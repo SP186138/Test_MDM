@@ -1,0 +1,27 @@
+REM Call BCM Environment
+cd /d E:\Teradata\MDM\3.05.02\custom\pngrelease3\bin
+call bcmenv.bat
+
+REM –Checking whether MDM Server is running
+%JAVA_HOME%\bin\java  com.teradata.xcore.util.SocketPoller localhost xserver.xml > E:\Teradata\MDM\3.05.02\custom\pngrelease3\log\checkMDMStatus.log
+
+REM forfiles /p E:\Teradata\MDM\3.05.02\custom\pngrelease3\log /m checkMDMStatus.log /c "cmd /c echo @fsize"
+
+set file="E:\Teradata\MDM\3.05.02\custom\pngrelease3\log\checkMDMStatus.log"
+set maxbytesize= 82
+
+FOR /F "usebackq" %%A IN ('%file%') DO set size=%%~zA
+
+if %size% == %maxbytesize% (
+    echo.MDM IS UP
+) ELSE (
+    echo.MDM IS DOWN
+)
+
+@echo on>E:\Teradata\MDM\3.05.02\custom\pngrelease3\log\checkMDMStatus.log
+
+pause
+:error
+echo Input value has to be either spaces or "pause"
+
+

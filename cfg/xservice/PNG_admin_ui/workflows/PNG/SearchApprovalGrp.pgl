@@ -1,0 +1,315 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_entry" source="studio.controller:load">
+  <ui:container id="container1" showFavorite="true" scrollable="true">
+    <ui:step id="Outer" name="Outer" displayText="Manage Approvals">
+      <ui:help id="help1" displayPage="/mdm/bcm/help/Manage_Approvals_Help.htm"/>
+      <ui:field-group name="mesg" select="$root" displayCondition="{string-length($root/ALERT/message/@Value) != 0}">
+        <ui:choose-field name="BUTTON_ID">
+          <ui:when test="$root/ALERT/alertGreen/@Value != ''">
+            <ui:field-group id="leftFields1" columns="3">
+              <ui:image src="/bpi_check.gif" displayCondition="{string-length($root/ALERT/alertGreen/@Value) != 0}"/>
+              <ui:display-field displayText="" name="success" value="{$root/ALERT/alertGreen/@Value}" class="requiredIndicatorGreen"/>
+            </ui:field-group>
+          </ui:when>
+          <ui:when test="$root/ALERT/alertRed/@Value != ''">
+            <ui:field-group id="leftFields1" columns="3">
+              <ui:image src="/cancel.gif" displayCondition="{string-length($root/ALERT/alertRed/@Value) != 0}"/>
+              <ui:display-field displayText="" name="error" value="{$root/ALERT/alertRed/@Value}" class="requiredIndicator"/>
+            </ui:field-group>
+          </ui:when>
+          <ui:otherwise/>
+        </ui:choose-field>
+      </ui:field-group>
+
+      <ui:container inner="true" id="Inner">
+        <ui:step id="InnerStep">
+          <ui:field-group columns="2">
+            <ui:field-group id="leftFields">
+              <ui:entry-field id="APPROVAL_GROUP_NAME" name="APPROVAL_GROUP_NAME" displayText="Approval  Name" title="ManageApprovalsApprovalGroupName" size="35"/>
+              <ui:textarea size="50" rows="5" columns="35" id="APPROVAL_GROUP_DESCRIPTION" name="APPROVAL_GROUP_DESCRIPTION" displayText="Approval Description" title="ManageApprovalsApprovalGroupDescription"/>
+              <ui:dropdown id="IS_ROLE" name="IS_ROLE" displayText="Approval User Type" selectOne="true" title="Approval User Type">
+                <ui:option id="User Based" value="User Based" displayText="User Based"/>
+                <ui:option id="User Group Based" value="User Group Based" displayText="User Group Based"/>
+              </ui:dropdown>
+              <ui:dropdown id="APPROVAL_OBJECT_TYPE" name="APPROVAL_OBJECT_TYPE" displayText="Approval Object Type" selectOne="true" title="ManageApprovalsApprovalObjectType" onChange="javascript:onObjectTypeChange(this.value)" sort="true">
+                <ui:option id="Table" value="Table" displayText="Table" title="Table"/>
+                <ui:option id="Business Entity" value="Business Entity" displayText="Business Entity" title="Business Entity"/>
+                <ui:option id="View" value="View" displayText="View" title="View"/>
+                <ui:option id="Business Rules" value="Business Rules" displayText="Business Rules" title="Business Rules"/>
+              </ui:dropdown>
+              <ui:dropdown id="EVENT_NAME" name="EVENT_NAME" displayText="Approval Object" selectOne="true" title="ManageApprovalsDocumentName" />
+              <ui:hidden-field id="EVENT_NAME_TEMP" name="EVENT_NAME_TEMP" value="{$root/EVENT_NAME/@Value}" />
+            </ui:field-group>
+            <ui:field-group id="rightFields">
+              <ui:dropdown id="APPROVAL_GROUP_TYPE" name="APPROVAL_GROUP_TYPE" displayText="Approval  Type" selectOne="true" title="ManageApprovalsApprovalGroupType">
+                <!-- <ui:option id="All" value="All" displayText="All"/>-->
+                <ui:option id="Serial" value="Serial" displayText="Serial"/>
+                <ui:option id="Parallel" value="Parallel" displayText="Parallel"/>
+              </ui:dropdown>
+              <ui:dropdown id="ACTION_TYPE" name="ACTION_TYPE" displayText="Action Type" selectOne="true" title="ManageApprovalsApprovalActionType">
+                <ui:option id="INSERT" value="INSERT" displayText="INSERT"/>
+                <ui:option id="UPDATE" value="UPDATE" displayText="UPDATE"/>
+                <ui:option id="DELETE" value="DELETE" displayText="DELETE"/>
+                <ui:option id="ALL" value="ALL" displayText="ALL"/>
+              </ui:dropdown>
+              <ui:dropdown id="IS_ACTIVE" name="IS_ACTIVE" displayText="Is Active" selectOne="true" title="ManageApprovalsIsActive">
+                <ui:option id="True" value="True" displayText="True"/>
+                <ui:option id="False" value="False" displayText="False"/>
+              </ui:dropdown>
+            </ui:field-group>
+          </ui:field-group>
+          <ui:buttons>
+            <ui:button name="Clear" id="Clear" displayText="Clear" onClick="{$pages:ManageApprovals}"/>
+            <ui:divider/>
+            <ui:button name="search" id="search" displayText="Search"/>
+          </ui:buttons>
+        </ui:step>
+      </ui:container>
+      <!--/ui:step-->
+      <!--/ui:container>
+<ui:container id="container2" name="container2" >
+<ui:step id="Inner" name="Inner" displayText=""-->
+      <ui:table id="searchResultsTable" displayText="Search Results" select="$root/RESPONSE" rowId="SEQID" rowSrc="Approval_Groups" rowscollapsable="true" scrollable="true" selectable="Single" maxRows="20" postRowIdAs="selectedRuleGrpId" sortBy="$root/SORT_BY[1]/@Value" exportable="true">
+        <ui:field-group>
+          <ui:hidden-field name="SEQID" id="SEQID" sortable="true"/>
+          <ui:display-field displayText="Approval Object" name="EVENT_NAME" id="EVENT_NAME" sortable="true" title="ManageApprovalsDocumentName" unFormat="true"/>
+          <ui:display-field displayText="Approval Type" name="APPROVAL_GROUP_TYPE" id="APPROVAL_GROUP_TYPE" sortable="true" title="ManageApprovalsApprovalGroupType" unFormat="true"/>
+          <ui:display-field displayText="Is Active" name="IS_ACTIVE" id="IS_ACTIVE" sortable="true" title="ManageApprovalsIsActive"/>
+          <ui:hidden-field displayText="Is Active" name="IS_ACTIVE" id="IS_ACTIVE_HID"/>
+          <ui:display-field displayText="Action Type" name="ACTION_TYPE" id="ACTION_TYPE" sortable="true" title="ManageApprovalsApprovalActionType"/>
+          <ui:display-field displayText="Approval User Type" name="IS_ROLE" id="IS_ROLE" sortable="true" title="ManageApprovalUserType"/>
+          <ui:display-field displayText="Approval Name" name="APPROVAL_GROUP_NAME" id="APPROVAL_GROUP_NAME" sortable="true" title="ManageApprovalsApprovalGroupName" unFormat="true"/>
+          <ui:display-field displayText="Approval Description" id="APPROVAL_GROUP_DESCRIPTION" name="APPROVAL_GROUP_DESCRIPTION" sortable="true" title="ManageApprovalsApprovalGroupDescription" unFormat="true"/>
+        </ui:field-group>
+        <ui:buttons id="buttons1" name="buttons1">
+          <ui:button displayText="Activate" id="ISACTIVE" name="ISACTIVE" enabledBySelections="true" onClick="javascript:onActivate(this);"/>
+          <ui:button displayText="Deactivate" id="ISDEACTIVE" name="ISDEACTIVE" enabledBySelections="true"/>
+          <ui:divider id="div1"/>
+          <ui:button displayText="Edit" id="EDIT" name="EDIT" enabledBySelections="true" onClick="javascript:onUpdate(this);"/>
+          <ui:button displayText="Delete" id="DELETE" name="DELETE" enabledBySelections="true" onClick="javascript:onDelete();"/>
+          <ui:divider id="div2"/>
+          <ui:button displayText="Create" id="CREATE" name="CREATE"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+
+function onLoad()
+{
+ if(document.form.APPROVAL_OBJECT_TYPE.value != '')
+  {
+    	onObjectTypeChange(document.form.APPROVAL_OBJECT_TYPE.value); 	
+		$(&quot;#EVENT_NAME_td&quot;).show();
+		$(&quot;#EVENT_NAME&quot;).show();
+		$(&quot;#EVENT_NAME_td&quot;).text(document.form.APPROVAL_OBJECT_TYPE.value);
+  }
+	//else
+	//{
+
+		//$(&quot;#EVENT_NAME_td&quot;).hide();
+		//$(&quot;#EVENT_NAME&quot;).hide();
+	//}
+	onLoadSuper();
+	onResize();
+}
+function onObjectTypeChange(type)
+{
+	if(type=='Business Entity'){
+		var request= &quot;&lt;REQUEST Name='getAllEntityObjects' ServiceName='UI_WORKFLOW'>&lt;/REQUEST>&quot;;
+		var xpath = &quot;/RESPONSES/RESPONSE/ENTITY_OBJECTS/OPTION&quot;;
+		SendAjaxRequest(&quot;UI_WORKFLOW&quot;,request,'getUserCallbackForObjectType',xpath);
+	}
+	if(type=='Table'){
+		var request=&quot;&lt;GET_DOCUMENT Name='SYS_TABLE_MAP' ServiceName='E2E' DirtyRead='true'> &lt;ORDER_BY>&lt;LOGICAL_NAME Sort='Ascending'/> &lt;/ORDER_BY> &lt;SELECT>&lt;LOGICAL_NAME /> &lt;/SELECT> &lt;OR>&lt;SOURCE Value='BACKEND'/>&lt;SOURCE Value='BOTH'/>&lt;SOURCE Value='MASTER'/> &lt;/OR>&lt;/GET_DOCUMENT>&quot;;
+		var xpath = &quot;/RESPONSES/RESPONSE/SYS_TABLE_MAP/LOGICAL_NAME&quot;;
+		SendAjaxRequest(&quot;E2E&quot;,request,'getUserCallbackForObjectType',xpath);
+	}
+	if(type=='View'){
+		var request=&quot;&lt;GET_DOCUMENT Name='SYS_DOCVIEW_MAP' ServiceName='E2E' DirtyRead='true'> &lt;ORDER_BY>&lt;LOGICAL_NAME Sort='Ascending'/> &lt;/ORDER_BY> &lt;SELECT>&lt;LOGICAL_NAME /> &lt;/SELECT> &lt;/GET_DOCUMENT>&quot;;
+		var xpath = &quot;/RESPONSES/RESPONSE/SYS_DOCVIEW_MAP/LOGICAL_NAME&quot;;
+		SendAjaxRequest(&quot;E2E&quot;,request,'getUserCallbackForObjectType',xpath);
+	}
+	//else
+	//{
+		//$(&quot;#EVENT_NAME_td&quot;).hide();
+		//$(&quot;#EVENT_NAME&quot;).hide();
+	//}
+}
+ 
+function getUserCallbackForObjectType(node)
+{
+	document.form.EVENT_NAME.options.length = 0;
+	document.form.EVENT_NAME.options[0] = new Option('Select...', '', true, false);
+    var tableNames=&quot;&quot;;
+	for (i=0;i&lt;node.length;i++)
+	{
+		tableNames = tableNames+node[i].getAttribute(&quot;Value&quot;) +&quot;#&quot;;
+		//document.form.EVENT_NAME.options[i+1]=new Option(node[i].getAttribute(&quot;Value&quot;), node[i].getAttribute(&quot;Value&quot;));
+	}
+	
+	var delimiter=&quot;true&quot;;
+	var callBackName=&quot;populateTableCallback&quot;;
+	SendI18nAjaxRequestList(tableNames,delimiter,callBackName);
+	
+	$(&quot;#EVENT_NAME_td&quot;).show();
+	$(&quot;#EVENT_NAME&quot;).show();
+    $(&quot;#EVENT_NAME_td&quot;).text(document.form.APPROVAL_OBJECT_TYPE[document.form.APPROVAL_OBJECT_TYPE.selectedIndex].title);
+	
+}
+function  populateTableCallback(node){
+	var itnized=null;
+	var nonItnizned=null;
+	var doc=node;
+	itnized=doc[0].getElementsByTagName(&quot;i18nVal&quot;)[0].getAttribute(&quot;Value&quot;);
+	nonitnized=doc[0].getElementsByTagName(&quot;i18nVal&quot;)[0].getAttribute(&quot;inputText&quot;);
+	var table_array=itnized.split(&quot;#&quot;);
+	var nonI18nized_array=nonitnized.split(&quot;#&quot;);
+	if(msieversion() == 8){
+	table_array.shift();
+	nonI18nized_array.pop();
+	}
+	else{
+    table_array.splice(table_array.indexOf(&quot;&quot;), 1);
+	nonI18nized_array.splice(nonI18nized_array.indexOf(&quot;&quot;), 1);
+	}
+    var counter_value=0;
+	var lenTemp=nonI18nized_array.length;
+	while (counter_value &lt; lenTemp)
+	{
+		document.form.EVENT_NAME.options[counter_value+1]=new Option(table_array[counter_value],nonI18nized_array[counter_value], true, false);
+		counter_value+=1;
+	}
+	if(document.getElementById('EVENT_NAME_TEMP').value != '')
+	{
+	document.getElementById('EVENT_NAME').value = document.getElementById('EVENT_NAME_TEMP').value;
+	document.getElementById('EVENT_NAME_TEMP').value='';
+	}
+}
+function onActivate()
+{
+var  radioObj = document.form.elements[&quot;selectedRuleGrpId&quot;];
+var rowobj=document.getElementById('searchResultsTable_data').getElementsByTagName(&quot;tr&quot;);
+var radioLength = radioObj.length;
+if(radioLength == undefined){
+form.BUTTON_ID.value = 'ISACTIVE';
+form.submit();
+grayOut(true);
+}
+else
+{
+for(var i = 0;radioLength>i; i++)
+{
+if(radioObj[i].checked) {
+var docName=   rowobj[i].getElementsByTagName(&quot;td&quot;)[0].innerHTML;
+var active_status=document.form.IS_ACTIVE_HID[i].value;
+var actionType=   rowobj[i].getElementsByTagName(&quot;td&quot;)[3].innerHTML;
+
+if(active_status.indexOf(&quot;False&quot;)==0 || active_status.indexOf(&quot;False&quot;)==1)
+{
+if(actionType.indexOf(&quot;ALL&quot;)==0 || actionType.indexOf(&quot;ALL&quot;)==1){
+var request=&quot;&lt;GET_DOCUMENT Name='Approval_Groups' ServiceName='APPROVAL'> &lt;EVENT_NAME Value='&quot;+docName+&quot;'/>&lt;IS_ACTIVE Value='True'/>&lt;/GET_DOCUMENT>&quot;;
+var xpath = &quot;/RESPONSES/RESPONSE/Approval_Groups&quot;;
+buttonId='ISACTIVE'
+    SendAjaxRequest(&quot;APPROVAL&quot;,request,'getApprovalsCall',xpath);
+//SendAjaxRequest(&quot;APPROVAL&quot;,request,getApprovalsCall(''+buttonId+''),xpath);
+
+}
+else{
+form.BUTTON_ID.value = 'ISACTIVE';
+form.submit();
+grayOut(true);
+}
+}
+else
+{
+core_alert_jquery(&quot;The approval is already in Active state.&quot;);
+return;
+}
+}
+}
+}
+}
+   
+function getApprovalsCall(node)
+{
+	core_confirm_jquery('MANAGE_APPROV_DEL_EXISTING_DOCU','onApprovalCallBack') ;
+}
+    
+function onApprovalCallBack(response)
+{
+if( response == 'yes' )
+{
+form.BUTTON_ID.value = 'ISACTIVE';
+form.submit();
+grayOut(true);
+}
+}
+
+function onUpdate()
+{
+var  radioObj = document.form.elements[&quot;selectedRuleGrpId&quot;];
+var rowobj=document.getElementById('searchResultsTable_data').getElementsByTagName(&quot;tr&quot;);
+var radioLength = radioObj.length;
+
+if(radioLength == undefined){
+var active=document.form.IS_ACTIVE_HID.value;
+
+if(active.indexOf(&quot;True&quot;)==0 || active.indexOf(&quot;True&quot;)==1){
+document.form.BUTTON_ID.value = 'EDIT';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+}
+else{
+core_alert_jquery(&quot;Edit not allowed on Deactivated Approval.&quot;);
+return;
+}
+}
+else{
+for(var i = 0;radioLength>i; i++)
+{
+if(radioObj[i].checked) {
+
+var active=document.form.IS_ACTIVE_HID[i].value;
+
+if(active.indexOf(&quot;True&quot;)==0 || active.indexOf(&quot;True&quot;)==1){
+document.form.BUTTON_ID.value = 'EDIT';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+}
+else{
+core_alert_jquery(&quot;Edit not allowed on Deactivated Approval.&quot;);
+return;
+}
+  
+}
+}
+}
+// LOGIC FOR SUBMIT A FORM
+
+}
+  
+
+    
+
+    
+    
+function onDelete()
+{ 
+ core_confirm_jquery('Are you sure you want to delete the selected Approval?','onDeleteCallback');  
+}
+    
+function onDeleteCallback(response)
+{
+     if( response == 'yes' )
+       {
+          document.form.BUTTON_ID.value = 'DELETE';
+          document.form.action = 'view.x2ps';
+          document.form.submit();
+          grayOut(true);
+      }
+}
+
+</ui:script>
+</ui:page-group>

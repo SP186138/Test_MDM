@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+ 	 Copyright (c) 2009 by Teradata Corporation. 
+	 All Rights Reserved. 
+	 Teradata CONFIDENTIAL AND TRADE SECRET 
+ -->
+  <DEFINE_METHOD Name="ruleConsumerDeleteProcess">
+    <!--**********************************************************************************************************
+*
+*		Created Date	: September 9, 2017
+*		Created By   	: Reshma Ramesh
+*
+**********************************************************************************************************-->
+    <RULE>
+      <ACTION>
+        <REQUEST Name="WS_CNSMR_DEL" ServiceName="BCM_MASTER" AssignToVar="errStatus">
+          <LOAD_ID Value="{$thisParam/LOAD_ID/@Value}"/>
+        </REQUEST>
+        <IF_TEST Test="$errStatus/@Status !='Success'">
+          <THEN>
+            <REQUEST Name="emailOnErrorNode" ServiceName="BCM_MASTER">
+              <LoadId Value="{$thisParam/LOAD_ID/@Value}"/>
+              <Subject Value="GDPR Consumer Delete Failure"/>
+              <Short_Description Value="Webservice Invocation Failed"/>
+              <Description Value="Following Load Id failed :{$thisParam/LOAD_ID/@Value}. Please verify the png_master.log and xserver.log at E:\Teradata\MDM\3.05.02\custom\pngrelease3\log on the MDM server."/>
+              <SubCategory Value="GDPR Consumer Delete Error"/>
+            </REQUEST>
+          </THEN>
+          <ELSE>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <!--**********************************************************************************************************
+  *
+  *		Created Date	: September 9, 2017
+  *		Created By   	: Reshma Ramesh
+  *Method Name : WS_CNSMR_DEL Method
+  **********************************************************************************************************-->
+  <DEFINE_METHOD Name="WS_CNSMR_DEL" Access="public">
+    <API_DOC>
+      <INPUT>
+      </INPUT>
+      <OUTPUT>
+      </OUTPUT>
+    </API_DOC>
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="selWSCnsmrlist">
+          <ROOT>
+LOCKING ROW FOR ACCESS
+SELECT MKTNG_PGM_NBR,REGIS_CNSMR_ID_VAL,SOURCE_ID FROM DELETE_REGIS_RUN_LOG_HIST
+WHERE LOG_SOURCE_ID='{$thisParam/LOAD_ID/@Value}' ;
+</ROOT>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY AssignToVar="resWSCnsmrlist" Value="{$selWSCnsmrlist/@text}"/>
+        <EXECUTE_SQL_QUERY AssignToVar="Props" Value="locking row for access sel UPPER(ENV_NM),RESOURCE_URL,ENDPOINT,EMAIL_SUFFIX from GDPR_PROPS "/>
+        <FOR_EACH CurrentElement="CurrentProps" SelectList="$Props/SQL_RESULT">
+          <!--SET Var="RESOURCE_URL" FromValue="{$Props/SQL_RESULT/RESOURCE_URL/@Value}"/-->
+          <FOR_EACH CurrentElement="cur" SelectList="$resWSCnsmrlist/SQL_RESULT">
+            <TO_DOCVAR AssignToVar="tmp">
+              <ROOT>
+                <RESOURCE_URL Value="{$CurrentProps/RESOURCE_URL/@Value}"/>
+                <ENDPOINT Value="{$CurrentProps/ENDPOINT/@Value}"/>
+              </ROOT>
+            </TO_DOCVAR>
+            <IF_TEST Test="$CurrentProps/ENV_NM/@Value='UAT' or $CurrentProps/ENV_NM/@Value='SIT'">
+              <THEN>
+                <START_WORKFLOW ServiceName="BCM_MASTER" AssignToVar="startWfResponse" HandleException="true" IsQbEnabled="false" QbIdentifier="WfProcessUI">
+                  <TEMPLATE Value="OUTBOUND_CNSMR_DELETE"/>
+                  <ADDITIONAL_PARAMETERS>
+                    <TO_XML SelectList="$tmp/*"/>
+                    <TO_XML SelectList="$cur/*"/>
+                  </ADDITIONAL_PARAMETERS>
+                </START_WORKFLOW>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="$CurrentProps/ENV_NM/@Value='DEV'">
+              <THEN>
+                <START_WORKFLOW ServiceName="BCM_MASTER" AssignToVar="startWfResponse" HandleException="true" IsQbEnabled="false" QbIdentifier="WfProcessUI">
+                  <TEMPLATE Value="OUTBOUND_CNSMR_DELETE_DEV"/>
+                  <ADDITIONAL_PARAMETERS>
+                    <TO_XML SelectList="$tmp/*"/>
+                    <TO_XML SelectList="$cur/*"/>
+                  </ADDITIONAL_PARAMETERS>
+                </START_WORKFLOW>
+              </THEN>
+            </IF_TEST>
+            <SET Var="test" FromValue="{$startWfResponse/@Status='Success'}"/>
+            <IF_TEST Test="$test='true'">
+              <THEN>
+                <!--TO_DOCVAR AssignToVar="insertResultsQuery">
+                <ROOT>
+INSERT INTO MDM.WS_CNSMR_DEL (MKTNG_PGM_NBR,REGIS_CNSMR_ID_VAL,SOURCE_ID)
+Values('{$cur/MKTNG_PGM_NBR/@Value}','{$cur/REGIS_CNSMR_ID_VAL/@Value}','{$cur/SOURCE_ID/@Value}')
+</ROOT>
+              </TO_DOCVAR>
+              <EXECUTE_SQL_QUERY AssignToVar="result" ReturnRowCount="yes" Value="{$insertResultsQuery/@text}" HandleException="true"/-->
+                <APPEND_TO_XML DocVar="thisReturn">
+                  <ROOT>
+                    <Response Status="Success">
+                      <MKTNG_PGM_NBR Value="{$cur/MKTNG_PGM_NBR/@Value}"/>
+                      <REGIS_CNSMR_ID_VAL Value="{$cur/REGIS_CNSMR_ID_VAL/@Value}"/>
+                      <SOURCE_ID Value="{$cur/SOURCE_ID/@Value}"/>
+                    </Response>
+                  </ROOT>
+                </APPEND_TO_XML>
+              </THEN>
+            </IF_TEST>
+          </FOR_EACH>
+        </FOR_EACH>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

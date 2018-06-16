@@ -1,0 +1,95 @@
+/***********************************************************************************************************
+SCRIPT:               TSS_NCOA_INPUT.FEXP
+DESCRIPTION:          This script generates the INPUT file for use by Trillium
+DEPENDENCY:           Staging Opt Out table
+INPUT:                
+OUTPUT:               TSS_NCOA_INPUT.DAT
+ERRORS:
+SPECIAL INSTRUCTIONS: In case of failure, log table to be dropped and script to restart from top.
+
+CHANGE LOG:
+VERSION              DATE                 AUTHOR                          CHANGES
+1.00                 10/12/2012           TERADATA                        INITIAL VERSION
+5.0                  12/18/2013           TERADATA                        INTEGRATION CHANGES TO USE I2 
+                                                                          TRILLIUM PROJECTS
+***********************************************************************************************************/
+
+.LOGTABLE TSS_NCOA_INPUT_LOG;
+
+.BEGIN EXPORT;
+
+.EXPORT OUTFILE $TSS_NCOA_INPUT.DAT FORMAT TEXT MODE RECORD;
+
+SELECT 
+CAST(
+	       COALESCE(TRIM(CAST(A.MATCHD_CNSMR_PRSNA_ID AS INTEGER)),'')
+	||'|'||COALESCE(TRIM(CAST(CAST(A.MKTNG_PGM_NBR AS INTEGER) AS CHAR(20))),'')
+	||'|'||COALESCE(TRIM(CAST(A.REGIS_PRSNA_ID AS INTEGER)),'')
+	||'|'||COALESCE(TRIM(C.NAME_PREFX_TXT),'')
+	||'|'||COALESCE(TRIM(C.GVN_NAME),'AA')
+	||'|'||COALESCE(TRIM(C.MID_NAME),'')
+	||'|'||COALESCE(TRIM(C.FAMLY_NAME),'')
+	||'|'||COALESCE(TRIM(C.NAME_SUFFX_TXT),'')
+	||'|'||COALESCE(TRIM(C.FULL_NAME),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(A.NEW_ADDRESS1),'')
+	||'|'||COALESCE(TRIM(A.NEW_ADDRESS2),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(A.NEW_CITY),'')
+	||'|'||COALESCE(TRIM(A.NEW_ZIP),'')
+	||'|'||COALESCE(TRIM(A.NEW_STATE),'')
+	||'|'||COALESCE(TRIM(A.NEW_COUNTRY),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(CAST(CAST(A.LOAD_ID AS INTEGER) AS VARCHAR(20))),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(CAST(CAST(A.LOAD_TS AS TIMESTAMP(0)) AS VARCHAR(20))),'')		
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'||||'||COALESCE(TRIM(''),'')
+    AS CHAR(750))
+  FROM $DATABASENAME.NCOA_ADDR_STG A
+  INNER JOIN LOAD_INFO B
+  ON A.LOAD_ID=B.LOAD_ID
+  AND B.PROCESS_NAME='NCOA Input'
+  AND B.STATUS = 'In Progress'
+  LEFT OUTER JOIN REGIS_PRSNA C
+  ON A.MKTNG_PGM_NBR = C.MKTNG_PGM_NBR
+  AND A.REGIS_PRSNA_ID = C.REGIS_PRSNA_ID
+  WHERE (NEW_ADDRESS1 IS NOT NULL
+  OR NEW_ADDRESS2 IS NOT NULL)  
+;
+
+.END EXPORT;
+
+.SET CREATERC TO 0;
+
+.IF &SYSRC > 4 THEN;
+.SET CREATERC TO 1;
+.ELSE;
+.IF &SYSRC <= 4 THEN;
+.SET CREATERC TO 0;
+.ENDIF;
+.ENDIF;
+
+.LOGOFF &CREATERC;

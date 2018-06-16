@@ -1,0 +1,72 @@
+/***********************************************************************************************************
+SCRIPT:               DQRM.BTQ 
+DESCRIPTION:          THIS SCRIPT invoke stored procedure to execute DQRM rules
+DEPENDENCY:           
+INPUT:                
+OUTPUT:               
+ERRORS:
+SPECIAL INSTRUCTIONS:
+
+CHANGE LOG:
+VERSION              DATE                 AUTHOR                          CHANGES
+DQRM                 04/01/2016           TERADATA                        DQRM
+                                                                          INITIAL VERSION
+***********************************************************************************************************/
+.logon $TDPID/$TDUSER,$TDPWD
+
+
+.SET ERROROUT STDOUT;
+.SET SESSION CHARSET 'UTF8';
+.SET ERRORLEVEL 3624 SEVERITY 0
+SET QUERY_BAND = 'WorkFlow=DQRM;ProjectId=1;Frequency=WEEKLY;ProcessId=45070125;Step=Step01;' FOR SESSION;
+
+insert into ETL_CTRL.LOAD_CONTROL
+(
+LOAD_ID
+,SOURCE_ID
+,FORMAT_ID
+,FileName
+,FILERECEIVEDTS
+,LOAD_TYPE
+,MIG_TASK
+,LOADSTARTTS
+,LOADSTATUS
+,SOURCECNT
+,TARGETCNT
+,REJECTSCNT
+,MDM_PROCESS_DESC
+)
+SELECT
+45070125
+,1532
+,25
+,'DQRM_1_WEEKLY_'||CURRENT_DATE||'.txt'
+,CURRENT_TIMESTAMP(0)
+,'ETL'
+,'N'
+,CURRENT_TIMESTAMP(0)
+,'In Progress'
+,0
+,0
+,0
+,'1_WEEKLY';
+ .IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE;
+/*
+1st paramter is the process id
+2nd parameter is the project id
+3rd parameter is the frequency
+4th parameter is the return code from the wrapper
+0 for succuss
+-1 for failure
+*/
+.export report file=E:/Teradata/MDM/3.05.02/custom/pngrelease3/bin/DQRM_Output_File_45070125.out
+CALL DQ_EXECUTE_WRAPPER (45070125,1,'WEEKLY', :return_value);
+ .IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE;
+ 
+UPDATE ETL_CTRL.LOAD_CONTROL
+SET LOADSTATUS='Success'
+,MDM_PROCESS_DESC='1_WEEKLY - Completed'
+,LOADENDTS=CURRENT_TIMESTAMP(0)
+WHERE LOAD_ID = 45070125;
+ .IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE;
+.exit

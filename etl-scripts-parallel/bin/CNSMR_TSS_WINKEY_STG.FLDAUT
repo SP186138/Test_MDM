@@ -1,0 +1,51 @@
+/***********************************************************************************************************
+SCRIPT:               CNSMR_TSS_WINKEY_STG.FLD 
+DESCRIPTION:          This script loads the WINKEY TRIGGER table from the trigger file that is given by 
+                      Trillium
+DEPENDENCY:           TRILLIUM WINKEY SCRIPT
+INPUT:                TRILLIUM WINKEY FILE
+OUTPUT:               WINKEY TRIGGER
+ERRORS:
+SPECIAL INSTRUCTIONS: In case of failure, fast load cleanup needs to be performed and script to restart from top.
+
+CHANGE LOG:
+VERSION              DATE                 AUTHOR                          CHANGES
+1.00                 01/21/2011           TERADATA                        INITIAL VERSION
+R5.1                 01/28/2014           TERADATA                        ADD NATIONAL_ID_NBR   
+***********************************************************************************************************/
+
+SESSIONS 10;
+ERRLIMIT 65000;
+.RUN \\10.138.21.14\Teradata\MDM\3.05.02\custom\pngrelease3\logon\LOGON.txt;
+
+DELETE FROM MDM.WINKEY_TRIGGER_AUT ALL;
+
+.SET RECORD VARTEXT;
+DEFINE
+      WIN_KEY (VARCHAR(1000)),
+      EMAIL_ADDR_TXT (VARCHAR(1000))	,
+      FULL_PHONE_NUM (VARCHAR(2000)),
+      LEGAL_ENT_NBR (VARCHAR(200)),
+      NATIONAL_ID_NBR (VARCHAR(100))
+FILE=\\10.138.21.14\Teradata\MDM\3.05.02\custom\pngrelease3\data\TSS_WINKEY_OUTPUT_AUT.DAT;
+
+.BEGIN LOADING MDM.WINKEY_TRIGGER_AUT ERRORFILES MDM.WINKEY_TRIGGER_AUT_ERR1, MDM.WINKEY_TRIGGER_AUT_ERR2;
+
+INSERT INTO MDM.WINKEY_TRIGGER_AUT (
+ WINDOW_KEY_01                 
+,EMAIL_ADDR_TXT            
+,PHONE
+,LEGAL_ENT_NBR
+,NATIONAL_ID_NBR
+)
+VALUES
+(
+ :WIN_KEY                 
+,:EMAIL_ADDR_TXT            
+,:FULL_PHONE_NUM
+,:LEGAL_ENT_NBR
+,:NATIONAL_ID_NBR
+);
+.END LOADING;
+
+.LOGOFF &SYSRC;

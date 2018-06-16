@@ -1,0 +1,30 @@
+<ui:page-group version="3" xmlns:ui="http://www.teradata.com/ui" name="studio.templates.simple_form" source="studio.controller:load">
+  <ui:container id="topContainer">
+    <ui:step displayText="Set Server" id="basicControls">
+      <ui:validation />
+      <ui:field-group>
+        <ui:dropdown name="ServerName" selectOne="true" size="1" displayText="Select Server To Manage" optionSrc="$root/ServerNames/*" dataType="Constant" onChange="javascript:dropdownChanged();" id="ServerName" value="{$root/SelServerName/@Value}" required="true" />
+        <ui:button name="DROPDOWN_CHANGED" displayText="" displayCondition="false" />
+        <ui:entry-field displayText="Enter Machine Name" name="OtherServerName" displayCondition="{$root/SelServerName/@Value='define a new server'}" id="OtherServerName"/>
+        <ui:entry-field displayText="Enter Port Number" name="Port" displayCondition="{$root/SelServerName/@Value='define a new server'}" id="Port"/>
+      </ui:field-group>
+      <ui:buttons>
+        <ui:button id="DONE" name="DONE" displayText="Apply" emphasized="true" />
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:script>function dropdownChanged()
+		{
+		if(document.form.ServerName.options[document.form.ServerName.selectedIndex].value=='define a new server')
+		{
+		document.form.BUTTON_ID.value='DROPDOWN_CHANGED';
+		document.form.action='view.x2ps';
+		document.form.submit();
+		} else {
+			document.form.BUTTON_ID.value='DROPDOWN_CHANGED';
+		document.form.action='view.x2ps';
+		document.form.submit();
+		}
+		}</ui:script>
+</ui:page-group>
+

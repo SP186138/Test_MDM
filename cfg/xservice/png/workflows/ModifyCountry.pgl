@@ -1,0 +1,199 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" name="studio.templates.simple_form" source="studio.controller:load" version="3">
+<ui:container id="topContainer" scrollable="true" type="Tabs">
+<ui:step displayText="MODIFY COUNTRY" id="content1" scrollable="true">
+<ui:field-group id="leftFields1" columns="3">
+<ui:image src="/bpi_check.gif" displayCondition="{string-length($root/AlertGreen/@Value) != 0}"/>
+<ui:display-field value="{$root/AlertGreen/@Value}" displayCondition="{string-length($root/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen"/>
+<ui:hidden-field id="ACTION_TYPE" name="ACTION_TYPE"/>
+</ui:field-group>
+<ui:field-group id="tableColumns1" columns="2" select="$root/SQL_RESULT">
+<ui:dropdown id="GEOC_REGN_CODE" name="GEOC_REGN_CODE" displayText="Geographic Region Code" optionSrc="$root/GEOC_REGN/OPTION" selectOne="true" displayCondition="true"  onChange="javascript:loadProgramList();"/>
+<ui:dropdown id="GEOC_SUB_REGN_CODE" name="GEOC_SUB_REGN_CODE" displayText="Geographic Sub Region Code" optionSrc="$root/GEOC_SUB_REGN/OPTION" selectOne="true" onChange="javascript:loadProgramList();"/>
+<ui:dropdown id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR" displayText="Legal Entity Number" optionSrc="$root/LEGAL_ENT/OPTION" selectOne="true" />
+<ui:display-field id="CNTRY_CODE" name="CNTRY_CODE" displayText="Country Code" required="true" dataType="Constant"/>
+<ui:entry-field id="CNTRY_CODE_NTV" name="CNTRY_CODE_NTV" displayText="Country Code NTV" disabled="false" dataType="Constant"/>
+<!--<ui:dropdown id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR" displayText="Matched Domain" optionSrc="$searchResults/LEGAL_ENT_NBR/" seectOne="false" disabled="true"/>-->
+<ui:entry-field id="CNTRY_NAME" name="CNTRY_NAME" displayText="Country Name" dataType="Constant"/>
+<ui:entry-field id="CNTRY_NAME_NTV" name="CNTRY_NAME_NTV" displayText="Country Name NTV" dataType="Constant"/>
+<ui:entry-field id="CNTRY_SHORT_NAME" name="CNTRY_SHORT_NAME" displayText="Country Short Name" dataType="Constant"/>
+<ui:entry-field id="CNTRY_DESC" name="CNTRY_DESC" displayText="Country Description" size="30" dataType="Constant"/>
+<ui:dropdown id="ENTITY_STATE" name="ENTITY_STATE" displayText="Entity State">
+<ui:option id="ACTIVE" value="ACTIVE"/>
+<ui:option id="INACTIVE" value="INACTIVE"/>
+<ui:option id="NEW" value="NEW"/>
+<ui:option id="DELETED" value="DELETED"/>
+</ui:dropdown>
+</ui:field-group>
+<ui:buttons>
+<ui:button id="CANCEL" name="CANCEL" displayText="Return" onClick="javascript:onCancel();"/>
+<ui:divider/>
+<ui:button id="SAVE" name="SAVE" displayText="Update" emphasized="true"/>
+<ui:divider/>
+</ui:buttons>
+</ui:step>
+</ui:container>
+<ui:hr/>
+<ui:script>
+
+
+function loadProgramList(){
+document.form.BUTTON_ID.value = 'LOAD_PROGRAM_LIST';
+
+document.form.action = 'view.x2ps';
+
+
+document.form.submit();
+
+
+}
+
+/*function onCancel()
+{
+var formchanged=isFormChanged();
+if(formchanged){
+var cancelMessage = &quot;Modified information will be discarded, Do you want to continue?&quot;;
+if (	core_confirm( cancelMessage ) == 'yes' )
+{
+form.BUTTON_ID.value = &quot;CANCEL&quot; ;
+form.submit();
+}
+else
+{
+return;
+}
+}else{
+form.BUTTON_ID.value = &quot;CANCEL&quot; ;
+form.submit();
+}
+}*/
+
+function onCancel()
+{
+var formchanged=isFormChanged();
+if(formchanged){
+//var cancelMessage = &quot;Modified information will be discarded, Do you want to continue?&quot;;
+core_confirm_jquery('Modified information will be discarded, Do you want to continue?','onConfirmCancel');
+
+}else{
+form.BUTTON_ID.value = &quot;CANCEL&quot; ;
+form.submit();
+}
+}
+
+
+
+function onConfirmCancel(response)
+{
+if (response == 'yes' )
+{
+form.BUTTON_ID.value = &quot;CANCEL&quot; ;
+form.submit();
+}
+else
+{
+return;
+}
+}
+
+function isFormChanged() {
+
+
+
+var rtnVal = false;
+
+
+
+var frm = document.forms[0];
+
+
+
+var ele = frm.elements;
+
+
+
+for ( i=0; i &lt; ele.length; i++ ) {
+
+
+
+if ( ele[i].type.length > 0 ) {
+
+
+
+if ( isElementChanged( ele, i ) ) {
+
+
+
+rtnVal = true;
+
+
+
+break;
+
+
+
+}
+
+
+
+}
+
+
+
+}
+
+
+
+return rtnVal;
+
+
+
+}
+
+function on_Save(){
+
+var bIsValid = true;
+
+document.form.SUBMIT_AS_XML.value = 'false';
+
+
+
+bIsValid = (isValid_content1());
+
+	
+
+if( bIsValid == false )
+
+{
+
+validation_alert('content1');
+
+}
+
+if ( bIsValid == true){
+
+var isFormValid = validateForm();
+
+if(isFormValid){
+
+document.form.BUTTON_ID.value = 'SAVE';
+
+document.form.action = 'view.x2ps';
+
+document.form.submit();
+
+}
+
+else return;
+
+}
+
+return;
+
+}
+
+
+
+
+
+</ui:script>
+</ui:page-group>

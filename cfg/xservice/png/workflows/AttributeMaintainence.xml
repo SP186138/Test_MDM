@@ -1,0 +1,702 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="527" ShowInBreadCrumbs="true" Version="1.0" Name="AttributeMaintainence" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="AttributeMaintainence">
+    <variable Name="P_buttonAction" Type="string" Comment=""/>
+    <variable Name="P_parentExist" Type="string" Comment=""/>
+    <variable Name="Seq" Type="string" Comment=""/>
+    <variable Name="USER_MAN_VAL" Type="string" Comment=""/>
+    <variable Name="pFixedDropDowns" Type="xml" Comment=""/>
+    <variable Name="pScreenValues" Type="xml" Comment=""/>
+    <variable Name="pSearchResults" Type="xml" Comment=""/>
+    <variable Name="relatedAttribute" Type="xml" Comment=""/>
+    <variable Name="relatedAttributeValues" Type="xml" Comment=""/>
+    <variable Name="relatedAttributes" Type="xml" Comment=""/>
+    <variable Name="resAttributeTypeDetail" Type="xml" Comment=""/>
+    <variable Name="resParentAttribute" Type="xml" Comment=""/>
+    <variable Name="resParentAttributeTypeDetail" Type="xml" Comment=""/>
+    <variable Name="resParentAttributeValues" Type="xml" Comment=""/>
+    <variable Name="resRelatedAttributeTypeDetail" Type="xml" Comment=""/>
+    <variable Name="currentAttributeValues" Type="xml" Comment=""/>
+  </variables>
+  <nodes>
+    <ui_form2 Name="AttributeMaintainence" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="AttributeMaintenance.pgl">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$userAction = 'Cancel' ">
+            <THEN>
+              <SET Var="P_buttonAction" FromValue="Cancel"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction != 'AttributeTypeChange' ">
+            <THEN>
+              <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="Desc">
+                <Description_TopCont/>
+              </FORM_SEARCH_FILTER>
+              <SET_NAME Value="{$Desc/FILTER/Description_TopCont}" FromValue="AV_DESCRIPTION"/>
+              <IF_TEST Test="$userAction = 'Search'">
+                <THEN>
+                  <SET Var="START_COUNT" FromValue="0"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="START_COUNT" FromValue="{ifElse($thisParam/START_COUNT/@Value = null, '0', $thisParam/START_COUNT/@Value)}"/>
+                </ELSE>
+              </IF_TEST>
+              <SET Var="MAX_ROWS" FromValue="10"/>
+              <REQUEST Name="getAttValuesForAttTypeAndParentAvId" AssignToVar="resAttValuesForAttTypeAndParentAvId" ServiceName="BCM_MASTER">
+                <START_COUNT Value="{$START_COUNT}"/>
+                <MAX_ROWS Value="{$MAX_ROWS}"/>
+                <ATTRIBUTE_TYPE_ID Value="{$pScreenValues/ATTRIBUTE_TYPE_ID/@Value}"/>
+                <AV_ID_PARENT Value="{$pScreenValues/PARENT_ATTRIBUTE_AV_ID/@Value}"/>
+                <FLAG Value="{$pScreenValues/Status/@Value}"/>
+                <FILTERS>
+                  <TO_XML SelectList="$Desc/FILTER/*"/>
+                </FILTERS>
+              </REQUEST>
+              <IF_TEST Test="$userAction !='Add' ">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="pSearchResults">
+                    <root>
+                      <PROJECTS START_COUNT="{$START_COUNT}" MAX_ROWS="{$MAX_ROWS}" TOTAL_ROW_COUNT="{$resAttValuesForAttTypeAndParentAvId/@TotalRowCount}">
+                        <TO_XML SelectList="$resAttValuesForAttTypeAndParentAvId/*"/>
+                      </PROJECTS>
+                    </root>
+                  </TO_DOCVAR>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+            <ELSE>
+              <TO_DOCVAR AssignToVar="pSearchResults">
+                <root>
+                  <PROJECTS/>
+                </root>
+              </TO_DOCVAR>
+            </ELSE>
+          </IF_TEST>
+          <SET Var="Seq" FromValue="{$Seq + 1}"/>
+          <APPEND_TO_XML Select="$resRelatedAttributeTypeDetail/ATTRIBUTE_TYPES">
+            <ATTRIBUTE_TYPE_AVAILABLE Value="{concat($resRelatedAttributeTypeDetail/ATTRIBUTE_TYPES/ATTRIBUTE_TYPE/@Value,' Available')}"/>
+            <ATTRIBUTE_TYPE_ASSIGNED Value="{concat($resRelatedAttributeTypeDetail/ATTRIBUTE_TYPES/ATTRIBUTE_TYPE/@Value,' Assigned')}"/>
+          </APPEND_TO_XML>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <root>
+              <Attribute_type_hidden Value="{$Seq}"/>
+              <RELATED_ATTRIBUTE>
+                <TO_XML SelectList="$resRelatedAttributeTypeDetail/ATTRIBUTE_TYPES/*"/>
+              </RELATED_ATTRIBUTE>
+              <PARENT_ATTRIBUTE>
+                <TO_XML SelectList="$resParentAttributeTypeDetail/ATTRIBUTE_TYPES/*"/>
+              </PARENT_ATTRIBUTE>
+              <TO_XML SelectList="$resAttributeTypeDetail/*"/>
+              <TO_XML SelectList="$currentAttributeValues/*"/>
+              <TO_XML SelectList="$relatedAttributes/RELATED_AV_IDS/*"/>
+              <TO_XML SelectList="$relatedAttributeValues/*"/>
+              <!--<DISPLAY_COND_ADD Value="{$thisParam/USER_MAN_VAL/@Value}"/>-->
+              <DISPLAY_COND_ADD Value="{$USER_MAN_VAL/@Value}"/>
+              <PARENT_ATTRIBUTE_DISPLAY_NAME Value="{$parentDisplayName}"/>
+              <isParentExisting Value="{$P_parentExist}"/>
+              <DISPLAY_COND_CONT2 Value="{$P_buttonAction}"/>
+              <SuccessMessageForProject Value="{$SuccessMessageForProject}"/>
+              <AlertMessageForProject Value="{$AlertMessageForProject}"/>
+              <TO_XML SelectList="$pFixedDropDowns/*"/>
+              <TO_XML SelectList="$resParentAttributeValues/*"/>
+              <TO_XML SelectList="$pSearchResults/*"/>
+              <TO_XML SelectList="$pScreenValues/*"/>
+              <TO_XML SelectList="$thisParam/*"/>
+            </root>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pScreenValues">
+            <ROOT>
+              <TO_XML SelectList="$pglFormOutput/ATTRIBUTE_TYPE_ID"/>
+              <TO_XML SelectList="$pglFormOutput/PARENT_ATTRIBUTE_AV_ID"/>
+              <TO_XML SelectList="$pglFormOutput/Status"/>
+              <TO_XML SelectList="$pglFormOutput/AV_ID"/>
+              <TO_XML SelectList="$pglFormOutput/CODE"/>
+              <TO_XML SelectList="$pglFormOutput/DESCRIPTION"/>
+              <TO_XML SelectList="$pglFormOutput/SHORT_NAME"/>
+              <TO_XML SelectList="$pglFormOutput/PAR_ATT_AVID_CONT2"/>
+              <TO_XML SelectList="$pglFormOutput/Status_CONT2"/>
+              <TO_XML SelectList="$pglFormOutput/RELATED_AV_ID"/>
+              <TO_XML SelectList="$pglFormOutput/BUTTON_ID"/>
+              <TO_XML SelectList="$pglFormOutput/MOD_AV_ID"/>
+              <TO_XML SelectList="$pglFormOutput/emailRequired"/>
+              <TO_XML SelectList="$pglFormOutput/toAddr"/>
+              <TO_XML SelectList="$pglFormOutput/message"/>
+              <!--<TO_XML SelectList="$pglFormOutput/"/>
+			<TO_XML SelectList="$pglFormOutput/"/>
+			<TO_XML SelectList="$pglFormOutput/"/>
+			<TO_XML SelectList="$pglFormOutput/"/>
+			<TO_XML SelectList="$pglFormOutput/"/>
+			<TO_XML SelectList="$pglFormOutput/"/>
+			<TO_XML SelectList="$pglFormOutput/"/>-->
+            </ROOT>
+          </TO_DOCVAR>
+          <IF_TEST Test="$userAction='Search'">
+            <THEN>
+              <SET Var="P_buttonAction" FromValue="Search"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='Add' ">
+            <THEN>
+              <SET Var="P_buttonAction" FromValue="Add"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='Edit' ">
+            <THEN>
+              <SET Var="P_buttonAction" FromValue="Edit"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='DONE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Search'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="AttributeMaintainence" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction = 'Add' or $userAction = 'Edit'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="onAddOrEdit" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='AttributeTypeChange'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="onAttributeTypeChange" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SUBMIT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="onSubmit" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Edit'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Add'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Cancel'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="AttributeMaintainence" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='null'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='out'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='in'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='emailFieldsChanged'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="AttributeMaintainence" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <start Name="start9">
+      <actions>
+        <action>
+          <SET Var="P_buttonAction" FromValue="Search"/>
+          <SET Var="Seq" FromValue="0"/>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="GetFixedDropDownValues"/>
+      </next_nodes>
+    </start>
+    <task Name="GetFixedDropDownValues">
+      <actions>
+        <action>
+          <REQUEST Name="getAttributeTypesList" AssignToVar="resAttributeTypesList" ServiceName="BCM_MASTER">
+            <USER_MANAGED_FLAG Value="N" MatchBy="NOT_EQUAL"/>
+          </REQUEST>
+          <REQUEST Name="getStatusValues" AssignToVar="resStatusValues" ServiceName="BCM_MASTER"/>
+          <TO_DOCVAR AssignToVar="pFixedDropDowns">
+            <ROOT>
+              <TO_XML SelectList="$resAttributeTypesList/*"/>
+              <TO_XML SelectList="$resStatusValues/*"/>
+            </ROOT>
+          </TO_DOCVAR>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="AttributeMaintainence"/>
+      </next_nodes>
+    </task>
+    <task Name="onAddOrEdit">
+      <actions>
+        <action>
+          <REQUEST Name="getRelatedAttribute" ServiceName="BCM_MASTER" AssignToVar="relatedAttribute">
+            <ATTRIBUTE_TYPE_ID Value="{$resAttributeTypeDetail/ATTRIBUTE_TYPES/ATTRIBUTE_TYPE_ID/@Value}"/>
+          </REQUEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Add' ">
+            <THEN>
+              <TO_DOCVAR AssignToVar="currentAttributeValues">
+                <ROOT>
+                  <RELATED_AV_IDS/>
+                </ROOT>
+              </TO_DOCVAR>
+              <REMOVE_CHILDREN DocVar="pScreenValues" ChildName="MOD_AV_ID"/>
+              <REMOVE_CHILDREN DocVar="pScreenValues" ChildName="CODE"/>
+              <REMOVE_CHILDREN DocVar="pScreenValues" ChildName="DESCRIPTION"/>
+              <REMOVE_CHILDREN DocVar="pScreenValues" ChildName="SHORT_NAME"/>
+              <REMOVE_CHILDREN DocVar="pScreenValues" ChildName="PAR_ATT_AVID_CONT2"/>
+              <REMOVE_CHILDREN DocVar="pScreenValues" ChildName="emailRequired"/>
+              <REMOVE_CHILDREN DocVar="pScreenValues" ChildName="toAddr"/>
+              <REMOVE_CHILDREN DocVar="pScreenValues" ChildName="message"/>
+              <REMOVE_CHILDREN DocVar="pScreenValues" ChildName="Status_CONT2"/>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="MOD_AV_ID"/>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="CODE"/>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="DESCRIPTION"/>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="SHORT_NAME"/>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="PAR_ATT_AVID_CONT2"/>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="emailRequired"/>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="toAddr"/>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="message"/>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="Status_CONT2"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="count($relatedAttribute/*) > 0">
+            <THEN>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Edit' ">
+                <THEN>
+                  <SET Var="isRelatedAttribute" FromValue="true"/>
+                  <REQUEST Name="getAttributeTypeDetail" AssignToVar="resRelatedAttributeTypeDetail" ServiceName="BCM_MASTER">
+                    <ATTRIBUTE_TYPE_ID Value="{ifElse($relatedAttribute/ATTRIBUTE_TYPE_ID1/@Value != null, $relatedAttribute/ATTRIBUTE_TYPE_ID1/@Value, $relatedAttribute/ATTRIBUTE_TYPE_ID2/@Value)}"/>
+                  </REQUEST>
+                  <IF_TEST Test="$relatedAttribute/ATTRIBUTE_TYPE_ID1/@Value != null">
+                    <THEN>
+                      <TO_DOCVAR AssignToVar="avIdVar">
+                        <AV_ID2 Value="{$thisParam/AV_ID/@Value}"/>
+                      </TO_DOCVAR>
+                    </THEN>
+                    <ELSE>
+                      <TO_DOCVAR AssignToVar="avIdVar">
+                        <AV_ID1 Value="{$thisParam/AV_ID/@Value}"/>
+                      </TO_DOCVAR>
+                    </ELSE>
+                  </IF_TEST>
+                  <REQUEST Name="getRelatedAttributesForAvId" ServiceName="BCM_MASTER" AssignToVar="relatedAttributes">
+                    <TO_XML DocVar="avIdVar"/>
+                  </REQUEST>
+                  <TO_DOCVAR AssignToVar="currentAttributeValues">
+                    <ROOT>
+                      <RELATED_AV_IDS/>
+                    </ROOT>
+                  </TO_DOCVAR>
+                  <FOR_EACH SelectList="$relatedAttributes/ROOT/RELATED_AV_ID" CurrentElement="currAttribute">
+                    <APPEND_TO_XML Select="$currentAttributeValues/RELATED_AV_IDS">
+                      <!--<RELATED_AV_ID Id="{$currAttribute/@Value}" Value="{$relAttValuesNotFiltered/ATTRIBUTE_VALUES[AV_ID/@Value=$currAttribute/@Value]/AV_DESCRIPTION/@Value}"/>-->
+                      <RELATED_AV_ID Id="{$currAttribute/@Id}" Value="{$currAttribute/@Value}"/>
+                    </APPEND_TO_XML>
+                  </FOR_EACH>
+                  <TO_DOCVAR AssignToVar="relAttSubtracted">
+                    <ROOT>
+                      <AND/>
+                    </ROOT>
+                  </TO_DOCVAR>
+                  <FOR_EACH SelectList="$relatedAttributes/ROOT/RELATED_AV_ID" CurrentElement="currAttribute">
+                    <APPEND_TO_XML Select="$relAttSubtracted/AND">
+                      <AV_ID Value="{$currAttribute/@Id}" MatchBy="NOT_EQUAL"/>
+                    </APPEND_TO_XML>
+                  </FOR_EACH>
+                  <REQUEST Name="getAttributeValues" ServiceName="BCM_MASTER" AssignToVar="relatedAttributeValuesTemp">
+                    <ATTRIBUTE_TYPE_ID Value="{ifElse($relatedAttribute/ATTRIBUTE_TYPE_ID1/@Value != null, $relatedAttribute/ATTRIBUTE_TYPE_ID1/@Value, $relatedAttribute/ATTRIBUTE_TYPE_ID2/@Value)}"/>
+                    <TO_XML SelectList="$relAttSubtracted/*"/>
+                  </REQUEST>
+                  <TO_DOCVAR AssignToVar="relatedAttributeValues">
+                    <ROOT>
+                      <RELATED_AV_IDS_LIST/>
+                    </ROOT>
+                  </TO_DOCVAR>
+                  <FOR_EACH SelectList="$relatedAttributeValuesTemp/ATTRIBUTE_VALUES" CurrentElement="currAttribute">
+                    <APPEND_TO_XML Select="$relatedAttributeValues/RELATED_AV_IDS_LIST">
+                      <RELATED_AV_ID_LIST Id="{$currAttribute/AV_ID/@Value}" Value="{$currAttribute/AV_DESCRIPTION/@Value}"/>
+                    </APPEND_TO_XML>
+                  </FOR_EACH>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Add' ">
+                    <THEN>
+                      <REQUEST Name="getAttributeTypeDetail" AssignToVar="resRelatedAttributeTypeDetail" ServiceName="BCM_MASTER">
+                        <ATTRIBUTE_TYPE_ID Value="{ifElse($relatedAttribute/ATTRIBUTE_TYPE_ID1/@Value != null, $relatedAttribute/ATTRIBUTE_TYPE_ID1/@Value, $relatedAttribute/ATTRIBUTE_TYPE_ID2/@Value)}"/>
+                      </REQUEST>
+                      <REQUEST Name="getAttributeValues" ServiceName="BCM_MASTER" AssignToVar="relatedAttributeValuesTemp">
+                        <ATTRIBUTE_TYPE_ID Value="{ifElse($relatedAttribute/ATTRIBUTE_TYPE_ID1/@Value != null, $relatedAttribute/ATTRIBUTE_TYPE_ID1/@Value, $relatedAttribute/ATTRIBUTE_TYPE_ID2/@Value)}"/>
+                      </REQUEST>
+                      <TO_DOCVAR AssignToVar="relatedAttributeValues">
+                        <ROOT>
+                          <RELATED_AV_IDS_LIST/>
+                        </ROOT>
+                      </TO_DOCVAR>
+                      <FOR_EACH SelectList="$relatedAttributeValuesTemp/ATTRIBUTE_VALUES" CurrentElement="currAttribute">
+                        <APPEND_TO_XML Select="$relatedAttributeValues/RELATED_AV_IDS_LIST">
+                          <RELATED_AV_ID_LIST Id="{$currAttribute/AV_ID/@Value}" Value="{$currAttribute/AV_DESCRIPTION/@Value}"/>
+                        </APPEND_TO_XML>
+                      </FOR_EACH>
+                    </THEN>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+            <ELSE>
+              <TO_DOCVAR AssignToVar="resRelatedAttributeTypeDetail">
+                <ROOT/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="relatedAttributeValues">
+                <ROOT/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="relatedAttributes">
+                <ROOT/>
+              </TO_DOCVAR>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$pScreenValues/BUTTON_ID/@Value = 'Edit'">
+            <THEN>
+              <REQUEST Name="GetIDForValueInAttrMaintanance" AssignToVar="resSelectedAVID" ServiceName="BCM_MASTER">
+                <AV_ID Value="{$thisParam/AV_ID/@Value}"/>
+              </REQUEST>
+              <REMOVE_CHILDREN DocVar="pScreenValues" ChildName="MOD_AV_ID"/>
+              <REMOVE_CHILDREN DocVar="pScreenValues" ChildName="CODE"/>
+              <REMOVE_CHILDREN DocVar="pScreenValues" ChildName="DESCRIPTION"/>
+              <REMOVE_CHILDREN DocVar="pScreenValues" ChildName="SHORT_NAME"/>
+              <REMOVE_CHILDREN DocVar="pScreenValues" ChildName="PAR_ATT_AVID_CONT2"/>
+              <REMOVE_CHILDREN DocVar="pScreenValues" ChildName="RELATED_AV_ID"/>
+              <REMOVE_CHILDREN DocVar="pScreenValues" ChildName="emailRequired"/>
+              <REMOVE_CHILDREN DocVar="pScreenValues" ChildName="toAddr"/>
+              <REMOVE_CHILDREN DocVar="pScreenValues" ChildName="message"/>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="emailRequired"/>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="toAddr"/>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="message"/>
+              <SET Property="MOD_AV_ID" FromValue="{$resSelectedAVID/ATTRIBUTE_VALUES/AV_ID/@Value}" DocVar="pScreenValues"/>
+              <SET Property="CODE" FromValue="{$resSelectedAVID/ATTRIBUTE_VALUES/AV_CODE/@Value}" DocVar="pScreenValues"/>
+              <SET Property="DESCRIPTION" FromValue="{$resSelectedAVID/ATTRIBUTE_VALUES/AV_DESCRIPTION/@Value}" DocVar="pScreenValues"/>
+              <SET Property="SHORT_NAME" FromValue="{$resSelectedAVID/ATTRIBUTE_VALUES/AV_SHORT_NAME/@Value}" DocVar="pScreenValues"/>
+              <SET Property="PAR_ATT_AVID_CONT2" FromValue="{$resSelectedAVID/ATTRIBUTE_VALUES/AV_ID_PARENT/@Value}" DocVar="pScreenValues"/>
+              <SET Property="Status_CONT2" FromValue="{$resSelectedAVID/ATTRIBUTE_VALUES/ACTIVE_FLAG/@Value}" DocVar="pScreenValues"/>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="RELATED_AV_ID"/>
+            </THEN>
+            <ELSE/>
+          </IF_TEST>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="AttributeMaintainence"/>
+      </next_nodes>
+    </task>
+    <task Name="onAttributeTypeChange">
+      <actions>
+        <action>
+          <SET Var="P_buttonAction" FromValue="AttributeTypeChange"/>
+          <REQUEST Name="getAttributeTypeDetail" AssignToVar="resAttributeTypeDetail" ServiceName="BCM_MASTER">
+            <ATTRIBUTE_TYPE_ID Value="{$thisParam/ATTRIBUTE_TYPE_ID/@Value}"/>
+          </REQUEST>
+          <SET Var="USER_MAN_VAL" FromValue="{$resAttributeTypeDetail/ATTRIBUTE_TYPES/USER_MANAGED_FLAG/@Value}"/>
+          <REQUEST Name="getParentAttribute" AssignToVar="resParentAttribute" ServiceName="BCM_MASTER">
+            <ATTRIBUTE_TYPE_ID_CHILD Value="{$thisParam/ATTRIBUTE_TYPE_ID/@Value}"/>
+          </REQUEST>
+          <IF_TEST Test="count($resParentAttribute/*)!=0">
+            <THEN>
+              <SET Var="P_parentExist" FromValue="true"/>
+              <!--<SET Var="parentDisplayName" FromValue="{$resAttributeDetails/ATTRIBUTE_TYPES[ATTRIBUTE_TYPE_ID/@Value=$resParentAttribute/ATTRIBUTE_TYPES_HIERARCHY/ATTRIBUTE_TYPE_ID_PARENT/@Value]/ATTRIBUTE_TYPE/@Value}"/>-->
+              <REQUEST Name="getAttributeTypeDetail" AssignToVar="resParentAttributeTypeDetail" ServiceName="BCM_MASTER">
+                <ATTRIBUTE_TYPE_ID Value="{$resParentAttribute/ATTRIBUTE_TYPES_HIERARCHY/ATTRIBUTE_TYPE_ID_PARENT/@Value}"/>
+              </REQUEST>
+              <REQUEST Name="getAttributeValuesForAttributeType" AssignToVar="resParentAttributeValues" ServiceName="BCM_MASTER">
+                <ATTRIBUTE_TYPE_ID Value="{$resParentAttribute/ATTRIBUTE_TYPES_HIERARCHY/ATTRIBUTE_TYPE_ID_PARENT/@Value}"/>
+              </REQUEST>
+            </THEN>
+            <ELSE>
+              <SET Var="P_parentExist" FromValue="false"/>
+              <TO_DOCVAR AssignToVar="resParentAttributeTypeDetail">
+                <ROOT/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="resParentAttributeValues">
+                <ROOT/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="resParentAttributeTypeDetail">
+                <ROOT/>
+              </TO_DOCVAR>
+            </ELSE>
+          </IF_TEST>
+          <SET Var="P_buttonAction" FromValue=""/>
+          <!--Reset the search results-->
+          <TO_DOCVAR AssignToVar="pSearchResults">
+            <root/>
+          </TO_DOCVAR>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="AttributeMaintainence"/>
+      </next_nodes>
+    </task>
+    <task Name="onSubmit">
+      <actions>
+        <action>
+          <IF_TEST Test="$P_buttonAction='Edit' and $userAction='SUBMIT'">
+            <THEN>
+              <SET Var="Action" FromValue="EDIT"/>
+              <TO_DOCVAR AssignToVar="temp">
+                <ROOT/>
+              </TO_DOCVAR>
+              <IF_TEST Test="$thisParam/CODE != null">
+                <THEN>
+                  <APPEND_TO_XML DocVar="temp">
+                    <AV_CODE Value="{$thisParam/CODE/@Value}"/>
+                  </APPEND_TO_XML>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/SHORT_NAME != null">
+                <THEN>
+                  <APPEND_TO_XML DocVar="temp">
+                    <AV_SHORT_NAME Value="{$thisParam/SHORT_NAME/@Value}"/>
+                  </APPEND_TO_XML>
+                </THEN>
+              </IF_TEST>
+              <!--<IF_TEST Test="$resAttributeTypeDetail/ATTRIBUTE_TYPES/ATTRIBUTE_TYPE/@Value='Master Title' or $resAttributeTypeDetail/ATTRIBUTE_TYPES/ATTRIBUTE_TYPE/@Value='Project Title' ">
+                    <THEN>
+                      <SET Property="DESCRIPTION" FromValue="{upperCase($thisParam/DESCRIPTION/@Value)}" DocVar="thisParam"/>
+                    </THEN>
+                  </IF_TEST>-->
+              <IF_TEST Test="$resAttributeTypeDetail/ATTRIBUTE_TYPES/USER_MANAGED_FLAG/@Value != 'R'">
+                <THEN>
+                  <REQUEST Name="modifyAttValues" AssignToVar="resModifyAttValues" ServiceName="BCM_MASTER">
+                    <AV_ID Value="{$pScreenValues/MOD_AV_ID/@Value}"/>
+                    <AV_DESCRIPTION Value="{$thisParam/DESCRIPTION/@Value}"/>
+                    <TO_XML SelectList="$temp/*"/>
+                    <ACTIVE_FLAG Value="{$thisParam/Status_CONT2/@Value}"/>
+                  </REQUEST>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$P_parentExist='true' ">
+                <THEN>
+                  <REQUEST Name="modifyAttHierarchy" AssignToVar="resModifyAttHierarchy" ServiceName="BCM_MASTER">
+                    <AV_ID_CHILD Value="{$pScreenValues/MOD_AV_ID/@Value}"/>
+                    <AV_ID_PARENT Value="{$thisParam/PAR_ATT_AVID_CONT2/@Value}"/>
+                  </REQUEST>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$resAttributeTypeDetail/ATTRIBUTE_TYPES/API/@Value != null and $resAttributeTypeDetail/ATTRIBUTE_TYPES/USER_MANAGED_FLAG/@Value != 'R'">
+                <THEN>
+                  <REQUEST Name="{$resAttributeTypeDetail/ATTRIBUTE_TYPES/API/@Value}" AssignToVar="resModifyProjects" ServiceName="BCM_MASTER">
+                    <AV_ID Value="{$pScreenValues/MOD_AV_ID/@Value}"/>
+                    <AV_DESCRIPTION Value="{$thisParam/DESCRIPTION/@Value}"/>
+                    <ATTRIBUTE_TYPE_ID Value="{$resAttributeTypeDetail/ATTRIBUTE_TYPES/ATTRIBUTE_TYPE_ID/@Value}"/>
+                    <TO_XML SelectList="$thisParam/CODE"/>
+                    <TO_XML SelectList="$thisParam/SHORT_NAME"/>
+                    <ACTIVE_FLAG Value="{$thisParam/Status_CONT2/@Value}"/>
+                  </REQUEST>
+                </THEN>
+              </IF_TEST>
+              <!--<SET Var="SuccessMessageForProject" FromValue="Record Successfully Modified"/>-->
+              <SET Property="SuccessMessageForProject" FromValue="Attribute Successfully Modified" DocVar="thisParam"/>
+              <TO_DOCVAR AssignToVar="thisParam">
+                <ROOT/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="P_displaySearchResults">
+                <ROOT/>
+              </TO_DOCVAR>
+              <SET Var="P_buttonAction" FromValue="SUBMIT"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$P_buttonAction='Add' and $userAction='SUBMIT' ">
+            <THEN>
+              <SET Var="Action" FromValue="CREATE"/>
+              <REQUEST AssignToVar="getAVIDValues" Name="getIDGeneratedAttributeValues" ServiceName="BCM_MASTER" HandleException="yes"/>
+              <REQUEST Name="addAttValues" AssignToVar="resAddAttValues" ServiceName="BCM_MASTER">
+                <AV_ID Value="{$getAVIDValues/AVID/@Value}"/>
+                <ATTRIBUTE_TYPE_ID Value="{$thisParam/ATTRIBUTE_TYPE_ID/@Value}"/>
+                <ACTIVE_FLAG Value="{$thisParam/Status_CONT2/@Value}"/>
+                <AV_DESCRIPTION Value="{$thisParam/DESCRIPTION/@Value}"/>
+                <AV_CODE Value="{$thisParam/CODE/@Value}"/>
+                <AV_SHORT_NAME Value="{$thisParam/SHORT_NAME/@Value}"/>
+              </REQUEST>
+              <IF_TEST Test="$P_parentExist='true' ">
+                <THEN>
+                  <REQUEST Name="addAttHierarchy" AssignToVar="resAddAttHierarchy" ServiceName="BCM_MASTER">
+                    <AV_ID_CHILD Value="{$getAVIDValues/AVID/@Value}"/>
+                    <AV_ID_PARENT Value="{$thisParam/PAR_ATT_AVID_CONT2/@Value}"/>
+                  </REQUEST>
+                </THEN>
+              </IF_TEST>
+              <!--<SET Var="SuccessMessageForProject" FromValue="Record Successfully Added"/>-->
+              <SET Property="SuccessMessageForProject" FromValue="Attribute Successfully Added" DocVar="thisParam"/>
+              <TO_DOCVAR AssignToVar="thisParam">
+                <ROOT/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="pSearchResults">
+                <ROOT/>
+              </TO_DOCVAR>
+              <SET Var="P_buttonAction" FromValue="SUBMIT"/>
+              <!--<SET Var="P_parentExist" FromValue="false"/>-->
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="count($relatedAttribute/*) > 0 and $resValidationForCode/_RESULT/@Value='SUCCESS'">
+            <THEN>
+              <IF_TEST Test="$pScreenValues/MOD_AV_ID/@Value != null and $pScreenValues/MOD_AV_ID/@Value != ''">
+                <THEN>
+                  <IF_TEST Test="$relatedAttribute/ATTRIBUTE_TYPE_ID1/@Value != null">
+                    <THEN>
+                      <TO_DOCVAR AssignToVar="avIdVar">
+                        <AV_ID2 Value="{$pScreenValues/MOD_AV_ID/@Value}"/>
+                      </TO_DOCVAR>
+                    </THEN>
+                    <ELSE>
+                      <TO_DOCVAR AssignToVar="avIdVar">
+                        <AV_ID1 Value="{$pScreenValues/MOD_AV_ID/@Value}"/>
+                      </TO_DOCVAR>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$relatedAttribute/ATTRIBUTE_TYPE_ID1/@Value != null">
+                    <THEN>
+                      <TO_DOCVAR AssignToVar="avIdVar">
+                        <AV_ID2 Value="{$getAVIDValues/AVID/@Value}"/>
+                      </TO_DOCVAR>
+                    </THEN>
+                    <ELSE>
+                      <TO_DOCVAR AssignToVar="avIdVar">
+                        <AV_ID1 Value="{$getAVIDValues/AVID/@Value}"/>
+                      </TO_DOCVAR>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+              <REQUEST Name="modifyRelatedAttributes">
+                <TO_XML DocVar="avIdVar"/>
+                <RELATED_AV_IDS>
+                  <TO_XML SelectList="$relatedAttributes/ROOT/*"/>
+                </RELATED_AV_IDS>
+                <CURRENT_AV_IDS>
+                  <TO_XML SelectList="$pScreenValues/RELATED_AV_ID"/>
+                </CURRENT_AV_IDS>
+              </REQUEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$resValidationForCode/_RESULT/@Value='SUCCESS' and $pScreenValues/emailRequired/@Value='true' ">
+            <THEN>
+              <IF_TEST Test="$Action='EDIT'">
+                <THEN>
+                  <IF_TEST Test="$P_parentExist='true'">
+                    <THEN>
+                      <!--  <SET Var="Old_Desc_Val" FromValue="{$pSearchResults/PROJECTS/ATTRIBUTE_VALUES_HIERARCHY[AV_ID_CHILD/@Value=$pScreenValues/MOD_AV_ID/@Value]/AV_DESCRIPTION/@Value}"/>-->
+                      <SET Var="Old_Desc_Val" FromValue="{$pSearchResults/PROJECTS/ATTRIBUTE_VALUES[AV_ID/@Value=$pScreenValues/MOD_AV_ID/@Value]/AV_DESCRIPTION/@Value}"/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="Old_Desc_Val" FromValue="{$pSearchResults/PROJECTS/ATTRIBUTE_VALUES[AV_ID/@Value=$pScreenValues/MOD_AV_ID/@Value]/AV_DESCRIPTION/@Value}"/>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+              </IF_TEST>
+              <REQUEST Name="sendAttributeNotification" ServiceName="BCM_MASTER" AssignToVar="sendStatus" Synchronous="false">
+                <SEND_ACTION Value="{$Action}"/>
+                <TO_XML SelectList="$pScreenValues/CODE"/>
+                <TO_XML SelectList="$pScreenValues/DESCRIPTION"/>
+                <TO_XML SelectList="$pScreenValues/SHORT_NAME"/>
+                <TO_XML SelectList="$pScreenValues/Status_CONT2"/>
+                <Old_Description Value="{$Old_Desc_Val}"/>
+                <TO_XML SelectList="$pScreenValues/message"/>
+                <ATTRIBUTE_TYPE Value="{$resAttributeTypeDetail/ATTRIBUTE_TYPES/ATTRIBUTE_TYPE/@Value}"/>
+                <TO_ADDRS>
+                  <TO_ADDR Value="{$pScreenValues/toAddr/@Value}"/>
+                </TO_ADDRS>
+              </REQUEST>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="AttributeMaintainence"/>
+      </next_nodes>
+    </task>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10" compId="MgcDashboard1" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="11" textAttrsKey0="P_buttonAction : string" textAttrsKey1="P_parentExist : string" textAttrsKey2="Seq : string" textAttrsKey3="USER_MAN_VAL : string" textAttrsKey4="currentAttributeValues : xml" textAttrsKey5="pFixedDropDowns : xml" textAttrsKey6="pScreenValues : xml" textAttrsKey7="pSearchResults : xml" textAttrsKey8="relatedAttribute : xml" textAttrsKey9="relatedAttributeValues : xml" textAttrsKey10="... and 6 more">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="currentAttributeValues" Type="xml"/>
+      </variables>
+    </mgcdashboard>
+    <mgcnodes>
+      <AttributeMaintainence font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="311,185" size="1032,723">
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+        <textProps text="AttributeMaintainence" font="Verdana,0,9" textColor="80,80,80"/>
+      </AttributeMaintainence>
+      <start9 font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="24,181">
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+        <textProps text="start9" font="Verdana,0,9" textColor="80,80,80"/>
+      </start9>
+      <GetFixedDropDownValues font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="114,181" size="732,560">
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+        <textProps text="GetFixedDropDownValues" font="Verdana,0,9" textColor="80,80,80"/>
+      </GetFixedDropDownValues>
+      <onAddOrEdit font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="509,53" size="732,560">
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+        <textProps text="onAddOrEdit" font="Verdana,0,9" textColor="80,80,80"/>
+      </onAddOrEdit>
+      <onAttributeTypeChange font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="566,202" size="732,560">
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+        <textProps text="onAttributeTypeChange" font="Verdana,0,9" textColor="80,80,80"/>
+      </onAttributeTypeChange>
+      <onSubmit font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="470,269" size="732,560">
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+        <textProps text="onSubmit" font="Verdana,0,9" textColor="186,12,12"/>
+      </onSubmit>
+    </mgcnodes>
+    <mgcconnectors>
+      <AttributeMaintainence>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="343,207" endpoint="343,207" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="416,205,4,4" ctrlRect2="422,157,4,4" textRect="404,179,34,8">
+          <textProps text="Search" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="333,185" endpoint="509,75" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="369,48,4,4" ctrlRect2="462,73,4,4" textRect="389,58,56,8">
+          <textProps text="Add or Edit" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="356,207" endpoint="588,202" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="445,182,4,4" ctrlRect2="482,143,4,4" textRect="369,160,193,9">
+          <textProps text="[$userAction ='AttributeTypeChange']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="356,207" endpoint="470,291" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="true" ctrlRect1="402,237,4,4" ctrlRect2="377,294,4,4" textRect="327,263,128,9">
+          <textProps text="[$userAction ='SUBMIT']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="311,207" endpoint="311,207" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="234,205,4,4" ctrlRect2="237,153,4,4" textRect="220,177,34,8">
+          <textProps text="Cancel" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="333,185" endpoint="333,185" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="331,108,4,4" ctrlRect2="331,108,4,4" textRect="240,106,186,9">
+          <textProps text="[$userAction ='emailFieldsChanged']" font="Verdana,0,9"/>
+        </nextNodeView>
+      </AttributeMaintainence>
+      <start9>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="70,81,173" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="69,203" endpoint="114,203" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="100,201,4,4" ctrlRect2="104,201,4,4"/>
+      </start9>
+      <GetFixedDropDownValues>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="70,81,173" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="146,204" endpoint="311,207" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="267,202,4,4" ctrlRect2="185,205,4,4"/>
+      </GetFixedDropDownValues>
+      <onAddOrEdit>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="70,81,173" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="509,75" endpoint="356,207" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="393,73,4,4" ctrlRect2="469,205,4,4"/>
+      </onAddOrEdit>
+      <onAttributeTypeChange>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="70,81,173" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="566,224" endpoint="356,207" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="407,222,4,4" ctrlRect2="512,205,4,4"/>
+      </onAttributeTypeChange>
+      <onSubmit>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="70,81,173" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="470,291" endpoint="356,207" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="383,289,4,4" ctrlRect2="440,205,4,4"/>
+      </onSubmit>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions/>
+    <post_actions/>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

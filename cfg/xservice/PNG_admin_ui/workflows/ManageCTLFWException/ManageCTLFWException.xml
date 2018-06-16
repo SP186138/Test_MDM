@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="3" ShowInBreadCrumbs="true" Version="1.0" Name="ManageCTLFWException" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="ManageCTLFWException">
+    <variable Name="alertGreen" Type="string" Comment=""/>
+    <variable Name="alertRed" Type="string" Comment=""/>
+    <variable Name="pollerStatus" Type="string" Comment=""/>
+    <variable Name="roleID" Type="string" Comment=""/>
+    <variable Name="pollerDuration" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start0">
+      <actions/>
+      <next_nodes>
+        <next_node Name="manageCtlfwExceptionNode"/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="manageCtlfwExceptionNode" ShowInBreadCrumbs="SHOW" Template="CTLFWExceptionNode.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="userRoles">
+            <USER_ROLES/>
+          </TO_DOCVAR>
+          <!-- Get the preset Poller parameters from db  -->
+          <GET_DOC_SMART Name="SystemProperties" AssignToVar="resp1" ServiceName="BCM_MASTER">
+            <propertyName Value="PollDataSteward"/>
+          </GET_DOC_SMART>
+          <SET Var="pollerStatus" FromValue="{$resp1/SystemProperties/propertyValue/@Value}"/>
+          <GET_DOC_SMART Name="SystemProperties" AssignToVar="resp2" ServiceName="BCM_MASTER">
+            <propertyName Value="DataStewardRoleID"/>
+          </GET_DOC_SMART>
+          <SET Var="roleID" FromValue="{$resp2/SystemProperties/propertyValue/@Value}"/>
+          <GET_DOC_SMART Name="SystemProperties" AssignToVar="resp3" ServiceName="BCM_MASTER">
+            <propertyName Value="DataStewardPollerDuration"/>
+          </GET_DOC_SMART>
+          <SET Var="pollerDuration" FromValue="{$resp3/SystemProperties/propertyValue/@Value}"/>
+          <!-- Get user roles from DB -->
+          <GET_DOC_SMART Name="USER_ROLE" ServiceName="USER_SECURITY" AssignToVar="userRoleDetails" ReturnRowCount="true">
+            <ORDER_BY>
+              <ID Sort="Ascending"/>
+            </ORDER_BY>
+          </GET_DOC_SMART>
+          <FOR_EACH SelectList="$userRoleDetails/USER_ROLE" CurrentElement="currElem">
+            <SET Var="userRole" FromValue="{$currElem/ID/@Value}"/>
+            <TO_DOCVAR AssignToVar="each">
+              <ROOT>
+                <OPTION Value="{$userRole/@Value}" Id="{$userRole/@Value}"/>
+              </ROOT>
+            </TO_DOCVAR>
+            <APPEND_CHILDREN DocVar="userRoles" FromDocVar="each"/>
+          </FOR_EACH>
+          <TO_DOCVAR AssignToVar="page">
+            <ABC>
+              <pollerDuration Value="{$pollerDuration/@Value}"/>
+              <pollerStatus Value="{$pollerStatus/@Value}"/>
+              <roleID Value="{$roleID/@Value}"/>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </ABC>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$page/*"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="userRoles"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="modifyStatus" FromValue="false"/>
+          <MODIFY_DOCUMENT Name="SystemProperties" ServiceName="BCM_MASTER" AssignToVar="modifyResponse">
+            <DOCUMENT_CONTEXT>
+              <propertyName Value="PollDataSteward"/>
+            </DOCUMENT_CONTEXT>
+            <UPDATE_PROPERTIES>
+              <propertyValue Value="{$pglFormOutput/EnableDSPolling/@Value}"/>
+            </UPDATE_PROPERTIES>
+          </MODIFY_DOCUMENT>
+          <IF_TEST Test="$modifyResponse/@Status='Success'">
+            <THEN>
+              <IF_TEST Test="$pglFormOutput/EnableDSPolling/@Value='true'">
+                <THEN>
+                  <MODIFY_DOCUMENT Name="SystemProperties" ServiceName="BCM_MASTER" AssignToVar="modifyResponse">
+                    <DOCUMENT_CONTEXT>
+                      <propertyName Value="DataStewardRoleID"/>
+                    </DOCUMENT_CONTEXT>
+                    <UPDATE_PROPERTIES>
+                      <propertyValue Value="{$pglFormOutput/DataStewardRoleID/@Value}"/>
+                    </UPDATE_PROPERTIES>
+                  </MODIFY_DOCUMENT>
+                  <IF_TEST Test="$modifyResponse/@Status='Success'">
+                    <THEN>
+                      <MODIFY_DOCUMENT Name="SystemProperties" ServiceName="BCM_MASTER" AssignToVar="modifyResponse">
+                        <DOCUMENT_CONTEXT>
+                          <propertyName Value="DataStewardPollerDuration"/>
+                        </DOCUMENT_CONTEXT>
+                        <UPDATE_PROPERTIES>
+                          <propertyValue Value="{$pglFormOutput/pollDuration/@Value}"/>
+                        </UPDATE_PROPERTIES>
+                      </MODIFY_DOCUMENT>
+                      <IF_TEST Test="$modifyResponse/@Status='Success'">
+                        <THEN>
+                          <SET Var="modifyStatus" FromValue="true"/>
+                        </THEN>
+                        <ELSE>
+                          <SET Var="modifyStatus" FromValue="false"/>
+                        </ELSE>
+                      </IF_TEST>
+                    </THEN>
+                    <ELSE/>
+                  </IF_TEST>
+                </THEN>
+              </IF_TEST>
+              <ELSE>
+                <SET Var="modifyStatus" FromValue="true"/>
+              </ELSE>
+            </THEN>
+          </IF_TEST>
+          <!-- set alert message -->
+          <IF_TEST Test="$modifyStatus ='true'">
+            <THEN>
+              <SET Var="alertGreen" FromValue="pollerConfigSaved"/>
+              <SET Var="alertRed" FromValue=""/>
+              <!-- stop start Timers -->
+              <IF_TEST Test="$pglFormOutput/EnableDSPolling/@Value='true'">
+                <THEN>
+                  <STOP_TIMER>
+                    <IDENTIFIED_BY>
+                      <NAME Value="DATA_STEWARD_TIMER"/>
+                    </IDENTIFIED_BY>
+                  </STOP_TIMER>
+                  <START_TIMER>
+                    <SERVICE_NAME Value="BPE_META"/>
+                    <IDENTIFIED_BY>
+                      <NAME Value="DATA_STEWARD_TIMER"/>
+                    </IDENTIFIED_BY>
+                    <CALLBACK_DURATION Value="{duration(0,0,$pglFormOutput/pollDuration/@Value,0)}"/>
+                    <CALLBACK_ACTIONS>
+                      <REQUEST Name="pollStandardMapTables"/>
+                    </CALLBACK_ACTIONS>
+                  </START_TIMER>
+                </THEN>
+                <ELSE>
+                  <STOP_TIMER>
+                    <IDENTIFIED_BY>
+                      <NAME Value="DATA_STEWARD_TIMER"/>
+                    </IDENTIFIED_BY>
+                  </STOP_TIMER>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+            <ELSE>
+              <SET Var="alertGreen" FromValue=""/>
+              <SET Var="alertRed" FromValue="errorPollerConfig"/>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='save'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="manageCtlfwExceptionNode" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='null'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='back'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='cancel'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="manageCtlfwExceptionNode" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <start0 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="186,220">
+        <iconProps iconfile="z1start.gif"/>
+      </start0>
+      <manageCtlfwExceptionNode font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" Name="Configure -ve Code Value Poller" location="346,222" size="1018,738">
+        <iconProps iconfile="x1age80.gif"/>
+      </manageCtlfwExceptionNode>
+    </mgcnodes>
+    <mgcconnectors>
+      <start0>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="231,242" endpoint="346,244" ctrlRect1="314,240,4,4" ctrlRect2="257,242,4,4"/>
+      </start0>
+      <manageCtlfwExceptionNode>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="346,244" endpoint="346,244" ctrlRect1="269,242,4,4" ctrlRect2="269,242,4,4"/>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="368,222" endpoint="346,244" ctrlRect1="387,168,4,4" ctrlRect2="275,212,4,4" ctrlRect2Dirty="true" ctrlRect1Dirty="true"/>
+      </manageCtlfwExceptionNode>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions/>
+    <post_actions/>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

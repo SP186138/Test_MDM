@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dom-config>
+  <service-config Name="BCM_INPUT_STAGING" TransactionCache="false" Register="false">
+    <register-handlers>
+      <handler TagName="MDM" ClassName="com.teradata.bcm.xcore.tool.MDMPreInitHandler"/>
+      <handler TagName="dataPersistSpec" ClassName="com.teradata.bcm.xcore.datapersist.DataPersistConfigSpecHandler"/>
+      <handler TagName="validationSpecFiles" ClassName="com.teradata.xservice.validation.ValidationSpecsHandler"/>
+    </register-handlers>
+    <MDM/>
+    <dataPersistSpec>
+      <dataPersistSpecFile Name="com/teradata/bcm/xcore/serverutil/xml/DefaultDocPersistConfig.xml"/>
+    </dataPersistSpec>
+    <extensionFiles>
+      <extensionFile Name="com/teradata/bcm/xcore/serverutil/xml/bcm_rule_extension.xml"/>
+    </extensionFiles>
+    <docDefnFiles>
+      <docDefnFile Name="xservice/png/staging/input/documents/in_xdoc.xml"/>
+    </docDefnFiles>
+    <validationSpecFiles>
+      <validationSpecFile Name="xservice/toolkit/staging/input/validations/in_validation.xml"/>
+    </validationSpecFiles>
+    <ruleDefnFiles>
+      <ruleDefnFile Name="com/teradata/bcm/xcore/serverutil/xml/forms_rule.xml"/>
+      <ruleDefnFile Name="com/teradata/bcm/xcore/serverutil/xml/bcm_xrule.xml"/>
+      <ruleDefnFile Name="xservice/toolkit/staging/input/rules/tk_bcmInputRule.xml"/>
+    </ruleDefnFiles>
+    <logger>
+      <file Name="../log/png_input.log"/>
+      <logLevels>
+        <logLevel Value="Exception"/>
+        <logLevel Value="Error"/>
+      </logLevels>
+      <brief-console Value="false"/>
+    </logger>
+    <service-params>
+      <param Value="1000" Name="DEFAULT_MAX_ROWS_FETCH"/>
+    </service-params>
+    <schemaGenerate Value="true">
+      <file Value="../db/BCM_input.sql"/>
+      <generateTables Value="true"/>
+      <viewSqlDir Value="xservice/png/staging/input/viewsql"/>
+      <dbname Value=""/>
+      <maxTableNameLength Value="30"/>
+      <maxColumnNameLength Value="30"/>
+    </schemaGenerate>
+    <workflow>
+      <workflowDefnFiles/>
+      <uiWorkflowDefnFiles/>
+    </workflow>
+    <eventDefnFiles/>
+    <statetransition>
+      <stateTransitionFiles/>
+      <stateMappingFiles/>
+    </statetransition>
+    <messaging>
+      <messageTemplateFiles/>
+      <messageRecipientGroupFiles/>
+      <messagingEventDefFiles/>
+      <messagingEventFiles/>
+    </messaging>
+  </service-config>
+</dom-config>

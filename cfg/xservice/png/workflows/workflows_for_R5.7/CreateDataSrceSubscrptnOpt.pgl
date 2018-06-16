@@ -1,0 +1,46 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_form" source="studio.controller:load">
+  <ui:container id="topContainer">
+    <ui:step id="stStep1" name="stStep1" displayText="Create Screen">
+      <ui:field-group>
+        <ui:image src="/bpi_check.gif" displayCondition="{string-length($root/MSG/AlertGreen/@Value) != 0}" id="checkImg"/>
+        <ui:display-field id="success" value="{$root/MSG/AlertGreen/@Value}" displayCondition="{string-length($root/MSG/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen"/>
+        <ui:image src="/cancel.gif" displayCondition="{string-length($root/MSG/AlertRed/@Value) != 0}"/>
+        <ui:display-field value="{$root/MSG/AlertRed/@Value}" displayCondition="{string-length($root/MSG/AlertRed/@Value) != 0}" name="error" class="requiredIndicator"/>
+      </ui:field-group>
+      <ui:field-group columns="2">
+        <ui:dropdown id="LEGAL_ENT_NAME" name="LEGAL_ENT_NAME" displayText="Legal Entity" optionSrc="$root/LEGAL_ENT/LEGAL_ENT_NAME" onChange="javascript:loadProgramList();" displayCondition="{count($root/LEGAL_ENT)>1}" required="true"/>
+        <ui:entry-field id="LEGAL_ENT_NAME" name="LEGAL_ENT_NAME" displayText="Legal Entity" readOnly="true" value="{$root/LEGAL_ENT/LEGAL_ENT_NAME/@Value}" displayCondition="{count($root/LEGAL_ENT)&lt;=1}" required="true"/>
+        <ui:dropdown id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR" displayText="Program Name" optionSrc="$root/MKTNG_PGM/OPTION" required="true" onChange="javascript:loadSourceList();"/>
+        <ui:dropdown id="DATA_SRCE_NBR" name="DATA_SRCE_NBR" displayText="Source" selectOne="true" required="true" optionSrc="$root/DATA_SRCE/OPTION"/>
+        <ui:entry-field id="CR_NUM" name="CR_NUM" displayText="Change Request Number" required="true"/>
+        <ui:entry-field id="CR_DESC" name="CR_DESC" displayText="Change Request Description"/>
+        <ui:entry-field id="ENG_TXT" name="ENG_TXT" displayText="Text(English)"/>
+        <ui:entry-field id="LOCAL_TXT" name="LOCAL_TXT" displayText="Text(Local)"/>
+        <ui:entry-field id="BRAND_CODE" name="BRAND_CODE" displayText="Brand"/>
+        <ui:entry-field id="COMMENTS" name="COMMENTS" displayText="Comment"/>
+        <ui:hidden-field id="SUBSCRPTN_OPT_NBR" name="SUBSCRPTN_OPT_NBR" displayText="SUBSCRPTN_OPT_NBR" value="0"/>
+      </ui:field-group>
+      <ui:buttons>
+        <ui:button id="Back" name="Back" displayText="Back" validate="false"/>
+        <ui:button id="Save" name="Save" displayText="Save"/>
+        <ui:button id="Request" name="Request" displayText="Request" disabled="{$root/dispRequest/@Value}"/>
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+function loadProgramList(){
+
+document.form.BUTTON_ID.value = 'LOAD_PROGRAM_LIST';
+document.form.action = 'view.x2ps';
+document.form.submit();
+}
+    
+function loadSourceList(){
+
+document.form.BUTTON_ID.value = 'LOAD_SOURCE_LIST';
+document.form.action = 'view.x2ps';
+document.form.submit();
+}
+
+</ui:script>
+</ui:page-group>

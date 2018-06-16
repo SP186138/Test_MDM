@@ -1,0 +1,160 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" Id="ViewMatchedConsumerDetails.pgl" version="3">
+  <ui:container id="outerContainer" scrollable="true" type="Tabs">
+    <ui:step id="outerStep7" select="$root" scrollable="true" displayText="View Consumer Details" activity="CSRView">
+      <ui:grid>
+        <ui:row>
+          <ui:cell id="Main" width="100%">
+            <ui:field-group>
+              <ui:hidden-field name="HTML_CODE" id="HTML_CODE" value=""/>
+            </ui:field-group>
+            <ui:dynamic-pgl select="$root/PGL/*"/>
+            <ui:field-group>
+              <ui:hidden-field id="isOpen" name="isOpen" value="{$root/isOpen/@Value}"/>
+            </ui:field-group>
+          </ui:cell>
+        </ui:row>
+      </ui:grid>
+      <ui:buttons>
+        <ui:button id="Print" name="Print" displayText="Print" onClick="javascript:onPrint1();"/>
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:script>function onLoad(){
+
+togglenav();
+
+onLoadSuper();
+
+if(document.getElementById('isOpen').value==&quot;true&quot;)
+
+{
+
+window.location.href ='download.jsp?file_name=pdf.pdf';
+
+}
+
+onResize();
+
+
+
+}
+
+
+
+
+
+function onPrint1(){
+  
+var docType = &quot;&lt;!DOCTYPE html>&quot;;
+var htmlStart = &quot;&lt;html>&quot;;
+var htmlHeadStart = &quot;&lt;head>&quot;;
+var htmlBodyStart = &quot;&lt;body>&quot;;
+var htmlEnd = &quot;&lt;/html>&quot;;
+    
+var style = &quot;&lt;style>body{font-family: 'Arial Unicode MS', FreeSans; font-size:20px;font-weight: normal;} &quot;;
+style+=&quot; table,td {     table-layout: fixed; width: 100%; ;border: 1px solid black; border-collapse: collapse; word-wrap:break-word;} &quot;;
+style+=&quot; .tabularDataContainerHeaderRowLeft{font-weight:bold;padding:5px} &quot;;
+style+=&quot; .containerHeaderRowLeft{font-weight:bold;padding-left: 350px;} &quot;;
+style+=&quot; &lt;/style>&quot;;
+    
+var htmlHeadEnd = &quot;&lt;/head>&quot;;
+var htmlBodyEnd = &quot;&lt;/body>&quot;;
+    
+var tablobj = document.getElementById('outerStep7');
+var header = tablobj.children[0].innerHTML;
+
+    
+
+var mainTable=&quot;&quot;
+var allTables = document.getElementsByClassName(&quot;tabularDataContainer&quot;);
+
+for( var h = 0; h &lt; allTables.length; h++ ){
+    
+var tdinnerdata =&quot;&quot;;
+var count=0;
+if(h==0 || h % 13==0)
+{
+count = count+1;
+tdinnerdata =&quot;&lt;table >&lt;tr>&lt;td>Registration &quot;+count+&quot;&lt;/td>&lt;/tr>&lt;/table>&lt;p>&amp;nbsp;&lt;/p>&quot;;
+}
+    
+var curObj = allTables[h];
+var headers = curObj.getElementsByClassName('tabularDataContainerHeaderRow');
+var headerHTML = &quot;&quot;;
+if(headers.length>=1){
+headers[0].getElementsByTagName('img').remove();
+tdinnerdata += headers[0].outerHTML;
+}
+        
+var tableObj;
+var tbl = $(curObj).find(&quot; > table&quot;);
+if(tbl.length>=1){
+    headerObj = document.getElementById(tbl[0].id+'_header');
+   dataObj = document.getElementById(tbl[0].id+'_data');
+    if(dataObj &amp;&amp; dataObj.rows.length>1){
+
+dataObj.getElementsByTagName('input').remove();
+dataObj.getElementsByTagName('img').remove();
+dataObj.getElementsByClassName('emptyTableRow').remove();
+headerObj.getElementsByClassName('emptyTableRow').remove();
+mainTable=mainTable+tdinnerdata+ headerObj.outerHTML+dataObj.outerHTML;
+    
+    }else{
+mainTable=mainTable+tdinnerdata;;
+
+    }
+}
+
+}
+var breakPage = "&lt;p>&amp;nbsp;&lt;/p>&lt;p>&amp;nbsp;&lt;/p>&lt;p>&amp;nbsp;&lt;/p>&lt;p>&amp;nbsp;&lt;/p>&lt;p>&amp;nbsp;&lt;/p>&lt;p>&amp;nbsp;&lt;/p>&lt;p>&amp;nbsp;&lt;/p>&lt;p>&amp;nbsp;&lt;/p>&lt;p>&amp;nbsp;&lt;/p>&lt;p>&amp;nbsp;&lt;/p>&lt;p>&amp;nbsp;&lt;/p>&lt;p>&amp;nbsp;&lt;/p>&lt;p>&amp;nbsp;&lt;/p>&lt;p>&amp;nbsp;&lt;/p>";
+var finalhtml = docType + htmlStart + htmlHeadStart  + style +  htmlHeadEnd + htmlBodyStart + breakPage+header+breakPage+mainTable + htmlBodyEnd + htmlEnd;
+
+document.form.HTML_CODE.value = finalhtml;
+document.form.BUTTON_ID.value = 'Print';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+//return false;
+}
+
+
+String.prototype.replaceAt=function(index, character) {
+
+return this.substr(0, index) + character + this.substr(index+character.length);
+
+}
+
+    
+
+function removeTag(htmlcode, tagStartindex, tagname){
+
+if(tagname == 'SCRIPT'){
+
+var tagCloseIndex = htmlcode.indexOf(&quot;SCRIPT>&quot;, tagStartindex);
+
+//alert(htmlcode.substring(tagStartindex,tagCloseIndex+7));
+
+var htmlcodeReturn = htmlcode.replace(htmlcode.substring(tagStartindex,tagCloseIndex+7),&quot;&quot;);
+
+//alert(htmlcodeReturn);
+
+return htmlcodeReturn;
+
+}
+
+}
+    
+Element.prototype.remove = function() {
+this.parentElement.removeChild(this);
+}
+NodeList.prototype.remove = HTMLCollection.prototype.remove = function() {
+for(var i = this.length - 1; i >= 0; i--) {
+if(this[i] &amp;&amp; this[i].parentElement) {
+this[i].parentElement.removeChild(this[i]);
+}
+}
+}
+    
+    
+  </ui:script>
+</ui:page-group>

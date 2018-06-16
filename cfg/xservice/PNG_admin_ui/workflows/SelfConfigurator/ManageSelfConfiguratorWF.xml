@@ -1,0 +1,2735 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="14" ShowInBreadCrumbs="true" Version="1.0" Name="ManageSelfConfiguratorWF" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="ManageSelfConfiguratorWF">
+    <variable Name="executionId" Type="string" Comment=""/>
+    <variable Name="selectedTableId" Type="string" Comment=""/>
+    <variable Name="tableId" Type="string" Comment=""/>
+    <variable Name="action" Type="string" Comment=""/>
+    <variable Name="modelGenratedFlag" Type="string" Comment=""/>
+    <variable Name="selfConfigDocInfo" Type="xml" Comment=""/>
+    <variable Name="selectedModelIdsClone" Type="xml" Comment=""/>
+    <variable Name="selfConfigDictInfo" Type="xml" Comment=""/>
+    <variable Name="dictId" Type="string" Comment=""/>
+    <variable Name="showAdvanceFacet" Type="string" Comment=""/>
+    <variable Name="templateType" Type="string" Comment=""/>
+    <variable Name="fromTemplate" Type="string" Comment=""/>
+    <variable Name="alertz" Type="xml" Comment=""/>
+  </variables>
+  <nodes>
+    <ui_form2 Name="ModelBuilderExcelUpload" ShowInBreadCrumbs="SHOW" Template="SelfConfiguratorExcelUpload.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value ='uploadTemplate' or ($thisParam/templateType/@Value != null and $thisParam/templateType/@Value !='MODEL')">
+            <THEN>
+              <SET DocVar="pglFormInput" Property="TemplateName" FromValue="{$templateType}"/>
+            </THEN>
+            <ELSE>
+              <SET DocVar="pglFormInput" Property="TemplateName" FromValue="MODEL"/>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value ='UPLOAD'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT/>
+              </TO_DOCVAR>
+              <NATIVE_FUNCTION ClassName="com.teradata.xservice.meta.selfconfigdocs.SelfConfiguratorExcelUploder" MethodName="uploadExcelFileData" HandleException="true">
+                <PARAM Var="thisParam" Caption="thisParam"/>
+                <PARAM Var="thisContext" Caption="thisContext"/>
+                <PARAM Var="thisReturn" Caption="thisReturn"/>
+              </NATIVE_FUNCTION>
+              <IF_TEST Test="$thisReturn/@Status = 'Success'">
+                <THEN>
+                  <SET Var="tableName" FromValue="{$thisReturn/ROOT/SELF_CONF_MODEL/TABLE_NAME/@Value}"/>
+                  <GET_DOCUMENT Name="SELF_CONF_MODEL" ServiceName="BPE_META" DirtyRead="true" AssignToVar="isTableNameExist" ReturnRowCount="true" HandleException="true">
+                    <TABLE_NAME Value="{$tableName}"/>
+                  </GET_DOCUMENT>
+                  <REQUEST Name="getAllLogicalDocumentName" ServiceName="UI_WORKFLOW" AssignToVar="masterTables" HandleException="true">
+                    <SERVICE Value="BCM_MASTER"/>
+                  </REQUEST>
+                  <SET Var="existingTableFlag" FromValue="FALSE"/>
+                  <IF_TEST Test="strlen($masterTables/DOCUMENT[@Value=$tableName]/@Value)!=0">
+                    <THEN>
+                      <SET Var="existingTableFlag" FromValue="TRUE"/>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="($isTableNameExist/@TotalRowCount = '0' or $isTableNameExist/SELF_CONF_MODEL/STATUS/@Value != 'GENERATED') and ($existingTableFlag/@Value ='FALSE')">
+                    <THEN>
+                      <IF_TEST Test="$isTableNameExist/SELF_CONF_MODEL/STATUS/@Value != null and  $isTableNameExist/SELF_CONF_MODEL/STATUS/@Value != 'GENERATED'">
+                        <THEN>
+                          <REQUEST Name="deleteSelfConfigModel" ServiceName="BPE_META" HandleException="true">
+                            <Table_Id Value="{$isTableNameExist/SELF_CONF_MODEL/TABLE_ID/@Value}"/>
+                          </REQUEST>
+                          <SET Var="action" FromValue="EDIT"/>
+                        </THEN>
+                        <ELSE>
+                          <SET Var="action" FromValue="CREATE"/>
+                        </ELSE>
+                      </IF_TEST>
+                      <TO_DOCVAR AssignToVar="thisReturn">
+                        <ROOT>
+                          <ACTION_VAR Value="{$action}"/>
+                          <TO_XML SelectList="$thisReturn/*/*"/>
+                        </ROOT>
+                      </TO_DOCVAR>
+                      <TO_DOCVAR AssignToVar="selfConfigData">
+                        <ROOT>
+                          <TO_XML SelectList="$thisReturn/*"/>
+                        </ROOT>
+                      </TO_DOCVAR>
+                      <REQUEST Name="persistSelfConfigDataInDB" ServiceName="BPE_META" AssignToVar="persistDataResponse" HandleException="true">
+                        <TO_XML SelectList="$selfConfigData"/>
+                      </REQUEST>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="alertRed" FromValue="DATA_UPLOAD_FAILED_TABLE_WITH_SAME_NAME_ALREADY_EXIST"/>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertRed" FromValue="{$thisReturn/@Status}"/>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$persistDataResponse/RESPONSE/@Status ='Success'">
+                <THEN>
+                  <IF_TEST Test="$action ='CREATE'">
+                    <THEN>
+                      <REQUEST Name="peristTemplateDetailsReq" ServiceName="BPE_META" AssignToVar="resp" HandleException="true">
+                        <TemplateName Value="{$selfConfigData/SELF_CONF_MODEL/TABLE_NAME/@Value}"/>
+                        <TemplateType Value="{$templateType}"/>
+                        <ModelCount Value="0"/>
+                      </REQUEST>
+                      <IF_TEST Test="$resp/@Status ='Success'">
+                        <THEN>
+                          <SET Var="alertGreen" FromValue="DATA_UPLOADED_SUCCCESSFLLY"/>
+                        </THEN>
+                        <ELSE>
+                          <SET Var="alertRed" FromValue="Excel Data Upload Failed {$resp/@Description}"/>
+                        </ELSE>
+                      </IF_TEST>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="alertGreen" FromValue="DATA_UPLOADED_SUCCCESSFLLY"/>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$alertRed/@Value = null">
+                    <THEN>
+                      <SET Var="alertRed" FromValue="Excel Data Upload Failed {$persistDataResponse/RESPONSE/@Description}"/>
+                    </THEN>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="alertz">
+            <ABC>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </ABC>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="alertz"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <if_cond Value="$userAction ='UPLOAD'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ModelBuilderExcelUpload" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Model Builder" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='templateBack'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ModelDefauftTemplateUI" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <start Name="start1">
+      <actions/>
+      <next_nodes>
+        <next_node Name="Model Builder"/>
+        <next_node Name="decision"/>
+        <next_node Name="decisionExtend"/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Model Builder" ShowInBreadCrumbs="SHOW" Template="SelfConfigurator.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$thisParam/PARAMETERS/innerAction/@Value = 'Filter' and $thisParam/PARAMETERS/BUTTON_ID/@Value = 'REPROCESS_MODEL'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="thisParam">
+                <ROOT>
+                  <innerAction Value="Filter"/>
+                  <FILTER_TABLE_NAME Value="{$thisParam/PARAMETERS/modelName/@Value}"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="modelList">
+            <MODELS/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="selectedModelIds">
+            <SELECTED_ID/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Delete'">
+            <THEN>
+              <SET Var="paginateStart" FromValue="0"/>
+            </THEN>
+            <ELSE>
+              <SET Var="paginateStart" FromValue="{ifElse($thisParam/START_COUNT/@Value = null, '0', $thisParam/START_COUNT/@Value)}"/>
+            </ELSE>
+          </IF_TEST>
+          <ADD_CHILDREN DocVar="selectedModelIds" FromSelectList="$thisParam/SELECTED_ID"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value ='Validate'">
+            <THEN>
+              <REQUEST Name="generateSelfConfigModelInfoDocs" ServiceName="BPE_META" AssignToVar="selfConfigModelInfo">
+                <TO_XML SelectList="$selectedModelIds"/>
+              </REQUEST>
+              <REQUEST Name="generateSelfConfigDocuments" ServiceName="BPE_META" AssignToVar="selfConfigModelDocument" HandleException="true">
+                <TO_XML SelectList="$selfConfigModelInfo/*"/>
+              </REQUEST>
+              <IF_TEST Test="$selfConfigModelDocument/MODEL_FORM/@STATUS != 'NO_ERROR'">
+                <THEN>
+                  <SET Var="alertRed" FromValue="Model Validation failed for {$selfConfigModelDocument/MODEL_FORM/@TableName} tables,Please check logs for more details."/>
+                </THEN>
+                <ELSE>
+                  <REQUEST Name="persistSelfConfigXDocsReq" ServiceName="BPE_META" AssignToVar="getResponse">
+                    <TO_XML SelectList="$selfConfigModelDocument"/>
+                    <TO_XML SelectList="$selectedModelIds"/>
+                  </REQUEST>
+                  <IF_TEST Test="$getResponse/STATUS/@Value ='SUCCESS'">
+                    <THEN>
+                      <IF_TEST Test="$getResponse/DESCRIPTION/@Value = 'VALIDATED'">
+                        <THEN>
+                          <SET Var="alertGreen" FromValue="MODEL_VALIDATED_SUCESSFULLY"/>
+                        </THEN>
+                        <ELSE>
+                          <SET Var="alertGreen" FromValue="SELF_GEN_MODEL_VALIDATED_SENT_APP"/>
+                        </ELSE>
+                      </IF_TEST>
+                      <REQUEST Name="downloadModelBuilderSqlLogReq" ServiceName="BPE_META" AssignToVar="getResponse">
+                        <TO_XML SelectList="$selectedModelIds"/>
+                        <BUTTON_ID Value="{$thisParam/BUTTON_ID/@Value}"/>
+                      </REQUEST>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="alertRed" FromValue="{$getResponse/DESCRIPTION/@Value}"/>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+              <NATIVE_FUNCTION ClassName="com.teradata.mcore.doc.xdocgen.selfconfigdocs.SelfConfigXDocGenerateUtil" MethodName="getModelValidatorLogString" AssignToVar="validateModelsLog" HandleException="true"/>
+              <SET Property="modelValidatorLog" FromValue="{$validateModelsLog/@Value}" DocVar="pglFormInput"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value ='RunIsg'">
+            <THEN>
+              <REQUEST Name="triggerRuntimeISGReq" ServiceName="BPE_META" HandleException="true" Synchronous="no">
+                <TO_XML SelectList="$selectedModelIds"/>
+              </REQUEST>
+              <SET Var="alertGreen" FromValue="ISG_REQUEST_IS_FIRED_CHECK_LOG"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'Delete'">
+            <THEN>
+              <REQUEST Name="inactivateModelsReq" ServiceName="BPE_META" HandleException="true" AssignToVar="inactivateModelsResponse">
+                <TO_XML SelectList="$selectedModelIds"/>
+                <MODEL_STATUS Value="{$thisParam/modelStatus/@Value}"/>
+                <ACTION_VAR Value="DELETE"/>
+              </REQUEST>
+              <IF_TEST Test="$inactivateModelsResponse/@Status = 'Success'">
+                <THEN>
+                  <SET Var="alertGreen" FromValue="{$inactivateModelsResponse/@MESSAGE}"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertRed" FromValue="{$inactivateModelsResponse/@MESSAGE}"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <SET Var="draftModel" FromValue="true"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value ='showModels' or $thisParam/BUTTON_ID/@Value ='SYS_RELOAD' or $thisParam/modelStatus/@Value != null">
+            <THEN>
+              <SET Var="modelStatus" FromValue="{$thisParam/modelStatus/@Value}"/>
+            </THEN>
+            <ELSE>
+              <SET Var="modelStatus" FromValue="DRAFT"/>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value != 'save'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="alertz">
+                <ABC>
+                  <AlertGreen Value="{$alertGreen/@Value}"/>
+                  <AlertRed Value="{$alertRed/@Value}"/>
+                </ABC>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <SET Var="sortOrder" FromValue="{ifElse($thisParam/SORT_ORDER/@Value = null, 'Ascending', $thisParam/SORT_ORDER/@Value)}"/>
+          <SET Var="sortBy" FromValue="{ifElse(($thisParam/SORT_BY/@Value = null) or ($thisParam/SORT_BY/@Value = 'ID'), 'TABLE_ID', $thisParam/SORT_BY/@Value)}"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SYS_RELOAD'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="orderByXml">
+                <ORDER_BY/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="sortByColumn">
+                <TEMP/>
+              </TO_DOCVAR>
+              <SET_NAME DocVar="sortByColumn" FromValue="{$sortBy}"/>
+              <SET Attribute="Sort" DocVar="sortByColumn" FromValue="{$sortOrder}"/>
+              <ADD_CHILDREN DocVar="orderByXml" FromDocVar="sortByColumn"/>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="userAccess">
+            <USER_ACCESS/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="tableDocList">
+            <RESPONSE/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$modelStatus/@Value='DRAFT' or $modelStatus/@Value='VALIDATED' or $modelStatus/@Value='PENDING_APPROVAL'">
+            <THEN>
+              <SET Var="isSuperUser" FromValue="false"/>
+              <SET Var="SUCheckVar" FromValue="LOCKING ROW FOR ACCESS SELECT ROLE_ID  FROM USR_GRP_ROLE_MAP UR,USER_UG_RELATION  UG WHERE UG.USER_ID='{$userId}' AND UR.USR_GRP_ID=UG.USER_GRP_ID ORDER BY ROLE_ID DESC"/>
+              <EXECUTE_SQL_QUERY AssignToVar="SUCheckQuery" Value="{$SUCheckVar/@Value}"/>
+              <FOR_EACH SelectList="$SUCheckQuery/*" CurrentElement="currRole">
+                <IF_TEST Test="$currRole/ROLE_ID/@Value='SU'">
+                  <THEN>
+                    <SET Var="isSuperUser" FromValue="true"/>
+                    <BREAK/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <IF_TEST Test="$isSuperUser/@Value='false'">
+                <THEN>
+                  <APPEND_TO_XML DocVar="userAccess">
+                    <CREATED_BY Value="Migrated"/>
+                    <CREATED_BY Value="{$userId}"/>
+                  </APPEND_TO_XML>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+            <ELSE>
+              <APPEND_TO_XML DocVar="userAccess">
+                <CREATED_BY Value="{$userId}"/>
+              </APPEND_TO_XML>
+              <REQUEST Name="getMetadataAccess" ServiceName="BPE_META" AssignToVar="tableDocList"/>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/innerAction/@Value = 'Filter'">
+            <THEN>
+              <SET DocVar="paginateStart" FromValue="0"/>
+              <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filterXml">
+                <FILTER_TABLE_NAME/>
+                <FILTER_STATUS/>
+                <FILTER_TABLE_DESCRIPTION/>
+                <FILTER_FOLDER_NAME/>
+                <FILTER_CREATED_BY/>
+                <CREATION_DATE Range="true" IsFilter="true"/>
+                <FILTER_LAST_MODIFIED_BY/>
+                <LAST_MODIFIED_DATE Range="true" IsFilter="true"/>
+              </FORM_SEARCH_FILTER>
+              <FOR_EACH SelectList="$filterXml/*/*" CurrentElement="currentSearchColumn">
+                <SET_NAME DocVar="currentSearchColumn" FromValue="{substringAfter($currentSearchColumn/name(),'FILTER_')}"/>
+              </FOR_EACH>
+              <GET_DOCUMENT Name="SELF_CONF_MODEL" ServiceName="BPE_META" AssignToVar="getSelfConfigModels" DirtyRead="true" StartAtRow="{$paginateStart}" MaxRows="{$tableDefaultRows}" ReturnRowCount="yes" HandleException="true">
+                <OR>
+                  <TO_XML SelectList="$tableDocList/*"/>
+                  <TO_XML SelectList="$userAccess/*"/>
+                </OR>
+                <TO_XML SelectList="$filterXml/*/*"/>
+                <TO_XML SelectList="$orderByXml"/>
+                <STATUS Value="{$modelStatus}"/>
+              </GET_DOCUMENT>
+            </THEN>
+            <ELSE>
+              <GET_DOCUMENT Name="SELF_CONF_MODEL" ServiceName="BPE_META" StartAtRow="{$paginateStart}" MaxRows="{$tableDefaultRows}" DirtyRead="true" AssignToVar="getSelfConfigModels" ReturnRowCount="true" HandleException="true">
+                <STATUS Value="{$modelStatus}"/>
+                <OR>
+                  <TO_XML SelectList="$tableDocList/*"/>
+                  <TO_XML SelectList="$userAccess/*"/>
+                </OR>
+                <TO_XML SelectList="$orderByXml"/>
+              </GET_DOCUMENT>
+            </ELSE>
+          </IF_TEST>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="alertz"/>
+          <ADD_CHILDREN DocVar="modelList" FromSelectList="$getSelfConfigModels/*"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="modelList"/>
+          <SET Property="totalRowCount" FromValue="{$getSelfConfigModels/@TotalRowCount}" DocVar="pglFormInput"/>
+          <SET Property="startAtRow" FromValue="{$paginateStart}" DocVar="pglFormInput"/>
+          <SET Property="modelStatus" FromValue="{$modelStatus}" DocVar="pglFormInput"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <if_cond Value="$userAction ='DONE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='UploadExcel'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ModelBuilderExcelUpload" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Validate'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Model Builder" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='RunIsg'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Model Builder" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Create'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Model Builder" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Edit'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Model Builder" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Delete'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Model Builder" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='showModels'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Model Builder" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='isgLog'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ModelBuilder Logs" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='defaultTemplate'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ModelDefauftTemplateUI" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ManageDictionary'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Dictionary" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ViewSql'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="View Model DDL" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="Manage Model Builder" ShowInBreadCrumbs="SHOW" Template="SelfConfiguratorCreateUI.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value != 'SYS_TAB'">
+            <THEN>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value ='Create'">
+                <THEN/>
+                <ELSE>
+                  <SET Var="tableId" FromValue="{$thisParam/SELECTED_ID/@Value}"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="masterTables">
+            <DOCUMENTS/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="selfConfigProperties">
+            <SELF_CONF_MOD_PROPTIES/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="selfConfigKeys">
+            <SELF_CONF_MOD_KEYS/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="selfConfigLinks">
+            <SELF_CONF_MOD_LINKS/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="selfFacetDocInfo">
+            <SELF_CONFIG_FACET_DOC_INFO/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="facetPropInfoDocument">
+            <SELF_CONFIG_FACET_PROP_INFO/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'Create' or $thisParam/BUTTON_ID/@Value = 'CreateTemplate'">
+            <THEN>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'CreateTemplate'">
+                <THEN>
+                  <SET Var="status" FromValue="TEMPLATE"/>
+                  <SET Var="action" FromValue="CREATE"/>
+                  <SET Var="modelGenratedFlag" FromValue="TEMPLATE"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="status" FromValue="DRAFT"/>
+                  <SET Var="action" FromValue="CREATE"/>
+                  <SET Var="modelGenratedFlag" FromValue="DRAFT"/>
+                </ELSE>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="selfConfigDocInfo">
+                <ROOT/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="selfConfigModel">
+                <SELF_CONF_MODEL>
+                  <STATUS Value="{$status}"/>
+                </SELF_CONF_MODEL>
+              </TO_DOCVAR>
+              <APPEND_TO_XML DocVar="selfConfigProperties">
+                <SELF_CONF_MOD_PROP>
+                  <NAME Value=""/>
+                  <HIDDEN Value="FALSE"/>
+                  <I18NIZE Value="FALSE"/>
+                  <EDITABLE Value="TRUE"/>
+                  <NO_WRAP Value="TRUE"/>
+                  <SEARCHABLE Value="TRUE"/>
+                  <SORTABLE Value="TRUE"/>
+                </SELF_CONF_MOD_PROP>
+              </APPEND_TO_XML>
+              <APPEND_TO_XML DocVar="selfConfigKeys">
+                <SELF_CONF_MOD_KEY>
+                  <NAME Value=""/>
+                </SELF_CONF_MOD_KEY>
+              </APPEND_TO_XML>
+              <APPEND_TO_XML DocVar="selfConfigLinks">
+                <SELF_CONF_MOD_LINK>
+                  <NAME Value=""/>
+                </SELF_CONF_MOD_LINK>
+              </APPEND_TO_XML>
+              <APPEND_TO_XML DocVar="selfFacetDocInfo">
+                <MISC_FACET/>
+                <SYS_ENTRY/>
+                <CONFIG_FACET/>
+                <WEB_OPERATION/>
+                <TEMPORAL/>
+              </APPEND_TO_XML>
+              <ADD_CHILDREN DocVar="selfConfigDocInfo" FromDocVar="selfConfigModel"/>
+              <ADD_CHILDREN DocVar="selfConfigDocInfo" FromDocVar="selfConfigProperties"/>
+              <ADD_CHILDREN DocVar="selfConfigDocInfo" FromDocVar="selfConfigKeys"/>
+              <ADD_CHILDREN DocVar="selfConfigDocInfo" FromDocVar="selfConfigLinks"/>
+              <ADD_CHILDREN DocVar="selfConfigDocInfo" FromDocVar="selfFacetDocInfo"/>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'Edit' or $thisParam/BUTTON_ID/@Value = 'EditTemplate'">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="selfConfigDocInfo">
+                    <ROOT/>
+                  </TO_DOCVAR>
+                  <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT PREV_STATUS FROM SELF_CONF_MODEL WHERE TABLE_ID = {$tableId}" AssignToVar="ModelStatus"/>
+                  <IF_TEST Test="$ModelStatus/SQL_RESULT/PREV_STATUS/@Value = 'GENERATED'">
+                    <THEN>
+                      <REQUEST Name="ExtendedAttributesToMigrate" ServiceName="BPE_META" AssignToVar="isExtendedAttributesPresent">
+                        <TABLE_ID Value="{$tableId}"/>
+                      </REQUEST>
+                      <IF_TEST Test="$isExtendedAttributesPresent/Present/@Value='true'">
+                        <THEN>
+                          <SET Property="ExtendendAtributesFlag" DocVar="pglFormInput" FromValue="true"/>
+                        </THEN>
+                      </IF_TEST>
+                    </THEN>
+                  </IF_TEST>
+                  <SET Property="showAdvanceFacet" FromValue="true" DocVar="pglFormInput"/>
+                  <SET Var="action" FromValue="EDIT"/>
+                  <GET_DOCUMENT ServiceName="BPE_META" Name="SELF_CONF_MODEL" AssignToVar="selfConfigModel" DirtyRead="true" HandleException="true">
+                    <TABLE_ID Value="{$tableId}"/>
+                  </GET_DOCUMENT>
+                  <SET_NAME DocVar="selfConfigModel" FromValue="SELF_CONFIG_MODEL"/>
+                  <GET_DOCUMENT ServiceName="BPE_META" Name="SELF_CONF_MOD_PROP" ReturnRowCount="true" AssignToVar="selfConfigProperties" DirtyRead="true" HandleException="true">
+                    <TABLE_ID Value="{$tableId}"/>
+                    <ORDER_BY>
+                      <SEQ_ID Sort="Ascending"/>
+                    </ORDER_BY>
+                  </GET_DOCUMENT>
+                  <SET Var="fromTemplate" FromValue="{$selfConfigModel/SELF_CONF_MODEL/FROM_TEMPLATE/@Value}"/>
+                  <SET_NAME DocVar="selfConfigProperties" FromValue="SELF_CONF_MOD_PROPTIES"/>
+                  <IF_TEST Test="$selfConfigProperties/SELF_CONF_MOD_PROP/* = null">
+                    <THEN>
+                      <TO_DOCVAR AssignToVar="selfConfigProp">
+                        <SELF_CONF_MOD_PROP>
+                          <NAME Value=""/>
+                          <HIDDEN Value="FALSE"/>
+                          <I18NIZE Value="FALSE"/>
+                          <EDITABLE Value="TRUE"/>
+                          <NO_WRAP Value="TRUE"/>
+                          <SEARCHABLE Value="TRUE"/>
+                          <SORTABLE Value="TRUE"/>
+                        </SELF_CONF_MOD_PROP>
+                      </TO_DOCVAR>
+                      <TO_DOCVAR AssignToVar="selfConfKeys">
+                        <SELF_CONF_MOD_KEY>
+                          <NAME Value=""/>
+                        </SELF_CONF_MOD_KEY>
+                      </TO_DOCVAR>
+                      <APPEND_TO_XML SelectList="$selfConfigProperties">
+                        <TO_XML SelectList="$selfConfigProp"/>
+                      </APPEND_TO_XML>
+                      <APPEND_TO_XML SelectList="$selfConfigKeys">
+                        <TO_XML SelectList="$selfConfKeys"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <FOR_EACH CurrentElement="currentProperty" SelectList="$selfConfigProperties/*">
+                        <FOR_EACH CurrentElement="currElem" SelectList="$currentProperty/*">
+                          <IF_TEST Test="$currElem/name() = 'DATA_TYPE'">
+                            <THEN>
+                              <IF_TEST Test="contains($currElem/@Value,'_') and lowerCase($currElem/@Value) != 'st_geometry'">
+                                <THEN>
+                                  <SET Property="LENGTH" FromValue="{substringAfter($currElem/@Value,'_')}" DocVar="currentProperty"/>
+                                  <SET Property="DATA_TYPE" FromValue="{substringBefore($currElem/@Value,'_')}" DocVar="currentProperty"/>
+                                </THEN>
+                              </IF_TEST>
+                            </THEN>
+                            <ELSE>
+                              <IF_TEST Test="$currElem/name() = 'ENUM'">
+                                <THEN>
+                                  <IF_TEST Test="strlen($currElem/@Value)!=0">
+                                    <THEN>
+                                      <SET Var="qu" FromValue="&quot;"/>
+                                      <SET Var="enumValue" FromValue="{$currElem/@Value}"/>
+                                      <SET Property="ENUM" FromValue="{strReplaceAll($enumValue/@Value,$qu,'&amp;quot;')}" DocVar="currentProperty"/>
+                                    </THEN>
+                                  </IF_TEST>
+                                </THEN>
+                              </IF_TEST>
+                            </ELSE>
+                          </IF_TEST>
+                        </FOR_EACH>
+                      </FOR_EACH>
+                      <GET_DOCUMENT ServiceName="BPE_META" Name="SELF_CONF_MOD_KEY" AssignToVar="selfConfigKeys" DirtyRead="true" HandleException="true" ReturnRowCount="true">
+                        <TABLE_ID Value="{$tableId}"/>
+                        <ORDER_BY>
+                          <NAME/>
+                        </ORDER_BY>
+                      </GET_DOCUMENT>
+                      <SET_NAME DocVar="selfConfigKeys" FromValue="SELF_CONF_MOD_KEYS"/>
+                      <GET_DOCUMENT ServiceName="BPE_META" Name="SELF_CONF_MOD_KEY_COL" AssignToVar="selfConfigKeyColumn" DirtyRead="true" HandleException="true">
+                        <TABLE_ID Value="{$tableId}"/>
+                      </GET_DOCUMENT>
+                      <SET_NAME DocVar="selfConfigKeyColumn" FromValue="SELF_CONFIG_KEY_COLUMN"/>
+                      <FOR_EACH CurrentElement="currKey" SelectList="$selfConfigKeys/*">
+                        <SET Var="count" FromValue="0"/>
+                        <SET Var="keyName" FromValue="{$currKey/NAME/@Value}"/>
+                        <FOR_EACH CurrentElement="currentKeyColumn" SelectList="$selfConfigKeyColumn/*">
+                          <SET Var="colKeyName" FromValue="{$currentKeyColumn/NAME/@Value}"/>
+                          <IF_TEST Test="$keyName = $colKeyName">
+                            <THEN>
+                              <IF_TEST Test="$count != '0'">
+                                <THEN>
+                                  <SET Var="colName" FromValue="{$currKey/COLUMN_NAME/@Value}"/>
+                                  <SET Property="COLUMN_NAME" DocVar="currKey" FromValue="{$colName},{$currentKeyColumn/COLUMN_NAME/@Value}"/>
+                                </THEN>
+                                <ELSE>
+                                  <SET Var="count" FromValue="{int(0)}"/>
+                                  <SET Property="COLUMN_NAME" DocVar="currKey" FromValue="{$currentKeyColumn/COLUMN_NAME/@Value}"/>
+                                </ELSE>
+                              </IF_TEST>
+                              <SET Var="count" FromValue="{int($count + 1)}"/>
+                            </THEN>
+                          </IF_TEST>
+                        </FOR_EACH>
+                      </FOR_EACH>
+                      <GET_DOCUMENT ServiceName="BPE_META" Name="SELF_CONF_MOD_LINK" AssignToVar="selfConfigLinks" DirtyRead="true" HandleException="true">
+                        <TABLE_ID Value="{$tableId}"/>
+                        <ORDER_BY>
+                          <NAME/>
+                        </ORDER_BY>
+                      </GET_DOCUMENT>
+                      <SET_NAME DocVar="selfConfigLinks" FromValue="SELF_CONF_MOD_LINKS"/>
+                      <GET_DOCUMENT ServiceName="BPE_META" Name="SELF_CONF_MOD_LINK_COL" AssignToVar="selfConfigLinkColumn" DirtyRead="true" HandleException="true">
+                        <TABLE_ID Value="{$tableId}"/>
+                      </GET_DOCUMENT>
+                      <SET_NAME DocVar="selfConfigLinkColumn" FromValue="SELF_CONFIG_LINK_COLUMN"/>
+                      <FOR_EACH CurrentElement="currLink" SelectList="$selfConfigLinks/*">
+                        <SET Var="count" FromValue="0"/>
+                        <SET Var="linkName" FromValue="{$currLink/NAME/@Value}"/>
+                        <FOR_EACH CurrentElement="currlinkColumn" SelectList="$selfConfigLinkColumn/*">
+                          <SET Var="colLinkName" FromValue="{$currlinkColumn/NAME/@Value}"/>
+                          <IF_TEST Test="$linkName = $colLinkName">
+                            <THEN>
+                              <IF_TEST Test="$count != '0'">
+                                <THEN>
+                                  <CLONE_XML AssignToVar="currLinkClone" DocVar="currLink"/>
+                                  <SET Property="FROM_COLUMN_NAME" DocVar="currLinkClone" FromValue="{$currlinkColumn/FROM_COLUMN_NAME/@Value}"/>
+                                  <SET Property="TO_COLUMN_NAME" DocVar="currLinkClone" FromValue="{$currlinkColumn/TO_COLUMN_NAME/@Value}"/>
+                                  <ADD_CHILDREN DocVar="selfConfigLinks" FromDocVar="currLinkClone"/>
+                                </THEN>
+                                <ELSE>
+                                  <SET Var="count" FromValue="{int(0)}"/>
+                                  <SET Property="FROM_COLUMN_NAME" DocVar="currLink" FromValue="{$currlinkColumn/FROM_COLUMN_NAME/@Value}"/>
+                                  <SET Property="TO_COLUMN_NAME" DocVar="currLink" FromValue="{$currlinkColumn/TO_COLUMN_NAME/@Value}"/>
+                                </ELSE>
+                              </IF_TEST>
+                              <SET Var="count" FromValue="{int($count + 1)}"/>
+                            </THEN>
+                          </IF_TEST>
+                        </FOR_EACH>
+                      </FOR_EACH>
+                      <REQUEST Name="getFacetPropInfoReq" ServiceName="BPE_META" AssignToVar="facetPropInfoDocument" HandleException="true">
+                        <TABLE_ID Value="{$tableId}"/>
+                      </REQUEST>
+                    </ELSE>
+                  </IF_TEST>
+                  <REQUEST Name="getModelFacetDocInfoReq" ServiceName="BPE_META" AssignToVar="selfFacetDocInfo" HandleException="true">
+                    <TABLE_ID Value="{$tableId}"/>
+                  </REQUEST>
+                  <ADD_CHILDREN DocVar="selfConfigDocInfo" FromSelectList="$selfConfigModel/*"/>
+                  <ADD_CHILDREN DocVar="selfConfigDocInfo" FromDocVar="selfConfigProperties"/>
+                  <ADD_CHILDREN DocVar="selfConfigDocInfo" FromDocVar="selfConfigKeys"/>
+                  <IF_TEST Test="$selfConfigLinks/SELF_CONF_MOD_LINK = null">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="selfConfigLinks">
+                        <SELF_CONF_MOD_LINK>
+                          <NAME Value=""/>
+                        </SELF_CONF_MOD_LINK>
+                      </APPEND_TO_XML>
+                    </THEN>
+                  </IF_TEST>
+                  <ADD_CHILDREN DocVar="selfConfigDocInfo" FromDocVar="selfConfigLinks"/>
+                  <ADD_CHILDREN DocVar="selfConfigDocInfo" FromSelectList="$selfFacetDocInfo/*"/>
+                  <ADD_CHILDREN DocVar="selfConfigDocInfo" FromSelectList="$facetPropInfoDocument/*"/>
+                </THEN>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <!-- GET Folder Name-->
+          <TO_DOCVAR AssignToVar="folderName">
+            <FOLDER_NAME/>
+          </TO_DOCVAR>
+          <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT DISPLAY_NAME FROM LEFT_NAV_STRUCTURE WHERE ACTIVITY_ID ='bcmTableEdit' ORDER BY DISPLAY_NAME ASC" AssignToVar="folderNameResp"/>
+          <FOR_EACH CurrentElement="currFolderName" SelectList="$folderNameResp/SQL_RESULT">
+            <IF_TEST Test="$currFolderName/DISPLAY_NAME/@Value = 'Master Tables'">
+              <THEN>
+                <CONTINUE/>
+              </THEN>
+            </IF_TEST>
+            <ADD_CHILDREN DocVar="folderName" FromSelectList="$currFolderName/*"/>
+          </FOR_EACH>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$folderName"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value ='Create'">
+            <THEN>
+              <SET DocVar="pglFormInput" Property="newFolder" FromValue="false"/>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$selfConfigDocInfo/SELF_CONF_MODEL/FOLDER_NAME/@Value != null">
+                <THEN>
+                  <SET Var="foldName" FromValue="{$selfConfigDocInfo/SELF_CONF_MODEL/FOLDER_NAME/@Value}"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="foldName" FromValue="{$thisParam/FOLDER_NAME[1]/@Value}"/>
+                  <REMOVE_CHILDREN ChildName="FOLDER_NAME" DocVar="thisParam"/>
+                  <SET DocVar="thisParam" Property="FOLDER_NAME" FromValue="{$foldName}"/>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="strlen($folderName/DISPLAY_NAME[@Value=$foldName/@Value]/@Value)!=0">
+                <THEN>
+                  <SET DocVar="pglFormInput" Property="newFolder" FromValue="false"/>
+                </THEN>
+                <ELSE>
+                  <SET DocVar="pglFormInput" Property="newFolder" FromValue="true"/>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'SYS_TAB'">
+                <THEN>
+                  <IF_TEST Test="$thisParam/modelStatusFlag/@Value='GENERATED'">
+                    <THEN>
+                      <IF_TEST Test="$thisParam/topContainer_STEP_ID/@Value='tableDetailsStep'">
+                        <THEN>
+                          <REQUEST Name="ExtendedAttributesToMigrate" ServiceName="BPE_META" AssignToVar="isExtendedAttributesPresent">
+                            <TABLE_ID Value="{$tableId}"/>
+                          </REQUEST>
+                          <IF_TEST Test="$isExtendedAttributesPresent/Present/@Value='true'">
+                            <THEN>
+                              <SET Property="ExtendendAtributesFlag" DocVar="pglFormInput" FromValue="true"/>
+                            </THEN>
+                            <ELSE>
+                              <SET Property="ExtendendAtributesFlag" DocVar="pglFormInput" FromValue="false"/>
+                            </ELSE>
+                          </IF_TEST>
+                        </THEN>
+                      </IF_TEST>
+                      <IF_TEST Test="$thisParam/TabName/@Value='TABLE_STEP'">
+                        <THEN>
+                          <IF_TEST Test="$thisParam/migrateExtAttr/@Value='true'">
+                            <THEN>
+                              <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT * FROM SYS_EXT_ATTRBS_MAP WHERE DOCUMENT_NAME='{$thisParam/TABLE_NAME/@Value}' AND END_DATE IS NULL" AssignToVar="extAttrs" ReturnRowCount="true"/>
+                              <SET Var="propCount" FromValue="{$thisParam/noOfProps/@Value}"/>
+                              <SET Var="seqno" FromValue="{int($propCount+1)}"/>
+                              <FOR_EACH SelectList="$extAttrs/SQL_RESULT" CurrentElement="currattr">
+                                <FOR_EACH SelectList="$selfConfigDocInfo/SELF_CONF_MOD_PROPTIES/*" CurrentElement="currprop">
+                                  <IF_TEST Test="$currattr/ATTRIBUTE_LOGICAL_NAME/@Value = $currprop/NAME/@Value">
+                                    <THEN>
+                                      <SET Property="migrated" FromValue="true" DocVar="currattr"/>
+                                    </THEN>
+                                  </IF_TEST>
+                                </FOR_EACH>
+                                <IF_TEST Test="$currattr/migrated/@Value = 'true'">
+                                  <THEN>
+                                    <SET Var="alreadyMigrated" FromValue="true"/>
+                                  </THEN>
+                                  <ELSE>
+                                    <SET Var="alreadyMigrated" FromValue="false"/>
+                                  </ELSE>
+                                </IF_TEST>
+                                <IF_TEST Test="$alreadyMigrated = 'false'">
+                                  <THEN>
+                                    <IF_TEST Test="$currattr/ATTRIBUTE_DATA_TYPE/@Value ='string'">
+                                      <THEN>
+                                        <SET Var="dataType" FromValue="String"/>
+                                        <SET Var="length" FromValue="200"/>
+                                      </THEN>
+                                    </IF_TEST>
+                                    <IF_TEST Test="$currattr/ATTRIBUTE_DATA_TYPE/@Value ='date'">
+                                      <THEN>
+                                        <SET Var="dataType" FromValue="Date"/>
+                                        <SET Var="length" FromValue=""/>
+                                      </THEN>
+                                    </IF_TEST>
+                                    <IF_TEST Test="$currattr/ATTRIBUTE_DATA_TYPE/@Value ='decimal'">
+                                      <THEN>
+                                        <SET Var="precision" FromValue="{ifElse($currattr/ATTRIBUTE_PRECISION/@Value = null, '0', $currattr/ATTRIBUTE_PRECISION/@Value)}"/>
+                                        <SET Var="dataType" FromValue="Decimal"/>
+                                        <IF_TEST Test="$precision = 0">
+                                          <THEN>
+                                            <SET Var="length" FromValue="18_8"/>
+                                          </THEN>
+                                          <ELSE>
+                                            <SET Var="length" FromValue="{concat('18_',$precision)}"/>
+                                          </ELSE>
+                                        </IF_TEST>
+                                      </THEN>
+                                    </IF_TEST>
+                                    <IF_TEST Test="($currattr/IS_VALID_VALUE_TYPE/@Value ='true' or $currattr/IS_VALID_VALUE_TYPE/@Value ='1') and $currattr/VALID_VALUE_TYPE/@Value ='Reference'">
+                                      <THEN>
+                                        <TO_DOCVAR AssignToVar="enumData">
+                                          <ABC>
+                                            <TYPE Value="Reference"/>
+                                            <TYPE_VALUES>
+                                              <Source_Table Value="{$currattr/REFERENCE_TABLE/@Value}"/>
+                                              <Source_Property Value="{$currattr/REFERENCE_PROPERTY/@Value}"/>
+                                            </TYPE_VALUES>
+                                          </ABC>
+                                        </TO_DOCVAR>
+                                      </THEN>
+                                    </IF_TEST>
+                                    <IF_TEST Test="($currattr/IS_VALID_VALUE_TYPE/@Value ='true' or $currattr/IS_VALID_VALUE_TYPE/@Value ='1') and $currattr/VALID_VALUE_TYPE/@Value ='LookUp'">
+                                      <THEN>
+                                        <TO_DOCVAR AssignToVar="enumData">
+                                          <ABC>
+                                            <TYPE Value="Lookup"/>
+                                            <TYPE_VALUES>
+                                              <Code_Set Value="{$currattr/CODE_SET_NAME/@Value}"/>
+                                            </TYPE_VALUES>
+                                          </ABC>
+                                        </TO_DOCVAR>
+                                      </THEN>
+                                    </IF_TEST>
+                                    <NATIVE_FUNCTION ClassName="com.teradata.xcore.util.json.XMLJSONUtil" MethodName="xmlToJSONObjectString" AssignToVar="enumJsonData">
+                                      <PARAM Var="enumData" Type="xml"/>
+                                    </NATIVE_FUNCTION>
+                                    <SET DocVar="FacetProps" FromSelectList="$selfConfigDocInfo/SELF_CONFIG_FACET_PROP_INFO/*"/>
+                                    <SET Var="countPropInfo" FromValue="0"/>
+                                    <FOR_EACH SelectList="$FacetProps" CurrentElement="currprop">
+                                      <SET Var="countPropInfo" FromValue="{int($countPropInfo+1)}"/>
+                                    </FOR_EACH>
+                                    <IF_TEST Test="$countPropInfo != 0">
+                                      <THEN>
+                                        <APPEND_TO_XML SelectList="$selfConfigDocInfo/SELF_CONF_MOD_PROPTIES">
+                                          <SELF_CONF_MOD_PROP>
+                                            <TABLE_ID Value="{$tableId}"/>
+                                            <NAME Value="{$currattr/ATTRIBUTE_LOGICAL_NAME/@Value}"/>
+                                            <CHARACTER_SET Value=""/>
+                                            <CREATED_BY Value="USR_1"/>
+                                            <CREATION_DATE Value="{$currattr/START_DATE/@Value}"/>
+                                            <DATA_TYPE Value="{$dataType}"/>
+                                            <DEFAULT_VALUE Value="{$currattr/ATTRIBUTE_DEFAULT_VALUE/@Value}"/>
+                                            <DESCRIPTION Value="{$currattr/DESCRIPTION/@Value}"/>
+                                            <DICT_DATA_TYPE_NAME Value=""/>
+                                            <DICT_ID Value=""/>
+                                            <ENTITY_STATE Value="ACTIVE"/>
+                                            <ENUM Value="{$enumJsonData}"/>
+                                            <PHYSICAL_NAME Value="{upperCase($currattr/ATTRIBUTE_LOGICAL_NAME/@Value)}"/>
+                                            <REQUIRED Value="{$currattr/ATTRIBUTE_IS_REQUIRED/@Value}"/>
+                                            <SEQ_ID Value="{$seqno}"/>
+                                            <SOURCE_TYPE Value=""/>
+                                            <LENGTH Value="{$length}"/>
+                                          </SELF_CONF_MOD_PROP>
+                                        </APPEND_TO_XML>
+                                        <APPEND_TO_XML SelectList="$selfConfigDocInfo/SELF_CONFIG_FACET_PROP_INFO">
+                                          <FACET_PROP>
+                                            <PROPERTY_NAME Value="{$currattr/ATTRIBUTE_LOGICAL_NAME/@Value}"/>
+                                            <NAME Value="{$currattr/ATTRIBUTE_LOGICAL_NAME/@Value}"/>
+                                            <SEARCHABLE Value="TRUE"/>
+                                            <SOURCE Value="MASTER"/>
+                                            <EDITABLE Value="TRUE"/>
+                                            <NO_WRAP Value="TRUE"/>
+                                            <SORTABLE Value="TRUE"/>
+                                            <COLUMN_DISPLAY_NAME Value="{$currattr/ATTRIBUTE_LOGICAL_NAME/@Value}"/>
+                                            <I18NIZE Value="FALSE"/>
+                                            <HIDDEN Value="FALSE"/>
+                                          </FACET_PROP>
+                                        </APPEND_TO_XML>
+                                      </THEN>
+                                      <ELSE>
+                                        <APPEND_TO_XML SelectList="$selfConfigDocInfo/SELF_CONF_MOD_PROPTIES">
+                                          <SELF_CONF_MOD_PROP>
+                                            <TABLE_ID Value="{$tableId}"/>
+                                            <NAME Value="{$currattr/ATTRIBUTE_LOGICAL_NAME/@Value}"/>
+                                            <DATA_TYPE Value="{$dataType}"/>
+                                            <DICT_ID Value=""/>
+                                            <DICT_DATA_TYPE_NAME Value=""/>
+                                            <LENGTH Value="{$length}"/>
+                                            <PHYSICAL_NAME Value="{upperCase($currattr/ATTRIBUTE_LOGICAL_NAME/@Value)}"/>
+                                            <REQUIRED Value="{$currattr/ATTRIBUTE_IS_REQUIRED/@Value}"/>
+                                            <CHARACTER_SET Value=""/>
+                                            <DEFAULT_VALUE Value="{$currattr/ATTRIBUTE_DEFAULT_VALUE/@Value}"/>
+                                            <SOURCE_TYPE Value=""/>
+                                            <ENUM Value="{$enumJsonData}"/>
+                                            <DESCRIPTION Value="{$currattr/DESCRIPTION/@Value}"/>
+                                            <COLUMN_DISPLAY_NAME Value="{$currattr/ATTRIBUTE_LOGICAL_NAME/@Value}"/>
+                                            <SOURCE Value="MASTER"/>
+                                            <EDITABLE Value="TRUE"/>
+                                            <SEARCHABLE Value="TRUE"/>
+                                            <HIDDEN Value="FALSE"/>
+                                            <I18NIZE Value="FALSE"/>
+                                            <SORTABLE Value="TRUE"/>
+                                            <NO_WRAP Value="TRUE"/>
+                                          </SELF_CONF_MOD_PROP>
+                                        </APPEND_TO_XML>
+                                      </ELSE>
+                                    </IF_TEST>
+                                  </THEN>
+                                </IF_TEST>
+                              </FOR_EACH>
+                              <SET Property="ExtendendAtributesmigrated" FromValue="true" DocVar="pglFormInput"/>
+                            </THEN>
+                            <ELSE>
+                              <IF_TEST Test="$thisParam/migrateExtendedAttributes/@Value='true'">
+                                <THEN>
+                                  <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT * FROM SYS_EXT_ATTRBS_MAP WHERE DOCUMENT_NAME='{$thisParam/TABLE_NAME/@Value}' AND END_DATE IS NULL" AssignToVar="extAttrs" ReturnRowCount="true"/>
+                                  <TO_DOCVAR AssignToVar="selfConfProps">
+                                    <TO_XML SelectList="$selfConfigDocInfo/SELF_CONF_MOD_PROPTIES"/>
+                                  </TO_DOCVAR>
+                                  <FOR_EACH SelectList="$extAttrs/SQL_RESULT" CurrentElement="currattr">
+                                    <FOR_EACH SelectList="$selfConfProps/*" CurrentElement="currprop">
+                                      <IF_TEST Test="$currattr/ATTRIBUTE_LOGICAL_NAME/@Value = $currprop/NAME/@Value ">
+                                        <THEN>
+                                          <REMOVE_CHILD ChildDocVar="currprop" DocVar="selfConfProps"/>
+                                        </THEN>
+                                      </IF_TEST>
+                                    </FOR_EACH>
+                                  </FOR_EACH>
+                                </THEN>
+                              </IF_TEST>
+                            </ELSE>
+                          </IF_TEST>
+                        </THEN>
+                        <ELSE>
+                          <IF_TEST Test="$thisParam/migrateExtendedAttributes/@Value='true'">
+                            <THEN>
+                              <SET Property="ExtendendAtributesmigrated" FromValue="true" DocVar="pglFormInput"/>
+                            </THEN>
+                            <ELSE>
+                              <SET Property="ExtendendAtributesmigrated" FromValue="false" DocVar="pglFormInput"/>
+                            </ELSE>
+                          </IF_TEST>
+                        </ELSE>
+                      </IF_TEST>
+                    </THEN>
+                  </IF_TEST>
+                  <REQUEST Name="selfConfigUpdateGlobalVariableReq" ServiceName="BPE_META" AssignToVar="selfConfigUpdateGlobalVariableResponse" HandleException="true">
+                    <TO_XML SelectList="$thisParam/*"/>
+                    <TO_XML DocVar="selfConfigDocInfo"/>
+                  </REQUEST>
+                  <REMOVE_CHILDREN ChildName="SELF_CONF_MODEL" DocVar="selfConfigDocInfo"/>
+                  <REMOVE_CHILDREN ChildName="SELF_CONF_MOD_PROPTIES" DocVar="selfConfigDocInfo"/>
+                  <REMOVE_CHILDREN ChildName="SELF_CONF_MOD_KEYS" DocVar="selfConfigDocInfo"/>
+                  <REMOVE_CHILDREN ChildName="SELF_CONF_MOD_LINKS" DocVar="selfConfigDocInfo"/>
+                  <REMOVE_CHILDREN ChildName="SELF_CONFIG_FACET_DOC_INFO" DocVar="selfConfigDocInfo"/>
+                  <REMOVE_CHILDREN ChildName="SELF_CONFIG_FACET_PROP_INFO" DocVar="selfConfigDocInfo"/>
+                  <REMOVE_CHILDREN ChildName="DOCUMENTS" DocVar="selfConfigDocInfo"/>
+                  <REMOVE_CHILDREN ChildName="COLUMNS" DocVar="selfConfigDocInfo"/>
+                  <APPEND_TO_XML DocVar="selfConfigDocInfo">
+                    <TO_XML SelectList="$selfConfigUpdateGlobalVariableResponse/*/*"/>
+                  </APPEND_TO_XML>
+                </THEN>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="columnsName">
+            <COLUMNS/>
+          </TO_DOCVAR>
+          <FOR_EACH CurrentElement="currProp" SelectList="$selfConfigDocInfo/SELF_CONF_MOD_PROPTIES/*">
+            <IF_TEST Test="strlen($currProp/NAME/@Value)=0">
+              <THEN>
+                <CONTINUE/>
+              </THEN>
+            </IF_TEST>
+            <TO_DOCVAR AssignToVar="colName">
+              <COLUMN_NAME Value="{$currProp/NAME/@Value}"/>
+            </TO_DOCVAR>
+            <ADD_CHILDREN DocVar="columnsName" FromSelectList="$colName"/>
+          </FOR_EACH>
+          <XML_SORT DataType="string" SortOrder="Ascending" SortKey="@Value" AssignToVar="sortedColumnNames">
+            <TO_XML SelectList="$columnsName/*"/>
+          </XML_SORT>
+          <REMOVE_CHILDREN ChildName="COLUMN_NAME" DocVar="columnsName"/>
+          <ADD_CHILDREN DocVar="columnsName" FromSelectList="$sortedColumnNames/*"/>
+          <REMOVE_CHILDREN ChildName="COLUMNS" DocVar="selfConfigDocInfo"/>
+          <ADD_CHILDREN DocVar="selfConfigDocInfo" FromDocVar="columnsName"/>
+          <IF_TEST Test="$selfConfigDocInfo/DOCUMENTS/DOCUMENT = null">
+            <THEN>
+              <REQUEST Name="getAllDocNameReq" ServiceName="BPE_META" AssignToVar="tableNames"/>
+              <APPEND_TO_XML DocVar="masterTables">
+                <TO_XML SelectList="$tableNames/*/*"/>
+              </APPEND_TO_XML>
+              <ADD_CHILDREN DocVar="selfConfigDocInfo" FromDocVar="masterTables"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$selfConfigModel/SELF_CONF_MODEL/STATUS/@Value = 'TEMPLATE'">
+            <THEN>
+              <SET Var="modelGenratedFlag" FromValue="TEMPLATE"/>
+              <SET DocVar="pglFormInput" Property="modelGenratedFlag" FromValue="TEMPLATE"/>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$selfConfigModel/SELF_CONF_MODEL/PREV_STATUS/@Value = 'GENERATED'">
+                <THEN>
+                  <SET Var="modelGenratedFlag" FromValue="{$selfConfigModel/SELF_CONF_MODEL/PREV_STATUS/@Value}"/>
+                  <SET DocVar="pglFormInput" Property="modelGenratedFlag" FromValue="{$modelGenratedFlag}"/>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$modelGenratedFlag = 'GENERATED'">
+                    <THEN>
+                      <SET DocVar="pglFormInput" Property="modelGenratedFlag" FromValue="{$modelGenratedFlag}"/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="modelGenratedFlag" FromValue="DRAFT"/>
+                      <SET DocVar="pglFormInput" Property="modelGenratedFlag" FromValue="DRAFT"/>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <SET DocVar="pglFormInput" Property="URL_Extend" FromValue="{concat($webuiContextPath,'/start.x2ps?START_WORKFLOW=ManageSelfConfiguratorWF&amp;SERVICE_NAME=ADMIN_UI&amp;SOLUTION_NAME=MDM&amp;POPUP=true&amp;createExtendDataType=true')}"/>
+          <SET DocVar="pglFormInput" Property="URL_V" FromValue="{concat($webuiContextPath,'/start.x2ps?START_WORKFLOW=ManageSelfConfiguratorWF&amp;SERVICE_NAME=ADMIN_UI&amp;SOLUTION_NAME=MDM&amp;POPUP=true&amp;createValidValue=true')}"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$selfConfigDocInfo/*"/>
+          <SET Property="ERROR_TAB_NAME" FromValue="{$thisParam/ERROR_TAB_NAME/@Value}" DocVar="pglFormInput"/>
+          <IF_TEST Test="$selfConfigDocInfo/SELF_CONF_MOD_KEYS/@TotalRowCount = null">
+            <THEN>
+              <SET Property="NO_OF_KEYS" FromValue="{$thisParam/noOfKeys/@Value}" DocVar="pglFormInput"/>
+            </THEN>
+            <ELSE>
+              <SET Property="NO_OF_KEYS" FromValue="{$selfConfigDocInfo/SELF_CONF_MOD_KEYS/@TotalRowCount}" DocVar="pglFormInput"/>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$selfConfigDocInfo/SELF_CONF_MOD_PROPTIES/@TotalRowCount = null">
+            <THEN>
+              <SET Property="NO_OF_PROPS" FromValue="{$thisParam/noOfProps/@Value}" DocVar="pglFormInput"/>
+            </THEN>
+            <ELSE>
+              <SET Property="NO_OF_PROPS" FromValue="{$selfConfigDocInfo/SELF_CONF_MOD_PROPTIES/@TotalRowCount}" DocVar="pglFormInput"/>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/topContainer_STEP_ID/@Value ='selfConfigPropertiesStep' and $modelGenratedFlag = 'GENERATED'">
+            <THEN>
+              <FOR_EACH CurrentElement="currKey" SelectList="$selfConfigDocInfo/SELF_CONF_MOD_KEYS/*">
+                <IF_TEST Test="$currKey/KIND/@Value = 'PRIMARY'">
+                  <THEN>
+                    <SET Var="ColsName" FromValue="{strSplit($currKey/COLUMN_NAME/@Value,',')}"/>
+                    <FOR_EACH CurrentElement="column" SelectList="$ColsName/*">
+                      <SET Var="Columns" FromValue="{concat($Columns,'_-_',$column/@Value)}"/>
+                    </FOR_EACH>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <SET Property="primaryKeyColumns" DocVar="pglFormInput" FromVar="Columns"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/TabName/@Value = 'PROPERTIES' or $thisParam/topContainer_STEP_ID/@Value ='selfConfigKeysStep'">
+            <THEN>
+              <FOR_EACH CurrentElement="currKey" SelectList="$selfConfigDocInfo/SELF_CONF_MOD_PROPTIES/*">
+                <IF_TEST Test="$currKey/REQUIRED/@Value = 'true'">
+                  <THEN>
+                    <SET Var="reqColumns" FromValue="{concat($reqColumns,'_-_',$currKey/NAME/@Value)}"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <SET Property="requiredColumns" DocVar="pglFormInput" FromVar="reqColumns"/>
+            </THEN>
+          </IF_TEST>
+          <SET Property="fromTemplate" FromValue="{$fromTemplate}" DocVar="pglFormInput"/>
+          <IF_TEST Test="strlen($thisParam/showAdvanceFacet/@Value)!=0 or ($showAdvanceFacet/@Value = 'true' and $thisParam/TabName/@Value != 'TABLE_STEP')">
+            <THEN>
+              <SET Var="showAdvanceFacet" FromValue="true"/>
+              <SET Property="showAdvanceFacet" FromValue="{$showAdvanceFacet}" DocVar="pglFormInput"/>
+            </THEN>
+            <ELSE>
+              <SET Var="showAdvanceFacet" FromValue="false"/>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value ='save' or $thisParam/BUTTON_ID/@Value ='saveTemplate'">
+            <THEN>
+              <REQUEST Name="selfConfigUpdateGlobalVariableReq" ServiceName="BPE_META" AssignToVar="selfConfigUpdateGlobalVariableResponse" HandleException="true">
+                <TO_XML SelectList="$thisParam/*"/>
+                <TO_XML DocVar="selfConfigDocInfo"/>
+              </REQUEST>
+              <REMOVE_CHILDREN ChildName="SELF_CONF_MODEL" DocVar="selfConfigDocInfo"/>
+              <REMOVE_CHILDREN ChildName="SELF_CONF_MOD_PROPTIES" DocVar="selfConfigDocInfo"/>
+              <REMOVE_CHILDREN ChildName="SELF_CONF_MOD_KEYS" DocVar="selfConfigDocInfo"/>
+              <REMOVE_CHILDREN ChildName="SELF_CONF_MOD_LINKS" DocVar="selfConfigDocInfo"/>
+              <REMOVE_CHILDREN ChildName="SELF_CONFIG_FACET_DOC_INFO" DocVar="selfConfigDocInfo"/>
+              <REMOVE_CHILDREN ChildName="SELF_CONFIG_FACET_PROP_INFO" DocVar="selfConfigDocInfo"/>
+              <REMOVE_CHILDREN ChildName="DOCUMENTS" DocVar="selfConfigDocInfo"/>
+              <REMOVE_CHILDREN ChildName="COLUMNS" DocVar="selfConfigDocInfo"/>
+              <APPEND_TO_XML DocVar="selfConfigDocInfo">
+                <TO_XML SelectList="$selfConfigUpdateGlobalVariableResponse/*/*"/>
+              </APPEND_TO_XML>
+              <TO_DOCVAR AssignToVar="selfConfigDoc">
+                <ROOT>
+                  <SELF_CONF_MODEL/>
+                  <SELF_CONF_MOD_PROPTIES/>
+                  <SELF_CONF_MOD_KEYS/>
+                  <SELF_CONF_MOD_LINKS/>
+                  <SELF_CONF_MOD_FACET_INFORMATION/>
+                </ROOT>
+              </TO_DOCVAR>
+              <IF_TEST Test="$action/@Value = 'EDIT'">
+                <THEN>
+                  <REQUEST Name="deleteSelfConfigModel" ServiceName="BPE_META">
+                    <Table_Id Value="{$tableId}"/>
+                  </REQUEST>
+                </THEN>
+                <ELSE>
+                  <GET_DOCUMENT Name="SELF_CONF_MODEL" ServiceName="BPE_META" DirtyRead="true" AssignToVar="isTableNameExist" ReturnRowCount="true" HandleException="true">
+                    <TABLE_NAME Value="{$selfConfigDocInfo/SELF_CONF_MODEL/TABLE_NAME/@Value}"/>
+                  </GET_DOCUMENT>
+                  <IF_TEST Test="$isTableNameExist/SELF_CONF_MODEL/TABLE_ID/@Value != null">
+                    <THEN>
+                      <SET Var="tableId" FromValue="{$isTableNameExist/SELF_CONF_MODEL/TABLE_ID/@Value}"/>
+                      <REQUEST Name="deleteSelfConfigModel" ServiceName="BPE_META" HandleException="true">
+                        <Table_Id Value="{$tableId}"/>
+                      </REQUEST>
+                      <SET Var="action" FromValue="EDIT"/>
+                    </THEN>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+              <!-- CREATE Model DOC VAR -->
+              <TO_DOCVAR AssignToVar="selfConfigModel">
+                <SELF_CONF_MODEL>
+                  <STATUS Value="{$selfConfigDocInfo/SELF_CONF_MODEL/STATUS/@Value}"/>
+                  <TABLE_NAME Value="{$selfConfigDocInfo/SELF_CONF_MODEL/TABLE_NAME/@Value}"/>
+                  <TABLE_DESCRIPTION Value="{$selfConfigDocInfo/SELF_CONF_MODEL/TABLE_DESCRIPTION/@Value}"/>
+                  <FOLDER_NAME Value="{$selfConfigDocInfo/SELF_CONF_MODEL/FOLDER_NAME/@Value}"/>
+                  <SURROGATE_ENABLED Value="{$selfConfigDocInfo/SELF_CONF_MODEL/SURROGATE_ENABLED/@Value}"/>
+                </SELF_CONF_MODEL>
+              </TO_DOCVAR>
+              <APPEND_TO_XML SelectList="$selfConfigDoc/SELF_CONF_MODEL">
+                <TO_XML SelectList="$selfConfigModel/*"/>
+              </APPEND_TO_XML>
+              <!-- CREATE  PROPERTIES DOC VAR -->
+              <FOR_EACH CurrentElement="currProp" SelectList="$selfConfigDocInfo/SELF_CONF_MOD_PROPTIES/SELF_CONF_MOD_PROP">
+                <IF_TEST Test="strlen($currProp/NAME/@Value) = 0">
+                  <THEN>
+                    <CONTINUE/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="strlen($currProp/LENGTH/@Value) != 0">
+                  <THEN>
+                    <SET Var="dataType" FromValue="{concat($currProp/DATA_TYPE/@Value,'_',$currProp/LENGTH/@Value)}"/>
+                  </THEN>
+                  <ELSE>
+                    <SET Var="dataType" FromValue="{$currProp/DATA_TYPE/@Value}"/>
+                  </ELSE>
+                </IF_TEST>
+                <IF_TEST Test="strlen($currProp/PHYSICAL_NAME/@Value) = 0">
+                  <THEN>
+                    <SET Var="physicalName" FromValue="{upperCase($currProp/NAME/@Value)}"/>
+                  </THEN>
+                  <ELSE>
+                    <SET Var="physicalName" FromValue="{$currProp/PHYSICAL_NAME/@Value}"/>
+                  </ELSE>
+                </IF_TEST>
+                <TO_DOCVAR AssignToVar="selfConfigProp">
+                  <SELF_CONF_MOD_PROP>
+                    <NAME Value="{$currProp/NAME/@Value}"/>
+                    <CHARACTER_SET Value="{$currProp/CHARACTER_SET/@Value}"/>
+                    <DATA_TYPE Value="{$dataType}"/>
+                    <DICT_ID Value="{$currProp/DICT_ID/@Value}"/>
+                    <DICT_DATA_TYPE_NAME Value="{$currProp/DICT_DATA_TYPE_NAME/@Value}"/>
+                    <DEFAULT_VALUE Value="{$currProp/DEFAULT_VALUE/@Value}"/>
+                    <DESCRIPTION Value="{$currProp/DESCRIPTION/@Value}"/>
+                    <PHYSICAL_NAME Value="{$physicalName}"/>
+                    <REQUIRED Value="{$currProp/REQUIRED/@Value}"/>
+                    <ENUM Value="{$currProp/ENUM/@Value}"/>
+                    <SOURCE_TYPE Value="{$currProp/SOURCE_TYPE/@Value}"/>
+                    <ENTITY_STATE Value="{$currProp/ENTITY_STATE/@Value}"/>
+                    <CREATED_BY Value="{$currProp/CREATED_BY/@Value}"/>
+                    <CREATION_DATE Value="{$currProp/CREATION_DATE/@Value}"/>
+                  </SELF_CONF_MOD_PROP>
+                </TO_DOCVAR>
+                <APPEND_TO_XML SelectList="$selfConfigDoc/SELF_CONF_MOD_PROPTIES">
+                  <TO_XML SelectList="$selfConfigProp"/>
+                </APPEND_TO_XML>
+              </FOR_EACH>
+              <!-- CREATE KEYS DOC VAR -->
+              <SET Var="existingKeyName" FromValue=""/>
+              <FOR_EACH CurrentElement="currKey" SelectList="$selfConfigDocInfo/SELF_CONF_MOD_KEYS/SELF_CONF_MOD_KEY">
+                <SET Var="Name" FromValue="{$currKey/NAME/@Value}"/>
+                <IF_TEST Test="contains($existingKeyName/@Value,$Name/@Value) or strlen($Name/@Value) = 0">
+                  <THEN>
+                    <CONTINUE/>
+                  </THEN>
+                  <ELSE>
+                    <IF_TEST Test="strlen($currKey/PHYSICAL_NAME/@Value) = 0">
+                      <THEN>
+                        <SET Var="keyPhyName" FromValue="{upperCase($currKey/NAME/@Value)}"/>
+                      </THEN>
+                      <ELSE>
+                        <SET Var="keyPhyName" FromValue="{$currKey/PHYSICAL_NAME/@Value}"/>
+                      </ELSE>
+                    </IF_TEST>
+                    <TO_DOCVAR AssignToVar="selfConfigModelKey">
+                      <SELF_CONF_MOD_KEY>
+                        <NAME Value="{$currKey/NAME/@Value}"/>
+                        <KIND Value="{$currKey/KIND/@Value}"/>
+                        <PHYSICAL_NAME Value="{$keyPhyName}"/>
+                        <ACTIVE Value="TRUE"/>
+                      </SELF_CONF_MOD_KEY>
+                    </TO_DOCVAR>
+                    <FOR_EACH CurrentElement="currKeyColumn" SelectList="$selfConfigDocInfo/SELF_CONF_MOD_KEYS/SELF_CONF_MOD_KEY">
+                      <SET Var="ColsName" FromValue="{strSplit($currKeyColumn/COLUMN_NAME/@Value,',')}"/>
+                      <FOR_EACH CurrentElement="col" SelectList="$ColsName/*">
+                        <IF_TEST Test="$Name/@Value = $currKeyColumn/NAME/@Value">
+                          <THEN>
+                            <TO_DOCVAR AssignToVar="selfConfigModelKeyColumn">
+                              <SELF_CONF_MOD_KEY_COL>
+                                <COLUMN_NAME Value="{$col/@Value}"/>
+                                <NAME Value="{$currKeyColumn/NAME/@Value}"/>
+                              </SELF_CONF_MOD_KEY_COL>
+                            </TO_DOCVAR>
+                            <ADD_CHILDREN DocVar="selfConfigModelKey" FromDocVar="selfConfigModelKeyColumn"/>
+                          </THEN>
+                        </IF_TEST>
+                      </FOR_EACH>
+                      <SET DocVar="keyColVals" FromValue="{substringAfter($curRow/@Value,'=')}" Property="{substringAfter(substringBefore($curRow/@Value,'='),'.')}"/>
+                    </FOR_EACH>
+                    <APPEND_TO_XML SelectList="$selfConfigDoc/SELF_CONF_MOD_KEYS">
+                      <TO_XML SelectList="$selfConfigModelKey"/>
+                    </APPEND_TO_XML>
+                    <SET Var="existingKeyName" FromValue="{$existingKeyName} {$Name}"/>
+                  </ELSE>
+                </IF_TEST>
+              </FOR_EACH>
+              <!-- CREATE FACET LINK DOC VAR -->
+              <SET Var="existingLinkName" FromValue=""/>
+              <FOR_EACH CurrentElement="currLink" SelectList="$selfConfigDocInfo/SELF_CONF_MOD_LINKS/SELF_CONF_MOD_LINK">
+                <SET Var="Name" FromValue="{$currLink/NAME/@Value}"/>
+                <IF_TEST Test="strlen($Name/@Value) = '0'">
+                  <THEN>
+                    <CONTINUE/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="contains($existingLinkName/@Value,$Name/@Value)">
+                  <THEN>
+                    <CONTINUE/>
+                  </THEN>
+                  <ELSE>
+                    <IF_TEST Test="strlen($currLink/PHYSICAL_NAME/@Value) = 0">
+                      <THEN>
+                        <SET Var="linkPhyName" FromValue="{upperCase($currLink/NAME/@Value)}"/>
+                      </THEN>
+                      <ELSE>
+                        <SET Var="linkPhyName" FromValue="{$currLink/PHYSICAL_NAME/@Value}"/>
+                      </ELSE>
+                    </IF_TEST>
+                    <IF_TEST Test="strlen($currLink/REVERSE_LINK/@Value) != 0 and $currLink/REVERSE_LINK/@Value ='TRUE' and strlen($currLink/REVERSE_LINK_NAME/@Value) = 0">
+                      <THEN>
+                        <SET Var="reverseLinkName" FromValue="{concat(upperCase($currLink/NAME/@Value),'_REV')}"/>
+                      </THEN>
+                      <ELSE>
+                        <SET Var="reverseLinkName" FromValue="{$currLink/REVERSE_LINK_NAME/@Value}"/>
+                      </ELSE>
+                    </IF_TEST>
+                    <TO_DOCVAR AssignToVar="selfConfigModelLink">
+                      <SELF_CONF_MOD_LINK>
+                        <NAME Value="{$currLink/NAME/@Value}"/>
+                        <PHYSICAL_NAME Value="{$linkPhyName}"/>
+                        <TO_DOCUMENT_NAME Value="{$currLink/TO_DOCUMENT_NAME/@Value}"/>
+                        <REVERSE_LINK Value="{$currLink/REVERSE_LINK/@Value}"/>
+                        <REVERSE_LINK_NAME Value="{$reverseLinkName}"/>
+                        <ACTIVE Value="TRUE"/>
+                      </SELF_CONF_MOD_LINK>
+                    </TO_DOCVAR>
+                    <FOR_EACH CurrentElement="currLinkColumn" SelectList="$selfConfigDocInfo/SELF_CONF_MOD_LINKS/SELF_CONF_MOD_LINK">
+                      <IF_TEST Test="$Name/@Value = $currLinkColumn/NAME/@Value">
+                        <THEN>
+                          <TO_DOCVAR AssignToVar="selfConfigModelLinkColumn">
+                            <SELF_CONF_MOD_LINK_COL>
+                              <NAME Value="{$Name/@Value}"/>
+                              <FROM_COLUMN_NAME Value="{$currLinkColumn/FROM_COLUMN_NAME/@Value}"/>
+                              <TO_COLUMN_NAME Value="{$currLinkColumn/TO_COLUMN_NAME/@Value}"/>
+                            </SELF_CONF_MOD_LINK_COL>
+                          </TO_DOCVAR>
+                          <ADD_CHILDREN DocVar="selfConfigModelLink" FromDocVar="selfConfigModelLinkColumn"/>
+                        </THEN>
+                      </IF_TEST>
+                    </FOR_EACH>
+                    <APPEND_TO_XML SelectList="$selfConfigDoc/SELF_CONF_MOD_LINKS">
+                      <TO_XML SelectList="$selfConfigModelLink"/>
+                    </APPEND_TO_XML>
+                    <SET Var="existingLinkName" FromValue="{$existingLinkName} {$Name}"/>
+                  </ELSE>
+                </IF_TEST>
+              </FOR_EACH>
+              <!-- CREATE FACET DOCUMENT DOC VAR -->
+              <FOR_EACH CurrentElement="currDocFacet" SelectList="$selfConfigDocInfo/SELF_CONFIG_FACET_DOC_INFO/*">
+                <FOR_EACH CurrentElement="currElem" SelectList="$currDocFacet/*">
+                  <TO_DOCVAR AssignToVar="facetDoc">
+                    <SELF_CONF_MOD_FACET_INF>
+                      <FACET_NAME Value="{$currElem/name()}"/>
+                      <FACET_VALUE Value="{$currElem/@Value}"/>
+                      <FACET_TYPE Value="DOCUMENT"/>
+                    </SELF_CONF_MOD_FACET_INF>
+                  </TO_DOCVAR>
+                  <APPEND_TO_XML SelectList="$selfConfigDoc/SELF_CONF_MOD_FACET_INFORMATION">
+                    <TO_XML SelectList="$facetDoc"/>
+                  </APPEND_TO_XML>
+                </FOR_EACH>
+              </FOR_EACH>
+              <!-- CREATE FACET PROPERTIES DOC VAR -->
+              <SET Var="facetFieldName" FromValue="COLUMN_DISPLAY_NAME,HIDDEN,SEARCHABLE,SOURCE,EDITABLE,NO_WRAP,SORTABLE,I18NIZE"/>
+              <FOR_EACH CurrentElement="currPropFacet" SelectList="$selfConfigDocInfo/SELF_CONF_MOD_PROPTIES/SELF_CONF_MOD_PROP">
+                <SET Var="propName" FromValue="{$currPropFacet/NAME/@Value}"/>
+                <FOR_EACH CurrentElement="currElem" SelectList="$currPropFacet/*">
+                  <SET Var="facetName" FromValue="{$currElem/name()}"/>
+                  <IF_TEST Test="contains($facetFieldName,$facetName)">
+                    <THEN>
+                      <IF_TEST Test="$facetName/@Value ='COLUMN_DISPLAY_NAME' and strlen($currElem/@Value) = 0">
+                        <THEN>
+                          <SET Var="facetValue" FromValue="{$propName}"/>
+                        </THEN>
+                        <ELSE>
+                          <SET Var="facetValue" FromValue="{$currElem/@Value}"/>
+                        </ELSE>
+                      </IF_TEST>
+                      <TO_DOCVAR AssignToVar="facetProp">
+                        <SELF_CONF_MOD_FACET_INF>
+                          <FACET_NAME Value="{$facetName}"/>
+                          <FACET_VALUE Value="{$facetValue/@Value}"/>
+                          <FACET_TYPE Value="PROPERTY"/>
+                          <PROPERTY_NAME Value="{$propName}"/>
+                        </SELF_CONF_MOD_FACET_INF>
+                      </TO_DOCVAR>
+                      <APPEND_TO_XML SelectList="$selfConfigDoc/SELF_CONF_MOD_FACET_INFORMATION">
+                        <TO_XML SelectList="$facetProp"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                  </IF_TEST>
+                </FOR_EACH>
+              </FOR_EACH>
+              <SET Property="ACTION_VAR" FromValue="{$action}" DocVar="selfConfigDoc"/>
+              <REQUEST Name="persistSelfConfigDataInDB" ServiceName="BPE_META" HandleException="true" AssignToVar="response">
+                <TO_XML SelectList="$selfConfigDoc"/>
+              </REQUEST>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value ='saveTemplate'">
+                <THEN>
+                  <IF_TEST Test="$response/@Status ='Error'">
+                    <THEN>
+                      <SET Var="alertRed" FromValue="Error in Template {$response/@Description}"/>
+                    </THEN>
+                    <ELSE>
+                      <IF_TEST Test="$response/RESPONSE/@Status ='Error'">
+                        <THEN>
+                          <SET Var="alertRed" FromValue="Error in Template {$response/RESPONSE/@Description}"/>
+                        </THEN>
+                        <ELSE>
+                          <SET Var="alertGreen" FromValue="SC_TEMPLATE_UPDATED_SUCCESSFULLY"/>
+                        </ELSE>
+                      </IF_TEST>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$response/@Status ='Error'">
+                    <THEN>
+                      <SET Var="alertRed" FromValue="Error in Model {$response/@Description}"/>
+                    </THEN>
+                    <ELSE>
+                      <IF_TEST Test="$response/RESPONSE/@Status ='Error'">
+                        <THEN>
+                          <SET Var="alertRed" FromValue="Error in Model {$response/RESPONSE/@Description}"/>
+                        </THEN>
+                        <ELSE>
+                          <SET Var="alertGreen" FromValue="SC_MODEL_UPDATED_SUCCESSFULLY"/>
+                        </ELSE>
+                      </IF_TEST>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="alertz">
+            <ABC>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </ABC>
+          </TO_DOCVAR>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='add'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='delete'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='save'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Model Builder" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='unCheckedValButton'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Model Builder" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='true()'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done10" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='saveTemplate'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ModelDefauftTemplateUI" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="ModelBuilder Logs" ShowInBreadCrumbs="SHOW" Template="SelfConfigLogs.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <SET Var="paginateStart" FromValue="{ifElse($thisParam/START_COUNT/@Value = null, '0', $thisParam/START_COUNT/@Value)}"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value != 'back' and $thisParam/BUTTON_ID/@Value != 'SYS_REFRESH'">
+            <THEN>
+              <SET Var="selectedTableId" FromValue="{$thisParam/SELECTED_ID/@Value}"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'SYS_RELOAD'">
+            <THEN>
+              <SET Var="selectedTableId" FromValue="{$thisParam/tableId/@Value}"/>
+            </THEN>
+          </IF_TEST>
+          <SET Var="whereCondition" FromValue=" "/>
+          <IF_TEST Test="$thisParam/innerAction/@Value = 'Filter'">
+            <THEN>
+              <SET Var="starSign" FromValue="*"/>
+              <FOR_EACH SelectList="$thisParam/*" CurrentElement="currElem">
+                <IF_TEST Test="contains($currElem/name(),'FILTER_')">
+                  <THEN>
+                    <IF_TEST Test="strlen($currElem/@Value) != 0">
+                      <THEN>
+                        <SET Var="columnName" FromValue="{substringAfter($currElem/name(),'FILTER_')}"/>
+                        <IF_TEST Test="$columnName ='FROM_ISG_START_TIME' or $columnName ='FROM_ISG_END_TIME'">
+                          <THEN>
+                            <CONTINUE/>
+                          </THEN>
+                        </IF_TEST>
+                        <IF_TEST Test="contains($currElem/@Value,$starSign)">
+                          <THEN>
+                            <SET Var="percentSign" FromValue="\%"/>
+                            <SET Var="starSign" FromValue="\*"/>
+                            <SET Var="currElem" FromValue="{strReplaceAll($currElem/@Value,$starSign,$percentSign)}"/>
+                            <SET Var="whereCondition" FromValue="{$whereCondition} AND {$columnName} like '{$currElem/@Value}'"/>
+                          </THEN>
+                          <ELSE>
+                            <IF_TEST Test="$columnName ='TO_ISG_START_TIME' or $columnName ='TO_ISG_END_TIME'">
+                              <THEN>
+                                <IF_TEST Test="$columnName = 'TO_ISG_START_TIME'">
+                                  <THEN>
+                                    <SET Var="columnName" FromValue="ISG_START_TIME"/>
+                                    <SET Var="fromColumValue" FromValue="{$currElem/@Value}"/>
+                                    <SET Var="toColumValue" FromValue="{$thisParam/FILTER_FROM_ISG_START_TIME/@Value}"/>
+                                  </THEN>
+                                  <ELSE>
+                                    <SET Var="columnName" FromValue="ISG_END_TIME"/>
+                                    <SET Var="fromColumValue" FromValue="{$currElem/@Value}"/>
+                                    <SET Var="toColumValue" FromValue="{$thisParam/FILTER_FROM_ISG_END_TIME/@Value}"/>
+                                  </ELSE>
+                                </IF_TEST>
+                                <SET Var="whereCondition" FromValue="{$whereCondition} AND ({$columnName} BETWEEN '{trim($toColumValue)}' (timestamp(0), format 'MM/DD/YYYYBHH:MI:SS') AND '{trim($fromColumValue)}' (timestamp(0), format 'MM/DD/YYYYBHH:MI:SS') ) "/>
+                              </THEN>
+                              <ELSE>
+                                <SET Var="whereCondition" FromValue="{$whereCondition} AND {$columnName} = '{$currElem/@Value}'"/>
+                              </ELSE>
+                            </IF_TEST>
+                          </ELSE>
+                        </IF_TEST>
+                      </THEN>
+                    </IF_TEST>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="isgDetailResponse">
+            <RESPONSE/>
+          </TO_DOCVAR>
+          <IF_TEST Test="strlen($selectedTableId) != 0">
+            <THEN>
+              <GET_DOCUMENT Name="SELF_CONF_MOD_ISG_ID_MAP" ServiceName="BPE_META" DirtyRead="true" AssignToVar="executionID" ReturnRowCount="true">
+                <TABLE_ID Value="{$selectedTableId}"/>
+                <SELECT>
+                  <EXECUTION_ID/>
+                </SELECT>
+              </GET_DOCUMENT>
+            </THEN>
+            <ELSE>
+              <GET_DOCUMENT Name="SELF_CONF_MOD_ISG_ID_MAP" ServiceName="BPE_META" DirtyRead="true" AssignToVar="executionID" ReturnRowCount="true">
+                <SELECT>
+                  <EXECUTION_ID/>
+                </SELECT>
+              </GET_DOCUMENT>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$executionID/@TotalRowCount != '0'">
+            <THEN>
+              <SET Var="executionIds" FromValue="("/>
+              <IF_TEST Test="$executionID/SELF_CONF_MOD_ISG_ID_MAP/EXECUTION_ID/@Value != null">
+                <THEN>
+                  <SET Var="quot" FromValue="'"/>
+                  <FOR_EACH CurrentElement="exId" SelectList="$executionID/SELF_CONF_MOD_ISG_ID_MAP/*">
+                    <SET Var="executionIds" FromValue="{$executionIds} {$quot} {$exId/@Value} {concat($quot,',')}"/>
+                  </FOR_EACH>
+                  <SET Var="executionIds" FromValue="{subString($executionIds/@Value,0,strlen($executionIds/@Value)-1)}"/>
+                  <SET Var="executionIds" FromValue="{$executionIds} {')'}"/>
+                  <SET Var="whereCondition" FromValue="{$whereCondition} AND EXECUTION_ID IN {$executionIds/@Value}"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/SORT_ORDER/@Value = 'Descending'">
+                <THEN>
+                  <SET Var="sortOrder" FromValue="DESC"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="sortOrder" FromValue="ASC"/>
+                </ELSE>
+              </IF_TEST>
+              <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT * FROM SYS_ISG_VAL_HEADER WHERE ISG_TYPE ='SELF_CONFIGURATOR_ISG' {$whereCondition} ORDER BY EXECUTION_ID {$sortOrder}" AssignToVar="isgDetailResponse" StartAtRow="{$paginateStart}" MaxRows="20"/>
+            </THEN>
+          </IF_TEST>
+          <SET Property="totalRowCount" FromValue="{$executionID/@TotalRowCount}" DocVar="pglFormInput"/>
+          <SET Property="startAtRow" FromValue="{$paginateStart}" DocVar="pglFormInput"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="isgDetailResponse"/>
+          <SET Property="tableId" DocVar="pglFormInput" FromValue="{$selectedTableId}"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <if_cond Value="$userAction ='back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Model Builder" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='logDetails'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ModelBuilderDetailLog" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="ModelBuilderDetailLog" ShowInBreadCrumbs="SHOW" Template="SelfConfigDetailsLog.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/SELECTED_ID/@Value != null">
+            <THEN>
+              <SET Var="executionId" FromValue="{$thisParam/SELECTED_ID/@Value}"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/SORT_ORDER/@Value = 'Descending'">
+            <THEN>
+              <SET Var="sortOrder" FromValue="DESC"/>
+            </THEN>
+            <ELSE>
+              <SET Var="sortOrder" FromValue="ASC"/>
+            </ELSE>
+          </IF_TEST>
+          <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT * FROM SYS_ISG_VAL_DETAIL WHERE EXECUTION_ID ='{$executionId}' ORDER BY PARAMETER_TYPE {$sortOrder}, OPERATION_START_TIME ASC" AssignToVar="isglogDetailsResponse" ReturnRowCount="true"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="isglogDetailsResponse"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <if_cond Value="$userAction ='back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ModelBuilder Logs" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='true()'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <done Name="done10">
+      <actions/>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="EnumValidValuesUI" ShowInBreadCrumbs="HIDE" Template="EnumValidValuesUI.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="codeSet">
+            <CODE_SETS/>
+          </TO_DOCVAR>
+          <IF_TEST Test="strlen($thisParam/ENUM_VALUE/@Value) ='0'">
+            <THEN>
+              <SET DocVar="pglFormInput" Property="ENUM_TYPE" FromValue="CONSTANT"/>
+            </THEN>
+            <ELSE>
+              <SET DocVar="pglFormInput" Property="ENUM_DEFINED" FromValue="true"/>
+              <SET Var="enumValue" FromValue="{$thisParam/ENUM_VALUE/@Value}"/>
+              <IF_TEST Test="strlen($enumValue)=0">
+                <THEN>
+                  <SET DocVar="pglFormInput" Property="ENUM_TYPE" FromValue="CONSTANT"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="doubleQuotes" FromValue="&amp;quot;&amp;quot;"/>
+                  <REQUEST Name="getEnumValueReq" ServiceName="BPE_META" AssignToVar="constDoc">
+                    <EnumValue Value="{$enumValue/@Value}"/>
+                  </REQUEST>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$constDoc/ROOT/*"/>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <REQUEST Name="getAllDocNameReq" ServiceName="BPE_META" AssignToVar="masterTables" HandleException="true"/>
+          <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT NAME FROM MST_CODE_SET" AssignToVar="codeSetNameResponse"/>
+          <FOR_EACH CurrentElement="currElem" SelectList="$codeSetNameResponse/SQL_RESULT">
+            <ADD_CHILDREN DocVar="codeSet" FromSelectList="$currElem/*"/>
+          </FOR_EACH>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value ='save'">
+            <THEN>
+              <NATIVE_FUNCTION ClassName="com.teradata.xservice.meta.selfconfigdocs.SelfConfiguratorExcelUploder" MethodName="generateEnumJasonObj" AssignToVar="response" HandleException="true">
+                <PARAM Var="thisContext" Caption="thisContext"/>
+                <PARAM Var="thisParam" Caption="thisParam"/>
+              </NATIVE_FUNCTION>
+              <SET Var="qu" FromValue="&quot;"/>
+              <SET Var="response" FromValue="{strReplaceAll($response/@Value,$qu,'&amp;quot;')}"/>
+              <SET DocVar="pglFormInput" Property="enumJsonValue" FromValue="{$response}"/>
+            </THEN>
+          </IF_TEST>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="codeSet"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$masterTables/*"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <if_cond Value="$userAction ='back'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='save'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="EnumValidValuesUI" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='up'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='down'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='delete'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='addConstant'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <decision Name="decision">
+      <actions>
+        <action>
+          <IF_TEST Test="$thisParam/createValidValue/@Value='true'">
+            <THEN>
+              <SET Var="sourceFlag" FromValue="Yes"/>
+            </THEN>
+            <ELSE>
+              <SET Var="sourceFlag" FromValue="No"/>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </actions>
+      <condition Value="$sourceFlag = 'No'"/>
+      <if_true>
+        <next_nodes/>
+      </if_true>
+      <if_false>
+        <next_nodes>
+          <next_node Name="EnumValidValuesUI" Description=""/>
+        </next_nodes>
+      </if_false>
+    </decision>
+    <ui_form2 Name="ModelDefauftTemplateUI" ShowInBreadCrumbs="SHOW" Template="ModelDefaultTemplateUI.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/templateType/@Value=null and $templateType=null">
+            <THEN>
+              <SET Var="templateType" FromValue="LRDM"/>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$thisParam/templateType/@Value != null">
+                <THEN>
+                  <SET Var="templateType" FromValue="{$thisParam/templateType/@Value}"/>
+                </THEN>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <SET Var="sortOrder" FromValue="{ifElse($thisParam/SORT_ORDER/@Value = null, 'Ascending', $thisParam/SORT_ORDER/@Value)}"/>
+          <SET Var="sortBy" FromValue="{ifElse(($thisParam/SORT_BY/@Value = null) or ($thisParam/SORT_BY/@Value = 'ID'), 'TABLE_ID', $thisParam/SORT_BY/@Value)}"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SYS_RELOAD'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="orderByXml">
+                <ORDER_BY/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="sortByColumn">
+                <TEMP/>
+              </TO_DOCVAR>
+              <SET_NAME DocVar="sortByColumn" FromValue="{$sortBy}"/>
+              <SET Attribute="Sort" DocVar="sortByColumn" FromValue="{$sortOrder}"/>
+              <ADD_CHILDREN DocVar="orderByXml" FromDocVar="sortByColumn"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value ='saveTemplate'">
+            <THEN>
+              <IF_TEST Test="$action = 'CREATE'">
+                <THEN>
+                  <REQUEST Name="peristTemplateDetailsReq" ServiceName="BPE_META" AssignToVar="tempDetailsResp" HandleException="true">
+                    <TemplateName Value="{$selfConfigDocInfo/SELF_CONF_MODEL/TABLE_NAME/@Value}"/>
+                    <TemplateType Value="{$templateType}"/>
+                    <ModelCount Value="0"/>
+                  </REQUEST>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <GET_DOCUMENT Name="SELF_CONF_TEMP_DETAILS" ServiceName="BPE_META" AssignToVar="getTempDetails" DirtyRead="true" ReturnRowCount="true" HandleException="true">
+            <TemplateType Value="{$templateType}"/>
+          </GET_DOCUMENT>
+          <TO_DOCVAR AssignToVar="tableNameDoc">
+            <OR/>
+          </TO_DOCVAR>
+          <FOR_EACH SelectList="$getTempDetails/SELF_CONF_TEMP_DETAILS/TemplateName" CurrentElement="currElem">
+            <SET_NAME DocVar="currElem" FromValue="TABLE_NAME"/>
+            <ADD_CHILDREN DocVar="tableNameDoc" FromDocVar="currElem"/>
+          </FOR_EACH>
+          <IF_TEST Test="($thisParam/innerAction/@Value = 'Filter') or($thisParam/BUTTON_ID/@Value='SYS_RELOAD')">
+            <THEN>
+              <SET DocVar="paginateStart" FromValue="0"/>
+              <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filterXml">
+                <FILTER_TABLE_NAME/>
+                <FILTER_TABLE_DESCRIPTION/>
+                <FILTER_FOLDER_NAME/>
+                <FILTER_LAST_MODIFIED_BY/>
+                <LAST_MODIFIED_DATE Range="true" IsFilter="true"/>
+              </FORM_SEARCH_FILTER>
+              <FOR_EACH SelectList="$filterXml/*/*" CurrentElement="currentSearchColumn">
+                <SET_NAME DocVar="currentSearchColumn" FromValue="{substringAfter($currentSearchColumn/name(),'FILTER_')}"/>
+              </FOR_EACH>
+              <GET_DOCUMENT Name="SELF_CONF_MODEL" ServiceName="BPE_META" AssignToVar="getSelfConfigModels" DirtyRead="true" StartAtRow="{$paginateStart}" MaxRows="{$maxRow}" ReturnRowCount="yes" HandleException="true">
+                <TO_XML SelectList="$tableNameDoc"/>
+                <STATUS Value="TEMPLATE"/>
+                <TO_XML SelectList="$filterXml/*/*"/>
+                <TO_XML SelectList="$orderByXml"/>
+              </GET_DOCUMENT>
+            </THEN>
+            <ELSE>
+              <GET_DOCUMENT Name="SELF_CONF_MODEL" ServiceName="BPE_META" StartAtRow="{$paginateStart}" MaxRows="{$tableDefaultRows}" DirtyRead="true" AssignToVar="getSelfConfigModels" ReturnRowCount="true" HandleException="true">
+                <TO_XML SelectList="$tableNameDoc"/>
+                <STATUS Value="TEMPLATE"/>
+                <TO_XML SelectList="$orderByXml"/>
+              </GET_DOCUMENT>
+            </ELSE>
+          </IF_TEST>
+          <FOR_EACH SelectList="$getTempDetails/SELF_CONF_TEMP_DETAILS" CurrentElement="currTemp">
+            <FOR_EACH SelectList="$getSelfConfigModels/SELF_CONF_MODEL" CurrentElement="currMod">
+              <IF_TEST Test="$currTemp/TABLE_NAME/@Value = $currMod/TABLE_NAME/@Value">
+                <THEN>
+                  <SET Property="MODEL_COUNT" DocVar="currMod" FromValue="{$currTemp/ModelCount/@Value}"/>
+                </THEN>
+              </IF_TEST>
+            </FOR_EACH>
+          </FOR_EACH>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value ='createMultiModels'">
+            <THEN>
+              <REQUEST Name="generateTemplateBasedModels" ServiceName="BPE_META" AssignToVar="generateModelResp" HandleException="true" Synchronous="no">
+                <TO_XML SelectList="$getSelfConfigModels/*"/>
+                <ADD_MODEL_COUNT Value="{$thisParam/selectedModelCount/@Value}"/>
+                <TEMPLATE_TYPE Value="{$templateType}"/>
+              </REQUEST>
+              <SET Var="alertGreen" FromValue="ISG_REQUEST_IS_FIRED_CHECK_LOG"/>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="getSelfConfigTemplates">
+            <SELF_CONF_MODEL/>
+          </TO_DOCVAR>
+          <SET Property="templateType" FromValue="{$templateType}" DocVar="pglFormInput"/>
+          <IF_TEST Test="$getTempDetails/@TotalRowCount != '0'">
+            <THEN>
+              <SET Property="totalRowCount" FromValue="{$getSelfConfigModels/@TotalRowCount}" DocVar="pglFormInput"/>
+              <ADD_CHILDREN DocVar="getSelfConfigTemplates" FromSelectList="$getSelfConfigModels/*"/>
+            </THEN>
+            <ELSE>
+              <SET Property="totalRowCount" FromValue="0" DocVar="pglFormInput"/>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value ='Validate'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="selectedModelIds">
+                <SELECTED_ID/>
+              </TO_DOCVAR>
+              <ADD_CHILDREN DocVar="selectedModelIds" FromSelectList="$thisParam/SELECTED_ID"/>
+              <SET Property="TEMPLATE" FromValue="{$templateType}" DocVar="selectedModelIds"/>
+              <REQUEST Name="generateSelfConfigModelInfoDocs" ServiceName="BPE_META" AssignToVar="selfConfigModelInfo">
+                <TO_XML SelectList="$selectedModelIds"/>
+              </REQUEST>
+              <REQUEST Name="generateSelfConfigDocuments" ServiceName="BPE_META" AssignToVar="selfConfigModelDocument" HandleException="true">
+                <TO_XML SelectList="$selfConfigModelInfo/*"/>
+              </REQUEST>
+              <IF_TEST Test="$selfConfigModelDocument/MODEL_FORM/@STATUS != 'NO_ERROR'">
+                <THEN>
+                  <SET Var="alertRed" FromValue="Model Validation failed for {$selfConfigModelDocument/MODEL_FORM/@TableName} tables,Please check logs for more details."/>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertGreen" FromValue="MODEL_VALIDATED_SUCESSFULLY"/>
+                  <REQUEST Name="persistSelfConfigXDocsReq" ServiceName="BPE_META" AssignToVar="getResponse">
+                    <TO_XML SelectList="$selfConfigModelDocument"/>
+                    <TO_XML SelectList="$selectedModelIds"/>
+                  </REQUEST>
+                </ELSE>
+              </IF_TEST>
+              <NATIVE_FUNCTION ClassName="com.teradata.mcore.doc.xdocgen.selfconfigdocs.SelfConfigXDocGenerateUtil" MethodName="getModelValidatorLogString" AssignToVar="validateModelsLog" HandleException="true"/>
+              <SET Property="modelValidatorLog" FromValue="{$validateModelsLog/@Value}" DocVar="pglFormInput"/>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="alertz">
+            <ABC>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </ABC>
+          </TO_DOCVAR>
+          <SET Property="startAtRow" FromValue="{$paginateStart}" DocVar="pglFormInput"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="alertz"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="getSelfConfigTemplates"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <if_cond Value="$userAction ='uploadTemplate'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ModelBuilderExcelUpload" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='downloadTemplate'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='CreateTemplate'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Model Builder" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='EditTemplate'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Model Builder" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='showTemplates'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ModelDefauftTemplateUI" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='createMultiModels'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ModelDefauftTemplateUI" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='generateMultiModels'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Validate'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ModelDefauftTemplateUI" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Model Builder" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="Manage Dictionary" ShowInBreadCrumbs="SHOW" Template="ManageDictionary.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="dictList">
+            <DICTMODEL/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="selectedDictIds">
+            <SELECTED_ID/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Delete'">
+            <THEN>
+              <SET Var="paginateStart" FromValue="0"/>
+            </THEN>
+            <ELSE>
+              <SET Var="paginateStart" FromValue="{ifElse($thisParam/START_COUNT/@Value = null, '0', $thisParam/START_COUNT/@Value)}"/>
+            </ELSE>
+          </IF_TEST>
+          <ADD_CHILDREN DocVar="selectedDictIds" FromSelectList="$thisParam/SELECTED_ID"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'Delete'">
+            <THEN>
+              <SET Var="selId" FromValue="{$thisParam/SELECTED_ID/@Value}"/>
+              <REMOVE_DOCUMENT Name="SELF_CONF_DICTIONARY" ServiceName="BPE_META" AssignToVar="response">
+                <Id Value="{$selId}"/>
+              </REMOVE_DOCUMENT>
+              <REMOVE_DOCUMENT Name="SELF_CONF_DICT_PROPS" ServiceName="BPE_META" AssignToVar="response">
+                <Id Value="{$selId}"/>
+              </REMOVE_DOCUMENT>
+              <IF_TEST Test="$response/@Status = 'Success'">
+                <THEN>
+                  <SET Var="alertGreen" FromValue="SC_DICTIONARY_DELETE_SUCCESS"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertRed" FromValue="SC_DICTIONARY_DELETE_FAILED"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value != 'save'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="alertz">
+                <ABC>
+                  <AlertGreen Value="{$alertGreen/@Value}"/>
+                  <AlertRed Value="{$alertRed/@Value}"/>
+                </ABC>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <SET Var="sortOrder" FromValue="{ifElse($thisParam/SORT_ORDER/@Value = null, 'Ascending', $thisParam/SORT_ORDER/@Value)}"/>
+          <SET Var="sortBy" FromValue="{ifElse(($thisParam/SORT_BY/@Value = null) or ($thisParam/SORT_BY/@Value = 'ID'), 'Id', $thisParam/SORT_BY/@Value)}"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SYS_RELOAD'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="orderByXml">
+                <ORDER_BY/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="sortByColumn">
+                <TEMP/>
+              </TO_DOCVAR>
+              <SET_NAME DocVar="sortByColumn" FromValue="{$sortBy}"/>
+              <SET Attribute="Sort" DocVar="sortByColumn" FromValue="{$sortOrder}"/>
+              <ADD_CHILDREN DocVar="orderByXml" FromDocVar="sortByColumn"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="($thisParam/innerAction/@Value = 'Filter')">
+            <THEN>
+              <SET DocVar="paginateStart" FromValue="0"/>
+              <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filterXml">
+                <FILTER_ModelUnit/>
+                <FILTER_Description/>
+                <FILTER_CREATED_BY/>
+                <CREATION_DATE Range="true" IsFilter="true"/>
+                <FILTER_LAST_MODIFIED_BY/>
+                <LAST_MODIFIED_DATE Range="true" IsFilter="true"/>
+              </FORM_SEARCH_FILTER>
+              <FOR_EACH SelectList="$filterXml/*/*" CurrentElement="currentSearchColumn">
+                <SET_NAME DocVar="currentSearchColumn" FromValue="{substringAfter($currentSearchColumn/name(),'FILTER_')}"/>
+              </FOR_EACH>
+              <GET_DOCUMENT Name="SELF_CONF_DICTIONARY" ServiceName="BPE_META" AssignToVar="getSelfConfigDicts" DirtyRead="true" StartAtRow="{$paginateStart}" MaxRows="{$maxRow}" ReturnRowCount="yes">
+                <TO_XML SelectList="$filterXml/*/*"/>
+                <TO_XML SelectList="$orderByXml"/>
+              </GET_DOCUMENT>
+            </THEN>
+            <ELSE>
+              <GET_DOCUMENT Name="SELF_CONF_DICTIONARY" ServiceName="BPE_META" StartAtRow="{$paginateStart}" MaxRows="{$tableDefaultRows}" DirtyRead="true" AssignToVar="getSelfConfigDicts" ReturnRowCount="true">
+                <TO_XML SelectList="$orderByXml"/>
+              </GET_DOCUMENT>
+            </ELSE>
+          </IF_TEST>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="alertz"/>
+          <ADD_CHILDREN DocVar="dictList" FromSelectList="$getSelfConfigDicts/*"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="dictList"/>
+          <SET Property="totalRowCount" FromValue="{$getSelfConfigDicts/@TotalRowCount}" DocVar="pglFormInput"/>
+          <SET Property="startAtRow" FromValue="{$paginateStart}" DocVar="pglFormInput"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <if_cond Value="$userAction ='Create'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Dictionary Model" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Edit'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Dictionary Model" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Delete'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Dictionary" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Model Builder" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="Dictionary Model" ShowInBreadCrumbs="SHOW" Template="DictionaryModel.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value != 'SYS_TAB'">
+            <THEN>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value ='Create'">
+                <THEN/>
+                <ELSE>
+                  <SET Var="dictId" FromValue="{$thisParam/SELECTED_ID/@Value}"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="selfConfigDict">
+            <SELF_CONF_DICTIONARY/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="selfConfDictProperties">
+            <SELF_CONF_DICT_PROPTIES/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'Create'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="selfConfigDictInfo">
+                <ROOT/>
+              </TO_DOCVAR>
+              <APPEND_TO_XML DocVar="selfConfDictProperties">
+                <SELF_CONF_DICT_PROP>
+                  <Name Value=""/>
+                </SELF_CONF_DICT_PROP>
+              </APPEND_TO_XML>
+              <ADD_CHILDREN DocVar="selfConfigDictInfo" FromSelectList="$selfConfigDict"/>
+              <ADD_CHILDREN DocVar="selfConfigDictInfo" FromDocVar="selfConfDictProperties"/>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'Edit'">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="selfConfigDictInfo">
+                    <ROOT/>
+                  </TO_DOCVAR>
+                  <SET Var="action" FromValue="EDIT"/>
+                  <GET_DOCUMENT ServiceName="BPE_META" Name="SELF_CONF_DICTIONARY" AssignToVar="selfConfigDict" DirtyRead="true" HandleException="true">
+                    <Id Value="{$dictId}"/>
+                  </GET_DOCUMENT>
+                  <SET_NAME DocVar="selfConfigDict" FromValue="SELF_CONF_DICTIONARY"/>
+                  <REQUEST Name="getDictProperty" ServiceName="BPE_META" AssignToVar="dictproperties">
+                    <dictId Value="{$dictId}"/>
+                  </REQUEST>
+                  <IF_TEST Test="$dictproperties/SELF_CONF_DICT_PROPTIES/* = null">
+                    <THEN>
+                      <TO_DOCVAR AssignToVar="dictprop">
+                        <SELF_CONF_DICT_PROP>
+                          <Name Value=""/>
+                        </SELF_CONF_DICT_PROP>
+                      </TO_DOCVAR>
+                      <APPEND_TO_XML SelectList="$dictproperties/SELF_CONF_DICT_PROPTIES">
+                        <TO_XML SelectList="$dictprop"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                  </IF_TEST>
+                  <ADD_CHILDREN DocVar="selfConfigDictInfo" FromSelectList="$selfConfigDict/*"/>
+                  <ADD_CHILDREN DocVar="selfConfigDictInfo" FromSelectList="$dictproperties/*"/>
+                </THEN>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'SYS_TAB'">
+            <THEN>
+              <REQUEST Name="selfConfigDictUpdateGlobalVariableReq" ServiceName="BPE_META" AssignToVar="selfConfigUpdateGlobalVariableResponse" HandleException="true">
+                <TO_XML SelectList="$thisParam/*"/>
+                <TO_XML DocVar="selfConfigDictInfo"/>
+              </REQUEST>
+              <REMOVE_CHILDREN ChildName="SELF_CONF_DICTIONARY" DocVar="selfConfigDictInfo"/>
+              <REMOVE_CHILDREN ChildName="SELF_CONF_DICT_PROPTIES" DocVar="selfConfigDictInfo"/>
+              <APPEND_TO_XML DocVar="selfConfigDictInfo">
+                <TO_XML SelectList="$selfConfigUpdateGlobalVariableResponse/*/*"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <FOR_EACH CurrentElement="currProp" SelectList="$selfConfigDictInfo/SELF_CONF_DICT_PROPTIES/*">
+            <IF_TEST Test="strlen($currProp/Name/@Value)=0">
+              <THEN>
+                <CONTINUE/>
+              </THEN>
+            </IF_TEST>
+          </FOR_EACH>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$selfConfigDictInfo/*"/>
+          <SET DocVar="pglFormInput" Property="URL_V" FromValue="{concat($webuiContextPath,'/start.x2ps?START_WORKFLOW=ManageSelfConfiguratorWF&amp;SERVICE_NAME=ADMIN_UI&amp;SOLUTION_NAME=MDM&amp;POPUP=true&amp;createValidValue=true')}"/>
+          <SET DocVar="pglFormInput" Property="URL_Extend" FromValue="{concat($webuiContextPath,'/start.x2ps?START_WORKFLOW=ManageSelfConfiguratorWF&amp;SERVICE_NAME=ADMIN_UI&amp;SOLUTION_NAME=MDM&amp;POPUP=true&amp;createExtendDataType=true')}"/>
+          <SET Property="ERROR_TAB_NAME" FromValue="{$thisParam/ERROR_TAB_NAME/@Value}" DocVar="pglFormInput"/>
+          <SET DocVar="pglFormInput" Property="disableVar" FromValue="{$thisParam/disableVar/@Value}"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value ='save'">
+            <THEN>
+              <REQUEST Name="selfConfigDictUpdateGlobalVariableReq" ServiceName="BPE_META" AssignToVar="selfConfigUpdateGlobalVariableResponse" HandleException="true">
+                <TO_XML SelectList="$thisParam/*"/>
+                <TO_XML DocVar="selfConfigDictInfo"/>
+              </REQUEST>
+              <REMOVE_CHILDREN ChildName="SELF_CONF_DICTIONARY" DocVar="selfConfigDictInfo"/>
+              <REMOVE_CHILDREN ChildName="SELF_CONF_DICT_PROPTIES" DocVar="selfConfigDictInfo"/>
+              <APPEND_TO_XML DocVar="selfConfigDictInfo">
+                <TO_XML SelectList="$selfConfigUpdateGlobalVariableResponse/*/*"/>
+              </APPEND_TO_XML>
+              <TO_DOCVAR AssignToVar="selfConfigDict">
+                <ROOT>
+                  <SELF_CONF_DICTIONARY/>
+                  <SELF_CONF_DICT_PROPTIES/>
+                </ROOT>
+              </TO_DOCVAR>
+              <IF_TEST Test="$action/@Value = 'EDIT'">
+                <THEN>
+                  <REQUEST Name="deleteSelfConfigDictProps" ServiceName="BPE_META">
+                    <Dict_Id Value="{$dictId}"/>
+                  </REQUEST>
+                </THEN>
+                <ELSE>
+                  <GET_DOCUMENT Name="SELF_CONF_DICTIONARY" ServiceName="BPE_META" DirtyRead="true" AssignToVar="isTableNameExist" ReturnRowCount="true" HandleException="true">
+                    <ModelUnit Value="{$selfConfigDictInfo/SELF_CONF_DICTIONARY/ModelUnit/@Value}"/>
+                  </GET_DOCUMENT>
+                  <IF_TEST Test="$isTableNameExist/SELF_CONF_DICTIONARY/Id/@Value != null">
+                    <THEN>
+                      <SET Var="dictId" FromValue="{$isTableNameExist/SELF_CONF_DICTIONARY/Id/@Value}"/>
+                      <REQUEST Name="deleteSelfConfigModel" ServiceName="BPE_META" HandleException="true">
+                        <Id Value="{$dictId}"/>
+                      </REQUEST>
+                      <SET Var="action" FromValue="EDIT"/>
+                    </THEN>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+              <!-- CREATE Model DOC VAR -->
+              <TO_DOCVAR AssignToVar="selfConfigModel">
+                <SELF_CONF_DICTIONARY>
+                  <Id Value="{$selfConfigDictInfo/SELF_CONF_DICTIONARY/Id/@Value}"/>
+                  <ModelUnit Value="{$selfConfigDictInfo/SELF_CONF_DICTIONARY/ModelUnit/@Value}"/>
+                  <Description Value="{$selfConfigDictInfo/SELF_CONF_DICTIONARY/Description/@Value}"/>
+                </SELF_CONF_DICTIONARY>
+              </TO_DOCVAR>
+              <APPEND_TO_XML SelectList="$selfConfigDict/SELF_CONF_DICTIONARY">
+                <TO_XML SelectList="$selfConfigModel/*"/>
+              </APPEND_TO_XML>
+              <!-- CREATE  PROPERTIES DOC VAR -->
+              <FOR_EACH CurrentElement="currProp" SelectList="$selfConfigDictInfo/SELF_CONF_DICT_PROPTIES/SELF_CONF_DICT_PROP">
+                <IF_TEST Test="strlen($currProp/Name/@Value) = 0">
+                  <THEN>
+                    <CONTINUE/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="strlen($currProp/Length/@Value) != 0">
+                  <THEN>
+                    <SET Var="dataType" FromValue="{concat($currProp/DataType/@Value,'_',$currProp/Length/@Value)}"/>
+                  </THEN>
+                  <ELSE>
+                    <SET Var="dataType" FromValue="{$currProp/DataType/@Value}"/>
+                  </ELSE>
+                </IF_TEST>
+                <TO_DOCVAR AssignToVar="selfConfigProp">
+                  <SELF_CONF_DICT_PROP>
+                    <Name Value="{$currProp/Name/@Value}"/>
+                    <CharacterSet Value="{$currProp/CharacterSet/@Value}"/>
+                    <DataType Value="{$dataType}"/>
+                    <ExtendedId Value="{$currProp/ExtendedId/@Value}"/>
+                    <ExtendedName Value="{$currProp/ExtendedName/@Value}"/>
+                    <DefaultValue Value="{$currProp/DefaultValue/@Value}"/>
+                    <Description Value="{$currProp/Description/@Value}"/>
+                    <PhysicalName Value="{$currProp/PhysicalName/@Value}"/>
+                    <Required Value="{$currProp/Required/@Value}"/>
+                    <Enum Value="{$currProp/Enum/@Value}"/>
+                    <ENTITY_STATE Value="{$currProp/ENTITY_STATE/@Value}"/>
+                    <CREATED_BY Value="{$currProp/CREATED_BY/@Value}"/>
+                    <CREATION_DATE Value="{$currProp/CREATION_DATE/@Value}"/>
+                  </SELF_CONF_DICT_PROP>
+                </TO_DOCVAR>
+                <APPEND_TO_XML SelectList="$selfConfigDict/SELF_CONF_DICT_PROPTIES">
+                  <TO_XML SelectList="$selfConfigProp"/>
+                </APPEND_TO_XML>
+              </FOR_EACH>
+              <SET Property="ACTION_VAR" FromValue="{$action}" DocVar="selfConfigDict"/>
+              <REQUEST Name="persistSelfConfigDictDataInDB" ServiceName="BPE_META" HandleException="true" AssignToVar="response">
+                <TO_XML SelectList="$selfConfigDict"/>
+              </REQUEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$response/RESPONSE/@Status ='Error'">
+            <THEN>
+              <SET Var="alertRed" FromValue="Error in Dictionary {$response/RESPONSE/@Description}"/>
+            </THEN>
+            <ELSE>
+              <SET Var="alertGreen" FromValue="SC_DICTIONARY_UPDATED_SUCCESSFULLY"/>
+            </ELSE>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="alertz">
+            <ABC>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </ABC>
+          </TO_DOCVAR>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Dictionary" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='delete'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='add'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='save'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Dictionary" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done10" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <decision Name="decisionExtend">
+      <actions>
+        <action>
+          <IF_TEST Test="$thisParam/createExtendDataType/@Value='true'">
+            <THEN>
+              <SET Var="sourceFlag" FromValue="Yes"/>
+            </THEN>
+            <ELSE>
+              <SET Var="sourceFlag" FromValue="No"/>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </actions>
+      <condition Value="$sourceFlag = 'No'"/>
+      <if_true>
+        <next_nodes/>
+      </if_true>
+      <if_false>
+        <next_nodes>
+          <next_node Name="Extend DataType Node" Description=""/>
+        </next_nodes>
+      </if_false>
+    </decision>
+    <ui_form2 Name="Extend DataType Node" ShowInBreadCrumbs="HIDE" Template="ExtendDataTypeNode.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="DataType">
+            <DICT_DATATYPE/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Select'">
+            <THEN>
+              <SET Var="dataId" FromValue="{$thisParam/SELECTED_ID/@Value}"/>
+              <SET DocVar="pglFormInput" Property="result" FromValue="{$dataId}"/>
+            </THEN>
+            <ELSE>
+              <SET Var="paginateStart" FromValue="{ifElse($thisParam/START_COUNT/@Value = null, '0', $thisParam/START_COUNT/@Value)}"/>
+              <IF_TEST Test="($thisParam/innerAction/@Value = 'Filter') or ($thisParam/BUTTON_ID/@Value='SYS_RELOAD')">
+                <THEN>
+                  <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filterXml1">
+                    <FILTER_Name/>
+                  </FORM_SEARCH_FILTER>
+                  <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filterXml2">
+                    <FILTER_ModelUnit/>
+                    <FILTER_FolderName/>
+                  </FORM_SEARCH_FILTER>
+                  <FOR_EACH SelectList="$filterXml1/*/*" CurrentElement="currentSearchColumn">
+                    <SET_NAME DocVar="currentSearchColumn" FromValue="{substringAfter($currentSearchColumn/name(),'FILTER_')}"/>
+                  </FOR_EACH>
+                  <FOR_EACH SelectList="$filterXml2/*/*" CurrentElement="currentSearchColumn">
+                    <SET_NAME DocVar="currentSearchColumn" FromValue="{substringAfter($currentSearchColumn/name(),'FILTER_')}"/>
+                  </FOR_EACH>
+                </THEN>
+              </IF_TEST>
+              <GET_DOC_SMART Name="SELF_CONF_DICT_PROPS" ServiceName="BPE_META" AssignToVar="getDictDataType" ReturnRowCount="yes" DirtyRead="true" HandleException="true" MaxRows="{$tableDefaultRows}" StartAtRow="{$paginateStart}">
+                <TO_XML SelectList="$filterXml1/*/*"/>
+                <SELECT>
+                  <Id/>
+                  <Name/>
+                </SELECT>
+                <QUERY_DOCUMENT_LINK Name="dict_Id_Link">
+                  <TO_XML SelectList="$filterXml2/*/*"/>
+                  <SELECT>
+                    <ModelUnit/>
+                    <FolderName/>
+                  </SELECT>
+                </QUERY_DOCUMENT_LINK>
+                <ORDER_BY>
+                  <ModelUnit Sort="Ascending"/>
+                </ORDER_BY>
+              </GET_DOC_SMART>
+              <APPEND_CHILDREN DocVar="DataType" FromDocVar="getDictDataType"/>
+              <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="DataType"/>
+            </ELSE>
+          </IF_TEST>
+          <SET Property="totalRowCount" FromValue="{$getDictDataType/@TotalRowCount}" DocVar="pglFormInput"/>
+          <SET Property="startAtRow" FromValue="{$paginateStart}" DocVar="pglFormInput"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <if_cond Value="$userAction ='Select'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Extend DataType Node" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Delete'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='delete'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="View Model DDL" ShowInBreadCrumbs="SHOW" Template="ViewModelSQL.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="selectedModelsDDL">
+            <MODEL_DDL/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="selectedModelIds">
+            <OR/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="selectedModelTableIds">
+            <OR/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/SELECTED_ID != null">
+            <THEN>
+              <FOR_EACH CurrentElement="currElem" SelectList="$thisParam/SELECTED_ID">
+                <SET_NAME DocVar="currElem" FromValue="TABLE_ID"/>
+                <ADD_CHILDREN DocVar="selectedModelIds" FromDocVar="currElem"/>
+                <ADD_CHILDREN DocVar="selectedModelTableIds" FromDocVar="currElem"/>
+              </FOR_EACH>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value ='SYS_RELOAD'">
+                <THEN>
+                  <IF_TEST Test="int(count($selectedModelIdsClone/ID)) != 0">
+                    <THEN>
+                      <ADD_CHILDREN DocVar="selectedModelIds" FromSelectList="$selectedModelIdsClone/*"/>
+                    </THEN>
+                  </IF_TEST>
+                  <SET Var="sortOrder" FromValue="{ifElse($thisParam/SORT_ORDER/@Value = null, 'Ascending', $thisParam/SORT_ORDER/@Value)}"/>
+                  <SET Var="sortBy" FromValue="{ifElse(($thisParam/SORT_BY/@Value = null) or ($thisParam/SORT_BY/@Value = 'TABLE_NAME'), 'TABLE_NAME', $thisParam/SORT_BY/@Value)}"/>
+                  <TO_DOCVAR AssignToVar="orderByXml">
+                    <ORDER_BY/>
+                  </TO_DOCVAR>
+                  <TO_DOCVAR AssignToVar="sortByColumn">
+                    <TEMP/>
+                  </TO_DOCVAR>
+                  <SET_NAME DocVar="sortByColumn" FromValue="{$sortBy}"/>
+                  <SET Attribute="Sort" DocVar="sortByColumn" FromValue="{$sortOrder}"/>
+                  <ADD_CHILDREN DocVar="orderByXml" FromDocVar="sortByColumn"/>
+                </THEN>
+                <ELSE>
+                  <FOR_EACH CurrentElement="currElem" SelectList="$thisParam/ID">
+                    <SET_NAME DocVar="currElem" FromValue="ID"/>
+                    <ADD_CHILDREN DocVar="selectedModelIds" FromDocVar="currElem"/>
+                  </FOR_EACH>
+                  <CLONE_XML AssignToVar="selectedModelIdsClone" DocVar="selectedModelIds"/>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <SET Var="paginateStart" FromValue="{ifElse($thisParam/START_COUNT/@Value = null, '0', $thisParam/START_COUNT/@Value)}"/>
+          <IF_TEST Test="int(count($selectedModelIds/TABLE_ID)) != 0 or int(count($selectedModelIds/ID)) != 0">
+            <THEN>
+              <GET_DOCUMENT Name="SELF_CONF_MODEL_DDL" ServiceName="BPE_META" DirtyRead="true" StartAtRow="{$paginateStart}" MaxRows="{$tableDefaultRows}" ReturnRowCount="yes" AssignToVar="modelSqls">
+                <ORDER_BY>
+                  <ID Sort="Descending"/>
+                </ORDER_BY>
+                <TO_XML SelectList="$selectedModelIds"/>
+                <SELECT>
+                  <TABLE_ID/>
+                  <ID/>
+                  <MST_TABLE_DDL/>
+                  <ERR_TABLE_DDL/>
+                  <AUDIT_TABLE_DDL/>
+                  <IN_TABLE_DDL/>
+                  <OUT_TABLE_DDL/>
+                  <VER_TABLE_DDL/>
+                  <NET_CHANGE_TABLE_DDL/>
+                </SELECT>
+              </GET_DOCUMENT>
+              <IF_TEST Test="int(count($selectedModelTableIds/TABLE_ID)) = 0">
+                <THEN>
+                  <FOR_EACH CurrentElement="currModel" SelectList="$modelSqls/*">
+                    <ADD_CHILDREN DocVar="selectedModelTableIds" FromDocVar="{$currModel/TABLE_ID}"/>
+                  </FOR_EACH>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/innerAction/@Value = 'Filter'">
+                <THEN>
+                  <SET DocVar="paginateStart" FromValue="0"/>
+                  <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filterXml">
+                    <FILTER_TABLE_NAME/>
+                  </FORM_SEARCH_FILTER>
+                  <FOR_EACH SelectList="$filterXml/*/*" CurrentElement="currentSearchColumn">
+                    <SET_NAME DocVar="currentSearchColumn" FromValue="{substringAfter($currentSearchColumn/name(),'FILTER_')}"/>
+                  </FOR_EACH>
+                  <GET_DOCUMENT Name="SELF_CONF_MODEL" ServiceName="BPE_META" DirtyRead="true" AssignToVar="modelName">
+                    <SELECT>
+                      <TABLE_NAME/>
+                      <TABLE_ID/>
+                    </SELECT>
+                    <TO_XML SelectList="$filterXml/*/*"/>
+                    <TO_XML SelectList="$orderByXml"/>
+                    <TO_XML SelectList="$selectedModelTableIds"/>
+                  </GET_DOCUMENT>
+                </THEN>
+                <ELSE>
+                  <GET_DOCUMENT Name="SELF_CONF_MODEL" ServiceName="BPE_META" DirtyRead="true" AssignToVar="modelName">
+                    <SELECT>
+                      <TABLE_NAME/>
+                      <TABLE_ID/>
+                    </SELECT>
+                    <TO_XML SelectList="$orderByXml"/>
+                    <TO_XML SelectList="$selectedModelTableIds"/>
+                  </GET_DOCUMENT>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <FOR_EACH CurrentElement="currModel" SelectList="$modelSqls/*">
+            <SET Var="tableName" FromValue="{$modelName/SELF_CONF_MODEL[TABLE_ID/@Value=$currModel/TABLE_ID/@Value]/TABLE_NAME/@Value}"/>
+            <IF_TEST Test="strlen($tableName/@Value) = 0 or strlen($selectedModelsDDL/SELF_CONF_MODE_DDL/TABLE_NAME[@Value=$tableName/@Value]/@Value)!=0">
+              <THEN>
+                <CONTINUE/>
+              </THEN>
+            </IF_TEST>
+            <FOR_EACH CurrentElement="currElem" SelectList="$currModel/*">
+              <SET Var="ID" FromValue="{$currModel/ID/@Value}"/>
+              <IF_TEST Test="$currElem/name() = 'ID' or $currElem/name() = 'TABLE_ID'">
+                <THEN>
+                  <CONTINUE/>
+                </THEN>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="selfConfModel">
+                <SELF_CONF_MODE_DDL>
+                  <ID Value="{$ID}"/>
+                  <TABLE_NAME Value="{$tableName/@Value}"/>
+                  <TableStagingName Value="{$currElem/name()}"/>
+                  <ModelDDl Value="{$currElem/@Value}"/>
+                </SELF_CONF_MODE_DDL>
+              </TO_DOCVAR>
+              <ADD_CHILDREN DocVar="selectedModelsDDL" FromDocVar="selfConfModel"/>
+            </FOR_EACH>
+          </FOR_EACH>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="selectedModelsDDL"/>
+          <SET Property="totalRowCount" FromValue="{$modelSqls/@TotalRowCount}" DocVar="pglFormInput"/>
+          <SET Property="startAtRow" FromValue="{$paginateStart}" DocVar="pglFormInput"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <if_cond Value="$userAction ='BACK'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='GenerateSql'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Model Builder" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <ModelBuilderExcelUpload font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="395,104" size="1920,1040">
+        <iconProps iconfile="x1age80.gif"/>
+      </ModelBuilderExcelUpload>
+      <start1 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="186,216">
+        <iconProps iconfile="z1start.gif"/>
+      </start1>
+      <mgcnode Name="Model Builder" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="389,215" size="1920,1040">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <mgcnode Name="Manage Model Builder" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="673,213" size="1920,1040">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <mgcnode Name="ModelBuilder Logs" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="0,0" size="1920,1040">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <ModelBuilderDetailLog font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="631,409" size="1920,1040">
+        <iconProps iconfile="x1age80.gif"/>
+      </ModelBuilderDetailLog>
+      <done10 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="846,213">
+        <iconProps iconfile="z1end.gif"/>
+      </done10>
+      <EnumValidValuesUI font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="230,486" size="1920,1040">
+        <iconProps iconfile="x1age80.gif"/>
+      </EnumValidValuesUI>
+      <decision font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="261,372" size="744,679">
+        <iconProps iconfile="z1decision.gif"/>
+      </decision>
+      <ModelDefauftTemplateUI font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="670,55" size="1920,1040">
+        <iconProps iconfile="x1age80.gif"/>
+      </ModelDefauftTemplateUI>
+      <mgcnode Name="Manage Dictionary" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="363,579" size="1920,1032">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <mgcnode Name="Dictionary Model" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="640,579" size="1920,1032">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <decisionExtend font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="59,374" size="752,857">
+        <iconProps iconfile="z1decision.gif"/>
+      </decisionExtend>
+      <mgcnode Name="Extend DataType Node" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="66,526" size="1920,1032">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <mgcnode Name="View Model DDL" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="203,95" size="1920,1040">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+    </mgcnodes>
+    <mgcconnectors>
+      <ModelBuilderExcelUpload>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="417,104" endpoint="417,104" ctrlRect1="415,27,4,4" ctrlRect2="412,-9,4,4" ctrlRect2Dirty="true" textRect="410,7,11,8">
+          <textProps text="Upload"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="417,104" endpoint="411,215" ctrlRect1="601,72,4,4" ctrlRect2="409,129,4,4" ctrlRect1Dirty="true" textRect="503,98,9,8">
+          <textProps text="Back"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="440,126" endpoint="670,77" ctrlRect1="491,98,4,4" ctrlRect2="495,75,4,4" textRect="491,84,9,8" ctrlRect1Dirty="true">
+          <textProps text="Back"/>
+        </nextNodeView>
+      </ModelBuilderExcelUpload>
+      <start1>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="231,238" endpoint="389,237" ctrlRect1="347,236,4,4" ctrlRect2="268,235,4,4"/>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="215,248" endpoint="275,371" ctrlRect1="213,337,4,4" ctrlRect2="273,276,4,4"/>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="208,261" endpoint="81,374" ctrlRect1="206,343,4,4" ctrlRect2="79,287,4,4"/>
+      </start1>
+      <mgcnode Name="Model Builder">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="411,215" endpoint="395,126" ctrlRect1="409,147,4,4" ctrlRect2="216,101,4,4" ctrlRect2Dirty="true" textRect="306,122,16,8">
+          <textProps text="ExcelUpload"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="389,237" endpoint="389,237" ctrlRect1="312,235,4,4" ctrlRect2="378,415,4,4" ctrlRect2Dirty="true" textRect="341,323,13,8">
+          <textProps text="Validate"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="434,237" endpoint="434,237" ctrlRect1="531,311,4,4" ctrlRect2="430,424,4,4" ctrlRect2Dirty="true" textRect="477,365,11,8" ctrlRect1Dirty="true">
+          <textProps text="RunIsg"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="434,237" endpoint="695,213" ctrlRect1="627,235,4,4" ctrlRect2="641,158,4,4" textRect="631,194,11,8" ctrlRect2Dirty="true">
+          <textProps text="Create"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="434,237" endpoint="673,235" ctrlRect1="610,235,4,4" ctrlRect2="669,337,4,4" ctrlRect2Dirty="true" textRect="636,284,11,8">
+          <textProps text="Edit"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="434,237" endpoint="434,237" ctrlRect1="507,235,4,4" ctrlRect2="545,115,4,4" ctrlRect2Dirty="true" textRect="523,173,11,8">
+          <textProps text="Delete"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="389,237" endpoint="389,237" ctrlRect1="312,235,4,4" ctrlRect2="225,112,4,4" ctrlRect2Dirty="true" textRect="263,171,15,8">
+          <textProps text="showModels"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="411,260" endpoint="408,412" ctrlRect1="409,372,4,4" ctrlRect2="345,367,4,4" ctrlRect2Dirty="true" textRect="373,367,13,8">
+          <textProps text="Isg Logs"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="434,237" endpoint="670,77" ctrlRect1="609,235,4,4" ctrlRect2="589,103,4,4" textRect="591,167,20,8" ctrlRect2Dirty="true">
+          <textProps text="defaultTemplate"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="411,260" endpoint="385,579" ctrlRect1="409,496,4,4" ctrlRect2="383,337,4,4" textRect="387,414,22,8">
+          <textProps text="Manage Dictionary"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="389,237" endpoint="248,117" ctrlRect1="282,235,4,4" ctrlRect2="352,115,4,4" textRect="313,173,12,8">
+          <textProps text="ViewSql"/>
+        </nextNodeView>
+      </mgcnode>
+      <mgcnode Name="Manage Model Builder">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="673,235" endpoint="434,237" ctrlRect1="493,233,4,4" ctrlRect2="612,235,4,4" textRect="550,232,9,8">
+          <textProps text="save"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="673,235" endpoint="434,237" ctrlRect1="662,233,4,4" ctrlRect2="612,235,4,4" ctrlRect1Dirty="true" textRect="635,232,9,8">
+          <textProps text="Back"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="718,235" endpoint="846,235" ctrlRect1="812,233,4,4" ctrlRect2="748,233,4,4" textRect="778,231,9,8">
+          <textProps text="Done"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="695,213" endpoint="692,100" ctrlRect1="835,77,4,4" ctrlRect2="690,183,4,4" ctrlRect1Dirty="true" textRect="756,128,17,8">
+          <textProps text="saveTemplate"/>
+        </nextNodeView>
+      </mgcnode>
+      <mgcnode Name="ModelBuilder Logs">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="408,412" endpoint="411,260" ctrlRect1="477,346,4,4" ctrlRect2="409,372,4,4" ctrlRect1Dirty="true" textRect="441,357,9,8">
+          <textProps text="Back"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="431,434" endpoint="631,431" ctrlRect1="429,431,4,4" ctrlRect2="604,389,4,4" ctrlRect2Dirty="true" textRect="510,408,16,8">
+          <textProps text="log Details"/>
+        </nextNodeView>
+      </mgcnode>
+      <ModelBuilderDetailLog>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="631,431" endpoint="431,434" ctrlRect1="582,464,4,4" ctrlRect2="429,429,4,4" ctrlRect1Dirty="true" textRect="503,444,9,8">
+          <textProps text="Back"/>
+        </nextNodeView>
+      </ModelBuilderDetailLog>
+      <EnumValidValuesUI>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="275,508" endpoint="275,508" ctrlRect1="348,506,4,4" ctrlRect2="348,506,4,4" textRect="346,504,9,8">
+          <textProps text="Save"/>
+        </nextNodeView>
+      </EnumValidValuesUI>
+      <decision>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="178,0,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="283,417" endpoint="252,486" ctrlRect1="281,466,4,4" ctrlRect2="250,432,4,4"/>
+      </decision>
+      <ModelDefauftTemplateUI>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="670,77" endpoint="440,126" ctrlRect1="496,75,4,4" ctrlRect2="578,128,4,4" textRect="530,99,19,8" ctrlRect2Dirty="true">
+          <textProps text="uploadTemplate"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="692,100" endpoint="695,213" ctrlRect1="690,182,4,4" ctrlRect2="693,126,4,4" textRect="684,152,19,8">
+          <textProps text="CreateTemplate"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="692,100" endpoint="695,213" ctrlRect1="637,152,4,4" ctrlRect2="693,126,4,4" textRect="659,137,17,8" ctrlRect1Dirty="true">
+          <textProps text="EditTemplate"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="715,77" endpoint="715,77" ctrlRect1="788,75,4,4" ctrlRect2="877,13,4,4" ctrlRect2Dirty="true" textRect="825,42,18,8">
+          <textProps text="showTemplates"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="715,77" endpoint="715,77" ctrlRect1="788,75,4,4" ctrlRect2="832,120,4,4" ctrlRect2Dirty="true" textRect="800,95,24,8">
+          <textProps text="generateMultiModels"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="715,77" endpoint="715,77" ctrlRect1="788,75,4,4" ctrlRect2="788,75,4,4" textRect="780,73,21,8">
+          <textProps text="validateTemplate"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="670,77" endpoint="411,215" ctrlRect1="475,75,4,4" ctrlRect2="409,109,4,4" textRect="440,90,9,8">
+          <textProps text="back"/>
+        </nextNodeView>
+      </ModelDefauftTemplateUI>
+      <mgcnode Name="Manage Dictionary">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="408,601" endpoint="640,601" ctrlRect1="455,608,4,4" ctrlRect2="540,633,4,4" textRect="494,618,11,8" ctrlRect1Dirty="true" ctrlRect2Dirty="true">
+          <textProps text="Create"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="408,601" endpoint="640,601" ctrlRect1="461,585,4,4" ctrlRect2="581,544,4,4" textRect="519,562,9,8" ctrlRect2Dirty="true" ctrlRect1Dirty="true">
+          <textProps text="Edit"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="385,579" endpoint="385,579" ctrlRect1="383,502,4,4" ctrlRect2="461,509,4,4" ctrlRect2Dirty="true" textRect="419,503,11,8">
+          <textProps text="Delete"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="385,579" endpoint="411,260" ctrlRect1="383,339,4,4" ctrlRect2="409,498,4,4"/>
+      </mgcnode>
+      <mgcnode Name="Dictionary Model">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="662,579" endpoint="408,601" ctrlRect1="668,359,4,4" ctrlRect2="400,590,4,4" ctrlRect1Dirty="true" textRect="532,472,9,8" ctrlRect2Dirty="true">
+          <textProps text="back"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="640,601" endpoint="385,624" ctrlRect1="458,666,4,4" ctrlRect2="466,757,4,4" ctrlRect1Dirty="true" textRect="458,709,13,8" ctrlRect2Dirty="true">
+          <textProps text="SaveDict"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="662,579" endpoint="846,235" ctrlRect1="744,560,4,4" ctrlRect2="700,263,4,4" ctrlRect1Dirty="true" textRect="720,409,9,8" ctrlRect2Dirty="true">
+          <textProps text="Done"/>
+        </nextNodeView>
+      </mgcnode>
+      <decisionExtend>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="178,0,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="81,419" endpoint="88,526" ctrlRect1="79,496,4,4" ctrlRect2="86,443,4,4"/>
+      </decisionExtend>
+      <mgcnode Name="Extend DataType Node">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="88,526" endpoint="88,526" ctrlRect1="86,449,4,4" ctrlRect2="166,426,4,4" textRect="123,435,11,8" ctrlRect2Dirty="true">
+          <textProps text="Select"/>
+        </nextNodeView>
+      </mgcnode>
+      <mgcnode Name="View Model DDL">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="248,117" endpoint="389,237" ctrlRect1="264,175,4,4" ctrlRect2="281,235,4,4" ctrlRect1Dirty="true" textRect="270,203,9,8">
+          <textProps text="Back"/>
+        </nextNodeView>
+      </mgcnode>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions/>
+    <post_actions/>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

@@ -1,0 +1,126 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" Id="SearchLegalEntity.pgl" version="3">
+  <ui:container id="outerContainer1" name="outerContainer1" scrollable="true">
+    <ui:step id="outerStep1" name="outerStep1" scrollable="true">
+      <ui:container id="topContainer" scrollable="true" type="Tabs">
+        <ui:step displayText="SEARCH COUNTRY" id="country" scrollable="true">
+          <ui:field-group id="tableColumns1" columns="2" select="$this">
+            <ui:hidden-field id="ACTION_TYPE" name="ACTION_TYPE"/>
+            <ui:dropdown id="GEOC_REGN_CODE" name="GEOC_REGN_CODE" displayText="Geographic Region Code" optionSrc="$root/GEOC_REGN/GEOC_REGN_NAME" selectOne="true" onChange="javascript:loadProgramList();"/>
+            <ui:dropdown id="GEOC_SUB_REGN_CODE" name="GEOC_SUB_REGN_CODE" displayText="Geographic Sub Region Code" optionSrc="$root/GEOC_SUB_REGN/OPTION" selectOne="true" onChange="javascript:loadProgramList();"/>
+            <ui:dropdown id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR" displayText="Legal Entity Number" optionSrc="$root/LEGAL_ENT/OPTION" selectOne="true" />
+            <ui:hidden-field id="user_action" name="user_action"/>
+            <ui:entry-field id="CNTRY_CODE" name="CNTRY_CODE" displayText="Country Code" dataType="Constant"/>
+            <ui:entry-field id="CNTRY_NAME" name="CNTRY_NAME" displayText="Country Name" dataType="Constant"/>
+            <ui:entry-field id="CNTRY_CODE_NTV" name="CNTRY_CODE_NTV" displayText="Country Code NTV" dataType="Constant"/>
+            <ui:entry-field id="CNTRY_NAME_NTV" name="CNTRY_NAME_NTV" displayText="Country Name NTV" dataType="Constant"/>
+            <ui:entry-field id="CNTRY_SHORT_NAME" name="CNTRY_SHORT_NAME" displayText="Country Short Name" dataType="Constant"/>
+            <ui:entry-field id="CNTRY_DESC" name="CNTRY_DESC" displayText="Country Description"  dataType="Constant"/>
+          </ui:field-group>
+          <ui:buttons>
+            <!--ui:button id="RESET" name="RESET" displayText="Reset" onClick="javascript:on_RESET();"/-->
+            <ui:button id="SEARCH" name="SEARCH" displayText="Search" emphasized="true"/>
+          </ui:buttons>
+        </ui:step>
+      </ui:container>
+      <ui:table id="rtable" name="rtable" displayText="Search Results" displayTextNoRecords="No records found" rowId="CNTRY_CODE" rowSrc="$root/RESPONSE/CNTRY" scrollable="true" selectable="Single" postRowIdAs="CountryCode" startAtRow="$root/START_COUNT/@Value" maxRows="15" totalRowCount="$root/RESPONSE/@TotalRowCount" exportable="true">
+        <ui:field-group id="tableColumns">
+          <ui:display-field id="CNTRY_CODE" name="CNTRY_CODE" displayText="Country Code" dataType="Constant"/>
+          <ui:display-field id="CNTRY_CODE_NTV" name="CNTRY_CODE_NTV" displayText="Country Code NTV" dataType="Constant"/>
+          <ui:display-field id="CNTRY_NAME" name="CNTRY_NAME" displayText="Country Name" dataType="Constant"/>
+          <ui:display-field id="CNTRY_NAME_NTV" name="CNTRY_NAME_NTV" displayText="Country Name NTV" dataType="Constant"/>
+          <ui:display-field id="CNTRY_SHORT_NAME" name="CNTRY_SHORT_NAME" displayText="Country Short Name" dataType="Constant"/>
+          <ui:display-field id="CNTRY_DESC" name="CNTRY_DESC" displayText="Country Desc" dataType="Constant"/>
+<!--          <ui:display-field id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR" displayText="Legal Entity" select="$root/LEGAL_ENT/OPTION"/>-->
+<!--          <ui:display-field id="GEOC_REGN_CODE" name="GEOC_REGN_CODE" displayText="Geography Region " select="root/RESPONSE/CNTRY[GEOC_REGN_CODE/@Value=$root/GEOC_REGN/GEOC_REGN_CODE/@Value]/GEOC_REGN_NAME"/>-->
+<!--          <ui:display-field id="GEOC_SUB_REGN_CODE" name="GEOC_SUB_REGN_CODE" displayText="Geography Sub Region "/>-->
+          <ui:display-field id="LEGAL" name="LEGAL" displayText="Legal Entity" dataType="Constant"/>
+          <ui:display-field id="REGN" name="REGN" displayText="Geography Region " dataType="Constant"/>          
+          <ui:display-field id="SUBREGN" name="SUBREGN" displayText="Geography Sub Region " dataType="Constant"/>
+          
+<!--      <ui:display-field id="GEOC_REGN_CODE" name="GEOC_REGN_CODE" displayText="Geography Region "  select="$root/RESPONSE/CNTRY[GEOC_REGN_CODE/@Value=REGN/@Id]/REGN"/>
+            <ui:display-field id="GEOC_SUB_REGN_CODE" name="GEOC_SUB_REGN_CODE" displayText="Geography Sub Region " select="$root/RESPONSE/CNTRY[GEOC_SUB_REGN_CODE/@Value=SUBREGN/@Id]/SUBREGN"/>-->
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button id="CREATE" name="CREATE" displayText="Create"/>
+          <ui:divider/>
+          <ui:button id="EDIT" name="EDIT" displayText="Modify" enabledBySelections="true"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+
+
+
+
+
+function loadProgramList(){
+
+
+
+
+
+
+
+
+
+
+
+document.form.BUTTON_ID.value = 'LOAD_PROGRAM_LIST';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+document.form.action = 'view.x2ps';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+document.form.submit();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+  
+
+
+
+
+
+</ui:script>
+</ui:page-group>

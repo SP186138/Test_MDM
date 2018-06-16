@@ -1,0 +1,73 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_form" source="studio.controller:load">
+  <ui:container id="CtSearch" showFavorite="false" scrollable="true" displayText="Data Source Subscription Opt Input">
+    <ui:step id="stSearch" name="outerStep1" scrollable="true">
+      <ui:container id="CtSearchResults" showFavorite="false" scrollable="true">
+        <ui:step id="stSearchResults" name="innerStep1" scrollable="true">
+          <ui:validation successMessage="{$root/Message/@Value}" anyFieldIsRequired="false"/>
+          <ui:field-group>
+            <ui:image src="/bpi_check.gif" displayCondition="{string-length($root/MSG/AlertGreen/@Value) != 0}" id="checkImg"/>
+            <ui:display-field id="success" value="{$root/MSG/AlertGreen/@Value}" displayCondition="{string-length($root/MSG/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen"/>
+            <ui:image src="/cancel.gif" displayCondition="{string-length($root/MSG/AlertRed/@Value) != 0}"/>
+            <ui:display-field value="{$root/MSG/AlertRed/@Value}" displayCondition="{string-length($root/MSG/AlertRed/@Value) != 0}" name="error" class="requiredIndicator"/>
+          </ui:field-group>
+          <ui:field-group id="tableColumns1" columns="2" select="$this">
+            <ui:hidden-field id="ACTION_TYPE" name="ACTION_TYPE"/>
+            <ui:image src="/bpi_check.gif" displayCondition="{string-length($root/AlertGreen/@Value) != 0}"/>
+            <ui:display-field value="{$root/AlertGreen/@Value}" displayCondition="{string-length($root/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen"/>
+            <ui:hidden-field id="ACTION_TYPE" name="ACTION_TYPE"/>
+            <ui:dropdown id="LEGAL_ENT_NAME" name="LEGAL_ENT_NAME" displayText="Legal Entity" required="true" optionSrc="$root/LEGAL_ENT/LEGAL_ENT_NAME" onChange="javascript:loadProgramList();" displayCondition="{count($root/LEGAL_ENT)>1}"/>
+            <ui:entry-field id="LEGAL_ENT_NAME" name="LEGAL_ENT_NAME" displayText="Legal Entity" readOnly="true" value="{$root/LEGAL_ENT/LEGAL_ENT_NAME/@Value}" displayCondition="{count($root/LEGAL_ENT)&lt;=1}"/>
+            <ui:dropdown id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR" displayText="Program Name" required="true" optionSrc="$root/MKTNG_PGM/OPTION" onChange="javascript:loadSourceList();"/>
+            <ui:dropdown id="DATA_SRCE_NBR" name="DATA_SRCE_NBR" displayText="Source" selectOne="true" optionSrc="$root/DATA_SRCE/OPTION"/>
+            <ui:entry-field id="CR_NUM" name="CR_NUM" displayText="Change Request Number"/>
+            <ui:entry-field id="CR_DESC" name="CR_DESC" displayText="Change Request Description" displayNoWrap="true"/>
+            <ui:entry-field id="ENG_TXT" name="ENG_TXT" displayText="Text(English)" displayNoWrap="true"/>
+            <ui:entry-field id="LOCAL_TXT" name="LOCAL_TXT" displayText="Text(Local)" displayNoWrap="true"/>
+            <ui:entry-field id="BRAND_CODE" name="BRAND_CODE" displayText="Brand" displayNoWrap="true"/>
+            <ui:entry-field id="COMMENTS" name="COMMENTS" displayText="Comment" displayNoWrap="true"/>
+          </ui:field-group>
+          <ui:buttons>
+            <ui:button id="Search" name="Search" displayText="Search"/>
+            <ui:divider/>
+            <ui:button id="Create" name="Create" displayText="Create" validate="false"/>
+          </ui:buttons>
+        </ui:step>
+      </ui:container>
+      <!--<ui:table id="rtable" name="rtable" displayText="Search Results" displayTextNoRecords="No records found" scrollable="true" selectable="Single" maxRows="10" exportable="true" postRowIdAs="SELECTED_DATA_SRCE_NBR" collapsable="true" selectedId="SELECTED_ID" rowId="DATA_SRCE_NBR" rowSrc="$root/RESPONSE/DATA_SRCE_SUBS_OPT_IN_DMY" filter="true">-->
+      <ui:table id="rtable" name="rtable" displayText="Search Results" displayTextNoRecords="No records found" scrollable="true" selectable="Single" maxRows="10" exportable="true" postRowIdAs="SELECTED_ID" collapsable="true" selectedId="DATA_SRCE_NBR#DMY_id" rowId="DATA_SRCE_NBR#DMY_id" rowSrc="$root/RESPONSE/DATA_SRCE_SUBS_OPT_IN_DMY" filter="true" totalRowCount="$root/RowCount/@Value">
+        <ui:field-group id="tableColumns">
+          <ui:display-field id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR" displayText="Legal Entity"/>
+          <ui:display-field id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR" displayText="Marketing Program"/>
+          <ui:display-field id="DATA_SRCE_NBR" name="DATA_SRCE_NBR" displayText="Source"/>
+          <ui:hidden-field id="IN_id" name="IN_id"/>
+          <ui:display-field id="CR_NUM" name="CR_NUM" displayText="Change Request Number"/>
+          <ui:display-field id="CR_DESC" name="CR_DESC" displayText="Change Request Description"/>
+          <ui:display-field id="ENG_TXT" name="ENG_TXT" displayText="English Text"/>
+          <ui:display-field id="LOCAL_TXT" name="LOCAL_TXT" displayText="Local Text"/>
+          <ui:display-field id="BRAND_CODE" name="BRAND_CODE" displayText="Brand"/>
+          <ui:display-field id="COMMENTS" name="COMMENTS" displayText="Comment"/>
+          <ui:display-field id="STATUS" name="STATUS" displayText="Status"/>
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button id="Modify" name="Modify" displayText="Modify" enabledBySelections="true"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+    
+function loadProgramList(){
+
+document.form.BUTTON_ID.value = 'LOAD_PROGRAM_LIST';
+document.form.action = 'view.x2ps';
+document.form.submit();
+}
+    
+function loadSourceList(){
+
+document.form.BUTTON_ID.value = 'LOAD_SOURCE_LIST';
+document.form.action = 'view.x2ps';
+document.form.submit();
+}   
+  </ui:script>
+</ui:page-group>

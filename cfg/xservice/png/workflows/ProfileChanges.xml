@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="3" ShowInBreadCrumbs="true" Version="1.0" Name="ProfileChanges" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="ProfileChanges">
+    <variable Name="matchedDomainValues" Type="xml" Comment=""/>
+    <variable Name="monthStartDates" Type="xml" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start0">
+      <actions>
+        <action>
+          <REQUEST Name="getMatchedDomains" ServiceName="BCM_MASTER" AssignToVar="domainValues"/>
+          <TO_DOCVAR AssignToVar="matchedDomainValues">
+            <TO_XML SelectList="$domainValues"/>
+          </TO_DOCVAR>
+          <REQUEST Name="getMonthStartDates" ServiceName="BCM_MASTER" AssignToVar="monthStartDates">
+            <LEGAL_ENT_NBR Value="{$domainValues/LEGAL_ENT/LEGAL_ENT_NBR/@Value}"/>
+          </REQUEST>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="ProfileChanges"/>
+      </next_nodes>
+    </start>
+    <done Name="done2">
+      <actions/>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="ProfileChanges" ShowInBreadCrumbs="HIDE" Template="profilechanges.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pMessage">
+            <_ERRORS/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/SHOW_PROFILE_CHANGES/@Value='TRUE'">
+            <THEN>
+              <GET_DOCUMENT Name="LEGAL_ENT" AssignToVar="legalEntNbr" ServiceName="BCM_MASTER" DirtyRead="true">
+                <LEGAL_ENT_NAME Value="{$thisParam/LEGAL_ENT_NAME/@Value}"/>
+                <SELECT>
+                  <LEGAL_ENT_NBR/>
+                </SELECT>
+              </GET_DOCUMENT>
+              <SET_CHILD Value="{$thisParam}" FromValue="{$legalEntNbr/LEGAL_ENT/LEGAL_ENT_NBR}"/>
+              <SET Property="SHOW_PROFILE_CHANGES" DocVar="thisParam" FromValue="FALSE"/>
+              <GET_DOCUMENT Name="V_RPT_PROFILE_CHANGES" AssignToVar="ProfileChanges" ServiceName="BCM_MASTER" DirtyRead="true">
+                <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                <MONTH_START Value="{$thisParam/MONTH_START/@Value}"/>
+                <SELECT>
+                  <MKTNG_PGM_NBR/>
+                  <USER_ID/>
+                  <PROFILE_CHANGE_NBR/>
+                </SELECT>
+              </GET_DOCUMENT>
+              <GET_DOCUMENT Name="MKTNG_PGM" AssignToVar="mktngPrograms" ServiceName="BCM_MASTER" DirtyRead="true">
+                <SELECT>
+                  <MKTNG_PGM_NBR/>
+                  <MKTNG_PGM_NAME/>
+                </SELECT>
+              </GET_DOCUMENT>
+              <FOR_EACH SelectList="$ProfileChanges/V_RPT_PROFILE_CHANGES" CurrentElement="currentElement">
+                <FOR_EACH SelectList="$mktngPrograms/MKTNG_PGM" CurrentElement="curElement">
+                  <IF_TEST Test="$currentElement/MKTNG_PGM_NBR/@Value=$curElement/MKTNG_PGM_NBR/@Value">
+                    <THEN>
+                      <SET DocVar="currentElement" Property="MKTNG_PGM_NAME" FromValue="{$curElement/MKTNG_PGM_NAME/@Value}"/>
+                    </THEN>
+                  </IF_TEST>
+                </FOR_EACH>
+              </FOR_EACH>
+              <GROUP_DOCS SelectList="$ProfileChanges/V_RPT_PROFILE_CHANGES" AssignToVar="groupedProfileChanges">
+                <PROPERTIES>
+                  <USER_ID/>
+                </PROPERTIES>
+                <GROUP_NAME Value="PROFILE_CHANGE_GROUP"/>
+                <DOCS_NAME Value="PROFILE_CHANGE_DOC"/>
+                <ROOT_NAME Value="RESPONSE"/>
+              </GROUP_DOCS>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$matchedDomainValues/@TotalRowCount=0">
+            <THEN>
+              <APPEND_TO_XML DocVar="pMessage">
+                <_ERROR Value="No Matched domains found for the profile." Severity="ERROR"/>
+              </APPEND_TO_XML>
+              <APPEND_TO_XML DocVar="matchedDomainValues">
+                <LEGAL_ENT_NBR Value="None"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <!--SET Var="MONTH_START_DIFF_FORMAT" FromValue="{parseDate($thisParam/MONTH_START/@Value,'MMMMM,yyyyy')}"></SET-->
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <TO_XML SelectList="$matchedDomainValues/*"/>
+              <TO_XML SelectList="$monthStartDates/*"/>
+              <TO_XML SelectList="$groupedProfileChanges/*"/>
+              <MONTH_START Value="{$thisParam/MONTH_START/@Value}"/>
+              <MONTH_START_DIFF_FORMAT Value="{$MONTH_START_DIFF_FORMAT}"/>
+            </ROOT>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction='SEARCH'">
+            <THEN>
+              <SET Property="SHOW_PROFILE_CHANGES" DocVar="thisParam" FromValue="TRUE"/>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$userAction='LOAD_MONTH_START'">
+                <THEN>
+                  <GET_DOCUMENT Name="LEGAL_ENT" AssignToVar="legalEntNbr" ServiceName="BCM_MASTER" DirtyRead="true">
+                    <LEGAL_ENT_NAME Value="{$thisParam/LEGAL_ENT_NAME/@Value}"/>
+                    <SELECT>
+                      <LEGAL_ENT_NBR/>
+                    </SELECT>
+                  </GET_DOCUMENT>
+                  <REQUEST Name="getMonthStartDates" ServiceName="BCM_MASTER" AssignToVar="monthStartDates">
+                    <LEGAL_ENT_NBR Value="{$legalEntNbr/LEGAL_ENT/LEGAL_ENT_NBR/@Value}"/>
+                  </REQUEST>
+                </THEN>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='DONE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='SEARCH'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ProfileChanges" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_MONTH_START'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ProfileChanges" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done2" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <start0 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="316,200" size="732,534">
+        <iconProps iconfile="z1start.gif"/>
+      </start0>
+      <done2 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="628,223">
+        <iconProps iconfile="z1end.gif"/>
+      </done2>
+      <ProfileChanges font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="477,242" size="1280,740">
+        <iconProps iconfile="x1age80.gif"/>
+      </ProfileChanges>
+    </mgcnodes>
+    <mgcconnectors>
+      <start0>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="361,222" endpoint="477,264" ctrlRect1="446,220,4,4" ctrlRect2="388,262,4,4"/>
+      </start0>
+      <ProfileChanges>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="522,264" endpoint="522,264" ctrlRect1="595,262,4,4" ctrlRect2="595,262,4,4" textRect="584,260,26,8">
+          <textProps text="$userAction ='SEARCH'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="522,264" endpoint="522,264" ctrlRect1="595,262,4,4" ctrlRect2="651,395,4,4" ctrlRect2Dirty="true" textRect="607,326,37,8">
+          <textProps text="$userAction =''LOAD_MONTH_START'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="515,255" endpoint="633,241" ctrlRect1="601,253,4,4" ctrlRect2="542,239,4,4"/>
+      </ProfileChanges>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+      <action/>
+    </pre_actions>
+    <post_actions>
+      <action/>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

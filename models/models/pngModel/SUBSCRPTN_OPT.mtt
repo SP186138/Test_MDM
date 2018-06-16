@@ -1,0 +1,61 @@
+<document>
+  <documentation>A way that P&amp;G has identified for communicating with consumers.</documentation>
+  <properties>
+    <property Name="SUBSCRPTN_OPT_NAME" Required="true">
+      <documentation>The name of the CONTACT OPTION.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="SUBSCRPTN_OPT_NAME" />
+    </property>
+    <property Name="SUBSCRPTN_OPT_NBR" Active="true" Required="true" Type="Integer">
+      <documentation>The number that P&amp;G assigned to uniquely distinguish the CONTACT OPTION from all others.</documentation>
+      <extends />
+    </property>
+    <property Name="PARNTL_CNSNT_IND">
+      <documentation>Indicates whether the CONTACT OPTION is for parental consent for a minor to register for the MARKETING PROGRAM.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="PARNTL_CNSNT_IND" />
+    </property>
+    <property Name="SUBSCRPTN_OPT_STMT_TXT">
+      <documentation>The text of the CONTACT OPTION.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="SUBSCRPTN_OPT_STMT_TXT" />
+    </property>
+    <property Name="MKTNG_PGM_NBR" Required="true">
+      <documentation>The number that P&amp;G assigned to uniquely distinguish the MARKETING PROGRAM from all others.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="MKTNG_PGM_NBR" />
+    </property>
+    <property Name="LEGAL_ENT_NBR" Required="true">
+      <documentation>The number that P&amp;G assigned to uniquely distinguish the LEGAL ENTITY from all others.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="LEGAL_ENT_NBR" />
+    </property>
+    <property Name="SUBSCRPTN_VERSION_NBR">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="SUBSCRPTN_VERSION_NBR" />
+    </property>
+  </properties>
+  <keys>
+    <key Active="true" Name="SUBSCRPTN_OPT_IX" PhysicalName="SUBSCRPTN_OPT_IX" Kind="INDEX">
+      <property Name="LEGAL_ENT_NBR" />
+      <property Name="MKTNG_PGM_NBR" />
+    </key>
+    <key Active="true" Name="SUBSCRPTN_OPT_UPI" PhysicalName="SUBSCRPTN_OPT_UPI" Kind="PRIMARY">
+      <property Name="LEGAL_ENT_NBR" />
+      <property Name="MKTNG_PGM_NBR" />
+      <property Name="SUBSCRPTN_OPT_NBR" />
+    </key>
+  </keys>
+  <links>
+    <link Active="true" Name="SUBSCRPTN_OPT_FK" PhysicalName="SUBSCRPTN_OPT_FK">
+      <keymap FromKey="SUBSCRPTN_OPT_IX" ToPackage="models/pngModel" ToModelUnit="MKTNG_PGM.mtt" ReverseLink="true" ReverseLinkName="R_SUBSCRPTN_OPT">
+        <mapping FromProperty="LEGAL_ENT_NBR" ToProperty="LEGAL_ENT_NBR" />
+        <mapping FromProperty="MKTNG_PGM_NBR" ToProperty="MKTNG_PGM_NBR" />
+      </keymap>
+    </link>
+  </links>
+  <docFacets>
+    <mdmWebServiceFacet />
+    <mdmAuthorizationFacet />
+    <mdmSysTableMapFacet TableClass="MASTER" Source="MASTER" MasterTable="SUBSCRPTN_OPT" />
+    <miscFacet PhysicalName="SUBSCRPTN_OPT" Active="true" />
+    <mdmConfigFacet SchemaGen="true" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql />
+</document>
+

@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+Copyright (c) 2009 by Teradata Corporation.
+All Rights Reserved.
+Teradata CONFIDENTIAL AND TRADE SECRET
+-->
+  <DEFINE_METHOD Name="WS_ONLINE_CAMPAIGN_ORIGAMI" Access="Public">
+    <API_DOC>
+      <INPUT>
+        <REQUEST Name="webServiceCall">
+          <WS_ONLINE_CAMPAIGN_ORIGAMI>
+            <TIMEFRAME Value="1"/>
+            <DATE_AS_OF Value="2016-01-31"/>
+          </WS_ONLINE_CAMPAIGN_ORIGAMI>
+        </REQUEST>
+      </INPUT>
+      <OUTPUT>
+        <ON_SUCCESS>
+          <RESPONSE Status="Success" DbgCmd_="GET_DOCUMENT" DbgNameAttr_="WS_ONLINE_CAMPAIGN_ORIGAMI">
+            <readRESTResponse>
+              <STATUS Description="Success">
+                <MESSAGE Value="Query Returned 0 Rows"/>
+              </STATUS>
+              <READ_VAL>
+                <WS_ONLINE_CAMPAIGN_ORIGAMI ExistingDocument="yes">
+                  <DATE_AS_OF Value="2016-01-31"/>
+                  <COUNTRY Value="India"/>
+                  <MKTNG_PGM_NBR Value="ASD"/>
+                  <MKTNG_PGM_NAME Value="ASD"/>
+                  <MKTNG_PGM_DESC Value="ASD"/>
+                  <CAMPAIGN_NAME Value="ASD"/>
+                  <OBJECTIVE Value="ASD"/>
+                  <AUTOMATED Value="Y"/>
+                  <MULTI_STEP Value="Y"/>
+                  <ONLINE_CONTACT Value="Y"/>
+                  <OFFLINE_CONTACT Value="Y"/>
+                  <MOBILE_CONTACT Value="Y"/>
+                  <ANY_CONTACT Value="Y"/>
+                  <UNQ_SENT Value="10"/>
+                  <UNQ_DELIVERED Value="10"/>
+                  <UNQ_OPENED Value="10"/>
+                  <UNQ_CLICKED Value="10"/>
+                  <OPT_OUT Value="0"/>
+                  <INSRT_DT Value="2016-01-31"/>
+                </WS_ONLINE_CAMPAIGN_ORIGAMI>
+              </READ_VAL>
+            </readRESTResponse>
+          </RESPONSE>
+        </ON_SUCCESS>
+        <ON_EXCEPTION>
+          <RESPONSE Comment="Error in Webservice"/>
+        </ON_EXCEPTION>
+      </OUTPUT>
+    </API_DOC>
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="thisReturn">
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="errorStatus">
+          <ROOT/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="UsrGrpQry">
+          <root>
+LOCKING ROW FOR ACCESS SEL DISTINCT role_id FROM USR_GRP_ROLE_MAP WHERE usr_grp_id IN (SEL user_grp_id FROM USER_UG_RELATION WHERE user_id='{$UserId}')
+AND ROLE_ID='WS_ONLINE_CAMPAIGN_ORIGAMI_Role'
+</root>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY AssignToVar="roleDetail" Value="{$UsrGrpQry/@text}" ReturnRowCount="yes"/>
+        <IF_TEST Test="$roleDetail/SQL_RESULT/ROLE_ID/@Value ='WS_ONLINE_CAMPAIGN_ORIGAMI_Role' ">
+          <THEN>
+            <IF_TEST Test="($thisParam/WS_ONLINE_CAMPAIGN_ORIGAMI/TIMEFRAME/@Value = '') or ($thisParam/WS_ONLINE_CAMPAIGN_ORIGAMI/TIMEFRAME/@Value = null) or ($thisParam/WS_ONLINE_CAMPAIGN_ORIGAMI/DATE_AS_OF/@Value = null) or ($thisParam/WS_ONLINE_CAMPAIGN_ORIGAMI/TIMEFRAME/@Value = 0) or ($thisParam/WS_ONLINE_CAMPAIGN_ORIGAMI/DATE_AS_OF/@Value = '')">
+              <THEN>
+                <APPEND_TO_XML DocVar="thisReturn">
+                  <ERROR Value="MISSING_MANDATORY_FIELD">
+                    <Message Value="TIMEFRAME and DATE_AS_OF is a required field."/>
+                  </ERROR>
+                </APPEND_TO_XML>
+                <APPEND_TO_XML DocVar="errorStatus">
+                  <Error_in_Status_Code Value="true"/>
+                </APPEND_TO_XML>
+              </THEN>
+              <ELSE>
+                <IF_TEST Test="($thisParam/WS_ONLINE_CAMPAIGN_ORIGAMI/TIMEFRAME/@Value = 1)">
+                  <THEN>
+                    <SET Var="TIMEFRAME" FromValue="{$thisParam/WS_ONLINE_CAMPAIGN_ORIGAMI/TIMEFRAME/@Value}"/>
+                    <SET Var="DATE_AS_OF" FromValue="{$thisParam/WS_ONLINE_CAMPAIGN_ORIGAMI/DATE_AS_OF/@Value}"/>
+                    <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+                      <DATE_AS_OF/>
+                    </FORM_SEARCH_FILTER>
+                    <EXECUTE_SQL_QUERY AssignToVar="GetOrigami" Value="SEL * FROM MDM.BI_ONLINE_CAMPAIGN_ORIGAMI_V WHERE DATE_AS_OF in ('{$thisParam/WS_ONLINE_CAMPAIGN_ORIGAMI/DATE_AS_OF/@Value}') " ReturnRowCount="yes"/>
+                  </THEN>
+                  <ELSE>
+                    <SET Var="TIMEFRAME" FromValue="{$thisParam/WS_ONLINE_CAMPAIGN_ORIGAMI/TIMEFRAME/@Value}"/>
+                    <SET Var="DATE_AS_OF" FromValue="{$thisParam/WS_ONLINE_CAMPAIGN_ORIGAMI/DATE_AS_OF/@Value}"/>
+                    <SET Var="Counter" FromValue="1"/>
+                    <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+                      <DATE_AS_OF/>
+                    </FORM_SEARCH_FILTER>
+                    <SET Var="quote" FromValue="'"/>
+                    <SET Var="GivenDate" FromValue="{concat($quote,$DATE_AS_OF,$quote)}"/>
+                    <!--<IF_TEST Test="($thisParam/TIMEFRAME/@Value = 2)">
+
+<THEN>-->
+                    <WHILE Condition="($Counter &lt; $TIMEFRAME)">
+                      <TO_DOCVAR AssignToVar="qry">
+                        <root>
+
+
+
+SELECT CAST(OADD_MONTHS(CAST('{$DATE_AS_OF}' AS DATE),-{$Counter}) AS DATE) AS DateCol
+
+
+
+</root>
+                      </TO_DOCVAR>
+                      <EXECUTE_SQL_QUERY AssignToVar="SqlRes" Value="{$qry/@text}" ReturnRowCount="yes"/>
+                      <!--<EXECUTE_SQL_QUERY AssignToVar="Dcrmtdate" Value="SELECT OADD_MONTHS(CAST('$DATE_AS_OF' as DATE),-$Counter);" ReturnRowCount="yes"/>-->
+                      <SET Var="PrevDate" FromValue="{substringBefore($SqlRes/SQL_RESULT/DateCol/@Value,' ')}"/>
+                      <TO_DOCVAR AssignToVar="qry2">
+                        <root>
+
+
+
+SELECT TRIM(EXTRACT(YEAR FROM CAST ('{$PrevDate}' AS DATE FORMAT 'MM/DD/YYYY')))||'-'||TRIM(EXTRACT(MONTH FROM CAST ('{$PrevDate}' AS DATE FORMAT 'MM/DD/YYYY'))(FORMAT '99'))||'-'||TRIM(EXTRACT(DAY FROM CAST ('{$PrevDate}' AS DATE FORMAT 'MM/DD/YYYY'))) AS DateFrmt
+
+
+
+</root>
+                      </TO_DOCVAR>
+                      <EXECUTE_SQL_QUERY AssignToVar="SqlRes2" Value="{$qry2/@text}" ReturnRowCount="yes"/>
+                      <SET Var="Dcrmtdate" FromValue="{concat($quote,$SqlRes2/SQL_RESULT/DateFrmt/@Value,$quote)}"/>
+                      <SET Var="quote" FromValue="'"/>
+                      <SET Var="GivenDate" FromValue="{concat($GivenDate,',',$Dcrmtdate)}"/>
+                      <SET Var="Counter" FromValue="{int(($Counter) + 1) }"/>
+                    </WHILE>
+                    <EXECUTE_SQL_QUERY AssignToVar="GetOrigami" Value="SEL * FROM MDM.BI_ONLINE_CAMPAIGN_ORIGAMI_V WHERE DATE_AS_OF in ({$GivenDate}) " ReturnRowCount="yes"/>
+                  </ELSE>
+                </IF_TEST>
+                <IF_TEST Test="$GetOrigami/VALIDATION_RESULT/@Value='Error' or $GetOrigami/VALIDATION_RESULT/@Value='ERROR'">
+                  <THEN>
+                    <APPEND_TO_XML DocVar="thisReturn">
+                      <ON_ERROR>
+                        <RESPONSE Comment="{$GetOrigami/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                      </ON_ERROR>
+                    </APPEND_TO_XML>
+                  </THEN>
+                  <ELSE/>
+                </IF_TEST>
+                <IF_TEST Test="$GetOrigami/@Status='Success' or $GetOrigami/VALIDATION_RESULT/@Value='SUCCESS'">
+                  <THEN>
+                    <TO_DOCVAR AssignToVar="OnlineOrigamiResponse">
+                      <readRESTResponse>
+                        <STATUS Description="{$GetOrigami/@Status}">
+                          <MESSAGE Value="Query Returned {$GetOrigami/@TotalRowCount} Rows"/>
+                        </STATUS>
+                        <READ_VAL>
+                          <TO_XML SelectList="$GetOrigami/SQL_RESULT"/>
+                        </READ_VAL>
+                      </readRESTResponse>
+                    </TO_DOCVAR>
+                    <APPEND_TO_XML DocVar="thisReturn">
+                      <TO_XML Select="$OnlineOrigamiResponse"/>
+                    </APPEND_TO_XML>
+                  </THEN>
+                  <ELSE/>
+                </IF_TEST>
+              </ELSE>
+            </IF_TEST>
+          </THEN>
+          <ELSE>
+            <APPEND_TO_XML DocVar="thisReturn">
+              <ON_SUCCESS>
+                <RESPONSE Comment="USER Does NOT Have Access to the WebService "/>
+              </ON_SUCCESS>
+            </APPEND_TO_XML>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

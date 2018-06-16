@@ -1,0 +1,54 @@
+<ui:page-group version="3" xmlns:ui="http://www.teradata.com/ui" name="studio.templates.simple_form" source="studio.controller:load">
+  <ui:container id="topContainer" showFavorite="true">
+    <ui:step displayText="manageCtlfwExceptionNode" id="ctlfwExceptionDisp">
+      <ui:field-group columns="3">
+        <ui:image src="/bpi_check.gif" displayCondition="{string-length($root/AlertGreen/@Value) != 0}"/>
+        <ui:display-field value="{$root/AlertGreen/@Value}" displayCondition="{string-length($root/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen"/>
+        <ui:image src="/cancel.gif" displayCondition="{string-length($root/AlertRed/@Value) != 0}"/>
+        <ui:display-field value="{$root/AlertRed/@Value}" displayCondition="{string-length($root/AlertRed/@Value) != 0}" name="error" class="requiredIndicator"/>
+      </ui:field-group>
+      <ui:help displayPage="../../bcm/help/ManageCTLFWExceptionHelp.htm"/>
+      <ui:hr>
+      </ui:hr>
+      <ui:field-group>
+        <ui:dropdown id="EnableDSPolling" name="EnableDSPolling" size="1" displayText="pollerStatus" value="{$root/pollerStatus/@Value}" onChange="javascript:onPollerDisable()" title="pollerStatusTitle">
+          <ui:option id="true" value="true"/>
+          <ui:option id="false" value="false"/>
+        </ui:dropdown>
+        <ui:dropdown id="DataStewardRoleID" name="DataStewardRoleID" size="1" displayText="pollerRoleID" optionSrc="$root/USER_ROLES/OPTION" value="{$root/roleID/@Value}" title="pollerRoleIDTitle">
+        </ui:dropdown>
+        <ui:entry-field id="pollDuration" name="pollDuration" displayText="pollerDuration" value="{$root/pollerDuration/@Value}" required="true" title="pollerDurationTitle" dataType="Number"/>
+      </ui:field-group>
+      <ui:buttons>
+        <ui:button id="save" name="save" displayText="Save" emphasized="true"/>
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+function onLoad()
+{
+onPollerDisable();
+}
+function onMyCancel()
+{
+document.location = omxContextPath + &quot;/bcm/framework/homepage.html&quot;;
+}
+function onPollerDisable()
+{
+var comboValue;
+var selIndex = document.form.EnableDSPolling.selectedIndex;
+comboValue = document.form.EnableDSPolling.options[selIndex].value;
+    if(comboValue=='false')
+    {
+    	document.form.DataStewardRoleID.disabled=true;
+		document.form.pollDuration.disabled=true;
+	}
+    else
+    {
+		document.form.DataStewardRoleID.disabled=false;
+		document.form.pollDuration.disabled=false;
+    }
+
+}
+  </ui:script>
+</ui:page-group>

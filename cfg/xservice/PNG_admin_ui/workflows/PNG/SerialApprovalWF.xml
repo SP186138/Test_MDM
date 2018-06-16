@@ -1,0 +1,755 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="4" ShowInBreadCrumbs="true" Version="1.0" Name="SerialApprovalWF" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="SerialApprovalWF">
+    <variable Name="ParApprovalsXml" Type="xml" Comment=""/>
+    <variable Name="ReleaseProcessXml" Type="xml" Comment=""/>
+    <variable Name="ApprovalGroups" Type="xml" Comment=""/>
+    <variable Name="RulesXml" Type="xml" Comment=""/>
+    <variable Name="SeqApprovalsXml" Type="xml" Comment=""/>
+    <variable Name="alertObject" Type="xml" Comment=""/>
+    <variable Name="eventName" Type="string" Comment=""/>
+    <variable Name="inputXml" Type="xml" Comment=""/>
+    <variable Name="DummyRecord" Type="xml" Comment=""/>
+    <variable Name="user_id" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="Start">
+      <actions>
+        <action>
+          <TO_DOCVAR AssignToVar="inputXml">
+            <TO_XML SelectList="$thisParam/*"/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="DummyRecord">
+            <TO_XML SelectList="$thisParam/XML/*"/>
+          </TO_DOCVAR>
+          <SET Var="user_id" FromValue="{$UserId}"/>
+          <SET Var="EVENTNAME" FromValue="{$DummyRecord/@DocumentName}"/>
+          <CREATE_DOCUMENT_ID Name="{$EVENTNAME/@Value}" AssignToVar="DOCUMENT_ID"/>
+          <TO_DOCVAR AssignToVar="alertObject">
+            <root>
+              <messageType Value="{$EVENTNAME/@Value}"/>
+              <document_Id Value="{$DOCUMENT_ID/@Value}"/>
+              <documentType Value="{$EVENTNAME/@Value}"/>
+              <messageType Value="{$EVENTNAME/@Value}"/>
+              <EMAIL_NODE_TYPE Value="{$inputXml/EMAIL_NODE_TYPE/@Value}"/>
+              <SysLoadId Value="{$DummyRecord/@SysLoadId}"/>
+              <Action Value="{$DummyRecord/@Action}"/>
+            </root>
+          </TO_DOCVAR>
+        </action>
+      </actions>
+      <next_nodes OutputVar="{thisParam,xml}">
+        <next_node Name="Identify Approval Groups"/>
+      </next_nodes>
+    </start>
+    <done Name="Done">
+      <actions/>
+      <next_nodes/>
+    </done>
+    <task Name="Identify Approval Groups">
+      <actions>
+        <action>
+          <SET Var="Action" FromValue="{$DummyRecord/@Action}"/>
+          <REMOVE_CHILDREN DocVar="DummyRecord" ChildName="SYS_TYPE"/>
+          <TO_DOCVAR AssignToVar="DocumentInstanceBlk">
+            <PARAMS/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="DocumentAttributesBlk">
+            <PARAMS/>
+          </TO_DOCVAR>
+          <FOR_EACH CurrentElement="ddpElem" SelectList="$DummyRecord/*">
+            <CREATE_DOCUMENT_ID Name="DocumentAttributes" AssignToVar="DocumentInstanceID"/>
+            <SET Var="DocumentName" FromValue="{name($ddpElem)}"/>
+            <!--<SET Var="DocumentName" FromValue="{$DummyRecord/@DocumentName}"/>-->
+            <TO_DOCVAR AssignToVar="DocumentInstanceTemp">
+              <PARAMS>
+                <PARAM Value="{$DocumentInstanceID/@Value}"/>
+                <PARAM Value="{$alertObject/document_Id/@Value}"/>
+                <PARAM Value="{$DocumentName}"/>
+                <PARAM Value="{$user_id/@Value}"/>
+                <PARAM Value="UnderApproval"/>
+                <PARAM Value="{$Action/@Value}"/>
+                <!--<PARAM Value="{date()}"/>
+                <PARAM Value="{date()}"/>-->
+              </PARAMS>
+            </TO_DOCVAR>
+            <ADD_CHILDREN DocVar="DocumentInstanceBlk" FromSelectList="$DocumentInstanceTemp"/>
+            <SET Var="Action1" FromValue="{$DummyRecord/@Action}"/>
+            <SET Var="SYS_PRESENT" FromValue="{$DummyRecord/SYS_TYPE}"/>
+            <SET Var="testVar" FromSelect="$DummyRecord/*/*/*"/>
+            <IF_TEST Test="($DummyRecord/@Action='UPDATE' or $DummyRecord/@Action='MASS_UPDATE') and $testVar!=null ">
+              <THEN>
+                <IF_TEST Test="$SYS_PRESENT=null">
+                  <THEN>
+                    <SET Var="testVar1" FromSelect="$ddpElem/*/*"/>
+                    <IF_TEST Test="$testVar1!=null ">
+                      <THEN>
+                        <FOR_EACH CurrentElement="currelm" SelectList="$ddpElem/*/*">
+                          <CREATE_DOCUMENT_ID Name="DocumentAttributes" AssignToVar="DocumentAttributesID"/>
+                          <TO_DOCVAR AssignToVar="DocumentAttributesTemp">
+                            <PARAMS>
+                              <PARAM Value="{$DocumentAttributesID/@Value}"/>
+                              <PARAM Value="{name($currelm)}"/>
+                              <PARAM Value="{$currelm/@Value}"/>
+                              <PARAM Value="{$DocumentInstanceID/@Value}"/>
+                            </PARAMS>
+                          </TO_DOCVAR>
+                          <ADD_CHILDREN DocVar="DocumentAttributesBlk" FromSelectList="$DocumentAttributesTemp"/>
+                        </FOR_EACH>
+                      </THEN>
+                      <ELSE>
+                        <FOR_EACH CurrentElement="currelm" SelectList="$ddpElem/*">
+                          <CREATE_DOCUMENT_ID Name="DocumentAttributes" AssignToVar="DocumentAttributesID"/>
+                          <TO_DOCVAR AssignToVar="DocumentAttributesTemp">
+                            <PARAMS>
+                              <PARAM Value="{$DocumentAttributesID/@Value}"/>
+                              <PARAM Value="{name($currelm)}"/>
+                              <PARAM Value="{$currelm/@Value}"/>
+                              <PARAM Value="{$DocumentInstanceID/@Value}"/>
+                            </PARAMS>
+                          </TO_DOCVAR>
+                          <ADD_CHILDREN DocVar="DocumentAttributesBlk" FromSelectList="$DocumentAttributesTemp"/>
+                        </FOR_EACH>
+                      </ELSE>
+                    </IF_TEST>
+                  </THEN>
+                  <ELSE>
+                    <!-- <FOR_EACH CurrentElement="currelm" SelectList="$thisParam/XML/DO_DB_PERSIST/*/*"> have doubt in this logic???-->
+                    <FOR_EACH CurrentElement="currelm" SelectList="$ddpElem/*">
+                      <CREATE_DOCUMENT_ID Name="DocumentAttributes" AssignToVar="DocumentAttributesID"/>
+                      <TO_DOCVAR AssignToVar="DocumentAttributesTemp">
+                        <PARAMS>
+                          <PARAM Value="{$DocumentAttributesID/@Value}"/>
+                          <PARAM Value="{name($currelm)}"/>
+                          <PARAM Value="{$currelm/@Value}"/>
+                          <PARAM Value="{$DocumentInstanceID/@Value}"/>
+                        </PARAMS>
+                      </TO_DOCVAR>
+                      <ADD_CHILDREN DocVar="DocumentAttributesBlk" FromSelectList="$DocumentAttributesTemp"/>
+                    </FOR_EACH>
+                  </ELSE>
+                </IF_TEST>
+              </THEN>
+              <ELSE>
+                <FOR_EACH CurrentElement="currelm" SelectList="$ddpElem/*">
+                  <CREATE_DOCUMENT_ID Name="DocumentAttributes" AssignToVar="DocumentAttributesID"/>
+                  <TO_DOCVAR AssignToVar="DocumentAttributesTemp">
+                    <PARAMS>
+                      <PARAM Value="{$DocumentAttributesID/@Value}"/>
+                      <PARAM Value="{name($currelm)}"/>
+                      <PARAM Value="{$currelm/@Value}"/>
+                      <PARAM Value="{$DocumentInstanceID/@Value}"/>
+                    </PARAMS>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="DocumentAttributesBlk" FromSelectList="$DocumentAttributesTemp"/>
+                </FOR_EACH>
+              </ELSE>
+            </IF_TEST>
+          </FOR_EACH>
+          <EXECUTE_BATCH_SQL_DML Value="insert into AW_DOC_INSTANCE (ID, ALERTID, DOCUMENTTYPE, SUBMITBYID, STATUS, DOCUMENTACTION) values (?,?,?,?,?,?)" assignToVar="DocumentInstanceResult">
+            <TO_XML SelectList="$DocumentInstanceBlk/*"/>
+          </EXECUTE_BATCH_SQL_DML>
+          <EXECUTE_BATCH_SQL_DML Value="insert into AW_DOC_ATTR (ID, ATTRIBUTEID, ATTRIBUTEVALUE, INSTANCEID) values (?,?,?,?)" assignToVar="DocumentInstanceResult">
+            <TO_XML SelectList="$DocumentAttributesBlk/*"/>
+          </EXECUTE_BATCH_SQL_DML>
+          <SET Var="docAction" FromValue="{$DummyRecord/@Action}"/>
+          <IF_TEST Test="$docAction='MASS_UPDATE'">
+            <THEN>
+              <SET Var="docAction" FromValue="UPDATE"/>
+            </THEN>
+          </IF_TEST>
+          <GET_DOCUMENT Name="Approval_Groups" AssignToVar="ApprovalGroups" ServiceName="APPROVAL" ReturnRowCount="yes" DirtyRead="true">
+            <EVENT_NAME Value="{$DummyRecord/@DocumentName}"/>
+            <IS_ACTIVE Value="True"/>
+            <ENTITY_STATE Value="ACTIVE"/>
+            <APPROVAL_GROUP_TYPE Value="Serial"/>
+            <OR>
+              <ACTION_TYPE Value="{$docAction}"/>
+              <ACTION_TYPE Value="ALL"/>
+            </OR>
+          </GET_DOCUMENT>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Get All ApproVALS"/>
+      </next_nodes>
+    </task>
+    <task Name="Get All ApproVALS">
+      <actions>
+        <action>
+          <TO_DOCVAR AssignToVar="SeqApprovalsXml">
+            <RULES/>
+          </TO_DOCVAR>
+          <FOR_EACH CurrentElement="currRulGrp" SelectList="$ApprovalGroups/Approval_Groups">
+            <IF_TEST Test="$currRulGrp/APPROVAL_GROUP_TYPE/@Value='Serial'">
+              <THEN>
+                <GET_DOCUMENT Name="Approvals" AssignToVar="AllSeqApprovals" ServiceName="APPROVAL" ReturnRowCount="yes" DirtyRead="true">
+                  <APPROVAL_GROUP_ID Value="{$currRulGrp/SEQID/@Value}"/>
+                  <APPROVAL_TYPE Value="MANUAL-APPROVAL"/>
+                  <IS_ACTIVE Value="True"/>
+                  <ENTITY_STATE Value="ACTIVE"/>
+                  <ORDER_BY>
+                    <EXECUTION_ORDER/>
+                  </ORDER_BY>
+                </GET_DOCUMENT>
+              </THEN>
+            </IF_TEST>
+          </FOR_EACH>
+          <SET Var="Action" FromValue="NONE"/>
+          <IF_TEST Test="$AllSeqApprovals/@TotalRowCount > 0">
+            <THEN>
+              <FOR_EACH SelectList="$AllSeqApprovals/Approvals" CurrentElement="currentRule">
+                <IF_TEST Test="$currentRule/APPROVAL_TYPE/@Value='MANUAL-APPROVAL'">
+                  <THEN>
+                    <ADD_CHILDREN DocVar="SeqApprovalsXml" FromDocVar="currentRule"/>
+                    <SET Var="Action" FromValue="MANUAL"/>
+                    <IF_TEST Test="$user_id=null">
+                      <THEN>
+                        <SET Var="Action" FromValue="MANUAL-NO-ALERT"/>
+                      </THEN>
+                    </IF_TEST>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$currentRule/APPROVAL_TYPE/@Value='AUTO-APPROVAL'">
+                  <THEN>
+                    <SET Var="Action" FromValue="AUTO-APPROVAL"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+            </THEN>
+            <ELSE>
+              <SET Var="Action" FromValue="AUTO-APPROVAL"/>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </actions>
+      <next_nodes OutputVar="{Action,String}">
+        <next_node Name="Check Rule Action"/>
+      </next_nodes>
+    </task>
+    <branch Name="Check Rule Action" InputVar="{Action,String}">
+      <actions>
+        <action/>
+      </actions>
+      <if_cond Value="$Action/@Value='EXIT'">
+        <next_nodes OutputVar=""/>
+      </if_cond>
+      <else_if_cond Value="$Action/@Value='MANUAL'">
+        <next_nodes OutputVar="">
+          <next_node Name="SendMail" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$Action/@Value='ACCEPT_OLD'">
+        <next_nodes OutputVar="{ReleaseProcessXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$Action/@Value='ACCEPT'">
+        <next_nodes OutputVar=""/>
+      </else_if_cond>
+      <else_if_cond Value="$Action/@Value='AUTO-APPROVAL'">
+        <next_nodes OutputVar="">
+          <next_node Name="Make Auto Accepted" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$Action/@Value='NONE'">
+        <next_nodes OutputVar="">
+          <next_node Name="No_Action" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$Action/@Value='MANUAL-NO-ALERT'">
+        <next_nodes OutputVar="">
+          <next_node Name="serial_approval_node" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </branch>
+    <serial_approval_node Type="Serial Approval Node" Name="serial_approval_node" Workflow="DummyWF">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="serialApproverList">
+            <root/>
+          </TO_DOCVAR>
+          <FOR_EACH SelectList="$SeqApprovalsXml/Approvals" CurrentElement="currentRule">
+            <TO_DOCVAR AssignToVar="currentApprover">
+              <Id Value="{$currentRule/APPROVER_NAME/@Value}"/>
+            </TO_DOCVAR>
+            <ADD_CHILDREN DocVar="serialApproverList" FromDocVar="currentApprover"/>
+          </FOR_EACH>
+        </action>
+      </pre_actions>
+      <input>
+        <action/>
+      </input>
+      <output AssignToVar="outXml"/>
+      <parameters>
+        <approverlist Value="{$serialApproverList}"/>
+        <documentid Value="{$alertObject/document_Id/@Value}"/>
+        <documenttype Value="{$DummyRecord/@DocumentName}"/>
+        <alertobject Value="{$alertObject}"/>
+        <consultallowed Value="No"/>
+        <forwardallowed Value="No"/>
+        <isgroupapproval Value="No"/>
+        <expediteallowed Value="No"/>
+        <regenerateapproverlist Value="No"/>
+      </parameters>
+      <document_approve_actions>
+        <action/>
+      </document_approve_actions>
+      <hold_actions>
+        <action/>
+      </hold_actions>
+      <document_reject_actions>
+        <action/>
+      </document_reject_actions>
+      <consult_actions>
+        <action/>
+      </consult_actions>
+      <forward_actions>
+        <action/>
+      </forward_actions>
+      <document_approveall_actions>
+        <action>
+          <REQUEST Name="getUser" ServiceName="USER_SECURITY" AssignToVar="creatorDetails">
+            <ID Value="{$user_id}"/>
+          </REQUEST>
+          <REQUEST Name="getUser" ServiceName="USER_SECURITY" AssignToVar="cur_approver_Details">
+            <ID Value="{$userId/@Value}"/>
+          </REQUEST>
+          <IF_TEST Test="$userAction/@Value='ACCEPT'">
+            <THEN>
+              <SET Var="MESSAGE" FromValue="[MDM] {$DummyRecord[1]/@Action} request for {$DummyRecord[1]/@DocumentName} is Approved by all Approvers."/>
+              <SET Var="DATA" FromValue="[MDM] {$DummyRecord[1]/@Action} request for {$DummyRecord[1]/@DocumentName} is Approved by all Approvers.  &lt;br/>      Approval Type :serial &lt;br/>&lt;br/> "/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction/@Value='REJECT'">
+            <THEN>
+              <SET Var="MESSAGE" FromValue="[MDM] {$DummyRecord[1]/@Action} request for {$DummyRecord[1]/@DocumentName} is rejected by Approver."/>
+              <SET Var="DATA" FromValue="[MDM] {$DummyRecord[1]/@Action} request for {$DummyRecord[1]/@DocumentName} is rejected by  Approvers {$userId/@Value} &lt;br/> Approval Type :serial &lt;br/>&lt;br/> "/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$user_id != null">
+            <THEN>
+              <SET Var="NOTIFICATION_TYPE" FromValue="{$SeqApprovalsXml/Approvals[1]/NOTIFICATION_TYPE/@Value}"/>
+              <IF_TEST Test="$NOTIFICATION_TYPE/@Value ='ALL' or $NOTIFICATION_TYPE/@Value ='WEB'">
+                <THEN>
+                  <REQUEST Name="sendAlert">
+                    <DOCUMENT_ID Value="{$alertObject/document_Id/@Value}"/>
+                    <DOCUMENT_NAME Value="{$DummyRecord[1]/@DocumentName}"/>
+                    <ARG_INDEX Value="0"/>
+                    <PRIORITY Value="3"/>
+                    <USER_ID Value="{$creatorDetails/USER_PROFILE/ID/@Value}"/>
+                    <SERVICE_NAME Value="APPROVAL"/>
+                    <MESSAGE Value="{$DATA/@Value}"/>
+                  </REQUEST>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$NOTIFICATION_TYPE/@Value ='ALL' or $NOTIFICATION_TYPE/@Value ='EMAIL'">
+                <THEN>
+                  <REQUEST Name="sendEmail" ServiceName="OMS_MESSAGE_SERVICE" Synchronous="no">
+                    <SUBJECT Value="{$MESSAGE/@Value}"/>
+                    <TO_ADDRS>
+                      <TO_ADDR Value="{$creatorDetails/USER_PROFILE/EMAIL_ADDRESS/@Value}"/>
+                    </TO_ADDRS>
+                    <FORMAT Value="text/html"/>
+                    <MESSAGE>
+                      <DATA Value="{$DATA/@Value}"/>
+                    </MESSAGE>
+                  </REQUEST>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </document_approveall_actions>
+      <respond_actions>
+        <action/>
+      </respond_actions>
+      <expedite_actions>
+        <action/>
+      </expedite_actions>
+      <regenerate_approver_list_actions>No</regenerate_approver_list_actions>
+      <on_approved>
+        <next_nodes OutputVar="">
+          <next_node Name="Make Accepted" Description=""/>
+        </next_nodes>
+      </on_approved>
+      <on_rejected>
+        <next_nodes OutputVar="">
+          <next_node Name="Make Rejected" Description=""/>
+        </next_nodes>
+      </on_rejected>
+    </serial_approval_node>
+    <task Name="Make Accepted">
+      <actions>
+        <action>
+          <REQUEST Name="_fromAccepted" ServiceName="ADMIN_UI" AssignToVar="newRequest">
+            <ADD_CHILDREN DocVar="thisParam" FromSelect="$DummyRecord"/>
+            <TO_XML SelectList="$thisParam/*"/>
+          </REQUEST>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Done"/>
+      </next_nodes>
+    </task>
+    <task Name="Make Auto Accepted">
+      <actions>
+        <action/>
+      </actions>
+      <next_nodes>
+        <next_node Name="Done"/>
+      </next_nodes>
+    </task>
+    <task Name="Make Rejected">
+      <actions>
+        <action>
+          <REQUEST Name="_fromRejected" ServiceName="ADMIN_UI" AssignToVar="newRequest">
+            <ADD_CHILDREN DocVar="thisParam" FromSelect="$DummyRecord"/>
+            <TO_XML SelectList="$thisParam/*"/>
+          </REQUEST>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Done"/>
+      </next_nodes>
+    </task>
+    <task Name="No_Action">
+      <actions>
+        <action>
+          <REQUEST Name="_fromAccepted" ServiceName="ADMIN_UI" AssignToVar="newRequest">
+            <TO_XML SelectList="$thisParam/message/*"/>
+          </REQUEST>
+          <ADD_CHILDREN DocVar="thisParam" FromDocVar="newRequest"/>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Done"/>
+      </next_nodes>
+    </task>
+    <task Name="SendMail">
+      <actions>
+        <action>
+          <GET_DOCUMENT Name="Approval_Groups" AssignToVar="ApprovalGroups" ServiceName="APPROVAL" ReturnRowCount="yes" DirtyRead="true">
+            <IS_ACTIVE Value="True"/>
+            <ENTITY_STATE Value="ACTIVE"/>
+            <SEQID Value="{$SeqApprovalsXml/Approvals/APPROVAL_GROUP_ID/@Value}"/>
+          </GET_DOCUMENT>
+          <SET Var="sendMail" FromValue="false"/>
+          <IF_TEST Test="$DummyRecord/@isBulkRequest=false">
+            <THEN>
+              <GET_DOCUMENT Name="Alert" AssignToVar="alertResponse" ReturnRowCount="true" ServiceName="APPROVAL" DirtyRead="true">
+                <InstanceMode Value="{$alertObject/Action/@Value}"/>
+                <InstanceLineID Value="{$alertObject/SysLoadId/@Value}"/>
+                <InstanceType Value="{$alertObject/documentType/@Value}"/>
+              </GET_DOCUMENT>
+              <IF_TEST Test="$alertResponse/@TotalRowCount &lt; 1">
+                <THEN>
+                  <SET Var="sendMail" FromValue="true"/>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+            <ELSE>
+              <SET Var="sendMail" FromValue="true"/>
+            </ELSE>
+          </IF_TEST>
+          <SET Var="ddpChildCount" FromValue="{count($thisParam/*/DO_ENTITY_PERSIST/*)}"/>
+          <IF_TEST Test="$ddpChildCount > 1">
+            <THEN>
+              <SET Var="sendMail" FromValue="true"/>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$DummyRecord/@Action='INSERT'">
+                <THEN>
+                  <SET Var="sendMail" FromValue="true"/>
+                </THEN>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$sendMail='true'">
+            <THEN>
+              <REQUEST Name="getUser" ServiceName="USER_SECURITY" AssignToVar="creatorDetails" ReturnRowCount="true">
+                <ID Value="{$user_id}"/>
+              </REQUEST>
+              <SET Var="approvers" FromValue=""/>
+              <IF_TEST Test="$creatorDetails/USER_PROFILE/EMAIL_ADDRESS !=''">
+                <THEN>
+                  <SET Var="ctr" FromValue="0"/>
+                  <FOR_EACH SelectList="$SeqApprovalsXml/Approvals" CurrentElement="currApprover">
+                    <IF_TEST Test="$ApprovalGroups/Approval_Groups/IS_ROLE/@Value='User Based'">
+                      <THEN>
+                        <SET Var="ctr" FromValue="{int($ctr)+1}"/>
+                        <SET Var="NOTIFICATION_TYPE" FromValue="{$currApprover/NOTIFICATION_TYPE/@Value}"/>
+                        <SET Var="approvers" FromValue="{$approvers}{int($ctr)}. {$currApprover/APPROVER_NAME/@Value}&lt;br/>"/>
+                      </THEN>
+                      <ELSE>
+                        <EXECUTE_SQL_QUERY AssignToVar="usrNameResp" Value="LOCKING TABLE USER_PROFILE_T FOR ACCESS LOCKING TABLE USER_UG_RELATION FOR ACCESS LOCKING TABLE USR_GRP_PROFIL FOR ACCESS SELECT distinct A.LOGIN_NAME AS LOGIN_NAME FROM USER_PROFILE_T A, USER_UG_RELATION B, USR_GRP_PROFIL E WHERE E.GRP_NAME = '{$currApprover/APPROVER_NAME/@Value}' AND A.ID=B.USER_ID AND E.ID = B.USER_GRP_ID AND E.STATUS = 'ACTIVE'"/>
+                        <FOR_EACH SelectList="$usrNameResp/*" CurrentElement="currUserName">
+                          <SET Var="dataSeparaotr" FromValue="({$currApprover/APPROVER_NAME/@Value})"/>
+                          <SET Var="ctr" FromValue="{int($ctr)+1}"/>
+                          <SET Var="NOTIFICATION_TYPE" FromValue="{$currApprover/NOTIFICATION_TYPE/@Value}"/>
+                          <SET Var="approver" FromValue="{$approvers}{int($ctr)}. {$currUserName/LOGIN_NAME/@Value}"/>
+                          <SET Var="approvers" FromValue="{concat($approver,$dataSeparaotr)}&lt;br/>"/>
+                        </FOR_EACH>
+                      </ELSE>
+                    </IF_TEST>
+                  </FOR_EACH>
+                  <IF_TEST Test="$NOTIFICATION_TYPE/@Value ='ALL' or $NOTIFICATION_TYPE/@Value ='WEB'">
+                    <THEN>
+                      <REQUEST Name="sendAlert">
+                        <DOCUMENT_ID Value="{$alertObject/document_Id/@Value}"/>
+                        <DOCUMENT_NAME Value="{$DummyRecord/@DocumentName}"/>
+                        <ARG_INDEX Value="0"/>
+                        <PRIORITY Value="3"/>
+                        <USER_ID Value="{$user_id}"/>
+                        <SERVICE_NAME Value="APPROVAL"/>
+                        <MESSAGE Value="[MDM] Your {$DummyRecord/@Action}  request for {$DummyRecord/@DocumentName} sent for approval Approval ID:  {$alertObject/document_Id/@Value}"/>
+                      </REQUEST>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="$NOTIFICATION_TYPE/@Value ='ALL' or $NOTIFICATION_TYPE/@Value ='EMAIL'">
+                    <THEN>
+                      <REQUEST Name="sendEmail" ServiceName="OMS_MESSAGE_SERVICE" Synchronous="no">
+                        <SUBJECT Value="[MDM] Your {$DummyRecord/@Action}  request for {$DummyRecord/@DocumentName} sent for approval"/>
+                        <TO_ADDRS>
+                          <TO_ADDR Value="{$creatorDetails/USER_PROFILE/EMAIL_ADDRESS/@Value}"/>
+                        </TO_ADDRS>
+                        <FORMAT Value="text/html"/>
+                        <MESSAGE>
+                          <XML_DATA XsltFileName="xservice/email/xml/GenericApproval_Sent_For_Approval_Template.xsl">
+                            <DATA>
+                              <DocumentAction Value="{$DummyRecord/@Action}"/>
+                              <DocumentName Value="{$DummyRecord/@DocumentName}"/>
+                              <ApprovalType Value="Serial"/>
+                              <approvers Value="{$approvers/@Value}"/>
+                              <creatorDetails Value="{$creatorDetails/USER_PROFILE/LOGIN_NAME/@Value}"/>
+                              <DocumentInstance Value="{$alertObject/document_Id/@Value}"/>
+                            </DATA>
+                          </XML_DATA>
+                        </MESSAGE>
+                      </REQUEST>
+                    </THEN>
+                  </IF_TEST>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$ApprovalGroups/Approval_Groups/IS_ROLE/@Value='User Based'">
+                <THEN>
+                  <GET_DOCUMENT AssignToVar="curDetails" Name="USER_PROFILE" ServiceName="USER_SECURITY" Distinct="true" DirtyRead="true">
+                    <LOGIN_NAME Value="{$SeqApprovalsXml/Approvals[1]/APPROVER_NAME/@Value}"/>
+                  </GET_DOCUMENT>
+                  <REQUEST Name="getUser" ServiceName="USER_SECURITY" AssignToVar="approverDetails" ReturnRowCount="true">
+                    <ID Value="{$curDetails/USER_PROFILE/ID/@Value}"/>
+                  </REQUEST>
+                  <IF_TEST Test="$NOTIFICATION_TYPE/@Value ='ALL' or $NOTIFICATION_TYPE/@Value ='WEB'">
+                    <THEN>
+                      <REQUEST Name="sendAlert">
+                        <DOCUMENT_ID Value="{$alertObject/document_Id/@Value}"/>
+                        <DOCUMENT_NAME Value="{$DummyRecord/@DocumentName}"/>
+                        <ARG_INDEX Value="0"/>
+                        <PRIORITY Value="3"/>
+                        <USER_ID Value="{$approverDetails/USER_PROFILE/ID/@Value}"/>
+                        <SERVICE_NAME Value="APPROVAL"/>
+                        <MESSAGE Value="[MDM] {$DummyRecord/@Action}  request for {$DummyRecord/@DocumentName} is pending for your Approval  Approval ID:  {$alertObject/document_Id/@Value}"/>
+                      </REQUEST>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="$NOTIFICATION_TYPE/@Value ='ALL' or $NOTIFICATION_TYPE/@Value ='EMAIL'">
+                    <THEN>
+                      <REQUEST Name="sendEmail" ServiceName="OMS_MESSAGE_SERVICE" Synchronous="no">
+                        <SUBJECT Value="[MDM] Your {$DummyRecord/@Action}  request for {$DummyRecord/@DocumentName} is pending for your Approval"/>
+                        <TO_ADDRS>
+                          <TO_ADDR Value="{$approverDetails/USER_PROFILE/EMAIL_ADDRESS/@Value}"/>
+                        </TO_ADDRS>
+                        <FORMAT Value="text/html"/>
+                        <MESSAGE>
+                          <XML_DATA XsltFileName="xservice/email/xml/GenericApproval_Pending_For_Approval_Template.xsl">
+                            <DATA>
+                              <DocumentAction Value="{$DummyRecord/@Action}"/>
+                              <DocumentType Value="{$DummyRecord/@DocumentName}"/>
+                              <LOGIN_NAME Value="{$cur_approver_Details/USER_PROFILE/LOGIN_NAME/@Value}"/>
+                              <ApprovalType Value="Serial"/>
+                              <approvers Value="{$approvers/@Value}"/>
+                              <creatorDetails Value="{$creatorDetails/USER_PROFILE/LOGIN_NAME/@Value}"/>
+                              <DocumentInstance Value="{$alertObject/document_Id/@Value}"/>
+                            </DATA>
+                          </XML_DATA>
+                        </MESSAGE>
+                      </REQUEST>
+                    </THEN>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <!--TEST-->
+                  <FOR_EACH SelectList="$SeqApprovalsXml/Approvals" CurrentElement="currentApprover">
+                    <EXECUTE_SQL_QUERY AssignToVar="loginNameResp" Value="LOCKING TABLE USER_PROFILE_T FOR ACCESS LOCKING TABLE USER_UG_RELATION FOR ACCESS LOCKING TABLE USR_GRP_PROFIL FOR ACCESS SELECT distinct A.LOGIN_NAME AS LOGIN_NAME FROM USER_PROFILE_T A, USER_UG_RELATION B, USR_GRP_PROFIL E WHERE E.GRP_NAME = '{$currApprover/APPROVER_NAME/@Value}' AND A.ID=B.USER_ID AND E.ID = B.USER_GRP_ID AND E.STATUS = 'ACTIVE'"/>
+                    <FOR_EACH SelectList="$loginNameResp/*" CurrentElement="currentUserName">
+                      <GET_DOCUMENT AssignToVar="curDetails" Name="USER_PROFILE" ServiceName="USER_SECURITY" Distinct="true" DirtyRead="true">
+                        <LOGIN_NAME Value="{$currentUserName/LOGIN_NAME/@Value}"/>
+                      </GET_DOCUMENT>
+                      <EXECUTE_SQL_QUERY AssignToVar="usrIdTest" Value="LOCKING ROW FOR ACCESS SELECT ID from USER_PROFILE_T where LOGIN_NAME='{$currentUserName/LOGIN_NAME/@Value}';"/>
+                      <REQUEST Name="getUser" ServiceName="USER_SECURITY" AssignToVar="approverDetails" ReturnRowCount="true">
+                        <ID Value="{$usrIdTest/SQL_RESULT/ID/@Value}"/>
+                      </REQUEST>
+                      <IF_TEST Test="$NOTIFICATION_TYPE/@Value ='ALL' or $NOTIFICATION_TYPE/@Value ='WEB'">
+                        <THEN>
+                          <REQUEST Name="sendAlert">
+                            <DOCUMENT_ID Value="{$alertObject/document_Id/@Value}"/>
+                            <DOCUMENT_NAME Value="{$DummyRecord/@DocumentName}"/>
+                            <ARG_INDEX Value="0"/>
+                            <PRIORITY Value="3"/>
+                            <USER_ID Value="{$approverDetails/USER_PROFILE/ID/@Value}"/>
+                            <SERVICE_NAME Value="APPROVAL"/>
+                            <MESSAGE Value="[MDM] {$DummyRecord/@Action}  request for {$DummyRecord/@DocumentName} is pending for your Approval  Approval ID:  {$alertObject/document_Id/@Value}"/>
+                          </REQUEST>
+                        </THEN>
+                      </IF_TEST>
+                      <IF_TEST Test="$NOTIFICATION_TYPE/@Value ='ALL' or $NOTIFICATION_TYPE/@Value ='EMAIL'">
+                        <THEN>
+                          <REQUEST Name="sendEmail" ServiceName="OMS_MESSAGE_SERVICE" Synchronous="no">
+                            <SUBJECT Value="[MDM] Your {$DummyRecord/@Action}  request for {$DummyRecord/@DocumentName} is pending for your Approval"/>
+                            <TO_ADDRS>
+                              <TO_ADDR Value="{$approverDetails/USER_PROFILE/EMAIL_ADDRESS/@Value}"/>
+                            </TO_ADDRS>
+                            <FORMAT Value="text/html"/>
+                            <MESSAGE>
+                              <XML_DATA XsltFileName="xservice/email/xml/GenericApproval_Pending_For_Approval_Template.xsl">
+                                <DATA>
+                                  <DocumentAction Value="{$DummyRecord/@Action}"/>
+                                  <DocumentType Value="{$DummyRecord/@DocumentName}"/>
+                                  <LOGIN_NAME Value="{$cur_approver_Details/USER_PROFILE/LOGIN_NAME/@Value}"/>
+                                  <ApprovalType Value="Serial"/>
+                                  <approvers Value="{$approvers/@Value}"/>
+                                  <creatorDetails Value="{$creatorDetails/USER_PROFILE/LOGIN_NAME/@Value}"/>
+                                  <DocumentInstance Value="{$alertObject/document_Id/@Value}"/>
+                                </DATA>
+                              </XML_DATA>
+                            </MESSAGE>
+                          </REQUEST>
+                        </THEN>
+                      </IF_TEST>
+                    </FOR_EACH>
+                  </FOR_EACH>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="serial_approval_node"/>
+      </next_nodes>
+    </task>
+  </nodes>
+  <mgcview>
+    <mgcgroups>
+      <group rect="120,127,700,339" groupFillColor="192,192,192"/>
+    </mgcgroups>
+    <mgcdashboard location="137,103" compId="MgcDashboard1" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="8" textAttrsKey0="ApprovalGroups : xml" textAttrsKey1="ParApprovalsXml : xml" textAttrsKey2="ReleaseProcessXml_1 : xml" textAttrsKey3="RulesXml : xml" textAttrsKey4="SeqApprovalsXml : xml" textAttrsKey5="alertObject : xml" textAttrsKey6="eventName : string" textAttrsKey7="inputXml : xml">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="inputXml" Type="xml"/>
+      </variables>
+    </mgcdashboard>
+    <mgcnodes>
+      <Start font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="120,322">
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+        <textProps text="Start" font="Verdana,0,9" textColor="80,80,80"/>
+      </Start>
+      <Done font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="783,421">
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+        <textProps text="Done" font="Verdana,0,9" textColor="80,80,80"/>
+      </Done>
+      <mgcnode Name="Identify Approval Groups" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="257,324">
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+        <textProps text="Identify Approval Groups" font="Verdana,0,9" textColor="80,80,80"/>
+      </mgcnode>
+      <mgcnode Name="Get All ApproVALS" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="415,316" size="732,560">
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+        <textProps text="Get All ApproVALS" font="Verdana,0,9" textColor="80,80,80"/>
+      </mgcnode>
+      <mgcnode Name="Check Rule Action" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="523,317" size="732,534">
+        <iconProps iconfile="z1branch.gif" location="0,0"/>
+        <textProps text="Check Rule Action" font="Verdana,0,9" textColor="80,80,80"/>
+      </mgcnode>
+      <serial_approval_node font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="647,128" size="732,717">
+        <iconProps iconfile="x1age91.gif" location="0,0"/>
+        <textProps text="serial_approval_node" font="Verdana,0,9" textColor="80,80,80"/>
+      </serial_approval_node>
+      <mgcnode Name="Make Accepted" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="608,285" size="732,560">
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+        <textProps text="Make Accepted" font="Verdana,0,9" textColor="80,80,80"/>
+      </mgcnode>
+      <mgcnode Name="Make Auto Accepted" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="523,421" size="732,560">
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+        <textProps text="Make Auto Accepted" font="Verdana,0,9" textColor="80,80,80"/>
+      </mgcnode>
+      <mgcnode Name="Make Rejected" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="775,318" size="732,560">
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+        <textProps text="Make Rejected" font="Verdana,0,9" textColor="80,80,80"/>
+      </mgcnode>
+      <No_Action font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="611,361" size="732,560">
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+        <textProps text="No_Action" font="Verdana,0,9" textColor="186,12,12"/>
+      </No_Action>
+      <SendMail font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="306,189" size="1024,677">
+        <iconProps iconfile="z1task.gif"/>
+      </SendMail>
+    </mgcnodes>
+    <mgcconnectors>
+      <Start>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="70,81,173" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="165,344" endpoint="257,346" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="232,342,4,4" ctrlRect2="249,346,4,4"/>
+      </Start>
+      <mgcnode Name="Identify Approval Groups">
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="70,81,173" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="302,346" endpoint="415,338" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="384,344,4,4" ctrlRect2="328,336,4,4"/>
+      </mgcnode>
+      <mgcnode Name="Get All ApproVALS">
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="70,81,173" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="460,338" endpoint="523,339" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="504,336,4,4" ctrlRect2="473,337,4,4"/>
+      </mgcnode>
+      <mgcnode Name="Check Rule Action">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="523,339" endpoint="351,211" ctrlRect1="431,333,4,4" ctrlRect2="478,209,4,4" textRect="451,269,11,8" ctrlRect1Dirty="true">
+          <textProps text="MANUAL"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="545,362" endpoint="545,421" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="543,403,4,4" ctrlRect2="543,374,4,4" textRect="534,386,23,8">
+          <textProps text="Auto" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="568,339" endpoint="611,383" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="597,337,4,4" ctrlRect2="576,381,4,4" textRect="576,357,25,8">
+          <textProps text="None" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="545,317" endpoint="669,128" ctrlRect1="543,174,4,4" ctrlRect2="594,33,4,4" textRect="560,101,21,8" ctrlRect2Dirty="true">
+          <textProps text="MANUAL-NO-ALERT"/>
+        </nextNodeView>
+      </mgcnode>
+      <serial_approval_node>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="669,173" endpoint="630,285" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="667,255,4,4" ctrlRect2="628,199,4,4" textRect="615,225,68,9">
+          <textProps text="APPROVED" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="669,173" endpoint="797,318" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="667,279,4,4" ctrlRect2="795,207,4,4" textRect="702,241,63,9">
+          <textProps text="REJECTED" font="Verdana,0,9"/>
+        </nextNodeView>
+      </serial_approval_node>
+      <mgcnode Name="Make Accepted">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="653,307" endpoint="783,443" ctrlRect1="748,305,4,4" ctrlRect2="683,441,4,4"/>
+      </mgcnode>
+      <mgcnode Name="Make Auto Accepted">
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="70,81,173" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="568,443" endpoint="783,443" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="726,441,4,4" ctrlRect2="619,441,4,4"/>
+      </mgcnode>
+      <mgcnode Name="Make Rejected">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="775,340" endpoint="783,443" ctrlRect1="685,299,4,4" ctrlRect2="695,334,4,4" ctrlRect2Dirty="true" ctrlRect1Dirty="true"/>
+      </mgcnode>
+      <No_Action>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="70,81,173" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="656,383" endpoint="783,443" ctrlRect1Dirty="true" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="657,363,4,4" ctrlRect2="685,441,4,4"/>
+      </No_Action>
+      <SendMail>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="351,211" endpoint="647,150" ctrlRect1="571,209,4,4" ctrlRect2="480,59,4,4" ctrlRect2Dirty="true"/>
+      </SendMail>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+      <action/>
+    </pre_actions>
+    <post_actions>
+      <action/>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

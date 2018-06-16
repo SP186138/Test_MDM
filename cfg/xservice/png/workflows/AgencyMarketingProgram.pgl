@@ -1,0 +1,61 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" Id="AgencyMarketingProgram.pgl" version="3">
+  <ui:container id="topContainer">
+    <ui:step displayText="AGENCY MARKETING PROGRAM" id="AGENCY_MKTNG_PGM">
+      <ui:validation successMessage="{$root/SuccessMessage/@Value}"/>
+      <ui:field-group>
+        <ui:image src="/bpi_check.gif" displayCondition="{string-length($root/MSG/AlertGreen/@Value) != 0}" id="checkImg"/>
+        <ui:display-field id="success" value="{$root/MSG/AlertGreen/@Value}" displayCondition="{string-length($root/MSG/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen"/>
+        <ui:image src="/cancel.gif" displayCondition="{string-length($root/MSG/AlertRed/@Value) != 0}"/>
+        <ui:display-field value="{$root/MSG/AlertRed/@Value}" displayCondition="{string-length($root/MSG/AlertRed/@Value) != 0}" name="error" class="requiredIndicator"/>
+      </ui:field-group>
+      <ui:field-group id="Create">
+        <ui:field-group id="left fields" columns="2">
+          <ui:display-field id="AGNCY_NBR" displayText="Agency Number" name="AGNCY_NBR"/>
+          <ui:entry-field id="MKTNG_PGM_NBR" displayText="Marketing Program Number" name="MKTNG_PGM_NBR" required="true" readOnly="true">
+          <ui:links id="linksMatlGrp">
+<ui:link id="linkMatlGrp" onClick="javascript:openLookupBox('MKTNG_PGM_NBR');">
+<ui:image src="/pop_up_window.gif"/>
+</ui:link>
+          </ui:links>
+          </ui:entry-field>
+           <ui:dropdown id="PREF_SRC_IND" name="PREF_SRC_IND" displayText="PRF Source Indicator" required="true">
+            <ui:option id="Y" value="Y"/>
+            <ui:option id="N" value="N"/>
+          </ui:dropdown>
+          <ui:dropdown id="WEBSITE_REGIS_IND" name="WEBSITE_REGIS_IND" displayText="Website Regis Indicator" required="true">
+            <ui:option id="Y" value="Y"/>
+            <ui:option id="N" value="N"/>
+          </ui:dropdown>
+          <ui:dropdown id="DTC_REGIS_PRIOR_IND" name="DTC_REGIS_PRIOR_IND" displayText="DTC Regis Prior Indicator" required="true">
+            <ui:option id="Y" value="Y"/>
+            <ui:option id="N" value="N"/>
+          </ui:dropdown>
+          <ui:entry-field id="LEGAL_ENT_NBR" displayText="Legal Entity Number" name="LEGAL_ENT_NBR" required="true" readOnly="true">
+<ui:links id="linksMatlGrp">
+<ui:link id="linkMatlGrp" onClick="javascript:openLookupBox('LEGAL_ENT_NBR');">
+<ui:image src="/pop_up_window.gif"/>
+</ui:link>
+</ui:links>
+ </ui:entry-field>
+        </ui:field-group>
+      </ui:field-group>
+      <ui:buttons id="buttons">
+        <ui:button id="Save_MKTNG" displayText="Save" name="Save_MKTNG" emphasized="true"/>
+        <ui:button id="Save_and_Return_MKTNG" displayText="Save And Return" name="Save_and_Return_MKTNG" emphasized="true"/>
+        <ui:button id="Add_Contact" displayText="Add Contact" name="Add_Contact" emphasized="true" validate="false" displayCondition="{$root/Add_Contact_MKTNG/@Value='true'}"/>
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:container>
+  </ui:container>
+  <ui:script>
+function openLookupBox(sLookupButton)
+{
+disableButtons();
+trapExcelPivotChanges();
+document.form.BUTTON_ID.value =sLookupButton;
+document.form.action = 'view.x2ps';
+document.form.submit();
+}
+ </ui:script>
+</ui:page-group>

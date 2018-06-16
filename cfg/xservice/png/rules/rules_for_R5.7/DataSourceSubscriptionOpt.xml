@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+ 	 Copyright (c) 2009 by Teradata Corporation. 
+	 All Rights Reserved. 
+	 Teradata CONFIDENTIAL AND TRADE SECRET 
+ -->
+  <!--Written by Ankita Sadhwani 13th May,2016 starts-->
+  <DEFINE_METHOD Name="getDataSourceNamesAndNbr">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="sourceList">
+          <ROOT>
+            <DATA_SRCE/>
+          </ROOT>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY AssignToVar="ExtrnDataSrcValues" Value="SEL A.DATA_SRCE_NBR,DATA_SRCE_NAME FROM DATA_SRCE A INNER JOIN DATA_SRCE_MKTNG_PGM B ON A. DATA_SRCE_NBR=B.DATA_SRCE_NBR WHERE MKTNG_PGM_NBR= {$thisParam/MKTNG_PGM_NBR/@Value}ORDER BY DATA_SRCE_NAME ASC;"/>
+        <FOR_EACH SelectList="$ExtrnDataSrcValues/SQL_RESULT" CurrentElement="currentElement">
+          <SET Var="extrName1" FromValue="{$currentElement/DATA_SRCE_NAME/@Value}"/>
+          <SET Var="extrNbr" FromValue="{$currentElement/DATA_SRCE_NBR/@Value}"/>
+          <SET Var="extrNbr1" FromValue="{concat($extrNbr,': ')}"/>
+          <SET Var="extrName" FromValue="{concat($extrNbr1,$extrName1)}"/>
+          <APPEND_TO_XML SelectList="$sourceList/DATA_SRCE">
+            <OPTION Id="{$extrNbr}" Value="{$extrName}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="sourceList" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <!--Written by Ankita Sadhwani ends-->
+  <!--<DEFINE_METHOD Name="getDataSource">
+    <RULE>
+      <ACTION>
+        <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT DATA_SRCE_NBR, DATA_SRCE_NAME FROM DATA_SRCE WHERE DATA_SRCE_NBR IN (SELECT DATA_SRCE_NBR FROM DATA_SRCE_MKTNG_PGM WHERE MKTNG_PGM_NBR='{$thisParam/MKTNG_PGM_NBR/@Value}') ORDER BY 1 ASC" AssignToVar="assignSource" ReturnRowCount="yes"/>
+        <TO_DOCVAR AssignToVar="sourceList">
+          <TO_XML SelectList="$assignSource"/>
+        </TO_DOCVAR>      
+        <CLONE_XML DocVar="sourceList" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>-->
+  <DEFINE_METHOD Name="ApprovalEmail">
+    <RULE>
+      <ACTION>
+        <REQUEST AssignToVar="UserDetails" Name="getApprovalUserGrp">
+          <USER_ID Value="SU_UGP"/>
+        </REQUEST>
+        <TO_DOCVAR AssignToVar="emailSubject">
+          <ROOT>
+            <SUBJECT Value="INSERT request for DATA_SRCE_SUBS_OPT_IN with CR # {$RuleNumberResultService/SQL_RESULT/RULE_NUMBER/@Value}is Approved."/>
+          </ROOT>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="emailFormat">
+          <ROOT>
+            <FORMAT Value="text/html"/>
+          </ROOT>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="emailMessage">
+          <ROOT>
+            <MESSAGE>
+              <SET Var="DQRMDetails" FromValue="E:\Teradata\MDM\3.04.01.00\custom\pngrelease3\DQRM.xsl"/>
+              <XML_DATA XsltFileName="{$DQRMDetails}">
+                <REPORT>
+                  <TO_XML SelectList="$Result1/*"/>
+                </REPORT>
+                <REPORT1>
+                  <TO_XML SelectList="$QueryResult1/*"/>
+                </REPORT1>
+              </XML_DATA>
+            </MESSAGE>
+          </ROOT>
+        </TO_DOCVAR>
+        <!-- <GET_DOCUMENT Name="DQRM_EMAIL" AssignToVar="resAttValues" DirtyRead="yes" ServiceName="BCM_MASTER">
+<EMAIL_TYPE Value="5"/>
+</GET_DOCUMENT>-->
+        <GET_DOCUMENT Name="ATTRIBUTE_VALUES" AssignToVar="resAttValues" DirtyRead="yes" ServiceName="BCM_MASTER">
+          <QUERY_DOCUMENT_LINK Name="XIF1ATTRIBUTE_VALUES">
+            <OR>
+              <ATTRIBUTE_TYPE_ID Value="5"/>
+              <ATTRIBUTE_TYPE_ID Value="6"/>
+              <ATTRIBUTE_TYPE_ID Value="10"/>
+            </OR>
+          </QUERY_DOCUMENT_LINK>
+        </GET_DOCUMENT>
+        <TO_DOCVAR AssignToVar="emailRecipients">
+          <TO_ADDRS/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$resAttValues/*" CurrentElement="currRec">
+          <APPEND_TO_XML DocVar="emailRecipients">
+            <TO_ADDR Value="{$currRec/AV_DESCRIPTION/@Value}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <REQUEST Name="sendEmailNotification" AssignToVar="respEmail" ServiceName="BCM_MASTER" HandleException="true">
+          <TO_XML DocVar="emailRecipients"/>
+          <TO_XML SelectList="$emailSubject/*"/>
+          <TO_XML SelectList="$emailFormat/*"/>
+          <TO_XML SelectList="$emailMessage/*"/>
+        </REQUEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getApprovalUserGrp">
+    <RULE>
+      <ACTION>
+        <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT USER_ID FROM USER_UG_RELATION WHERE USER_GRP_ID='{$UserGrpId}'" AssignToVar="AllUserId"/>
+        <TO_DOCVAR AssignToVar="Users">
+          <ROOT/>
+        </TO_DOCVAR>
+        <IF_TEST Test="$AllUserId/SQL_RESULT/USER_ID/@Value != NULL">
+          <THEN>
+            <SET Var="Sample" FromValue="1"/>
+            <FOR_EACH SelectList="$AllUserId/*" CurrentElement="currSource">
+              <IF_TEST Test="$Sample=1">
+                <THEN>
+                  <SET Var="UserID" FromValue="'{$currSource/USER_ID/@Value}'" Scope="Global"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="UserID1" FromValue="'{$currSource/USER_ID/@Value}'" Scope="Global"/>
+                  <SET Var="UserID" FromValue="{concat($UserID/@Value,',',$UserID1/@Value)}" Scope="Global"/>
+                </ELSE>
+              </IF_TEST>
+              <SET Var="Sample" FromValue="{int(int($Sample)+1)}"/>
+              <APPEND_TO_XML DocVar="Users">
+                <TO_XML SelectList="$currSource/USER_ID"/>
+              </APPEND_TO_XML>
+            </FOR_EACH>
+          </THEN>
+        </IF_TEST>
+        <!--<FOR_EACH SelectList="$AllGroupId/SQL_RESULT/USER_GRP_ID" CurrentElement="CurrEle">
+<APPEND_TO_XML DocVar="userGroups">
+<TO_XML SelectList="$currSource/USER_GRP_ID"/>
+</APPEND_TO_XML>
+</FOR_EACH>-->
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+ 	 Copyright (c) 2009 by Teradata Corporation. 
+	 All Rights Reserved. 
+	 Teradata CONFIDENTIAL AND TRADE SECRET 
+ -->
+  
+  <DEFINE_METHOD Name="pngSETPreviousLoadStatus">
+    <!--**********************************************************************************************************
+*   Module Name	: pngSETPreviousLoadStatus
+*		Created Date	: Oct 27, 2011
+*		Created By   	: Kalyana Chakravarthy
+*		Called Functions: 
+*		Called By Functions:  pngSETPreviousLoadStatus bat files
+*		Short Desc	: This API sets the COuntry Specific PreLoad failure global variable to success 
+*  		Change Log 		:
+*		DATE							LC						OWNER		DESCRIPTION
+*
+**********************************************************************************************************-->
+    <RULE>
+      <ACTION>
+        <SET Var="{concat('previousLoadStatus',$thisParam/CNTRY_NAME/@Value)}" FromValue="Success" Scope="Global"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="pngSETPreviousValidationLoadStatus">
+    <!--**********************************************************************************************************
+*   Module Name	: pngSETPreviousLoadStatus
+*		Created Date	: Oct 27, 2011
+*		Created By   	: Kalyana Chakravarthy
+*		Called Functions:
+*		Called By Functions:  pngSETPreviousLoadStatus bat files
+*		Short Desc	: This API sets the COuntry Specific PreLoad failure global variable to success
+*  		Change Log 		:
+*		DATE							LC						OWNER		DESCRIPTION
+*
+**********************************************************************************************************-->
+    <RULE>
+      <ACTION>
+        <SET Var="previousValidationLoadStatus" FromValue="Success" Scope="Global"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="pngSETPreviousWrapperLoadStatus">
+    <!--**********************************************************************************************************
+*   Module Name	: pngSETPreviousLoadStatus
+*		Created Date	: Oct 27, 2011
+*		Created By   	: Kalyana Chakravarthy
+*		Called Functions:
+*		Called By Functions:  pngSETPreviousLoadStatus bat files
+*		Short Desc	: This API sets the COuntry Specific PreLoad failure global variable to success
+*  		Change Log 		:
+*		DATE							LC						OWNER		DESCRIPTION
+*
+**********************************************************************************************************-->
+    <RULE>
+      <ACTION>
+        <SET Var="previousWrapperLoadStatus" FromValue="Success" Scope="Global"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="pngSETPreviousDeleteLoadStatus">
+    <!--**********************************************************************************************************
+*   Module Name	: pngSETPreviousLoadStatus
+*		Created Date	: Oct 27, 2011
+*		Created By   	: Kalyana Chakravarthy
+*		Called Functions:
+*		Called By Functions:  pngSETPreviousLoadStatus bat files
+*		Short Desc	: This API sets the COuntry Specific PreLoad failure global variable to success
+*  		Change Log 		:
+*		DATE							LC						OWNER		DESCRIPTION
+*
+**********************************************************************************************************-->
+    <RULE>
+      <ACTION>
+        <SET Var="previousDeleteStatus" FromValue="Success" Scope="Global"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="pngSETCPUUtilCheck">
+    <!--**********************************************************************************************************
+*   Module Name	: pngSETPreviousLoadStatus
+*		Created Date	: Oct 27, 2011
+*		Created By   	: Kalyana Chakravarthy
+*		Called Functions:
+*		Called By Functions:  pngSETCPUUtilCheck bat files
+*		Short Desc	: This API sets the CPU Utility Check global variable to YES
+*  		Change Log 		:
+*		DATE							LC						OWNER		DESCRIPTION
+*
+**********************************************************************************************************-->
+    <RULE>
+      <ACTION>
+        <SET Var="CPUUtilCheck" FromValue="YES" Scope="Global"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="pngRESETCPUUtilCheck">
+    <!--**********************************************************************************************************
+*   Module Name	: pngSETPreviousLoadStatus
+*		Created Date	: Oct 27, 2011
+*		Created By   	: Kalyana Chakravarthy
+*		Called Functions:
+*		Called By Functions:  pngRESETCPUUtilCheck bat files
+*		Short Desc	: This API sets the CPU Utility Check global variable to NO
+*  		Change Log 		:
+*		DATE							LC						OWNER		DESCRIPTION
+*
+**********************************************************************************************************-->
+    <RULE>
+      <ACTION>
+        <SET Var="CPUUtilCheck" FromValue="NO" Scope="Global"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="pngSETCPUPercentProcessorTime">
+    <!--**********************************************************************************************************
+*   Module Name	: pngSETPreviousLoadStatus
+*		Created Date	: Oct 27, 2011
+*		Created By   	: Kalyana Chakravarthy
+*		Called Functions:
+*		Called By Functions:  pngSETCPUPercentProcessorTime bat files
+*		Short Desc	: This API sets the CPU Processor Percent Time
+*  		Change Log 		:
+*		DATE							LC						OWNER		DESCRIPTION
+*
+**********************************************************************************************************-->
+    <RULE>
+      <ACTION>
+        <SET Var="CPUPercentProcessorTime" FromValue="{$thisParam/CPUPercent/@Value}" Scope="Global"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="pngSETCPUProcessorTimeOnServiceStartup">
+    <!--**********************************************************************************************************
+*   Module Name	: pngSETPreviousLoadStatus
+*		Created Date	: Oct 27, 2011
+*		Created By   	: Kalyana Chakravarthy
+*		Called Functions:
+*		Called By Functions:  
+*		Short Desc	: This API sets the CPU Processor Percent Time on Service Startup
+*  		Change Log 		:
+*		DATE							LC						OWNER		DESCRIPTION
+*
+**********************************************************************************************************-->
+    <RULE>
+      <ACTION>
+        <SET Var="xmlfilepath" FromValue="\custom\pngrelease3\bin\pngSETCPUPercentProcessorTime.xml"/>
+        <LOAD_XML_FILE FromValue="{concat($MDM_Install_Dir,$xmlfilepath)}" Var="resCPUTime"/>
+        <SET Var="CPUPercentProcessorTime" FromValue="{$resCPUTime/REQUEST/CPUPercent/@Value}" Scope="Global"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

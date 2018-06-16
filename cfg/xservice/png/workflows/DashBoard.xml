@@ -1,0 +1,333 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="12" ShowInBreadCrumbs="true" Version="1.0" Name="DashBoard" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="DashBoard">
+    <variable Name="matchedDomainValues" Type="xml" Comment=""/>
+    <variable Name="programIDValues" Type="xml" Comment=""/>
+    <variable Name="searchResults" Type="xml" Comment=""/>
+    <variable Name="restartStatus" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start0">
+      <actions>
+        <action>
+          <REQUEST Name="getMatchedDomains" ServiceName="BCM_MASTER" AssignToVar="domainValues"/>
+          <TO_DOCVAR AssignToVar="matchedDomainValues">
+            <TO_XML SelectList="$domainValues"/>
+          </TO_DOCVAR>
+          <REQUEST Name="getProgramIDOptions" ServiceName="BCM_MASTER" AssignToVar="programIDValues">
+            <LEGAL_ENT_NBR Value="{$domainValues/LEGAL_ENT/LEGAL_ENT_NBR/@Value}"/>
+          </REQUEST>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Data Load Dashboard"/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Data Load Dashboard" ShowInBreadCrumbs="SHOW" Template="DashBoard.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SYS_RELOAD' and $thisParam/FILTER_ID/@Value='searchResultsTable'">
+            <THEN>
+              <REQUEST Name="getLoadSearchResults" AssignToVar="searchResults" ServiceName="BCM_MASTER">
+                <ACTION_NAME Value="EXPORT"/>
+                <TO_XML SelectList="$thisParam/*"/>
+                <TO_XML SelectList="$matchedDomainValues/LEGAL_ENT"/>
+                <TO_XML SelectList="$programIDValues/MKTNG_PGM"/>
+              </REQUEST>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="($thisParam/SHOW_LOAD_SEARCH_RESULTS/@Value='TRUE' or $thisParam/START_COUNT/@Value>=0)">
+                <THEN>
+                  <REQUEST Name="getLoadSearchResults" AssignToVar="searchResults" ServiceName="BCM_MASTER">
+                    <TO_XML SelectList="$thisParam/*"/>
+                    <!--     <TO_XML SelectList="$matchedDomainValues/LEGAL_ENT"/>-->
+                    <TO_XML SelectList="$programIDValues/MKTNG_PGM"/>
+                  </REQUEST>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$thisParam/SHOW_LOAD_DETAILS/@Value='TRUE'">
+                    <THEN>
+                      <TO_DOCVAR AssignToVar="loadDetails">
+                        <RESPONSE>
+                          <RPT_LOAD_NBR_DETAILS/>
+                        </RESPONSE>
+                      </TO_DOCVAR>
+                      <APPEND_TO_XML SelectList="$loadDetails/RPT_LOAD_NBR_DETAILS">
+                        <TO_XML SelectList="$thisParam/*"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$restartStatus='Success'">
+            <THEN>
+              <SET Var="MESSAGE" FromValue="Restart Request Completed"/>
+              <SET Var="restartResult" FromValue="Success"/>
+              <SET Var="restartStatus" FromValue=""/>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$restartStatus='Failure'">
+                <THEN>
+                  <SET Var="MESSAGE" FromValue="Restart request can not be completed"/>
+                  <SET Var="restartResult" FromValue="Failure"/>
+                  <SET Var="restartStatus" FromValue=""/>
+                </THEN>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <TO_XML SelectList="$matchedDomainValues/*"/>
+              <TO_XML SelectList="$programIDValues/*"/>
+              <TO_XML SelectList="$searchResults"/>
+              <TO_XML SelectList="$loadDetails"/>
+              <Result Value="{$restartResult}"/>
+              <MESSAGE Value="{$MESSAGE}"/>
+            </ROOT>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction='SEARCH_LOAD'">
+            <THEN>
+              <SET Property="SHOW_LOAD_SEARCH_RESULTS" DocVar="thisParam" FromValue="TRUE"/>
+              <SET DocVar="thisParam" Property="START_COUNT" FromValue="0"/>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$userAction='Details'">
+                <THEN>
+                  <SET Property="SHOW_LOAD_DETAILS" DocVar="thisParam" FromValue="TRUE"/>
+                  <GET_DOCUMENT Name="RPT_LOAD_NBR" AssignToVar="rptLoadNbrDetails" ServiceName="BCM_MASTER" DirtyRead="true">
+                    <LOAD_ID Value="{$thisParam/SELECTED_LOAD_ID/@Value}"/>
+                    <!--MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}" /-->
+                    <!--LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}" /-->
+                  </GET_DOCUMENT>
+                  <FOR_EACH SelectList="$rptLoadNbrDetails/RPT_LOAD_NBR" CurrentElement="currentElement">
+                    <FOR_EACH SelectList="$programIDValues/MKTNG_PGM/OPTION" CurrentElement="curElement">
+                      <IF_TEST Test="$curElement/@Value!='All'">
+                        <THEN>
+                          <IF_TEST Test="$currentElement/MKTNG_PGM_NBR/@Value=$curElement/@Id">
+                            <THEN>
+                              <SET DocVar="currentElement" Property="MKTNG_PGM_NAME" FromValue="{$curElement/@Value}"/>
+                            </THEN>
+                          </IF_TEST>
+                        </THEN>
+                      </IF_TEST>
+                    </FOR_EACH>
+                  </FOR_EACH>
+                  <FOR_EACH SelectList="$rptLoadNbrDetails/RPT_LOAD_NBR" CurrentElement="currentElement">
+                    <FOR_EACH SelectList="$matchedDomainValues/LEGAL_ENT/OPTION" CurrentElement="curElement">
+                      <IF_TEST Test="$curElement/@Value!='All'">
+                        <THEN>
+                          <IF_TEST Test="$currentElement/LEGAL_ENT_NBR/@Value=$curElement/@Id">
+                            <THEN>
+                              <SET DocVar="currentElement" Property="LEGAL_ENT_NAME" FromValue="{$curElement/@Value}"/>
+                            </THEN>
+                          </IF_TEST>
+                        </THEN>
+                      </IF_TEST>
+                    </FOR_EACH>
+                  </FOR_EACH>
+                  <APPEND_TO_XML SelectList="$thisParam">
+                    <TO_XML SelectList="$rptLoadNbrDetails/*"/>
+                  </APPEND_TO_XML>
+                  <SET Property="SHOW_LOAD_SEARCH_RESULTS" DocVar="thisParam" FromValue="FALSE"/>
+                  <SET Property="START_COUNT" DocVar="thisParam" FromValue="-1"/>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_PROGRAM_LIST'">
+                    <THEN>
+                      <REQUEST Name="getMatchedDomains" ServiceName="BCM_MASTER" AssignToVar="domainValues"/>
+                      <REQUEST Name="getProgramIDs" AssignToVar="programIDValues" ServiceName="BCM_MASTER">
+                        <SOURCE Value="SEARCH"/>
+                        <LEGAL_ENT_NBR Value="{$domainValues/LEGAL_ENT[LEGAL_ENT_NAME/@Value=$thisParam/LEGAL_ENT_NAME/@Value]/LEGAL_ENT_NBR/@Value}"/>
+                      </REQUEST>
+                      <TO_DOCVAR AssignToVar="searchResults">
+                        <ROOT/>
+                      </TO_DOCVAR>
+                      <SET Property="SHOW_LOAD_SEARCH_RESULTS" DocVar="thisParam" FromValue="FALSE"/>
+                      <SET Property="START_COUNT" DocVar="thisParam" FromValue="-1"/>
+                    </THEN>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='DONE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='RESET'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SEARCH_LOAD'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Data Load Dashboard" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='RejectedData'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="RejectedData" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='RestartLoad'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="RestartLoad" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='DeleteLoad'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="DeleteLoad" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Details'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Data Load Dashboard" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_PROGRAM_LIST'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Data Load Dashboard" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <task Name="RejectedData">
+      <actions>
+        <action/>
+      </actions>
+      <next_nodes/>
+    </task>
+    <task Name="RestartLoad">
+      <actions>
+        <action>
+          <SET Var="LOAD_ID" FromValue="{$thisParam/SELECTED_LOAD_ID/@Value}"/>
+          <EXECUTE_SQL_QUERY Value="NONSEQUENCED TRANSACTIONTIME SEL * FROM REGIS_PRSNA WHERE SYS_SOURCE={$LOAD_ID};" AssignToVar="resRegisprsna" ReturnRowCount="yes"/>
+          <IF_TEST Test="$resRegisprsna/@TotalRowCount != 0">
+            <THEN>
+              <GET_DOCUMENT Name="USER_PROFILE" AssignToVar="resUser" DirtyRead="yes" ServiceName="USER_SECURITY">
+                <SELECT>
+                  <CONTACT_ID/>
+                </SELECT>
+                <LOGIN_NAME Value="{$userName}"/>
+              </GET_DOCUMENT>
+              <GET_DOCUMENT Name="CONTACT" AssignToVar="resContact" DirtyRead="yes" ServiceName="USER_SECURITY">
+                <ID Value="{$resUser/USER_PROFILE/CONTACT_ID/@Value}"/>
+              </GET_DOCUMENT>
+              <EXECUTE_SQL_QUERY Value="SELECT MKTNG_PGM_NBR,LEGAL_ENT_NBR FROM V_RPT_LOAD_NBR WHERE LOAD_ID= {$thisParam/SELECTED_LOAD_ID/@Value};" AssignToVar="resMktgLegal"/>
+              <REQUEST Name="emailOnRestartNDelete" ServiceName="BCM_MASTER" AssignToVar="resrestart">
+                <SUBJECT Value="Restart Request Initiated"/>
+                <DATA Value="Restart request has been Initiated from User {$resContact/CONTACT/FIRST_NAME/@Value}  {$resContact/CONTACT/LAST_NAME/@Value} for Load Id  {$LOAD_ID} having MKTNG_PGM_NBR {$resMktgLegal/SQL_RESULT/MKTNG_PGM_NBR/@Value} and LEGAL_ENT_NBR {$resMktgLegal/SQL_RESULT/LEGAL_ENT_NBR/@Value}.Restart cannot take place as there is data present in Golden tables for Load_Id {$LOAD_ID}.Please take care of Non Temporal Delete from Golden tables and delete from LOAD_INFO and LOAD_CONTROL."/>
+              </REQUEST>
+              <SET Var="restartStatus" FromValue="Success"/>
+            </THEN>
+            <ELSE>
+              <EXECUTE_SQL_QUERY Value="DELETE FROM LOAD_INFO WHERE LOAD_ID= {$LOAD_ID};"/>
+              <EXECUTE_SQL_QUERY Value="DELETE FROM LOAD_CONTROL WHERE LOAD_ID= {$LOAD_ID} AND LOAD_TYPE='MDM';"/>
+              <SET Var="restartStatus" FromValue="Failure"/>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Data Load Dashboard"/>
+      </next_nodes>
+    </task>
+    <task Name="DeleteLoad">
+      <actions>
+        <action>
+          <!--<EXEC_PROC Name="DEL_BY_LOADID" AssignToVar="resdelByLoadId">
+<LOAD_ID Type="IN" Value="{$thisParam/SELECTED_LOAD_ID/@Value}" DataType="string"/>
+</EXEC_PROC>-->
+          <EXEC_PROC Name="SOFTDEL_BY_LOADID" AssignToVar="ressoftdelByLoadId">
+            <LOAD_ID Type="IN" Value="{$thisParam/SELECTED_LOAD_ID/@Value}" DataType="string"/>
+          </EXEC_PROC>
+          <GET_DOCUMENT Name="USER_PROFILE" AssignToVar="resUser" DirtyRead="yes" ServiceName="USER_SECURITY">
+            <SELECT>
+              <CONTACT_ID/>
+            </SELECT>
+            <LOGIN_NAME Value="{$userName}"/>
+          </GET_DOCUMENT>
+          <GET_DOCUMENT Name="CONTACT" AssignToVar="resContact" DirtyRead="yes" ServiceName="USER_SECURITY">
+            <ID Value="{$resUser/USER_PROFILE/CONTACT_ID/@Value}"/>
+          </GET_DOCUMENT>
+          <EXECUTE_SQL_QUERY Value="SELECT MKTNG_PGM_NBR,LEGAL_ENT_NBR FROM V_RPT_LOAD_NBR WHERE LOAD_ID= {$thisParam/SELECTED_LOAD_ID/@Value};" AssignToVar="resMktgLegal"/>
+          <REQUEST Name="emailOnRestartNDelete" ServiceName="BCM_MASTER" AssignToVar="resDelete">
+            <SUBJECT Value="Delete Request Initiated"/>
+            <DATA Value="Delete request has been Initiated from User {$resContact/CONTACT/FIRST_NAME/@Value} {$resContact/CONTACT/LAST_NAME/@Value} for Load Id  {$thisParam/SELECTED_LOAD_ID/@Value} having MKTNG_PGM_NBR {$resMktgLegal/SQL_RESULT/MKTNG_PGM_NBR/@Value} and LEGAL_ENT_NBR {$resMktgLegal/SQL_RESULT/LEGAL_ENT_NBR/@Value} "/>
+          </REQUEST>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Data Load Dashboard"/>
+      </next_nodes>
+    </task>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <start0 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="129,218" size="732,534">
+        <iconProps iconfile="z1start.gif"/>
+      </start0>
+      <mgcnode Name="Data Load Dashboard" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="355,181" size="1280,740">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <RejectedData font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="363,13" size="732,560">
+        <iconProps iconfile="z1task.gif"/>
+      </RejectedData>
+      <RestartLoad font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="578,28" size="732,560">
+        <iconProps iconfile="z1task.gif"/>
+      </RestartLoad>
+      <DeleteLoad font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="672,209" size="732,560">
+        <iconProps iconfile="z1task.gif"/>
+      </DeleteLoad>
+    </mgcnodes>
+    <mgcconnectors>
+      <start0>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="174,240" endpoint="355,203" ctrlRect1="307,238,4,4" ctrlRect2="217,201,4,4"/>
+      </start0>
+      <mgcnode Name="Data Load Dashboard">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="355,203" endpoint="355,203" ctrlRect1="278,201,4,4" ctrlRect2="217,322,4,4" ctrlRect2Dirty="true" textRect="234,259,31,8">
+          <textProps text="$userAction ='SEARCH_LOAD'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="377,181" endpoint="385,58" ctrlRect1="375,88,4,4" ctrlRect2="383,149,4,4" textRect="365,116,32,8">
+          <textProps text="$userAction ='RejectedData'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="400,203" endpoint="578,50" ctrlRect1="531,201,4,4" ctrlRect2="442,48,4,4" textRect="473,122,31,8">
+          <textProps text="$userAction ='RestartLoad'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="400,203" endpoint="672,231" ctrlRect1="491,230,4,4" ctrlRect2="607,257,4,4" textRect="536,241,30,8" ctrlRect1Dirty="true" ctrlRect2Dirty="true">
+          <textProps text="$userAction ='DeleteLoad'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="400,203" endpoint="400,203" ctrlRect1="473,201,4,4" ctrlRect2="517,314,4,4" textRect="484,255,27,8" ctrlRect2Dirty="true">
+          <textProps text="$userAction ='Details'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="377,226" endpoint="377,226" ctrlRect1="375,299,4,4" ctrlRect2="325,441,4,4" ctrlRect2Dirty="true" textRect="334,368,37,8">
+          <textProps text="$userAction ='LOAD_PROGRAM_LIST'"/>
+        </nextNodeView>
+      </mgcnode>
+      <RestartLoad>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="578,50" endpoint="400,203" ctrlRect1="443,48,4,4" ctrlRect2="532,201,4,4"/>
+      </RestartLoad>
+      <DeleteLoad>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="672,231" endpoint="400,203" ctrlRect1="466,229,4,4" ctrlRect2="602,201,4,4"/>
+      </DeleteLoad>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+      <action/>
+    </pre_actions>
+    <post_actions>
+      <action/>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

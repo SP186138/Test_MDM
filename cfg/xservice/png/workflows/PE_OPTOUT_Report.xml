@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="4" ShowInBreadCrumbs="true" Version="1.0" Name="PE_OPTOUT_Report" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="PE_OPTOUT_Report"/>
+  <nodes>
+    <start Name="start0">
+      <actions/>
+      <next_nodes>
+        <next_node Name="PE_OPTOUT_Report"/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="PE_OPTOUT_Report" ShowInBreadCrumbs="HIDE" Template="PE_OPTOUT_Report.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <root/>
+          </TO_DOCVAR>
+          <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+            <FILTER_PE_OPTOUT_ID/>
+            <FILTER_REGIS_PRSNA_ID/>
+            <FILTER_MKTNG_PGM_NBR/>
+            <FILTER_LEGAL_ENT_NBR/>
+            <FILTER_SUBSCRPTN_OPT_NBR/>
+            <FILTER_GVN_NAME/>
+            <FILTER_MID_NAME/>
+            <FILTER_FAMLY_NAME/>
+            <FILTER_SRC_ADDR_LINE_1_TXT/>
+            <FILTER_SRC_ADDR_LINE_2_TXT/>
+            <FILTER_SRC_ADDR_LINE_3_TXT/>
+            <FILTER_SRC_CITY_NAME/>
+            <FILTER_SRC_TERR_NAME/>
+            <FILTER_SRC_CNTRY_NAME/>
+            <FILTER_SRC_POSTL_AREA_CODE/>
+            <FILTER_EMAIL_ADDR_TEXT/>
+            <FILTER_FULL_PHONE_NUM/>
+            <FILTER_OPT_IND/>
+            <FILTER_NATIONAL_ID_NBR/>
+            <FILTER_CHANNEL_IND/>
+            <FILTER_OPT_LEVEL_IND/>
+            <FILTER_OPT_TIME/>
+            <FILTER_STATUS_FLG/>
+            <FILTER_LOG_UPDATE_USER Value="{$userId/@Value}" AddOn="true"/>
+          </FORM_SEARCH_FILTER>
+          <FOR_EACH SelectList="$filters/*/*" CurrentElement="currentSearchColumn">
+            <SET_NAME DocVar="currentSearchColumn" FromValue="{substringAfter($currentSearchColumn/name(),'FILTER_')}"/>
+          </FOR_EACH>
+          <TO_DOCVAR AssignToVar="filterList">
+            <FILTERLIST/>
+          </TO_DOCVAR>
+          <FOR_EACH SelectList="$filters/FILTER" CurrentElement="thisFilter">
+            <APPEND_TO_XML SelectList="$filterList">
+              <TO_XML SelectList="$thisFilter/*"/>
+            </APPEND_TO_XML>
+          </FOR_EACH>
+          <SET Var="startRow1" FromValue="{$thisParam/START_COUNT/@Value}"/>
+          <GET_DOC_SMART Name="V_PE_OPT_OUT" AssignToVar="get_PE_OPTOUT_Dtls" MaxRows="50" ReturnRowCount="yes" ServiceName="BCM_MASTER" StartAtRow="{$startRow1}">
+            <TO_XML SelectList="$filterList/*"/>
+            <ORDER_BY>
+              <OPT_TIME Sort="Descending"/>
+            </ORDER_BY>
+          </GET_DOC_SMART>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <TO_XML SelectList="$get_PE_OPTOUT_Dtls/*"/>
+            <RowCount Value="{$get_PE_OPTOUT_Dtls/@TotalRowCount}"/>
+          </APPEND_TO_XML>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done3" Description=""/>
+        </next_nodes>
+      </if_cond>
+    </ui_form2>
+    <done Name="done3">
+      <actions/>
+      <next_nodes/>
+    </done>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <start0 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="173,154">
+        <iconProps iconfile="z1start.gif"/>
+      </start0>
+      <PE_OPTOUT_Report font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="407,178" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </PE_OPTOUT_Report>
+      <done3 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="613,204">
+        <iconProps iconfile="z1end.gif"/>
+      </done3>
+    </mgcnodes>
+    <mgcconnectors>
+      <start0>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="218,176" endpoint="407,200" ctrlRect1="357,174,4,4" ctrlRect2="263,198,4,4"/>
+      </start0>
+      <PE_OPTOUT_Report>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="452,200" endpoint="613,226" ctrlRect1="570,198,4,4" ctrlRect2="490,224,4,4"/>
+      </PE_OPTOUT_Report>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions/>
+    <post_actions/>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

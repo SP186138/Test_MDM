@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+ 	 Copyright (c) 2009 by Teradata Corporation. 
+	 All Rights Reserved. 
+	 Teradata CONFIDENTIAL AND TRADE SECRET 
+ -->
+  <DEFINE_METHOD Name="pngStartSTGDeleteProcessTimer">
+<!--**********************************************************************************************************
+*   Module Name	: pngSTGDelete
+*		Created Date	: Oct 27, 2011
+*		Created By   	: Kalyana Chakravarthy
+*		Called Functions:
+*		Called By Functions:
+*		Short Desc	: Rule that starts timer for data delete from MDM stage Tables.
+*  		Change Log 		:
+*		DATE							LC						OWNER		DESCRIPTION
+*
+**********************************************************************************************************-->
+    <RULE>
+      <ACTION>
+        <START_TIMER>
+          <IDENTIFIED_BY>
+            <NAME Value="TIMER_FOR_STG_Delete"/>
+          </IDENTIFIED_BY>
+          <CALLBACK_DATE Value="{incrDate(date(), duration(0, 12, 0, 0))}"/>
+          <CALLBACK_DURATION Value="{duration(0,12,0,0)}"/>
+          <CALLBACK_ACTIONS>
+            <REQUEST Name="pngSTGnLoadInfoDelete" AssignToVar="resSTGnLoadInfoDelete" ServiceName="BCM_MASTER">
+            </REQUEST>
+          </CALLBACK_ACTIONS>
+        </START_TIMER>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="pngStopSTGDeleteProcessTimer">
+<!--**********************************************************************************************************
+*   Module Name	: pngSTGDelete
+*		Created Date	: Oct 27, 2011
+*		Created By   	: Kalyana Chakravarthy
+*		Called Functions:
+*		Called By Functions:
+*		Short Desc	: Rule that stops timer for data delete from MDM stage.
+*  		Change Log 		:
+*		DATE							LC						OWNER		DESCRIPTION
+*
+**********************************************************************************************************-->
+    <RULE>
+      <ACTION>
+        <STOP_TIMER>
+          <IDENTIFIED_BY>
+            <NAME Value="TIMER_FOR_STG_Delete"/>
+          </IDENTIFIED_BY>
+        </STOP_TIMER>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="pngSTGnLoadInfoDelete">
+    <RULE>
+      <ACTION>
+        <!-- Verify if the previous Delete run failed.If yes then send the email and dont proceed further-->
+        <IF_TEST Test="$previousDeleteStatus/@Value='Failed'">
+          <THEN>
+            <REQUEST Name="emailOnSerdownNPrevLoadInFailState" AssignToVar="resPreviousLoad" ServiceName="BCM_MASTER">
+              <SUBJECT Value="Previous Load for STG Delete still in Failed State."/>
+              <DATA Value="Previous Load is still in Failed State and hence the Workflow wont be executed"/>
+            </REQUEST>
+          </THEN>
+          <ELSE>
+            <!-- Get the load ids that needs to be deleted from MDM STG-->
+            <EXECUTE_SQL_QUERY Value="SELECT LOAD_ID,COUNT(*) FROM PRSNA_STG A WHERE EXISTS(SELECT LOAD_ID FROM LOAD_INFO B WHERE PROCESS_NAME='Wrapper' AND STATUS='Success' AND A.LOAD_ID = B.LOAD_ID) GROUP BY 1;" AssignToVar="deleteReadyLoadIds"/>
+            <!-- verify if there is data in MDM STG tables which is ready to be Deleted-->
+            <IF_TEST Test="count($deleteReadyLoadIds/SQL_RESULT) > 0">
+              <THEN>
+                <!-- Form the concatenated String of Load Ids-->
+                <SET Var="count" FromValue="1"/>
+                <SET Var="openingquote" FromValue="&quot;"/>
+                <FOR_EACH SelectList="$deleteReadyLoadIds/*" CurrentElement="currLoad">
+                  <IF_TEST Test="$count=1">
+                    <THEN>
+                      <SET Var="concatenatedLoadIds" FromValue="{concat($openingquote,$currLoad/LOAD_ID/@Value)}"/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="concatenatedLoadIds" FromValue="{concat($concatenatedLoadIds/@Value,',',$currLoad/LOAD_ID/@Value)}"/>
+                    </ELSE>
+                  </IF_TEST>
+                  <SET Var="count" FromValue="{int(int($count)+1)}"/>
+                </FOR_EACH>
+                <SET Var="concatenatedLoadIds" FromValue="{concat($concatenatedLoadIds/@Value,$openingquote)}"/>
+                <!--Calls the batch file that will delete from MDM STG.Also we pass the load_ids for which data needs to be deleted  -->
+                <EXECUTE_SHELL_COMMAND Value="CONSUMER_STG_DELETE.BAT {$concatenatedLoadIds/@Value}" AssignToVar="resStgDelete"/>
+                <!--Verify if batch file completed successfully and accordingly set the Load status -->
+                <IF_TEST Test="$resStgDelete/@ShellReturnValue = 0">
+                  <THEN>
+                    <TO_DOCVAR AssignToVar="thisReturn">
+                      <SUCCESS>
+                        <Message Value="Delete Successful"/>
+                      </SUCCESS>
+                    </TO_DOCVAR>
+                    <SET Var="previousDeleteStatus" FromValue="Success" Scope="Global"/>
+                  </THEN>
+                  <ELSE>
+                    <TO_DOCVAR AssignToVar="thisReturn">
+                      <FAILURE>
+                        <Message Value="{$result/STD_ERR/LINE[1]/@Value}"/>
+                      </FAILURE>
+                    </TO_DOCVAR>
+                    <SET Var="previousDeleteStatus" FromValue="Failed" Scope="Global"/>
+                    <!--Sends out an email in case of batch file failure-->
+                    <REQUEST Name="emailOnErrorNode" ServiceName="BCM_MASTER">
+                      <LoadId Value="{$concatenatedLoadIds/@Value}"/>
+                      <Subject Value="MDM STG Delete Failure"/>
+                      <BatchIdORLoadId Value="LoadId"/>
+                    </REQUEST>
+                  </ELSE>
+                </IF_TEST>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

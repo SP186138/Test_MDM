@@ -1,0 +1,616 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="0" ShowInBreadCrumbs="true" Version="1.0" Name="ManageExtnAttributes" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="ManageExtnAttributes">
+    <variable Name="alertGreen" Type="string" Comment=""/>
+    <variable Name="alertRed" Type="string" Comment=""/>
+    <variable Name="search_by_user" Type="string" Comment=""/>
+    <variable Name="tableName" Type="string" Comment=""/>
+    <variable Name="ManageExtnAttrbsBreadCrumbText" Type="string" Comment=""/>
+    <variable Name="AddNewExtAttrBreadCrumbText" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start1">
+      <actions>
+        <action>
+          <SET Var="ManageExtnAttrbsBreadCrumbText" FromValue="ManageExtendedAttributes_MainTitle"/>
+          <SET Var="AddNewExtAttrBreadCrumbText" FromValue="CreateExtendedAttribute_MainTitle"/>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Manage Extended Attributes"/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Manage Extended Attributes" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="ManageExtnAttributes.pgl" Description="SearchResults" BreadCrumbsText="$ManageExtnAttrbsBreadCrumbText">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="filterXml">
+            <FILTERS/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="orderByXml">
+            <ORDER_BY/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="attrMaster">
+            <QUERY_RESULTS/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="extnTables">
+            <OPTIONS/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'search' or $thisParam/BUTTON_ID/@Value='createFavourite' or $thisParam/BUTTON_ID/@Value = 'ExtnAttributes'">
+            <THEN>
+              <SET Var="alertGreen" FromValue=""/>
+              <SET Var="alertRed" FromValue=""/>
+              <SET DocVar="thisParam" Property="START_COUNT" FromValue="0"/>
+              <SET Var="search_by_user" FromValue="true"/>
+              <SET Var="tableName" FromValue="{$thisParam/DOCUMENT_NAME/@Value}"/>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'clear' and $thisParam/HierTable/@Value != 'true'">
+                <THEN>
+                  <SET Var="tableName" FromValue=""/>
+                </THEN>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'Cancel'">
+            <THEN>
+              <SET Var="alertGreen" FromValue=""/>
+              <SET Var="alertRed" FromValue=""/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$search_by_user = 'true'">
+            <THEN>
+              <IF_TEST Test="strlen($tableName) > 0">
+                <THEN>
+                  <SET Property="DOCUMENT_NAME" DocVar="filterXml" FromValue="{$tableName}"/>
+                </THEN>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="test">
+                <DOCUMENT_NAME Value="{$tableName}"/>
+              </TO_DOCVAR>
+              <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="test"/>
+            </THEN>
+          </IF_TEST>
+          <SET Var="sortOrder" FromValue="{ifElse($thisParam/SORT_ORDER/@Value = null, 'Descending', $thisParam/SORT_ORDER/@Value)}"/>
+          <SET Var="sortBy" FromValue="{ifElse(($thisParam/SORT_BY/@Value = null) or($thisParam/SORT_BY/@Value = 'ID') , 'ID', $thisParam/SORT_BY/@Value)}"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SYS_RELOAD'">
+            <THEN>
+              <SET Var="alertGreen" FromValue=""/>
+              <SET Var="alertRed" FromValue=""/>
+              <TO_DOCVAR AssignToVar="sortByColumn">
+                <TEMP/>
+              </TO_DOCVAR>
+              <SET_NAME DocVar="sortByColumn" FromValue="{$sortBy}"/>
+              <SET Attribute="Sort" DocVar="sortByColumn" FromValue="{$sortOrder}"/>
+              <ADD_CHILDREN DocVar="orderByXml" FromDocVar="sortByColumn"/>
+            </THEN>
+          </IF_TEST>
+          <SET Var="paginateStart" FromValue="{int(ifElse($thisParam/START_COUNT/@Value = null, 0, $thisParam/START_COUNT/@Value))}"/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <this>
+              <TO_XML SelectList="$extnTables"/>
+            </this>
+          </TO_DOCVAR>
+          <GET_DOCUMENT Name="SYS_TABLE_MAP" ServiceName="E2E" AssignToVar="extn" DirtyRead="true">
+            <IS_EXTENDABLE Value="1"/>
+            <IS_USED Value="1"/>
+            <ORDER_BY>
+              <LOGICAL_NAME Sort="Ascending"/>
+            </ORDER_BY>
+            <SELECT>
+              <ID/>
+              <LOGICAL_NAME/>
+              <TABLE_TYPE/>
+            </SELECT>
+          </GET_DOCUMENT>
+          <!-- Added code to skip extended attribute creation in the case of hierarchy tables which aren't being used -->
+          <GET_DOC_SMART Name="RelationalObject" ServiceName="BCM_MASTER" AssignToVar="hierObjects" DirtyRead="true" HandleException="true">
+            <SELECT>
+              <LogicalTableName/>
+            </SELECT>
+          </GET_DOC_SMART>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'ExtnAttributes' or $thisParam/HierTable/@Value='true'">
+            <THEN>
+              <SET Property="selectableVar" DocVar="pglFormInput" FromValue="Single"/>
+              <FOR_EACH SelectList="$extn/SYS_TABLE_MAP" CurrentElement="docName">
+                <IF_TEST Test="$tableName = $docName/LOGICAL_NAME/@Value">
+                  <THEN>
+                    <TO_DOCVAR AssignToVar="each">
+                      <ROOT>
+                        <OPTION Value="{$docName/LOGICAL_NAME/@Value}" Id="{$docName/LOGICAL_NAME/@Value}" Selected="true" Parent="{$docName/TABLE_TYPE/@Value}"/>
+                      </ROOT>
+                    </TO_DOCVAR>
+                    <APPEND_CHILDREN DocVar="extnTables" FromDocVar="each"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+            </THEN>
+            <ELSE>
+              <SET Property="selectableVar" DocVar="pglFormInput" FromValue="false"/>
+              <FOR_EACH SelectList="$extn/SYS_TABLE_MAP" CurrentElement="docName">
+                <IF_TEST Test="$docName/TABLE_TYPE/@Value = 'OBJECT_HIERARCHY'">
+                  <THEN>
+                    <SET Var="table_name" FromValue="{$hierObjects/RelationalObject/LogicalTableName[@Value = $docName/LOGICAL_NAME/@Value]/@Value}"/>
+                  </THEN>
+                  <ELSE>
+                    <SET Var="table_name" FromValue="{$docName/LOGICAL_NAME/@Value}"/>
+                  </ELSE>
+                </IF_TEST>
+                <IF_TEST Test="$table_name != null">
+                  <THEN>
+                    <IF_TEST Test="$tableName = $table_name">
+                      <THEN>
+                        <TO_DOCVAR AssignToVar="each">
+                          <ROOT>
+                            <OPTION Value="{$docName/LOGICAL_NAME/@Value}" Id="{$docName/LOGICAL_NAME/@Value}" Selected="true" Parent="{$docName/TABLE_TYPE/@Value}"/>
+                          </ROOT>
+                        </TO_DOCVAR>
+                      </THEN>
+                      <ELSE>
+                        <TO_DOCVAR AssignToVar="each">
+                          <ROOT>
+                            <OPTION Value="{$docName/LOGICAL_NAME/@Value}" Id="{$docName/LOGICAL_NAME/@Value}" Parent="{$docName/TABLE_TYPE/@Value}"/>
+                          </ROOT>
+                        </TO_DOCVAR>
+                      </ELSE>
+                    </IF_TEST>
+                    <APPEND_CHILDREN DocVar="extnTables" FromDocVar="each"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+            </ELSE>
+          </IF_TEST>
+          <SET Var="maxRow" FromValue="{$tableDefaultRows}"/>
+          <IF_TEST Test="$thisParam/EXPORT_ALL/@Value='yes'">
+            <THEN>
+              <SET Var="paginateStart" FromValue="0"/>
+              <SET Var="maxRow" FromValue="{$thisParam/MAX_ROWS/@Value}"/>
+            </THEN>
+          </IF_TEST>
+          <GET_DOCUMENT Name="SYS_EXT_ATTRBS_MAP" ServiceName="BPE_META" AssignToVar="attrSearch" StartAtRow="{$paginateStart}" MaxRows="{$maxRow}" ReturnRowCount="yes" DirtyRead="true">
+            <END_DATE/>
+            <TO_XML SelectList="$filterXml/*"/>
+            <ORDER_BY>
+              <TO_XML SelectList="$orderByXml/*"/>
+              <DOCUMENT_NAME Sort="Descending"/>
+            </ORDER_BY>
+            <SELECT>
+              <Id/>
+              <DOCUMENT_NAME/>
+              <ATTRIBUTE_NAME/>
+              <ATTRIBUTE_LOGICAL_NAME/>
+              <ATTRIBUTE_DATA_TYPE/>
+              <START_DATE/>
+              <DESCRIPTION/>
+              <VALID_VALUE_TYPE/>
+              <CODE_SET_NAME/>
+              <REFERENCE_TABLE/>
+              <REFERENCE_PROPERTY/>
+              <ATTRIBUTE_IS_REQUIRED/>
+              <ATTRIBUTE_DEFAULT_VALUE/>
+              <ATTRIBUTE_PRECISION/>
+            </SELECT>
+          </GET_DOCUMENT>
+          <TO_DOCVAR AssignToVar="page">
+            <ABC>
+              <StartRowCount Value="{$paginateStart}"/>
+              <TotalRowCount Value="{$attrSearch/@TotalRowCount}"/>
+              <maxRows Value="{$tableDefaultRows}"/>
+            </ABC>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisReturn/* !=null">
+            <THEN>
+              <TO_DOCVAR AssignToVar="alertz">
+                <ABC>
+                  <AlertRed Value="{$thisReturn/alertRed/@Value}"/>
+                  <AlertGreen Value="{$thisReturn/alertGreen/@Value}"/>
+                </ABC>
+              </TO_DOCVAR>
+            </THEN>
+            <ELSE>
+              <TO_DOCVAR AssignToVar="alertz">
+                <ABC>
+                  <AlertGreen Value="{$alertGreen/@Value}"/>
+                  <AlertRed Value="{$alertRed/@Value}"/>
+                </ABC>
+              </TO_DOCVAR>
+            </ELSE>
+          </IF_TEST>
+          <ADD_CHILDREN DocVar="attrMaster" FromSelectList="$attrSearch/*"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="attrMaster"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$alertz/*"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$page/*"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$thisParam/*"/>
+          <SET Property="HierTable" DocVar="pglFormInput" FromValue="{ifElse($thisParam/HierTable/@Value='true' or $thisParam/BUTTON_ID/@Value = 'ExtnAttributes','true','false')}"/>
+          <SET Property="objects" DocVar="pglFormInput" FromValue="{ifElse($thisParam/HierTable/@Value='true'or $thisParam/BUTTON_ID/@Value = 'ExtnAttributes','OBJECT_HIERARCHY',$thisParam/objects/@Value)}"/>
+          <SET Var="alertGreen" FromValue=""/>
+          <SET Var="alertRed" FromValue=""/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="thisReturn">
+            <RESPONSE/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'Delete'">
+            <THEN>
+              <SET Var="selectedAttribute" FromValue="{$thisParam/SELECTED_ID/@Value}"/>
+              <SET Var="selectedTable" FromValue="{$thisParam/DOCUMENT_NAME/@Value}"/>
+              <SET Property="BUTTON_ID" FromValue="ExtnAttributes" DocVar="thisParam"/>
+              <SET Property="DOCUMENT_NAME" DocVar="thisParam" FromValue="{$thisParam/DOCUMENT_NAME/@Value}"/>
+              <GET_DOC_SMART Name="SYS_EXT_ATTRBS_MAP" ServiceName="BPE_META" AssignToVar="selectedExtnAttr" HandleException="true">
+                <DOCUMENT_NAME Value="{$selectedTable}" MatchBy="EQUAL"/>
+                <ATTRIBUTE_NAME Value="{$selectedAttribute}" MatchBy="EQUAL"/>
+              </GET_DOC_SMART>
+              <TO_DOCVAR AssignToVar="ExtDoc">
+                <EXTN_ATTRBS>
+                  <DOCUMENT_NAME Value="{$selectedExtnAttr/*/DOCUMENT_NAME/@Value}"/>
+                  <ATTRIBUTE_NAME Value="{$selectedExtnAttr/*/ATTRIBUTE_NAME/@Value}"/>
+                  <ATTRIBUTE_LOGICAL_NAME Value="{$selectedExtnAttr/*/ATTRIBUTE_LOGICAL_NAME/@Value}"/>
+                  <ATTRIBUTE_DATA_TYPE Value="{$selectedExtnAttr/*/ATTRIBUTE_DATA_TYPE/@Value}"/>
+                  <IS_VALID_VALUE_TYPE Value="{ifElse($selectedExtnAttr/*/IS_VALID_VALUE_TYPE/@Value='true','1','0')}"/>
+                  <VALID_VALUE_TYPE Value="{ifElse($selectedExtnAttr/*/VALID_VALUE_TYPE/@Value!=null,$selectedExtnAttr/*/VALID_VALUE_TYPE/@Value,'')}"/>
+                  <CODE_SET_NAME Value="{ifElse($selectedExtnAttr/*/CODE_SET_NAME/@Value!=null,$selectedExtnAttr/*/CODE_SET_NAME/@Value,'')}"/>
+                  <REFERENCE_TABLE Value="{ifElse($selectedExtnAttr/*/REFERENCE_TABLE/@Value!=null,$selectedExtnAttr/*/REFERENCE_TABLE/@Value,'')}"/>
+                  <REFERENCE_PROPERTY Value="{ifElse($selectedExtnAttr/*/REFERENCE_PROPERTY/@Value!=null,$selectedExtnAttr/*/REFERENCE_PROPERTY/@Value,'')}"/>
+                  <ATTRIBUTE_IS_REQUIRED Value="{ifElse($selectedExtnAttr/*/ATTRIBUTE_IS_REQUIRED/@Value='true','1','0')}"/>
+                  <ATTRIBUTE_DEFAULT_VALUE Value="{ifElse($selectedExtnAttr/*/ATTRIBUTE_DEFAULT_VALUE/@Value!=null,$selectedExtnAttr/*/ATTRIBUTE_DEFAULT_VALUE/@Value,'')}"/>
+                  <ATTRIBUTE_PRECISION Value="{ifElse($selectedExtnAttr/*/ATTRIBUTE_PRECISION/@Value!=null,$selectedExtnAttr/*/ATTRIBUTE_PRECISION/@Value,'')}"/>
+                </EXTN_ATTRBS>
+              </TO_DOCVAR>
+              <NATIVE_FUNCTION ClassName="com.teradata.bcm.mdrm.RelationshipManagerOperation" MethodName="deleteExtAttributeFromRO" AssignToVar="deleteExtAttr">
+                <PARAM Var="ExtDoc"/>
+                <PARAM Var="thisContext"/>
+              </NATIVE_FUNCTION>
+              <IF_TEST Test="$deleteExtAttr/@Status='Success'">
+                <THEN>
+                  <REQUEST Name="removeExtendedAttribute" ServiceName="BCM_MASTER" AssignToVar="removeExtAttr">
+                    <selectedTable Value="{$selectedTable}"/>
+                    <selectedAttribute Value="{$selectedExtnAttr/*/ATTRIBUTE_LOGICAL_NAME/@Value}"/>
+                  </REQUEST>
+                  <IF_TEST Test="$removeExtAttr/@Status = 'Success'">
+                    <THEN>
+                      <SET Property="alertGreen" FromValue="You have successfully deleted this Extended Attribute." DocVar="thisReturn"/>
+                    </THEN>
+                    <ELSE>
+                      <SET Property="alertRed" FromValue="{$deleteResult/@Description}" DocVar="thisReturn"/>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <SET Property="alertRed" FromValue="{$deleteExtAttr/@Status}" DocVar="thisReturn"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='search'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Extended Attributes" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Create'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Add Extended Attribute" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='clear'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Extended Attributes" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Clear'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Delete'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Extended Attributes" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="Add Extended Attribute" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="AddExtnAttributes.pgl" BreadCrumbsText="$AddNewExtAttrBreadCrumbText">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="extnTables">
+            <EXTN_TABLES_OPTIONS/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="allTables">
+            <ALL_TABLES_OPTIONS/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="allCodeSets">
+            <CODE_SET_OPTIONS/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="previousUserValues">
+            <USER_VALUES/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'Create'">
+            <THEN>
+              <SET Var="alertGreen" FromValue=""/>
+              <SET Var="alertRed" FromValue=""/>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'Save'">
+                <THEN>
+                  <ADD_CHILDREN DocVar="previousUserValues" FromSelectList="$thisParam/*"/>
+                  <REQUEST Name="getAvailableExtAttrbsDataTypesForDoc" ServiceName="BPE_META" AssignToVar="validExtAttrbDataTypesResp">
+                    <DOCUMENT_NAME Value="{$thisParam/Tablename/@Value}"/>
+                  </REQUEST>
+                  <TO_DOCVAR AssignToVar="validDataTypes">
+                    <ValidDataTypes/>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="validDataTypes" FromSelectList="$validExtAttrbDataTypesResp/*"/>
+                  <ADD_CHILDREN DocVar="previousUserValues" FromDocVar="validDataTypes"/>
+                  <IF_TEST Test="$thisParam/IsValidValueType/@Value = 'true' and  $thisParam/SelectValidValueType/@Value = 'Reference' ">
+                    <THEN>
+                      <REQUEST Name="getXDocumentProperties" ServiceName="BPE_META" AssignToVar="refTablePropsResp">
+                        <DOCUMENT_NAME Value="{$thisParam/SelectRefTableName/@Value}"/>
+                        <SERVICE_NAME Value="BCM_MASTER"/>
+                      </REQUEST>
+                      <TO_DOCVAR AssignToVar="selectedRefTableProperties">
+                        <SelectedRefTableProperties/>
+                      </TO_DOCVAR>
+                      <FOR_EACH SelectList="$refTablePropsResp/DOCUMENT/PROPERTY" CurrentElement="currentProp">
+                        <SET Var="currPropName" FromValue="{$currentProp/@Name}"/>
+                        <IF_TEST Test="$currPropName != 'SYS_TARGET_ID' and  $currPropName != 'SYS_AUTH_ID'  and  $currPropName != 'SOURCE' and  $currPropName != 'CREATED_BY' and  $currPropName != 'CREATION_DATE'  and  $currPropName != 'ENTITY_STATE' and  $currPropName != 'LAST_MODIFIED_BY' and  $currPropName != 'LAST_MODIFIED_DATE' and  $currPropName != 'SYS_TYPE' and  $currPropName != 'SYS_ERR_CODE' and  $currPropName != 'SYS_ERR_SEVERITY' and  $currPropName != 'ERROR_ID' and  $currPropName != 'ERROR_MESSAGE' and  $currPropName != 'ERROR_TIME' and  $currPropName != 'SYS_DOCUMENT' and  $currPropName != 'SYS_LOAD_ID'and  $currPropName != 'WORKFLOW_ID' ">
+                          <THEN>
+                            <TO_DOCVAR AssignToVar="eachOption">
+                              <OPTION Value="{$currPropName}" id="{$currPropName}"/>
+                            </TO_DOCVAR>
+                            <ADD_CHILDREN DocVar="selectedRefTableProperties" FromDocVar="eachOption"/>
+                          </THEN>
+                        </IF_TEST>
+                      </FOR_EACH>
+                      <ADD_CHILDREN DocVar="previousUserValues" FromDocVar="selectedRefTableProperties"/>
+                    </THEN>
+                  </IF_TEST>
+                </THEN>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <!--
+  <IS_EXTENDABLE Value="1" />
+-->
+          <GET_DOCUMENT Name="SYS_TABLE_MAP" ServiceName="E2E" AssignToVar="extn" DirtyRead="true">
+            <ORDER_BY>
+              <LOGICAL_NAME Sort="Ascending"/>
+            </ORDER_BY>
+            <SELECT>
+              <ID/>
+              <LOGICAL_NAME/>
+              <IS_EXTENDABLE Value="false"/>
+              <IS_USED/>
+              <TABLE_TYPE/>
+            </SELECT>
+          </GET_DOCUMENT>
+          <FOR_EACH SelectList="$extn/SYS_TABLE_MAP" CurrentElement="currentDoc">
+            <IF_TEST Test="$thisParam/HierTable/@Value = 'true'">
+              <THEN>
+                <IF_TEST Test="$currentDoc/LOGICAL_NAME/@Value = $tableName">
+                  <THEN>
+                    <TO_DOCVAR AssignToVar="each">
+                      <ROOT>
+                        <OPTION Value="{$currentDoc/LOGICAL_NAME/@Value}" Id="{$tableName}" Parent="OBJECT_HIERARCHY" Selected="true"/>
+                      </ROOT>
+                    </TO_DOCVAR>
+                    <APPEND_CHILDREN DocVar="extnTables" FromDocVar="each"/>
+                  </THEN>
+                </IF_TEST>
+              </THEN>
+              <ELSE>
+                <IF_TEST Test="$currentDoc/IS_EXTENDABLE/@Value = 'true' and $currentDoc/IS_USED/@Value = 'true'">
+                  <THEN>
+                    <TO_DOCVAR AssignToVar="eachExtn">
+                      <OPTION Value="{$currentDoc/LOGICAL_NAME/@Value}" Id="{$currentDoc/LOGICAL_NAME/@Value}" Parent="{$currentDoc/TABLE_TYPE/@Value}"/>
+                    </TO_DOCVAR>
+                    <ADD_CHILDREN DocVar="extnTables" FromValue="{$eachExtn}"/>
+                  </THEN>
+                </IF_TEST>
+              </ELSE>
+            </IF_TEST>
+          </FOR_EACH>
+          <FOR_EACH SelectList="$extn/SYS_TABLE_MAP" CurrentElement="currentDoc">
+            <TO_DOCVAR AssignToVar="eachDoc">
+              <OPTION Value="{$currentDoc/LOGICAL_NAME/@Value}" Id="{$currentDoc/LOGICAL_NAME/@Value}" Parent="{$currentDoc/TABLE_TYPE/@Value}"/>
+            </TO_DOCVAR>
+            <ADD_CHILDREN DocVar="allTables" FromValue="{$eachDoc}"/>
+          </FOR_EACH>
+          <GET_DOC_SMART Name="Code_Set" ServiceName="BCM_MASTER" AssignToVar="codeSetsResults" DirtyRead="true">
+            <ORDER_BY>
+              <Code_Name Sort="Ascending"/>
+            </ORDER_BY>
+            <SELECT>
+              <Code_Name/>
+            </SELECT>
+          </GET_DOC_SMART>
+          <FOR_EACH SelectList="$codeSetsResults/Code_Set" CurrentElement="currentDoc">
+            <TO_DOCVAR AssignToVar="eachDoc">
+              <OPTION Value="{$currentDoc/Code_Name/@Value}" Id="{$currentDoc/Code_Name/@Value}"/>
+            </TO_DOCVAR>
+            <ADD_CHILDREN DocVar="allCodeSets" FromValue="{$eachDoc}"/>
+          </FOR_EACH>
+          <TO_DOCVAR AssignToVar="alertz">
+            <ABC>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </ABC>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <this>
+              <TO_XML SelectList="$extnTables"/>
+              <TO_XML SelectList="$allTables"/>
+              <TO_XML SelectList="$allCodeSets"/>
+              <TO_XML SelectList="$previousUserValues"/>
+            </this>
+          </TO_DOCVAR>
+          <SET Property="HierTable" FromValue="{ifElse($thisParam/HierTable/@Value = 'true','true','false')}" DocVar="pglFormInput"/>
+          <SET Property="objects" FromValue="{ifElse($thisParam/HierTable/@Value = 'true','OBJECT_HIERARCHY','')}" DocVar="pglFormInput"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$alertz/*"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$pglFormOutput/BUTTON_ID/@Value = 'Save'">
+            <THEN>
+              <GET_DOCUMENT Name="SYS_EXT_ATTRBS_MAP" ServiceName="BPE_META" AssignToVar="nameSearch" ReturnRowCount="yes">
+                <DOCUMENT_NAME Value="{$pglFormOutput/Tablename/@Value}" MatchBy="EQUAL"/>
+                <ATTRIBUTE_LOGICAL_NAME Value="{$pglFormOutput/attrName/@Value}" MatchBy="EQUAL"/>
+                <END_DATE/>
+              </GET_DOCUMENT>
+              <GET_DOCUMENT Name="SYS_EXT_ATTRBS" ServiceName="BPE_META" AssignToVar="attrSearch" ReturnRowCount="yes">
+                <DOCUMENT_NAME Value="{$pglFormOutput/Tablename/@Value}" MatchBy="EQUAL"/>
+                <IS_USED Value="1" MatchBy="EQUAL"/>
+              </GET_DOCUMENT>
+              <IF_TEST Test="$nameSearch/@TotalRowCount='1'">
+                <THEN>
+                  <IF_TEST Test="$nameSearch/@TotalRowCount='1'">
+                    <THEN>
+                      <SET Var="alertGreen" FromValue=""/>
+                      <SET Var="alertRed" FromValue="You cannot add the extended attribute, the entered attribute name already exists for the selected table."/>
+                    </THEN>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <REQUEST Name="callAddExtendedAttribute" ServiceName="BPE_META" AssignToVar="addExtResponse" HandleException="true">
+                    <TableName Value="{$pglFormOutput/Tablename/@Value}"/>
+                    <AttributeLogicalName Value="{$pglFormOutput/attrName/@Value}"/>
+                    <AttributeDescription Value="{$pglFormOutput/desc/@Value}"/>
+                    <AttributeDataType Value="{$pglFormOutput/SelectDataType/@Value}"/>
+                    <IsValidValueType Value="{$pglFormOutput/IsValidValueType/@Value}"/>
+                    <ValidValueType Value="{$pglFormOutput/SelectValidValueType/@Value}"/>
+                    <CodeSetType Value="{$pglFormOutput/SelectCodeSet/@Value}"/>
+                    <RefTableName Value="{$pglFormOutput/SelectRefTableName/@Value}"/>
+                    <RefPropName Value="{$pglFormOutput/SelectRefPropName/@Value}"/>
+                    <AttributeIsRequired Value="{$pglFormOutput/attrIsRequired/@Value}"/>
+                    <AttributeDefaultValue Value="{$pglFormOutput/attrDefaultValue/@Value}"/>
+                    <AttributeDecimalPrecision Value="{$pglFormOutput/attrPrecisionDecimal/@Value}"/>
+                  </REQUEST>
+                  <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT TABLE_NAME FROM SELF_CONF_MODEL WHERE TABLE_NAME='{$pglFormOutput/Tablename/@Value}' AND FROM_TEMPLATE IN ('HierarchyNode','HierarchyNodeRltn')" AssignToVar="hierTable" HandleException="true"/>
+                  <IF_TEST Test="$hierTable/*/TABLE_NAME/@Value != null">
+                    <THEN>
+                      <REQUEST Name="addExtAttributeToRO" AssignToVar="resAddExtAttr" ServiceName="BCM_MASTER">
+                        <selectedTable Value="{$pglFormOutput/Tablename/@Value}"/>
+                        <selectedAttribute Value="{$pglFormOutput/attrName/@Value}"/>
+                        <extAttrName Value="{$pglFormOutput/attrName/@Value}"/>
+                        <extAttrDispName Value="{$pglFormOutput/attrName/@Value}"/>
+                        <extAttrValidValue Value="{$pglFormOutput/IsValidValueType/@Value}"/>
+                        <extAttrLookUp Value="{$pglFormOutput/SelectCodeSet/@Value}"/>
+                        <extAttrReference Value="{$pglFormOutput/SelectRefTableName/@Value}"/>
+                        <extAttrIsRequired Value="{$pglFormOutput/attrIsRequired/@Value}"/>
+                        <extAttrColorCode Value="Cyan"/>
+                        <UserId Value="{$userId}"/>
+                      </REQUEST>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="$addExtResponse/@Status='Success'">
+                    <THEN>
+                      <SET Var="alertGreen" FromValue="Extended Attribute added successfully."/>
+                      <SET Property="alertGreen" FromValue="Extended Attribute added successfully." DocVar="thisReturn"/>
+                      <SET Var="alertRed" FromValue=""/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="alertGreen" FromValue=""/>
+                      <SET Var="alertRed" FromValue="{$addExtResponse/@Description}"/>
+                      <SET Property="alertRed" FromValue="{$addExtResponse/@Description}" DocVar="thisReturn"/>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/HierTable/@Value = 'true'">
+            <THEN>
+              <SET Property="BUTTON_ID" DocVar="thisParam" FromValue="ExtnAttributes"/>
+              <SET Property="DOCUMENT_NAME" DocVar="thisParam" FromValue="{$tableName}"/>
+              <SET Property="objects" DocVar="thisParam" FromValue="OBJECT_HIERARCHY"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Cancel'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Extended Attributes" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Save' and $alertRed != ''">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Add Extended Attribute" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Save' and $alertRed = ''">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Extended Attributes" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='true()'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Save'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10" compId="MgcDashboard1" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="8" textAttrsKey0="VIEW_FILE_CONTENTS : xml" textAttrsKey1="alertGreen : string" textAttrsKey2="alertRed : string" textAttrsKey3="checkExistingQuery : string" textAttrsKey4="paramList : xml" textAttrsKey5="queryID : string" textAttrsKey6="queryString : string" textAttrsKey7="search_by_user : string">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="VIEW_FILE_CONTENTS" Type="xml"/>
+      </variables>
+    </mgcdashboard>
+    <mgcnodes>
+      <start1 font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="61,224" size="732,534">
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+        <textProps text="start1" font="Verdana,0,9" textColor="80,80,80"/>
+      </start1>
+      <mgcnode Name="Manage Extended Attributes" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="359,221" size="1280,984">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <mgcnode Name="Add Extended Attribute" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="809,217" size="1280,984">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+    </mgcnodes>
+    <mgcconnectors>
+      <start1>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="70,81,173" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="106,246" endpoint="359,243" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="293,244,4,4" ctrlRect2="167,241,4,4"/>
+      </start1>
+      <mgcnode Name="Manage Extended Attributes">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="359,243" endpoint="359,243" ctrlRect1="282,241,4,4" ctrlRect2="167,90,4,4" ctrlRect2Dirty="true" textRect="221,163,11,8">
+          <textProps text="Search"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="404,243" endpoint="809,239" ctrlRect1="635,111,4,4" ctrlRect2="503,237,4,4" ctrlRect1Dirty="true" textRect="558,172,26,8">
+          <textProps text="$userAction ='Create'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="404,243" endpoint="404,243" ctrlRect1="477,241,4,4" ctrlRect2="383,245,4,4" ctrlRect2Dirty="true" textRect="427,241,10,8">
+          <textProps text="Clear"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="381,221" endpoint="381,221" ctrlRect1="379,144,4,4" ctrlRect2="400,205,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+      </mgcnode>
+      <mgcnode Name="Add Extended Attribute">
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="831,262" endpoint="404,243" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="true" ctrlRect1="806,302,4,4" ctrlRect2="655,487,4,4" textRect="715,392,34,8">
+          <textProps text="Cancel" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="809,239" endpoint="809,239" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="456,-34,4,4" ctrlRect2="940,385,4,4" textRect="688,173,24,8">
+          <textProps text="Save" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="809,239" endpoint="404,243" ctrlRect1="604,214,4,4" ctrlRect2="600,349,4,4" ctrlRect1Dirty="true" ctrlRect2Dirty="true"/>
+      </mgcnode>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions/>
+    <post_actions/>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

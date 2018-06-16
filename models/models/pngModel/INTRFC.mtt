@@ -1,0 +1,54 @@
+<document>
+  <properties>
+    <property Name="INTRFC_NBR" PhysicalName="INTRFC_NBR" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="INTRFC_NBR" />
+    </property>
+    <property Name="INTRFC_NM" PhysicalName="INTRFC_NM" Required="true" CharSet="LATIN">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="INTRFC_NM" />
+    </property>
+    <property Name="INTRFC_DESC" PhysicalName="INTRFC_DESC" CharSet="LATIN">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="INTRFC_DESC" />
+    </property>
+    <property Name="INTRFC_TYPE_CD" PhysicalName="INTRFC_TYPE_CD" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="INTRFC_TYPE_CD" />
+    </property>
+    <property Name="FILE_DELIMITER" PhysicalName="FILE_DELIMITER" CharSet="LATIN">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="FILE_DELIMITER" />
+    </property>
+    <property Name="FILE_NAMING" PhysicalName="FILE_NAMING" CharSet="LATIN">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="FILE_NAMING" />
+    </property>
+    <property Name="FILE_TYPE" PhysicalName="FILE_TYPE" CharSet="LATIN">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="FILE_TYPE" />
+    </property>
+    <property Name="INTRFC_CNTCT_NBR" PhysicalName="INTRFC_CNTCT_NBR">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="INTRFC_CNTCT_NBR" />
+    </property>
+  </properties>
+  <keys>
+    <key Active="true" Name="INTRFC_UPI" PhysicalName="INTRFC_UPI" Kind="PRIMARY">
+      <property Name="INTRFC_NBR" />
+    </key>
+  </keys>
+  <links>
+    <link Active="true" Name="Link1" PhysicalName="Intrfc_type_cd_link">
+      <keymap ToPackage="models/pngModel" ToModelUnit="INTRFC_TYPE.mtt" ToKey="INTRFC_TYPE_UPI" ReverseLink="true" ReverseLinkName="Type_cd" DeleteRule="RESTRICT">
+        <mapping FromProperty="INTRFC_TYPE_CD" ToProperty="INTRFC_TYPE_CD" />
+      </keymap>
+    </link>
+    <link Active="true" Name="Link2" PhysicalName="interface_cntct_link">
+      <keymap ToPackage="models/pngModel" ToModelUnit="CNTCT.mtt" ToKey="CNTCT_UPI" ReverseLink="true" ReverseLinkName="interface_cntct_nbr" DeleteRule="RESTRICT">
+        <mapping FromProperty="INTRFC_CNTCT_NBR" ToProperty="CNTCT_NBR" />
+      </keymap>
+    </link>
+  </links>
+  <docFacets>
+    <mdmWebServiceFacet />
+    <mdmSysTableMapFacet TableClass="MASTER" Source="MASTER" MasterTable="INTRFC" />
+    <miscFacet PhysicalName="INTRFC" Active="true" />
+    <mdmConfigFacet SchemaGen="true" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql />
+</document>
+

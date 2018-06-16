@@ -1,0 +1,39 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" name="studio.templates.simple_entry" source="studio.controller:load" version="3">
+  <ui:container id="topContainer">
+    <ui:step id="pivotControl" displayText="Profile Change Report">
+      <ui:field-group id="searchFG" displayText="Search by" collapsable="true">
+        <ui:field-group columns="4" id="fieldGroups" select="$this">
+          <ui:dropdown id="LEGAL_ENT_NAME" name="LEGAL_ENT_NAME" displayText="Matching Domain" optionSrc="$root/LEGAL_ENT/LEGAL_ENT_NAME" onChange="javascript:loadMonthStart();" required="true" displayCondition="{count($root/LEGAL_ENT)>1}">
+          </ui:dropdown>
+          <ui:entry-field id="LEGAL_ENT_NAME" name="LEGAL_ENT_NAME" displayText="Matching Domain" readOnly="true" value="{$root/LEGAL_ENT/LEGAL_ENT_NAME/@Value}" displayCondition="{count($root/LEGAL_ENT)&lt;=1}" required="true"/>
+          <ui:dropdown id="MONTH_START" name="MONTH_START" displayText="Month Start Date" optionSrc="$root/V_RPT_PROFILE_CHANGES/MONTH_START">
+          </ui:dropdown>
+          <ui:button id="SEARCH" displayText="Search" emphasized="true" displayCondition="{$root/LEGAL_ENT/LEGAL_ENT_NAME/@Value!=''}" onClick="javascript:onSearchClick()"/>
+          <ui:button id="SEARCH" displayText="Search" emphasized="true" displayCondition="{$root/LEGAL_ENT_NBR/@Value='None'}" disabled="true"/>
+        </ui:field-group>
+      </ui:field-group>
+      <ui:pivot id="pivot" displayText="Profile Changes by Program" select="$root" rowSrc="PROFILE_CHANGE_GROUP" subRowSrc="PROFILE_CHANGE_DOC/V_RPT_PROFILE_CHANGES" maxRows="-1">
+    
+        <ui:pivot-field axis="row" id="USER_ID" name="USER_ID" displayText="Prsna ID"/>
+        <ui:pivot-field axis="column" id="MKTNG_PGM_NAME" name="MKTNG_PGM_NAME"/>
+        <ui:display-field name="PROFILE_CHANGE_NBR" defaultValue="0" displayText="-->"/>
+      </ui:pivot>
+    </ui:step>
+  </ui:container>
+  <ui:script> 
+function onSearchClick()
+{
+document.form.BUTTON_ID.value = 'SEARCH';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+//return false;
+}
+    function loadMonthStart(){
+document.form.BUTTON_ID.value = 'LOAD_MONTH_START';
+document.form.action = 'view.x2ps';
+document.form.submit();
+return false;
+    }
+  </ui:script>
+</ui:page-group>

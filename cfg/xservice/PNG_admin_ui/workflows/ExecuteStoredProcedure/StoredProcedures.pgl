@@ -1,0 +1,55 @@
+<ui:page-group version="3" xmlns:ui="http://www.teradata.com/ui" name="studio.templates.simple_form" source="studio.controller:load">
+<!-- scrollable="true" added for issue MDM-1917 by Ankur Goyal-->  
+<ui:container id="topContainer" scrollable="true" showFavorite="true">
+<!--Line added for issue MDM-1937 by Ankur Goyal-->
+    <ui:help displayPage="{$pages:storedProcedureHelp}" />
+    <ui:step displayText="Manage Stored Procedures" id="basicControls">
+      <ui:field-group id="leftFields1" columns="3">
+        <ui:image src="/bpi_check.gif" displayCondition="{string-length($root/AlertGreen/@Value) != 0}" />
+        <ui:display-field value="{$root/AlertGreen/@Value}" displayCondition="{string-length($root/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen" />
+      </ui:field-group>
+      <ui:field-group id="leftFields1" columns="3">
+        <ui:image src="/cancel.gif" displayCondition="{string-length($root/AlertRed/@Value) != 0}" />
+        <ui:display-field value="{$root/AlertRed/@Value}" displayCondition="{string-length($root/AlertRed/@Value) != 0}" name="error" class="requiredIndicator" />
+      </ui:field-group>
+      <ui:container id="addNew">
+        <ui:step id="addNew" displayText="Add New">
+          <ui:field-group>
+            <ui:dropdown id="DROPDOWN" name="DROPDOWN" displayText="Name" optionSrc="$root/RESPONSE/SQL_RESULT/TableName" title="StoredProcedureName"/>
+            <ui:entry-field displayText="Parameters (comma separated)" name="PARAMETERS" id="PARAMETERS" title="StoredProcedureParametersCommaSeperated"/>
+          </ui:field-group>
+          <ui:buttons>
+            <ui:button id="ADD" name="ADD" displayText="Add" />
+          </ui:buttons>
+        </ui:step>
+      </ui:container>
+      <ui:table id="storedProcedureTable" displayText="Stored Procedure" selectable="Single" rowSrc="$root/RESULTS/RESPONSE/*" postRowIdAs="NAME" rowId="PROCEDURE_ID" maxRows="-1" scrollable="true">
+        <ui:field-group>
+          <ui:hidden-field id="PROCEDURE_ID" name="PROCEDURE_ID" />
+          <ui:display-field id="NAME" name="NAME" displayText="Stored Procedure Name" title="StoredProcedureName"/>
+          <ui:display-field id="PARAMS" name="PARAMS" displayText="Parameter Values" title="StoredProcedureParameters"/>
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button id="EXECUTE" name="EXECUTE" displayText="Execute" enabledBySelections="true" />
+          <ui:button id="EDIT" name="EDIT" displayText="Edit" enabledBySelections="true" />
+          <ui:button id="DELETE" name="DELETE" displayText="Delete" enabledBySelections="true" onClick="javascript:deleteCheck();" />
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+function deleteCheck()
+    {
+	core_confirm_jquery('SP_DEL_CONFIRM','onDeleteCallback' );
+    }
+function onDeleteCallback(response)
+    {
+		if( response == 'yes' )
+		{
+		document.form.BUTTON_ID.value ='DELETE';			
+    	document.form.submit(); 
+   	 	}
+	}   
+
+ </ui:script>
+</ui:page-group>

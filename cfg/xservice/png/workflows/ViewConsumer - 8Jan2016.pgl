@@ -1,0 +1,295 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" Id="ViewMatchedConsumerDetails.pgl" version="3">
+
+  <ui:container id="outerContainer" scrollable="true" type="Tabs">    
+
+   <ui:step id="outerStep7" select="$root" scrollable="true" displayText="View Consumer Details" activity="CSRView">
+
+      <ui:grid>
+
+        <ui:row>
+
+          <ui:cell id="Main" width="100%">
+
+<ui:field-group>
+
+<ui:hidden-field name="HTML_CODE" id="HTML_CODE" value=""></ui:hidden-field>
+
+            </ui:field-group>
+
+            <ui:dynamic-pgl select="$root/PGL/*" />
+
+            <ui:field-group>
+
+            <ui:hidden-field id="isOpen" name="isOpen" value="{$root/isOpen/@Value}"></ui:hidden-field>
+
+     </ui:field-group>
+
+          </ui:cell>
+
+        </ui:row>
+
+      </ui:grid>
+
+      <ui:buttons>
+
+        <ui:button id="Print" name="Print" displayText="Print" onClick="javascript:onPrint1();" />
+
+      </ui:buttons>
+
+    </ui:step>
+
+    </ui:container>
+
+    <ui:script>function onLoad(){
+
+togglenav();
+
+    onLoadSuper();
+
+    if(document.getElementById('isOpen').value=="true")
+
+    {
+
+    window.location.href ='download.jsp?file_name=consumer.pdf';
+
+    }
+
+    onResize();
+
+
+
+    }
+
+
+
+
+
+    function onPrint1(){
+
+    //GET THE CONTENT IN HEAD ANd BODY TAG
+
+  
+
+var htmlStart = "&lt;html&gt;";
+var htmlHeadStart = "&lt;head&gt;";
+var htmlBodyStart = "&lt;body&gt;&lt;h4 style='font-family: Arial Unicode MS, FreeSans; font-size:16px; font-weight: normal;' &gt;";
+var htmlEnd = "&lt;/html&gt;";
+var htmlHeadEnd = "&lt;/link&gt;&lt;/link&gt;&lt;/link&gt;&lt;/link&gt;&lt;/link&gt;&lt;/link&gt;&lt;/link&gt;&lt;/link&gt;&lt;/link&gt;&lt;/link&gt;&lt;/link&gt;&lt;/link&gt;&lt;/meta&gt;&lt;/meta&gt;&lt;/head&gt;";
+var htmlBodyEnd = "&lt;/h4&gt;&lt;/body&gt;";
+    
+var htmlhead = document.getElementsByTagName('head')[0].innerHTML;
+var htmlbody = document.body.innerHTML;
+
+
+ 
+ 
+var re=/\/mdm\//g;
+htmlhead = htmlhead.replace(re, "/Teradata/MDM/3.05.02/web/mdmclient/");
+
+//REMOVE SCRIPTS TAGS FROM THE HTML HEAD TAG
+
+  
+var index1 = 0;
+var index2 = 0;
+//alert(document.getElementsByTagName('head')[0].getElementsByTagName('script').length);
+for (var i = 0; i &lt; document.getElementsByTagName('head')[0].getElementsByTagName('script').length; i++) {
+  
+index1 = htmlhead.indexOf("&lt;script", index2);
+ 
+index2 = htmlhead.indexOf("/script&gt;",  index1);
+htmlhead = htmlhead.replace(htmlhead.substring(index1, index2 + 8),"");
+var index1 = 0;
+var index2 = 0;
+}
+
+var htmlheadFinal = htmlhead.trim();
+    //main body
+
+  
+
+    var elementCollection = new Array();
+
+    var allElements = document.getElementsByTagName("*");
+
+
+
+    for(i = 0; i &lt; allElements.length; i++)
+
+    {
+
+    if(allElements[i].id == 'result_form_container'){
+
+    elementCollection.push(allElements[i]);
+
+    }
+
+    }
+
+    var tablobj = document.getElementById('outerStep7');
+
+ 
+
+    var header = tablobj.children[0].innerHTML;
+
+
+    header = header.replace("containerHeader", "containerHeader align='center'");
+
+ 
+
+    var mainTable = "&lt;table id='outerStep7' &gt;"+header+"&lt;tr&gt;&lt;td&gt;";
+
+
+    var count=0;
+
+    for(var j=0;j&lt;elementCollection.length;j++)
+
+    {
+
+    var tdinnerdata ="";
+
+    if(j==0 || j % 13==0)
+
+    {
+
+    count = count+1;
+
+  
+
+    tdinnerdata ="&lt;table &gt;&lt;tr&gt;&lt;td&gt;Registration "+count+"&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;";
+
+  
+
+    }
+
+
+
+    var innerbody = elementCollection[j].innerHTML;
+      
+var index1 = 0;
+var index2 = 0;
+for (var i = 0; i &lt; elementCollection[j].getElementsByTagName('input').length; i++) {
+index1 = innerbody.indexOf("&lt;input", index2);
+index2 = innerbody.indexOf("&gt;",  index1);
+innerbody = innerbody.replace(innerbody.substring(index1, index2 + 1),"");
+var index1 = 0;
+var index2 = 0;
+}      
+      
+var index1 = 0;
+var index2 = 0;
+for (var i = 0; i &lt; elementCollection[j].getElementsByTagName('div').length; i++) {
+index1 = innerbody.indexOf("&lt;div", index2);
+index2 = innerbody.indexOf("&gt;",  index1);
+innerbody = innerbody.replace(innerbody.substring(index1, index2 + 1),"");
+var index1 = 0;
+var index2 = 0;
+}      
+var re = /&lt;\/div&gt;/g;
+innerbody = innerbody.replace(re,"");      
+   
+      
+var index1 = 0;
+var index2 = 0;
+for (var i = 0; i &lt; elementCollection[j].getElementsByTagName('img').length; i++) {
+index1 = innerbody.indexOf("&lt;img", index2);
+index2 = innerbody.indexOf("&gt;",  index1);
+innerbody = innerbody.replace(innerbody.substring(index1, index2 + 1),"");
+var index1 = 0;
+var index2 = 0;
+}      
+  
+var re=/\/mdm\//g;
+innerbody = innerbody.replace(re, "/Teradata/MDM/3.05.02/web/mdmclient/");
+
+
+var re = "table_createSorter('pdf_PII_Details', 'ID', 'Descending');";
+innerbody = innerbody.replace(re,"");
+var re = "table_createSorter('Origin_Table', 'ID', 'Descending');";
+innerbody = innerbody.replace(re,"");
+var re = "table_createSorter('Email_Subscriptions', 'ID', 'Descending');";
+innerbody = innerbody.replace(re,"");
+var re = "table_createSorter('Phone_Subscriptions', 'ID', 'Descending');";
+innerbody = innerbody.replace(re,"");
+var re = "table_createSorter('Postal_Subscriptions', 'ID', 'Descending');";
+innerbody = innerbody.replace(re,"");
+var re = "table_createSorter('Social_Subscriptions', 'ID', 'Descending');";
+innerbody = innerbody.replace(re,"");
+var re = "table_createSorter('Depend_Table', 'ID', 'Descending');";
+innerbody = innerbody.replace(re,"");
+var re = "table_createSorter('Pet_Table', 'ID', 'Descending');";
+innerbody = innerbody.replace(re,"");
+var re = "table_createSorter('Communications_Table', 'ID', 'Descending');";
+innerbody = innerbody.replace(re,"");
+var re = "table_createSorter('Coupons_Table', 'ID', 'Descending');";
+innerbody = innerbody.replace(re,"");
+var re = "table_createSorter('Samples_Table', 'ID', 'Descending');";
+innerbody = innerbody.replace(re,"");
+var re = "table_createSorter('History_Table', 'ID', 'Descending');";
+innerbody = innerbody.replace(re,"");
+var re = "table_createSorter('Legacy_History_Table', 'ID', 'Descending');";
+innerbody = innerbody.replace(re,"");
+
+    
+
+//alert(innerbody);           
+mainTable = mainTable +tdinnerdata+ "&lt;table id='result_form_container'&gt;&lt;tr&gt;&lt;td&gt;"+ innerbody+ "&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;";
+
+}
+mainTable = mainTable+"&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;";
+
+
+
+ 
+
+var finalhtml = htmlStart + htmlHeadStart  + htmlheadFinal + htmlHeadEnd + htmlBodyStart + mainTable + htmlBodyEnd + htmlEnd;
+//alert(mainTable);
+//alert(finalhtml);
+
+    document.form.HTML_CODE.value = finalhtml;
+
+    document.form.BUTTON_ID.value = 'Print';
+
+    document.form.action = 'view.x2ps';
+
+    document.form.submit();
+
+    //return false;
+
+    
+
+    }
+
+    
+
+    
+
+    String.prototype.replaceAt=function(index, character) {
+
+    return this.substr(0, index) + character + this.substr(index+character.length);
+
+    }
+
+    
+
+    function removeTag(htmlcode, tagStartindex, tagname){
+
+    if(tagname == 'SCRIPT'){
+
+    var tagCloseIndex = htmlcode.indexOf("SCRIPT&gt;", tagStartindex);
+
+    //alert(htmlcode.substring(tagStartindex,tagCloseIndex+7));
+
+    var htmlcodeReturn = htmlcode.replace(htmlcode.substring(tagStartindex,tagCloseIndex+7),"");
+
+    //alert(htmlcodeReturn);
+
+    return htmlcodeReturn;
+
+    }
+
+    }</ui:script>
+
+</ui:page-group>
+
+
+

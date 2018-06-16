@@ -1,0 +1,46 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_entry" source="studio.controller:load">
+ <ui:container displayText="Parameters">
+    <ui:step id="asd">
+      <ui:field-group>
+        <ui:div id="html-div"/>
+        <ui:hidden-field id="SELECTED_INSTANCE_ID" name="SELECTED_INSTANCE_ID" value="{$root/SELECTED_INSTANCE_ID/@Value}"/>
+        <ui:hidden-field id="PARAM_TYPE" name="PARAM_TYPE" value="{$root/PARAM_TYPE/@Value}"/>
+        <ui:hidden-field id="NodeName" name="NodeName" value="{$root/Node_Name/@Value}"/>
+        <ui:hidden-field id="PrevButtonId" name="PrevButtonId" value="{$root/PREV_BUTTON_ID/@Value}"/>
+        <ui:hidden-field id="Fork_Node_Name" name="Fork_Node_Name" value="{$root/Fork_Node_Name/@Value}"/>
+      </ui:field-group>
+      <ui:dynamic-pgl id="dyn1" select="$root/DYN_PGL/*"/>
+      <ui:script language="javascript" type="text/javascript" src="/td/javascript/tdXmlTableDisplay.js"/>
+      <ui:script>
+        
+$('#html-div').append('&lt;link rel=&quot;stylesheet&quot;  type=&quot;text/css&quot;  href=&quot;'+omxContextPath+'/td/css/xml_display.css&quot; />');
+ if(form.PrevButtonId.value=='showWorkflowParams')
+{
+var paramNames=['SELECTED_INSTANCE_ID','PARAM_TYPE'];
+var paramValues=[form.SELECTED_INSTANCE_ID.value,form.PARAM_TYPE.value];
+var requestXMLObj=createRequestXmlObjectTd('getWorkflowParamValueXML','BPE_META',paramNames,paramValues);
+        
+}
+else
+{
+var paramNames=['SELECTED_INSTANCE_ID','PARAM_TYPE','NODE_NAME','FORK_NODE_NAME'];
+var paramValues=[form.SELECTED_INSTANCE_ID.value,form.PARAM_TYPE.value,form.NodeName.value,form.Fork_Node_Name.value];
+var requestXMLObj=createRequestXmlObjectTd('getNodeXmlDetails','UI_WORKFLOW',paramNames,paramValues);
+}
+        
+var requestXMLStr=serializeXmlTd(requestXMLObj);
+var xpath = &quot;/RESPONSES/RESPONSE/*&quot;;
+SendAjaxRequest('BPE_META',requestXMLStr,'displayParamXML',xpath);
+
+        
+function displayParamXML(node){
+for(var i=0;i&lt;node.length;i++) {
+        var temp = 'pglXML'+(i+1);
+		buildTableFromXMLDoc(temp,node[i]);
+    }
+}
+        
+</ui:script>
+    </ui:step>>
+</ui:container>
+</ui:page-group>

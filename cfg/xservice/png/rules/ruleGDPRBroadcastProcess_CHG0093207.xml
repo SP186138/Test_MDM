@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+ 	 Copyright (c) 2009 by Teradata Corporation. 
+	 All Rights Reserved. 
+	 Teradata CONFIDENTIAL AND TRADE SECRET 
+ -->
+  <DEFINE_METHOD Name="ruleGDPRBroadcastProcess">
+    <!--**********************************************************************************************************
+* 
+*		Created Date	: June 08, 2017
+*		Created By   	: Ankita Sadhwani
+*
+**********************************************************************************************************-->
+    <RULE>
+      <ACTION>
+        <REQUEST Name="WS_OUT_GDPR_GRS" ServiceName="BCM_MASTER" AssignToVar="errStatus">
+          <LoadId Value="{$thisParam/LoadId/@Value}"/>
+        </REQUEST>
+        <IF_TEST Test="$errStatus/@Status !='Success'">
+          <THEN>
+            <EXECUTE_SQL_QUERY Value="UPDATE etl_ctrl.extract_control SET ExtractSTATUS='Failed' WHERE EXTRACT_ID={$thisParam/LoadId/@Value}" AssignToVar="resUpd"/>
+            <SET Var="Description" FromValue="{$resUpd/@ShellReturnValue}"/>
+            <REQUEST Name="emailOnErrorNode" ServiceName="BCM_MASTER">
+              <LoadId Value="{$thisParam/LoadId/@Value}"/>
+              <Subject Value="GDPR Broadcast Failure"/>
+              <Short_Description Value="{$Description/@Value}"/>
+              <!--<Short_Description Value="Webservice Invocation Failed"/>-->
+              <Description Value="Following Load Id failed :{$thisParam/LoadId/@Value}. Please verify the png_master.log and xserver.log at E:\Teradata\MDM\3.05.02\custom\pngrelease3\log on the MDM server."/>
+              <SubCategory Value="GDPR Broadcast Error"/>
+            </REQUEST>
+          </THEN>
+          <ELSE>
+          </ELSE>
+        </IF_TEST>
+        <REQUEST Name="WS_OUT_GDPR_DMC_EMAIL" ServiceName="BCM_MASTER" AssignToVar="errStatus">
+          <LoadId Value="{$thisParam/LoadId/@Value}"/>
+        </REQUEST>
+        <IF_TEST Test="$errStatus/@Status !='Success'">
+          <THEN>
+            <EXECUTE_SQL_QUERY Value="UPDATE etl_ctrl.extract_control SET ExtractSTATUS='Failed' WHERE EXTRACT_ID={$thisParam/LoadId/@Value}" AssignToVar="resUpd"/>
+            <SET Var="Description" FromValue="{$resUpd/@ShellReturnValue}"/>
+            <REQUEST Name="emailOnErrorNode" ServiceName="BCM_MASTER">
+              <LoadId Value="{$thisParam/LoadId/@Value}"/>
+              <Subject Value="GDPR Broadcast Failure"/>
+              <Short_Description Value="{$Description/@Value}"/>
+              <!--<Short_Description Value="Webservice Invocation Failed"/>-->
+              <Description Value="Following Load Id failed :{$thisParam/LoadId/@Value}. Please verify the png_master.log and xserver.log at E:\Teradata\MDM\3.05.02\custom\pngrelease3\log on the MDM server."/>
+              <SubCategory Value="GDPR Broadcast Error"/>
+            </REQUEST>
+          </THEN>
+          <ELSE>
+          </ELSE>
+        </IF_TEST>
+        <REQUEST Name="WS_OUT_GDPR_DMC_PHONE" ServiceName="BCM_MASTER" AssignToVar="errStatus">
+          <LoadId Value="{$thisParam/LoadId/@Value}"/>
+        </REQUEST>
+        <IF_TEST Test="$errStatus/@Status !='Success'">
+          <THEN>
+            <EXECUTE_SQL_QUERY Value="UPDATE etl_ctrl.extract_control SET ExtractSTATUS='Failed' WHERE EXTRACT_ID={$thisParam/LoadId/@Value}" AssignToVar="resUpd"/>
+            <SET Var="Description" FromValue="{$resUpd/@ShellReturnValue}"/>
+            <REQUEST Name="emailOnErrorNode" ServiceName="BCM_MASTER">
+              <LoadId Value="{$thisParam/LoadId/@Value}"/>
+              <Subject Value="GDPR Broadcast Failure"/>
+              <Short_Description Value="{$Description/@Value}"/>
+              <!--<Short_Description Value="Webservice Invocation Failed"/>-->
+              <Description Value="Following Load Id failed :{$thisParam/LoadId/@Value}. Please verify the png_master.log and xserver.log at E:\Teradata\MDM\3.05.02\custom\pngrelease3\log on the MDM server."/>
+              <SubCategory Value="GDPR Broadcast Error"/>
+            </REQUEST>
+          </THEN>
+          <ELSE>
+          </ELSE>
+        </IF_TEST>
+        <REQUEST Name="WS_OUT_GDPR_EXT_SYS" ServiceName="BCM_MASTER" AssignToVar="errStatus" HandleException="true">
+          <LoadId Value="{$thisParam/LoadId/@Value}"/>
+        </REQUEST>
+        <IF_TEST Test="$errStatus/@Status !='Success'">
+          <THEN>
+            <EXECUTE_SQL_QUERY Value="UPDATE etl_ctrl.extract_control SET ExtractSTATUS='Failed' WHERE EXTRACT_ID={$thisParam/LoadId/@Value}" AssignToVar="resUpd"/>
+            <SET Var="Description" FromValue="{$resUpd/@ShellReturnValue}"/>
+            <REQUEST Name="emailOnGDPRfailure" ServiceName="BCM_MASTER">
+              <LoadId Value="{$thisParam/LoadId/@Value}"/>
+              <Subject Value="GDPR External systems   Failure"/>
+              <Short_Description Value="Following Load Id failed :{$thisParam/LoadId/@Value}"/>
+              <Description Value="Please verify the png_master.log and xserver.log at E:\Teradata\MDM\3.05.02\custom\pngrelease3\log on the MDM server.{$errStatus/@Description}"/>
+              <SubCategory Value="GDPR External systems Error"/>
+            </REQUEST>
+          </THEN>
+          <ELSE>
+            <EXECUTE_SQL_QUERY AssignToVar="ErrCnt" Value="SEL DISTINCT SUPPLIER_QUAD FROM ICRM_STAGE_TBL.GDPR_BRODCAST_HIST WHERE GDPR_RQST_STATUS_CD='Failure' AND LOAD_ID={$thisParam/LoadId/@Value}and SUPPLIER_QUAD NOT IN ('GRS','DEV','SIT','UAT','DMCE','DMCP')" ReturnRowCount="yes"/>
+            <EXECUTE_SQL_QUERY AssignToVar="ErrCntry" Value="SEL DISTINCT CNTRY_CODE FROM ICRM_STAGE_TBL.GDPR_BRODCAST_HIST WHERE GDPR_RQST_STATUS_CD='Failure' AND LOAD_ID={$thisParam/LoadId/@Value}and SUPPLIER_QUAD NOT IN ('GRS','DEV','SIT','UAT','DMCE','DMCP')" ReturnRowCount="yes"/>
+            <IF_TEST Test="count($ErrCnt/SQL_RESULT)>0">
+              <THEN>
+                <EXECUTE_SQL_QUERY Value="UPDATE etl_ctrl.extract_control SET ExtractSTATUS='Failed' WHERE EXTRACT_ID={$thisParam/LoadId/@Value}" AssignToVar="resUpd"/>
+                <SET Var="ENV1" FromValue="1"/>
+                <FOR_EACH SelectList="$ErrCnt/SQL_RESULT" CurrentElement="currLoad">
+                  <IF_TEST Test="$ENV1=1">
+                    <THEN>
+                      <SET Var="ENV_NM" FromValue="{$currLoad/SUPPLIER_QUAD/@Value}"/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="ENV_NM" FromValue="{concat($ENV_NM/@Value,',',$currLoad/SUPPLIER_QUAD/@Value)}"/>
+                    </ELSE>
+                  </IF_TEST>
+                  <SET Var="ENV1" FromValue="{int(int($ENV1)+1)}"/>
+                </FOR_EACH>
+                <SET Var="ENV2" FromValue="1"/>
+                <FOR_EACH SelectList="$ErrCntry/SQL_RESULT" CurrentElement="currLoad">
+                  <IF_TEST Test="$ENV2=1">
+                    <THEN>
+                      <SET Var="CNTRY_NAME" FromValue="{$currLoad/CNTRY_CODE/@Value}"/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="CNTRY_NAME" FromValue="{concat($CNTRY_NAME/@Value,',',$currLoad/CNTRY_CODE/@Value)}"/>
+                    </ELSE>
+                  </IF_TEST>
+                  <SET Var="ENV2" FromValue="{int(int($ENV1)+1)}"/>
+                </FOR_EACH>
+                <SET Var="Description" FromValue="{$resUpd/@ShellReturnValue}"/>
+                <REQUEST Name="emailOnGDPRfailure" ServiceName="BCM_MASTER">
+                  <SOURCE_ID Value="{$ENV_NM}"/>
+                  <CNTRY_NAME Value="{$CNTRY_NAME}"/>
+                  <LoadId Value="{$thisParam/LoadId/@Value}"/>
+                  <Subject Value="GDPR External systems   Failure"/>
+                  <Short_Description Value="Following Load Id failed :{$thisParam/LoadId/@Value}"/>
+                  <Description Value="Following Load Id failed :{$thisParam/LoadId/@Value} for External System: {$ENV_NM}.                        Please verify the png_master.log and xserver.log at E:\Teradata\MDM\3.05.02\custom\pngrelease3\log on the MDM server."/>
+                  <SubCategory Value="GDPR External systems Error"/>
+                </REQUEST>
+              </THEN>
+            </IF_TEST>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+ 	 Copyright (c) 2009 by Teradata Corporation. 
+	 All Rights Reserved. 
+	 Teradata CONFIDENTIAL AND TRADE SECRET 
+ -->
+  <DEFINE_METHOD Name="getGeographicRegion">
+    <RULE>
+      <ACTION>
+        <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT DISTINCT GEOC_REGN_CODE, GEOC_REGN_NAME FROM GEOC_REGN" AssignToVar="GeocRegn" ReturnRowCount="yes"/>
+        <SET_NAME SelectList="$GeocRegn/SQL_RESULT" FromValue="GEOC_REGN"/>
+        <CLONE_XML DocVar="GeocRegn" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getGeographicSubRegionALL">
+    <RULE>
+      <ACTION>
+        <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT DISTINCT GEOC_REGN_CODE,GEOC_SUB_REGN_CODE,GEOC_SUB_REGN_NAME FROM GEOC_SUB_REGN" AssignToVar="GeocSubRegn" ReturnRowCount="yes"/>
+        <SET_NAME SelectList="$GeocSubRegn/SQL_RESULT" FromValue="GEOC_SUB_REGN"/>
+        <CLONE_XML DocVar="GeocSubRegn" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getLegalALL">
+    <RULE>
+      <ACTION>
+        <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT DISTINCT LEGAL_ENT_NBR,LEGAL_ENT_NAME FROM LEGAL_ENT" AssignToVar="LegalEnt" ReturnRowCount="yes"/>
+        <SET_NAME SelectList="$LegalEnt/SQL_RESULT" FromValue="LEGAL_ENT"/>
+        <CLONE_XML DocVar="LegalEnt" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getGeographicSubRegion">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="geographicSubRegionList">
+          <ROOT>
+            <GEOC_SUB_REGN/>
+          </ROOT>
+        </TO_DOCVAR>
+        <GET_DOCUMENT Name="GEOC_SUB_REGN" ServiceName="BCM_MASTER" AssignToVar="allgeographicSubRegionIDs" DirtyRead="true" ReturnRowCount="yes">
+          <GEOC_REGN_CODE Value="{$thisParam/GEOC_REGN_CODE/@Value}"/>
+          <SELECT>
+            <GEOC_SUB_REGN_CODE/>
+            <GEOC_SUB_REGN_NAME/>
+          </SELECT>
+        </GET_DOCUMENT>
+        <!-- <IF_TEST Test="$thisParam/SOURCE/@Value='SEARCH'">
+          <THEN>
+            <APPEND_TO_XML SelectList="$geographicSubRegionList/GEOC_SUB_REGN">
+              <OPTION Id="" Value="All"/>
+            </APPEND_TO_XML>
+          </THEN>
+        </IF_TEST>-->
+        <FOR_EACH SelectList="$allgeographicSubRegionIDs/GEOC_SUB_REGN" CurrentElement="currentElement">
+          <SET Var="programname" FromValue="{$currentElement/GEOC_SUB_REGN_NAME/@Value}"/>
+          <SET Var="programnbr" FromValue="{$currentElement/GEOC_SUB_REGN_CODE/@Value}"/>
+          <APPEND_TO_XML SelectList="$geographicSubRegionList/GEOC_SUB_REGN">
+            <OPTION Id="{$programnbr}" Value="{$programname}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="geographicSubRegionList" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getGeographicRegionList">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="geographicRegionList">
+          <ROOT>
+            <GEOC_REGN/>
+          </ROOT>
+        </TO_DOCVAR>
+        <GET_DOCUMENT Name="GEOC_REGN" ServiceName="BCM_MASTER" AssignToVar="allgeographicRegionIDs" DirtyRead="true" ReturnRowCount="yes">
+          <!--<GEOC_REGN_CODE Value="{$thisParam/GEOC_REGN_CODE/@Value}"/>-->
+          <SELECT>
+            <GEOC_REGN_CODE/>
+            <GEOC_REGN_NAME/>
+          </SELECT>
+        </GET_DOCUMENT>
+        <FOR_EACH SelectList="$allgeographicRegionIDs/GEOC_REGN" CurrentElement="currentElement">
+          <SET Var="programname" FromValue="{$currentElement/GEOC_REGN_NAME/@Value}"/>
+          <SET Var="programnbr" FromValue="{$currentElement/GEOC_REGN_CODE/@Value}"/>
+          <APPEND_TO_XML SelectList="$geographicRegionList/GEOC_REGN">
+            <OPTION Id="{$programnbr}" Value="{$programname}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="geographicRegionList" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getMatchedDomains1">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="matchedDomainsList">
+          <ROOT>
+            <LEGAL_ENT/>
+          </ROOT>
+        </TO_DOCVAR>
+        <GET_DOCUMENT Name="LEGAL_ENT" ServiceName="BCM_MASTER" AssignToVar="allLegalIDs" DirtyRead="true" ReturnRowCount="yes">
+          <GEOC_REGN_CODE Value="{$thisParam/GEOC_REGN_CODE/@Value}"/>
+          <GEOC_SUB_REGN_CODE Value="{$thisParam/GEOC_SUB_REGN_CODE/@Value}"/>
+          <SELECT>
+            <LEGAL_ENT_NBR/>
+            <LEGAL_ENT_NAME/>
+          </SELECT>
+        </GET_DOCUMENT>
+        <!-- <IF_TEST Test="$thisParam/SOURCE/@Value='SEARCH'">
+          <THEN>
+            <APPEND_TO_XML SelectList="$matchedDomainsList/LEGAL_ENT">
+              <OPTION Id="" Value="All"/>
+            </APPEND_TO_XML>
+          </THEN>
+        </IF_TEST>-->
+        <FOR_EACH SelectList="$allLegalIDs/LEGAL_ENT" CurrentElement="currentElement">
+          <SET Var="programname" FromValue="{$currentElement/LEGAL_ENT_NAME/@Value}"/>
+          <SET Var="programnbr" FromValue="{$currentElement/LEGAL_ENT_NBR/@Value}"/>
+          <APPEND_TO_XML SelectList="$matchedDomainsList/LEGAL_ENT">
+            <OPTION Id="{$programnbr}" Value="{$programname}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="matchedDomainsList" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getCountrySearchResults">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="Results">
+          <ROOT>
+            <CNTRY/>
+          </ROOT>
+        </TO_DOCVAR>
+        <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+          <CNTRY_CODE/>
+          <CNTRY_CODE_NTV/>
+          <CNTRY_NAME/>
+          <CNTRY_NAME_NTV/>
+          <CNTRY_SHORT_NAME/>
+          <CNTRY_DESC/>
+          <GEOC_REGN_CODE/>
+          <GEOC_SUB_REGN_CODE/>
+          <LEGAL_ENT_NBR/>
+        </FORM_SEARCH_FILTER>
+        <TO_DOCVAR AssignToVar="filterList">
+          <FILTERLIST/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$filters/FILTER" CurrentElement="thisFilter">
+          <APPEND_TO_XML SelectList="$filterList">
+            <TO_XML SelectList="$thisFilter/*"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'SEARCH'">
+          <THEN>
+            <SET Var="startCount" FromValue="0"/>
+          </THEN>
+          <ELSE>
+            <THEN>
+              <SET Var="startCount" FromValue="{$thisParam/START_COUNT/@Value}"/>
+            </THEN>
+          </ELSE>
+        </IF_TEST>
+        <!--<SET Var="GEOC_REGN_CODE" FromSelect="$thisParam/GEOC_REGN_CODE/@Value"/>
+        <SET Var="GEOC_SUB_REGN_CODE" FromSelect="$thisParam/GEOC_SUB_REGN_CODE/@Value"/>
+        <SET Var="LEGAL_ENT_NBR" FromSelect="$thisParam/LEGAL_ENT_NBR/@Value"/>-->
+        <GET_DOCUMENT StartAtRow="{$startCount}" Name="CNTRY" ServiceName="BCM_MASTER" DirtyRead="true" MaxRows="15" AssignToVar="searchResults" ReturnRowCount="yes">
+          <TO_XML SelectList="$filterList/*"/>
+          <SELECT>
+            <CNTRY_CODE/>
+            <CNTRY_CODE_NTV/>
+            <CNTRY_NAME/>
+            <CNTRY_NAME_NTV/>
+            <CNTRY_SHORT_NAME/>
+            <CNTRY_DESC/>
+            <GEOC_REGN_CODE/>
+            <GEOC_SUB_REGN_CODE/>
+            <LEGAL_ENT_NBR/>
+          </SELECT>
+          <ORDER_BY>
+            <CNTRY_CODE Sort="Ascending"/>
+          </ORDER_BY>
+        </GET_DOCUMENT>
+        <REQUEST Name="getGeographicRegion" AssignToVar="Regn"/>
+        <REQUEST Name="getGeographicSubRegionALL" AssignToVar="SubRegn"/>
+        <REQUEST Name="getLegalALL" AssignToVar="Legal"/>
+        <SET Var="i" FromValue="1"/>
+        <FOR_EACH SelectList="$searchResults/CNTRY" CurrentElement="currentElement">
+          <SET Attribute="Index" DocVar="currentElement" FromValue="{int($i)}"/>
+          <SET Var="geocRegnCode" FromValue="{$currentElement/GEOC_REGN_CODE/@Value}"/>
+          <SET Var="geocRegnname" FromSelect="$Regn/GEOC_REGN[GEOC_REGN_CODE/@Value=$geocRegnCode]/GEOC_REGN_NAME/@Value"/>
+          <SET Var="geocSubRegnCode" FromValue="{$currentElement/GEOC_SUB_REGN_CODE/@Value}"/>
+          <SET Var="geocSubRegnCodename" FromSelect="$SubRegn/GEOC_SUB_REGN[GEOC_SUB_REGN_CODE/@Value=$geocSubRegnCode]/GEOC_SUB_REGN_NAME/@Value"/>
+          <SET Var="legalEnt" FromValue="{$currentElement/LEGAL_ENT_NBR/@Value}"/>          
+          <SET Var="legalEntname" FromSelect="$Legal/LEGAL_ENT[LEGAL_ENT_NBR/@Value=$legalEnt]/LEGAL_ENT_NAME/@Value"/>
+          <APPEND_TO_XML SelectList="$searchResults/CNTRY[@Index=$i]">
+            <REGN Id="{$geocRegnCode}" Value="{$geocRegnname}"/>
+            <SUBREGN Id="{$geocSubRegnCode}" Value="{$geocSubRegnCodename}"/>
+            <LEGAL Id="{$legalEnt}" Value="{$legalEntname}"/>
+          </APPEND_TO_XML>
+          <SET FromValue="{int($i+1)}" Var="i"/>
+        </FOR_EACH>
+        <CLONE_XML DocVar="searchResults" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="createCountry">
+    <RULE>
+      <ACTION>
+        <ADD_DOC_SMART Name="CNTRY" ServiceName="BCM_MASTER" AssignToVar="createCountryResult">
+          <CNTRY_CODE Value="{$thisParam/CNTRY_CODE/@Value}"/>
+          <CNTRY_CODE_NTV Value="{$thisParam/CNTRY_CODE_NTV/@Value}"/>
+          <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+          <CNTRY_NAME_NTV Value="{$thisParam/CNTRY_NAME_NTV/@Value}"/>
+          <CNTRY_SHORT_NAME Value="{$thisParam/CNTRY_SHORT_NAME/@Value}"/>
+          <CNTRY_DESC Value="{$thisParam/CNTRY_DESC/@Value}"/>
+          <CNSMR_ACTN_TYPE_CODE Value="{$thisParam/CNSMR_ACTN_TYPE_CODE/@Value}"/>
+          <GEOC_REGN_CODE Value="{trim($thisParam/GEOC_REGN_CODE/@Value)}"/>
+          <GEOC_SUB_REGN_CODE Value="{$thisParam/GEOC_SUB_REGN_CODE/@Value}"/>
+          <ENTITY_STATE Value="{$thisParam/ENTITY_STATE/@Value}"/>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+        </ADD_DOC_SMART>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getCountryDetails">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="CNTRY" ServiceName="BCM_MASTER" AssignToVar="countryDetails" ReturnRowCount="true">
+          <SELECT>
+            <CNTRY_CODE/>
+            <CNTRY_CODE_NTV/>
+            <CNTRY_NAME/>
+            <CNTRY_NAME_NTV/>
+            <CNTRY_SHORT_NAME/>
+            <CNTRY_DESC/>
+            <GEOC_REGN_CODE/>
+            <GEOC_SUB_REGN_CODE/>
+          </SELECT>
+          <CNTRY_CODE Value="{$thisParam/CNTRY_CODE/@Value}"/>
+        </GET_DOCUMENT>
+        <CLONE_XML DocVar="countryDetails" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="saveCountry">
+    <RULE>
+      <ACTION>
+        <MODIFY_DOC_SMART Name="CNTRY" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <CNTRY_CODE Value="{$thisParam/CNTRY_CODE/@Value}"/>
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <CNTRY_CODE_NTV Value="{$thisParam/CNTRY_CODE_NTV/@Value}"/>
+            <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+            <CNTRY_NAME_NTV Value="{$thisParam/CNTRY_NAME_NTV/@Value}"/>
+            <CNTRY_SHORT_NAME Value="{$thisParam/CNTRY_SHORT_NAME/@Value}"/>
+            <CNTRY_DESC Value="{$thisParam/CNTRY_DESC/@Value}"/>
+            <GEOC_REGN_CODE Value="{$thisParam/GEOC_REGN_CODE/@Value}"/>
+            <GEOC_SUB_REGN_CODE Value="{$thisParam/GEOC_SUB_REGN_CODE/@Value}"/>
+            <ENTITY_STATE Value="{$thisParam/ENTITY_STATE/@Value}"/>
+            <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOC_SMART>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getCountryOptions">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="CNTRY" ServiceName="BCM_MASTER" DirtyRead="true" AssignToVar="allCountries" ReturnRowCount="yes">
+          <SELECT>
+            <CNTRY_CODE/>
+            <CNTRY_NAME/>
+          </SELECT>
+          <CNTRY_CODE Value="{$thisParam/CNTRY_CODE/@Value}"/>
+        </GET_DOCUMENT>
+        <SET Var="Count" FromSelect="$allCountries/@TotalRowCount"/>
+        <TO_DOCVAR AssignToVar="CountryList">
+          <ROOT>
+            <CNTRY TotalRowCount="{$allCountries/@TotalRowCount}"/>
+          </ROOT>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$allCountries/CNTRY" CurrentElement="currentElement">
+          <SET FromValue="{$currentElement/CNTRY_NAME/@Value}" Var="countryName"/>
+          <SET FromValue="{$currentElement/CNTRY_CODE/@Value}" Var="countryCode"/>
+          <APPEND_TO_XML SelectList="$CountryList/CNTRY">
+            <OPTION Id="{$countryCode}" Value="{$countryName}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="CountryList" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+ 	 Copyright (c) 2009 by Teradata Corporation. 
+	 All Rights Reserved. 
+	 Teradata CONFIDENTIAL AND TRADE SECRET 
+ -->
+  <DEFINE_METHOD Name="pngGdprMigRule">
+    <!--**********************************************************************************************************
+*   	Module Name			: pngGdprMigration
+*		Created Date		: Sepetember 12, 2017
+*		Created By   		: Prachi Kale
+*		Called Functions	:  
+*		Called By Functions	: 
+*		Short Desc			: Rule that performs standardization of data
+*  		Change Log 			:
+*		DATE							LC						OWNER		DESCRIPTION
+*
+**********************************************************************************************************-->
+    <RULE>
+      <ACTION>
+        <IF_TEST Test="$previousGdprLoadStatus/@Value='Failed'">
+          <THEN>
+            <REQUEST Name="emailOnSerdownNPrevLoadInFailState" ServiceName="BCM_MASTER" AssignToVar="resPreviousLoad">
+              <SUBJECT Value="Previous GDPR is still in Failed State"/>
+              <DATA Value="Previous GDPR is still in Failed State and hence the Workflow wont be executed"/>
+            </REQUEST>
+          </THEN>
+          <ELSE>
+            <!-- identify if previous migration load is still in progress-->
+            <GET_DOCUMENT Name="LOAD_INFO" AssignToVar="respLoadInfo" ServiceName="BCM_MASTER">
+              <OR>
+                <AND>
+                  <PROCESS_NAME Value="GDPR Input"/>
+                  <STATUS Value="In Progress"/>
+                </AND>
+                <AND>
+                  <PROCESS_NAME Value="GDPR Load"/>
+                  <STATUS Value="In Progress"/>
+                </AND>
+                <AND>
+                  <PROCESS_NAME Value="Staging GDPR Load"/>
+                  <STATUS Value="In Progress"/>
+                </AND>
+              </OR>
+            </GET_DOCUMENT>
+            <IF_TEST Test="count($resLoadInfo/LOAD_INFO) > 0">
+              <THEN>
+                <TO_DOCVAR AssignToVar="thisReturn">
+                  <SUCCESS>
+                    <Message Value="Previous Load Running"/>
+                  </SUCCESS>
+                </TO_DOCVAR>
+              </THEN>
+              <ELSE>
+                <EXECUTE_SHELL_COMMAND Value="del MDM_LOAD_CONTROL_GDPR.err" AssignToVar="errStatus"/>
+                <EXECUTE_SQL_QUERY Value="SEL lOAD_ID FROM MDM_LOAD_CONTROL_GDPR A WHERE NOT EXISTS(SEL LOAD_ID FROM LOAD_INFO B WHERE PROCESS_NAME LIKE '%GDPR%' AND A.LOAD_ID = B.LOAD_ID);" AssignToVar="GdprReadyLoadIds"/>
+                <IF_TEST Test="count($GdprReadyLoadIds/SQL_RESULT) > 0">
+                  <THEN>
+                    <!-- Sets the Status variable so that Gdpr Wf is not started when EDWPersist is Running-->
+                    <SET Var="GdprMig_Status" FromValue="Yes" Scope="Global"/>
+                    <SET Var="count" FromValue="1"/>
+                    <FOR_EACH SelectList="$GdprReadyLoadIds/*" CurrentElement="currLoad">
+                      <IF_TEST Test="$count=1">
+                        <THEN>
+                          <SET Var="concatenatedLoadIds" FromValue="{$currLoad/LOAD_ID/@Value}"/>
+                        </THEN>
+                        <ELSE>
+                          <SET Var="concatenatedLoadIds" FromValue="{concat($concatenatedLoadIds/@Value,',',$currLoad/LOAD_ID/@Value)}"/>
+                        </ELSE>
+                      </IF_TEST>
+                      <SET Var="count" FromValue="{int(int($count)+1)}"/>
+                    </FOR_EACH>
+                    <EXECUTE_SHELL_COMMAND Value="TSS_GDPR_INPUT.BAT" AssignToVar="GdprInputResult"/>
+                    <IF_TEST Test="$GdprInputResult/@ShellReturnValue = 0">
+                      <THEN>
+                        <EXECUTE_SHELL_COMMAND Value="TSSEnvSet_Gdpr.BAT" AssignToVar="GdprEnvSetResult"/>
+                        <!--                        <REQUEST Name="invokeOptOut" ServiceName="Trillium" AssignToVar="result2" Synchronous="true">
+                          <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+                        </REQUEST>-->
+                        <GET_DOCUMENT Name="ENV_NM" ServiceName="BCM_MASTER" AssignToVar="Environment">
+                        </GET_DOCUMENT>
+                        <EXECUTE_SHELL_COMMAND Value="pngMDM_Trillium.bat GDPRSearch invokeGdpr {$Environment/ENV_NM/TRILLIUM_ASIA_NM/@Value} Trillium 0" AssignToVar="result2" Synchronous="true" HandleException="true"/>
+                        <IF_TEST Test="$result2/@ShellReturnValue = 0">
+                          <THEN>
+                            <EXECUTE_SHELL_COMMAND Value="TSS_GDPR_OUTPUT.BAT" AssignToVar="GdprOutputResult"/>
+                            <IF_TEST Test="$GdprOutputResult/@ShellReturnValue = 0">
+                              <THEN>
+                                <REQUEST Name="wrappersuccess" ServiceName="BCM_MASTER" AssignToVar="resGdpr" Synchronous="no">
+                                  <BatchId Value="{$concatenatedLoadIds}"/>
+                                  <TO_XML DocVar="srcdetails"/>
+                                </REQUEST>
+                                <!-- Call Status Update batch Script which does inserts into ETL_CTRL.LOAD_CONTROL -->
+                                <EXECUTE_SHELL_COMMAND Value="MDM_STATUS_GDPR.BAT" AssignToVar="resMdmStatus"/>
+                                <TO_DOCVAR AssignToVar="thisReturn">
+                                  <SUCCESS>
+                                    <Message Value="GDPR Search Successful"/>
+                                  </SUCCESS>
+                                </TO_DOCVAR>
+                                <!-- Sets back status to NO so that ORIG Wf is free to Run-->
+                                <SET Var="GdprMig_Status" FromValue="No" Scope="Global"/>
+                                <SET Var="previousGdprLoadStatus" FromValue="Success" Scope="Global"/>
+                              </THEN>
+                              <ELSE>
+                                <!-- Call Status Update batch Script which does inserts into ETL_CTRL.LOAD_CONTROL -->
+                                <EXECUTE_SHELL_COMMAND Value="MDM_STATUS_GDPR.BAT" AssignToVar="resMdmStatus"/>
+                                <EXECUTE_SHELL_COMMAND Value="echo Error > MDM_LOAD_CONTROL_GDPR.err" AssignToVar="errStatus"/>
+                                <!-- send the email with concatenated list of load ids that failed-->
+                                <SET Var="Description" FromValue="{$GdprOutputResult/@ShellReturnValue}"/>
+                                <REQUEST Name="emailOnErrorNode" ServiceName="BCM_MASTER">
+                                  <LoadId Value="{$concatenatedLoadIds/@Value}"/>
+                                  <Subject Value="GDPR Failure"/>
+                                  <BatchIdORLoadId Value="LoadId"/>
+                                  <Short_Description Value="{$Description/@Value}"/>
+                                  <Description Value="Following Load Id failed :{$concatenatedLoadIds/@Value}"/>
+                                  <SubCategory Value="GDPR Error"/>
+                                  <RuleName Value="ruleGDPRSearchProcess"/>
+                                </REQUEST>
+                                <TO_DOCVAR AssignToVar="thisReturn">
+                                  <FAILURE>
+                                    <Message Value="{$GdprOutputResult/STD_ERR/LINE[1]/@Value}"/>
+                                  </FAILURE>
+                                </TO_DOCVAR>
+                                <SET Var="GdprMig_Status" FromValue="No" Scope="Global"/>
+                              </ELSE>
+                            </IF_TEST>
+                          </THEN>
+                          <ELSE>
+                            <!-- Call Status Update batch Script which does inserts into ETL_CTRL.LOAD_CONTROL -->
+                            <DO_TRANSACTION>
+                              <MODIFY_DOC_SMART Name="LOAD_INFO" ServiceName="BCM_MASTER">
+                                <DOCUMENT_CONTEXT>
+                                  <PROCESS_NAME Value="GDPR Input"/>
+                                  <STATUS Value="In Progress"/>
+                                </DOCUMENT_CONTEXT>
+                                <UPDATE_PROPERTIES>
+                                  <STATUS Value="Failure"/>
+                                  <ERROR_MSG_TXT Value="{$result2/Message/@Value}"/>
+                                  <PROCESS_END_TIME Value="{date()}"/>
+                                </UPDATE_PROPERTIES>
+                              </MODIFY_DOC_SMART>
+                            </DO_TRANSACTION>
+                            <EXECUTE_SHELL_COMMAND Value="MDM_STATUS_GDPR.BAT" AssignToVar="resMdmStatus"/>
+                            <EXECUTE_SHELL_COMMAND Value="echo Error > MDM_LOAD_CONTROL_GDPR.err" AssignToVar="errStatus"/>
+                            <!-- send the email with concatenated list of load ids that failed-->
+                            <SET Var="Description" FromValue="{$result2/@ShellReturnValue}"/>
+                            <REQUEST Name="emailOnErrorNode" ServiceName="BCM_MASTER">
+                              <LoadId Value="{$concatenatedLoadIds/@Value}"/>
+                              <Subject Value="GDPR Failure"/>
+                              <BatchIdORLoadId Value="LoadId"/>
+                              <Short_Description Value="{$Description/@Value}"/>
+                              <Description Value="Following Load Id failed :{$concatenatedLoadIds/@Value}"/>
+                              <SubCategory Value="GDPR Error"/>
+                              <RuleName Value="ruleGDPRSearchProcess"/>
+                            </REQUEST>
+                            <TO_DOCVAR AssignToVar="thisReturn">
+                              <FAILURE>
+                                <Message Value="{$result2/STD_ERR/LINE[1]/@Value}"/>
+                              </FAILURE>
+                            </TO_DOCVAR>
+                            <SET Var="GdprMig_Status" FromValue="No" Scope="Global"/>
+                          </ELSE>
+                        </IF_TEST>
+                      </THEN>
+                      <ELSE>
+                        <!-- Call Status Update batch Script which does inserts into ETL_CTRL.LOAD_CONTROL -->
+                        <DO_TRANSACTION>
+                          <MODIFY_DOC_SMART Name="LOAD_INFO" ServiceName="BCM_MASTER">
+                            <DOCUMENT_CONTEXT>
+                              <PROCESS_NAME Value="GDPR Input"/>
+                              <STATUS Value="In Progress"/>
+                            </DOCUMENT_CONTEXT>
+                            <UPDATE_PROPERTIES>
+                              <STATUS Value="Failure"/>
+                              <ERROR_MSG_TXT Value="{$GdprInputResult/Message/@Value}"/>
+                              <PROCESS_END_TIME Value="{date()}"/>
+                            </UPDATE_PROPERTIES>
+                          </MODIFY_DOC_SMART>
+                        </DO_TRANSACTION>
+                        <EXECUTE_SHELL_COMMAND Value="MDM_STATUS_GDPR.BAT" AssignToVar="resMdmStatus"/>
+                        <EXECUTE_SHELL_COMMAND Value="echo Error > MDM_LOAD_CONTROL_GDPR.err" AssignToVar="errStatus"/>
+                        <!-- send the email with concatenated list of load ids that failed-->
+                        <SET Var="Description" FromValue="{$GdprInputResult/@ShellReturnValue}"/>
+                        <REQUEST Name="emailOnErrorNode" ServiceName="BCM_MASTER">
+                          <LoadId Value="{$concatenatedLoadIds/@Value}"/>
+                          <Subject Value="GDPR Failure"/>
+                          <BatchIdORLoadId Value="LoadId"/>
+                          <Short_Description Value="{$Description/@Value}"/>
+                          <Description Value="Following Load Id failed :{$concatenatedLoadIds/@Value}"/>
+                          <SubCategory Value="GDPR Error"/>
+                          <RuleName Value="ruleGDPRSearchProcess"/>
+                        </REQUEST>
+                        <TO_DOCVAR AssignToVar="thisReturn">
+                          <FAILURE>
+                            <Message Value="{$GdprInputResult/STD_ERR/LINE[1]/@Value}"/>
+                          </FAILURE>
+                        </TO_DOCVAR>
+                        <SET Var="GdprMig_Status" FromValue="No" Scope="Global"/>
+                      </ELSE>
+                    </IF_TEST>
+                  </THEN>
+                  <ELSE>
+                    <TO_DOCVAR AssignToVar="thisReturn">
+                      <SUCCESS>
+                        <Message Value="No Load Id to Process"/>
+                      </SUCCESS>
+                    </TO_DOCVAR>
+                  </ELSE>
+                </IF_TEST>
+              </ELSE>
+            </IF_TEST>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="pngSETPreviousGdprLoadStatus">
+    <RULE>
+      <ACTION>
+        <SET Var="previousGdprLoadStatus" FromValue="Success" Scope="Global"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

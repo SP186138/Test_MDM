@@ -1,0 +1,79 @@
+<ui:page-group version="3" xmlns:ui="http://www.teradata.com/ui" name="studio.templates.simple_form" source="studio.controller:load">
+  <ui:container id="topContainer" scrollable="true" showFavorite="true">
+    <!--Line added for issue MDM-1937 by Ankur Goyal-->
+    <ui:help displayPage="{$pages:publicationObjectsHelp}"/>
+    <ui:step displayText="Manage Publication Objects" id="basicControls">
+      <ui:field-group id="leftFields1" columns="3">
+        <ui:image src="/bpi_check.gif" displayCondition="{string-length($root/AlertGreen/@Value) != 0}"/>
+        <ui:display-field value="{$root/AlertGreen/@Value}" displayCondition="{string-length($root/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen"/>
+      </ui:field-group>
+      <ui:field-group id="leftFields1" columns="3">
+        <ui:image src="/cancel.gif" displayCondition="{string-length($root/AlertRed/@Value) != 0}"/>
+        <ui:display-field value="{$root/AlertRed/@Value}" displayCondition="{string-length($root/AlertRed/@Value) != 0}" name="error" class="requiredIndicatorRed"/>
+      </ui:field-group>
+      <ui:container id="addNew">
+        <ui:step id="addNew" displayText="Add New">
+          <ui:validation displayCondition="{(string-length($root/AlertGreen/@Value) = 0) or (string-length($root/AlertRed/@Value) = 0) }"/>
+          <ui:field-group>
+            <ui:dropdown id="DROPDOWN" name="DROPDOWN" displayText="Service" optionSrc="$root/SERVICELIST/LINE/ID" required="true" title="PublicationObjectService"/>
+            <ui:entry-field id="NAME" name="NAME" displayText="Name" required="true" title="PublicationObjectName"/>
+            <ui:entry-field id="DESCRIPTION" name="DESCRIPTION" displayText="Description" title="PublicationObjectDescription"/>
+          </ui:field-group>
+          <ui:buttons>
+            <ui:button id="ADD" name="ADD" displayText="Add" onClick="javascript:onAdd()"/>
+          </ui:buttons>
+        </ui:step>
+      </ui:container>
+      <ui:table id="publishingObjectTable" displayText="Publication Objects" selectable="Single" rowSrc="$root/RESPONSE/*" postRowIdAs="KEY_NAME" rowId="KEY_NAME" maxRows="-1" scrollable="true">
+        <ui:field-group id="tableColumns">
+          <ui:display-field name="KEY_NAME" id="KEY_NAME" displayText="Name" title="PublicationObjectName"/>
+          <ui:display-field name="KEY_DESCRIPTION" id="KEY_DESCRIPTION" displayText="Description" title="PublicationObjectDescription"/>
+          <ui:hidden-field name="KEY_ID" id="KEY_ID"/>
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button id="PUBLISH" name="PUBLISH" displayText="Publish Table" enabledBySelections="true"/>
+          <ui:button id="EDIT" name="EDIT" displayText="Edit" enabledBySelections="true"/>
+          <ui:button id="DELETE" name="DELETE" displayText="Delete" enabledBySelections="true" onClick="javascript:onDelete()"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+    function onDelete()
+  {
+	core_confirm_jquery(&quot;MANG_PUB_SELECTED_DELETED_PERMANETLY&quot;,'onDeleteCallback'); 
+  }
+  function onDeleteCallback(response) {
+  if(response =='yes'){
+	document.form.BUTTON_ID.value = 'DELETE';
+  	document.form.action = 'view.x2ps';
+  	document.form.submit();
+	grayOut(true);
+	}
+  }
+function onAdd()
+{
+var bIsValid = true;
+document.form.SUBMIT_AS_XML.value = 'false';
+
+bIsValid = (isValid_addNew());
+
+if( bIsValid == false )
+{
+validation_alert('addNew');
+}
+if ( bIsValid == true)
+{
+
+disableButtons();
+trapExcelPivotChanges();
+document.form.BUTTON_ID.value = 'ADD';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+}
+onResize();
+return;
+}
+  </ui:script>
+</ui:page-group>

@@ -1,0 +1,148 @@
+<ui:page-group version="3" xmlns:ui="http://www.teradata.com/ui" name="studio.templates.simple_entry" source="studio.controller:load">
+<ui:container id="outerContainer" showFavorite="true" displayText="Manage Logger">
+<ui:help displayPage="{$pages:manageLogsHelp}" />
+  <ui:step id="tab">
+  <ui:container id="topContainer" >
+    <!--Line added for issue MDM-1937 by Ankur Goyal-->
+       <ui:step id="tab1" displayText="{concat('Logger Settings for Service : ',$root/SNAME/@Value)}">
+      <ui:field-group id="hiddenFldGrp">
+        <ui:hidden-field id="SNAME" name="SNAME" />
+      </ui:field-group>
+      <ui:grid id="firstGrid" cellSpacing="0">
+        <ui:row id="first">
+          <ui:cell id="fts">
+            <ui:grid id="GroupDescGrid">
+              <ui:row>
+                <ui:cell width="30%" valign="top">
+                  <ui:container collapsable="false" scrollable="true">
+                    <ui:step id="firstInner" scrollable="true" displayText="Services">
+                      <ui:dynamic-pgl select="$root/RUNNING_SERVICE/*" id="" displayText="RUNNING_SERVICES" />
+                    </ui:step>
+                  </ui:container>
+                </ui:cell>
+                <ui:cell valign="top" width="50%">
+                  <ui:container collapsable="false" scrollable="true">
+                    <ui:step id="firstInner" scrollable="true" displayText="Logger Options">
+                      <ui:dynamic-pgl select="$root/LOGGER_OPTION/*" id="LOG_OPTIONS" displayText="LOG_OPTIONS" />
+                      <ui:buttons>
+                        <ui:button id="RESET" displayText="Reset" name="RESET" onClick="javascript:onRESET()" />
+                        <ui:button id="SAVE" displayText="Save" name="SAVE" />
+                      </ui:buttons>
+                    </ui:step>
+                  </ui:container>
+                </ui:cell>
+                <ui:cell valign="top" >
+                  <ui:container collapsable="false" scrollable="true">
+                    <ui:step id="firstInner" scrollable="true" displayText="View Logs">
+                      <ui:field-group id="ww">
+                        <ui:display-field name="log" value="Click the link to view log." title="ManageLoggerLinkHeader"/>
+                        <ui:link-field id="logfile" name="logfile" value="{$root/SNAME/@Value}" targetType="popup" targetName="popUp4" title="ManageLoggerLink">
+                          <!--ui:url page="{concat('/mdm/bcm/log/',$root/LOGFILE/@Value)}" /-->
+                          <ui:url page="{concat($root/WEB_APP_PATH/@Value,'/bcm/log/viewLog.jsp?LogFile=',$root/LOGFILE/@Value)}"/>
+                        </ui:link-field>
+                      </ui:field-group>
+                      <ui:buttons>
+                        <ui:button id="Clearlog" displayText="Clear Log" name="Clearlog" />
+                        <!--ui:button id="Savelog" displayText="Save Log" name="Savelog" /-->
+                        <ui:divider id="" displayText="" />
+                        <ui:button id="AllClear" displayText="Clear All Log files" name="AllClear" />
+                      </ui:buttons>
+                    </ui:step>
+                  </ui:container>
+                </ui:cell>
+              </ui:row>
+            </ui:grid>
+          </ui:cell>
+        </ui:row>
+      </ui:grid>
+    </ui:step>
+    <ui:step id="SP_Logger_Tab" displayText="Logger Settings for MDM Stored Procedures">
+      <ui:container collapsable="false" scrollable="true">
+        <ui:step id="firstInner" scrollable="true" displayText="Logger Options">
+          <ui:field-group columns="2" width="50%">
+            <ui:radiobutton id="EnableDisableStoredProcLog" name="EnableDisableStoredProcLog" value="{$root/IS_LOGGER_ENABLED/@Value}" displayText="Enable" checkedValue="true" title="ManageLoggerEnableStoredProcLog"/>
+            <ui:radiobutton id="EnableDisableStoredProcLog" name="EnableDisableStoredProcLog" value="{$root/IS_LOGGER_ENABLED/@Value}" displayText="Disable" checkedValue="false" title="ManageLoggerDisableStoredProcLog"/>
+          </ui:field-group>
+          <ui:field-group id="hiddenFldGrp">
+            <ui:hidden-field id="SNAME" name="SNAME" />
+          </ui:field-group>
+          <!--        <ui:dynamic-pgl select="$root/LOGGER_OPTION/*" id="LOG_OPTIONS" displayText="LOG_OPTIONS"/>-->
+          <ui:buttons>
+            <ui:button id="CLEAR_SP_LOG" name="CLEAR_SP_LOG" displayText="Clear Log" />
+            <ui:divider />
+            <ui:button id="VIEW_SP_LOG" displayText="View" name="VIEW_SP_LOG" />
+            <ui:divider />
+            <ui:button id="SAVE_SP_LOG" displayText="Save" name="SAVE_SP_LOG" emphasized="true" />
+          </ui:buttons>
+        </ui:step>
+      </ui:container>
+      <ui:table id="SYS_SP_LOG" name="SYS_SP_LOG" doPaging="true" displayText="SYS_SP_LOG DATA" rowSrc="$root/SYS_LOG_DATA/*" filter="true" scrollable="true" totalRowCount="$root/TotalRowCount/@Value" startAtRow="$root/StartRowCount/@Value" maxRows="10" displayCondition="{$root/DISPLAY_LOG_TABLE/@Value  !='false'}" exportable="true">
+        <ui:field-group>
+          <ui:display-field id="SP_NAME" name="SP_NAME" displayText="SP_NAME" sortable="true" title="ManageLoggerStoredProcedureName"/>
+          <ui:display-field id="LOG_TYPE" name="LOG_TYPE" displayText="LOG_TYPE" sortable="true" title="ManageLoggerLogType"/>
+          <ui:textarea id="MSG" name="MSG" displayText="MSG" columns="30" rows="3" sortable="true" title="ManageLoggerMessage"/>
+          <ui:display-field id="APP_USER_ID" name="APP_USER_ID" displayText="APP_USER_ID" sortable="true" title="ManageLoggerUserId"/>
+          <ui:display-field id="ERROR_CODE" name="ERROR_CODE" displayText="ERROR_CODE" sortable="true" title="ManageLoggerErrorCode"/>
+          <ui:display-field id="ERROR_MSG" name="ERROR_MSG" displayText="ERROR_MSG" sortable="true" title="ManageLoggerErrorMessage"/>
+          <ui:display-field id="COLLECT_TIMESTAMP" name="COLLECT_TIMESTAMP" displayText="COLLECT_TIMESTAMP" dataType="DateTime" sortable="true" title="ManageLoggerCollectTimeStamp"/>
+        </ui:field-group>
+        <ui:buttons />
+      </ui:table>
+      <!--			 totalRowCount="{$root/TotalRowCount/@Value}" startAtRow="{$root/StartRowCount/@Value}">-->
+    </ui:step>
+  </ui:container>
+ </ui:step>
+  </ui:container>
+  <ui:script>function onRESET()
+  {
+   
+		elems=form.elements;
+		for(i=0;i&lt;elems.length;i++)
+						{								
+								if(elems[i].checked)
+								{
+										elems[i].checked = false;
+							  }		
+								if(elems[i].name == "Error" || elems[i].name == "Exception")
+														elems[i].checked = true;
+																
+						}
+				form.BUTTON_ID.value = 'RESET' ; 
+				form.action = 'view.x2ps';
+				form.submit();
+				grayOut(true);
+  }
+  function onBack()
+  {
+    //document.location='view.x2ps?BUTTON_ID=SYS_BACK&amp;PAGE=' + document.form.PAGE.value;
+	loadMainContentPanel('view.x2ps?BUTTON_ID=SYS_BACK&amp;PAGE=' + document.form.PAGE.value,'appFrame');
+
+  }
+	
+	function AllClicked()
+	{
+		elems=form.elements;
+		if(document.form.All.checked)
+		{
+							for(i=1;i&lt;elems.length;i++)
+							{								
+													elems[i].checked = true;
+							}		
+							
+		}
+		else
+		{
+						 for(i=1;i&lt;elems.length;i++)
+							{								
+													elems[i].checked = false;
+							}		
+				}
+	}
+		
+	function Clicked(value)
+	{
+		if(value==false)
+				document.form.All.checked=false;
+	}</ui:script>
+</ui:page-group>
+

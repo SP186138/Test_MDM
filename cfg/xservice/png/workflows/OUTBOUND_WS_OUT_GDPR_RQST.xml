@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="4" ShowInBreadCrumbs="true" Version="1.0" Name="OUTBOUND_DMC" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="OUTBOUND_DMC"/>
+  <nodes>
+    <start Name="start0">
+      <actions/>
+      <next_nodes>
+        <next_node Name="rest_node1"/>
+      </next_nodes>
+    </start>
+    <rest_node Name="rest_node1">
+      <parameters>
+        <Method_Type Value="GET"/>
+        <End_Point Value="http://columbus.shortest-route.com"/>
+        <Resource Value="/pngdev_ecm/automated/action.jsp"/>
+        <Mime_Type Value="text/xml"/>
+        <Headers/>
+        <http_params>
+          <action Value="changeUserEmail"/>
+          <errorPage Value="//automated/action.jsp"/>
+          <!-- <pemail Value="MaxMustermann@domain.xx" />-->
+          <pemail Value="{$thisParam/EMAIL_ADDR_TXT/@Value}"/>
+          <new_uemail Value="Deleted@teradata.com"/>
+          <uemail Value="1cp@api.com"/>
+          <psw Value="0n3CpAP!tdUS"/>
+        </http_params>
+        <security_params/>
+      </parameters>
+      <pre_actions>
+        <action/>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <PRINTLN Var="RestParametersOut"/>
+          <STRING_TO_XML DocVar="tmp" FromVar="RestParametersOut"/>
+          <APPEND_TO_XML DocVar="thisReturn">
+            <TO_XML DocVar="tmp"/>
+          </APPEND_TO_XML>
+        </action>
+      </post_actions>
+      <next_nodes>
+        <next_node Name="done3"/>
+      </next_nodes>
+    </rest_node>
+    <done Name="done3">
+      <actions/>
+      <next_nodes/>
+    </done>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <start0 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="311,266">
+        <iconProps iconfile="z1start.gif"/>
+      </start0>
+      <rest_node1 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="678,267" size="744,728">
+        <iconProps iconfile="x1age95.gif"/>
+      </rest_node1>
+      <done3 location="1002,265" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <iconProps iconfile="z1end.gif"/>
+      </done3>
+    </mgcnodes>
+    <mgcconnectors>
+      <start0>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="349,281" endpoint="683,280" ctrlRect1="597,279,4,4" ctrlRect2="430,278,4,4"/>
+      </start0>
+      <rest_node1>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="716,280" endpoint="1007,280" ctrlRect1="931,278,4,4" ctrlRect2="786,278,4,4"/>
+      </rest_node1>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions/>
+    <post_actions/>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

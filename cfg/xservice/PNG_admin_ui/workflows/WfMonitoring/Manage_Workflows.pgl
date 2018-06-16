@@ -1,0 +1,83 @@
+<ui:page-group version="3" xmlns:ui="http://www.teradata.com/ui" name="studio.templates.simple_entry" source="studio.controller:load">
+  <ui:container id="container" displayText="Workflow Search" collapsable="true">
+    <ui:step displayText="Workflow Search" id="top_container" editable="true">
+      <ui:validation displayCondition="{count($root/KILLRESULT) = 0}" />
+      <ui:validation successMessage="Workflow Terminated Successfully!" displayCondition="{$root/KILLRESULT/@Value = 'Success'}" />
+      <ui:validation instructionMessage="Workflow could not be Terminated!" displayCondition="{$root/KILLRESULT/@Value = 'Error'}" />
+      <!-- bootstrap fields -->
+      <!-- these should even be hidden from templates -->
+      <ui:field-group select="$root">
+        <ui:hidden-field name="EV_NAME" id="EV_NAME"/>
+        <ui:hidden-field name="EV_KEY" id="EV_KEY"/>
+        <ui:hidden-field name="CURRENT_USER_ID" value="{identity-user-id()}" id="CURRENT_USER_ID"/>
+      </ui:field-group>
+      <!-- bootstrap fields done-->
+      <ui:field-group columns="2" id="fieldGroups">
+        <ui:field-group id="leftFields">
+          <ui:button name="SYS_REFRESH" displayText="" displayCondition="false" />
+          <ui:entry-field name="InstanceId" displayText="Instance Id" id="InstanceId" value="{$root/SEARCHCRITERIA/InstanceId/@Value}" />
+          <ui:entry-field id="StartedBy" name="StartedBy" displayText="Started by" maxlength="100" value="{$root/SEARCHCRITERIA/StartedBy/@Value}" />
+          <ui:dropdown name="PrimaryDoc" selectOne="true" displayText="Primary Document" optionSrc="$root/PRIMARYDOCLIST/*" value="{$root/SEARCHCRITERIA/PrimaryDoc/@Value}" id="PrimaryDoc"/>
+          <ui:dropdown displayText="Waiting on Event" selectOne="true" id="WaitingonEvent" optionSrc="$root/ACTIVENODELIST/*" value="{$root/SEARCHCRITERIA/WaitingonEvent/@Value}" name="WaitingonEvent" />
+        </ui:field-group>
+        <ui:field-group id="rightFields">
+          <ui:entry-field name="Template" displayText="Template Name" id="Template" value="{$root/SEARCHCRITERIA/Template/@Value}" />
+          <ui:date-range id="StartDate" name="StartDate" displayText="Start Date" fromDate="{$root/SEARCHCRITERIA/FROM_StartDate/@Value}" toDate="{$root/SEARCHCRITERIA/TO_StartDate/@Value}" />
+          <ui:dropdown displayText="Status" selectOne="true" id="Status" optionSrc="$root/STATUSLIST/*" required="true" value="{$root/SEARCHCRITERIA/Status/@Value}" name="Status" />
+        </ui:field-group>
+      </ui:field-group>
+      <ui:buttons id="buttons">
+        <ui:button id="Search" name="Search" displayText="Search" />
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:container id="container2" name="container2">
+    <ui:step id="Inner" name="Inner" displayText="">
+      <ui:table id="tableWFInst" name="tableWFInst" scrollable="true" displayText="Workflows" rowSrc="$root/LINE" postRowIdAs="SEL_ID" selectable="All" maxRows="-1">
+        <ui:field-group id="tableColumns">
+          <ui:link-field name="ID" displayText="InstanceId" targetName="catalogPopup" targetType="popup" id="ID">
+            <ui:url page="view.x2ps">
+              <BUTTON_ID select="'History'" />
+              <INSTANCE_ID select="InstanceId/@Value" />
+              <NODE select="WaitingOnEvent/@Value" />
+              <WFL_SVC select="ServiceName/@Value" />
+              <TEMPLATE select="TemplateName/@Value" />
+              <HISTORY select="History/@Value" />
+            </ui:url>
+          </ui:link-field>
+          <ui:display-field displayText="Template Name" name="TemplateName" />
+          <ui:display-field displayText="Description" name="Description" />
+          <ui:display-field displayText="Status" name="Status" />
+          <ui:display-field displayText="Started At" name="StartedAt" />
+          <ui:display-field displayText="Started By" name="StartedBy" />
+          <ui:link-field name="WaitingOnEvent" displayText="Event name" targetName="catalogPopup" targetType="popup" displayCondition="{$root/SEARCHCRITERIA/Status/@Value = 'Event'}">
+            <ui:url page="view.x2ps">
+              <BUTTON_ID select="'link'" />
+              <INSTANCE_ID select="InstanceId/@Value" />
+              <NODE select="WaitingOnEvent/@Value" />
+              <EVT_DESC select="EventDescriptor/@Value" />
+              <EVENT_SVC select="EventService/@Value" />
+              <WFL_START_ALLOW select="StartAllowed/@Value" />
+              <WFL_SVC select="ServiceName/@Value" />
+            </ui:url>
+          </ui:link-field>
+          <ui:link-field name="WaitingOnEvent" displayText="Event name" targetName="catalogPopup" targetType="popup" displayCondition="{$root/SEARCHCRITERIA/Status/@Value = 'Timer'}">
+            <ui:url page="view.x2ps">
+              <BUTTON_ID select="'link'" />
+              <INSTANCE_ID select="InstanceId/@Value" />
+              <NODE select="WaitingOnEvent/@Value" />
+              <WFL_START_ALLOW select="StartAllowed/@Value" />
+              <WFL_SVC select="ServiceName/@Value" />
+            </ui:url>
+          </ui:link-field>
+          <ui:display-field displayText="Event Name" name="WaitingOnEvent" displayCondition="{$root/SEARCHCRITERIA/Status/@Value != 'Event' }" />
+          <ui:display-field displayText="Primary Doc" name="PrimaryDoc" />
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button name="Kill" displayText="Kill" id="Kill" />
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+</ui:page-group>
+

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dom-config>
+  <service-config Name="BCM_VERSION_STAGING" TransactionCache="false" Register="false">
+    <register-handlers>
+      <handler TagName="MDM" ClassName="com.teradata.bcm.xcore.tool.MDMPreInitHandler"/>
+      <handler TagName="dataPersistSpec" ClassName="com.teradata.bcm.xcore.datapersist.DataPersistConfigSpecHandler"/>
+      <handler TagName="validationSpecFiles" ClassName="com.teradata.xservice.validation.ValidationSpecsHandler"/>
+    </register-handlers>
+    <MDM/>
+    <dataPersistSpec>
+      <dataPersistSpecFile Name="com/teradata/bcm/xcore/serverutil/xml/DefaultDocPersistConfig.xml"/>
+    </dataPersistSpec>
+    <extensionFiles>
+      <extensionFile Name="com/teradata/bcm/xcore/serverutil/xml/bcm_rule_extension.xml"/>
+    </extensionFiles>
+    <docDefnFiles>
+      <docDefnFile Name="xservice/png/staging/version/documents/ver_xdoc.xml"/>
+    </docDefnFiles>
+    <ruleDefnFiles>
+      <ruleDefnFile Name="com/teradata/bcm/xcore/serverutil/xml/forms_rule.xml"/>
+      <ruleDefnFile Name="com/teradata/bcm/xcore/serverutil/xml/bcm_xrule.xml"/>
+    </ruleDefnFiles>
+    <logger>
+      <file Name="../log/png_version.log"/>
+      <logLevels>
+        <logLevel Value="Exception"/>
+        <logLevel Value="Error"/>
+      </logLevels>
+      <brief-console Value="false"/>
+    </logger>
+    <service-params>
+      <param Value="1000" Name="DEFAULT_MAX_ROWS_FETCH"/>
+    </service-params>
+    <schemaGenerate Value="false">
+      <file Value="../db/png_version.sql"/>
+      <generateTables Value="false"/>
+      <viewSqlDir Value="xservice/png/staging/version/viewsql"/>
+      <dbname Value=""/>
+      <maxTableNameLength Value="30"/>
+      <maxColumnNameLength Value="30"/>
+    </schemaGenerate>
+    <workflow>
+      <workflowDefnFiles/>
+      <uiWorkflowDefnFiles/>
+    </workflow>
+    <eventDefnFiles/>
+    <statetransition>
+      <stateTransitionFiles/>
+      <stateMappingFiles/>
+    </statetransition>
+    <messaging>
+      <messageTemplateFiles/>
+      <messageRecipientGroupFiles/>
+      <messagingEventDefFiles/>
+      <messagingEventFiles/>
+    </messaging>
+    <validationSpecFiles/>
+  </service-config>
+</dom-config>

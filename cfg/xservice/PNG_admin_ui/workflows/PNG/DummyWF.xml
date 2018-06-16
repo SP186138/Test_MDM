@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="2" ShowInBreadCrumbs="true" Version="1.0" Name="DummyWF" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="DummyWF"/>
+  <nodes>
+    <start Name="startSubWorkflow">
+      <actions>
+        <action/>
+      </actions>
+      <next_nodes OutputVar="{thisParam,xml}">
+        <next_node Name="doneSubWorkflow" Description=""/>
+      </next_nodes>
+    </start>
+    <done Name="doneSubWorkflow" InputVar="{thisParam,xml}">
+      <actions>
+        <action>
+          <APPEND_TO_XML Select="$thisReturn">
+            <TO_XML SelectList="$thisParam/CURRENT_PARAMS/REQUEST/*"/>
+          </APPEND_TO_XML>
+        </action>
+      </actions>
+      <next_nodes/>
+    </done>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <startSubWorkflow location="124,223" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="startSubWorkflow" font="Times New Roman,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </startSubWorkflow>
+      <doneSubWorkflow location="271,223" font="Times New Roman,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="doneSubWorkflow" font="Times New Roman,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </doneSubWorkflow>
+    </mgcnodes>
+    <mgcconnectors>
+      <startSubWorkflow>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="156,245" endpoint="271,245" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="239,243,4,4" ctrlRect2="182,243,4,4"/>
+      </startSubWorkflow>
+    </mgcconnectors>
+    <mgcgroups>
+      <group rect="65,114,320,177" font="Verdana,0,9" textColor="80,80,80" groupFillColor="192,192,192" groupBorderColor="64,64,64" groupBorderStroke="1.5,2,0,10.0,null,0.0"/>
+    </mgcgroups>
+    <mgctexts>
+      <text compId="MgcText144" location="86,124" font="Tahoma,0,9" componentConnect="false" componentIconBorder="true" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="RECTANGLE" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="3" textAttrsKey0="Customization Hints:" textAttrsKey1="You can insert custom UI components between Start and End Node " textAttrsKey2="to perform custom user action.">
+        <iconProps iconfile="defaultNode.gif"/>
+      </text>
+    </mgctexts>
+    <mgcdashboard compId="MgcDashboard1" location="100,185" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="0">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables/>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

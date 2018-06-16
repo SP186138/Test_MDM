@@ -1,0 +1,1 @@
+E:\Teradata\MDM\3.05.02\custom\pngrelease3\bin\onetime.cmd R542_v1 L21 > E:\Teradata\MDM\3.05.02\custom\pngrelease3\log\R542_v1.txt

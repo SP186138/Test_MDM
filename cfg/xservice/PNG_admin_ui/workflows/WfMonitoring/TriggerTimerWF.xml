@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="44" ShowInBreadCrumbs="true" Version="1.0" Name="TriggerTimerWF" Description="Reset Timer" Type="" PrimaryDocument="" IsStartAllowed="No">
+  <variables/>
+  <nodes>
+    <start Name="start">
+      <actions>
+        <action>
+          <TO_DOCVAR AssignToVar="nodeOutputXml">
+            <TO_XML SelectList="$thisParam"/>
+          </TO_DOCVAR>
+        </action>
+      </actions>
+      <next_nodes OutputVar="{nodeOutputXml,xml}">
+        <next_node Name="Trigger Timer" Description=""/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Trigger Timer" InputVar="{nodeInputXml,xml}" OutputFormVar="pglFormOutput" InputFormVar="pglFormInput" ShowInBreadCrumbs="HIDE" Template="Trigger Timer.pgl" Description="Reset Timer in Timer Workflows">
+      <pre_actions>
+        <action>
+          <GET_SESSION Var="GServerName" AssignToVar="GServer"/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <root>
+            </root>
+          </TO_DOCVAR>
+          <SET Var="instId" FromValue="{$nodeInputXml/INSTANCE_ID/@Value}"/>
+          <SET Var="likeClause" FromValue="{concat('%',$instId)}"/>
+          <NATIVE_FUNCTION ClassName="com.teradata.xcore.bpm.BPMUtil" MethodName="getTimerDocuments" AssignToVar="TimerDoc">
+            <PARAM Var="thisContext"/>
+            <PARAM Value="{$likeClause}" Type="String"/>
+            <PARAM Value="{substringBefore($GServer/@Value, ':')}" Type="String"/>
+            <PARAM Value="{substringAfter($GServer/@Value, ':')}" Type="String"/>
+          </NATIVE_FUNCTION>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelect="$TimerDoc/TIMER/ID"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelect="$TimerDoc/TIMER/SERVICE_NAME"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelect="$TimerDoc/TIMER/EXPIRATION_DATE"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelect="$TimerDoc/TIMER/END_DATE"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelect="$TimerDoc/TIMER/DURATION"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <GET_SESSION Var="GServerName" AssignToVar="GServer"/>
+          <NATIVE_FUNCTION ClassName="com.teradata.xcore.bpm.BPMUtil" MethodName="modifyTimer" AssignToVar="TimerResult">
+            <PARAM Var="thisContext"/>
+            <PARAM Value="{$pglFormOutput/Id/@Value}" Type="String"/>
+            <PARAM Value="{$pglFormOutput/ServiceName/@Value}" Type="String"/>
+            <PARAM Value="{$pglFormOutput/Duration/@Value}" Type="String"/>
+            <PARAM Value="{$pglFormOutput/ExpDate/@Value}" Type="String"/>
+            <PARAM Value="{$pglFormOutput/EndDate/@Value}" Type="String"/>
+            <PARAM Value="{substringBefore($GServer/@Value, ':')}" Type="String"/>
+            <PARAM Value="{substringAfter($GServer/@Value, ':')}" Type="String"/>
+          </NATIVE_FUNCTION>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='DONE'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <done Name="done">
+      <actions>
+        <action>
+          <TO_DOCVAR AssignToVar="thisReturn">
+            <RESPONSE Value="Success"/>
+          </TO_DOCVAR>
+        </action>
+      </actions>
+      <next_nodes/>
+    </done>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start location="101,149" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start>
+      <mgcnode Name="Trigger Timer" location="293,148" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Trigger Timer" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <done location="471,150" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done>
+    </mgcnodes>
+    <mgcconnectors>
+      <start>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="133,171" endpoint="293,171" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="251,169,4,4" ctrlRect2="171,169,4,4"/>
+      </start>
+      <mgcnode Name="Trigger Timer">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="325,171" endpoint="471,172" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="432,169,4,4" ctrlRect2="359,170,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="325,171" endpoint="471,172" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="432,169,4,4" ctrlRect2="359,170,4,4"/>
+      </mgcnode>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="10,10" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="0">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables/>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

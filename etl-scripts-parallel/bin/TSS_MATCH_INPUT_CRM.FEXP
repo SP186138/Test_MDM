@@ -1,0 +1,74 @@
+/***********************************************************************************************************
+SCRIPT:               TSS_MATCH_INPUT_CRM.FEXP
+DESCRIPTION:          This script generates the reference file for use by Trillium
+DEPENDENCY:           MST WINKEY TRIGGER load
+INPUT:                GOLDEN TABLES & MST WINKEY TRIGGER
+OUTPUT:               TSS_MATCH_INPUT_CRM.DAT
+ERRORS:
+SPECIAL INSTRUCTIONS: In case of failure, log table to be dropped and script to restart from top.
+
+CHANGE LOG:
+VERSION              DATE                 AUTHOR                          CHANGES
+1.00                 01/21/2011           TERADATA                        INITIAL VERSION
+***********************************************************************************************************/
+
+.LOGTABLE TSS_MATCH_INPUT_LOG;
+
+.BEGIN EXPORT;
+
+.EXPORT OUTFILE \\10.36.32.4\Teradata\MDM\3.05.02\custom\pngrelease3\data\TSS_MATCH_INPUT_CRM.DAT FORMAT TEXT MODE RECORD;
+
+SELECT DISTINCT
+CAST(
+	 COALESCE(TRIM(MKTNG_PGM_NBR_CRM          ),'')
+	 ||'|'||COALESCE(TRIM(REGIS_CNSMR_ID_VAL_CRM     ),'')
+	 ||'|'||COALESCE(TRIM(NAME_PREFX_TXT_CRM         ),'')
+	 ||'|'||COALESCE(TRIM(GVN_NAME_CRM               ),'')
+	 ||'|'||COALESCE(TRIM(MID_NAME_CRM               ),'')
+	 ||'|'||COALESCE(TRIM(FAMLY_NAME_CRM             ),'')
+	 ||'|'||COALESCE(TRIM(NAME_SUFFX_TXT_CRM         ),'')
+	 ||'|'||COALESCE(TRIM(FULL_NAME_CRM              ),'')
+	 ||'|'||COALESCE(TRIM(GENDR_IND_CRM              ),'')
+	 ||'|'||COALESCE(TRIM(CAST(CAST(BRTH_DATE_CRM AS DATE FORMAT 'YYYY-MM-DD') AS VARCHAR(10))),'')
+	 ||'|'||COALESCE(TRIM(ADDR_LINE_1_TXT_CRM        ),'')
+	 ||'|'||COALESCE(TRIM(ADDR_LINE_2_TXT_CRM        ),'')
+	 ||'|'||COALESCE(TRIM(ADDR_LINE_3_TXT_CRM        ),'')
+	 ||'|'||COALESCE(TRIM(STRET_NUM_CRM              ),'')
+	 ||'|'||COALESCE(TRIM(STRET_NAME_CRM             ),'')
+	 ||'|'||COALESCE(TRIM(APT_NUM_CRM                ),'')
+	 ||'|'||COALESCE(TRIM(PO_BOX_NUM_CRM             ),'')
+	 ||'|'||COALESCE(TRIM(CITY_NAME_CRM              ),'')
+	 ||'|'||COALESCE(TRIM(POSTL_AREA_CODE_CRM        ),'')
+	 ||'|'||COALESCE(TRIM(TERR_CODE_CRM              ),'')
+	 ||'|'||COALESCE(TRIM(CNTRY_CODE_CRM             ),'')
+	 ||'|'||COALESCE(TRIM(EMAIL_ADDR_TXT_1_CRM       ),'')
+	 ||'|'||COALESCE(TRIM(PHONE_EXTSN_NUM_1_CRM      ),'')
+	 ||'|'||COALESCE(TRIM(FULL_PHONE_NUM_1_CRM       ),'')
+	 ||'|'||COALESCE(TRIM(PHONE_LINE_NBR_1_CRM       ),'')
+	 ||'|'||COALESCE(TRIM(PHONE_AREA_NBR_1_CRM       ),'')
+	 ||'|'||COALESCE(TRIM(PHONE_EXCHG_NBR_1_CRM      ),'')
+	 ||'|'||COALESCE(TRIM(PHONE_CNTRY_NBR_1_CRM      ),'')
+	 ||'|'||COALESCE(TRIM(WIN_KEY_CRM      ),'')
+	 ||'|'||COALESCE(TRIM(DPEND_NAME_CRM      ),'')
+	 ||'|'||COALESCE(TRIM(PET_NAME_CRM      ),'')
+	 ||'|'||COALESCE(TRIM(REGIS_PRSNA_ID    ),'')
+	 ||'|'||COALESCE(TRIM(LEGAL_ENT_PRSNA_ID        ),'')
+         ||'|'||COALESCE(TRIM(HSHLD_PRSNA_ID            ),'')
+	 ||'|'||COALESCE(TRIM(LEGAL_ENT_NBR),'')
+    AS CHAR(2000))
+  FROM MDM.CNSMR_TSS_MATCH_INPUT
+;
+
+.END EXPORT;
+
+.SET CREATERC TO 0;
+
+.IF &SYSRC > 4 THEN;
+.SET CREATERC TO 1;
+.ELSE;
+.IF &SYSRC <= 4 THEN;
+.SET CREATERC TO 0;
+.ENDIF;
+.ENDIF;
+
+.LOGOFF &CREATERC;

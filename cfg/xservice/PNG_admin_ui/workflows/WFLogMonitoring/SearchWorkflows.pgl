@@ -1,0 +1,316 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_entry" source="studio.controller:load">
+  <ui:container id="Outer" showFavorite="true" scrollable="true" displayCondition="{$root/WF_PAGE_TYPE/@Value= 'WorkflowResults'}">
+    <ui:help displayPage="{$pages:WfMonitorLogHelp}"/>
+    <ui:step id="Outer" name="Outer" displayText="WF_LOG_MON_MAIN_TITLE">
+      <ui:field-group columns="2">
+        <ui:image src="/bpi_check.gif" displayCondition="{string-length($root/SuccessMsg/@Value) != 0}"/>
+        <ui:display-field value="{$root/SuccessMsg/@Value}" displayCondition="{string-length($root/SuccessMsg/@Value) != 0}" name="success" class="requiredIndicatorGreen"/>
+      </ui:field-group>
+      <ui:field-group columns="2">
+        <ui:image src="/cancel.gif" displayCondition="{string-length($root/ErrorMsg/@Value) != 0}"/>
+        <ui:display-field name="error" value="{$root/ErrorMsg/@Value}" class="requiredIndicator"/>
+      </ui:field-group>
+      <ui:container inner="true">
+        <ui:step id="Inner1">
+          <ui:field-group>
+            <ui:hidden-field name="SEARCH_DISABLED" id="SEARCH_DISABLED" value="{$root/OnBackPage/@Value!='none'}"/>
+            <ui:dropdown name="SelectService" id="SelectService" displayText="WF_LOG_MON_SELECT_SERVICE_TITLE" selectOne="true" optionSrc="$root/SERVICES/*" title="Select Service" onChange="javascript:onChangeService();" sort="true" disabled="{$root/OnBackPage/@Value!='none'}"/>
+            <ui:dropdown name="SelectWorkflow" id="SelectWorkflow" displayText="WF_LOG_MON_SELECT_WORKFLOW_TITLE" selectOne="true" optionSrc="$root/WF_TEMPLATES/*" title="Select Workflow" disabled="{$root/OnBackPage/@Value!='none'}" unFormat="true"/>
+            <ui:dropdown name="SelectEntity" id="SelectEntity" displayText="WF_LOG_MON_SELECT_BUSINESS_ENTITY_TITLE" selectOne="true" optionSrc="$root/ENTITIES/*" title="Select Entity" disabled="{$root/OnBackPage/@Value!='none'}" onChange="javascript:onChangeEntity();" unFormat="true"/>
+          </ui:field-group>
+          <ui:script>
+       
+
+function isIE () {
+var myNav = navigator.userAgent.toLowerCase();
+return (myNav.indexOf('msie') != -1) ? parseInt(myNav.split('msie')[1]) : false;
+}
+			function onLoad()
+            { 
+if (isIE () == 8) {
+$('#WhiteBoard').hide();
+}
+					var index=document.form.SelectEntity.selectedIndex;
+            		if(index > 0)
+            		{
+						document.form.SelectService.disabled=true;
+						document.form.SelectWorkflow.disabled=true;
+            		}
+                    onLoadSuper();
+					onResize();            
+            }
+            function onChangeService()
+            	{
+            		document.form.SelectWorkflow.options.length=0;
+					var service_name = 'ADMIN_UI';
+					var xmlValue='';
+					xmlValue+='&lt;ServiceName Value=&quot;'+document.getElementById('SelectService').value+'&quot;/>';
+					var request='&lt;REQUEST Name=&quot;populateWorkflows&quot;>' + xmlValue+'&lt;/REQUEST>';
+					var xpath = &quot;/RESPONSES/RESPONSE/Template/Name&quot;;
+					SendAjaxRequest(service_name,request,'populateWorkflow',xpath);
+                }
+$('[name="SELECTED_INSTANCE_ID"]').click(function(){
+   if($('[name="SELECTED_INSTANCE_ID"]:checked').parent().parent().find("#Status_td").text().trim().indexOf('Aborted') != -1)
+		tduiToggleButtonState( 'Kill', 'disabled');
+
+});
+            
+            function onKillWF()
+            {
+				core_confirm_jquery(&quot;WF_LOG_MON_ARE_YOU_SURE_TO_KILL_SELECTED_WORKFLOW_EXECUTION&quot;,'onKillWFCallback');
+				/*if(core_confirm(&quot;WF_LOG_MON_ARE_YOU_SURE_TO_KILL_SELECTED_WORKFLOW_EXECUTION&quot;) == 'yes')
+                {
+					document.form.BUTTON_ID.value = 'Kill';
+					document.form.action = 'view.x2ps';
+					document.form.submit();
+					grayOut(true);
+				}*/
+		  }
+		  function onKillWFCallback(response)
+		  {
+			if(response=='yes'){
+					document.form.BUTTON_ID.value = 'Kill';
+					document.form.action = 'view.x2ps';
+					document.form.submit();
+					grayOut(true);
+			}
+		}
+            
+            function onChangeEntity(){
+					//document.form.SelectWorkflow.disabled=true;
+					var index=document.form.SelectEntity.selectedIndex;
+            		if(index === 0 )
+            		{
+            				if(document.form.SEARCH_DISABLED.value === &quot;false&quot;)
+            				{
+            						document.form.SelectService.disabled=false;
+            						document.form.SelectWorkflow.disabled=false;
+            				}	
+            		}
+            		else
+            		{
+						document.form.SelectService.disabled=true;
+						document.form.SelectWorkflow.disabled=true;
+            		}
+            }
+            
+                function populateWorkflow(node)
+               {
+					var emptyOption = document.createElement(&quot;OPTION&quot;);
+					emptyOption.text = 'Select...';
+					emptyOption.value ="";
+					document.form.SelectWorkflow.options.add(emptyOption);
+            		if(node.length &gt; 0){
+            	     var sort=new Array();
+					var j;
+					for (i=0;i&lt;node.length;i++)
+					{
+							var templateName=node[i].getAttribute(&quot;Value&quot;);
+							var newOption = new Option(templateName, templateName, false, false);
+							var dataTypelength=document.form.SelectWorkflow.length;
+							sort[i]=newOption.value;
+                     }
+					sort.sort(function(x,y){
+								var a = String(x).toUpperCase();
+								var b = String(y).toUpperCase();
+								if (a > b)
+										return 1
+								if (a &lt; b)
+										return -1
+								return 0;
+							});
+				 for(j=0;j&lt;sort.length;j++)
+				 {
+					var newOption = document.createElement(&quot;OPTION&quot;);
+					newOption.text = sort[j];
+					newOption.value =sort[j];
+					document.form.SelectWorkflow.options.add(newOption);
+                } }
+            	else{
+					$('#SelectWorkflow').select2({dropdownAutoWidth: 'true'});
+            	}
+            }
+			
+            function deleteLog(){
+			core_confirm_jquery(&quot;WF_LOG_MON_ARE_YOU_SURE_TO_DELETE_WORKFLOW_INSTANCE_LOG&quot;, 'onDeleteLogCallback');
+                /*if(core_confirm(&quot;WF_LOG_MON_ARE_YOU_SURE_TO_DELETE_WORKFLOW_INSTANCE_LOG&quot;) == 'yes'){
+					document.form.BUTTON_ID.value = 'Delete';
+					document.form.action = 'view.x2ps';
+					document.form.submit();
+					grayOut(true);
+            	}*/
+			}
+			function onDeleteLogCallback(response){
+				if(response=='yes'){
+					document.form.BUTTON_ID.value = 'Delete';
+					document.form.action = 'view.x2ps';
+					document.form.submit();
+					grayOut(true);
+				}
+			}
+            function onDetails(){
+                if(checkifOnlyOneSelected () ){
+					document.form.BUTTON_ID.value = 'Details';
+					document.form.action = 'view.x2ps';
+					document.form.submit();
+					grayOut(true);
+            	}
+            	else
+            		core_alert_jquery(&quot;WF_LOG_MON_PLEASE_SELECT_SINGLE_WORKFLOW_INSTANCE&quot;);
+			}
+            
+            function onPictView(){
+				if(checkifOnlyOneSelected () ){ 
+						var paramNames=['InstanceId'];
+						var paramValues=[form.SELECTED_INSTANCE_ID.value];
+						var requestXMLObj=createRequestXmlObjectTd('checkAuditExists','ADMIN_UI',paramNames,paramValues);
+						var requestXMLStr=serializeXmlTd(requestXMLObj);
+						var xpath = &quot;/RESPONSES/RESPONSE/AuditExistsFlag&quot;;
+						SendAjaxRequest('ADMIN_UI',requestXMLStr,'onPictViewCallBack',xpath);
+            }
+				else
+					core_alert_jquery(&quot;WF_LOG_MON_PLEASE_SELECT_SINGLE_WORKFLOW_INSTANCE&quot;);
+            }
+			
+        function onPictViewCallBack(result){
+			if( result[0].getAttribute('Value').trim() === "true"){
+					document.form.BUTTON_ID.value = 'WhiteBoard';
+					document.form.action = 'view.x2ps';
+					document.form.submit();
+					grayOut(true);
+            }
+        }
+
+		function checkifOnlyOneSelected(form){
+            var form=document.form;
+			var count;
+			var numOfChecks = 0;
+			var elementsLen = form.elements.length;
+			var oneCheck = true;
+
+			for(count = 0; count &lt; elementsLen; count++)
+			{
+				if( form.elements[count].type == &quot;checkbox&quot; &amp;&amp; form.elements[count].checked == true  &amp;&amp;
+						form.elements[count].name == &quot;SELECTED_INSTANCE_ID&quot;  )
+				{
+					numOfChecks++;
+				}
+			}
+			if (numOfChecks > 1)
+			{
+				oneCheck = false;
+			}
+		return oneCheck;
+    }
+            
+function disableFilterElements()
+{
+	var elements = document.form.elements;
+	var elementCount = elements.length;
+	var element;
+	for (var i = 0; i &lt; elementCount; i++)
+	{
+		element = elements[i];
+		if (element.name.indexOf(&quot;FILTER_&quot;) == 0  )
+			{
+				element.disabled = true;
+			}
+		}
+}
+
+function onClearSearch()
+{
+	disableFilterElements();
+	document.form.BUTTON_ID.value = 'clear';
+	document.form.action = 'view.x2ps';
+	document.form.submit();
+	grayOut(true);
+}
+            
+function onWFSearch()
+{
+	disableFilterElements();
+	document.form.BUTTON_ID.value = 'search';
+	document.form.action = 'view.x2ps';
+	document.form.submit();
+	grayOut(true);
+}
+            
+            
+          </ui:script>
+          <ui:buttons>
+            <ui:button name="clear" id="clear" displayText="WF_LOG_MON_BUTTON_CLEAR_LABEL" disabled="{$root/OnBackPage/@Value!='none'}" onClick="javascript:onClearSearch()"/>
+            <ui:divider/>
+            <ui:button name="search" id="search" displayText="WF_LOG_MON_BUTTON_SEARCH_LABEL" emphasized="true" disabled="{$root/OnBackPage/@Value!='none'}" onClick="javascript:onWFSearch()"/>
+          </ui:buttons>
+        </ui:step>
+      </ui:container>
+      <ui:table id="WorkflowHistory" filter="true" displayText="WF_LOG_MON_WORKFLOW_RESULTS_TITLE" displayTextNoRecords="WF_LOG_MON_WORKFLOW_RESULTS_NO_RECORDS_TITLE" collapsable="false" select="$root/RESULTS" postRowIdAs="SELECTED_INSTANCE_ID" startAtRow="$root/StartRowCount/@Value" totalRowCount="$root/TotalRowCount/@Value" selectable="all" rowId="InstanceID" exportable="true">
+        <ui:field-group>
+          <ui:display-field displayText="WF_LOG_MON_WORKFLOW_RESULTS_WFNAME_LABEL" name="WFName" id="WFName" sortable="true" unFormat="true"/>
+          <ui:display-field displayText="WF_LOG_MON_WORKFLOW_RESULTS_INSTACE_ID_LABEL" name="InstanceID" id="InstanceID" sortable="true"/>
+          <ui:display-field displayText="WF_LOG_MON_WORKFLOW_RESULTS_SERVICE_NAME_LABEL" name="ServiceName" id="ServiceName" sortable="true"/>
+          <ui:display-field displayText="WF_LOG_MON_WORKFLOW_RESULTS_TRIGERRED_BY_LABEL" name="TriggeredBy" id="TriggeredBy" sortable="true"/>
+          <ui:display-field displayText="WF_LOG_MON_WORKFLOW_RESULTS_STATUS_LABEL" name="Status" id="Status" sortable="true"/>
+          <ui:compound-field displayText="Status Legend" id="StatuslegendCmpd" filter="false">
+            <ui:legend-field color="{HexColorCode/@Value}" id="Statuslegend" name="StatusColorCd"/>
+          </ui:compound-field>
+          <ui:display-field displayText="WF_LOG_MON_WORKFLOW_RESULTS_START_TIME_LABEL" name="StartTime" id="StartTime" sortable="true" filter="false" dataType="DateTime"/>
+          <ui:display-field displayText="WF_LOG_MON_WORKFLOW_RESULTS_END_TIME_LABEL" name="EndTime" id="EndTime" sortable="true" filter="false" dataType="DateTime"/>
+          <ui:link-field name="InputParams" displayText="WF_LOG_MON_WORKFLOW_RESULTS_INPUT_PARAMS_LABEL" targetName="catalogPopup" targetType="popup" id="InputParams" value="WF_LOG_MON_WORKFLOW_RESULTS_PARAMS_SHOW_LABEL" filter="false">
+            <ui:url page="{concat($root/WEB_APP_PATH/@Value,'/view.x2ps')}">
+              <POPUP select="$root/popValue/@Value"/>
+              <BUTTON_ID select="'showParams'"/>
+              <SELECTED_INSTANCE_ID select="InstanceID/@Value"/>
+              <PARAM_TYPE select="'INPUT_PARAM'"/>
+            </ui:url>
+          </ui:link-field>
+          <ui:link-field name="OutputParams" displayText="WF_LOG_MON_WORKFLOW_RESULTS_OUTPUT_PARAMS_LABEL" targetName="catalogPopup" targetType="popup" id="OutputParams" value="WF_LOG_MON_WORKFLOW_RESULTS_PARAMS_SHOW_LABEL" filter="false">
+            <ui:url page="{concat($root/WEB_APP_PATH/@Value,'/view.x2ps')}">
+              <POPUP select="$root/popValue/@Value"/>
+              <BUTTON_ID select="'showParams'"/>
+              <SELECTED_INSTANCE_ID select="InstanceID/@Value"/>
+              <PARAM_TYPE select="'OUTPUT_PARAM'"/>
+            </ui:url>
+          </ui:link-field>
+        </ui:field-group>
+        <ui:buttons id="buttons1" name="buttons1">
+          <ui:button name="Back" id="Back" displayCondition="{$root/OnBackPage/@Value!='none'}" onClick="{$pages:ExecuteWfProcess}" displayText="WF_LOG_MON_BUTTON_BACK_LABEL"/>
+          <ui:divider displayCondition="{$root/OnBackPage/@Value!='none'}"/>
+          <ui:button displayText="WF_LOG_MON_BUTTON_DELETE_LABEL" id="Delete" name="Delete" enabledBySelections="true" onClick="javascript:deleteLog()"/>
+          <ui:button displayText="WF_LOG_MON_BUTTON_KILL_LABEL" id="Kill" name="Kill" enabledBySelections="true" onClick="javascript:onKillWF()"/>
+          <ui:button displayText="WF_LOG_MON_BUTTON_DETAILS_LABEL" id="Details" name="Details" enabledBySelections="true" onClick="javascript:onDetails()"/>
+          <ui:button displayText="Workflow Log Viewer" id="WhiteBoard" name="WhiteBoard" enabledBySelections="true" onClick="javascript:onPictView()"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:container displayText="WF_LOG_MON_PARAMETERS_DIALOG_TITLE" displayCondition="{$root/WF_PAGE_TYPE/@Value= 'ParamDetails'}">
+    <ui:step id="asd">
+      <ui:field-group>
+        <ui:hidden-field id="SELECTED_INSTANCE_ID" name="SELECTED_INSTANCE_ID" value="{$root/SELECTED_INSTANCE_ID/@Value}"/>
+        <ui:hidden-field id="PARAM_TYPE" name="PARAM_TYPE" value="{$root/PARAM_TYPE/@Value}"/>
+        <ui:div id="ParamXML"/>
+      </ui:field-group>
+      <ui:script language="javascript" type="text/javascript" src="/td/javascript/tdXmlTableDisplay.js"/>
+      <ui:script>document.write('&lt;link rel=&quot;stylesheet&quot;  type=&quot;text/css&quot;  href=&quot;td/css/xml_display.css&quot; />');
+        
+		var paramNames=['SELECTED_INSTANCE_ID','PARAM_TYPE'];
+		var paramValues=[form.SELECTED_INSTANCE_ID.value,form.PARAM_TYPE.value];
+		var requestXMLObj=createRequestXmlObjectTd('getWorkflowParamValueXML','BPE_META',paramNames,paramValues);
+		var requestXMLStr=serializeXmlTd(requestXMLObj);
+		var xpath = &quot;/RESPONSES/RESPONSE/*&quot;;
+		SendAjaxRequest('BPE_META',requestXMLStr,'displayParamXML',xpath);
+        
+        function displayParamXML(node){
+			//LoadXMLDom('ParamXML',node[0]);
+			buildTableFromXMLDoc('ParamXML',node[0]);
+        
+       
+        }
+  
+
+</ui:script>
+    </ui:step>
+  </ui:container>
+</ui:page-group>

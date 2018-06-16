@@ -1,0 +1,54 @@
+<document>
+  <documentation>A planned effort by a P&amp;G marketing organization. It may be limited to a particular BRAND, or it may be concerned with a number of related BRANDs.</documentation>
+  <properties>
+    <property Name="MKTNG_PGM_NAME" Required="true">
+      <documentation>The name of the MARKETING PROGRAM.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="MKTNG_PGM_NAME" />
+    </property>
+    <property Name="MKTNG_PGM_NBR" Required="true">
+      <documentation>The number that P&amp;G assigned to uniquely distinguish the MARKETING PROGRAM from all others.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="MKTNG_PGM_NBR" />
+    </property>
+    <property Name="LEGAL_ENT_NBR" Required="true">
+      <documentation>The number that P&amp;G assigned to uniquely distinguish the LEGAL ENTITY from all others.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="LEGAL_ENT_NBR" />
+    </property>
+    <property Name="MKTNG_PGM_DESC" PhysicalName="MKTNG_PGM_DESC">
+      <extends Package="dictionaries/atomicModel/Generic Fields" ModelUnit="MDRM.mdt" Name="DESCRIPTION" />
+    </property>
+    <property Name="MKTNG_PGM_SHORT_NAME" PhysicalName="MKTNG_PGM_SHORT_NAME">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="SHORT_NAME" />
+    </property>
+    <property Name="MKTNG_PGM_STATUS">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="MKTNG_PGM_STATUS" />
+    </property>
+    <property Name="MKTNG_PGM_BUSN_NAME">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="MKTNG_PGM_BUSN_NAME" />
+    </property>
+  </properties>
+  <keys>
+    <key Active="true" Name="MKTNG_PGM_UPI" PhysicalName="MKTNG_PGM_UPI" Kind="PRIMARY">
+      <property Name="MKTNG_PGM_NBR" />
+    </key>
+    <key Active="true" Name="MKTNG_PGM_IX" PhysicalName="MKTNG_PGM_IX" Kind="INDEX">
+      <property Name="LEGAL_ENT_NBR" />
+    </key>
+  </keys>
+  <links>
+    <link Active="true" Name="MKTNG_PGM_FK" PhysicalName="MKTNG_PGM_FK">
+      <keymap FromKey="MKTNG_PGM_IX" ToPackage="models/pngModel" ToModelUnit="LEGAL_ENT.mtt" ToKey="LEGAL_ENT_UPI" ReverseLink="true" ReverseLinkName="MKTNG_PGM_RL" DeleteRule="RESTRICT">
+        <mapping FromProperty="LEGAL_ENT_NBR" ToProperty="LEGAL_ENT_NBR" />
+      </keymap>
+    </link>
+  </links>
+  <docFacets>
+    <mdmWebServiceFacet />
+    <mdmAuthorizationFacet />
+    <mdmSysTableMapFacet TableClass="MASTER" Source="MASTER" MasterTable="MKTNG_PGM" />
+    <miscFacet PhysicalName="MKTNG_PGM" Active="true" />
+    <mdmConfigFacet SchemaGen="true" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql />
+</document>
+

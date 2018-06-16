@@ -1,0 +1,36 @@
+<ui:page-group version="3" xmlns:ui="http://www.teradata.com/ui" name="studio.templates.simple_form" source="studio.controller:load">
+  <ui:container id="topContainer" scrollable="true">
+    <!--Line added for issue MDM-1937 by Ankur Goyal-->
+    <ui:help displayPage="{$pages:Edit_Publication_Object_help}" />
+    <ui:step displayText="Edit Publication Object" id="basicControls">
+      <ui:field-group>
+        <ui:display-field id="SERVICE" name="SERVICE" displayText="Service" select="$root/SERVICE" title="PublicationObjectService"/>
+        <ui:entry-field id="NAME" name="NAME" displayText="Name" select="$root/NAME" required="true" title="PublicationObjectName"/>
+        <ui:entry-field id="DESCRIPTION" name="DESCRIPTION" displayText="Description" select="$root/DESCRIPTION" title="PublicationObjectDescription"/>
+      </ui:field-group>
+      <ui:table id="tableServices" name="tableServices" displayText="Service Documents" rowSrc="$root/DOCLIST/LINE" scrollable="true" selectable="All" rowId="ID" postRowIdAs="SELECTED_ID" rememberSelections="true" maxRows="-1" doPaging="false">
+        <ui:field-group id="tableColumns">
+          <ui:display-field name="ID" id="ID" displayText="Service Documents" title="PublicationObjectServiceDocuments"/>
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button id="BACK" name="BACK" displayText="Back" />
+          <ui:button id="EDIT" name="EDIT" displayText="Save" enabledBySelections="true" onClick="javascript:handleRequired();" />
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>function	handleRequired()
+	{
+		if(document.form.NAME.value.trim()=="" )
+		{
+		core_alert_jquery("ENTER_NAME");
+return;
+		} else {
+		document.form.BUTTON_ID.value='EDIT';
+		document.form.submit();
+		grayOut(true);
+		}
+
+	}</ui:script>
+</ui:page-group>
+

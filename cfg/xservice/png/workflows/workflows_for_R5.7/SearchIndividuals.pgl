@@ -1,0 +1,221 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" Id="SearchIndividuals.pgl" version="3">
+  <ui:container id="outerContainer1" name="outerContainer1" scrollable="true">
+    <ui:step id="outerStep1" name="outerStep1" scrollable="true">
+      <ui:container id="searchContainer">
+        <ui:step id="searchStep">
+          <ui:validation id="validation1" anyFieldIsRequired="true" instructionMessage="For wildcard searches use the * character; e.g. *text*." />
+          <ui:field-group id="searchFG" displayText="Search Individuals" collapsable="true">
+            <ui:field-group columns="3" id="fieldGroups" select="$this">
+              <ui:dropdown id="LEGAL_ENT_NAME" name="LEGAL_ENT_NAME" displayText="Matched Domain" optionSrc="$root/LEGAL_ENT/LEGAL_ENT_NAME" onChange="javascript:loadProgramList();" displayCondition="{count($root/LEGAL_ENT)&gt;1}" required="true" />
+              <ui:entry-field id="LEGAL_ENT_NAME" name="LEGAL_ENT_NAME" displayText="Matched Domain" readOnly="true" value="{$root/LEGAL_ENT/LEGAL_ENT_NAME/@Value}" displayCondition="{count($root/LEGAL_ENT)&lt;=1}" required="true" />
+              
+              <!--<ui:entry-field id="REGIS_PRSNA_ID" name="REGIS_PRSNA_ID" displayText="Persona ID" onKeyUp="javascript:checkAsterik();" />
+              <ui:entry-field id="MATCHD_CNSMR_PRSNA_ID" name="MATCHD_CNSMR_PRSNA_ID" displayText="Matched Consumer Persona ID" onKeyUp="javascript:checkAsterik();" />              -->
+              <ui:dropdown id="MKTNG_PGM_NUMBER" name="MKTNG_PGM_NUMBER" displayText="Program Name" optionSrc="$root/MKTNG_PGM/OPTION" />
+              <ui:entry-field id="REGIS_CNSMR_ID_VAL" name="REGIS_CNSMR_ID_VAL" displayText="Registered Consumer ID" onKeyUp="javascript:checkAsterik();" />
+              <ui:entry-field id="GVN_NAME" name="GVN_NAME" displayText="First Name" />
+              <ui:entry-field id="FAMLY_NAME" name="FAMLY_NAME" displayText="Last Name" />
+              <ui:entry-field id="BRTH_DATE" name="BRTH_DATE" displayText="Date Of Birth(mm/dd/yyyy)" dataType="Date" displayCondition="True" />
+              <ui:entry-field id="ADDR_LINE_1_TXT" name="ADDR_LINE_1_TXT" displayText="Address Line 1" />
+              <ui:entry-field id="ADDR_LINE_2_TXT" name="ADDR_LINE_2_TXT" displayText="Address Line 2" />
+              <ui:entry-field id="ADDR_LINE_3_TXT" name="ADDR_LINE_3_TXT" displayText="Address Line 3" />
+
+              <ui:dropdown id="CNTRY_CODE" name="CNTRY_CODE" displayText="Country" optionSrc="$root/CNTRY_CODE/OPTION" selectOne="true" onChange="javascript:loadStates();"/>
+              <ui:dropdown id="TERR_CODE" name="TERR_CODE" displayText="State" optionSrc="$root/TERR_CODE/OPTION" selectOne="true" />
+              <ui:entry-field id="CITY_NAME" name="CITY_NAME" displayText="City" />              
+              <ui:entry-field id="POSTL_AREA_CODE" name="POSTL_AREA_CODE" displayText="Zip Code" />
+              <ui:entry-field id="EMAIL_ADDR_TXT" name="EMAIL_ADDR_TXT" displayText="Email" />
+              <ui:entry-field id="FULL_PHONE_NUMBER" name="FULL_PHONE_NUMBER" displayText="Phone" />
+              <ui:entry-field id="LYLTY_ACCT_NUM" name="LYLTY_ACCT_NUM" displayText="Loyalty ID" />
+              <ui:entry-field id="NATIONAL_ID_NBR" name="NATIONAL_ID_NBR" displayText="National ID" />
+            </ui:field-group>
+          </ui:field-group>
+          <ui:buttons>
+            <ui:button id="RESET" displayText="Reset" />
+            <ui:button id="SEARCH_INDIVIDUAL" displayText="Search Individuals" emphasized="true" displayCondition="{$root/LEGAL_ENT/LEGAL_ENT_NAME/@Value!=''}" onClick="javascript:onSearchClick()" />
+            <ui:button id="SEARCH_INDIVIDUAL" displayText="Search Individuals" emphasized="true" displayCondition="{$root/LEGAL_ENT_NBR/@Value='None'}" disabled="true" />
+          </ui:buttons>
+        </ui:step>
+      </ui:container>
+      <!-- changed  by Ruchi maxrow to 50, added match cnsmr persna id as row id-->
+      <ui:table id="searchResultsTable" displayText="Individuals Search Results" selectable="Single" rowId="REGIS_PRSNA_ID#MATCHD_CNSMR_PRSNA_ID#HSHLD_PRSNA_ID#MKTNG_PGM_NAME" rowSrc="$root/RESPONSE/V_REGIS_PRSNA" rowscollapsable="true" scrollable="true" displayTextNoRecords="No Individuals found" maxRows="100" postRowIdAs="selectedIndividualID" doPaging="true" totalRowCount="$root/RESPONSE/@TotalRowCount">
+        <ui:help id="bottomTableHelp" />
+        <ui:field-group id="tableColumns" select="$root/RESPONSE/*">
+          <!--ui:display-field id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR" displayText="Program ID"/-->
+          <ui:display-field id="MKTNG_PGM_NAME" name="MKTNG_PGM_NAME" displayText="Program Name" />
+          <ui:display-field id="REGIS_PRSNA_ID" name="REGIS_PRSNA_ID" displayText="Persona ID">
+            <!-- commented by Ruchi-->
+            <!--ui:url page="page.x2ps">
+              <BUTTON_ID select="'VIEW_CONSUMER_DETAILS'" />
+              <PRSNA_ID select="REGIS_PRSNA_ID/@Value" />
+              <PROGRAM_ID select="MKTNG_PGM_NBR/@Value" />
+              <MKTNG_PGM_NAME select="MKTNG_PGM_NAME/@Value" />
+              <LEGAL_ENT_NBR select="LEGAL_ENT_NBR/@Value" />
+              <CONSUMER_ID select="MATCHD_CNSMR_PRSNA_ID/@Value" />
+            </ui:url-->
+          </ui:display-field>
+          <!-- added by Ruchi-->
+          <ui:display-field id="REGIS_CNSMR_ID_VAL" name="REGIS_CNSMR_ID_VAL" displayText="Registered Consumer ID" />
+          <ui:display-field id="HSHLD_PRSNA_ID" name="HSHLD_PRSNA_ID" displayText="House Hold ID" />
+          <ui:display-field id="MATCHD_CNSMR_PRSNA_ID" name="MATCHD_CNSMR_PRSNA_ID" displayText="Matched Consumer ID" />
+          <ui:display-field id="PRSNA_STATUS_CODE" name="PRSNA_STATUS_CODE" displayText="Registered Personal Status" />
+          <ui:display-field id="NATIONAL_ID_NBR" name="NATIONAL_ID_NBR" displayText="National Id Number" />
+          <ui:display-field id="FULL_NAME" name="FULL_NAME" displayText="Full Name" />
+          <ui:display-field id="EMAIL_ADDR_TXT" name="EMAIL_ADDR_TXT" displayText="Email" />
+          <ui:display-field id="FULL_PHONE_NUM" name="FULL_PHONE_NUM" displayText="Phone" />
+          <ui:display-field id="FULL_ADDRESS" name="FULL_ADDRESS" displayText="Full Address" />
+         <!-- <ui:display-field id="NATIONAL_ID" name="NATIONAL_ID" displayText="National Id" />-->
+        </ui:field-group>
+        <ui:buttons>
+<ui:button displayText="Manage Opts" id="ManageOpts" name="ManageOpts" enabledBySelections="true" ></ui:button><!--onClick="javascript:MngOpt();"-->
+<ui:button displayText="View Consumer Details" id="VIEW" name="VIEW" enabledBySelections="true"></ui:button>
+<ui:button displayText="Edit Registration"  id="VIEW_CONSUMER_DETAILS" name="VIEW_CONSUMER_DETAILS" enabledBySelections="true"></ui:button>
+<ui:button name="create" id="create" displayText="Create" emphasized="true" displayCondition="{$root/RESPONSE/@TotalRowCount=0}"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>function IEEnterKey()
+{
+if( window.event.keyCode == 13)
+{
+var ele=document.form.CNTRY_CODE;
+for ( var x =0 ; x &lt; ele.length; x++ ) {
+if(ele.value!=''){
+if ( ele.options[ x ].selected != ele.options[ x ].defaultSelected ){
+return true;
+}
+}
+}
+onSearchClick();
+}
+}
+browserName = navigator.appName;
+function NetEnterKey(e)
+{
+key = e.which;
+if(key == 13)
+{
+onSearchClick();
+}
+}
+if (browserName == "Netscape")
+{
+document.captureEvents(Event.KEYPRESS);
+document.onkeypress=NetEnterKey;
+}
+else
+{
+if (browserName.indexOf("Explorer") &gt;= 0)
+{
+document.onkeypress=IEEnterKey;
+}
+}
+function onSearchClick()
+{
+
+var validate=doValidateForm();
+if(validate){
+
+document.form.BUTTON_ID.value = 'SEARCH_INDIVIDUAL';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+//return false;
+}
+else
+{
+return ;
+}
+}
+function doValidateForm(){
+if((document.form.GVN_NAME.value==''  &amp;&amp; document.form.FAMLY_NAME.value=='')&amp;&amp;(document.form.EMAIL_ADDR_TXT.value=='' &amp;&amp; document.form.FULL_PHONE_NUMBER.value=='')&amp;&amp;(document.form.ADDR_LINE_1_TXT.value=='' &amp;&amp; document.form.ADDR_LINE_2_TXT.value=='' &amp;&amp; document.form.ADDR_LINE_3_TXT.value=='' &amp;&amp; document.form.CITY_NAME.value=='' &amp;&amp; document.form.TERR_CODE.value=='' &amp;&amp; document.form.CNTRY_CODE.value=='' &amp;&amp; document.form.POSTL_AREA_CODE.value=='')&amp;&amp; (document.form.REGIS_CNSMR_ID_VAL.value=='')&amp;&amp; (document.form.LYLTY_ACCT_NUM.value=='') &amp;&amp; (document.form.NATIONAL_ID_NBR.value==''))
+//if((document.form.GVN_NAME.value==''  &amp;&amp; document.form.FAMLY_NAME.value=='')&amp;&amp;(document.form.EMAIL_ADDR_TXT.value=='' &amp;&amp; document.form.FULL_PHONE_NUMBER.value=='')&amp;&amp;(document.form.ADDR_LINE_1_TXT.value=='' &amp;&amp; document.form.ADDR_LINE_2_TXT.value=='' &amp;&amp; document.form.ADDR_LINE_3_TXT.value=='' &amp;&amp; document.form.CITY_NAME.value=='' &amp;&amp; document.form.TERR_CODE.value=='' &amp;&amp; document.form.CNTRY_CODE.value=='' &amp;&amp; document.form.POSTL_AREA_CODE.value=='')&amp;&amp; (document.form.REGIS_CNSMR_ID_VAL.value=='')&amp;&amp; (document.form.LYLTY_ACCT_NUM.value==''))
+{
+core_alert('Please enter either of Registered Consumer ID, First Name, Last Name, any Address field, Phone, Email, Loyalty ID.');
+return false;
+}
+    else
+    if((document.form.CNTRY_CODE.value!="" &amp;&amp; document.form.TERR_CODE.value!="") &amp;&amp; (document.form.ADDR_LINE_1_TXT.value=="" &amp;&amp; document.form.ADDR_LINE_2_TXT.value=="" &amp;&amp; document.form.ADDR_LINE_3_TXT.value=="" &amp;&amp; document.form.CITY_NAME.value=="" &amp;&amp; document.form.POSTL_AREA_CODE.value==""))
+    {
+    core_alert("Please enter either of address 1, address 2,address 3, city,pincode");
+    return false;
+    }
+else if(document.form.REGIS_CNSMR_ID_VAL.value.charAt(document.form.REGIS_CNSMR_ID_VAL.value.length-1)=='*'){
+core_alert('Wildcard search(*) is not allowed for numbers.');
+return false;
+}
+else if(document.form.BRTH_DATE.value!=''){
+var isdateformatvalid=validateDate(document.form.BRTH_DATE);
+if(!isdateformatvalid)
+return false;
+else
+return true;
+}else  return true;
+}
+function checkAsterik()
+{
+if(document.form.REGIS_CNSMR_ID_VAL.value.charAt(document.form.REGIS_CNSMR_ID_VAL.value.length-1)=='*'){
+core_alert('Wildcard search(*) is not allowed for numbers.');
+}
+return;
+}
+
+function checkDate(fld) {
+var mo, day, yr;
+var entry = fld.value;
+var re = /\b\d{1,2}[\/-]\d{1,2}[\/-]\d{4}\b/;
+if (re.test(entry)) {
+var delimChar = (entry.indexOf("/") != -1) ? "/" : "-";
+var delim1 = entry.indexOf(delimChar);
+var delim2 = entry.lastIndexOf(delimChar);
+mo = parseInt(entry.substring(0, delim1), 10);
+day = parseInt(entry.substring(delim1+1, delim2), 10);
+yr = parseInt(entry.substring(delim2+1), 10);
+var testDate = new Date(yr, mo-1, day);
+if (testDate.getDate() == day) {
+if (testDate.getMonth() + 1 == mo) {
+if (testDate.getFullYear() == yr) {
+return true;
+} else {
+core_alert("There is a problem with the year entry.");
+}
+} else {
+core_alert("There is a problem with the month entry.");
+}
+} else {
+core_alert("There is a problem with the date entry.");
+}
+} else {
+core_alert("Incorrect date format. Enter as mm/dd/yyyy.");
+}
+return false;
+}
+function validateDate(fld) {
+if (!checkDate(fld)) {
+// focus if validation fails
+fld.focus();
+fld.select();
+return false;
+}
+else return true;
+}
+function loadStates(){
+document.form.BUTTON_ID.value = 'LOAD_STATES';
+document.form.action = 'view.x2ps';
+document.form.submit();
+}    
+function loadProgramList(){
+document.form.BUTTON_ID.value = 'LOAD_PROGRAM_LIST';
+document.form.action = 'view.x2ps';
+document.form.submit();
+}
+    function MngOpt()
+    {
+document.form.BUTTON_ID.value = 'ManageOpts';
+document.form.action = 'view.x2ps';
+document.form.submit();
+    }
+  </ui:script>
+</ui:page-group>
+

@@ -1,0 +1,731 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="925" ShowInBreadCrumbs="true" Version="1.0" Name="UI_Manage_Workflows" Description="Terminate Workflows, Trigger Event Workflows and Reset Timer Workflows" Type="" PrimaryDocument="" IsStartAllowed="No">
+  <variables>
+    <variable Name="GSearchCriteria" Type="xml" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start">
+      <actions>
+        <action>
+          <GET_SESSION Name="GServerName" AssignToVar="GServer" HandleException="true"/>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Is Server Set" Description=""/>
+      </next_nodes>
+    </start>
+    <done Name="done">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+    <sub_workflow Name="Trigger Event WF" Workflow="TriggerEventWF" InputVar="{nodeInputXml,xml}">
+      <pre_actions>
+      </pre_actions>
+      <post_actions>
+      </post_actions>
+      <next_nodes OutputVar="{nodeOutputXml,xml}">
+        <next_node Name="Close And Refresh" Description=""/>
+      </next_nodes>
+      <input>
+        <TO_XML SelectList="$nodeInputXml/*"/>
+      </input>
+      <output AssignToVar="Wfresponse"/>
+    </sub_workflow>
+    <decision Name="Is Server Set">
+      <actions>
+        <action>
+          <GET_SESSION Name="GServerName" AssignToVar="GServer" HandleException="true"/>
+        </action>
+      </actions>
+      <condition Value="strlen($GServer/@Value) >=1"/>
+      <if_true>
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Workflows" Description=""/>
+        </next_nodes>
+      </if_true>
+      <if_false>
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Set_Server" Description=""/>
+        </next_nodes>
+      </if_false>
+    </decision>
+    <sub_workflow Name="Set_Server" InputVar="{inputXml,xml}" Workflow="SetServerUI">
+      <pre_actions>
+      </pre_actions>
+      <post_actions>
+      </post_actions>
+      <next_nodes OutputVar="{outputXml,xml}">
+        <next_node Name="Manage Workflows" Description=""/>
+      </next_nodes>
+      <input>
+      </input>
+    </sub_workflow>
+    <ui_form2 Name="Manage Workflows" InputVar="{searchParam,xml}" OutputFormVar="pglFormOutput" InputFormVar="pglFormInput" ShowInBreadCrumbs="SHOW" Template="Manage_Workflows.pgl">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SYS_REFRESH'">
+            <THEN>
+              <REQUEST Name="ExecuteSearchSQL" AssignToVar="searchParam">
+                <TO_XML DocVar="GSearchCriteria"/>
+              </REQUEST>
+            </THEN>
+          </IF_TEST>
+          <GET_SESSION Var="GServerName" AssignToVar="GServer" HandleException="true"/>
+          <!-- Get Distinct list of Primary docs-->
+          <NATIVE_FUNCTION ClassName="com.teradata.xcore.bpm.BPMUtil" MethodName="getDocuments" AssignToVar="PrimaryDocList">
+            <PARAM Var="thisContext"/>
+            <PARAM Value="WORKFLOW_INSTANCE" Type="String"/>
+            <PARAM Value="PRIMARY_DOC" Type="String"/>
+            <PARAM Value="{substringBefore($GServer/@Value, ':')}" Type="String"/>
+            <PARAM Value="{substringAfter($GServer/@Value, ':')}" Type="String"/>
+          </NATIVE_FUNCTION>
+          <!-- active node names are got from two tables :: WORKFLOW_ACTIVE_NODES, WORKFLOW_ACTIVE_EVENTS -->
+          <NATIVE_FUNCTION ClassName="com.teradata.xcore.bpm.BPMUtil" MethodName="getDocuments" AssignToVar="ActiveNodeList">
+            <PARAM Var="thisContext"/>
+            <PARAM Value="WORKFLOW_ACTIVE_NODES" Type="String"/>
+            <PARAM Value="NODE_NAME" Type="String"/>
+            <PARAM Value="{substringBefore($GServer/@Value, ':')}" Type="String"/>
+            <PARAM Value="{substringAfter($GServer/@Value, ':')}" Type="String"/>
+          </NATIVE_FUNCTION>
+          <NATIVE_FUNCTION ClassName="com.teradata.xcore.bpm.BPMUtil" MethodName="getDocuments" AssignToVar="EventNodesList">
+            <PARAM Var="thisContext"/>
+            <PARAM Value="WORKFLOW_ACTIVE_EVENTS" Type="String"/>
+            <PARAM Value="NODE" Type="String"/>
+            <PARAM Value="{substringBefore($GServer/@Value, ':')}" Type="String"/>
+            <PARAM Value="{substringAfter($GServer/@Value, ':')}" Type="String"/>
+          </NATIVE_FUNCTION>
+          <!-- Get Distinct list of status-->
+          <NATIVE_FUNCTION ClassName="com.teradata.xcore.bpm.BPMUtil" MethodName="getDocuments" AssignToVar="StatusList">
+            <PARAM Var="thisContext"/>
+            <PARAM Value="WORKFLOW_ACTIVE_NODES" Type="String"/>
+            <PARAM Value="NODE_TYPE" Type="String"/>
+            <PARAM Value="{substringBefore($GServer/@Value, ':')}" Type="String"/>
+            <PARAM Value="{substringAfter($GServer/@Value, ':')}" Type="String"/>
+          </NATIVE_FUNCTION>
+          <TO_DOCVAR AssignToVar="InXml">
+            <root>
+              <!-- primary doc list -->
+              <TO_DOCVAR AssignToVar="primaryDocListXml">
+                <PRIMARYDOCLIST>
+                  <FOR_EACH CurrentElement="currPrimaryDoc" SelectList="$PrimaryDocList/WORKFLOW_INSTANCE">
+                    <TO_DOCVAR AssignToVar="prmaryDocXml">
+                      <OPTION Value="{$currPrimaryDoc/PRIMARY_DOC/@Value}"/>
+                    </TO_DOCVAR>
+                    <TO_XML DocVar="prmaryDocXml"/>
+                  </FOR_EACH>
+                </PRIMARYDOCLIST>
+              </TO_DOCVAR>
+              <!-- active node types-->
+              <TO_DOCVAR AssignToVar="StatusListXml">
+                <STATUSLIST>
+                  <FOR_EACH CurrentElement="currStatus" SelectList="$StatusList/WORKFLOW_ACTIVE_NODES">
+                    <TO_DOCVAR AssignToVar="StatusXml">
+                      <OPTION Value="{$currStatus/NODE_TYPE/@Value}"/>
+                    </TO_DOCVAR>
+                    <TO_XML DocVar="StatusXml"/>
+                  </FOR_EACH>
+                  <IF_TEST Test="count($EventNodesList/WORKFLOW_ACTIVE_EVENTS) != 0">
+                    <THEN>
+                      <TO_DOCVAR AssignToVar="temp">
+                        <OPTION Value="Event" id="Event" name="Event"/>
+                      </TO_DOCVAR>
+                      <TO_XML DocVar="temp"/>
+                    </THEN>
+                  </IF_TEST>
+                </STATUSLIST>
+              </TO_DOCVAR>
+              <!-- active node names  list -->
+              <TO_DOCVAR AssignToVar="ActiveNodeListXml">
+                <ACTIVENODELIST>
+                  <FOR_EACH CurrentElement="currWFInst" SelectList="$ActiveNodeList/WORKFLOW_ACTIVE_NODES">
+                    <TO_DOCVAR AssignToVar="ActiveNodeXml">
+                      <OPTION Value="{$currWFInst/NODE_NAME/@Value}"/>
+                    </TO_DOCVAR>
+                    <TO_XML DocVar="ActiveNodeXml"/>
+                  </FOR_EACH>
+                  <FOR_EACH CurrentElement="currEvtNode" SelectList="$EventNodesList/WORKFLOW_ACTIVE_EVENTS">
+                    <TO_DOCVAR AssignToVar="EventNodeXml">
+                      <OPTION Value="{$currEvtNode/NODE/@Value}"/>
+                    </TO_DOCVAR>
+                    <TO_XML DocVar="EventNodeXml"/>
+                  </FOR_EACH>
+                </ACTIVENODELIST>
+              </TO_DOCVAR>
+            </root>
+          </TO_DOCVAR>
+          <!-- assign to pglFormInput -->
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <root>
+              <TO_XML DocVar="primaryDocListXml"/>
+              <TO_XML DocVar="StatusListXml"/>
+              <TO_XML DocVar="ActiveNodeListXml"/>
+              <!-- add search results to pglFormInput -->
+              <IF_TEST Test="$searchParam != null">
+                <THEN>
+                  <FOR_EACH CurrentElement="currResult" SelectList="$searchParam/RESPONSE/SQL_RESULT">
+                    <TO_DOCVAR AssignToVar="tempLineXml">
+                      <LINE>
+                        <InstanceId Value="{$currResult/ID/@Value}"/>
+                        <ID Value="{$currResult/ID/@Value}"/>
+                        <TemplateName Value="{$currResult/TEMPLATE/@Value}"/>
+                        <StartedBy Value="{$currResult/STARTED_BY/@Value}"/>
+                        <StartedAt Value="{substringBefore($currResult/START_DATE/@Value, ' ')}"/>
+                        <PrimaryDoc Value="{$currResult/PRIMARY_DOC/@Value}"/>
+                        <PrimaryDocId Value="{$currResult/PRIMARY_DOC_ID/@Value}"/>
+                        <Status Value="{$currResult/status/@Value}"/>
+                        <WaitingOnEvent Value="{$currResult/waitingonevent/@Value}"/>
+                        <Description Value="{$currResult/WFL_DESC/@Value}"/>
+                        <EventDescriptor Value="{$currResult/EVT_DESC/@Value}"/>
+                        <EventService Value="{$currResult/EVENT_SVC/@Value}"/>
+                        <ServiceName Value="{$currResult/WFL_SVC/@Value}"/>
+                        <History Value="{$currResult/HISTORY/@Value}"/>
+                      </LINE>
+                    </TO_DOCVAR>
+                    <TO_XML DocVar="tempLineXml"/>
+                  </FOR_EACH>
+                  <IF_TEST Test="$searchParam/KILLRESULT != null">
+                    <THEN>
+                      <TO_DOCVAR AssignToVar="KillResultDoc">
+                        <KILLRESULT Value="{$searchParam/KILLRESULT/@Value}"/>
+                      </TO_DOCVAR>
+                      <TO_XML DocVar="KillResultDoc"/>
+                    </THEN>
+                  </IF_TEST>
+                </THEN>
+              </IF_TEST>
+            </root>
+          </TO_DOCVAR>
+          <!-- add searchcriteria into pglFormInput -->
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelect="$searchParam/SEARCHCRITERIA"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <GET_SESSION Var="GServerName" AssignToVar="GServer" HandleException="true"/>
+          <IF_TEST Test="$pglFormOutput/Status/@Value = 'Event'">
+            <THEN>
+              <!-- Form the event query -->
+              <SET Var="eventQuery" FromValue="locking row for access select wi.id, wi.history, wi.wfl_desc, wi.started_by, wi.wfl_svc, wi.primary_doc, wi.primary_doc_id, wi.template, wi.start_date, wae.node as waitingonevent, 'Event' as status, wae.evt_desc, wae.event_svc from wfl_instance wi, wfl_atv_events wae where wi.id=wae.instance_id "/>
+              <IF_TEST Test="strlen($pglFormOutput/InstanceId/@Value) >= 1">
+                <THEN>
+                  <SET Var="eventwhereClause1" FromValue=" and Id like '%{$pglFormOutput/InstanceId/@Value}%'  "/>
+                  <SET Var="eventQuery" FromValue="{concat($eventQuery, $eventwhereClause1)}"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($pglFormOutput/StartedBy/@Value) >= 1">
+                <THEN>
+                  <SET Var="eventwhereClause2" FromValue=" and started_by like '%{$pglFormOutput/StartedBy/@Value}%'  "/>
+                  <SET Var="eventQuery" FromValue="{concat($eventQuery, $eventwhereClause2)}"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($pglFormOutput/PrimaryDoc/@Value) >= 1">
+                <THEN>
+                  <SET Var="eventwhereClause3" FromValue=" and Primary_Doc = '{$pglFormOutput/PrimaryDoc/@Value}'  "/>
+                  <SET Var="eventQuery" FromValue="{concat($eventQuery, $eventwhereClause3)}"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($pglFormOutput/WaitingonEvent/@Value) >= 1">
+                <THEN>
+                  <SET Var="eventwhereClause4" FromValue=" and node = '{$pglFormOutput/WaitingonEvent/@Value}'  "/>
+                  <SET Var="eventQuery" FromValue="{concat($eventQuery, $eventwhereClause4)}"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($pglFormOutput/Template/@Value) >= 1">
+                <THEN>
+                  <SET Var="eventwhereClause5" FromValue=" and wi.template like '%{$pglFormOutput/Template/@Value}%'  "/>
+                  <SET Var="eventQuery" FromValue="{concat($eventQuery, $eventwhereClause5)}"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($pglFormOutput/FROM_StartDate/@Value) >= 1">
+                <THEN>
+                  <SET Var="eventwhereClause6" FromValue=" and start_date >= to_date( '{$pglFormOutput/FROM_StartDate/@Value}','mm/dd/yyyy' )  "/>
+                  <SET Var="eventQuery" FromValue="{concat($eventQuery, $eventwhereClause6)}"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($pglFormOutput/TO_StartDate/@Value) >= 1">
+                <THEN>
+                  <SET Var="eventwhereClause7" FromValue=" and start_date &lt;= to_date( '{$pglFormOutput/TO_StartDate/@Value}','mm/dd/yyyy' )  "/>
+                  <SET Var="eventQuery" FromValue="{concat($eventQuery, $eventwhereClause7)}"/>
+                </THEN>
+              </IF_TEST>
+              <NATIVE_FUNCTION ClassName="com.teradata.xcore.bpm.BPMUtil" MethodName="executeSqlQueries" AssignToVar="WFInstList">
+                <PARAM Var="thisContext"/>
+                <PARAM Value="{$eventQuery}" Type="String"/>
+                <PARAM Value="WFInstList" Type="String"/>
+                <PARAM Value="{substringBefore($GServer/@Value, ':')}" Type="String"/>
+                <PARAM Value="{substringAfter($GServer/@Value, ':')}" Type="String"/>
+              </NATIVE_FUNCTION>
+            </THEN>
+            <ELSE>
+              <!-- Form the non event query -->
+              <SET Var="nonEventQuery" FromValue="locking row for access select wi.id, wi.wfl_desc, wi.history,  wi.wfl_svc, wi.started_by, wi.primary_doc, wi.primary_doc_id, wi.template, wi.start_date,  wan.node_name as waitingonevent, wan.node_type as status from wfl_instance wi, wfl_atv_nodes wan where wi.id=wan.instance_id "/>
+              <IF_TEST Test="strlen($pglFormOutput/InstanceId/@Value) >= 1">
+                <THEN>
+                  <SET Var="nonEventwhereClause1" FromValue=" and Id like '%{$pglFormOutput/InstanceId/@Value}%'  "/>
+                  <SET Var="nonEventQuery" FromValue="{concat($nonEventQuery, $nonEventwhereClause1)}"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($pglFormOutput/StartedBy/@Value) >= 1">
+                <THEN>
+                  <SET Var="nonEventwhereClause2" FromValue=" and started_by like '%{$pglFormOutput/StartedBy/@Value}%'  "/>
+                  <SET Var="nonEventQuery" FromValue="{concat($nonEventQuery, $nonEventwhereClause2)}"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($pglFormOutput/PrimaryDoc/@Value) >= 1">
+                <THEN>
+                  <SET Var="nonEventwhereClause3" FromValue=" and Primary_Doc = '{$pglFormOutput/PrimaryDoc/@Value}'  "/>
+                  <SET Var="nonEventQuery" FromValue="{concat($nonEventQuery, $nonEventwhereClause3)}"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($pglFormOutput/WaitingonEvent/@Value) >= 1">
+                <THEN>
+                  <SET Var="nonEventwhereClause4" FromValue=" and node_name = '{$pglFormOutput/WaitingonEvent/@Value}'  "/>
+                  <SET Var="nonEventQuery" FromValue="{concat($nonEventQuery, $nonEventwhereClause4)}"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($pglFormOutput/Template/@Value) >= 1">
+                <THEN>
+                  <SET Var="nonEventwhereClause5" FromValue=" and template like '%{$pglFormOutput/Template/@Value}%'  "/>
+                  <SET Var="nonEventQuery" FromValue="{concat($nonEventQuery, $nonEventwhereClause5)}"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($pglFormOutput/Status/@Value) >= 1">
+                <THEN>
+                  <SET Var="nonEventwhereClause6" FromValue=" and node_type = '{$pglFormOutput/Status/@Value}'  "/>
+                  <SET Var="nonEventQuery" FromValue="{concat($nonEventQuery, $nonEventwhereClause6)}"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($pglFormOutput/FROM_StartDate/@Value) >= 1">
+                <THEN>
+                  <SET Var="nonEventwhereClause7" FromValue=" and start_date >= to_date( '{$pglFormOutput/FROM_StartDate/@Value}','mm/dd/yyyy' )  "/>
+                  <SET Var="nonEventQuery" FromValue="{concat($nonEventQuery, $nonEventwhereClause7)}"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($pglFormOutput/TO_StartDate/@Value) >= 1">
+                <THEN>
+                  <SET Var="nonEventwhereClause8" FromValue=" and start_date &lt;=   to_date( '{$pglFormOutput/TO_StartDate/@Value}','mm/dd/yyyy' )  "/>
+                  <SET Var="nonEventQuery" FromValue="{concat($nonEventQuery, $nonEventwhereClause8)}"/>
+                </THEN>
+              </IF_TEST>
+              <NATIVE_FUNCTION ClassName="com.teradata.xcore.bpm.BPMUtil" MethodName="executeSqlQueries" AssignToVar="WFInstList">
+                <PARAM Var="thisContext"/>
+                <PARAM Value="{$nonEventQuery}" Type="String"/>
+                <PARAM Value="WFInstList" Type="String"/>
+                <PARAM Value="{substringBefore($GServer/@Value, ':')}" Type="String"/>
+                <PARAM Value="{substringAfter($GServer/@Value, ':')}" Type="String"/>
+              </NATIVE_FUNCTION>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='Search'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="searchCriteria">
+                <SEARCHCRITERIA>
+                  <InstanceId Value="{$pglFormOutput/InstanceId/@Value}"/>
+                  <StartedBy Value="{$pglFormOutput/StartedBy/@Value}"/>
+                  <Template Value="{$pglFormOutput/Template/@Value}"/>
+                  <FROM_StartDate Value="{$pglFormOutput/FROM_StartDate/@Value}"/>
+                  <TO_StartDate Value="{$pglFormOutput/TO_StartDate/@Value}"/>
+                  <Status Value="{$pglFormOutput/Status/@Value}"/>
+                  <WaitingonEvent Value="{$pglFormOutput/WaitingonEvent/@Value}"/>
+                  <PrimaryDoc Value="{$pglFormOutput/PrimaryDoc/@Value}"/>
+                </SEARCHCRITERIA>
+              </TO_DOCVAR>
+              <SET DocVar="GSearchCriteria" FromDocVar="searchCriteria"/>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="searchParam">
+            <SEARCH>
+              <TO_XML DocVar="WFInstList"/>
+              <TO_XML DocVar="GSearchCriteria"/>
+            </SEARCH>
+          </TO_DOCVAR>
+          <IF_TEST Test="$userAction='Kill'">
+            <THEN>
+              <FOR_EACH CurrentElement="currSelId" SelectList="$pglFormOutput/SEL_ID/@Value">
+                <FOR_EACH CurrentElement="curWFInst" SelectList="$searchParam/RESPONSE/SQL_RESULT">
+                  <SET Var="idval" FromValue="{$curWFInst/ID/@Value}"/>
+                  <SET Var="templateval" FromValue="{$curWFInst/TEMPLATE/@Value}"/>
+                  <SET Var="SvcName" FromValue="{$curWFInst/WFL_SVC/@Value}"/>
+                  <IF_TEST Test="$currSelId=$idval">
+                    <THEN>
+                      <NATIVE_FUNCTION ClassName="com.teradata.xcore.bpm.BPMUtil" MethodName="cancelWorkflows" AssignToVar="cancelResult">
+                        <PARAM Var="thisContext"/>
+                        <PARAM Value="{$SvcName}" Type="String"/>
+                        <PARAM Value="{$idval}" Type="String"/>
+                        <PARAM Value="{$templateval}" Type="String"/>
+                        <PARAM Value="{substringBefore($GServer/@Value, ':')}" Type="String"/>
+                        <PARAM Value="{substringAfter($GServer/@Value, ':')}" Type="String"/>
+                      </NATIVE_FUNCTION>
+                    </THEN>
+                  </IF_TEST>
+                </FOR_EACH>
+              </FOR_EACH>
+              <!-- search logic again -->
+              <IF_TEST Test="$pglFormOutput/Status/@Value = 'Event'">
+                <THEN>
+                  <!-- Form the event query -->
+                  <SET Var="eventQuery" FromValue="locking row for access select wi.id, wi.wfl_desc, wi.history,  wi.started_by, wi.wfl_svc, wi.primary_doc, wi.primary_doc_id, wi.template, wi.start_date,  wae.node as waitingonevent, 'Event' as status, wae.evt_desc, wae.event_svc from wfl_instance wi, wfl_atv_events wae where wi.id=wae.instance_id "/>
+                  <IF_TEST Test="strlen($pglFormOutput/InstanceId/@Value) >= 1">
+                    <THEN>
+                      <SET Var="eventwhereClause1" FromValue=" and Id like '%{$pglFormOutput/InstanceId/@Value}%'  "/>
+                      <SET Var="eventQuery" FromValue="{concat($eventQuery, $eventwhereClause1)}"/>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="strlen($pglFormOutput/StartedBy/@Value) >= 1">
+                    <THEN>
+                      <SET Var="eventwhereClause2" FromValue=" and started_by like '%{$pglFormOutput/StartedBy/@Value}%'  "/>
+                      <SET Var="eventQuery" FromValue="{concat($eventQuery, $eventwhereClause2)}"/>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="strlen($pglFormOutput/PrimaryDoc/@Value) >= 1">
+                    <THEN>
+                      <SET Var="eventwhereClause3" FromValue=" and Primary_Doc = '{$pglFormOutput/PrimaryDoc/@Value}'  "/>
+                      <SET Var="eventQuery" FromValue="{concat($eventQuery, $eventwhereClause3)}"/>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="strlen($pglFormOutput/WaitingonEvent/@Value) >= 1">
+                    <THEN>
+                      <SET Var="eventwhereClause4" FromValue=" and node = '{$pglFormOutput/WaitingonEvent/@Value}'  "/>
+                      <SET Var="eventQuery" FromValue="{concat($eventQuery, $eventwhereClause4)}"/>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="strlen($pglFormOutput/Template/@Value) >= 1">
+                    <THEN>
+                      <SET Var="eventwhereClause5" FromValue=" and wi.template like '%{$pglFormOutput/Template/@Value}%'  "/>
+                      <SET Var="eventQuery" FromValue="{concat($eventQuery, $eventwhereClause5)}"/>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="strlen($pglFormOutput/FROM_StartDate/@Value) >= 1">
+                    <THEN>
+                      <SET Var="eventwhereClause6" FromValue=" and start_date >= to_date( '{$pglFormOutput/FROM_StartDate/@Value}','mm/dd/yyyy' )  "/>
+                      <SET Var="eventQuery" FromValue="{concat($eventQuery, $eventwhereClause6)}"/>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="strlen($pglFormOutput/TO_StartDate/@Value) >= 1">
+                    <THEN>
+                      <SET Var="eventwhereClause7" FromValue=" and start_date &lt;= to_date( '{$pglFormOutput/TO_StartDate/@Value}','mm/dd/yyyy' )  "/>
+                      <SET Var="eventQuery" FromValue="{concat($eventQuery, $eventwhereClause7)}"/>
+                    </THEN>
+                  </IF_TEST>
+                  <NATIVE_FUNCTION ClassName="com.teradata.xcore.bpm.BPMUtil" MethodName="executeSqlQueries" AssignToVar="WFInstList">
+                    <PARAM Var="thisContext"/>
+                    <PARAM Value="{$eventQuery}" Type="String"/>
+                    <PARAM Value="WFInstList" Type="String"/>
+                    <PARAM Value="{substringBefore($GServer/@Value, ':')}" Type="String"/>
+                    <PARAM Value="{substringAfter($GServer/@Value, ':')}" Type="String"/>
+                  </NATIVE_FUNCTION>
+                </THEN>
+                <ELSE>
+                  <!-- Form the non event query -->
+                  <SET Var="nonEventQuery" FromValue="locking row for access select wi.id, wi.wfl_desc, wi.history,  wi.wfl_svc, wi.started_by, wi.primary_doc, wi.primary_doc_id, wi.template, wi.start_date, wan.node_name as waitingonevent, wan.node_type as status from wfl_instance wi, wfl_atv_nodes wan where wi.id=wan.instance_id "/>
+                  <IF_TEST Test="strlen($pglFormOutput/InstanceId/@Value) >= 1">
+                    <THEN>
+                      <SET Var="nonEventwhereClause1" FromValue=" and Id like '%{$pglFormOutput/InstanceId/@Value}%'  "/>
+                      <SET Var="nonEventQuery" FromValue="{concat($nonEventQuery, $nonEventwhereClause1)}"/>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="strlen($pglFormOutput/StartedBy/@Value) >= 1">
+                    <THEN>
+                      <SET Var="nonEventwhereClause2" FromValue=" and started_by like '%{$pglFormOutput/StartedBy/@Value}%'  "/>
+                      <SET Var="nonEventQuery" FromValue="{concat($nonEventQuery, $nonEventwhereClause2)}"/>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="strlen($pglFormOutput/PrimaryDoc/@Value) >= 1">
+                    <THEN>
+                      <SET Var="nonEventwhereClause3" FromValue=" and Primary_Doc = '{$pglFormOutput/PrimaryDoc/@Value}'  "/>
+                      <SET Var="nonEventQuery" FromValue="{concat($nonEventQuery, $nonEventwhereClause3)}"/>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="strlen($pglFormOutput/WaitingonEvent/@Value) >= 1">
+                    <THEN>
+                      <SET Var="nonEventwhereClause4" FromValue=" and node_name = '{$pglFormOutput/WaitingonEvent/@Value}'  "/>
+                      <SET Var="nonEventQuery" FromValue="{concat($nonEventQuery, $nonEventwhereClause4)}"/>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="strlen($pglFormOutput/Template/@Value) >= 1">
+                    <THEN>
+                      <SET Var="nonEventwhereClause5" FromValue=" and template like '%{$pglFormOutput/Template/@Value}%'  "/>
+                      <SET Var="nonEventQuery" FromValue="{concat($nonEventQuery, $nonEventwhereClause5)}"/>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="strlen($pglFormOutput/Status/@Value) >= 1">
+                    <THEN>
+                      <SET Var="nonEventwhereClause6" FromValue=" and node_type = '{$pglFormOutput/Status/@Value}'  "/>
+                      <SET Var="nonEventQuery" FromValue="{concat($nonEventQuery, $nonEventwhereClause6)}"/>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="strlen($pglFormOutput/FROM_StartDate/@Value) >= 1">
+                    <THEN>
+                      <SET Var="nonEventwhereClause7" FromValue=" and start_date >= to_date( '{$pglFormOutput/FROM_StartDate/@Value}','mm/dd/yyyy' )  "/>
+                      <SET Var="nonEventQuery" FromValue="{concat($nonEventQuery, $nonEventwhereClause7)}"/>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="strlen($pglFormOutput/TO_StartDate/@Value) >= 1">
+                    <THEN>
+                      <SET Var="nonEventwhereClause8" FromValue=" and start_date &lt;=   to_date( '{$pglFormOutput/TO_StartDate/@Value}','mm/dd/yyyy' )  "/>
+                      <SET Var="nonEventQuery" FromValue="{concat($nonEventQuery, $nonEventwhereClause8)}"/>
+                    </THEN>
+                  </IF_TEST>
+                  <NATIVE_FUNCTION ClassName="com.teradata.xcore.bpm.BPMUtil" MethodName="executeSqlQueries" AssignToVar="WFInstList">
+                    <PARAM Var="thisContext"/>
+                    <PARAM Value="{$nonEventQuery}" Type="String"/>
+                    <PARAM Value="WFInstList" Type="String"/>
+                    <PARAM Value="{substringBefore($GServer/@Value, ':')}" Type="String"/>
+                    <PARAM Value="{substringAfter($GServer/@Value, ':')}" Type="String"/>
+                  </NATIVE_FUNCTION>
+                </ELSE>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="searchCriteria">
+                <SEARCHCRITERIA>
+                  <InstanceId Value="{$pglFormOutput/InstanceId/@Value}"/>
+                  <StartedBy Value="{$pglFormOutput/StartedBy/@Value}"/>
+                  <Template Value="{$pglFormOutput/Template/@Value}"/>
+                  <FROM_StartDate Value="{$pglFormOutput/FROM_StartDate/@Value}"/>
+                  <TO_StartDate Value="{$pglFormOutput/TO_StartDate/@Value}"/>
+                  <Status Value="{$pglFormOutput/Status/@Value}"/>
+                  <WaitingonEvent Value="{$pglFormOutput/WaitingonEvent/@Value}"/>
+                  <PrimaryDoc Value="{$pglFormOutput/PrimaryDoc/@Value}"/>
+                </SEARCHCRITERIA>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="CancelWFStatusDoc">
+                <KILLRESULT Value="{$cancelResult/@Status}"/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="searchParam">
+                <SEARCH>
+                  <TO_XML DocVar="WFInstList"/>
+                  <TO_XML DocVar="GSearchCriteria"/>
+                  <TO_XML DocVar="CancelWFStatusDoc"/>
+                </SEARCH>
+              </TO_DOCVAR>
+              <!-- end of search logic -->
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction = 'link'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="BranchToTimerOrEventSubWF" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction = 'Search'">
+        <next_nodes OutputVar="{searchParam,xml}">
+          <next_node Name="Manage Workflows" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction='Kill'">
+        <next_nodes OutputVar="{searchParam,xml}">
+          <next_node Name="Manage Workflows" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction='History'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="History" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='null'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <sub_workflow Name="Trigger Timer WF" Workflow="TriggerTimerWF" InputVar="{nodeInputXml,xml}">
+      <pre_actions>
+      </pre_actions>
+      <post_actions>
+      </post_actions>
+      <next_nodes OutputVar="{nodeOutXml,xml}">
+        <next_node Name="Close And Refresh" Description=""/>
+      </next_nodes>
+      <input>
+        <TO_XML SelectList="$nodeInputXml/*"/>
+      </input>
+      <output AssignToVar="Wfresponse"/>
+    </sub_workflow>
+    <branch Name="BranchToTimerOrEventSubWF" InputVar="{outXml,xml}">
+      <actions>
+        <action>
+          <SET Var="NodeType" FromValue="Timer"/>
+          <IF_TEST Test="strlen($outXml/EVT_DESC/@Value) >= 1">
+            <THEN>
+              <SET Var="NodeType" FromValue="Event"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </actions>
+      <if_cond Value="$NodeType='Event'">
+        <next_nodes OutputVar="{outXml,xml}">
+          <next_node Name="Trigger Event WF" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$NodeType='Timer'">
+        <next_nodes OutputVar="{outXml,xml}">
+          <next_node Name="Trigger Timer WF" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </branch>
+    <ui_form2 Name="Close And Refresh" Description="Close And Refresh" OutputFormVar="pglFormOutput" InputFormVar="pglFormInput" ShowInBreadCrumbs="SHOW" Template="CloseAndRefresh.pgl" InputVar="{nodeInputXml,xml}">
+      <post_actions>
+        <action>
+        </action>
+      </post_actions>
+      <if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+    </ui_form2>
+    <ui_form2 Name="History" OutputFormVar="pglFormOutput" InputFormVar="pglFormInput" ShowInBreadCrumbs="HIDE" Template="History.pgl" InputVar="{nodeInputXml,xml}">
+      <pre_actions>
+        <action>
+          <GET_SESSION Var="GServerName" AssignToVar="GServer"/>
+          <NATIVE_FUNCTION ClassName="com.teradata.xcore.bpm.BPMUtil" MethodName="fetchWorkflowHistory" AssignToVar="HistoryDoc">
+            <PARAM Var="thisContext"/>
+            <PARAM Value="{$nodeInputXml/WFL_SVC/@Value}" Type="String"/>
+            <PARAM Value="{$nodeInputXml/INSTANCE_ID/@Value}" Type="String"/>
+            <PARAM Value="{$nodeInputXml/TEMPLATE/@Value}" Type="String"/>
+            <PARAM Value="{$nodeInputXml/HISTORY/@Value}" Type="String"/>
+            <PARAM Value="{substringBefore($GServer/@Value, ':')}" Type="String"/>
+            <PARAM Value="{substringAfter($GServer/@Value, ':')}" Type="String"/>
+          </NATIVE_FUNCTION>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <root>
+              <FOR_EACH CurrentElement="currElem" SelectList="$HistoryDoc/HISTORY/NODE">
+                <TO_DOCVAR AssignToVar="tempHistXml">
+                  <LINE>
+                    <NodeName Value="{$currElem/@Name}"/>
+                    <Status Value="{$currElem/@Status}"/>
+                  </LINE>
+                </TO_DOCVAR>
+                <TO_XML DocVar="tempHistXml"/>
+              </FOR_EACH>
+            </root>
+          </TO_DOCVAR>
+          <ADD_CHILDREN FromValue="{$nodeInputXml/NODE}" DocVar="pglFormInput"/>
+          <ADD_CHILDREN FromValue="{$nodeInputXml/INSTANCE_ID}" DocVar="pglFormInput"/>
+          <ADD_CHILDREN FromValue="{$nodeInputXml/WFL_SVC}" DocVar="pglFormInput"/>
+          <ADD_CHILDREN FromValue="{$nodeInputXml/TEMPLATE}" DocVar="pglFormInput"/>
+          <ADD_CHILDREN FromValue="{$nodeInputXml/HISTORY}" DocVar="pglFormInput"/>
+        </action>
+      </pre_actions>
+      <if_cond Value="$userAction ='DONE'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Close And Refresh" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Close And Refresh" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start location="22,123" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start" font="Times New Roman,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start>
+      <done location="416,108" font="Times New Roman,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done" font="Times New Roman,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done>
+      <mgcnode Name="Trigger Event WF" location="460,135" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Trigger Event WF" font="Times New Roman,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1sub_workflow.gif" location="0,0"/>
+      </mgcnode>
+      <mgcnode Name="Is Server Set" location="141,211" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Is Server Set" font="Times New Roman,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1decision.gif" location="0,0"/>
+      </mgcnode>
+      <Set_Server location="139,21" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Set_Server" font="Times New Roman,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1sub_workflow.gif" location="0,0"/>
+      </Set_Server>
+      <mgcnode Name="Manage Workflows" location="297,107" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Manage Workflows" font="Times New Roman,0,9" textColor="186,12,12"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <mgcnode Name="Trigger Timer WF" location="647,137" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Trigger Timer WF" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1sub_workflow.gif" location="0,0"/>
+      </mgcnode>
+      <BranchToTimerOrEventSubWF location="562,405" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="BranchToTimerOrEventSubWF" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1branch.gif" location="0,0"/>
+      </BranchToTimerOrEventSubWF>
+      <mgcnode Name="Close And Refresh" location="554,55" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Close And Refresh" font="Times New Roman,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <History location="295,0" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="History" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </History>
+    </mgcnodes>
+    <mgcconnectors>
+      <start>
+        <nextNodeView font="Times New Roman,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="54,145" endpoint="157,211" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="128,143,4,4" ctrlRect2="155,159,4,4"/>
+      </start>
+      <mgcnode Name="Trigger Event WF">
+        <nextNodeView font="Times New Roman,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="484,135" endpoint="554,77" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="482,90,4,4" ctrlRect2="499,75,4,4"/>
+      </mgcnode>
+      <mgcnode Name="Is Server Set">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,0" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="173,233" endpoint="297,130" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="264,231,4,4" ctrlRect2="202,128,4,4" textRect="226,177,18,8">
+          <textProps text="Yes" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Times New Roman,0,9" connectorColor="178,0,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="157,211" endpoint="155,67" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="155,101,4,4" ctrlRect2="153,173,4,4" textRect="150,136,13,7">
+          <textProps text="No" font="Times New Roman,0,9"/>
+        </nextNodeView>
+      </mgcnode>
+      <Set_Server>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="171,44" endpoint="297,130" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="263,42,4,4" ctrlRect2="200,128,4,4"/>
+      </Set_Server>
+      <mgcnode Name="Manage Workflows">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="313,153" endpoint="578,405" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="311,340,4,4" ctrlRect2="576,214,4,4" textRect="392,275,106,9">
+          <textProps text="[$userAction = 'link']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Times New Roman,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="313,153" endpoint="313,153" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="311,226,4,4" ctrlRect2="311,226,4,4" textRect="267,224,92,9">
+          <textProps text="[$userAction = 'Search']" font="Times New Roman,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Times New Roman,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="313,153" endpoint="313,153" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="311,226,4,4" ctrlRect2="311,226,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="313,107" endpoint="311,46" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="311,60,4,4" ctrlRect2="309,90,4,4" textRect="253,73,119,9">
+          <textProps text="[$userAction='History']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Times New Roman,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="329,130" endpoint="416,130" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="391,128,4,4" ctrlRect2="348,128,4,4"/>
+      </mgcnode>
+      <mgcnode Name="Trigger Timer WF">
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="663,137" endpoint="586,77" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="661,90,4,4" ctrlRect2="642,75,4,4"/>
+      </mgcnode>
+      <BranchToTimerOrEventSubWF>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="578,405" endpoint="476,181" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="576,235,4,4" ctrlRect2="474,347,4,4" textRect="474,289,107,9">
+          <textProps text="[$NodeType='Event']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="578,405" endpoint="663,183" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="576,237,4,4" ctrlRect2="661,348,4,4" textRect="567,290,107,9">
+          <textProps text="[$NodeType='Timer']" font="Verdana,0,9"/>
+        </nextNodeView>
+      </BranchToTimerOrEventSubWF>
+      <History>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="327,23" endpoint="554,77" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="494,21,4,4" ctrlRect2="381,75,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="327,23" endpoint="554,77" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="494,21,4,4" ctrlRect2="381,75,4,4"/>
+      </History>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="10,10" font="Times New Roman,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="1" textAttrsKey0="GSearchCriteria : xml">
+      <textProps text="Pipeline" font="Times New Roman,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="GSearchCriteria" Type="xml" Comment=""/>
+      </variables>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

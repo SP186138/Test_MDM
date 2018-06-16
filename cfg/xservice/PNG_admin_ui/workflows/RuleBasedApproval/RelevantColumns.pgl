@@ -1,0 +1,193 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" Id="RelevantColumns.pgl" version="3">
+  <ui:container id="relevantCols">
+    <ui:step id="relevantColStep" displayText="Column level approval">
+<ui:help displayPage="../../bcm/help/Column_Level_Approval_help.htm"/>
+      <ui:field-group>
+        <ui:hidden-field id="ApprovalId" name="ApprovalId" value="{$root/APPROVALS/ApprovalGroupId/@Value}"></ui:hidden-field>
+        <ui:display-field id="ApprovalTable" name="ApprovalTable" displayText="Approval Table" value="{$root/APPROVALS/ApprovalEventName/@Value}" style="font-weight:bold" />
+        <!--ui:dropdown id="ApprovalTable" name="ApprovalTable" displayText="Approval Table" optionSrc="$root/TABLES/LogicalTableName" value="{$root/APPROVALS/ApprovalEventName/@Value}" disabled="true" /-->
+      </ui:field-group>
+<ui:grid id="columnGrid">
+<ui:row>
+<ui:cell height="100%" valign="top" width="100%" scrollable="true">
+<ui:container id="columnContainer" height="100%" scrollable="true">
+<ui:step id="columnStep" displayText="Column Selection">
+<ui:grid cellSpacing="8">
+<ui:row>
+<ui:cell valign="left">
+<ui:field-group>
+<ui:display-field name="Available_Columns" id="Available_Columns" displayText="Available Columns " />
+</ui:field-group>
+</ui:cell>
+<ui:cell valign="middle" />
+<ui:cell>
+<ui:field-group>
+<ui:display-field name="Selected_Columns" id="Selected_Columns" displayText="Selected Columns " />
+</ui:field-group>
+</ui:cell>
+</ui:row>
+<!-- </ui:grid>
+<ui:grid>-->
+<ui:row>
+<ui:cell valign="left">
+<ui:field-group>
+<!--<ui:dropdown id="AVAILABLE_ROLES" size="6" style="font:12px;width:125px" optionSrc="$root/AVAILABLE_ROLES/OPTION"/>-->
+<ui:dropdown id="AvailableColumns" name="AvailableColumns" size="10" preferredWidth="20" optionSrc="$root/AVAILABLE_COLUMNS/LOG_NAME" unFormat="true" />
+</ui:field-group>
+</ui:cell>
+<ui:cell>
+<ui:field-group>
+<ui:button id="DoubleLeft" name="DoubleLeft " displayText="&gt;&gt;" onClick="javascript:addAll();" />
+<ui:button id="Left" name="Left " displayText="&gt;" onClick="javascript:addSelected();" />
+<ui:button id="Right" name="Right " displayText="&lt;" onClick="javascript:removeSelected();" />
+<ui:button id="DoubleRight" name="DoubleRight " displayText="&lt;&lt;" onClick="javascript:removeAll();" />
+</ui:field-group>
+</ui:cell>
+<ui:cell>
+<!--<ui:container inner="true">
+<ui:step id="InnerStep2">-->
+<ui:field-group>
+<!--<ui:dropdown id="ASSIGNED_ROLES" size="6" align="center" style="font:12px;width:125px" headerClass="color:yellow" optionSrc="$root/ASSIGNED_ROLE_TEMPLATES/ROLE_TEMPLATES"/>-->
+<ui:hidden-field id="selColumns" name="selColumns" />
+<ui:dropdown id="SelectedColumns" name="SelectedColumns" size="10" align="center" preferredWidth="20" headerClass="color:yellow" optionSrc="$root/SELECTED_COLUMNS/LOG_NAME" title="Selected Tables/Views" unFormat="true" />
+</ui:field-group>
+<!--</ui:step>
+</ui:container>-->
+</ui:cell>
+</ui:row>
+</ui:grid>
+<ui:buttons>
+<ui:button id="Cancel" name="Cancel" displayText="Cancel" />
+<ui:button id="Save_Return" name="Save_Return" displayText="Save and Return" onClick="javascript:onSave('Save_Return');" emphasized="true"/>
+<ui:button id="Save" name="Save" displayText="Next" onClick="javascript:onSave('Save');" />
+</ui:buttons>
+</ui:step>
+</ui:container>
+</ui:cell>
+</ui:row>
+</ui:grid>
+    </ui:step>
+  </ui:container>
+<ui:script>
+  
+  function selectAll(visible)
+{
+for (var i=(visible.options.length-1); i&gt;=0; i--)
+{
+var o =visible.options[i];
+o.selected=true;
+}
+}
+   
+function addAll()
+{
+var active;
+var visible;
+active=document.getElementById("AvailableColumns");
+visible=document.getElementById("SelectedColumns");
+clearAll( active );
+clearAll( visible );
+copyAll( active.options, visible.options );
+}
+function addSelected()
+{
+var active;
+var visible;
+active=document.getElementById("AvailableColumns");
+visible=document.getElementById("SelectedColumns");
+copySelected( active.options, visible.options );
+for (var i=(visible.options.length-1); i&gt;=0; i--)
+{
+var o =visible.options[i];
+if (!o.selected)
+{
+o.selected=true;
+}
+}
+    
+}
+function removeAll( )
+{
+var active;
+var visible;
+active=document.getElementById("AvailableColumns");
+visible=document.getElementById("SelectedColumns");
+clearAll( active );
+clearAll( visible );
+copyAll( visible.options, active.options );
+}
+
+function removeSelected()
+{
+var active;
+var visible;
+active=document.getElementById("AvailableColumns");
+visible=document.getElementById("SelectedColumns");
+copySelected( visible.options, active.options );
+}
+
+function copySelected( from, to )
+{
+var fl = from.length;
+var tl = to.length;
+for( var i = 0; i &lt; fl; ++i ){
+var f = from[ i ];
+if( f.selected ){
+to[ tl ] = new Option( f.text, f.value );
+to[ tl++ ].selected = true;
+}
+}
+deleteSelected( from );
+}
+
+function deleteSelected( x )
+{
+var l = x.length;
+while( --l &gt;= 0 )
+if( x[ l ].selected )
+x[ l ] = null;
+}
+ 
+
+function copyAll( from, to )
+{
+var fl = from.length;
+var tl = to.length;
+for( var i = 0; i &lt; fl; ++i ){
+var f = from[ i ];
+to[ tl ] = new Option( f.text, f.value );
+to[ tl++ ].selected = true;
+}
+from.length = 0;
+}
+
+function clearAll( x )
+{
+x = x.options;
+var l = x.length;
+while( --l &gt;= 0 )
+x[ l ].selected = false;
+}
+  
+  function onSave(value){
+var visible=document.getElementById(&quot;SelectedColumns&quot;);
+for (var i=(visible.options.length-1); i>=0; i--)
+{
+var o =visible.options[i];
+if (!o.selected)
+{
+o.selected=true;
+}
+}
+var selectedCols = document.getElementById('SelectedColumns').options;
+for(i=0;i &lt; selectedCols.length;i++)
+	if(document.getElementById('selColumns').value == '')
+		document.getElementById('selColumns').value =  selectedCols[i].text;
+	else	
+		document.getElementById('selColumns').value = document.getElementById('selColumns').value + ',' + selectedCols[i].text;
+ document.form.BUTTON_ID.value = value;
+  document.form.submit();  
+  }
+</ui:script>
+</ui:page-group>
+

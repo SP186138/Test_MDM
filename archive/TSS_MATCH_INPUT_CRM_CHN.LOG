@@ -1,0 +1,261 @@
+Microsoft (R) Windows Script Host Version 5.7
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+**** 14:28:15 UTY2407 Run time parameters in effect are: UTF-8.
+     ========================================================================
+     =                                                                      =
+     =          FastExport Utility    Release FEXP.13.10.00.007             =
+     =          Platform WIN32                                              =
+     =                                                                      =
+     ========================================================================
+     =                                                                      =
+     =     Copyright 1990-2010 Teradata Corporation. ALL RIGHTS RESERVED.   =
+     =                                                                      =
+     ========================================================================
+**** 14:28:15 UTY2411 Processing start date: TUE FEB 21, 2012
+     ========================================================================
+     =                                                                      =
+     =          Logon/Connection                                            =
+     =                                                                      =
+     ========================================================================
+0001 .run file \\10.36.32.4\Teradata\MDM\3.04.01.00\custom\pngrelease3\logon\LOGON.txt;
+0002 .LOGON 10.36.32.14/mdm,;
+**** 14:28:15 UTY6214 Reminder: A .Logtable statement must be entered for a
+     successful logon.
+     ========================================================================
+     =                                                                      =
+     =          Processing Control Statements                               =
+     =                                                                      =
+     ========================================================================
+
+0003 /*******************************************************************************
+     ****************************
+     SCRIPT:               TSS_MATCH_INPUT_CRM.FEXP
+     DESCRIPTION:          This script generates the reference file for use by
+     Trillium
+     DEPENDENCY:           MST WINKEY TRIGGER load
+     INPUT:                GOLDEN TABLES & MST WINKEY TRIGGER
+     OUTPUT:               TSS_MATCH_INPUT_CRM.DAT
+     ERRORS:
+     SPECIAL INSTRUCTIONS: In case of failure, log table to be dropped and
+     script to restart from top.
+     CHANGE LOG:
+     VERSION              DATE                 AUTHOR                         
+     CHANGES
+     1.00                 01/21/2011           TERADATA                       
+     INITIAL VERSION
+     2.00                 10/31/2011           TERADATA                       
+     CHANGES FOR ||ELISM
+     ***************************************************************************
+     ********************************/
+     .LOGTABLE TSS_MATCH_INPUT_LOG_CHN;
+**** 14:28:15 UTY8400 Teradata Database Release: 13.10.01.01
+**** 14:28:15 UTY8400 Teradata Database Version: 13.10.01.01
+**** 14:28:15 UTY8601 Character set specified: UTF8                          
+**** 14:28:15 UTY8400 Current RDBMS has UDT support
+**** 14:28:15 UTY8400 Current RDBMS has Large Decimal support
+**** 14:28:15 UTY8400 Current RDBMS has FEXP w/o Spooling support
+**** 14:28:15 UTY8400 Current RDBMS has TASM support
+**** 14:28:15 UTY8400 Maximum supported buffer size: 1M
+**** 14:28:15 UTY8400 Data Encryption supported by RDBMS server
+**** 14:28:15 UTY6211 A successful connect was made to the RDBMS.
+**** 14:28:15 UTY6217 Logtable 'MDM.TSS_MATCH_INPUT_LOG_CHN' has been created.
+
+0004 .BEGIN EXPORT;
+
+0005 .EXPORT OUTFILE
+     \\10.36.32.4\Teradata\MDM\3.04.01.00\custom\pngrelease3\data\TSS_MATCH_INPUT_C
+     RM_CHN.DAT FORMAT TEXT MODE RECORD;
+
+0006 SELECT 
+     CAST(
+     	 COALESCE(TRIM(MKTNG_PGM_NBR          ),'')
+     	 ||'|'||COALESCE(TRIM(REGIS_CNSMR_ID_VAL     ),'')
+     	 ||'|'||COALESCE(TRIM(NAME_PREFX_TXT         ),'')
+     	 ||'|'||COALESCE(TRIM(GVN_NAME               ),'')
+     	 ||'|'||COALESCE(TRIM(MID_NAME               ),'')
+     	 ||'|'||COALESCE(TRIM(FAMLY_NAME             ),'')
+     	 ||'|'||COALESCE(TRIM(NAME_SUFFX_TXT         ),'')
+     	 ||'|'||COALESCE(TRIM(FULL_NAME              ),'')
+     	 ||'|'||COALESCE(TRIM(GENDR_IND              ),'')
+     	 ||'|'||COALESCE(TRIM(CAST(CAST(BRTH_DATE AS DATE FORMAT 'YYYY-MM-DD') AS
+     VARCHAR(10))),'')
+     	 ||'|'||COALESCE(TRIM(ADDR_LINE_1_TXT        ),'')
+     	 ||'|'||COALESCE(TRIM(ADDR_LINE_2_TXT        ),'')
+     	 ||'|'||COALESCE(TRIM(ADDR_LINE_3_TXT        ),'')
+     	 ||'|'||COALESCE(TRIM(STRET_NUM              ),'')
+     	 ||'|'||COALESCE(TRIM(STRET_NAME             ),'')
+     	 ||'|'||COALESCE(TRIM(APT_NUM                ),'')
+     	 ||'|'||COALESCE(TRIM(PO_BOX_NUM             ),'')
+     	 ||'|'||COALESCE(TRIM(CITY_NAME              ),'')
+     	 ||'|'||COALESCE(TRIM(POSTL_AREA_CODE        ),'')
+     	 ||'|'||COALESCE(TRIM(TERR_CODE              ),'')
+     	 ||'|'||COALESCE(TRIM(CNTRY_CODE             ),'')
+     	 ||'|'||COALESCE(TRIM(EMAIL_ADDR_TXT      ),'')
+     	 ||'|'||COALESCE(TRIM(PHONE_EXTSN_NUM     ),'')
+     	 ||'|'||COALESCE(TRIM(FULL_PHONE_NUM      ),'')
+     	 ||'|'||COALESCE(TRIM(PHONE_LINE_NBR      ),'')
+     	 ||'|'||COALESCE(TRIM(PHONE_AREA_NBR      ),'')
+     	 ||'|'||COALESCE(TRIM(PHONE_EXCHG_NBR     ),'')
+     	 ||'|'||COALESCE(TRIM(PHONE_CNTRY_NBR     ),'')
+     	 ||'|'||COALESCE(TRIM(WIN_KEY      ),'')
+     	 ||'|'||COALESCE(TRIM(DPEND_NAME      ),'')
+     	 ||'|'||COALESCE(TRIM(PET_NAME      ),'')
+     	 ||'|'||COALESCE(TRIM(REGIS_PRSNA_ID    ),'')
+     	 ||'|'||COALESCE(TRIM(LEGAL_ENT_PRSNA_ID        ),'')
+              ||'|'||COALESCE(TRIM(HSHLD_PRSNA_ID            ),'')
+     	 ||'|'||COALESCE(TRIM(LEGAL_ENT_NBR),'')
+         AS CHAR(2000))
+       FROM TSS_MATCH_INPUT_CHN
+     ;
+
+0007 .END EXPORT;
+     ========================================================================
+     =                                                                      =
+     =          FastExport Initial Phase                                    =
+     =                                                                      =
+     ========================================================================
+**** 14:28:15 UTY8700 Options in effect for this FastExport task:
+     .       Sessions:    4 session(s).
+     .       Mode:        RECORD
+     .       Blocksize:   64330 bytes.
+     .       Outlimit:    No limit in effect.
+**** 14:28:15 UTY8715 FastExport is submitting the following request:
+     Select NULL from MDM.TSS_MATCH_INPUT_LOG_CHN where (LogType = 220) and (Seq
+     = 1) and (FExptSeq = 0);
+**** 14:28:15 UTY8715 FastExport is submitting the following request:
+     SET QUERY_BAND='UTILITYNAME=FASTEXP;' UPDATE FOR SESSION;
+**** 14:28:15 UTY8715 FastExport is submitting the following request:
+     CHECK WORKLOAD FOR BT;BEGIN FASTEXPORT;
+**** 14:28:15 UTY8715 FastExport is submitting the following request:
+     CHECK WORKLOAD FOR SELECT CAST(	 COALESCE(TRIM(MKTNG_PGM_NBR         
+     ),'')	 ||'|'||COALESCE(TRIM(REGIS_CNSMR_ID_VAL     ),'')	
+     ||'|'||COALESCE(TRIM(NAME_PREFX_TXT         ),'')	
+     ||'|'||COALESCE(TRIM(GVN_NAME               ),'')	
+     ||'|'||COALESCE(TRIM(MID_NAME               ),'')	
+     ||'|'||COALESCE(TRIM(FAMLY_NAME             ),'')	
+     ||'|'||COALESCE(TRIM(NAME_SUFFX_TXT         ),'')	
+     ||'|'||COALESCE(TRIM(FULL_NAME              ),'')	
+     ||'|'||COALESCE(TRIM(GENDR_IND              ),'')	
+     ||'|'||COALESCE(TRIM(CAST(CAST(BRTH_DATE AS DATE FORMAT 'YYYY-MM-DD') AS
+     VARCHAR(10))),'')	 ||'|'||COALESCE(TRIM(ADDR_LINE_1_TXT        ),'')	
+     ||'|'||COALESCE(TRIM(ADDR_LINE_2_TXT        ),'')	
+     ||'|'||COALESCE(TRIM(ADDR_LINE_3_TXT        ),'')	
+     ||'|'||COALESCE(TRIM(STRET_NUM              ),'')	
+     ||'|'||COALESCE(TRIM(STRET_NAME             ),'')	
+     ||'|'||COALESCE(TRIM(APT_NUM                ),'')	
+     ||'|'||COALESCE(TRIM(PO_BOX_NUM             ),'')	
+     ||'|'||COALESCE(TRIM(CITY_NAME              ),'')	
+     ||'|'||COALESCE(TRIM(POSTL_AREA_CODE        ),'')	
+     ||'|'||COALESCE(TRIM(TERR_CODE              ),'')	
+     ||'|'||COALESCE(TRIM(CNTRY_CODE             ),'')	
+     ||'|'||COALESCE(TRIM(EMAIL_ADDR_TXT      ),'')	
+     ||'|'||COALESCE(TRIM(PHONE_EXTSN_NUM     ),'')	
+     ||'|'||COALESCE(TRIM(FULL_PHONE_NUM      ),'')	
+     ||'|'||COALESCE(TRIM(PHONE_LINE_NBR      ),'')	
+     ||'|'||COALESCE(TRIM(PHONE_AREA_NBR      ),'')	
+     ||'|'||COALESCE(TRIM(PHONE_EXCHG_NBR     ),'')	
+     ||'|'||COALESCE(TRIM(PHONE_CNTRY_NBR     ),'')	
+     ||'|'||COALESCE(TRIM(WIN_KEY      ),'')	 ||'|'||COALESCE(TRIM(DPEND_NAME  
+        ),'')	 ||'|'||COALESCE(TRIM(PET_NAME      ),'')	
+     ||'|'||COALESCE(TRIM(REGIS_PRSNA_ID    ),'')	
+     ||'|'||COALESCE(TRIM(LEGAL_ENT_PRSNA_ID        ),'')        
+     ||'|'||COALESCE(TRIM(HSHLD_PRSNA_ID            ),'')	
+     ||'|'||COALESCE(TRIM(LEGAL_ENT_NBR),'')    AS CHAR(2000))  FROM
+     TSS_MATCH_INPUT_CHN; 
+**** 14:28:15 UTY8715 FastExport is submitting the following request:
+     CHECK WORKLOAD END;
+**** 14:28:15 UTY8705 EXPORT session(s) requested: 4.
+**** 14:28:15 UTY8706 EXPORT session(s) connected: 4.
+**** 14:28:15 UTY8715 FastExport is submitting the following request:
+     BT;BEGIN FASTEXPORT;
+**** 14:28:15 UTY8715 FastExport is submitting the following request:
+     SELECT MiscInt1 (INTEGER), MiscInt2 (INTEGER), MiscInt3 (INTEGER),FExptSeq
+     (INTEGER), FExptCkpt (VARBYTE(1024)) from MDM.TSS_MATCH_INPUT_LOG_CHN WHERE
+     (LogType = 210) and (Seq = 1) and (FExptSeq IN (SELECT MAX(FExptSeq) from
+     MDM.TSS_MATCH_INPUT_LOG_CHN where (LogType = 210) and (Seq = 1)));
+**** 14:28:15 UTY8715 FastExport is submitting the following request:
+     SELECT MiscInt1 (INTEGER), MiscInt2 (INTEGER),  MiscInt3 (INTEGER),FExptSeq
+     (INTEGER), FExptCkpt (VARBYTE(1024)) from MDM.TSS_MATCH_INPUT_LOG_CHN WHERE
+     (LogType = 212) and (Seq = 1) and (FExptSeq IN (SELECT MAX(FExptSeq) from
+     MDM.TSS_MATCH_INPUT_LOG_CHN where (LogType = 212) and (Seq = 1)));
+**** 14:28:16 UTY8715 FastExport is submitting the following request:
+     SELECT CAST(	 COALESCE(TRIM(MKTNG_PGM_NBR          ),'')	
+     ||'|'||COALESCE(TRIM(REGIS_CNSMR_ID_VAL     ),'')	
+     ||'|'||COALESCE(TRIM(NAME_PREFX_TXT         ),'')	
+     ||'|'||COALESCE(TRIM(GVN_NAME               ),'')	
+     ||'|'||COALESCE(TRIM(MID_NAME               ),'')	
+     ||'|'||COALESCE(TRIM(FAMLY_NAME             ),'')	
+     ||'|'||COALESCE(TRIM(NAME_SUFFX_TXT         ),'')	
+     ||'|'||COALESCE(TRIM(FULL_NAME              ),'')	
+     ||'|'||COALESCE(TRIM(GENDR_IND              ),'')	
+     ||'|'||COALESCE(TRIM(CAST(CAST(BRTH_DATE AS DATE FORMAT 'YYYY-MM-DD') AS
+     VARCHAR(10))),'')	 ||'|'||COALESCE(TRIM(ADDR_LINE_1_TXT        ),'')	
+     ||'|'||COALESCE(TRIM(ADDR_LINE_2_TXT        ),'')	
+     ||'|'||COALESCE(TRIM(ADDR_LINE_3_TXT        ),'')	
+     ||'|'||COALESCE(TRIM(STRET_NUM              ),'')	
+     ||'|'||COALESCE(TRIM(STRET_NAME             ),'')	
+     ||'|'||COALESCE(TRIM(APT_NUM                ),'')	
+     ||'|'||COALESCE(TRIM(PO_BOX_NUM             ),'')	
+     ||'|'||COALESCE(TRIM(CITY_NAME              ),'')	
+     ||'|'||COALESCE(TRIM(POSTL_AREA_CODE        ),'')	
+     ||'|'||COALESCE(TRIM(TERR_CODE              ),'')	
+     ||'|'||COALESCE(TRIM(CNTRY_CODE             ),'')	
+     ||'|'||COALESCE(TRIM(EMAIL_ADDR_TXT      ),'')	
+     ||'|'||COALESCE(TRIM(PHONE_EXTSN_NUM     ),'')	
+     ||'|'||COALESCE(TRIM(FULL_PHONE_NUM      ),'')	
+     ||'|'||COALESCE(TRIM(PHONE_LINE_NBR      ),'')	
+     ||'|'||COALESCE(TRIM(PHONE_AREA_NBR      ),'')	
+     ||'|'||COALESCE(TRIM(PHONE_EXCHG_NBR     ),'')	
+     ||'|'||COALESCE(TRIM(PHONE_CNTRY_NBR     ),'')	
+     ||'|'||COALESCE(TRIM(WIN_KEY      ),'')	 ||'|'||COALESCE(TRIM(DPEND_NAME  
+        ),'')	 ||'|'||COALESCE(TRIM(PET_NAME      ),'')	
+     ||'|'||COALESCE(TRIM(REGIS_PRSNA_ID    ),'')	
+     ||'|'||COALESCE(TRIM(LEGAL_ENT_PRSNA_ID        ),'')        
+     ||'|'||COALESCE(TRIM(HSHLD_PRSNA_ID            ),'')	
+     ||'|'||COALESCE(TRIM(LEGAL_ENT_NBR),'')    AS CHAR(2000))  FROM
+     TSS_MATCH_INPUT_CHN; 
+**** 14:28:16 UTY8724 Select request submitted to the RDBMS.
+**** 14:28:16 UTY8725 Select execution completed. 47 data blocks generated.
+**** 14:28:16 UTY8715 FastExport is submitting the following request:
+     INS MDM.TSS_MATCH_INPUT_LOG_CHN (LogType, Seq) VALUES (220, 1)
+**** 14:28:16 UTY8715 FastExport is submitting the following request:
+     END FASTEXPORT;ET;
+**** 14:28:16 UTY8710 Processing complete for this FastExport task.
+     ========================================================================
+     =                                                                      =
+     =          FastExport Task Complete                                    =
+     =                                                                      =
+     ========================================================================
+**** 14:28:16 UTY1024 Session modal request, 'SET
+     QUERY_BAND='UTILITYNAME=FASTEXP;' UPDATE FOR SESSION;', re-executed.
+**** 14:28:16 UTY8722 339 total records written to output file.
+
+0008 .SET CREATERC TO 0;
+
+0009 .IF &SYSRC > 4 THEN;
+**** 14:28:16 UTY2402 Previous statement modified to:
+0010 .IF 0 > 4 THEN;
+0011 .SET CREATERC TO 1;
+0012 .ELSE;
+0013 .IF &SYSRC <= 4 THEN;
+**** 14:28:16 UTY2402 Previous statement modified to:
+0014 .IF 0 <= 4 THEN;
+0015 .SET CREATERC TO 0;
+0016 .ENDIF;
+0017 .ENDIF;
+
+0018 .LOGOFF &CREATERC;
+**** 14:28:16 UTY2402 Previous statement modified to:
+0019 .LOGOFF 0;
+     ========================================================================
+     =                                                                      =
+     =          Logoff/Disconnect                                           =
+     =                                                                      =
+     ========================================================================
+**** 14:28:17 UTY6216 The restart log table has been dropped.
+**** 14:28:17 UTY6212 A successful disconnect was made from the RDBMS.
+**** 14:28:17 UTY2410 Total processor time used = '0.640625 Seconds'
+     .       Start : 14:28:14 - TUE FEB 21, 2012
+     .       End   : 14:28:17 - TUE FEB 21, 2012
+     .       Highest return code encountered = '0'.

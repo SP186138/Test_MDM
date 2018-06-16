@@ -1,0 +1,32 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_form" source="studio.controller:load">
+  <ui:container id="container" displayText="Top Container" collapsable="true">
+    <ui:step displayText="Create Trait" id="top_container" editable="true">
+      <ui:validation successMessage="{$root/Message/@Value}" anyFieldIsRequired="false"/>
+      <ui:field-group>
+        <ui:image src="/bpi_check.gif" displayCondition="{string-length($root/MSG/AlertGreen/@Value) != 0}" id="checkImg"/>
+        <ui:display-field id="success" value="{$root/MSG/AlertGreen/@Value}" displayCondition="{string-length($root/MSG/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen"/>
+        <ui:image src="/cancel.gif" displayCondition="{string-length($root/MSG/AlertRed/@Value) != 0}"/>
+        <ui:display-field value="{$root/MSG/AlertRed/@Value}" displayCondition="{string-length($root/MSG/AlertRed/@Value) != 0}" name="error" class="requiredIndicator"/>
+      </ui:field-group>
+      <ui:field-group columns="2" id="fieldGroups">
+        <ui:entry-field displayText="Trait Number" id="TRT_NBR" name="TRT_NBR" required="true" value="{$root/MAX_TRT_NBR/@Value}"/>
+        <ui:entry-field id="TRT_NAME" name="TRT_NAME" displayText="Trait Text" required="true" value="{$root/lookup_TRT_NAME_LOCAL/@Value}"/>
+        <ui:entry-field id="TRT_ENT_TYPE_CODE" name="TRT_ENT_TYPE_CODE" displayText="Trait Entity Type Code" value="{$root/TRT_ENT_TYPE_CODE/@Value}"/>
+        <ui:entry-field id="TRT_DESC" name="TRT_DESC" displayText="Trait Description" value="{$root/TRT_DESC/@Value}"/>
+        <ui:dropdown id="PII_DATA_IND" name="PII_DATA_IND" displayText="PII Data Indicator"  select="$root/PII_DATA_IND">
+          <ui:option id="Y" value="Yes"/>
+          <ui:option id="N" value="No"/>
+        </ui:dropdown>
+        <ui:entry-field id="TRT_DTTP_CODE" name="TRT_DTTP_CODE" displayText="Trait DTTP Code" value="{$root/TRT_DTTP_CODE/@Value}"/>
+        <ui:dropdown id="PRDFN_TRT_IND" name="PRDFN_TRT_IND" displayText="Predefined Trait Indicator"  select="$root/PRDFN_TRT_IND">
+<ui:option id="Y" value="Yes"/>
+<ui:option id="N" value="No"/>
+        </ui:dropdown> 
+      </ui:field-group>
+      <ui:buttons id="buttons">
+        <ui:button id="SAVE" name="SAVE" displayText="Save and Return"/>
+        <ui:button id="BACK" name="BACK" displayText="Back"/>
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+</ui:page-group>

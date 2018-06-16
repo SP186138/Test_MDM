@@ -1,0 +1,59 @@
+<document>
+  <documentation>An electronic address where P&amp;G can send messages to the consumer represented by a PERSONA via an email system.</documentation>
+  <properties>
+    <property Name="EMAIL_ADDR_TXT" PhysicalName="EMAIL_ADDR_TXT" Active="true" Required="false" CharSet="UNICODE" Type="String_1000">
+      <documentation>The complete text of the email address, including the @ sign and the domain name that follows it.</documentation>
+      <extends />
+    </property>
+    <property Name="EMAIL_FORMT_CODE">
+      <documentation>The code that P&amp;G assigned to uniquely distinguish the EMAIL FORMAT from all others.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="EMAIL_FORMT_CODE" />
+    </property>
+    <property Name="VALID_CNTCT_POINT_IND">
+      <documentation>Indicates whether the contact information is valid. This is set to "valid" when the PERSONA CONTACT POINT is initially recorded. Subsequently if it is found to be invalid (e.g., if direct mail is returned as undeliverable or an email message is bounced), this attribute is changed to "invalid".</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="VALID_CNTCT_POINT_IND" />
+    </property>
+    <property Name="PREF_CNTCT_POINT_IND" Required="true">
+      <documentation>Indicates whether the consumer represented by the PERSONA wants P&amp;G to use the PERSONA CONTACT POINT in lieu of others.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="PREF_CNTCT_POINT_IND" />
+    </property>
+    <property Name="CNTCT_POINT_CATEG_CODE" Required="false">
+      <documentation>e.g.&#xD;
+&#xD;
+      H = Home&#xD;
+      B = Business</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="CNTCT_POINT_CATEG_CODE" />
+    </property>
+    <property Name="MATCHD_CNSMR_PRSNA_ID" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="MATCHD_CNSMR_PRSNA_ID" />
+    </property>
+    <property Name="LEGAL_ENT_NBR" Required="true">
+      <documentation>The number that P&amp;G assigned to uniquely distinguish the LEGAL ENTITY from all others.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="LEGAL_ENT_NBR" />
+    </property>
+  </properties>
+  <keys>
+    <key Active="true" Name="MATCHD_CNSMR_EMAIL_ADDR_UPI" PhysicalName="MATCHD_CNSMR_EMAIL_ADDR_UPI" Kind="PRIMARY">
+      <property Name="LEGAL_ENT_NBR" />
+      <property Name="MATCHD_CNSMR_PRSNA_ID" />
+    </key>
+  </keys>
+  <links>
+    <link Active="true" Name="MATCHD_CNSMR_EMAIL_ADDR_FK" PhysicalName="MATCHD_CNSMR_EMAIL_ADDR_FK">
+      <keymap FromKey="MATCHD_CNSMR_EMAIL_ADDR_UPI" ToPackage="models/pngModel" ToModelUnit="MATCHD_CNSMR_PRSNA.mtt" ToKey="MATCHD_CNSMR_PRSNA_UPI" ReverseLink="true" ReverseLinkName="R_MATCHD_CNSMR_EMAIL_ADR" DeleteRule="RESTRICT">
+        <mapping FromProperty="LEGAL_ENT_NBR" ToProperty="MATCHD_CNSMR_PRSNA_ID" />
+        <mapping FromProperty="MATCHD_CNSMR_PRSNA_ID" ToProperty="LEGAL_ENT_NBR" />
+      </keymap>
+    </link>
+  </links>
+  <docFacets>
+    <mdmWebServiceFacet />
+    <mdmAuthorizationFacet />
+    <mdmSysTableMapFacet TableClass="MASTER" Source="MASTER" MasterTable="MATCHD_CNSMR_EMAIL_ADDR" />
+    <miscFacet PhysicalName="MATCHD_CNSMR_EMAIL_ADDR" Active="true" />
+    <mdmConfigFacet SchemaGen="true" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql />
+</document>
+

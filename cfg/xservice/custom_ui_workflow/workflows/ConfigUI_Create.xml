@@ -1,0 +1,1023 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="9" ShowInBreadCrumbs="true" Version="1.0" Name="ConfigUI_Create" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="ConfigUI_Create">
+    <variable Name="workflowName" Type="string" Comment=""/>
+    <variable Name="configurableWorkflow" Type="xml" Comment=""/>
+    <variable Name="tableConfig" Type="xml" Comment=""/>
+    <variable Name="workflowId" Type="string" Comment=""/>
+    <variable Name="parentRowId" Type="string" Comment=""/>
+    <variable Name="joinMechanism" Type="string" Comment=""/>
+    <variable Name="timeFormat" Type="string" Comment=""/>
+    <variable Name="dateFormat" Type="string" Comment=""/>
+    <variable Name="checkIsRegistered" Type="boolean" Comment=""/>
+    <variable Name="IsTemporalTable" Type="boolean" Comment=""/>
+    <variable Name="IsValidTimeTemporalTable" Type="boolean" Comment=""/>
+    <variable Name="IsTransactionTimeTemporalTable" Type="boolean" Comment=""/>
+    <variable Name="maxRows" Type="int" Comment=""/>
+    <variable Name="workflowAvailable" Type="boolean" Comment=""/>
+    <variable Name="searchPaginateStartBackup" Type="string" Comment=""/>
+    <variable Name="stringThisParam" Type="string" Comment=""/>
+    <variable Name="EVENT_ID" Type="string" Comment=""/>
+    <variable Name="autoGenFlag" Type="string" Comment=""/>
+    <variable Name="failureFlag" Type="string" Comment=""/>
+    <variable Name="dynamicPglBackUp" Type="xml" Comment=""/>
+    <variable Name="backUpDetails" Type="xml" Comment=""/>
+    <variable Name="showButtons" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start0">
+      <actions>
+        <action>
+          <!--
+  Get list of tables involved and save in pipeline
+  Get all search params, and construct the dynamic pgl and Save in pipeline
+  Get all results params, and construct the dynamic pgl and Save in pipeline
+  -->
+          <SET Var="failureFlag" FromValue="false"/>
+          <IF_TEST Test="$thisParam/*/*!=null">
+            <THEN>
+              <TO_DOCVAR AssignToVar="thisParam">
+                <TO_XML SelectList="$thisParam/*"/>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <SET Var="dateFormat" FromValue="MM/dd/yyyy"/>
+          <SET Var="timeFormat" FromValue="MM/dd/yyyy HH:mm:ss"/>
+          <IF_TEST Test="strlen($thisParam/workflowId/@Value)>0">
+            <THEN>
+              <SET Var="workflowId" FromValue="{$thisParam/workflowId/@Value}"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="strlen($thisParam/EVENT_ID/@Value)>0">
+            <THEN>
+              <SET Var="EVENT_ID" FromValue="{$thisParam/EVENT_ID/@Value}"/>
+            </THEN>
+          </IF_TEST>
+          <GET_DOCUMENT AssignToVar="configurableWorkflow" Name="configurableWorkflow" ServiceName="USER_SECURITY" ReturnRowCount="yes" DirtyRead="true">
+            <workflowId Value="{$workflowId}"/>
+          </GET_DOCUMENT>
+          <SET Var="autoGenFlag" FromValue="{$configurableWorkflow/*/autoGenFlag/@Value}"/>
+          <IF_TEST Test="$configurableWorkflow/@TotalRowCount>0">
+            <THEN>
+              <SET Var="workflowAvailable" FromValue="true"/>
+            </THEN>
+            <ELSE>
+              <SET Var="workflowAvailable" FromValue="false"/>
+            </ELSE>
+          </IF_TEST>
+          <SET Var="joinMechanism" FromValue="{$configurableWorkflow/configurableWorkflow/joinMechanism/@Value}"/>
+          <SET Var="workflowName" FromValue="{$configurableWorkflow/configurableWorkflow/workflowName/@Value}"/>
+          <SET Var="workflowId" FromValue="{$configurableWorkflow/configurableWorkflow/workflowId/@Value}"/>
+          <REQUEST Name="getTableConfig" ServiceName="UI_WORKFLOW" AssignToVar="tableConfig" HandleException="true">
+            <workflowId Value="{$workflowId}"/>
+          </REQUEST>
+          <REQUEST Name="checkIsTemporal" AssignToVar="checkIsTemporalInvolved" HandleException="true">
+            <workflowId Value="{$workflowId}"/>
+          </REQUEST>
+          <SET Var="IsTemporalTable" FromValue="{$checkIsTemporalInvolved/IsTemporalTable/@Value}"/>
+          <SET Var="IsValidTimeTemporalTable" FromValue="{$checkIsTemporalInvolved/IsValidTimeTemporalTable/@Value}"/>
+          <SET Var="IsTransactionTimeTemporalTable" FromValue="{$checkIsTemporalInvolved/IsTransactionTimeTemporalTable/@Value}"/>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Generate Create PGL"/>
+      </next_nodes>
+    </start>
+    <task Name="Generate Create PGL">
+      <actions>
+        <action/>
+      </actions>
+      <next_nodes>
+        <next_node Name="Create"/>
+      </next_nodes>
+    </task>
+    <ui_form2 Name="Create" ShowInBreadCrumbs="SHOW" Template="Create.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$autoGenFlag='true'">
+            <THEN>
+              <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT DISPLAY_NAME FROM LEFT_NAV_STRUCTURE WHERE PAGE_NAME='{$workflowName/@Value}'" AssignToVar="workDisplayName"/>
+              <SET Var="workflowOrgName" FromValue="{$workDisplayName/SQL_RESULT/DISPLAY_NAME/@Value}"/>
+            </THEN>
+            <ELSE>
+              <SET Var="workflowOrgName" FromValue="{$workflowName}"/>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='selectRecord'">
+            <THEN>
+              <GET_DOCUMENT Name="cwSearchResultsTables" ServiceName="USER_SECURITY" AssignToVar="tabDetailsVar" DirtyRead="true">
+                <workflowId Value="{$backUpDetails/workflowId/@Value}"/>
+                <tableRank Value="{$backUpDetails/tableRank/@Value}"/>
+              </GET_DOCUMENT>
+              <GET_DOC_PROPERTIES ServiceName="{$tabDetailsVar/*/serviceName/@Value}" TableName="{$tabDetailsVar/*/tableName/@Value}" AssignToVar="DocPropertiesVar"/>
+              <FOR_EACH SelectList="$DocPropertiesVar/DOCUMENT/PROPERTY" CurrentElement="currAttr">
+                <THEN>
+                  <IF_TEST Test="$currAttr/@LinkName=$backUpDetails/linkName/@Value">
+                    <THEN>
+                      <IF_TEST Test="$backUpDetails/joinMech/@Value='Document Links' or $backUpDetails/joinMech/@Value='No Link'">
+                        <THEN>
+                          <SET Var="tagName" FromValue="{$tabDetailsVar/*/tableName/@Value}.{$currAttr/@Name}"/>
+                        </THEN>
+                        <ELSE>
+                          <SET Var="tagName" FromValue="{$tabDetailsVar/*/dbName/@Value}.{$tabDetailsVar/*/tableNamePhy/@Value}.{$currAttr/@ColumnName}"/>
+                        </ELSE>
+                      </IF_TEST>
+                      <REMOVE_CHILDREN DocVar="backUpDetails" ChildName="{$tagName}"/>
+                      <SET Var="tagValue" FromValue="{$thisParam/SelectedRecordDetails/*/*[name()=$currAttr/@ToProperty]/@Value}"/>
+                      <SET DocVar="backUpDetails" Property="{$tagName}" FromValue="{$tagValue}"/>
+                    </THEN>
+                  </IF_TEST>
+                </THEN>
+              </FOR_EACH>
+              <TO_DOCVAR AssignToVar="thisParam">
+                <PARAMETERS>
+                  <TO_XML SelectList="$backUpDetails/*"/>
+                </PARAMETERS>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$failureFlag='true'">
+            <THEN>
+              <SET Var="failureFlag" FromValue="false"/>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <SAMPLE_XML>
+                  <TO_XML SelectList="$thisParam/*"/>
+                </SAMPLE_XML>
+              </TO_DOCVAR>
+              <APPEND_CHILDREN DocVar="pglFormInput" FromDocVar="dynamicPglBackUp"/>
+              <CLONE_XML AssignToVar="pglFormInput1" DocVar="pglFormInput"/>
+              <APPEND_TO_XML Select="$pglFormInput1/PGL/container/step/field-group">
+                <ui:field-group xmlns:ui="http://www.teradata.com/ui" id="d3" columns="2">
+                  <ui:image src="/cancel.gif" displayCondition="{strlen($thisParam/alertRed/@Value)!=0}" id="sImage"/>
+                  <ui:display-field id="alertValue" name="alertValue" displayCondition="{strlen($thisParam/alertRed/@Value)!=0}" value="{$thisParam/alertRed/@Value}" class="requiredIndicator"/>
+                </ui:field-group>
+              </APPEND_TO_XML>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <TO_XML DocVar="pglFormInput1"/>
+              </TO_DOCVAR>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SYS_REFRESH'">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="pglFormInput">
+                    <SAMPLE_XML>
+                      <PGL/>
+                      <DATA/>
+                    </SAMPLE_XML>
+                  </TO_DOCVAR>
+                </THEN>
+                <ELSE>
+                  <TO_DOCVAR AssignToVar="pglFormInput">
+                    <SAMPLE_XML>
+                      <TO_XML SelectList="$thisParam/*"/>
+                      <PGL/>
+                      <DATA/>
+                    </SAMPLE_XML>
+                  </TO_DOCVAR>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/*/VerId/@Value !=null and $thisParam/*/VerId/@Value != ''">
+                <THEN>
+                  <REQUEST Name="constructCreateEditPGL" ServiceName="UI_WORKFLOW" AssignToVar="genPGLResult">
+                    <workflowId Value="{$workflowId}"/>
+                    <mode Value="create"/>
+                    <joinMechanism Value="{$joinMechanism}"/>
+                    <VerId Value="{$thisParam/*/VerId/@Value}"/>
+                  </REQUEST>
+                </THEN>
+                <ELSE>
+                  <REQUEST Name="constructCreateEditPGL" ServiceName="UI_WORKFLOW" AssignToVar="genPGLResult">
+                    <workflowId Value="{$workflowId}"/>
+                    <mode Value="create"/>
+                    <joinMechanism Value="{$joinMechanism}"/>
+                  </REQUEST>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='createFavourite'">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="tableData">
+                    <ROOT>
+                      <TO_XML DocVar="thisParam"/>
+                    </ROOT>
+                  </TO_DOCVAR>
+                </THEN>
+                <ELSE>
+                  <TO_DOCVAR AssignToVar="tableData">
+                    <ROOT>
+                      <ROOT1/>
+                    </ROOT>
+                  </TO_DOCVAR>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/UI_START_WORKFLOW/HIDEBUTTONS/@Value !='true' and $showButtons !='false'">
+                <THEN>
+                  <SET Var="showButtons" FromValue="true"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="showButtons" FromValue="false"/>
+                </ELSE>
+              </IF_TEST>
+              <APPEND_TO_XML SelectList="$pglFormInput/PGL">
+                <ui:container xmlns:ui="http://www.teradata.com/ui" id="topContainer" showFavorite="true" scrollable="true">
+                  <ui:step id="step1" displayText="Create {$workflowOrgName}">
+                    <ui:field-group/>
+                    <ui:field-group id="d1">
+                      <ui:hidden-field id="workflowId" name="workflowId" value="{$workflowId}"/>
+                      <ui:hidden-field id="showHistory" name="showHistory" value="{$thisParam/showHistory/@Value}"/>
+                      <ui:hidden-field id="refers" name="refers"/>
+                      <ui:hidden-field id="toProperty" name="toProperty"/>
+                      <ui:hidden-field id="linkName" name="linkName"/>
+                      <ui:hidden-field id="joinMech" name="joinMech"/>
+                      <ui:hidden-field id="serviceName" name="serviceName"/>
+                      <ui:hidden-field id="tableRank" name="tableRank"/>
+                      <ui:hidden-field id="prefix" name="prefix"/>
+                    </ui:field-group>
+                    <ui:field-group columns="2" select="$root/DATA/LINE/*">
+                      <TO_XML SelectList="$genPGLResult/PGL/*/*"/>
+                    </ui:field-group>
+                    <ui:buttons>
+                      <ui:button id="Back" name="Back" displayText="Back" validate="false" displayCondition="{$showButtons}"/>
+                      <ui:button id="Create" name="Create" displayText="Save"/>
+                      <TO_XML SelectList="$customButtons/*"/>
+                    </ui:buttons>
+                  </ui:step>
+                </ui:container>
+              </APPEND_TO_XML>
+              <TO_DOCVAR AssignToVar="dynamicPglBackUp">
+                <ROOT/>
+              </TO_DOCVAR>
+              <APPEND_TO_XML Select="$pglFormInput/DATA">
+                <workflowName Value="{$workflowName}"/>
+                <LOOKUP_DATA>
+                  <TO_XML SelectList="$genPGLResult/DATA/*"/>
+                </LOOKUP_DATA>
+                <LINE>
+                  <TO_XML SelectList="$allTableData/*"/>
+                </LINE>
+              </APPEND_TO_XML>
+              <ADD_CHILDREN DocVar="dynamicPglBackUp" FromDocVar="pglFormInput"/>
+              <TO_DOCVAR AssignToVar="dynamicPglBackUp">
+                <TO_XML SelectList="$dynamicPglBackUp/*"/>
+              </TO_DOCVAR>
+              <REMOVE_CHILDREN DocVar="dynamicPglBackUp" ChildName="PARAMETERS"/>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <GET_DOCUMENT AssignToVar="cwSearchResultsTables" Name="cwSearchResultsTables" ServiceName="USER_SECURITY" ReturnRowCount="yes" DirtyRead="true">
+            <workflowId Value="{$workflowId}"/>
+            <ORDER_BY>
+              <tableRank Sort="Ascending"/>
+            </ORDER_BY>
+          </GET_DOCUMENT>
+          <SET Var="flagToContinue" FromValue="true"/>
+          <IF_TEST Test="$cwSearchResultsTables/@TotalRowCount='1' and $cwSearchResultsTables/cwSearchResultsTables/serviceName/@Value='BCM_MASTER' and $thisParam/BUTTON_ID/@Value = 'Create'">
+            <THEN>
+              <GET_DOC_PROPERTIES TableName="{$cwSearchResultsTables/cwSearchResultsTables/tableName/@Value}" ServiceName="{$cwSearchResultsTables/cwSearchResultsTables/serviceName/@Value}" AssignToVar="docProps"/>
+              <TO_DOCVAR AssignToVar="keyColVals">
+                <RECORD/>
+              </TO_DOCVAR>
+              <FOR_EACH CurrentElement="curAttr" SelectList="$docProps/*/*">
+                <IF_TEST Test="$curAttr/@PrimaryKey='yes'">
+                  <THEN>
+                    <SET DocVar="keyColVals" Property="{$curAttr/@Name}" FromValue="{$thisParam/*[name()=concat($cwSearchResultsTables/cwSearchResultsTables/tableName/@Value,'.',$curAttr/@Name)]/@Value}"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <REQUEST Name="CheckPendingApproval" ServiceName="ADMIN_UI" HandleException="true" AssignToVar="appStatus">
+                <Column>
+                  <TO_XML DocVar="keyColVals"/>
+                </Column>
+                <DocumentName>
+                  <TABLE_NAME Value="{$cwSearchResultsTables/cwSearchResultsTables/tableName/@Value}"/>
+                </DocumentName>
+                <DocumentOperation Value="INSERT"/>
+              </REQUEST>
+              <IF_TEST Test="$appStatus/@Value!='0'">
+                <THEN>
+                  <SET Var="flagToContinue" FromValue="false"/>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$flagToContinue='true'">
+            <THEN>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value!='tableNode'">
+                <THEN>
+                  <SET Var="alertGreen" FromValue=""/>
+                  <SET Var="alertRed" FromValue=""/>
+                  <IF_TEST Test="$thisParam/BUTTON_ID/@Value!='Back'">
+                    <THEN>
+                      <DO_TRANSACTION PropagateException="false">
+                        <GET_DOCUMENT AssignToVar="cwSearchResultsTables" Name="cwSearchResultsTables" ServiceName="USER_SECURITY" ReturnRowCount="yes" DirtyRead="true">
+                          <workflowId Value="{$workflowId}"/>
+                          <ORDER_BY>
+                            <tableRank Sort="Ascending"/>
+                          </ORDER_BY>
+                        </GET_DOCUMENT>
+                        <TO_DOCVAR AssignToVar="depCommand">
+                          <DEP_COMMAND index="0" tableList=""/>
+                        </TO_DOCVAR>
+                        <SET Var="eName" FromValue="{$cwSearchResultsTables/cwSearchResultsTables[tableRank/@Value='1']/Entity_Name/@Value}"/>
+                        <!--IF_TEST Test="strlen($eName)!=0">
+<THEN>
+<REQUEST Name="getAllEntityMasterTables" AssignToVar="entityMaster" HandleException="true" ServiceName="UI_WORKFLOW">
+<Entity_Name Value="{$eName}"/>
+</REQUEST>
+</THEN>
+<ELSE>
+<TO_DOCVAR AssignToVar="entityMaster">
+<RESPONSE/>
+</TO_DOCVAR>
+</ELSE>
+</IF_TEST-->
+                        <GET_DOCUMENT AssignToVar="cwSearchResultsConfigAttr" Name="cwSearchResultsConfigAttr" ServiceName="USER_SECURITY" ReturnRowCount="yes" DirtyRead="true">
+                          <workflowId Value="{$workflowId}"/>
+                          <container Value="create_edit"/>
+                          <fieldType Value="column"/>
+                          <propName Value="PrimaryKey"/>
+                          <propValue Value="yes"/>
+                          <SELECT>
+                            <attributeName/>
+                            <propName/>
+                            <propValue/>
+                          </SELECT>
+                        </GET_DOCUMENT>
+                        <SET Var="isHierTable" FromValue="0"/>
+                        <FOR_EACH CurrentElement="currTable" SelectList="$cwSearchResultsTables/cwSearchResultsTables">
+                          <IF_TEST Test="$currTable/tableRank/@Value = '1'">
+                            <THEN>
+                              <SET Var="nameSplit" FromValue="{strSplit($currTable/tableNamePhy/@Value,'_')}"/>
+                              <IF_TEST Test="($nameSplit/TOKEN[1]/@Value = 'MST' or $nameSplit/TOKEN[1]/@Value = 'VER') and $nameSplit/TOKEN[2]/@Value = 'HIER' and $nameSplit/TOKEN[4]/@Value = 'NODE'">
+                                <THEN>
+                                  <SET Var="isHierTable" FromValue="1"/>
+                                </THEN>
+                              </IF_TEST>
+                            </THEN>
+                          </IF_TEST>
+                          <IF_TEST Test="$isHierTable/@Value != '1' or $currTable/tableRank/@Value = '1'">
+                            <THEN>
+                              <SET Var="tabName" FromValue="{$currTable/tableName/@Value}"/>
+                              <SET Var="tabNamePhy" FromValue="{$currTable/tableNamePhy/@Value}"/>
+                              <SET Var="SRVC_NAME" FromValue="{$currTable/serviceName/@Value}"/>
+                              <SET Var="dbName" FromValue="{$currTable/dbName/@Value}"/>
+                              <SET Var="dbNameDotTableNameDot" FromValue="{$currTable/dbName/@Value}.{$tabNamePhy}."/>
+                              <!--init-->
+                              <SET Var="stringCols" FromValue=""/>
+                              <SET Var="fileCols" FromValue=""/>
+                              <SET Var="dateCols" FromValue=""/>
+                              <SET Var="dateTimeCols" FromValue=""/>
+                              <SET Var="mq" FromValue="null"/>
+                              <SET Var="queryColumns" FromValue="null"/>
+                              <SET Var="queryValue" FromValue="null"/>
+                              <GET_DOCUMENT AssignToVar="cwSearchResultsColumns" Name="cwSearchResultsColumns" ServiceName="USER_SECURITY" ReturnRowCount="yes" DirtyRead="true">
+                                <workflowId Value="{$workflowId}"/>
+                                <container Value="create_edit"/>
+                                <tableNamePhy Value="{$tabNamePhy}"/>
+                                <tableName Value="{$tabName}"/>
+                                <ORDER_BY>
+                                  <columnOrder Sort="Ascending"/>
+                                </ORDER_BY>
+                              </GET_DOCUMENT>
+                              <!--init-->
+                              <!--getting all file cols-->
+                              <TO_DOCVAR AssignToVar="tableProperties">
+                                <ROOT/>
+                              </TO_DOCVAR>
+                              <TO_DOCVAR AssignToVar="pkProperties">
+                                <ROOT/>
+                              </TO_DOCVAR>
+                              <FOR_EACH CurrentElement="currCol" SelectList="$cwSearchResultsColumns/cwSearchResultsColumns">
+                                <IF_TEST Test="$SRVC_NAME!='nonMDM' ">
+                                  <THEN>
+                                    <SET Var="dbDotTableDotColumName" FromValue="{$tabName}.{$currCol/columnName/@Value}"/>
+                                    <IF_TEST Test="$joinMechanism='Explicit Join' ">
+                                      <THEN>
+                                        <SET Var="dbDotTableDotColumName" FromValue="{$dbName}.{$tabNamePhy}.{$currCol/columnNamePhy/@Value}"/>
+                                      </THEN>
+                                    </IF_TEST>
+                                    <!--get tableproperties-->
+                                    <FOR_EACH SelectList="$thisParam/*" CurrentElement="params">
+                                      <IF_TEST Test="$params/name()=$dbDotTableDotColumName">
+                                        <THEN>
+                                          <SET Var="propName" FromValue="&lt;{$currCol/columnName/@Value} Value={substringAfter($params,'Value=')}"/>
+                                          <STRING_TO_XML DocVar="propXML" FromValue="{string($propName/@Value)}"/>
+                                          <IF_TEST Test="$propXML/@Value=null or $propXML/@Value=''">
+                                            <THEN>
+                                              <REMOVE_ATTRIBUTE DocVar="propXML" Name="Value"/>
+                                            </THEN>
+                                          </IF_TEST>
+                                          <ADD_CHILDREN DocVar="tableProperties" FromVar="propXML"/>
+                                          <FOR_EACH CurrentElement="curElem" SelectList="$cwSearchResultsConfigAttr/cwSearchResultsConfigAttr">
+                                            <IF_TEST Test="$curElem/attributeName/@Value=$params/name()">
+                                              <THEN>
+                                                <ADD_CHILDREN DocVar="pkProperties" FromVar="propXML"/>
+                                              </THEN>
+                                            </IF_TEST>
+                                          </FOR_EACH>
+                                        </THEN>
+                                        <ELSE>
+                                          <IF_TEST Test="$params/name()=concat($dbDotTableDotColumName/@Value,'_PeriodStart') and $params/@Value != ''">
+                                            <THEN>
+                                              <REQUEST Name="createPeriodDataTimeDocVar" ServiceName="UI_WORKFLOW" AssignToVar="periodDoc">
+                                                <TO_XML DocVar="thisParam"/>
+                                                <TABLE_DOT_COLUMN_NAME Value="{$dbDotTableDotColumName/@Value}"/>
+                                                <COLUMN_NAME Value="{$currCol/columnName/@Value}"/>
+                                              </REQUEST>
+                                              <ADD_CHILDREN DocVar="tableProperties" FromSelectList="$periodDoc/*"/>
+                                            </THEN>
+                                          </IF_TEST>
+                                        </ELSE>
+                                      </IF_TEST>
+                                    </FOR_EACH>
+                                    <!--get tableproperties-->
+                                  </THEN>
+                                </IF_TEST>
+                                <IF_TEST Test="lowerCase($currCol/dataType/@Value)='string' and $currCol/tableName/@Value=$tabName ">
+                                  <THEN>
+                                    <SET Var="stringCols" FromValue="{$currCol/columnName/@Value}#{$stringCols}"/>
+                                  </THEN>
+                                </IF_TEST>
+                                <IF_TEST Test="lowerCase($currCol/dataType/@Value)='file' and $currCol/tableName/@Value=$tabName ">
+                                  <THEN>
+                                    <SET Var="fileCols" FromValue="{$currCol/columnName/@Value}#{$fileCols}"/>
+                                  </THEN>
+                                </IF_TEST>
+                                <IF_TEST Test="lowerCase($currCol/dataType/@Value)='date' and $currCol/tableName/@Value=$tabName ">
+                                  <THEN>
+                                    <SET Var="dateCols" FromValue="{$tabName}.{$currCol/columnName/@Value}#{$dateCols}"/>
+                                  </THEN>
+                                </IF_TEST>
+                                <IF_TEST Test="(lowerCase($currCol/dataType/@Value)='datetime' or lowerCase($currCol/dataType/@Value)='timestamp' or lowerCase($currCol/dataType/@Value)='perioddate') and $currCol/tableName/@Value=$tabName">
+                                  <THEN>
+                                    <SET Var="dateTimeCols" FromValue="{$tabName}.{$currCol/columnName/@Value}#{$dateTimeCols}"/>
+                                  </THEN>
+                                </IF_TEST>
+                              </FOR_EACH>
+                              <!--getting all file cols-->
+                              <!--non mdm-->
+                              <IF_TEST Test="$SRVC_NAME='nonMDM' ">
+                                <THEN>
+                                  <GET_DOCUMENT Name="SYS_CUSTOM_MACRO_MAP" ServiceName="BPE_META" AssignToVar="macroMap" DirtyRead="true">
+                                    <Target_Table Value="{$tabName}"/>
+                                  </GET_DOCUMENT>
+                                  <IF_TEST Test="strlen($macroMap/SYS_CUSTOM_MACRO_MAP/Insert_Macro/@Value)>0">
+                                    <THEN>
+                                      <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT C.* FROM SYS_DBC_TABLES T, SYS_DBC_COLUMNS C WHERE T.TABLEKIND = 'M' AND T.DATABASENAME = '{$macroMap/SYS_CUSTOM_MACRO_MAP/Target_Database/@Value}' AND T.TABLENAME = '{$macroMap/SYS_CUSTOM_MACRO_MAP/Insert_Macro/@Value}' AND T.TABLENAME = C.TABLENAME AND T.DATABASENAME = C.DATABASENAME ORDER BY C.COLUMNID" AssignToVar="results" HandleException="true"/>
+                                      <SET Var="macroQuery" FromValue="{$macroMap/SYS_CUSTOM_MACRO_MAP/Target_Database/@Value}.{$macroMap/SYS_CUSTOM_MACRO_MAP/Insert_Macro/@Value}"/>
+                                      <FOR_EACH SelectList="$results/*" CurrentElement="currentElem">
+                                        <SET Var="propName" FromValue="{$dbName}.{$tabName}.{trim($currentElem/COLUMNNAME/@Value)}"/>
+                                        <SET Var="hasValue" FromValue="no"/>
+                                        <FOR_EACH SelectList="$thisParam/*" CurrentElement="params">
+                                          <IF_TEST Test="$params/name()=$propName ">
+                                            <THEN>
+                                              <SET Var="mq" FromValue="{$mq}, '{trim($params/@Value)}'"/>
+                                              <SET Var="hasValue" FromValue="yes"/>
+                                            </THEN>
+                                          </IF_TEST>
+                                        </FOR_EACH>
+                                        <IF_TEST Test="$hasValue='no'">
+                                          <THEN>
+                                            <SET Var="mq" FromValue="{$mq}, ''"/>
+                                          </THEN>
+                                        </IF_TEST>
+                                      </FOR_EACH>
+                                      <SET Var="mq" FromValue="{strReplaceAll($mq,'null,','')}"/>
+                                      <SET Var="macroQuery" FromValue="exec {trim($macroQuery)}({$mq})"/>
+                                      <EXECUTE_SQL_QUERY Value="{$macroQuery}" AssignToVar="macroQueryResults" HandleException="true" Mode="Write"/>
+                                      <IF_TEST Test="$macroQueryResults/@Status='Success'">
+                                        <THEN>
+                                          <SET Var="alertGreen" FromValue="Successfully_Added"/>
+                                        </THEN>
+                                        <ELSE>
+                                          <SET Var="alertRed" FromValue="{$macroQueryResults/@Description}"/>
+                                          <SET Var="alertGreen" FromValue=""/>
+                                          <!--RAISE_EXCEPTION Value="Error in DB transaction"/-->
+                                        </ELSE>
+                                      </IF_TEST>
+                                    </THEN>
+                                    <ELSE>
+                                      <FOR_EACH SelectList="$thisParam/*" CurrentElement="params">
+                                        <IF_TEST Test="contains($params/name(),$dbNameDotTableNameDot) and strlen(trim($params/@Value)) > 0">
+                                          <THEN>
+                                            <SET Var="queryColumns" FromValue="{$queryColumns}, {trim($params/name())}"/>
+                                            <IF_TEST Test="contains($dateCols,trim(substringAfter($params/name(),'.')))">
+                                              <THEN>
+                                                <SET Var="dateValue" FromValue="{trim($params/@Value)}"/>
+                                                <SET Var="dbFormat" FromValue="MM/dd/yyyy"/>
+                                                <NATIVE_FUNCTION ClassName="com.teradata.xservice.userSecurity.DynamicPGLGenerator" MethodName="parseDate" AssignToVar="nativeReturn">
+                                                  <PARAM Var="dateValue" Caption="date"/>
+                                                  <PARAM Var="dateFormat" Caption="format"/>
+                                                  <PARAM Var="dbFormat" Caption="dbFormat"/>
+                                                </NATIVE_FUNCTION>
+                                                <SET Var="queryValue" FromValue="{$queryValue}, CAST('{trim($nativeReturn)}' AS DATE FORMAT 'MM/dd/yyyy')"/>
+                                              </THEN>
+                                              <ELSE>
+                                                <IF_TEST Test="contains($dateTimeCols,trim(substringAfter($params/name(),'.')))">
+                                                  <THEN>
+                                                    <SET Var="timeValue" FromValue="{trim($params/@Value)}"/>
+                                                    <SET Var="dbFormat" FromValue="MM/dd/yyyy HH:mm:ss"/>
+                                                    <NATIVE_FUNCTION ClassName="com.teradata.xservice.userSecurity.DynamicPGLGenerator" MethodName="parseDate" AssignToVar="nativeReturn">
+                                                      <PARAM Var="timeValue" Caption="date"/>
+                                                      <PARAM Var="timeFormat" Caption="format"/>
+                                                      <PARAM Var="dbFormat" Caption="dbFormat"/>
+                                                    </NATIVE_FUNCTION>
+                                                    <SET Var="queryValue" FromValue="{$queryValue}, '{trim($nativeReturn)}' (timestamp(0), format 'MM/DD/YYYYBHH:MI:SS')"/>
+                                                  </THEN>
+                                                  <ELSE>
+                                                    <SET Var="queryColName" FromValue="{trim(substringAfter(substringAfter($params/name(),'.'),'.'))}"/>
+                                                    <SET Var="replace" FromValue="'"/>
+                                                    <IF_TEST Test="contains($params/@Value,$replace)">
+                                                      <THEN>
+                                                        <SET Var="replaceWith" FromValue="''"/>
+                                                        <SET DocVar="params" FromValue="{strReplaceAll($params/@Value,$replace,$replaceWith)}"/>
+                                                      </THEN>
+                                                    </IF_TEST>
+                                                    <IF_TEST Test="indexOf($stringCols,$queryColName)>=0">
+                                                      <THEN>
+                                                        <SET Var="queryValue" FromValue="{$queryValue}, '{$params/@Value}'"/>
+                                                      </THEN>
+                                                      <ELSE>
+                                                        <SET Var="queryValue" FromValue="{$queryValue}, '{trim($params/@Value)}'"/>
+                                                      </ELSE>
+                                                    </IF_TEST>
+                                                  </ELSE>
+                                                </IF_TEST>
+                                              </ELSE>
+                                            </IF_TEST>
+                                          </THEN>
+                                        </IF_TEST>
+                                      </FOR_EACH>
+                                      <SET Var="queryColumns" FromValue="{strReplaceAll($queryColumns,'null,','')}"/>
+                                      <SET Var="queryValue" FromValue="{strReplaceAll($queryValue,'null,','')}"/>
+                                      <SET Var="sqlQuery" FromValue="INSERT INTO {$dbName}.{$tabName} ({trim($queryColumns)}) VALUES ({trim($queryValue)})"/>
+                                      <EXECUTE_SQL_QUERY Value="{$sqlQuery}" AssignToVar="sqlQueryResults" HandleException="true" Mode="Write"/>
+                                      <IF_TEST Test="$sqlQueryResults/@Status='Success'">
+                                        <THEN>
+                                          <SET Var="alertGreen" FromValue="{$tabName} - Successfully_Added &lt;BR/>{$alertGreen}"/>
+                                        </THEN>
+                                        <ELSE>
+                                          <SET Var="alertRed" FromValue="{$tabName} - {$sqlQueryResults/@Description} &lt;BR/>{$alertRed}"/>
+                                          <SET Var="alertGreen" FromValue=""/>
+                                          <!--RAISE_EXCEPTION Value="Error in DB transaction"/-->
+                                        </ELSE>
+                                      </IF_TEST>
+                                    </ELSE>
+                                  </IF_TEST>
+                                </THEN>
+                                <!--non mdm-->
+                                <ELSE>
+                                  <IF_TEST Test="($SRVC_NAME='BCM_MASTER' and starts-with($tabName,'error_')='false') or $SRVC_NAME='BCM_VERSION_STAGING'">
+                                    <THEN>
+                                      <TO_DOCVAR AssignToVar="entityState">
+                                        <ROOT>
+                                          <ENTITY_STATE Value="DELETED"/>
+                                        </ROOT>
+                                      </TO_DOCVAR>
+                                    </THEN>
+                                    <ELSE>
+                                      <TO_DOCVAR AssignToVar="entityState">
+                                        <ROOT/>
+                                      </TO_DOCVAR>
+                                    </ELSE>
+                                  </IF_TEST>
+                                  <!--logic for file data-->
+                                  <FOR_EACH SelectList="$tableProperties/*" CurrentElement="tabProps">
+                                    <IF_TEST Test="contains($fileCols,trim($tabProps/name()))">
+                                      <THEN>
+                                        <IF_TEST Test="strlen($tabProps/@Value) > 0">
+                                          <THEN>
+                                            <SET Var="FileName" FromValue="{$tabProps/@Value}"/>
+                                            <IF_TEST Test="$joinMechanism='Explicit Join' ">
+                                              <THEN>
+                                                <SET Var="FileContents" FromValue="{$thisParam/*[name() = concat($dbName,'.',$tabNamePhy,'.',$currCol/columnNamePhy/@Value,'_FileContents')]/@Value}"/>
+                                              </THEN>
+                                              <ELSE>
+                                                <SET Var="FileContents" FromValue="{$thisParam/*[name() = concat($tabName,'.',$tabProps/name(),'_FileContents')]/@Value}"/>
+                                              </ELSE>
+                                            </IF_TEST>
+                                            <SET Var="TargetTableName" FromValue="{$tabName}"/>
+                                            <SET Var="TargetColumnName" FromValue="{$tabProps/name()}"/>
+                                            <REQUEST Name="insertFileDataType" ServiceName="BPE_META" AssignToVar="FileContentID">
+                                              <FileName Value="{$FileName}"/>
+                                              <FileContents Value="{$FileContents}"/>
+                                              <TargetTableName Value="{$TargetTableName}"/>
+                                              <TargetColumnName Value="{$TargetColumnName}"/>
+                                            </REQUEST>
+                                            <IF_TEST Test="($FileContentID/RESULT/@STATUS = 'SUCCESS')">
+                                              <THEN>
+                                                <SET Var="removeFileName" FromValue="{$TargetColumnName}_FileName"/>
+                                                <SET Var="removeFileContents" FromValue="{$TargetColumnName}_FileContents"/>
+                                                <REMOVE_CHILDREN ChildName="{$removeFileName}" DocVar="tableProperties"/>
+                                                <REMOVE_CHILDREN ChildName="{$removeFileContents}" DocVar="tableProperties"/>
+                                                <REMOVE_CHILDREN ChildName="{$TargetColumnName}" DocVar="tableProperties"/>
+                                                <SET DocVar="tabProps" Attribute="Value" FromValue="{$FileContentID/RESULT/ID/@Value}"/>
+                                                <ADD_CHILDREN DocVar="tableProperties" FromVar="tabProps"/>
+                                              </THEN>
+                                            </IF_TEST>
+                                          </THEN>
+                                        </IF_TEST>
+                                      </THEN>
+                                    </IF_TEST>
+                                  </FOR_EACH>
+                                  <!--END logic for file data-->
+                                  <!--remove all sys fields-->
+                                  <REMOVE_CHILDREN ChildName="SYS_TARGET_ID" DocVar="tableProperties"/>
+                                  <REMOVE_CHILDREN ChildName="SYS_AUTH_ID" DocVar="tableProperties"/>
+                                  <REMOVE_CHILDREN ChildName="SOURCE" DocVar="tableProperties"/>
+                                  <REMOVE_CHILDREN ChildName="CREATED_BY" DocVar="tableProperties"/>
+                                  <REMOVE_CHILDREN ChildName="CREATION_DATE" DocVar="tableProperties"/>
+                                  <REMOVE_CHILDREN ChildName="LAST_MODIFIED_BY" DocVar="tableProperties"/>
+                                  <REMOVE_CHILDREN ChildName="LAST_MODIFIED_DATE" DocVar="tableProperties"/>
+                                  <REMOVE_CHILDREN ChildName="SYS_TYPE" DocVar="tableProperties"/>
+                                  <REMOVE_CHILDREN ChildName="SYS_ERR_CODE" DocVar="tableProperties"/>
+                                  <REMOVE_CHILDREN ChildName="SYS_ERR_SEVERITY" DocVar="tableProperties"/>
+                                  <!--REMOVE_CHILDREN ChildName="ENTITY_STATE" DocVar="tableProperties"/-->
+                                  <!--remove all sys fields-->
+                                  <IF_TEST Test="($SRVC_NAME='BCM_MASTER' and starts-with($tabName,'error_')='false') or $SRVC_NAME='BCM_VERSION_STAGING'">
+                                    <THEN>
+                                      <TO_DOCVAR AssignToVar="executeGDS">
+                                        <GET_DOCUMENT Name="{$tabName}" ServiceName="{$SRVC_NAME}" AssignToVar="getDocSmartReturn" ReturnRowCount="true">
+                                          <TO_XML SelectList="$pkProperties/*"/>
+                                          <TO_XML SelectList="$entityState/*"/>
+                                        </GET_DOCUMENT>
+                                      </TO_DOCVAR>
+                                      <IF_TEST Test="strlen($eName)!=0">
+                                        <THEN>
+                                          <SET DocVar="depCommand" Attribute="index" FromValue="{int($depCommand/@index+1)}"/>
+                                          <SET DocVar="depCommand" Attribute="tableList" FromValue="{concat($depCommand/@tableList,$tabName,',')}"/>
+                                          <SET DocVar="depCommand" Attribute="actionType" FromValue="{ifElse($getDocSmartReturn/@TotalRowCount!=0 or $depCommand/@actionType='ACTIVATE','ACTIVATE','INSERT' )}"/>
+                                          <SET DocVar="tableProperties" Property="SOURCE" FromValue="UI"/>
+                                          <TO_DOCVAR AssignToVar="tempDDPValues">
+                                            <ROOT>
+                                              <TO_XML SelectList="$tableProperties/*"/>
+                                            </ROOT>
+                                          </TO_DOCVAR>
+                                          <SET_NAME DocVar="tempDDPValues" FromValue="{$tabName}"/>
+                                          <ADD_CHILDREN DocVar="depCommand" FromDocVar="tempDDPValues"/>
+                                        </THEN>
+                                        <ELSE>
+                                          <IF_TEST Test="$getDocSmartReturn/@TotalRowCount=0">
+                                            <THEN>
+                                              <TO_DOCVAR AssignToVar="tempDDPValues">
+                                                <ROOT>
+                                                  <TO_XML SelectList="$tableProperties/*"/>
+                                                </ROOT>
+                                              </TO_DOCVAR>
+                                              <SET_NAME DocVar="tempDDPValues" FromValue="{$tabName}"/>
+                                              <SET DocVar="tempDDPValues" Property="SOURCE" FromValue="UI"/>
+                                              <TO_DOCVAR AssignToVar="executeDDPRecord">
+                                                <DO_DB_PERSIST HandleException="true" DocumentName="{$tabName}" Action="INSERT" Source="EXTERNAL" isBulkRequest="false" ServiceName="{$SRVC_NAME}" AssignToVar="DDP_Result">
+                                                  <TO_XML DocVar="tempDDPValues"/>
+                                                </DO_DB_PERSIST>
+                                              </TO_DOCVAR>
+                                            </THEN>
+                                            <ELSE>
+                                              <TO_DOCVAR AssignToVar="tempDDPValues">
+                                                <ROOT>
+                                                  <TO_XML SelectList="$tableProperties/*"/>
+                                                </ROOT>
+                                              </TO_DOCVAR>
+                                              <SET_NAME DocVar="tempDDPValues" FromValue="{$tabName}"/>
+                                              <TO_DOCVAR AssignToVar="executeDDPRecord">
+                                                <DO_DB_PERSIST HandleException="true" DocumentName="{$tabName}" Action="ACTIVATE" Source="EXTERNAL" isBulkRequest="false" ServiceName="{$SRVC_NAME}" AssignToVar="DDP_Result">
+                                                  <TO_XML DocVar="tempDDPValues"/>
+                                                </DO_DB_PERSIST>
+                                              </TO_DOCVAR>
+                                            </ELSE>
+                                          </IF_TEST>
+                                          <IF_TEST Test="$DDP_Result/VALIDATION_RESULT/@Value='SUCCESS' and $tabName='MTCHD_CNSMR_SCR_DMN_MAP'">
+                                            <THEN>
+                                              <SET Var="LE" FromValue="{$tempDDPValues/LEGAL_ENT_NBR/@Value}"/>
+                                              <EXECUTE_SQL_QUERY AssignToVar="SP_Result" Value="CALL MDM.SP_CNSMR_SCORE({$LE}); "/>
+                                            </THEN>
+                                          </IF_TEST>
+                                          <IF_TEST Test="$DDP_Result/VALIDATION_RESULT/@Value='SUCCESS'">
+                                            <THEN>
+                                              <IF_TEST Test="$DDP_Result/@Description = 'DO_DB_PERSIST executed successfully, Record sent for approval'">
+                                                <THEN>
+                                                  <SET Var="alertGreen" FromValue="{$tabName} - RECORD_SUBMITTED_FOR_APPROVAL &lt;BR/>{$alertGreen}"/>
+                                                </THEN>
+                                                <ELSE>
+                                                  <SET Var="alertGreen" FromValue="{$tabName} - Successfully_Added &lt;BR/>{$alertGreen}"/>
+                                                </ELSE>
+                                              </IF_TEST>
+                                            </THEN>
+                                            <ELSE>
+                                              <IF_TEST Test="$DDP_Result/VALIDATION_RESULT/@Value='WARNING'">
+                                                <THEN>
+                                                  <SET Var="alertGreen" FromValue="{$tabName} - Record created successfully, but with {strReplaceAll($DDP_Result/VALIDATION_RESULT/ERROR_CODE/@Value,';','')}. &lt;BR/>{$alertGreen}"/>
+                                                </THEN>
+                                                <ELSE>
+                                                  <IF_TEST Test="$DDP_Result/VALIDATION_RESULT/ERROR_CODE/@Value!=null">
+                                                    <THEN>
+                                                      <SET Var="alertRed" FromValue="{$tabName} - {strReplaceAll($DDP_Result/VALIDATION_RESULT/ERROR_CODE/@Value,';','; ')} &lt;BR/>{$alertRed}"/>
+                                                      <SET Var="alertGreen" FromValue=""/>
+                                                      <!--RAISE_EXCEPTION Value="Error in DB transaction"/-->
+                                                    </THEN>
+                                                  </IF_TEST>
+                                                </ELSE>
+                                              </IF_TEST>
+                                            </ELSE>
+                                          </IF_TEST>
+                                          <IF_TEST Test="$DDP_Result/UI_MESSAGE/@Value='SUCCESS'">
+                                            <THEN>
+                                              <SET Var="alertGreen" FromValue="{$DDP_Result/UI_MESSAGE/@Message}"/>
+                                              <SET Var="alertRed" FromValue=""/>
+                                            </THEN>
+                                          </IF_TEST>
+                                          <IF_TEST Test="$DDP_Result/UI_MESSAGE/@Value='ERROR' or $DDP_Result/@Status='ERROR'">
+                                            <THEN>
+                                              <IF_TEST Test="$cwSearchResultsTables/@TotalRowCount!='1'">
+                                                <THEN>
+                                                  <SET_ERROR_FLAG/>
+                                                </THEN>
+                                              </IF_TEST>
+                                              <SET Var="alertGreen" FromValue=""/>
+                                              <SET Var="alertRed" FromValue="{ifElse(strlen($DDP_Result/UI_MESSAGE/@Message)!=0,$DDP_Result/UI_MESSAGE/@Message,'Record creation failed.')}"/>
+                                            </THEN>
+                                          </IF_TEST>
+                                          <IF_TEST Test="$DDP_Result/@Status='Error'">
+                                            <THEN>
+                                              <IF_TEST Test="$cwSearchResultsTables/@TotalRowCount!='1'">
+                                                <THEN>
+                                                  <SET_ERROR_FLAG/>
+                                                </THEN>
+                                              </IF_TEST>
+                                              <SET Var="alertGreen" FromValue=""/>
+                                              <SET Var="alertRed" FromValue="{$DDP_Result/@Description}"/>
+                                            </THEN>
+                                          </IF_TEST>
+                                        </ELSE>
+                                      </IF_TEST>
+                                    </THEN>
+                                    <ELSE>
+                                      <IF_TEST Test="$SRVC_NAME/@Value='BCM_MASTER' or $SRVC_NAME/@Value='BCM_INPUT_STAGING' or $SRVC_NAME/@Value='BCM_NET_CHANGE' or $SRVC_NAME/@Value='BCM_VERSION_STAGING' or $SRVC_NAME/@Value='BCM_OUTPUT_STAGING'">
+                                        <THEN>
+                                          <SET DocVar="tableProperties" Property="SOURCE" FromValue="UI"/>
+                                        </THEN>
+                                      </IF_TEST>
+                                      <TO_DOCVAR AssignToVar="executeDDPRecord">
+                                        <ADD_DOCUMENT Name="{$tabName}" ServiceName="{$SRVC_NAME}" AssignToVar="DDP_Result" HandleException="true">
+                                          <TO_XML SelectList="$tableProperties/*"/>
+                                        </ADD_DOCUMENT>
+                                      </TO_DOCVAR>
+                                      <IF_TEST Test="$DDP_Result/@Status='Success'">
+                                        <THEN>
+                                          <SET Var="alertGreen" FromValue="{$tabName} - Successfully_Added &lt;BR/>{$alertGreen}"/>
+                                        </THEN>
+                                        <ELSE>
+                                          <SET Var="alertRed" FromValue="{$tabName} - {$DDP_Result/@Description} &lt;BR/>{$alertRed}"/>
+                                          <SET Var="alertGreen" FromValue=""/>
+                                          <!--RAISE_EXCEPTION Value="Error in DB transaction"/-->
+                                        </ELSE>
+                                      </IF_TEST>
+                                    </ELSE>
+                                  </IF_TEST>
+                                </ELSE>
+                              </IF_TEST>
+                            </THEN>
+                          </IF_TEST>
+                        </FOR_EACH>
+                        <IF_TEST Test="strlen($eName)!=0">
+                          <THEN>
+                            <DO_ENTITY_PERSIST PersistTo="BCM_MASTER" AssignToVar="DDP_Result" ServiceName="BCM_MASTER" Source="EXTERNAL" DocumentName="{$eName}" Action="{$depCommand/@actionType}" EntityName="{$eName}" EntityTables="{subString($depCommand/@tableList,0,strlen($depCommand/@tableList)-1)}">
+                              <TO_XML SelectList="$depCommand/*"/>
+                            </DO_ENTITY_PERSIST>
+                            <IF_TEST Test="$DDP_Result/VALIDATION_RESULT/@Value='SUCCESS'">
+                              <THEN>
+                                <IF_TEST Test="$DDP_Result/@Description = 'DO_ENTITY_PERSIST executed successfully, Record sent for approval'">
+                                  <THEN>
+                                    <SET Var="alertGreen" FromValue="{$eName} - RECORD_SUBMITTED_FOR_APPROVAL &lt;BR/>{$alertGreen}"/>
+                                  </THEN>
+                                  <ELSE>
+                                    <SET Var="alertGreen" FromValue="{$eName} - Successfully_Added &lt;BR/>{$alertGreen}"/>
+                                  </ELSE>
+                                </IF_TEST>
+                              </THEN>
+                              <ELSE>
+                                <IF_TEST Test="$DDP_Result/VALIDATION_RESULT/@Value='WARNING'">
+                                  <THEN>
+                                    <SET Var="alertGreen" FromValue="{$eName} - Record created successfully, but with {strReplaceAll($DDP_Result/VALIDATION_RESULT/ERROR_CODE/@Value,';','')}. &lt;BR/>{$alertGreen}"/>
+                                  </THEN>
+                                  <ELSE>
+                                    <IF_TEST Test="$DDP_Result/VALIDATION_RESULT/ERROR_CODE/@Value!=null">
+                                      <THEN>
+                                        <SET Var="alertRed" FromValue="{$eName} - {strReplaceAll($DDP_Result/VALIDATION_RESULT/ERROR_CODE/@Value,';','; ')} &lt;BR/>{$alertRed}"/>
+                                        <SET Var="alertGreen" FromValue=""/>
+                                        <!--RAISE_EXCEPTION Value="Error in DB transaction"/-->
+                                      </THEN>
+                                    </IF_TEST>
+                                  </ELSE>
+                                </IF_TEST>
+                              </ELSE>
+                            </IF_TEST>
+                            <IF_TEST Test="$DDP_Result/UI_MESSAGE/@Value='SUCCESS'">
+                              <THEN>
+                                <SET Var="alertGreen" FromValue="{$DDP_Result/UI_MESSAGE/@Message}"/>
+                                <SET Var="alertRed" FromValue=""/>
+                              </THEN>
+                            </IF_TEST>
+                            <IF_TEST Test="$DDP_Result/UI_MESSAGE/@Value='ERROR'">
+                              <THEN>
+                                <SET Var="alertGreen" FromValue=""/>
+                                <SET Var="alertRed" FromValue="{$DDP_Result/UI_MESSAGE/@Message}"/>
+                              </THEN>
+                            </IF_TEST>
+                            <IF_TEST Test="$DDP_Result/@Value='ERROR' or $DDP_Result/@Status='ERROR'">
+                              <THEN>
+                                <SET Var="alertGreen" FromValue=""/>
+                                <SET Var="alertRed" FromValue="Record creation failed."/>
+                              </THEN>
+                            </IF_TEST>
+                          </THEN>
+                        </IF_TEST>
+                      </DO_TRANSACTION>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="strlen($alertGreen/@Value)> 0 and strlen($EVENT_ID)>0">
+                    <THEN>
+                      <REQUEST Name="raiseEvent" AssignToVar="raiseEventResponse">
+                        <EVENT_ID Value="{$EVENT_ID}"/>
+                      </REQUEST>
+                    </THEN>
+                  </IF_TEST>
+                  <TO_DOCVAR AssignToVar="alert">
+                    <ALERT/>
+                  </TO_DOCVAR>
+                  <IF_TEST Test="strlen($alertGreen/@Value)>1 and indexOf($alertGreen,'&lt;BR')>=0">
+                    <THEN>
+                      <SET Var="alertGreen" FromValue="{substringBefore($alertGreen,'&lt;BR/>')}"/>
+                      <SET Var="alertGreen" FromValue="{substringAfter($alertGreen,'-')}"/>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="strlen($alertRed/@Value)>1 and indexOf($alertRed,'&lt;BR')>=0">
+                    <THEN>
+                      <SET Var="alertRed" FromValue="{strReplaceAll($alertRed,'&lt;BR/>','')}"/>
+                      <SET Var="alertRed" FromValue="{$alertRed}{ifElse(ends-with($alertRed,';'),'',ifElse(ends-with($alertRed,' '),'',';'))}"/>
+                    </THEN>
+                  </IF_TEST>
+                  <APPEND_TO_XML Select="$alert">
+                    <alertGreen Value="{$alertGreen/@Value}"/>
+                    <alertRed Value="{$alertRed/@Value}"/>
+                  </APPEND_TO_XML>
+                  <ADD_CHILDREN DocVar="thisParam" FromSelectList="$alert/*"/>
+                  <IF_TEST Test="strlen($alertRed)!=0">
+                    <THEN>
+                      <SET Var="userAction" FromValue="failed"/>
+                      <SET Var="failureFlag" FromValue="true"/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="userAction" FromValue="true()"/>
+                    </ELSE>
+                  </IF_TEST>
+                  <REQUEST Name="ConfigurableUITrigger" HandleException="true" ServiceName="UI_WORKFLOW">
+                    <THIS_PARAM>
+                      <TO_XML DocVar="thisParam"/>
+                    </THIS_PARAM>
+                    <STATUS>
+                      <TO_XML SelectList="$alert/*"/>
+                    </STATUS>
+                    <OPERATION Value="Create"/>
+                  </REQUEST>
+                </THEN>
+                <ELSE>
+                  <TO_DOCVAR AssignToVar="backUpDetails">
+                    <BACK_UP>
+                      <TO_XML SelectList="$thisParam/*"/>
+                    </BACK_UP>
+                  </TO_DOCVAR>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+            <ELSE>
+              <SET DocVar="thisParam" Property="alertRed" FromValue="Selected Record(s) is Pending Approval"/>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done10" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='failed'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Create" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='tableNode'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="table_editor" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done10" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <table_editor Name="table_editor" DocumentServiceName="{$thisParam/serviceName/@Value}" DocumentName="{$thisParam/refers/@Value}" InputVar="{thisParam,xml}">
+      <pre_actions>
+        <action/>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <input>
+        <action/>
+      </input>
+      <config_parameters>
+        <CreateAction Value="yes"/>
+        <CopyAction Value="yes"/>
+        <EditAction Value="yes"/>
+        <DeleteAction Value="yes"/>
+        <ExportAction Value="yes"/>
+        <AdvancedFilterAction Value="yes"/>
+        <CancelAction Value="yes"/>
+        <SelectAndReturnAction Value="yes"/>
+        <IsMultiSelect Value="no"/>
+        <ResultsPageSize Value="10"/>
+        <SortByProp Value=""/>
+        <SortOrder Value=""/>
+      </config_parameters>
+      <next_nodes>
+        <next_node Name="Create"/>
+      </next_nodes>
+    </table_editor>
+    <done Name="done10">
+      <actions>
+        <action>
+          <TO_DOCVAR AssignToVar="temp">
+            <ROOT>
+              <EVENT_ID Value="{$EVENT_ID}"/>
+              <workflowId Value="{$workflowId}"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="thisParam" FromSelectList="$temp/*"/>
+          <ADD_CHILDREN DocVar="thisReturn" FromSelectList="$thisParam"/>
+        </action>
+      </actions>
+      <next_nodes/>
+    </done>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <start0 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="182,363" size="744,599">
+        <iconProps iconfile="z1start.gif"/>
+      </start0>
+      <mgcnode Name="Generate Create PGL" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="341,167" size="744,627">
+        <iconProps iconfile="z1task.gif"/>
+      </mgcnode>
+      <Create font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="497,333" size="1920,1040">
+        <iconProps iconfile="x1age80.gif"/>
+      </Create>
+      <table_editor font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="497,464" size="744,683">
+        <iconProps iconfile="TableEditor32x32.gif"/>
+      </table_editor>
+      <done10 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="754,294" size="744,599">
+        <iconProps iconfile="z1end.gif"/>
+      </done10>
+    </mgcnodes>
+    <mgcconnectors>
+      <start0>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="227,385" endpoint="363,212" ctrlRect1="327,383,4,4" ctrlRect2="361,340,4,4"/>
+      </start0>
+      <mgcnode Name="Generate Create PGL">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="386,189" endpoint="519,333" ctrlRect1="483,187,4,4" ctrlRect2="517,223,4,4"/>
+      </mgcnode>
+      <Create>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="519,333" endpoint="776,294" ctrlRect1="640,204,4,4" ctrlRect2="749,224,4,4" ctrlRect1Dirty="true" textRect="684,212,24,8" ctrlRect2Dirty="true">
+          <textProps text="$userAction ='Back'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="497,355" endpoint="497,355" ctrlRect1="420,353,4,4" ctrlRect2="423,300,4,4" ctrlRect2Dirty="true" textRect="418,324,11,8">
+          <textProps text="failed"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="519,378" endpoint="519,464" ctrlRect1="517,440,4,4" ctrlRect2="442,391,4,4" textRect="467,413,29,8" ctrlRect2Dirty="true">
+          <textProps text="$userAction ='tableNode'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="542,355" endpoint="776,339" ctrlRect1="715,353,4,4" ctrlRect2="767,355,4,4" textRect="738,352,11,8" ctrlRect2Dirty="true">
+          <textProps text="true()"/>
+        </nextNodeView>
+      </Create>
+      <table_editor>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="519,464" endpoint="519,378" ctrlRect1="596,397,4,4" ctrlRect2="517,441,4,4" ctrlRect1Dirty="true">
+          <textProps/>
+        </nextNodeView>
+      </table_editor>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+      <action/>
+    </pre_actions>
+    <post_actions>
+      <action/>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="4" ShowInBreadCrumbs="true" Version="1.0" Name="ORIG_wf" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="ORIG_wf"/>
+  <nodes>
+    <start Name="start">
+      <actions>
+        <action>
+          <SET Var="ORIGWf_Status" FromValue="Yes" Scope="Global"/>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="ORIG_Validation"/>
+      </next_nodes>
+    </start>
+    <task Name="ORIG_Validation">
+      <actions>
+        <action>
+          <REQUEST Name="Validation_Rule_ORIG" AssignToVar="thisReturn" ServiceName="BCM_MASTER"/>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="done"/>
+      </next_nodes>
+    </task>
+    <done Name="done">
+      <actions>
+        <action>
+          <IF_TEST Test="$thisReturn/Message/@Value ='ORIG Validation Successful'">
+            <THEN>
+              <EXECUTE_SHELL_COMMAND Value="CNSMR_MERGE.BAT" AssignToVar="resCnsmrMergeBat" Synchronous="true"/>
+              <IF_TEST Test="$resCnsmrMergeBat/@ShellReturnValue = 0">
+                <THEN>
+                </THEN>
+                <ELSE>
+                </ELSE>
+              </IF_TEST>
+              <EXECUTE_SQL_QUERY Value="SEL 1 WHERE TIME BETWEEN CAST('03:30:00' AS INTEGER FORMAT '99:99:99') AND CAST('19:00:00' AS INTEGER FORMAT '99:99:99');" AssignToVar="selTime" ReturnRowCount="yes"/>
+              <IF_TEST Test="$selTime/@TotalRowCount = 1">
+                <THEN>
+                  <EXECUTE_SHELL_COMMAND Value="{concat('pemerge.cmd ','PE')}" AssignToVar="resPEMergeBat" Synchronous="true"/>
+                  <SET Var="Description" FromValue="{$resPEMergeBat/@ShellReturnValue}"/>
+                  <IF_TEST Test="$resPEMergeBat/@ShellReturnValue = 0">
+                    <THEN>
+                    </THEN>
+                    <ELSE>
+                      <EXECUTE_SQL_QUERY Value="SELECT MAX(LOAD_ID) FROM LOAD_CONTROL WHERE FORMAT_ID= 22 AND LOAD_TYPE='ETL' AND LOADSTATUS='IN PROGRESS' AND MDM_PROCESS_DESC='PE Merge';" AssignToVar="concatenatedLoadIds" ReturnRowCount="yes"/>
+                      <EXECUTE_SQL_QUERY Value="UPDATE LOAD_CONTROL SET LOADSTATUS='Failure',MDM_PROCESS_DESC='PE Merge - Failed',LOADENDTS=CURRENT_TIMESTAMP(0) WHERE LOAD_ID IN (SELECT MAX(LOAD_ID) FROM LOAD_CONTROL WHERE FORMAT_ID= 22 AND LOAD_TYPE='ETL' AND LOADSTATUS='IN PROGRESS' AND MDM_PROCESS_DESC='PE Merge');" AssignToVar="resLoadInfo" ReturnRowCount="yes"/>
+                      <REQUEST Name="emailOnErrorNode">
+                        <LoadId Value="{$concatenatedLoadIds/@Value}"/>
+                        <Subject Value="PE Merge Failure"/>
+                        <Short_Description Value="{$Description/@Value}"/>
+                        <Description Value="Following Load Id failed :{$concatenatedLoadIds/@Value}"/>
+                        <SubCategory Value="PE Merge Error"/>
+                        <CNTRY_NAME Value="Global"/>
+                        <PROCESS_NAME Value="Profile Editor Merge"/>
+                      </REQUEST>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+            <ELSE>
+            </ELSE>
+          </IF_TEST>
+          <SET Var="ORIGWf_Status" FromValue="No" Scope="Global"/>
+        </action>
+      </actions>
+      <next_nodes/>
+    </done>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <start font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="119,149" size="732,526">
+        <iconProps iconfile="z1start.gif"/>
+      </start>
+      <ORIG_Validation font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="268,182" size="732,552">
+        <iconProps iconfile="z1task.gif"/>
+      </ORIG_Validation>
+      <done font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="427,181" size="1024,715">
+        <iconProps iconfile="z1end.gif"/>
+      </done>
+    </mgcnodes>
+    <mgcconnectors>
+      <start>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="157,168" endpoint="273,194" ctrlRect1="242,166,4,4" ctrlRect2="184,192,4,4"/>
+      </start>
+      <ORIG_Validation>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="313,204" endpoint="427,203" ctrlRect1="396,202,4,4" ctrlRect2="339,201,4,4"/>
+      </ORIG_Validation>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+      <action/>
+    </pre_actions>
+    <post_actions>
+      <action/>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

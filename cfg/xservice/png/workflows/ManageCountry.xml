@@ -1,0 +1,549 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="6" ShowInBreadCrumbs="true" Version="1.0" Name="ManageCountry" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="ManageCountry">
+    <variable Name="searchResults" Type="xml" Comment=""/>
+    <variable Name="actionType" Type="string" Comment=""/>
+    <variable Name="alertGreen" Type="string" Comment=""/>
+    <variable Name="alertRed" Type="string" Comment=""/>
+    <variable Name="selectedCountryCode" Type="string" Comment=""/>
+    <variable Name="CountryList" Type="xml" Comment=""/>
+    <variable Name="geographicRegionValues" Type="xml" Comment=""/>
+    <variable Name="geographicSubRegionValues" Type="xml" Comment=""/>
+    <variable Name="CountryDetails" Type="xml" Comment=""/>
+    <variable Name="countryCode" Type="string" Comment=""/>
+    <variable Name="geographicSubRegionList" Type="xml" Comment=""/>
+    <variable Name="matchedDomainValues" Type="xml" Comment=""/>
+    <variable Name="domainValues" Type="xml" Comment=""/>
+    <variable Name="grapRegionList" Type="xml" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start0">
+      <actions>
+        <action>
+          <REQUEST Name="getGeographicRegion" ServiceName="BCM_MASTER" AssignToVar="geographicRegionValues"/>
+          <!--<REQUEST Name="getGeographicSubRegion" ServiceName="BCM_MASTER" AssignToVar="geographicSubRegionValues">
+    <SOURCE Value="SEARCH"/>
+    <GEOC_REGN_CODE Value="{$geographicRegionValues/GEOC_REGN/GEOC_REGN_CODE/@Value}"/>
+  </REQUEST>-->
+          <!--<REQUEST Name="getMatchedDomains1" AssignToVar="matchedDomainValues">
+    <GEOC_REGN_CODE Value="{$geographicRegionValues/GEOC_REGN/GEOC_REGN_CODE/@Value}"/>
+    <GEOC_SUB_REGN_CODE Value="{$geographicSubRegionValues/GEOC_SUB_REGN/OPTION/@Id}"/>
+  </REQUEST>-->
+          <REQUEST Name="getGeographicSubRegionALL" ServiceName="BCM_MASTER" AssignToVar="geographicSubRegionList"/>
+          <REQUEST Name="getCountryOptions" ServiceName="BCM_MASTER" AssignToVar="CountryList"/>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="SearchCountry"/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="SearchCountry" ShowInBreadCrumbs="SHOW" Template="SearchCountry.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pMessage">
+            <_ERRORS/>
+          </TO_DOCVAR>
+          <IF_TEST Test="($userAction='SEARCH' or $thisParam/START_COUNT/@Value>=0)">
+            <!--IF_TEST Test="($userAction='SEARCH')"-->
+            <THEN>
+              <REQUEST Name="getCountrySearchResults" AssignToVar="searchResults" ServiceName="BCM_MASTER">
+                <!--<LEGAL_ENT_NBR Value="{$domainValues/LEGAL_ENT[OPTION/@Id=$thisParam/LEGAL_ENT_NBR/@Value]/OPTION/@Id}" />-->
+                <GEOC_REGN_CODE Value="{$geographicRegionValues/GEOC_REGN[GEOC_REGN_NAME/@Value=$thisParam/GEOC_REGN_CODE/@Value]/GEOC_REGN_CODE/@Value}"/>
+                <!--<GEOC_SUB_REGN_CODE Value="{$geographicSubRegionValues/GEOC_SUB_REGN[OPTION/@Id=$thisParam/GEOC_SUB_REGN_CODE/@Value]/OPTION/@Id}" />-->
+                <TO_XML SelectList="$thisParam/*"/>
+                <TOTAL_NO_OF_ROWS Value="15"/>
+              </REQUEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='CANCEL'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <TO_XML SelectList="$matchedDomainValues/*"/>
+                  <TO_XML SelectList="$domainValues/*"/>
+                  <TO_XML SelectList="$geographicRegionValues/*"/>
+                  <TO_XML SelectList="$geographicSubRegionValues/*"/>
+                  <TO_XML DocVar="pMessage"/>
+                  <TO_XML SelectList="$CountryList/*"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+            <ELSE>
+              <THEN>
+                <TO_DOCVAR AssignToVar="pglFormInput">
+                  <ROOT>
+                    <TO_XML SelectList="$matchedDomainValues/*"/>
+                    <TO_XML SelectList="$domainValues/*"/>
+                    <TO_XML SelectList="$geographicRegionValues/*"/>
+                    <TO_XML SelectList="$geographicSubRegionValues/*"/>
+                    <TO_XML SelectList="$geographicSubRegionList/*"/>
+                    <TO_XML SelectList="$searchResults"/>
+                    <TO_XML DocVar="pMessage"/>
+                    <TO_XML SelectList="$CountryList/*"/>
+                  </ROOT>
+                </TO_DOCVAR>
+              </THEN>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_PROGRAM_LIST'">
+            <THEN>
+              <REQUEST Name="getGeographicRegion" ServiceName="BCM_MASTER" AssignToVar="grapRegion"/>
+              <REQUEST Name="getGeographicSubRegion" ServiceName="BCM_MASTER" AssignToVar="geographicSubRegionValues">
+                <SOURCE Value="SEARCH"/>
+                <GEOC_REGN_CODE Value="{$grapRegion/GEOC_REGN[GEOC_REGN_NAME/@Value=$thisParam/GEOC_REGN_CODE/@Value]/GEOC_REGN_CODE/@Value}"/>
+              </REQUEST>
+              <REQUEST Name="getMatchedDomains1" ServiceName="BCM_MASTER" AssignToVar="domainValues">
+                <SOURCE Value="SEARCH"/>
+                <GEOC_REGN_CODE Value="{$grapRegion/GEOC_REGN[GEOC_REGN_NAME/@Value=$thisParam/GEOC_REGN_CODE/@Value]/GEOC_REGN_CODE/@Value}"/>
+                <GEOC_SUB_REGN_CODE Value="{$thisParam/GEOC_SUB_REGN_CODE/@Value}"/>
+              </REQUEST>
+              <TO_DOCVAR AssignToVar="searchResults">
+                <ROOT/>
+              </TO_DOCVAR>
+              <SET Property="SHOW_LOAD_SEARCH_RESULTS" DocVar="thisParam" FromValue="TRUE"/>
+              <SET Property="START_COUNT" DocVar="thisParam" FromValue="0"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='DONE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='RESET'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SEARCH'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="SearchCountry" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='CREATE'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="CreateCountry" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='EDIT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ModifyCountry" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='DELETE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='excelExport'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ExcelExport'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_PROGRAM_LIST'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="SearchCountry" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="CreateCountry" ShowInBreadCrumbs="SHOW" Template="Country.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$userAction='CREATE'">
+            <THEN>
+              <SET Var="actionType" FromValue="INSERT"/>
+              <REQUEST Name="getGeographicRegion" ServiceName="BCM_MASTER" AssignToVar="grapRegion"/>
+              <REQUEST Name="getGeographicSubRegion" ServiceName="BCM_MASTER" AssignToVar="geographicSubRegionValues">
+                <SOURCE Value="NOT_SEARCH"/>
+                <GEOC_REGN_CODE Value="{$grapRegion/GEOC_REGN[GEOC_REGN_NAME/@Value=$thisParam/GEOC_REGN_CODE/@Value]/GEOC_REGN_CODE/@Value}"/>
+              </REQUEST>
+              <!--<REQUEST Name="getMatchedDomains1" ServiceName="BCM_MASTER" AssignToVar="domainValues">
+        <SOURCE Value="NOT_SEARCH"/>
+        <GEOC_REGN_CODE Value="{$grapRegion/GEOC_REGN[GEOC_REGN_NAME/@Value=$thisParam/GEOC_REGN_CODE/@Value]/GEOC_REGN_CODE/@Value}"/>
+        <GEOC_SUB_REGN_CODE Value="{$geographicSubRegionValues/GEOC_SUB_REGN[OPTION/@Id=$thisParam/GEOC_SUB_REGN_CODE/@Value]/OPTION/@Id}"/>
+      </REQUEST>-->
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <ReadOnlyFlag Value="{$thisParam/ReadOnlyFlag/@Value}"/>
+              <ACTION_TYPE Value="{$actionType/@Value}"/>
+              <TO_XML SelectList="$CountryDetails/*"/>
+              <TO_XML SelectList="$searchResults"/>
+              <TO_XML SelectList="$matchedDomainValues/*"/>
+              <TO_XML SelectList="$geographicRegionValues/*"/>
+              <TO_XML SelectList="$geographicSubRegionValues/*"/>
+              <TO_XML SelectList="$CountryList/*"/>
+              <TO_XML SelectList="$domainValues/*"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="alertz">
+            <ABC>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </ABC>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$alertz/*"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="alertGreen" FromValue=""/>
+          <IF_TEST Test="$userAction='ADD'">
+            <THEN>
+              <SET Var="isNameValid" FromValue="YES"/>
+              <REQUEST Name="getCountryOptions" ServiceName="BCM_MASTER" AssignToVar="CountryNames">
+                <!--<LEGAL_ENT_NBR Value="{$matchedDomainValues/LEGAL_ENT[LEGAL_ENT_NAME/@Value=$thisParam/LEGAL_ENT_NBR/@Value]/LEGAL_ENT_NBR/@Value}"/>-->
+                <GEOC_REGN_CODE Value="{$geographicRegionValues/GEOC_REGN[GEOC_REGN_NAME/@Value=$thisParam/GEOC_REGN_CODE/@Value]/GEOC_REGN_CODE/@Value}"/>
+                <GEOC_SUB_REGN_CODE Value="{$thisParam/GEOC_SUB_REGN_CODE/@Value}"/>
+                <!--<GEOC_SUB_REGN_CODE Value="{$geographicSubRegionValues/GEOC_SUB_REGN[OPTION/@Id=$thisParam/GEOC_SUB_REGN_CODE/@Value]/GEOC_SUB_REGN_CODE/@Value}" />-->
+                <!--<GEOC_SUB_REGN_CODE Value="{$geographicSubRegionValues/GEOC_SUB_REGN[GEOC_SUB_REGN_NAME/@Value=$thisParam/GEOC_SUB_REGN_CODE/@Value]/GEOC_SUB_REGN_CODE/@Value}" />-->
+                <TO_XML SelectList="$thisParam/*"/>
+              </REQUEST>
+              <IF_TEST Test="$CountryNames/CNTRY/@TotalRowCount>=1">
+                <THEN>
+                  <SET Var="alertRed" FromValue="Country code already exists."/>
+                  <SET Var="isNameValid" FromValue="NO"/>
+                  <SET Var="actionType" FromValue="CREATE_FAILED"/>
+                </THEN>
+                <ELSE/>
+              </IF_TEST>
+              <!--<FOR_EACH SelectList="$CountryNames/CNTRY/OPTION" CurrentElement="curElement">       
+        <IF_TEST Test="$curElement/@Id=$thisParam/CNTRY_CODE/@Value">          
+          <THEN>
+            <SET Var="alertRed" FromValue="Country with the same code already exists."/>
+            <SET Var="isNameValid" FromValue="NO"/>
+            <SET Var="actionType" FromValue="CREATE_FAILED"/>
+          </THEN>
+        </IF_TEST>
+      </FOR_EACH>-->
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$isNameValid='YES'">
+            <THEN>
+              <REQUEST Name="createCountry" ServiceName="BCM_MASTER" AssignToVar="CountryResults">
+                <!--<LEGAL_ENT_NBR Value="{$matchedDomainValues/LEGAL_ENT[LEGAL_ENT_NAME/@Value=$thisParam/LEGAL_ENT_NBR/@Value]/LEGAL_ENT_NBR/@Value}"/>-->
+                <GEOC_REGN_CODE Value="{$geographicRegionValues/GEOC_REGN[GEOC_REGN_NAME/@Value=$thisParam/GEOC_REGN_CODE/@Value]/GEOC_REGN_CODE/@Value}"/>
+                <GEOC_SUB_REGN_CODE Value="{$thisParam/GEOC_SUB_REGN_CODE/@Value}"/>
+                <!--<GEOC_SUB_REGN_CODE Value="{$geographicSubRegionValues/GEOC_SUB_REGN[OPTION/@Id=$thisParam/GEOC_SUB_REGN_CODE/@Value]/GEOC_SUB_REGN_CODE/@Value}" />-->
+                <!--        <GEOC_SUB_REGN_CODE Value="{$geographicSubRegionValues/GEOC_SUB_REGN[GEOC_SUB_REGN_NAME/@Value=$thisParam/GEOC_SUB_REGN_CODE/@Value]/GEOC_SUB_REGN_CODE/@Value}" />-->
+                <TO_XML SelectList="$thisParam/*"/>
+              </REQUEST>
+              <IF_TEST Test="strlen($CountryResults/_RESULT/_ERROR/@Value) > 0">
+                <THEN>
+                  <SET Var="alertRed" FromValue="{$CountryResults/_RESULT/_ERROR/@Value}"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertGreen" FromValue="Record Created Successfully"/>
+                  <SET Var="isItemPresent" FromValue="YES"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_PROGRAM_LIST'">
+                <THEN>
+                  <SET Var="actionType" FromValue="{$thisParam/ACTION_TYPE/@Value}"/>
+                  <REQUEST Name="getGeographicRegion" ServiceName="BCM_MASTER" AssignToVar="grapRegion"/>
+                  <REQUEST Name="getGeographicSubRegion" ServiceName="BCM_MASTER" AssignToVar="geographicSubRegionValues">
+                    <SOURCE Value="NOT_SEARCH"/>
+                    <GEOC_REGN_CODE Value="{$grapRegion/GEOC_REGN[GEOC_REGN_NAME/@Value=$thisParam/GEOC_REGN_CODE/@Value]/GEOC_REGN_CODE/@Value}"/>
+                  </REQUEST>
+                  <REQUEST Name="getMatchedDomains1" ServiceName="BCM_MASTER" AssignToVar="domainValues">
+                    <SOURCE Value="NOT_SEARCH"/>
+                    <GEOC_REGN_CODE Value="{$grapRegion/GEOC_REGN[GEOC_REGN_NAME/@Value=$thisParam/GEOC_REGN_CODE/@Value]/GEOC_REGN_CODE/@Value}"/>
+                    <GEOC_SUB_REGN_CODE Value="{$thisParam/GEOC_SUB_REGN_CODE/@Value}"/>
+                  </REQUEST>
+                  <!--<REQUEST Name="getMatchedDomains" ServiceName="BCM_MASTER" AssignToVar="domainValues">
+                    <SOURCE Value="SEARCH"/>
+                    <GEOC_REGN_CODE Value="{$geographicRegionValues/GEOC_REGN[GEOC_REGN_NAME/@Value=$thisParam/GEOC_REGN_CODE/@Value]/GEOC_REGN_CODE/@Value}"/>
+                    <GEOC_SUB_REGN_CODE Value="{$geographicSubRegionValues/GEOC_SUB_REGN[GEOC_SUB_REGN_NAME/@Value=$thisParam/GEOC_SUB_REGN_CODE/@Value]/GEOC_SUB_REGN_CODE/@Value}"/>
+                  </REQUEST>-->
+                  <TO_DOCVAR AssignToVar="CountryDetailsCopy">
+                    <TO_XML SelectList="$CountryDetails/*"/>
+                  </TO_DOCVAR>
+                  <!--<SET Property="LEGAL_ENT_NBR" FromValue="{$thisParam/LEGAL_ENT_NBR/@Value}" DocVar="CountryDetailsCopy"/>
+          <SET Property="CNTRY_CODE" FromValue="{$thisParam/CNTRY_CODE/@Value}" DocVar="CountryDetailsCopy" />
+          <SET Property="CNTRY_CODE_NTV" FromValue="{$thisParam/CNTRY_CODE_NTV/@Value}" DocVar="CountryDetailsCopy" />
+          <SET Property="CNTRY_NAME" FromValue="{$thisParam/CNTRY_NAME/@Value}" DocVar="CountryDetailsCopy" />
+          <SET Property="CNTRY_NAME_NTV" FromValue="{$thisParam/CNTRY_NAME_NTV/@Value}" DocVar="CountryDetailsCopy" />
+          <SET Property="CNTRY_SHORT_NAME" FromValue="{$thisParam/CNTRY_SHORT_NAME/@Value}" DocVar="CountryDetailsCopy" />
+          <SET Property="CNTRY_DESC" FromValue="{$thisParam/CNTRY_DESC/@Value}" DocVar="CountryDetailsCopy" />
+          <SET Property="GEOC_REGN_CODE" FromValue="{$thisParam/GEOC_REGN_CODE/@Value}" DocVar="CountryDetailsCopy" />
+          <SET Property="GEOC_SUB_REGN_CODE" FromValue="{$thisParam/GEOC_SUB_REGN_CODE/@Value}" DocVar="CountryDetailsCopy" />          -->
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$userAction='CANCEL'">
+                    <THEN>
+                      <REQUEST Name="getGeographicSubRegion" AssignToVar="geographicSubRegionValues" ServiceName="BCM_MASTER">
+                        <SOURCE Value="SEARCH"/>
+                        <GEOC_REGN_CODE Value="{$geographicRegionValues/GEOC_REGN[GEOC_REGN_NAME/@Value=$thisParam/GEOC_REGN_CODE/@Value]/GEOC_REGN_CODE/@Value}"/>
+                      </REQUEST>
+                      <!--<REQUEST Name="getMatchedDomains" ServiceName="BCM_MASTER" AssignToVar="domainValues">
+                        <SOURCE Value="SEARCH"/>
+                        <GEOC_REGN_CODE Value="{$geographicRegionValues/GEOC_REGN[GEOC_REGN_NAME/@Value=$thisParam/GEOC_REGN_CODE/@Value]/GEOC_REGN_CODE/@Value}"/>
+                        <GEOC_SUB_REGN_CODE Value="{$geographicSubRegionValues/GEOC_SUB_REGN[GEOC_SUB_REGN_NAME/@Value=$thisParam/GEOC_SUB_REGN_CODE/@Value]/GEOC_SUB_REGN_CODE/@Value}"/>
+                      </REQUEST>-->
+                      <SET Property="LEGAL_ENT_NBR" FromValue="" DocVar="thisParam"/>
+                      <SET Property="CNTRY_CODE" FromValue="" DocVar="thisParam"/>
+                      <SET Property="CNTRY_CODE_NTV" FromValue="" DocVar="thisParam"/>
+                      <SET Property="CNTRY_NAME" FromValue="" DocVar="thisParam"/>
+                      <SET Property="CNTRY_NAME_NTV" FromValue="" DocVar="thisParam"/>
+                      <SET Property="CNTRY_SHORT_NAME" FromValue="" DocVar="thisParam"/>
+                      <SET Property="CNTRY_DESC" FromValue="" DocVar="thisParam"/>
+                      <SET Property="GEOC_REGN_CODE" FromValue="" DocVar="thisParam"/>
+                      <SET Property="GEOC_SUB_REGN_CODE" FromValue="" DocVar="thisParam"/>
+                    </THEN>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='DONE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='CANCEL'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="SearchCountry" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='CREATE_SUCCESS'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ADD'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="CreateCountry" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_PROGRAM_LIST'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="CreateCountry" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='true()'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="ModifyCountry" ShowInBreadCrumbs="SHOW" Template="ModifyCountry.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='EDIT' or $userAction='EDIT' or $userAction='RETURN' or $userAction='SAVE_ITEM' or $userAction='save' or $userAction='SAVE' or $userAction='Return' or $actionType='CREATE_SUCCESS' or $thisParam/BUTTON_ID/@Value='update' or $thisParam/BUTTON_ID/@Value='UPDATE_ITEM'">
+            <THEN>
+              <SET Var="actionType" FromValue="UPDATE"/>
+              <IF_TEST Test="$userAction='EDIT'">
+                <THEN>
+                  <SET Var="selectedCountryCode" FromValue="{$thisParam/CountryCode/@Value}"/>
+                </THEN>
+              </IF_TEST>
+              <EXECUTE_SQL_QUERY AssignToVar="CountryDetails" Value="SELECT * FROM CNTRY WHERE CNTRY_CODE = '{$selectedCountryCode/@Value}';"/>
+              <REQUEST Name="getGeographicRegionList" ServiceName="BCM_MASTER" AssignToVar="grapRegionList"/>
+              <REQUEST Name="getGeographicSubRegion" ServiceName="BCM_MASTER" AssignToVar="geographicSubRegionValues">
+                <SOURCE Value="NOT_SEARCH"/>
+                <GEOC_REGN_CODE Value="{$CountryDetails/SQL_RESULT/GEOC_REGN_CODE/@Value}"/>
+                <!--<GEOC_REGN_CODE Value="{$grapRegion/GEOC_REGN[GEOC_REGN_NAME/@Value=$thisParam/GEOC_REGN_CODE/@Value]/GEOC_REGN_CODE/@Value}" />-->
+              </REQUEST>
+              <REQUEST Name="getMatchedDomains1" ServiceName="BCM_MASTER" AssignToVar="domainValues">
+                <GEOC_REGN_CODE Value="{$CountryDetails/SQL_RESULT/GEOC_REGN_CODE/@Value}"/>
+                <GEOC_SUB_REGN_CODE Value="{$CountryDetails/SQL_RESULT/GEOC_SUB_REGN_CODE/@Value}"/>
+                <!--<GEOC_REGN_CODE Value="{$grapRegion/GEOC_REGN[GEOC_REGN_NAME/@Value=$thisParam/GEOC_REGN_CODE/@Value]/GEOC_REGN_CODE/@Value}" />
+<GEOC_SUB_REGN_CODE Value="{$geographicSubRegionValues/GEOC_SUB_REGN[OPTION/@Id=$thisParam/GEOC_SUB_REGN_CODE/@Value]/OPTION/@Id}" />-->
+              </REQUEST>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <CNTRY_CODE Value="{$selectedCountryCode/@Value}"/>
+              <ACTION_TYPE Value="{$actionType/@Value}"/>
+              <TO_XML SelectList="$CountryDetails/*"/>
+              <TO_XML SelectList="$domainValues/*"/>
+              <TO_XML SelectList="$grapRegionList/*"/>
+              <TO_XML SelectList="$geographicRegionValues/*"/>
+              <TO_XML SelectList="$geographicSubRegionValues/*"/>
+              <!--<IS_ITEM_PRESENT Value="{$isItemPresent/@Value}" />
+<IS_TRT_PRESENT Value="{$isTrtPresent/@Value}" />-->
+            </ROOT>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="alertz">
+            <ABC>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </ABC>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$alertz/*"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="alertGreen" FromValue=""/>
+          <IF_TEST Test="$userAction='SAVE'">
+            <THEN>
+              <REQUEST Name="saveCountry" ServiceName="BCM_MASTER" AssignToVar="saveCountryResults">
+                <CNTRY_CODE Value="{$selectedCountryCode/@Value}"/>
+                <!--<GEOC_REGN_CODE Value="{$thisParam/GEOC_REGN_CODE/@Value}" />-->
+                <!--<GEOC_REGN_CODE Value="{$geographicRegionValues/GEOC_REGN[GEOC_REGN_NAME/@Value=$thisParam/GEOC_REGN_CODE/@Value]/GEOC_REGN_CODE/@Value}"/>-->
+                <!--<GEOC_SUB_REGN_CODE Value="{$geographicSubRegionValues/GEOC_SUB_REGN[GEOC_SUB_REGN_NAME/@Value=$thisParam/GEOC_SUB_REGN_CODE/@Value]/GEOC_SUB_REGN_CODE/@Value}" /-->
+                <!--<LEGAL_ENT_NBR Value="{$matchedDomainValues/LEGAL_ENT[LEGAL_ENT_NAME/@Value=$thisParam/LEGAL_ENT_NBR/@Value]/LEGAL_ENT_NBR/@Value}"/>-->
+                <TO_XML SelectList="$thisParam/*"/>
+              </REQUEST>
+              <IF_TEST Test="$saveCountryResults/@Status='Success'">
+                <THEN>
+                  <SET Var="alertGreen" FromValue="Record Updated Successfully"/>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_PROGRAM_LIST'">
+                <THEN>
+                  <SET Var="actionType" FromValue="{$thisParam/ACTION_TYPE/@Value}"/>
+                  <!--          <REQUEST Name="getGeographicRegion" ServiceName="BCM_MASTER" AssignToVar="grapRegion" />-->
+                  <REQUEST Name="getGeographicRegionList" ServiceName="BCM_MASTER" AssignToVar="grapRegionList"/>
+                  <REQUEST Name="getGeographicSubRegion" ServiceName="BCM_MASTER" AssignToVar="geographicSubRegionValues">
+                    <SOURCE Value="NOT_SEARCH"/>
+                    <GEOC_REGN_CODE Value="{$thisParam/GEOC_REGN_CODE/@Value}"/>
+                    <!--            <GEOC_REGN_CODE Value="{$grapRegion/GEOC_REGN[GEOC_REGN_NAME/@Value=$thisParam/GEOC_REGN_CODE/@Value]/GEOC_REGN_CODE/@Value}" />-->
+                  </REQUEST>
+                  <REQUEST Name="getMatchedDomains1" ServiceName="BCM_MASTER" AssignToVar="domainValues">
+                    <GEOC_REGN_CODE Value="{$thisParam/GEOC_REGN_CODE/@Value}"/>
+                    <GEOC_SUB_REGN_CODE Value="{$thisParam/GEOC_SUB_REGN_CODE/@Value}"/>
+                    <!--<GEOC_REGN_CODE Value="{$grapRegionList/GEOC_REGN[OPTION/@Id=$thisParam/GEOC_REGN_CODE/@Value]/OPTION/@Id}"/>
+            <GEOC_SUB_REGN_CODE Value="{$geographicSubRegionValues/GEOC_SUB_REGN[OPTION/@Id=$thisParam/GEOC_SUB_REGN_CODE/@Value]/OPTION/@Id}"/>-->
+                    <!--  <GEOC_REGN_CODE Value="{$grapRegion/GEOC_REGN[GEOC_REGN_NAME/@Value=$thisParam/GEOC_REGN_CODE/@Value]/GEOC_REGN_CODE/@Value}" />
+            <GEOC_SUB_REGN_CODE Value="{$geographicSubRegionValues/GEOC_SUB_REGN[OPTION/@Id=$thisParam/GEOC_SUB_REGN_CODE/@Value]/OPTION/@Id}" />-->
+                  </REQUEST>
+                  <TO_DOCVAR AssignToVar="CountryDetailsCopy">
+                    <TO_XML SelectList="$CountryDetails/*"/>
+                  </TO_DOCVAR>
+                  <SET Property="SHOW_LOAD_SEARCH_RESULTS" DocVar="thisParam" FromValue="TRUE"/>
+                  <SET Property="START_COUNT" DocVar="thisParam" FromValue="0"/>
+                  <SET Property="CNTRY_CODE" FromValue="{$selectedContentID/@Value}" DocVar="CountryDetailsCopy"/>
+                  <SET Property="CNTRY_CODE_NTV" FromValue="{$thisParam/CNTRY_CODE_NTV/@Value}" DocVar="CountryDetailsCopy"/>
+                  <SET Property="CNTRY_NAME" FromValue="{$thisParam/CNTRY_NAME/@Value}" DocVar="CountryDetailsCopy"/>
+                  <SET Property="CNTRY_NAME_NTV" FromValue="{$thisParam/CNTRY_NAME_NTV/@Value}" DocVar="CountryDetailsCopy"/>
+                  <SET Property="CNTRY_SHORT_NAME" FromValue="{$thisParam/CNTRY_SHORT_NAME/@Value}" DocVar="CountryDetailsCopy"/>
+                  <SET Property="CNTRY_DESC" FromValue="{$thisParam/CNTRY_DESC/@Value}" DocVar="CountryDetailsCopy"/>
+                  <SET Property="GEOC_REGN_CODE" FromValue="{$thisParam/GEOC_REGN_CODE/@Value}" DocVar="CountryDetailsCopy"/>
+                  <SET Property="GEOC_SUB_REGN_CODE" FromValue="{$thisParam/GEOC_SUB_REGN_CODE/@Value}" DocVar="CountryDetailsCopy"/>
+                  <SET Property="ENTITY_STATE" FromValue="{$thisParam/ENTITY_STATE/@Value}" DocVar="CountryDetailsCopy"/>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$userAction='CANCEL'">
+                    <THEN>
+                      <SET Property="CNTRY_CODE" FromValue="" DocVar="thisParam"/>
+                      <SET Property="CNTRY_NAME" FromValue="" DocVar="thisParam"/>
+                      <SET Property="CNTRY_CODE_NTV" FromValue="" DocVar="thisParam"/>
+                      <SET Property="CNTRY_NAME_NTV" FromValue="" DocVar="thisParam"/>
+                      <SET Property="CNTRY_SHORT_NAME" FromValue="" DocVar="thisParam"/>
+                      <SET Property="CNTRY_DESC" FromValue="" DocVar="thisParam"/>
+                      <SET Property="GEOC_REGN_CODE" FromValue="" DocVar="thisParam"/>
+                      <SET Property="GEOC_SUB_REGN_CODE" FromValue="" DocVar="thisParam"/>
+                      <SET Property="LEGAL_ENT_NBR" FromValue="" DocVar="thisParam"/>
+                    </THEN>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='DONE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='CANCEL'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="SearchCountry" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SAVE'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ModifyCountry" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SUBMIT'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_PROGRAM_LIST'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ModifyCountry" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <start0 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="120,258" size="732,526">
+        <iconProps iconfile="z1start.gif"/>
+      </start0>
+      <SearchCountry font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="287,184" size="1364,724">
+        <iconProps iconfile="x1age80.gif"/>
+      </SearchCountry>
+      <CreateCountry font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="526,100" size="1364,724">
+        <iconProps iconfile="x1age80.gif"/>
+      </CreateCountry>
+      <ModifyCountry font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="454,275" size="1920,1036">
+        <iconProps iconfile="x1age80.gif"/>
+      </ModifyCountry>
+    </mgcnodes>
+    <mgcconnectors>
+      <start0>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="165,280" endpoint="287,206" ctrlRect1="254,278,4,4" ctrlRect2="193,204,4,4"/>
+      </start0>
+      <SearchCountry>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="309,184" endpoint="309,184" ctrlRect1="307,107,4,4" ctrlRect2="379,46,4,4" ctrlRect2Dirty="true" textRect="332,74,26,8">
+          <textProps text="$userAction ='SEARCH'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="332,206" endpoint="526,122" ctrlRect1="411,116,4,4" ctrlRect2="378,120,4,4" textRect="383,116,26,8" ctrlRect1Dirty="true">
+          <textProps text="$userAction ='CREATE'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="309,229" endpoint="454,297" ctrlRect1="307,278,4,4" ctrlRect2="343,295,4,4" textRect="315,284,24,8">
+          <textProps text="$userAction ='EDIT'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="287,206" endpoint="309,184" ctrlRect1="210,204,4,4" ctrlRect2="199,75,4,4" ctrlRect2Dirty="true" textRect="188,137,37,8">
+          <textProps text="$userAction ='LOAD_PROGRAM_LIST'"/>
+        </nextNodeView>
+      </SearchCountry>
+      <CreateCountry>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="526,122" endpoint="332,206" ctrlRect1="379,120,4,4" ctrlRect2="476,204,4,4" textRect="416,160,26,8">
+          <textProps text="$userAction ='CANCEL'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="548,145" endpoint="548,145" ctrlRect1="546,218,4,4" ctrlRect2="624,304,4,4" ctrlRect2Dirty="true" textRect="576,259,23,8">
+          <textProps text="$userAction ='ADD'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="571,122" endpoint="571,122" ctrlRect1="644,120,4,4" ctrlRect2="689,221,4,4" ctrlRect2Dirty="true" textRect="650,168,37,8">
+          <textProps text="$userAction ='LOAD_PROGRAM_LIST'"/>
+        </nextNodeView>
+      </CreateCountry>
+      <ModifyCountry>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="454,297" endpoint="332,206" ctrlRect1="361,295,4,4" ctrlRect2="422,204,4,4" textRect="380,247,26,8">
+          <textProps text="$userAction ='CANCEL'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="499,297" endpoint="499,297" ctrlRect1="572,295,4,4" ctrlRect2="827,174,4,4" ctrlRect2Dirty="true" textRect="689,232,24,8">
+          <textProps text="$userAction ='SAVE'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="499,297" endpoint="499,297" ctrlRect1="572,295,4,4" ctrlRect2="787,394,4,4" ctrlRect2Dirty="true" textRect="663,342,37,8">
+          <textProps text="$userAction ='LOAD_PROGRAM_LIST'"/>
+        </nextNodeView>
+      </ModifyCountry>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+      <action/>
+    </pre_actions>
+    <post_actions>
+      <action/>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

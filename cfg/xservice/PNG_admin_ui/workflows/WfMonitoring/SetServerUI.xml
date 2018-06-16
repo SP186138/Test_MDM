@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="136" ShowInBreadCrumbs="true" Version="1.0" Name="SetServerUI" Description="Sets Server to monitor" Type="" PrimaryDocument="" IsStartAllowed="No">
+  <variables>
+    <variable Name="GServer" Type="string" Comment=""/>
+    <variable Name="GServerFile" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start">
+      <actions>
+        <action>
+          <SET Var="GServerFile" FromValue=".\\ServerNames.txt"/>
+          <!-- TBD : This value needs to be picked from xserver file instead of hard coding -->
+        </action>
+      </actions>
+      <next_nodes OutputVar="{outputXml,xml}">
+        <next_node Name="Set Server" Description=""/>
+      </next_nodes>
+    </start>
+    <done Name="done">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="Set Server" OutputFormVar="pglFormOutput" InputFormVar="pglFormInput" ShowInBreadCrumbs="SHOW" Template="Set_Server.pgl" InputVar="{outputXml,xml}">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <root>
+              <NATIVE_FUNCTION ClassName="com.teradata.xcore.bpm.ServerNamesManager" MethodName="getServers" AssignToVar="ServerNameList">
+                <PARAM Value="{$GServerFile/@Value}" Type="String"/>
+              </NATIVE_FUNCTION>
+              <STRING_TO_XML FromValue="{$ServerNameList}" DocVar="ServerNamesDoc"/>
+              <APPEND_TO_XML>
+                <GET_SESSION Var="GServerName" AssignToVar="GServer" HandleException="true"/>
+                <SelServerName Value="{$GServer/@Value}"/>
+              </APPEND_TO_XML>
+            </root>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelect="$ServerNamesDoc"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="strlen($pglFormOutput/OtherServerName/@Value) >= 1">
+            <THEN>
+              <!-- user has manually entered server name -->
+              <SET Var="Host" FromValue="{$pglFormOutput/OtherServerName/@Value}"/>
+              <SET Var="Port" FromValue="{$pglFormOutput/Port/@Value}"/>
+              <SET Var="temp" FromValue="{concat($Host,':')}"/>
+              <SET_SESSION Var="GServerName" FromValue="{concat($temp,$Port)}"/>
+              <GET_SESSION Var="GServerName" AssignToVar="GServer" HandleException="true"/>
+              <NATIVE_FUNCTION ClassName="com.teradata.xcore.bpm.BPMUtil" MethodName="getServices" AssignToVar="serviceList">
+                <PARAM Var="thisContext"/>
+                <PARAM Value="{substringBefore($GServer/@Value, ':')}" Type="String"/>
+                <PARAM Value="{substringAfter($GServer/@Value, ':')}" Type="String"/>
+              </NATIVE_FUNCTION>
+              <IF_TEST Test="count($serviceList/ServiceName) >=1">
+                <THEN>
+                  <!-- if valid host -->
+                  <NATIVE_FUNCTION ClassName="com.teradata.xcore.bpm.ServerNamesManager" MethodName="setServer">
+                    <PARAM Value="{$GServerFile}" Type="String"/>
+                    <PARAM Value="{substringBefore($GServer/@Value, ':')}" Type="String"/>
+                    <PARAM Value="{substringAfter($GServer/@Value, ':')}" Type="String"/>
+                  </NATIVE_FUNCTION>
+                </THEN>
+                <ELSE>
+                  <!-- if invalid host -->
+                  <SET_SESSION Var="GServerName" FromValue=""/>
+                  <HANDLE_SYSTEM_EXCEPTION>
+                    <ACTION>
+                      <EXCEPTION>
+                        <Error Value="Invalid Server.Kindly choose another server to manage."/>
+                      </EXCEPTION>
+                    </ACTION>
+                  </HANDLE_SYSTEM_EXCEPTION>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+            <ELSE>
+              <!-- user has chosen server name from the drop down so set it in the pipeline variable and proceed-->
+              <SET_SESSION Var="GServerName" FromValue="{$pglFormOutput/ServerName/@Value}"/>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction='DROPDOWN_CHANGED'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Set Server" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='DONE'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='null'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start location="15,135" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start" font="Times New Roman,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start>
+      <done location="304,136" font="Times New Roman,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done" font="Times New Roman,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done>
+      <mgcnode Name="Set Server" location="202,135" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Set Server" font="Times New Roman,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+    </mgcnodes>
+    <mgcconnectors>
+      <start>
+        <nextNodeView font="Times New Roman,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="47,157" endpoint="202,157" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="160,155,4,4" ctrlRect2="83,155,4,4"/>
+      </start>
+      <mgcnode Name="Set Server">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="218,135" endpoint="218,135" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="216,58,4,4" ctrlRect2="216,58,4,4" textRect="114,56,208,9">
+          <textProps text="[$userAction='DROPDOWN_CHANGED']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="234,157" endpoint="304,158" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="284,155,4,4" ctrlRect2="249,156,4,4"/>
+      </mgcnode>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="10,10" font="Times New Roman,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="2" textAttrsKey0="GServer : string" textAttrsKey1="GServerFile : string">
+      <textProps text="Pipeline" font="Times New Roman,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="GServer" Type="string" Comment=""/>
+        <variable Name="GServerFile" Type="string" Comment=""/>
+      </variables>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="3" ShowInBreadCrumbs="true" Version="1.0" Name="wfSearchRqstrCntct" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="wfSearchRqstrCntct"/>
+  <nodes>
+    <start Name="start0">
+      <actions/>
+      <next_nodes>
+        <next_node Name="RequestorContactSearch"/>
+      </next_nodes>
+    </start>
+    <done Name="done1">
+      <actions/>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="RequestorContactSearch" ShowInBreadCrumbs="HIDE" Template="RequestorContactSearch.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$thisParam/MaxRec/@Value='' or $thisParam/MaxRec/@Value=null">
+            <THEN>
+              <SET Var="MaxRec" FromValue="25"/>
+            </THEN>
+            <ELSE>
+              <SET Var="MaxRec" FromValue="{$thisParam/MaxRec/@Value}"/>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="strlen(trim($thisParam/SORT_BY/@Value))!= 0 and ($thisParam/SORT_BY/@Value)!='ID'">
+            <THEN>
+              <SET Var="pSortBy" FromValue="{$thisParam/SORT_BY/@Value}"/>
+              <SET Var="pSortOrder" FromValue="{$thisParam/SORT_ORDER/@Value}"/>
+            </THEN>
+            <ELSE>
+              <THEN>
+                <SET Var="pSortBy" FromValue="CNTCT_NBR"/>
+                <SET Var="pSortOrder" FromValue="ASC"/>
+              </THEN>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$pSortOrder='Descending'">
+            <THEN>
+              <SET Var="pSortOrder" FromValue="DESC"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$pSortOrder='Ascending'">
+            <THEN>
+              <SET Var="pSortOrder" FromValue="ASC"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="strlen(trim($thisParam/SORT_BY/@Value)) != 0">
+            <THEN>
+              <MAKE_INSTANCE_DOCUMENT Name="{$pSortBy}" AssignToVar="sortByTag"/>
+              <SET DocVar="sortByTag" Attribute="Sort" FromValue="{$thisParam/SORT_ORDER/@Value}"/>
+            </THEN>
+          </IF_TEST>
+          <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filtersVar">
+            <!--PUT SEARCH CRITRIA HERE-->
+            <TO_XML SelectList="$thisParam/*[name()='FILTER_CNTCT_NBR' or name()='FILTER_FIRST_NM'  or name()='FILTER_LAST_NM' or name()='FILTER_ADDR_LINE_1_TXT' or name()='FILTER_ADDR_LINE_2_TXT' or name()='FILTER_ADDR_LINE_3_TXT' or name()='FILTER_CITY_NAME' or name()='FILTER_POSTL_AREA_CODE' or name()='FILTER_FULL_PHONE_NUM' or name()='FILTER_EMAIL_ADDR_TXT' or name()='FILTER_TERR_NAME' or name()='FILTER_CNTRY_CODE' or name()='FILTER_SR_NBR']"/>
+          </FORM_SEARCH_FILTER>
+          <FOR_EACH CurrentElement="currEle2" SelectList="$filtersVar/FILTER">
+            <SET_NAME SelectList="$currEle2/FILTER_CNTCT_NBR" FromValue="CNTCT_NBR"/>
+            <SET_NAME SelectList="$currEle2/FILTER_FIRST_NM" FromValue="FIRST_NM"/>
+            <SET_NAME SelectList="$currEle2/FILTER_LAST_NM" FromValue="LAST_NM"/>
+            <SET_NAME SelectList="$currEle2/FILTER_ADDR_LINE_1_TXT" FromValue="ADDR_LINE_1_TXT"/>
+            <SET_NAME SelectList="$currEle2/FILTER_ADDR_LINE_2_TXT" FromValue="ADDR_LINE_2_TXT"/>
+            <SET_NAME SelectList="$currEle2/FILTER_ADDR_LINE_3_TXT" FromValue="ADDR_LINE_3_TXT"/>
+            <SET_NAME SelectList="$currEle2/FILTER_CITY_NAME" FromValue="CITY_NAME"/>
+            <SET_NAME SelectList="$currEle2/FILTER_POSTL_AREA_CODE" FromValue="POSTL_AREA_CODE"/>
+            <SET_NAME SelectList="$currEle2/FILTER_FULL_PHONE_NUM" FromValue="FULL_PHONE_NUM"/>
+            <SET_NAME SelectList="$currEle2/FILTER_EMAIL_ADDR_TXT" FromValue="EMAIL_ADDR_TXT"/>
+            <SET_NAME SelectList="$currEle2/FILTER_TERR_NAME" FromValue="TERR_NAME"/>
+            <SET_NAME SelectList="$currEle2/FILTER_CNTRY_CODE" FromValue="CNTRY_CODE"/>
+            <SET_NAME SelectList="$currEle2/FILTER_SR_NBR" FromValue="SR_NBR"/>
+          </FOR_EACH>
+          <!--<EXECUTE_SQL_QUERY AssignToVar="VarMktngPgm" Value="LOCKING ROW FOR ACCESS SELECT MKTNG_PGM_NBR,LEGAL_ENT_NBR from MKTNG_PGM" ReturnRowCount="yes" />-->
+          <GET_DOC_SMART AssignToVar="varCntct" Name="CNTCT" HandleException="true" ReturnRowCount="true" ServiceName="BCM_MASTER" MaxRows="{$MaxRec}" StartAtRow="{$thisParam/START_COUNT/@Value}">
+            <TO_XML SelectList="$filtersVar/FILTER/*"/>
+            <ORDER_BY>
+              <TO_XML DocVar="sortByTag"/>
+            </ORDER_BY>
+          </GET_DOC_SMART>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <TO_XML SelectList="$varCntct/*"/>
+              <TotalRowCount Value="{$varCntct/@TotalRowCount}"/>
+              <MaxRec Value="{$MaxRec}"/>
+              <START_COUNT Value="{$thisParam/START_COUNT/@Value}"/>
+            </ROOT>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction ='select_and_return'">
+            <THEN>
+              <APPEND_TO_XML SelectList="$thisReturn">
+                <REMOVE_CHILDREN ChildName="SORT_BY" DocVar="thisParam"/>
+                <TO_XML SelectList="$thisParam/*"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='cancel'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done1" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='select_and_return'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done1" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="RequestorContactSearch" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <start0 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="45,124">
+        <iconProps iconfile="z1start.gif"/>
+      </start0>
+      <done1 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="616,132">
+        <iconProps iconfile="z1end.gif"/>
+      </done1>
+      <RequestorContactSearch font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="323,134" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </RequestorContactSearch>
+    </mgcnodes>
+    <mgcconnectors>
+      <start0>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="90,146" endpoint="323,156" ctrlRect1="262,144,4,4" ctrlRect2="146,154,4,4"/>
+      </start0>
+      <RequestorContactSearch>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="368,156" endpoint="616,154" ctrlRect1="552,154,4,4" ctrlRect2="538,284,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="368,156" endpoint="638,132" ctrlRect1="568,154,4,4" ctrlRect2="628,43,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="368,156" endpoint="368,156" ctrlRect1="441,154,4,4" ctrlRect2="320,263,4,4" ctrlRect2Dirty="true"/>
+      </RequestorContactSearch>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions/>
+    <post_actions/>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

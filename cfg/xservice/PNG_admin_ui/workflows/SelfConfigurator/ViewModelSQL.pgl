@@ -1,0 +1,39 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_form" source="studio.controller:load">
+  <ui:container id="Outer" scrollable="true" showFavorite="true">
+    <ui:step id="OuterStep" displayText="SELF_CONF_VIEW_MODEL" scrollable="true">
+      <ui:help displayPage="../../bcm/help/Model_Builder_DDL_help.htm"/>
+      <ui:table id="uiTable" displayText="SELF_CONF_VIEW_MODEL" scrollable="true" displayTextNoRecords="SELF_GEN_NO_SQL_FOUND" collapsable="false" doPaging="true" select="$root/MODEL_DDL" totalRowCount="$root/totalRowCount/@Value" startAtRow="$root/startAtRow/@Value" postRowIdAs="SELECTED_ID" maxRows="20" filter="true" rowId="ID">
+        <ui:field-group>
+          <ui:hidden-field name="ID" id="ID" displayText="Id" sortable="false" unFormat="true"/>
+          <ui:display-field name="TABLE_NAME" id="TABLE_NAME" displayText="SELF_GEN_TABLE_NAME" sortable="false" title="SELF_GEN_TABLE_NAME_HOV" unFormat="true" filter="true"/>        
+          <ui:display-field name="TableStagingName" id="TableStagingName" displayText="SELF_TABLE_STAGING_NAME" sortable="true" title="SELF_TABLE_STAGING_NAME_HOV"  filter="false" />
+          <ui:textarea name="ModelDDl"  id="ModelDDl" displayText="SELF_MODEL_DDL" columns="200" rows="5" displayNoWrap="false" editable="true" format="true" inFormat="true" filter="false"/>
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button id="back" name="back" displayText="Back" />
+          <ui:divider/>
+          <ui:button id="GenerateSql" name="GenerateSql" displayText="SELF_CONF_DOWNLOAD_SQL" emphasized="false"  onClick="javascript:generateSqlLog();"/>
+        </ui:buttons>
+      </ui:table>
+      <ui:script>        
+function generateSqlLog()
+{
+var selectedId =&quot;&quot;;
+var idElem = document.getElementsByName('ID');
+for(i = 0; i &lt; idElem.length; i++)
+{
+selectedId = selectedId + idElem[i].value +&quot;,&quot;
+}
+var pageId = document.form.PAGE_NAME.value;
+var prevAction = document.form.action;
+var prevTarget = document.form.target;
+document.form.target = &quot;hiddenDownloader&quot;;
+document.form.action=omxContextPath+ &quot;/selfConfigSqlLogExport?PAGE_ID=&quot;+pageId+&quot;&amp;SELECTED_ID=&quot;+selectedId;
+document.form.submitWholePage();
+document.form.action= prevAction;
+document.form.target= prevTarget;
+}
+      </ui:script>
+    </ui:step>
+  </ui:container>
+</ui:page-group>

@@ -1,0 +1,310 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" name="studio.templates.simple_form" source="studio.controller:load" version="3">
+  <ui:container id="outermostContainer" scrollable="true">
+    <ui:step id="outermostStep" scrollable="true">
+      <ui:container id="topContainer" scrollable="true" type="Tabs">
+        <ui:step displayText="MODIFY CONTENT ELEMENT" id="content1" scrollable="true">
+          <ui:field-group id="leftFields1" columns="3">
+            <ui:image src="/bpi_check.gif" displayCondition="{string-length($root/AlertGreen/@Value) != 0}"/>
+            <ui:display-field value="{$root/AlertGreen/@Value}" displayCondition="{string-length($root/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen"/>
+            <ui:display-field value="{$root/AlertRed/@Value}" displayCondition="{string-length($root/AlertRed/@Value) != 0}" name="failure" class="requiredIndicatorRed"/>
+            <ui:hidden-field id="ACTION_TYPE" name="ACTION_TYPE"/>
+          </ui:field-group>
+          <ui:field-group id="tableColumns1" columns="2" select="$root/SQL_RESULT">
+            <!--<ui:image src="/bpi_check.gif" displayCondition="{string-length($root/AlertGreen/@Value) != 0}"/>
+<ui:display-field value="{$root/AlertGreen/@Value}" displayCondition="{string-length($root/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen"/>
+<ui:hidden-field id="ACTION_TYPE" name="ACTION_TYPE"/>-->
+            <ui:display-field id="CNTNT_ELEM_ID" name="CNTNT_ELEM_ID" displayText="Content Element ID" optionSrc="$root/CNTNT_ELEM_ID/OPTION" required="true"/>
+            <ui:entry-field id="CNTNT_NAME" name="CNTNT_NAME" displayText="Content Name" optionSrc="$root/CNTNT_NAME/OPTION" disabled="true" required="true"/>
+            <!--ui:dropdown id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR" displayText="Matched Domain" optionSrc="$root/LEGAL_ENT/OPTION" selectOne="false" disabled="true" required="true"/-->
+            <!--<ui:dropdown id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR" displayText="Legal Entity" optionSrc="$root/LEGAL_ENT/OPTION" selectOne="false" required="true" disabled="true"/> -->
+            <!-- <ui:dropdown id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR" displayText="Legal Entity" optionSrc="$root/LEGAL_ENT/OPTION" selectOne="true" required="true" disabled="true" value="{$root/AutoPopulate/LEGAL_ENT_NBR/@Value}" /> -->
+            <!--<ui:dropdown id="LEVEL_IND" name="LEVEL_IND" displayText="Level Indiicator" disabled="true" optionSrc="$root/LEVEL_IND"/>-->
+            <ui:dropdown id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR" displayText="Program Name" optionSrc="$root/MKTNG_PGM/OPTION" selectOne="false" disabled="true" required="true"/>
+            <ui:hidden-field id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR" displayText="Program Name"/>
+            <ui:entry-field id="CNTNT_SHORT_NAME" name="CNTNT_SHORT_NAME" displayText="Content Short Name" disabled="true" optionSrc="$root/CNTNT_SHORT_NAME/OPTION"/>
+            <ui:entry-field id="CNTNT_DESC" name="CNTNT_DESC" displayText="Content Description" size="30" select="$root/CNTNT_DESC"/>
+            <ui:dropdown id="TRGT_PATH_TYPE_CODE" name="TRGT_PATH_TYPE_CODE" displayText="Target Path Type" optionSrc="$root/TRGT_PATH_TYPE/OPTION" disabled="true" selectOne="true"/>
+            <!--<ui:entry-field id="TRGT_SUB_PATH_TYPE_CODE" name="TRGT_SUB_PATH_TYPE_CODE" displayText="Target Sub Path type Code" optionSrc="$root/TRGT_SUB_PATH_TYPE_CODE/OPTION" disabled="true" required="true"/>-->
+            <ui:dropdown id="TRGT_SUB_PATH_TYPE_CODE" name="TRGT_SUB_PATH_TYPE_CODE" displayText="Target Sub Path Type" optionSrc="$root/TRGT_SUB_PATH_TYPE/OPTION" disabled="true" selectOne="true"/>
+            <ui:dropdown id="TRGT_CNSMR_SEG_CODE" name="TRGT_CNSMR_SEG_CODE" displayText="Target Consumer Seg" optionSrc="$root/TRGT_CNSMR_SEG/OPTION" selectOne="false" disabled="true"/>
+            <ui:dropdown id="CNSMR_ACTN_TYPE_CODE" name="CNSMR_ACTN_TYPE_CODE" displayText="Consumer Action Type" optionSrc="$root/CNSMR_ACTN_TYPE/OPTION" disabled="true" selectOne="true"/>
+            <ui:dropdown id="CNTNT_ELEM_TYPE_CODE" name="CNTNT_ELEM_TYPE_CODE" displayText="Content Element Type" optionSrc="$root/CNTNT_ELEM_TYPE/OPTION" disabled="true" selectOne="true" required="true"/>
+            <ui:entry-field id="CNTNT_ACTIVE_START_DATE" name="CNTNT_ACTIVE_START_DATE" displayText="Content Start Date(mm/dd/yyyy)" dataType="Date" disabled="true" required="true"/>
+            <ui:entry-field id="CNTNT_ACTIVE_END_DATE" name="CNTNT_ACTIVE_END_DATE" displayText="Content End Date(mm/dd/yyyy)" dataType="Date" required="true" displayCondition="{$root/GBL_END_DATE/@Value='N'}"/>
+            <ui:entry-field id="CNTNT_ACTIVE_END_DATE" name="CNTNT_ACTIVE_END_DATE" displayText="Content End Date(mm/dd/yyyy)" dataType="Date" required="false" displayCondition="{$root/GBL_END_DATE/@Value='Y'}"/>
+            <ui:entry-field id="INCTV_NBR" name="INCTV_NBR" displayText="Incentive Number" optionSrc="$root/INCTV_NBR/OPTION" disabled="true"/>
+            <!--<ui:entry-field id="BRAND_CODE" name="BRAND_CODE" displayText="Brand Code" optionSrc="$root/BRAND_CODE/OPTION" selectOne="false" disabled="true"/>-->
+            <ui:entry-field id="ALT_SYS_CNTNT_ID" name="ALT_SYS_CNTNT_ID" displayText="ALT SYS Content Id" disabled="false" editable="true" select="$root/ALT_SYS_CNTNT_ID"/>/>
+<ui:entry-field id="VIEW_WEB_SITE_URL_TXT" name="VIEW_WEB_SITE_URL_TXT" displayText="View Web Site" disabled="false" select="$root/VIEW_WEB_SITE_URL_TXT"/>
+            <ui:entry-field id="CNTNT_OWNER_NAME" name="CNTNT_OWNER_NAME" displayText="Content Owner Name" disabled="true"/>
+            <ui:entry-field id="CNTNT_PHYS_LOCATION" name="CNTNT_PHYS_LOCATION" displayText="Content Location" disabled="true"/>
+            <ui:entry-field id="GBL_CNTNT_ELEM_ID" name="GBL_CNTNT_ELEM_ID" displayText="Global Content Element Id" disabled="true" select="$root/SQL_RESULT/GBL_CNTNT_ELEM_ID" dataType="Number" align="left" displayCondition="{$root/GBL_END_DATE/@Value='N'}">
+              <ui:links id="linksTrt">
+                <ui:link id="linkTrt" onClick="javascript:openLookupId();">
+                  <ui:image src="/srch_actv.gif"/>
+                </ui:link>
+              </ui:links>
+            </ui:entry-field>
+            <ui:entry-field id="GBL_CNTNT_ELEM_ID" name="GBL_CNTNT_ELEM_ID" displayText="Global Content Element Id" disabled="true" displayCondition="{$root/GBL_END_DATE/@Value='Y'}" dataType="Number" align="left"/>
+            <!--ui:display-field  id="GBL_CNTNT_ELEM" name="GBL_CNTNT_ELEM" displayText="Global Content Element Id" disabled="true" select="$root/GBL_CNTNT_ELEM"/-->
+            <ui:dropdown id="ENTITY_STATE" name="ENTITY_STATE" displayText="Entity State">
+              <ui:option id="ACTIVE" value="ACTIVE"/>
+              <ui:option id="INACTIVE" value="INACTIVE"/>
+              <ui:option id="NEW" value="NEW"/>
+              <ui:option id="DELETED" value="DELETED"/>
+            </ui:dropdown>
+          </ui:field-group>
+          <ui:buttons>
+            <ui:button id="CANCEL" name="CANCEL" displayText="Return" onClick="javascript:onCancel();"/>
+            <ui:divider/>
+            <ui:button id="SAVE" name="SAVE" displayText="Update" emphasized="true" onClick="javascript:on_Save()"/>
+            <ui:divider/>
+            <ui:button id="ADD_CONTENT_ITEM" name="ADD_CONTENT_ITEM" displayText="Add Content Item" emphasized="true"/>
+            <ui:divider/>
+            <ui:button id="ADD_CONTENT_TRT" name="ADD_CONTENT_TRT" displayText="Add Content Trait" emphasized="true"/>
+          </ui:buttons>
+        </ui:step>
+      </ui:container>
+      <ui:hr/>
+      <ui:container id="container3" displayText="Content Item Details" displayCondition="{$root/IS_ITEM_PRESENT/@Value='YES'}">
+        <ui:step id="cntntItemstep">
+          <ui:table id="cntntItemsTable" displayText="Content Elem Item" rowId="CNTNT_ELEM_ITEM_NBR" rowSrc="$root/CNTNT_ELEM_ITEM" scrollable="true" displayTextNoRecords="No Content Items Found" maxRows="-1" doPaging="false" selectable="single" postRowIdAs="contentElemItemId">
+            <ui:field-group id="tableColumns" select="$root/CNTNT_ELEM_ITEM/*">
+              <ui:display-field displayText="Content Elem Item Nbr" id="CNTNT_ELEM_ITEM_NBR" name="CNTNT_ELEM_ITEM_NBR"/>
+              <ui:display-field id="PROD_ITEM_UPC" name="PROD_ITEM_UPC" displayText="Product Item Number"/>
+              <ui:display-field displayText="Content Elem Item Name" id="CNTNT_ELEM_ITEM_NAME" name="CNTNT_ELEM_ITEM_NAME"/>
+              <ui:display-field displayText="Content Elem Item Quantity" id="CNTNT_ELEM_ITEM_QTY" name="CNTNT_ELEM_ITEM_QTY"/>
+              <ui:display-field displayText="Brand Code" id="BRAND_CODE" name="BRAND_CODE"/>
+<ui:display-field displayText="Brand Family ID" id="BRAND_FAMLY_ID" name="BRAND_FAMLY_ID"/>
+<ui:display-field displayText="Prod Family ID" id="PROD_FAMLY_ID" name="PROD_FAMLY_ID"/>
+            </ui:field-group>
+          </ui:table>
+          <ui:buttons>
+            <ui:button id="MODIFY_CONTENT_ITEM" displayText="Modify Content Item" enabledBySelections="true" onClick="javascript:onEditClick();"/>
+          </ui:buttons>
+        </ui:step>
+      </ui:container>
+      <ui:hr/>
+      <ui:container id="container4" displayText="Content Trait Details" displayCondition="{$root/IS_TRT_PRESENT/@Value='YES'}">
+        <ui:step id="cntntTrtstep">
+          <ui:table id="cntntTrtTable" displayText="Content Elem Trt" rowId="CNTNT_ELEM_TRT_SEQ_NBR" rowSrc="$root/CNTNT_ELEM_TRT" scrollable="true" displayTextNoRecords="No Content Traits Found" maxRows="-1" doPaging="false" selectable="single" postRowIdAs="contentTrtNbr">
+            <ui:field-group id="tableColumns" select="$root/CNTNT_ELEM_TRT/*">
+              <ui:display-field displayText="Content Elem Trt Seq Num" id="CNTNT_ELEM_TRT_SEQ_NBR" name="CNTNT_ELEM_TRT_SEQ_NBR"/>
+              <ui:display-field id="TRT_NBR" name="TRT_NBR" displayText="Trait Number"/>
+              <ui:display-field displayText="Content Elem Trt Text" id="CNTNT_ELEM_TRT_TXT" name="CNTNT_ELEM_TRT_TXT"/>
+            </ui:field-group>
+          </ui:table>
+          <ui:buttons>
+            <ui:button id="MODIFY_CONTENT_TRT" displayText="Modify Content Trait" enabledBySelections="true"/>
+          </ui:buttons>
+        </ui:step>
+      </ui:container>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+/*function onCancel()
+{
+var formchanged=isFormChanged();
+if(formchanged){
+var cancelMessage = &quot;Modified information will be discarded, Do you want to continue?&quot;;
+if (	core_confirm( cancelMessage ) == 'yes' )
+{
+form.BUTTON_ID.value = &quot;CANCEL&quot; ;
+form.submit();
+}
+else
+{
+return;
+}
+}else{
+form.BUTTON_ID.value = &quot;CANCEL&quot; ;
+form.submit();
+}
+}
+*/
+
+function onCancel()
+{
+var formchanged=isFormChanged();
+if(formchanged){
+//var cancelMessage = &quot;Modified information will be discarded, Do you want to continue?&quot;;
+core_confirm_jquery('Modified information will be discarded, Do you want to continue?','onCancelConfirm');
+
+}else{
+form.BUTTON_ID.value = &quot;CANCEL&quot; ;
+form.submit();
+grayOut(true);
+}
+}
+
+
+function onCancelConfirm(response)
+{
+if ( response=='yes' )
+{
+form.BUTTON_ID.value = &quot;CANCEL&quot; ;
+form.submit();
+grayOut(true);
+}
+else
+{
+return;
+}
+}
+
+function loadProgramList(){
+document.form.BUTTON_ID.value = 'LOAD_PROGRAM_LIST';
+document.form.action = 'view.x2ps';
+document.form.submit();
+}
+function isFormChanged() {
+var rtnVal = false;
+var frm = document.forms[0];
+var ele = frm.elements;
+for ( i=0; i &lt; ele.length; i++ ) {
+if ( ele[i].type.length > 0 ) {
+if ( isElementChanged( ele, i ) ) {
+rtnVal = true;
+break;
+}
+}
+}
+return rtnVal;
+}
+function isElementChanged( ele, i ) {
+var isEleChanged = false;
+switch ( ele[i].type ) {
+case &quot;text&quot; :
+if ( ele[i].value != ele[i].defaultValue ){
+return true;
+}
+break;
+
+case &quot;textarea&quot; :
+if ( ele[i].value != ele[i].defaultValue ) return true;
+break;
+
+case &quot;radio&quot; :
+val = &quot;&quot;;
+if ( ele[i].checked != ele[i].defaultChecked ) return true;
+break;
+
+case &quot;select-one&quot; :
+for ( var x =0 ; x &lt; ele[i].length; x++ ) {
+if(ele[i].name!='LEGAL_ENT_NBR'){
+if(ele[i].value!='' ){
+if ( ele[i].options[ x ].selected != ele[i].options[ x ].defaultSelected ){
+return true;
+}
+}
+}
+}
+break;
+
+case &quot;select-multiple&quot; :
+for ( var x =0 ; x &lt; ele[i].length; x++ ) {
+if ( ele[i].options[ x ].selected
+!= ele[i].options[ x ].defaultSelected )
+return true;
+}
+break;
+
+case &quot;checkbox&quot; :
+if ( ele[i].checked != ele[i].defaultChecked ) return true;
+  
+default:
+return false;
+break;
+}
+}
+function on_Save(){
+var bIsValid = true;
+document.form.SUBMIT_AS_XML.value = 'false';
+
+bIsValid = (isValid_content1());
+	
+if( bIsValid == false )
+{
+validation_alert('content1');
+}
+if ( bIsValid == true){
+var isFormValid = validateForm();
+if(isFormValid){
+document.form.BUTTON_ID.value = 'SAVE';
+document.form.action = 'view.x2ps';
+document.form.submit();
+}
+else return;
+}
+return;
+}
+function validateForm(){
+var returnVal;
+returnVal=CompareDates();
+return returnVal;
+}
+function CompareDates()
+{
+var str1 = document.getElementById(&quot;CNTNT_ACTIVE_START_DATE&quot;).value;
+var str2 = document.getElementById(&quot;CNTNT_ACTIVE_END_DATE&quot;).value;
+var mon1  = parseInt(str1.substring(0,2),10);
+var dt1 = parseInt(str1.substring(3,5),10);
+//var yr1  = parseInt(str1.substring(6,10),10);
+var yr1  = parseInt(str1.substr(str1.length-4));
+var mon2  = parseInt(str2.substring(0,2),10);
+var dt2 = parseInt(str2.substring(3,5),10);
+//var yr2  = parseInt(str2.substring(6,10),10);
+var yr2  = parseInt(str2.substr(str2.length-4));
+var date1 = new Date(yr1, mon1, dt1);
+var date2 = new Date(yr2, mon2, dt2);
+
+if(date2 &lt; date1)
+{
+core_alert(&quot;End date cannot be earlier than Start date&quot;);
+return false;
+}
+else
+{
+return true;
+}
+}
+
+function openLookupId(){
+
+document.form.BUTTON_ID.value = 'GBL_CNTNT_ID';
+
+document.form.action = 'view.x2ps';
+
+document.form.submit();
+
+}
+function onEditClick()
+{
+
+    debugger;
+var checkedItems = new Array();
+var checkboxElem= document.getElementsByName('contentElemItemId');
+
+for(var count=0;count&lt;checkboxElem.length;count++)
+{
+
+if(checkboxElem[count].checked)
+var selectedId =checkboxElem[count].value;
+
+}
+if(selectedId == null)
+{
+core_alert_jquery('Please select atleast one Content Item to Modify.');
+}
+else
+{
+
+document.form.BUTTON_ID.value = 'MODIFY_CONTENT_ITEM';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+}
+}
+  
+</ui:script>
+</ui:page-group>

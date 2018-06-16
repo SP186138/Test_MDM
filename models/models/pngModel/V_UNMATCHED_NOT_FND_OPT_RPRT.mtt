@@ -1,0 +1,76 @@
+<document IsDocView="true">
+  <properties>
+    <property Name="PE_OPTOUT_ID">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="PE_OPTOUT_ID" />
+    </property>
+    <property Name="GVN_NAME_OPT" PhysicalName="GVN_NAME_OPT">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="GVN_NAME" />
+    </property>
+    <property Name="MID_NAME_OPT" PhysicalName="MID_NAME_OPT">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="MID_NAME" />
+    </property>
+    <property Name="FAMLY_NAME_OPT" PhysicalName="FAMLY_NAME_OPT">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="FAMLY_NAME" />
+    </property>
+    <property Name="FULL_PHONE_NUM_OPT" PhysicalName="FULL_PHONE_NUM_OPT">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="FULL_PHONE_NUM" />
+    </property>
+    <property Name="EMAIL_ADDR_TXT_OPT" PhysicalName="EMAIL_ADDR_TXT_OPT">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="EMAIL_ADDR_TXT" />
+    </property>
+    <property Name="ADDRESS_OPT" PhysicalName="ADDRESS_OPT">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="ADDRESS_OPT" />
+    </property>
+    <property Name="ADDRESS_OPT1">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="ADDRESS_OPT1" />
+    </property>
+    <property Name="LEGAL_ENT_NBR">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="LEGAL_ENT_NBR" />
+    </property>
+    <property Name="MATCH_FLG">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="MATCH_FLG" />
+    </property>
+    <property Name="NATIONAL_ID_NBR">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="NATIONAL_ID_NBR" />
+    </property>
+  </properties>
+  <keys />
+  <links />
+  <docFacets>
+    <miscFacet PhysicalName="V_UNMATCHED_NOT_FND_OPT_RPRT" Active="true" />
+    <mdmConfigFacet SchemaGen="false" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql OnMDMTables="true" IsSimpleView="true">REPLACE VIEW MDM.V_UNMATCHED_NOT_FND_OPT_RPRT&#xD;
+	(&#xD;
+	PE_OPTOUT_ID,&#xD;
+	GVN_NAME_OPT,&#xD;
+	MID_NAME_OPT,&#xD;
+	FAMLY_NAME_OPT,&#xD;
+	FULL_PHONE_NUM_OPT,&#xD;
+	EMAIL_ADDR_TXT_OPT,&#xD;
+	ADDRESS_OPT,&#xD;
+	ADDRESS_OPT1,&#xD;
+	LEGAL_ENT_NBR,&#xD;
+	MATCH_FLG,&#xD;
+	NATIONAL_ID_NBR&#xD;
+	)&#xD;
+	AS&#xD;
+		LOCKING ROW FOR ACCESS	&#xD;
+	SELECT &#xD;
+	      OPT_OUT_DRCTV_ID AS	PE_OPTOUT_ID,&#xD;
+		FIRST_NAME AS GVN_NAME_OPT,&#xD;
+		' ' AS MID_NAME_OPT,&#xD;
+		LAST_NAME AS FAMLY_NAME_OPT,&#xD;
+		CONTACT_PHONE_NBR AS FULL_PHONE_NUM_OPT,&#xD;
+		EMAIL_ADDR_TEXT AS EMAIL_ADDR_TXT_OPT,&#xD;
+		coalesce(ADDR_LINE_1_TXT,'')||' '||coalesce(ADDR_LINE_2_TXT,'')||' '||coalesce(ADDR_LINE_3_TXT,'')||' '||coalesce(CITY_NAME,'')||' '||coalesce(TERR_NAME,'')||' '||coalesce(CNTRY_NAME,'')||' '||coalesce(POSTL_AREA_CODE,'') AS ADDRESS_OPT ,&#xD;
+		coalesce(ADDR_LINE_1_TXT,'')||'^'||coalesce(ADDR_LINE_2_TXT,'')||'^'||coalesce(ADDR_LINE_3_TXT,'') AS ADDRESS_OPT1 ,&#xD;
+		LEGAL_ENT_NBR,&#xD;
+		' ' AS MATCH_FLG,&#xD;
+		NATIONAL_ID_NBR&#xD;
+	FROM MDM.OPT_OUT_DIRECTIVE  &#xD;
+	WHERE OPT_OUT_DRCTV_ID NOT IN (SELECT OPT_OUT_DRCTV_ID FROM MDM.REGIS_PRSNA_OPT_HIST)&#xD;
+;</viewsql>
+</document>
+

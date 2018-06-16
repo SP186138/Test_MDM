@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+ 	 Copyright (c) 2009 by Teradata Corporation. 
+	 All Rights Reserved. 
+	 Teradata CONFIDENTIAL AND TRADE SECRET 
+ -->
+  <DEFINE_METHOD Name="getMarketingPrograms">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="MKTNG_PGM" ServiceName="BCM_MASTER" AssignToVar="mkt_pgm" DirtyRead="true" ReturnRowCount="true">
+          <SELECT>
+            <MKTNG_PGM_NAME/>
+            <MKTNG_PGM_NBR/>
+          </SELECT>
+          <ORDER_BY>
+            <MKTNG_PGM_NAME Sort="Ascending"/>
+          </ORDER_BY>
+        </GET_DOCUMENT>        
+        <CLONE_XML DocVar="mkt_pgm" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

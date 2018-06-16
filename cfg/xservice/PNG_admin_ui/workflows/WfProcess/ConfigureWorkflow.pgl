@@ -1,0 +1,193 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" Id="ConfigureWorkflow.pgl" version="3">
+  <ui:container id="Outer" scrollable="true">
+    <ui:step id="OuterStep" displayText="{concat($root/ConfigAction/@Value,' Workflow')}" scrollable="true">
+      <ui:help displayPage="../../bcm/help/ConfigWorkflowSaveHelp.htm"/>
+      <ui:validation/>
+      <ui:field-group id="hiddenFieldsGroup">
+        <ui:hidden-field id="status" value="{$root/status/@Value}" name="status"/>
+        <ui:hidden-field id="status_msg" value="{$root/status_msg/@Value}" name="status_msg"/>
+      </ui:field-group>
+      <ui:field-group columns="4" id="alertFields">
+        <ui:image src="/bpi_check.gif" id="AlertGreenIconAjax"/>
+        <ui:image src="/cancel.gif" id="AlertRedIconAjax"/>
+        <ui:display-field id="alertValue" value="{$root/status_msg/@Value}" name="alertValueDisp"/>
+      </ui:field-group>
+      <ui:field-group id="configureFg">
+        <ui:dropdown name="SelectService" id="SelectService" displayText="WF_LOG_MON_SELECT_SERVICE_TITLE" selectOne="true" optionSrc="$root/SERVICE_NAMES/*" title="Select Service" onChange="javascript:onChangeService();" disabled="{$root/OnBackPage/@Value!='none'}" required="true" value="{$root/CONFIGURE_PARAMS/Service/@Value}"/>
+        <ui:dropdown name="SelectWorkflow" id="SelectWorkflow" displayText="WF_LOG_MON_SELECT_WORKFLOW_TITLE" selectOne="true" optionSrc="$root/WF_TEMPLATES/*" title="Select Workflow" disabled="{$root/OnBackPage/@Value!='none'}" required="true" value="{$root/CONFIGURE_PARAMS/Workflow_Name/@Value}"/>
+        <ui:textarea id="WFDesc" name="WFDesc" value="{$root/CONFIGURE_PARAMS/Description/@Value}" displayText="WF_PROCESS_DESC" title="WF_PROCESS_DESC_HOVER" columns="50" rows="4" maxlength="1024"/>
+        <ui:checkbox id="IsSchedulable" name="IsSchedulable" value="{$root/CONFIGURE_PARAMS//Is_Schedulable/@Value}" displayText="ENABLE_SCHEDULING_WF" title="ENABLE_SCHEDULING_WF_HOVER" checkedValue="Yes" defaultValue="No"/>
+        <ui:checkbox id="IsFavorite" name="IsFavorite" value="{$root/CONFIGURE_PARAMS/Is_Favorite/@Value}" displayText="MARK_FAVORITE_WF" title="MARK_FAVORITE_WF_HOVER" checkedValue="Yes" defaultValue="No"/>
+        <ui:dropdown id="BusinessEntity" name="BusinessEntity" optionSrc="$root/BUSINESS_ENTITY_LIST/TYPE_CODES/OPTION" value="{$root/CONFIGURE_PARAMS/Business_Entity/@Value}" displayText="WF_PROCESS_CAT" title="WF_PROCESS_CAT_HOVER" selectOne="true" unFormat="true"/>
+        <ui:dropdown id="Category" name="Category" displayText="Workflow Category" title="Select workflow category" value="{$root/CONFIGURE_PARAMS/Category/@Value}" required="true" selectOne="true">
+          <ui:option id="Custom" value="Custom" title="User built Custom workflow"/>
+          <!--ui:option id="System" value="System" title="Out of the box system bundeld workflows"/-->
+          <ui:option id="OOTB" value="OOTB" title="Out of the box system bundeld workflows"/>
+          <!--ui:option id="RunTime" value="RunTime"/-->
+          <ui:option id="Other" value="Other" title="Other workflows"/>
+        </ui:dropdown>
+        <ui:dropdown id="LogLevel" name="LogLevel" displayText="Log Level" title="Select workflow log level" value="{$root/CONFIGURE_PARAMS/Log_Level/@Value}" required="true" defaultValue="None">
+          <ui:option id="None" value="Disabled" title="Sets log level to None to disable logging for workflow"/>
+          <ui:option id="Node" value="Node" title="Sets log level to Node to enabled logging for all nodes of the workflow"/>
+          <ui:option id="Workflow" value="Workflow" title="Sets log level to Workflow to enable logging at workflow level"/>
+        </ui:dropdown>
+      </ui:field-group>
+      <ui:field-group id="hiddenFieldsGroups">
+        <ui:hidden-field id="ConfigAction" value="{$root/ConfigAction/@Value}" name="ConfigAction"/>
+        <ui:hidden-field id="wfProcessId" value="{$root/wfProcessId/@Value}" name="wfProcessId"/>
+        <ui:hidden-field id="wfName" value="{$root/CONFIGURE_PARAMS/Workflow_Name/@Value}" name="wfName"/>
+      </ui:field-group>
+      <ui:buttons id="tblButtons">
+        <ui:button id="Back" name="Back" displayText="Back"/>
+        <ui:divider displayCondition="{$root/action_type/@Value = 'existing_wf'}"/>
+        <ui:button id="WfParams" name="WfParams" displayText="WF_NODE_PROCESS_PARAMETERS" displayCondition="{$root/action_type/@Value = 'existing_wf'}"/>
+        <ui:divider/>
+        <ui:button id="Save" name="Save" displayText="Save" onClick="javascript:onSave()" />
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+function sortDropDown(dropId)
+{
+var selectedVal = $('#'+ dropId).val();
+var foption = $('#'+ dropId + ' option:first');
+var soptions = $('#'+ dropId + ' option:not(:first)').sort(function(a, b) {
+return a.text == b.text ? 0 : a.text &lt; b.text ? -1 : 1
+});
+$('#' + dropId).html(soptions).prepend(foption);
+if(selectedVal!=null &amp;&amp; typeof selectedVal!='undefined' &amp;&amp; selectedVal.length!=0)
+	$('#'+ dropId).val(selectedVal);
+}
+function onLoad(){
+	sortDropDown('SelectService');
+	var status = document.getElementById('status').value;
+	if(status === 'Success'){
+		showSuccessAlertFields();
+	}
+	else if(status === 'Failure'){
+		showFailureAlertFields();
+   	}
+	else
+		hideAlertFields();
+	onResize();
+	configActionOptions();
+	onLoadSuper();
+}
+    
+    function configActionOptions(){
+		onChangeService();
+		var configAction = document.getElementById('ConfigAction').value
+    	if(configAction==='Configure'){
+			$(&quot;#SelectService&quot;).prop(&quot;disabled&quot;, true);
+			$(&quot;#SelectWorkflow&quot;).prop(&quot;disabled&quot;, true);
+		}
+    }
+function onChangeService(){ 
+    if(document.getElementById('SelectService').value.length == 0)
+    	return;
+	document.form.SelectWorkflow.options.length=0;
+	var service_name = 'ADMIN_UI';
+	var xmlValue='';
+	xmlValue+='&lt;ServiceName Value=&quot;'+document.getElementById(&quot;SelectService&quot;).value+'&quot;/>';
+	var request='&lt;REQUEST Name=&quot;populateWorkflows&quot;>' + xmlValue+'&lt;/REQUEST>';	
+	var xpath = &quot;/RESPONSES/RESPONSE/Template/Name&quot;;
+    SendAjaxRequest(service_name,request,'populateWorkflow',xpath);
+}
+            
+function populateWorkflow(node){
+	var sort=new Array();
+	var j;
+	for (i=0;i&lt;node.length;i++){
+		var templateName=node[i].getAttribute(&quot;Value&quot;);
+		var newOption = new Option(templateName, templateName, false, false);
+		var dataTypelength=document.form.SelectWorkflow.length;
+		sort[i]=newOption.value;
+	}
+	sort.sort(function(x,y){
+		var a = String(x).toUpperCase();
+		var b = String(y).toUpperCase();
+		if (a > b)
+			return 1
+		if (a &lt; b)
+			return -1
+		return 0;
+	});
+	for(j=0;j&lt;sort.length;j++){
+		var newOption = document.createElement(&quot;OPTION&quot;);
+		newOption.text = sort[j];
+		newOption.value =sort[j];
+		document.form.SelectWorkflow.options.add(newOption);
+	}
+    var wfName = document.getElementById('wfName').value;
+    if(wfName){
+	$("#SelectWorkflow").val(wfName).trigger('change');
+
+    }
+}
+    
+function onDomainChange(domainname){
+document.form.BUTTON_ID.value = 'DomainChange';
+document.form.submit();
+grayOut(true);
+}
+function on_Back(){
+	document.form.BUTTON_ID.value = 'Back';
+	document.form.submit();
+	grayOut(true);
+}
+    
+function hideAlertFields(){
+toggleField('AlertGreenIconAjax','hide');
+toggleField('AlertRedIconAjax','hide');
+toggleField('alertValue_td','hide');
+}
+function showSuccessAlertFields(){
+toggleField('AlertGreenIconAjax','show');
+toggleField('AlertRedIconAjax','hide');
+toggleField('alertValue_td','show');
+}
+function showFailureAlertFields(){
+toggleField('AlertGreenIconAjax','hide');
+toggleField('AlertRedIconAjax','show');
+toggleField('alertValue_td','show');
+}
+function toggleField(id,state){
+fieldCell  = document.getElementById(id);
+fieldRow = fieldCell.parentNode;
+toggleItemVisibility(fieldRow, state);
+var i = document.getElementById(id);
+if (state=='hide'){
+i.disabled = true;
+}
+else{
+i.disabled = false;
+i.enabled = true;
+}
+}
+    
+    function onSave(){
+		hideAlertFields();
+		var bIsValid = true;
+		document.form.SUBMIT_AS_XML.value = 'false';
+
+		bIsValid = (isValid_OuterStep());
+ 
+		if( bIsValid == false )
+		{
+			validation_alert('OuterStep');
+		}
+		if ( bIsValid == true)
+		{
+			disableButtons();
+			trapExcelPivotChanges();
+			document.form.BUTTON_ID.value = 'Save';
+			document.form.action = 'view.x2ps';
+			document.form.submit();
+			grayOut(true);
+		}
+ 
+		onResize();
+		return;
+    }
+</ui:script>
+</ui:page-group>

@@ -1,0 +1,38 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_entry" source="studio.controller:load">
+  <ui:container id="container1" name="container1">
+    <ui:step id="Outer" name="Outer" displayText="Saved Filters">
+      <ui:field-group id="alert" width="10%" displayCondition="{string-length($root/AlertGreen/@Value) != 0}" columns="2">
+        <ui:image src="/bpi_check.gif" id="sImage"/>
+        <ui:display-field id="alertValue" name="alertValue" value="{$root/AlertGreen/@Value}"/>
+      </ui:field-group>
+      <ui:table id="prorityTable" displayTextNoRecords="No Records found" rowId="sequence" selectable="Single" rememberSelections="false" collapsable="false" scrollable="true" select="$root/FILTER_VALUES" configurable="false" postRowIdAs="SELECTED_ID" maxRows="-1">
+        <ui:field-group>
+          <ui:display-field displayText="Filter Name" id="filterName" name="filterName"/>
+          <ui:display-field displayText="Filter Expression" id="display_Expression" name="display_Expression"/>
+          <ui:hidden-field id="sequence" name="sequence"/>
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button id="Cancel" displayText="Back"/>
+          <ui:button id="Create" displayText="Create"/>
+          <ui:button id="Edit" displayText="Edit" enabledBySelections="true"/>
+          <ui:button id="DeleteFilter" displayText="Delete" enabledBySelections="true" onClick="javascript:onDelete()"/>
+          <ui:button id="applyFilterAndReturn" displayText="Apply And Return" enabledBySelections="true"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+    function onDelete()
+    {
+    core_confirm_jquery('CW_FILTER_DEL_CONFIRM','onDeleteCallback');
+    }
+	function onDeleteCallback(response)
+	{
+	if( response == 'yes' )
+	{
+    document.form.BUTTON_ID.value='DeleteFilter';
+    document.form.submit();   	 }
+	}   
+
+  </ui:script>
+</ui:page-group>

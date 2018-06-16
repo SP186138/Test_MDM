@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <DEFINE_METHOD Name="ruleExcelUploadForProjectsSub">
+    <RULE>
+      <ACTION>
+        <INVOKE_VALIDATION_FRAMEWORK ApiName="validateAllNULL" AssignToVar="resValidateAllNULL" DocVar="thisParam" ServiceName="BCM_MASTER"/>
+        <IF_TEST Test="$resValidateAllNULL/_RESULT/@Value='SEVERE_ERROR'">
+          <THEN>
+            <APPEND_TO_XML DocVar="thisReturn">
+              <TO_XML DocVar="resValidateAllNULL"/>
+            </APPEND_TO_XML>
+            <APPEND_TO_XML Select="$thisReturn/RESPONSE">
+              <TO_XML SelectList="$resValidateAllNULL/REQUEST/*"/>
+            </APPEND_TO_XML>
+            <REMOVE_CHILDREN DocVar="thisReturn" Select="$thisReturn/RESPONSE" ChildName="REQUEST"/>
+            <SET DocVar="tempDoc" FromSelect="$thisReturn/RESPONSE/_RESULT"/>
+            <SET DocVar="tempDoc" Property="_ERROR" FromValue="{concat('Subscription Opt Number:',$thisParam/SUBSCRPTN_OPT_NBR/@Value, ' - ', $thisReturn/RESPONSE/_RESULT/_ERROR[1]/@Value)}"/>
+          </THEN>
+          <ELSE>
+            <IF_TEST Test="$resValidateAllNULL/_RESULT/@Value='SUCCESS'">
+              <THEN>
+                <INVOKE_VALIDATION_FRAMEWORK ApiName="validateRecordExist" AssignToVar="resValidateRecordExist" DocVar="thisParam" ServiceName="BCM_MASTER"/>
+                <IF_TEST Test="$resValidateRecordExist/_RESULT/@Value='SEVERE_ERROR'">
+                  <THEN>
+                    <APPEND_TO_XML DocVar="thisReturn">
+                      <TO_XML DocVar="resValidateRecordExist"/>
+                    </APPEND_TO_XML>
+                    <APPEND_TO_XML Select="$thisReturn/RESPONSE">
+                      <TO_XML SelectList="$resValidateRecordExist/REQUEST/*"/>
+                    </APPEND_TO_XML>
+                    <REMOVE_CHILDREN DocVar="thisReturn" Select="$thisReturn/RESPONSE" ChildName="REQUEST"/>
+                    <SET DocVar="tempDoc" FromSelect="$thisReturn/RESPONSE/_RESULT "/>
+                    <SET DocVar="tempDoc" Property="_ERROR" FromValue="{concat('Subscription Opt Number:',$thisParam/SUBSCRPTN_OPT_NBR/@Value, ' - ', $thisReturn/RESPONSE/_RESULT/_ERROR[1]/@Value)}"/>
+                  </THEN>
+                  <ELSE>
+                    <IF_TEST Test="$resValidateRecordExist/_RESULT/@Value='SUCCESS'">
+                      <THEN>
+                        <IF_TEST Test="$thisParam/OPERATION/@Value = 'ADD'">
+                          <THEN>
+                            <!-- Subscription_Opt Starts-->
+                            <GET_DOCUMENT Name="SUBSCRPTN_OPT" AssignToVar="resSubopt">
+                              <SELECT>
+                                <SUBSCRPTN_OPT_NAME/>
+                              </SELECT>
+                              <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                              <SUBSCRPTN_OPT_NBR Value="{$thisParam/SUBSCRPTN_OPT_NBR/@Value}"/>
+                              <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>                              
+                            </GET_DOCUMENT>
+                            <IF_TEST Test="strlen($resSubopt/SUBSCRPTN_OPT/SUBSCRPTN_OPT_NAME/@Value)&gt; 0">
+                              <THEN>
+                                <MODIFY_DOC_SMART Name="SUBSCRPTN_OPT">
+                                  <DOCUMENT_CONTEXT>
+                                    <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                                    <SUBSCRPTN_OPT_NBR Value="{$thisParam/SUBSCRPTN_OPT_NBR/@Value}"/>
+                                    <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>                                    
+                                  </DOCUMENT_CONTEXT>
+                                  <UPDATE_PROPERTIES>
+                                    <SUBSCRPTN_OPT_NAME Value="{$thisParam/SUBSCRPTN_OPT_NAME/@Value}"/>
+                                    <PARNTL_CNSNT_IND Value="{$thisParam/PARNTL_CNSNT_IND/@Value}"/>
+                                    <SUBSCRPTN_OPT_STMT_TXT Value="{$thisParam/SUBSCRPTN_OPT_STMT_TXT/@Value}"/>
+                                  </UPDATE_PROPERTIES>
+                                </MODIFY_DOC_SMART>
+                              </THEN>
+                              <ELSE>
+                                <ADD_DOC_SMART Name="SUBSCRPTN_OPT">
+                                  <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                                  <SUBSCRPTN_OPT_NBR Value="{$thisParam/SUBSCRPTN_OPT_NBR/@Value}"/>
+                                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                                  <SUBSCRPTN_OPT_NAME Value="{$thisParam/SUBSCRPTN_OPT_NAME/@Value}"/>
+                                  <PARNTL_CNSNT_IND Value="{$thisParam/PARNTL_CNSNT_IND/@Value}"/>
+                                  <SUBSCRPTN_OPT_STMT_TXT Value="{$thisParam/SUBSCRPTN_OPT_STMT_TXT/@Value}"/>
+                                </ADD_DOC_SMART>
+                              </ELSE>
+                            </IF_TEST>
+                            <!-- Subscription_Opt Ends-->
+                            <!-- Subscription_Opt_Type Starts-->
+                            <GET_DOCUMENT Name="SUBSCRPTN_OPT_TYPE" AssignToVar="resSuboptType">
+                              <SELECT>
+                                <CNTCT_CHANL_TYPE_CODE/>
+                              </SELECT>
+                              <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                              <SUBSCRPTN_OPT_NBR Value="{$thisParam/SUBSCRPTN_OPT_NBR/@Value}"/>
+                              <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                              <CNTCT_CHANL_TYPE_CODE Value="{$thisParam/CNTCT_CHANL_TYPE_CODE/@Value}"/>
+                            </GET_DOCUMENT>
+                            <IF_TEST Test="strlen($resSuboptType/SUBSCRPTN_OPT_TYPE/CNTCT_CHANL_TYPE_CODE/@Value)&gt; 0">
+                              <THEN>
+                                <MODIFY_DOC_SMART Name="SUBSCRPTN_OPT_TYPE">
+                                  <DOCUMENT_CONTEXT>
+                                    <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                                    <SUBSCRPTN_OPT_NBR Value="{$thisParam/SUBSCRPTN_OPT_NBR/@Value}"/>
+                                    <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                                    <CNTCT_CHANL_TYPE_CODE Value="{$thisParam/CNTCT_CHANL_TYPE_CODE/@Value}"/>
+                                  </DOCUMENT_CONTEXT>
+                                  <UPDATE_PROPERTIES>
+                                    <SUBSCRPTN_OPT_FREQ_TXT Value="{$thisParam/SUBSCRPTN_OPT_FREQ_TXT/@Value}"/>
+                                  </UPDATE_PROPERTIES>
+                                </MODIFY_DOC_SMART>
+                              </THEN>
+                              <ELSE>
+                                <ADD_DOC_SMART Name="SUBSCRPTN_OPT_TYPE">
+                                  <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                                  <SUBSCRPTN_OPT_NBR Value="{$thisParam/SUBSCRPTN_OPT_NBR/@Value}"/>
+                                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                                  <SUBSCRPTN_OPT_FREQ_TXT Value="{$thisParam/SUBSCRPTN_OPT_FREQ_TXT/@Value}"/>
+                                  <CNTCT_CHANL_TYPE_CODE Value="{$thisParam/CNTCT_CHANL_TYPE_CODE/@Value}"/>
+                                </ADD_DOC_SMART>
+                              </ELSE>
+                            </IF_TEST>
+                            <!-- Subscription_Opt_Type Ends-->
+                          </THEN>
+                          <ELSE>
+                            <IF_TEST Test="$thisParam/OPERATION/@Value = 'UPDATE'">
+                              <THEN>
+									<!-- Subscription_Opt Starts-->
+                                <GET_DOCUMENT Name="SUBSCRPTN_OPT" AssignToVar="resSubopt">
+                                  <SELECT>
+                                    <SUBSCRPTN_OPT_NAME/>
+                                  </SELECT>
+                                  <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                                  <SUBSCRPTN_OPT_NBR Value="{$thisParam/SUBSCRPTN_OPT_NBR/@Value}"/>
+                                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>                                  
+                                </GET_DOCUMENT>
+                                <IF_TEST Test="strlen($resSubopt/SUBSCRPTN_OPT/SUBSCRPTN_OPT_NAME/@Value)&gt; 0">
+                                  <THEN>
+                                    <MODIFY_DOC_SMART Name="SUBSCRPTN_OPT">
+                                      <DOCUMENT_CONTEXT>
+                                        <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                                        <SUBSCRPTN_OPT_NBR Value="{$thisParam/SUBSCRPTN_OPT_NBR/@Value}"/>
+                                        <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>                                        
+                                      </DOCUMENT_CONTEXT>
+                                      <UPDATE_PROPERTIES>
+                                        <SUBSCRPTN_OPT_NAME Value="{$thisParam/SUBSCRPTN_OPT_NAME/@Value}"/>
+                                        <PARNTL_CNSNT_IND Value="{$thisParam/PARNTL_CNSNT_IND/@Value}"/>
+                                        <SUBSCRPTN_OPT_STMT_TXT Value="{$thisParam/SUBSCRPTN_OPT_STMT_TXT/@Value}"/>
+                                      </UPDATE_PROPERTIES>
+                                    </MODIFY_DOC_SMART>
+                                  </THEN>
+                                  <ELSE>
+                                    <ADD_DOC_SMART Name="SUBSCRPTN_OPT">
+                                      <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                                      <SUBSCRPTN_OPT_NBR Value="{$thisParam/SUBSCRPTN_OPT_NBR/@Value}"/>
+                                      <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                                      <SUBSCRPTN_OPT_NAME Value="{$thisParam/SUBSCRPTN_OPT_NAME/@Value}"/>
+                                      <PARNTL_CNSNT_IND Value="{$thisParam/PARNTL_CNSNT_IND/@Value}"/>
+                                      <SUBSCRPTN_OPT_STMT_TXT Value="{$thisParam/SUBSCRPTN_OPT_STMT_TXT/@Value}"/>
+                                    </ADD_DOC_SMART>
+                                  </ELSE>
+                                </IF_TEST>
+                                <!-- Subscription_Opt Ends-->
+                                <!-- Subscription_Opt_Type Starts-->
+                                <GET_DOCUMENT Name="SUBSCRPTN_OPT_TYPE" AssignToVar="resSuboptType">
+                                  <SELECT>
+                                    <CNTCT_CHANL_TYPE_CODE/>
+                                  </SELECT>
+                                  <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                                  <SUBSCRPTN_OPT_NBR Value="{$thisParam/SUBSCRPTN_OPT_NBR/@Value}"/>
+                                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                                  <CNTCT_CHANL_TYPE_CODE Value="{$thisParam/CNTCT_CHANL_TYPE_CODE/@Value}"/>
+                                </GET_DOCUMENT>
+                                <IF_TEST Test="strlen($resSuboptType/SUBSCRPTN_OPT_TYPE/CNTCT_CHANL_TYPE_CODE/@Value)&gt; 0">
+                                  <THEN>
+                                    <MODIFY_DOC_SMART Name="SUBSCRPTN_OPT_TYPE">
+                                      <DOCUMENT_CONTEXT>
+                                        <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                                        <SUBSCRPTN_OPT_NBR Value="{$thisParam/SUBSCRPTN_OPT_NBR/@Value}"/>
+                                        <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                                        <CNTCT_CHANL_TYPE_CODE Value="{$thisParam/CNTCT_CHANL_TYPE_CODE/@Value}"/>
+                                      </DOCUMENT_CONTEXT>
+                                      <UPDATE_PROPERTIES>
+                                        <SUBSCRPTN_OPT_FREQ_TXT Value="{$thisParam/SUBSCRPTN_OPT_FREQ_TXT/@Value}"/>
+                                      </UPDATE_PROPERTIES>
+                                    </MODIFY_DOC_SMART>
+                                  </THEN>
+                                  <ELSE>
+                                    <ADD_DOC_SMART Name="SUBSCRPTN_OPT_TYPE">
+                                      <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                                      <SUBSCRPTN_OPT_NBR Value="{$thisParam/SUBSCRPTN_OPT_NBR/@Value}"/>
+                                      <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                                      <SUBSCRPTN_OPT_FREQ_TXT Value="{$thisParam/SUBSCRPTN_OPT_FREQ_TXT/@Value}"/>
+                                      <CNTCT_CHANL_TYPE_CODE Value="{$thisParam/CNTCT_CHANL_TYPE_CODE/@Value}"/>
+                                    </ADD_DOC_SMART>
+                                  </ELSE>
+                                </IF_TEST>
+                                <!-- Subscription_Opt_Type Ends-->
+                              </THEN>
+                            </IF_TEST>
+                          </ELSE>
+                        </IF_TEST>
+                        <!--
+                        <ADD_DOC_SMART Name="SUBSCRPTN_OPT">
+							<LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+							<SUBSCRPTN_OPT_NBR Value="{$thisParam/SUBSCRPTN_OPT_NBR/@Value}"/>
+							<MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+							<SUBSCRPTN_OPT_NAME Value="{$thisParam/SUBSCRPTN_OPT_NAME/@Value}"/>
+                            <PARNTL_CNSNT_IND Value="{$thisParam/PARNTL_CNSNT_IND/@Value}"/>
+                            <SUBSCRPTN_OPT_STMT_TXT Value="{$thisParam/SUBSCRPTN_OPT_STMT_TXT/@Value}"/>
+                        </ADD_DOC_SMART>
+                        <ADD_DOC_SMART Name="SUBSCRPTN_OPT_TYPE">
+							<LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+							<SUBSCRPTN_OPT_NBR Value="{$thisParam/SUBSCRPTN_OPT_NBR/@Value}"/>
+							<MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+							<SUBSCRPTN_OPT_FREQ_TXT Value="{$thisParam/SUBSCRPTN_OPT_FREQ_TXT/@Value}"/>
+							<CNTCT_CHANL_TYPE_CODE Value="{$thisParam/CNTCT_CHANL_TYPE_CODE/@Value}"/>							
+                        </ADD_DOC_SMART>-->
+                      </THEN>
+                    </IF_TEST>
+                  </ELSE>
+                </IF_TEST>
+              </THEN>
+            </IF_TEST>
+          </ELSE>
+        </IF_TEST>
+        <!--<TO_DOCVAR AssignToVar="thisReturn">
+          <ROOT>
+            <MESSAGE Value="SUCCESS"/>
+          </ROOT>
+        </TO_DOCVAR>-->
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="isSubscriptionExist" Category="VALIDATIONS">
+    <RULE>
+      <ACTION>
+        <GET_DOC_SMART Name="SUBSCRPTN_OPT" AssignToVar="resSubscriptionOpt" DirtyRead="true">
+          <SELECT>
+            <SUBSCRPTN_OPT_NAME/>
+          </SELECT>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <SUBSCRPTN_OPT_NBR Value="{$thisParam/SUBSCRPTN_OPT_NBR/@Value}"/>
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+        </GET_DOC_SMART>
+        <GET_DOC_SMART Name="SUBSCRPTN_OPT_TYPE" AssignToVar="resSubscriptionOptType" DirtyRead="true">
+          <SELECT>
+            <CNTCT_CHANL_TYPE_CODE/>
+          </SELECT>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <SUBSCRPTN_OPT_NBR Value="{$thisParam/SUBSCRPTN_OPT_NBR/@Value}"/>
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <CNTCT_CHANL_TYPE_CODE Value="{$thisParam/CNTCT_CHANL_TYPE_CODE/@Value}"/>
+        </GET_DOC_SMART>
+        <IF_TEST Test="$thisParam/OPERATION/@Value='ADD'">
+          <THEN>
+            <SET DocVar="thisReturn" Property="_RESULT" FromValue="{ifElse(strlen($resSubscriptionOpt/SUBSCRPTN_OPT/SUBSCRPTN_OPT_NAME/@Value)> 0 and strlen($resSubscriptionOptType/SUBSCRPTN_OPT_TYPE/CNTCT_CHANL_TYPE_CODE/@Value)> 0,'ERROR','SUCCESS')}"/>
+          </THEN>
+          <ELSE>
+            <IF_TEST Test="$thisParam/OPERATION/@Value='UPDATE'">
+              <THEN>
+                <SET DocVar="thisReturn" Property="_RESULT" FromValue="{ifElse(strlen($resSubscriptionOpt/SUBSCRPTN_OPT/SUBSCRPTN_OPT_NAME/@Value)= 0 and strlen($resSubscriptionOptType/SUBSCRPTN_OPT_TYPE/CNTCT_CHANL_TYPE_CODE/@Value)= 0,'ERROR','SUCCESS')}"/>
+              </THEN>
+            </IF_TEST>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="isAllNULL" Category="VALIDATIONS">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="myThisParam">
+          <TO_XML DocVar="thisParam"/>
+        </TO_DOCVAR>
+        <SET Var="isNull" FromValue="TRUE"/>
+        <REMOVE_CHILDREN ChildName="SUBSCRPTN_OPT_STMT_TXT" DocVar="myThisParam"/>
+        <REMOVE_CHILDREN ChildName="PARNTL_CNSNT_IND" DocVar="myThisParam"/>
+        <REMOVE_CHILDREN ChildName="SUBSCRPTN_OPT_FREQ_TXT" DocVar="myThisParam"/>
+        <FOR_EACH CurrentElement="currAtt" SelectList="$myThisParam/*">
+          <IF_TEST Test="$currAtt/@Value!=null or strlen($currAtt/@Value)!=0">
+            <THEN>
+              <SET Var="isNull" FromValue="FALSE"/>
+            </THEN>
+          </IF_TEST>
+        </FOR_EACH>
+        <SET DocVar="thisReturn" Property="_RESULT" FromValue="{ifElse($isNull='FALSE','SUCCESS','ERROR')}"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

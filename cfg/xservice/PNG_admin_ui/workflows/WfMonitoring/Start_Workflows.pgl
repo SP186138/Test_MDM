@@ -1,0 +1,48 @@
+<ui:page-group version="3" xmlns:ui="http://www.teradata.com/ui" name="studio.templates.simple_entry" source="studio.controller:load">
+  <ui:container id="topContainer" type="Wizard" displayText="Start Workflows Wizard">
+    <ui:step id="1" displayText="Select Service">
+      <ui:table id="tableServices" name="tableServices" displayText="Services" rowSrc="$root/SERVICELIST/LINE" scrollable="true" selectable="Single" rowId="ID" postRowIdAs="SEL_SVC_ID" rememberSelections="true" maxRows="-1">
+        <ui:field-group id="tableColumns">
+          <ui:display-field id="ID" name="ID" displayText="Services" />
+        </ui:field-group>
+      </ui:table>
+      <ui:buttons>
+        <ui:button id="NEXT" name="NEXT" displayText="Next" />
+      </ui:buttons>
+    </ui:step>
+    <ui:step id="2" displayText="Select Template">
+      <ui:table id="tableTemplates" name="tableTemplates" displayText="Templates" rowSrc="$root/TEMPLATELIST/LINE" scrollable="true" selectable="Single" postRowIdAs="SEL_TMPL_ID" rememberSelections="true" maxRows="-1">
+        <ui:field-group id="tableColumns">
+          <ui:display-field name="ID" displayText="Name" />
+          <ui:display-field name="Description" displayText="Description" />
+          <ui:display-field name="Type" displayText="Type" />
+          <ui:display-field name="PrimaryDocument" displayText="Primary Document" />
+        </ui:field-group>
+      </ui:table>
+      <ui:buttons>
+        <ui:button id="BACK" name="BACK" displayText="Back" />
+        <ui:button id="NEXT" name="NEXT" displayText="Next" />
+        <ui:button id="DONE" name="DONE" displayText="Submit" emphasized="true" />
+      </ui:buttons>
+    </ui:step>
+    <ui:step id="3" displayText="Additional Parameters">
+      <ui:field-group>
+        <ui:hidden-field name="TemplateName" value="{$root/TemplateName/@Value}" id="TemplateName"/>
+        <ui:entry-field displayText="Enter Workflow Id Prefix" name="IdPrefix" id="IdPrefix" />
+        <ui:textarea displayText="Enter Xml To start Workflow" columns="50" rows="10" name="SWXml" id="SWXml"/>
+      </ui:field-group>
+      <ui:buttons>
+        <ui:button id="BACK" name="BACK" displayText="Back" />
+        <ui:button id="DONE" name="DONE" displayText="Submit" emphasized="true" />
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:script>/*function onLoad()
+	{
+		var x = document.body.scrollWidth - 169;
+		i2uiResizeScrollableArea('tableTemplates',300,x);
+		i2uiResizeScrollableArea('tableServices',300,x);
+	}
+		*/</ui:script>
+</ui:page-group>
+

@@ -1,0 +1,88 @@
+/***********************************************************************************************************
+SCRIPT:               CREATE_LOAD_INFO_RECORD.BTEQ 
+DESCRIPTION:          THIS SCRIPT CREATES LOAD INFO -- This scripts creates records in load info for the country being processed
+DEPENDENCY:           
+INPUT:                TRILLIUM OUTPUT CNTRY TABLES
+OUTPUT:               EDW
+ERRORS:
+SPECIAL INSTRUCTIONS:
+
+CHANGE LOG:
+VERSION              DATE                 AUTHOR                          CHANGES
+1.00                 10/31/2011           TERADATA                        INITIAL VERSION
+4.00                 03/26/2012           TERADATA                        1. UPDATE NATIONAL ID INTO REGIS PRSNA 
+                                                                          FROM PRSNA TRT.
+                                                                          2. ADD STATE VALIDATION FOR US
+									  3. ADD OPT OUT MODULE
+R2O                  05/11/2012           TERADATA                        REMOVE ERROR PROCESSING
+4.1                  06/13/2012           TERADATA                        MODULARIZE AND TUNING
+5.6                  11/13/2015           TERADATA                        Release 5.6 BR348
+***********************************************************************************************************/
+.logon $TDPID/$TDUSER,$TDPWD
+
+
+.SET ERROROUT STDOUT;
+.SET SESSION CHARSET 'UTF8';
+.SET ERRORLEVEL 3624 SEVERITY 0
+SET QUERY_BAND = 'WorkFlow=MDM;Interface=i2MDM;Country=$CNTRY;Stage=Wrapper;Step=Step01;' FOR SESSION;
+DATABASE $DATABASENAME;
+
+CREATE VOLATILE TABLE CNTRY_CODE AS
+ (SEL '$CNTRY' AS CNTRY_CODE) 
+ WITH DATA 
+ ON COMMIT PRESERVE ROWS;
+ .IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE;
+ 
+SEL 1 FROM CNTRY_CODE WHERE CNTRY_CODE IN ('PE');
+.IF ACTIVITYCOUNT > 0 THEN .GOTO PESKII
+
+UPDATE $DATABASENAME.LOAD_INFO
+SET STATUS = 'In Progress'
+,PROCESS_END_TIME = CAST(CURRENT_TIMESTAMP(0) AS VARCHAR(19))
+WHERE $DATABASENAME.LOAD_INFO.PROCESS_NAME='Wrapper'
+AND $DATABASENAME.LOAD_INFO.STATUS = 'Ready to Process'
+;
+.IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE;
+
+.QUIT 0
+
+.LABEL PESKII
+
+insert into LOAD_CONTROL
+(
+LOAD_ID
+,SOURCE_ID
+,FORMAT_ID
+,FileName
+,FILERECEIVEDTS
+,LOAD_TYPE
+,MIG_TASK
+,LOADSTARTTS
+,LOADSTATUS
+,SOURCECNT
+,TARGETCNT
+,REJECTSCNT
+,MDM_PROCESS_DESC
+)
+SELECT
+COALESCE(MAX(B.LOAD_ID) + 100,22)
+,1532
+,22
+,'Profile_Editor_SKII_Merge_'||CURRENT_DATE||'.txt'
+,CURRENT_TIMESTAMP(0)
+,'ETL'
+,'N'
+,CURRENT_TIMESTAMP(0)
+,'In Progress'
+,0
+,0
+,0
+,'PE Merge'
+from LOAD_CONTROL B
+WHERE B.FORMAT_ID=22 
+AND B.LOAD_TYPE='ETL';
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+.exit
+
+

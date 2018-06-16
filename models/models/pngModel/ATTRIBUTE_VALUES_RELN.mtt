@@ -1,0 +1,41 @@
+<document>
+  <viewsql />
+  <properties>
+    <property Name="ACTIVE_FLAG" CharSet="UNICODE">
+      <extends Package="dictionaries" ModelUnit="ProductMasterDictionary.mdt" Name="ACTIVE_FLAG" />
+    </property>
+    <property Name="AV_ID1" Required="true">
+      <extends Package="dictionaries" ModelUnit="ProductMasterDictionary.mdt" Name="AV_ID1" />
+    </property>
+    <property Name="AV_ID2" Required="true">
+      <extends Package="dictionaries" ModelUnit="ProductMasterDictionary.mdt" Name="AV_ID2" />
+    </property>
+  </properties>
+  <keys>
+    <key Active="true" Name="ATTRIBUTE_VALUES_RELN_UPI" PhysicalName="ATTRIBUTE_VALUES_RELN_UPI" Kind="PRIMARY">
+      <property Name="AV_ID1" />
+      <property Name="AV_ID2" />
+    </key>
+  </keys>
+  <links>
+    <link Active="true" Name="XIF1ATTRIBUTE_VALUES_REL" PhysicalName="XIF1ATTRIBUTE_VALUES_REL">
+      <keymap ToPackage="models/pngModel" ToModelUnit="ATTRIBUTE_VALUES.mtt" ToKey="ATTRIBUTE_VALUES_UPI" ReverseLink="true" ReverseLinkName="REV_XIF1ATTRIBUTE_VALUES_REL" DeleteRule="RESTRICT">
+        <mapping FromProperty="AV_ID1" ToProperty="AV_ID" />
+      </keymap>
+    </link>
+    <link Active="true" Name="XIF2ATTRIBUTE_VALUES_REL" PhysicalName="XIF2ATTRIBUTE_VALUES_REL">
+      <keymap ToPackage="models/pngModel" ToModelUnit="ATTRIBUTE_VALUES.mtt" ToKey="ATTRIBUTE_VALUES_UPI" ReverseLink="true" ReverseLinkName="REV_XIF2ATTRIBUTE_VALUES_REL" DeleteRule="RESTRICT">
+        <mapping FromProperty="AV_ID2" ToProperty="AV_ID" />
+      </keymap>
+    </link>
+  </links>
+  <docFacets>
+    <mdmWebServiceFacet />
+    <mdmAuthorizationFacet />
+    <mdmSysTableMapFacet TableClass="MASTER" Source="MASTER" MasterTable="ATTRIBUTE_VALUES_RELN" />
+    <miscFacet PhysicalName="ATTRIBUTE_VALUES_RELN" Active="true" AuditTrail="false" />
+    <mdmConfigFacet SchemaGen="true" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+</document>
+

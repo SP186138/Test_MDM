@@ -1,0 +1,38 @@
+<document>
+  <viewsql />
+  <properties>
+    <property Name="ATTRIBUTE_TYPE_ID_CHILD" Required="true">
+      <extends Package="dictionaries" ModelUnit="ProductMasterDictionary.mdt" Name="ATTRIBUTE_TYPE_ID_CHILD" />
+    </property>
+    <property Name="ATTRIBUTE_TYPE_ID_PARENT" Required="true">
+      <extends Package="dictionaries" ModelUnit="ProductMasterDictionary.mdt" Name="ATTRIBUTE_TYPE_ID_PARENT" />
+    </property>
+  </properties>
+  <keys>
+    <key Active="true" Name="ATTRIBUTE_TYPES_HIERARCHY_UPI" PhysicalName="ATTRIBUTE_TYPES_HIERARCHY_UPI" Kind="PRIMARY">
+      <property Name="ATTRIBUTE_TYPE_ID_CHILD" />
+      <property Name="ATTRIBUTE_TYPE_ID_PARENT" />
+    </key>
+  </keys>
+  <links>
+    <link Active="true" Name="XIF1ATTRIBUTE_TYPES_HIERARCHY" PhysicalName="XIF1ATTRIBUTE_TYPES_HIERARCHY">
+      <keymap ToPackage="models/pngModel" ToModelUnit="ATTRIBUTE_TYPES.mtt" ReverseLink="true" ReverseLinkName="REV_XIF1ATTRIBUTE_TYPES_HIERARCHY">
+        <mapping FromProperty="ATTRIBUTE_TYPE_ID_CHILD" ToProperty="ATTRIBUTE_TYPE_ID" />
+      </keymap>
+    </link>
+    <link Active="true" Name="XIF2ATTRIBUTE_TYPES_HIERARCHY" PhysicalName="XIF2ATTRIBUTE_TYPES_HIERARCHY">
+      <keymap ToPackage="models/pngModel" ToModelUnit="ATTRIBUTE_TYPES.mtt" ToKey="ATTRIBUTE_TYPES_UPI" ReverseLink="true" ReverseLinkName="REV_XIF2ATTRIBUTE_TYPES_HR" DeleteRule="RESTRICT">
+        <mapping FromProperty="ATTRIBUTE_TYPE_ID_PARENT" ToProperty="ATTRIBUTE_TYPE_ID" />
+      </keymap>
+    </link>
+  </links>
+  <docFacets>
+    <mdmWebServiceFacet />
+    <mdmAuthorizationFacet />
+    <mdmSysTableMapFacet TableClass="MASTER" Source="MASTER" MasterTable="ATTRIBUTE_TYPES_HIERARCHY" />
+    <miscFacet PhysicalName="ATTRIBUTE_TYPES_HIERARCHY" Active="true" AuditTrail="false" />
+    <mdmConfigFacet SchemaGen="true" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+</document>
+

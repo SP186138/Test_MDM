@@ -1,0 +1,496 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="0" ShowInBreadCrumbs="true" Version="1.0" Name="ManageLegalEnt" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="ManageLegalEnt">
+    <variable Name="geographicRegionValues" Type="xml" Comment=""/>
+    <variable Name="searchResults" Type="xml" Comment=""/>
+    <variable Name="actionType" Type="string" Comment=""/>
+    <variable Name="alertGreen" Type="string" Comment=""/>
+    <variable Name="alertRed" Type="string" Comment=""/>
+    <variable Name="selectedLegalEntNbr" Type="string" Comment=""/>
+    <variable Name="LegalEntityList" Type="xml" Comment=""/>
+    <variable Name="geographicSubRegionValues" Type="xml" Comment=""/>
+    <variable Name="legalEntityDetails" Type="xml" Comment=""/>
+    <variable Name="grapRegionList" Type="xml" Comment=""/>
+    <variable Name="geographicSubRegionList" Type="xml" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start0">
+      <actions>
+        <action>
+          <REQUEST Name="getGeographicRegion" ServiceName="BCM_MASTER" AssignToVar="geographicRegionValues"/>
+          <REQUEST Name="getGeographicSubRegionALL" ServiceName="BCM_MASTER" AssignToVar="geographicSubRegionList"/>
+          <!--  <REQUEST Name="getGeographicSubRegion" ServiceName="BCM_MASTER" AssignToVar="geographicSubRegionValues">
+    <SOURCE Value="SEARCH"/>
+    <GEOC_REGN_CODE Value="{$geographicRegionValues/GEOC_REGN/GEOC_REGN_CODE/@Value}"/>
+
+  </REQUEST>-->
+          <REQUEST Name="getLegalEntityOptions" ServiceName="BCM_MASTER" AssignToVar="LegalEntityList"/>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="SearchLegalEntity"/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="SearchLegalEntity" ShowInBreadCrumbs="SHOW" Template="SearchLegalEntity.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pMessage">
+            <_ERRORS/>
+          </TO_DOCVAR>
+          <!-- <IF_TEST Test="$thisParam/START_COUNT/@Value>=0 and $userAction !='SEARCH'">
+    <THEN>
+      <IF_TEST Test="$userAction !='LOAD_PROGRAM_LIST'">
+        <THEN>
+          <REQUEST Name="getLegalEntitySearchResults" AssignToVar="searchResults" ServiceName="BCM_MASTER">
+            <TO_XML SelectList="$thisParam/*"/>
+            <START_AT_ROW Value="{$thisParam/START_COUNT/@Value}"/>
+            <TOTAL_NO_OF_ROWS Value="{$thisParam/MAX_ROWS/@Value}"/>
+          </REQUEST>
+        </THEN>
+      </IF_TEST>
+    </THEN>
+  </IF_TEST>-->
+          <IF_TEST Test="($userAction='SEARCH' or $thisParam/START_COUNT/@Value>=0)">
+            <THEN>
+              <REQUEST Name="getLegalEntitySearchResults" AssignToVar="searchResults" ServiceName="BCM_MASTER">
+                <GEOC_REGN_CODE Value="{$geographicRegionValues/GEOC_REGN[GEOC_REGN_NAME/@Value=$thisParam/GEOC_REGN_CODE/@Value]/GEOC_REGN_CODE/@Value}"/>
+                <!--<GEOC_SUB_REGN_CODE Value="{$geographicSubRegionValues/GEOC_SUB_REGN[GEOC_SUB_REGN_NAME/@Value=$thisParam/GEOC_SUB_REGN_CODE/@Value]/GEOC_SUB_REGN_CODE/@Value}" />-->
+                <!--  <GEOC_SUB_REGN_CODE Value="{$geographicSubRegionValues/GEOC_SUB_REGN[OPTION/@Id=$thisParam/GEOC_SUB_REGN_CODE/@Value]/OPTION/@Id}"/>-->
+                <TO_XML SelectList="$thisParam/*"/>
+                <TOTAL_NO_OF_ROWS Value="15"/>
+              </REQUEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='CANCEL'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <TO_XML SelectList="$geographicRegionValues/*"/>
+                  <TO_XML SelectList="$geographicSubRegionValues/*"/>
+                  <TO_XML SelectList="$LegalEntityList/*"/>
+                  <TO_XML DocVar="pMessage"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+            <ELSE>
+              <THEN>
+                <TO_DOCVAR AssignToVar="pglFormInput">
+                  <ROOT>
+                    <TO_XML SelectList="$geographicRegionValues/*"/>
+                    <TO_XML SelectList="$geographicSubRegionValues/*"/>
+                    <TO_XML SelectList="$geographicSubRegionList/*"/>
+                    <TO_XML SelectList="$LegalEntityList/*"/>
+                    <TO_XML SelectList="$searchResults"/>
+                    <TO_XML DocVar="pMessage"/>
+                  </ROOT>
+                </TO_DOCVAR>
+              </THEN>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_PROGRAM_LIST'">
+            <THEN>
+              <REQUEST Name="getGeographicRegion" ServiceName="BCM_MASTER" AssignToVar="grapRegion"/>
+              <REQUEST Name="getGeographicSubRegion" ServiceName="BCM_MASTER" AssignToVar="geographicSubRegionValues">
+                <SOURCE Value="SEARCH"/>
+                <GEOC_REGN_CODE Value="{$grapRegion/GEOC_REGN[GEOC_REGN_NAME/@Value=$thisParam/GEOC_REGN_CODE/@Value]/GEOC_REGN_CODE/@Value}"/>
+              </REQUEST>
+              <TO_DOCVAR AssignToVar="searchResults">
+                <ROOT/>
+              </TO_DOCVAR>
+              <SET Property="SHOW_LOAD_SEARCH_RESULTS" DocVar="thisParam" FromValue="TRUE"/>
+              <SET Property="START_COUNT" DocVar="thisParam" FromValue="0"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='DONE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='RESET'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SEARCH'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="SearchLegalEntity" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='CREATE'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="CreateLegal" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='EDIT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ModifyLegalEntity" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='DELETE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='excelExport'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ExcelExport'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_PROGRAM_LIST'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="SearchLegalEntity" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="CreateLegal" ShowInBreadCrumbs="SHOW" Template="Legal.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$userAction='CREATE'">
+            <THEN>
+              <SET Var="actionType" FromValue="INSERT"/>
+              <REQUEST Name="getGeographicRegion" ServiceName="BCM_MASTER" AssignToVar="grapRegion"/>
+              <REQUEST Name="getGeographicSubRegion" ServiceName="BCM_MASTER" AssignToVar="geographicSubRegionValues">
+                <SOURCE Value="NOT_SEARCH"/>
+                <GEOC_REGN_CODE Value="{$grapRegion/GEOC_REGN[GEOC_REGN_NAME/@Value=$thisParam/GEOC_REGN_CODE/@Value]/GEOC_REGN_CODE/@Value}"/>
+              </REQUEST>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <ReadOnlyFlag Value="{$thisParam/ReadOnlyFlag/@Value}"/>
+              <ACTION_TYPE Value="{$actionType/@Value}"/>
+              <TO_XML SelectList="$legalEntityDetails/*"/>
+              <TO_XML SelectList="$searchResults"/>
+              <TO_XML SelectList="$geographicRegionValues/*"/>
+              <TO_XML SelectList="$geographicSubRegionValues/*"/>
+              <TO_XML SelectList="$LegalEntityList/*"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="alertz">
+            <ABC>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </ABC>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$alertz/*"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="alertGreen" FromValue=""/>
+          <IF_TEST Test="$userAction='ADD'">
+            <THEN>
+              <SET Var="isNameValid" FromValue="YES"/>
+              <REQUEST Name="getLegalEntityOptions" ServiceName="BCM_MASTER" AssignToVar="LegalEntityNames">
+                <!--        <LEGAL_ENT_NBR Value="{$matchedDomainValues/LEGAL_ENT[LEGAL_ENT_NAME/@Value=$thisParam/LEGAL_ENT_NBR/@Value]/LEGAL_ENT_NBR/@Value}" />-->
+                <GEOC_REGN_CODE Value="{$geographicRegionValues/GEOC_REGN[GEOC_REGN_NAME/@Value=$thisParam/GEOC_REGN_CODE/@Value]/GEOC_REGN_CODE/@Value}"/>
+                <GEOC_SUB_REGN_CODE Value="{$geographicSubRegionValues/GEOC_SUB_REGN[OPTION/@Id=$thisParam/GEOC_SUB_REGN_CODE/@Value]/GEOC_SUB_REGN_CODE/@Value}"/>
+                <TO_XML SelectList="$thisParam/*"/>
+              </REQUEST>
+              <FOR_EACH SelectList="$LegalEntityNames/LEGAL_ENT/OPTION" CurrentElement="curElement">
+                <IF_TEST Test="$curElement/@Id=$thisParam/LEGAL_ENT_NBR/@Value">
+                  <THEN>
+                    <SET Var="alertRed" FromValue="LEGAL_ENT_NBR already exists."/>
+                    <SET Var="isNameValid" FromValue="NO"/>
+                    <SET Var="actionType" FromValue="CREATE_FAILED"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$isNameValid='YES'">
+            <THEN>
+              <REQUEST Name="createLegalEntity" ServiceName="BCM_MASTER" AssignToVar="LegalEntityResults">
+                <!--<LEGAL_ENT_NBR Value="{$matchedDomainValues/LEGAL_ENT[LEGAL_ENT_NAME/@Value=$thisParam/LEGAL_ENT_NBR/@Value]/LEGAL_ENT_NBR/@Value}" />-->
+                <GEOC_REGN_CODE Value="{$geographicRegionValues/GEOC_REGN[GEOC_REGN_NAME/@Value=$thisParam/GEOC_REGN_CODE/@Value]/GEOC_REGN_CODE/@Value}"/>
+                <GEOC_SUB_REGN_CODE Value="{$thisParam/GEOC_SUB_REGN_CODE/@Value}"/>
+                <!--<GEOC_SUB_REGN_CODE Value="{$geographicSubRegionValues/GEOC_SUB_REGN[GEOC_SUB_REGN_NAME/@Value=$thisParam/GEOC_SUB_REGN_CODE/@Value]/GEOC_SUB_REGN_CODE/@Value}" />-->
+                <TO_XML SelectList="$thisParam/*"/>
+              </REQUEST>
+              <IF_TEST Test="strlen($LegalEntityResults/_RESULT/_ERROR/@Value) > 0">
+                <THEN>
+                  <SET Var="alertRed" FromValue="{$LegalEntityResults/_RESULT/_ERROR/@Value}"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertGreen" FromValue="Record Created Successfully"/>
+                  <SET Var="isItemPresent" FromValue="YES"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_PROGRAM_LIST'">
+                <THEN>
+                  <SET Var="actionType" FromValue="{$thisParam/ACTION_TYPE/@Value}"/>
+                  <REQUEST Name="getGeographicRegion" ServiceName="BCM_MASTER" AssignToVar="grapRegion"/>
+                  <REQUEST Name="getGeographicSubRegion" ServiceName="BCM_MASTER" AssignToVar="geographicSubRegionValues">
+                    <SOURCE Value="NOT_SEARCH"/>
+                    <GEOC_REGN_CODE Value="{$grapRegion/GEOC_REGN[GEOC_REGN_NAME/@Value=$thisParam/GEOC_REGN_CODE/@Value]/GEOC_REGN_CODE/@Value}"/>
+                  </REQUEST>
+                  <TO_DOCVAR AssignToVar="legalEntityDetailsCopy">
+                    <TO_XML SelectList="$legalEntityDetails/*"/>
+                  </TO_DOCVAR>
+                  <!--<SET Property="LEGAL_ENT_NBR" FromValue="{$thisParam/LEGAL_ENT_NBR/@Value}" DocVar="legalEntityDetailsCopy" />
+          <SET Property="LEGAL_ENT_NAME" FromValue="{$thisParam/LEGAL_ENT_NAME/@Value}" DocVar="legalEntityDetailsCopy" />
+          <SET Property="LEGAL_ENT_SHORT_NAME" FromValue="{$thisParam/LEGAL_ENT_SHORT_NAME/@Value}" DocVar="legalEntityDetailsCopy" />
+          <SET Property="LEGAL_ENT_DESC" FromValue="{$thisParam/LEGAL_ENT_DESC/@Value}" DocVar="legalEntityDetailsCopy" />
+          <SET Property="GEOC_REGN_CODE" FromValue="{$thisParam/GEOC_REGN_CODE/@Value}" DocVar="legalEntityDetailsCopy" />
+          <SET Property="GEOC_SUB_REGN_CODE" FromValue="{$thisParam/GEOC_SUB_REGN_CODE/@Value}" DocVar="legalEntityDetailsCopy" />-->
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$userAction='CANCEL'">
+                    <THEN>
+                      <REQUEST Name="getGeographicSubRegion" AssignToVar="geographicSubRegionValues" ServiceName="BCM_MASTER">
+                        <SOURCE Value="SEARCH"/>
+                        <GEOC_REGN_CODE Value="{$geographicRegionValues/GEOC_REGN[GEOC_REGN_NAME/@Value=$thisParam/GEOC_REGN_CODE/@Value]/GEOC_REGN_CODE/@Value}"/>
+                      </REQUEST>
+                      <SET Property="LEGAL_ENT_NBR" FromValue="" DocVar="thisParam"/>
+                      <SET Property="LEGAL_ENT_NAME" FromValue="" DocVar="thisParam"/>
+                      <SET Property="LEGAL_ENT_SHORT_NAME" FromValue="" DocVar="thisParam"/>
+                      <SET Property="LEGAL_ENT_DESC" FromValue="" DocVar="thisParam"/>
+                      <SET Property="GEOC_REGN_CODE" FromValue="" DocVar="thisParam"/>
+                    </THEN>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='DONE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='CANCEL'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="SearchLegalEntity" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='CREATE_SUCCESS'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ADD'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="CreateLegal" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_PROGRAM_LIST'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="CreateLegal" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='true()'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="ModifyLegalEntity" ShowInBreadCrumbs="SHOW" Template="ModifyLegalEntity.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='EDIT' or $userAction='EDIT' or $userAction='RETURN' or $userAction='SAVE_ITEM' or $userAction='save' or $userAction='SAVE' or $userAction='Return' or $actionType='CREATE_SUCCESS' or $thisParam/BUTTON_ID/@Value='update' or $thisParam/BUTTON_ID/@Value='UPDATE_ITEM'">
+            <THEN>
+              <SET Var="actionType" FromValue="UPDATE"/>
+              <IF_TEST Test="$userAction='EDIT'">
+                <THEN>
+                  <SET Var="selectedLegalEntNbr" FromValue="{$thisParam/LegalEnt/@Value}"/>
+                </THEN>
+              </IF_TEST>
+              <EXECUTE_SQL_QUERY AssignToVar="legalEntityDetails" Value="SELECT * FROM LEGAL_ENT WHERE LEGAL_ENT_NBR = '{$selectedLegalEntNbr/@Value}';"/>
+              <REQUEST Name="getGeographicRegionList" ServiceName="BCM_MASTER" AssignToVar="grapRegionList"/>
+              <REQUEST Name="getGeographicSubRegion" ServiceName="BCM_MASTER" AssignToVar="geographicSubRegionValues">
+                <SOURCE Value="NOT_SEARCH"/>
+                <GEOC_REGN_CODE Value="{$legalEntityDetails/SQL_RESULT/GEOC_REGN_CODE/@Value}"/>
+                <!--<GEOC_REGN_CODE Value="{$grapRegion/GEOC_REGN[GEOC_REGN_NAME/@Value=$thisParam/GEOC_REGN_CODE/@Value]/GEOC_REGN_CODE/@Value}" />-->
+              </REQUEST>
+              <!-- <REQUEST Name="getLegalEntityDetails" AssignToVar="respLegalEntityDetails" ServiceName="BCM_MASTER">
+        <LEGAL_ENT_NBR Value="{$selectedLegalEntNbr/@Value}"/>
+      
+        <GEOC_REGN_CODE Value="{$geographicRegionValues/GEOC_REGN[GEOC_REGN_NAME/@Value=$thisParam/GEOC_REGN_CODE/@Value]/GEOC_REGN_CODE/@Value}"/>
+        <GEOC_SUB_REGN_CODE Value="{$geographicSubRegionValues/GEOC_SUB_REGN[GEOC_SUB_REGN_NAME/@Value=$thisParam/GEOC_SUB_REGN_CODE/@Value]/GEOC_SUB_REGN_CODE/@Value}"/>
+      </REQUEST>-->
+              <!--  <SET Var="itemCheck" FromValue="{$respLegalEntityDetails/@TotalRowCount}"/>
+      <SET Var="isItemPresent" FromValue="NO"/>
+      <IF_TEST Test="$itemCheck !=0">
+        <THEN>
+          <SET Var="isItemPresent" FromValue="YES"/>
+        </THEN>
+      </IF_TEST>-->
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <CNTRY_CODE Value="{$selectedLegalEntNbr/@Value}"/>
+              <ACTION_TYPE Value="{$actionType/@Value}"/>
+              <TO_XML SelectList="$legalEntityDetails/*"/>
+              <TO_XML SelectList="$grapRegionList/*"/>
+              <!--  <TO_XML SelectList="$searchResults"/>-->
+              <TO_XML SelectList="$geographicRegionValues/*"/>
+              <TO_XML SelectList="$geographicSubRegionValues/*"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="alertz">
+            <ABC>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </ABC>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$alertz/*"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="alertGreen" FromValue=""/>
+          <IF_TEST Test="$userAction='SAVE'">
+            <THEN>
+              <REQUEST Name="saveLegalEntity" ServiceName="BCM_MASTER" AssignToVar="saveLegalEntityResults">
+                <LEGAL_ENT_NBR Value="{$selectedLegalEntNbr/@Value}"/>
+                <!--<GEOC_REGN_CODE Value="{$geographicRegionValues/GEOC_REGN[GEOC_REGN_NAME/@Value=$thisParam/GEOC_REGN_CODE/@Value]/GEOC_REGN_CODE/@Value}"/>
+        <GEOC_SUB_REGN_CODE Value="{$geographicSubRegionValues/GEOC_SUB_REGN[GEOC_SUB_REGN_NAME/@Value=$thisParam/GEOC_SUB_REGN_CODE/@Value]/GEOC_SUB_REGN_CODE/@Value}"/>-->
+                <TO_XML SelectList="$thisParam/*"/>
+              </REQUEST>
+              <IF_TEST Test="$saveLegalEntityResults/@Status='Success'">
+                <THEN>
+                  <SET Var="alertGreen" FromValue="Record Updated Successfully"/>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_PROGRAM_LIST'">
+                <THEN>
+                  <SET Var="actionType" FromValue="{$thisParam/ACTION_TYPE/@Value}"/>
+                  <!--          <REQUEST Name="getGeographicRegion" ServiceName="BCM_MASTER" AssignToVar="grapRegion"/>-->
+                  <REQUEST Name="getGeographicRegionList" ServiceName="BCM_MASTER" AssignToVar="grapRegionList"/>
+                  <REQUEST Name="getGeographicSubRegion" ServiceName="BCM_MASTER" AssignToVar="geographicSubRegionValues">
+                    <SOURCE Value="NOT_SEARCH"/>
+                    <GEOC_REGN_CODE Value="{$thisParam/GEOC_REGN_CODE/@Value}"/>
+                    <!--            <GEOC_REGN_CODE Value="{$grapRegion/GEOC_REGN[GEOC_REGN_NAME/@Value=$thisParam/GEOC_REGN_CODE/@Value]/GEOC_REGN_CODE/@Value}"/>-->
+                  </REQUEST>
+                  <TO_DOCVAR AssignToVar="legalEntityDetailsCopy">
+                    <TO_XML SelectList="$legalEntityDetails/*"/>
+                  </TO_DOCVAR>
+                  <SET Property="SHOW_LOAD_SEARCH_RESULTS" DocVar="thisParam" FromValue="TRUE"/>
+                  <SET Property="START_COUNT" DocVar="thisParam" FromValue="0"/>
+                  <SET Property="LEGAL_ENT_NBR" FromValue="{selectedLegalEntNbr/@Value}" DocVar="legalEntityDetailsCopy"/>
+                  <SET Property="LEGAL_ENT_NAME" FromValue="{$thisParam/LEGAL_ENT_NAME/@Value}" DocVar="legalEntityDetailsCopy"/>
+                  <SET Property="LEGAL_ENT_SHORT_NAME" FromValue="{$thisParam/LEGAL_ENT_SHORT_NAME/@Value}" DocVar="legalEntityDetailsCopy"/>
+                  <SET Property="LEGAL_ENT_DESC" FromValue="{$thisParam/LEGAL_ENT_DESC/@Value}" DocVar="legalEntityDetailsCopy"/>
+                  <SET Property="GEOC_REGN_CODE" FromValue="{$thisParam/GEOC_REGN_CODE/@Value}" DocVar="legalEntityDetailsCopy"/>
+                  <SET Property="GEOC_SUB_REGN_CODE" FromValue="{$thisParam/GEOC_SUB_REGN_CODE/@Value}" DocVar="legalEntityDetailsCopy"/>
+                  <SET Property="ENTITY_STATE" FromValue="{$thisParam/ENTITY_STATE/@Value}" DocVar="legalEntityDetailsCopy"/>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$userAction='CANCEL'">
+                    <THEN>
+                      <SET Property="LEGAL_ENT_NBR" FromValue="" DocVar="thisParam"/>
+                      <SET Property="LEGAL_ENT_NAME" FromValue="" DocVar="thisParam"/>
+                      <SET Property="LEGAL_ENT_SHORT_NAME" FromValue="" DocVar="thisParam"/>
+                      <SET Property="LEGAL_ENT_DESC" FromValue="" DocVar="thisParam"/>
+                      <SET Property="GEOC_REGN_CODE" FromValue="" DocVar="thisParam"/>
+                      <SET Property="GEOC_SUB_REGN_CODE" FromValue="" DocVar="thisParam"/>
+                    </THEN>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='DONE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='CANCEL'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="SearchLegalEntity" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SAVE'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ModifyLegalEntity" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SUBMIT'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_PROGRAM_LIST'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ModifyLegalEntity" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <start0 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="105,204" size="732,526">
+        <iconProps iconfile="z1start.gif"/>
+      </start0>
+      <SearchLegalEntity font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="287,184" size="1364,724">
+        <iconProps iconfile="x1age80.gif"/>
+      </SearchLegalEntity>
+      <CreateLegal font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="526,100" size="1364,724">
+        <iconProps iconfile="x1age80.gif"/>
+      </CreateLegal>
+      <ModifyLegalEntity font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="454,275" size="1364,724">
+        <iconProps iconfile="x1age80.gif"/>
+      </ModifyLegalEntity>
+    </mgcnodes>
+    <mgcconnectors>
+      <start0>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="150,226" endpoint="287,206" ctrlRect1="250,224,4,4" ctrlRect2="182,204,4,4"/>
+      </start0>
+      <SearchLegalEntity>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="309,184" endpoint="309,184" ctrlRect1="307,107,4,4" ctrlRect2="379,46,4,4" ctrlRect2Dirty="true" textRect="332,74,26,8">
+          <textProps text="$userAction ='SEARCH'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="332,206" endpoint="526,122" ctrlRect1="411,116,4,4" ctrlRect2="378,120,4,4" textRect="383,116,26,8" ctrlRect1Dirty="true">
+          <textProps text="$userAction ='CREATE'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="309,229" endpoint="454,297" ctrlRect1="307,278,4,4" ctrlRect2="343,295,4,4" textRect="315,284,24,8">
+          <textProps text="$userAction ='EDIT'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="287,206" endpoint="309,184" ctrlRect1="210,204,4,4" ctrlRect2="199,75,4,4" ctrlRect2Dirty="true" textRect="188,137,37,8">
+          <textProps text="$userAction ='LOAD_PROGRAM_LIST'"/>
+        </nextNodeView>
+      </SearchLegalEntity>
+      <CreateLegal>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="526,122" endpoint="332,206" ctrlRect1="379,120,4,4" ctrlRect2="476,204,4,4" textRect="416,160,26,8">
+          <textProps text="$userAction ='CANCEL'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="548,145" endpoint="548,145" ctrlRect1="546,218,4,4" ctrlRect2="624,304,4,4" ctrlRect2Dirty="true" textRect="576,259,23,8">
+          <textProps text="$userAction ='ADD'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="571,122" endpoint="571,122" ctrlRect1="644,120,4,4" ctrlRect2="689,221,4,4" ctrlRect2Dirty="true" textRect="650,168,37,8">
+          <textProps text="$userAction ='LOAD_PROGRAM_LIST'"/>
+        </nextNodeView>
+      </CreateLegal>
+      <ModifyLegalEntity>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="454,297" endpoint="332,206" ctrlRect1="361,295,4,4" ctrlRect2="422,204,4,4" textRect="380,247,26,8">
+          <textProps text="$userAction ='CANCEL'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="499,297" endpoint="499,297" ctrlRect1="572,295,4,4" ctrlRect2="827,174,4,4" ctrlRect2Dirty="true" textRect="689,232,24,8">
+          <textProps text="$userAction ='SAVE'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="499,297" endpoint="499,297" ctrlRect1="572,295,4,4" ctrlRect2="787,394,4,4" ctrlRect2Dirty="true" textRect="663,342,37,8">
+          <textProps text="$userAction ='LOAD_PROGRAM_LIST'"/>
+        </nextNodeView>
+      </ModifyLegalEntity>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+      <action/>
+    </pre_actions>
+    <post_actions>
+      <action/>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+ 	 Copyright (c) 2009 by Teradata Corporation. 
+	 All Rights Reserved. 
+	 Teradata CONFIDENTIAL AND TRADE SECRET 
+ -->
+  <DEFINE_METHOD Name="Wrapper_rule">
+    <API_DOC>
+    </API_DOC>
+    <RULE>
+      <ACTION>
+        <!--<GET_DOC_SMART Name="LOAD_INFO" AssignToVar="resLoadInfo" DirtyRead="true" ServiceName="BCM_MASTER">
+          <SELECT>
+            <LOAD_ID/>
+            <NC_TYPE/>
+          </SELECT>
+          <BATCH_ID Value="{$thisParam/BatchId/@Value}"/>
+          <PROCESS_NAME Value="Trillium"/>
+          <STATUS Value="Success"/>
+          <GROUP_BY>
+            <LOAD_ID/>
+            <NC_TYPE/>
+          </GROUP_BY>
+          <ORDER_BY>
+            <NC_TYPE Sort="Ascending"/>
+            <LOAD_ID Sort="Ascending"/>
+          </ORDER_BY>
+        </GET_DOC_SMART>-->
+        <!--<FOR_EACH SelectList="$resLoadInfo/*" CurrentElement="currLoadInfo">
+          <GET_DOCUMENT Name="TRILLIUM_OUTPUT" AssignToVar="resTrillium" DirtyRead="true" ServiceName="BCM_MASTER">
+            <STATUS Value="IN PROCESS"/>
+            <SOURCE Value="{$currLoadInfo/LOAD_ID/@Value}"/>
+            <SYS_TYPE Value="{$currLoadInfo/NC_TYPE/@Value}"/>
+            <RECORD_IND Value="Y"/>
+            <RECENT_IND Value="Y"/>
+            <ORDER_BY>
+              <CREATION_DATE Sort="Ascending"/>
+            </ORDER_BY>
+          </GET_DOCUMENT>
+          <FOR_EACH SelectList="$resTrillium/*" CurrentElement="currRec">
+            <DO_TRANSACTION>
+              <GET_DOCUMENT Name="REGIS_PRSNA" AssignToVar="resRegisPrsna" DirtyRead="true" ServiceName="BCM_MASTER">
+                <MKTNG_PGM_NBR Value="{$currRec/MKTNG_PGM_NBR/@Value}"/>
+                <REGIS_CNSMR_ID_VAL Value="{$currRec/REGIS_CNSMR_ID_VAL/@Value}"/>
+              </GET_DOCUMENT>
+              <IF_TEST Test="$resRegisPrsna/REGIS_PRSNA/MKTNG_PGM_NBR = null">
+                <THEN>
+                  <REQUEST Name="insRegPrsnaStatusInactive" AssignToVar="resinsRegPrsnaStatInact" ServiceName="BCM_MASTER">
+                    <TO_XML SelectList="$currRec/*"/>
+                  </REQUEST>
+                </THEN>
+                <ELSE>
+                 <REQUEST Name="updateRegistrationPersona" AssignToVar="resupdateRegistrationPersona" ServiceName="BCM_MASTER">
+                   <TO_XML SelectList="$currRec/*"/>
+                 </REQUEST>
+                 <IF_TEST Test="$currRec/LE_FLAG/@Value = 'N'">
+                   <THEN>
+                    <REQUEST Name="createMatchedCnsmr" AssignToVar="rescreateMatchedCnsmr" ServiceName="BCM_MASTER">
+                      <TO_XML SelectList="$currRec/*"/>
+                    </REQUEST> 
+                   </THEN>
+                   <ELSE>
+                    <REQUEST Name="updateMatchedCnsmr" AssignToVar="resupdateMatchedCnsmr" ServiceName="BCM_MASTER">
+                      <MATCHD_CNSMR_PRSNA_ID Value="{$currRec/REFERENCE_LegalEntityKEY/@Value}"/>
+                      <TO_XML SelectList="$currRec/*"/>
+                    </REQUEST>
+                   </ELSE>
+                 </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </DO_TRANSACTION>
+          </FOR_EACH>
+        </FOR_EACH>-->
+        <!--<IF_TEST Test="$Success_Error_Message = 'null'">
+          <THEN>
+            <EXECUTE_SHELL_COMMAND Value="CNSMR_MERGE.BAT" AssignToVar="resCnsmrMergeBat" Synchronous="true"/>
+            <IF_TEST Test="$resCnsmrMergeBat/@ShellReturnValue != 0">
+              <THEN>
+                <SET Var="Success_Error_Message" FromValue="Cnsmr Merge Failed" Scope="Global"/>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>-->
+        <IF_TEST Test="$Success_Error_Message = 'null'">
+          <THEN>
+            <!--<REQUEST Name="modifyTrilliumStatus" AssignToVar="resmodTrilliumStatus" ServiceName="BCM_MASTER"/>-->
+            <EXECUTE_SQL_QUERY Value="UPDATE TRILLIUM_OUTPUT1 SET STATUS='PROCESSED' WHERE STATUS='IN PROCESS';" AssignToVar="update3"/>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+        <PRINT Value="Trillium Status Modified"/>
+        <IF_TEST Test="$Success_Error_Message = 'null'">
+          <THEN>
+            <REQUEST Name="modifySyncStatus" AssignToVar="resmodifySyncStatus" ServiceName="BCM_MASTER"/>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+        <PRINT Value="Sync Status for STG Tables Modified"/>
+        <IF_TEST Test="$Success_Error_Message = 'null'">
+          <THEN>
+            <SET Var="Success_Error_Message" FromValue="Wrapper Rule Successful" Scope="Global"/>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+        <TO_DOCVAR AssignToVar="thisReturn">
+          <SUCCESS>
+            <Message Value="{$Success_Error_Message}"/>
+          </SUCCESS>
+        </TO_DOCVAR>
+      </ACTION>
+    </RULE>
+    <HANDLE_SYSTEM_EXCEPTION>
+      <action>
+        <TO_DOCVAR AssignToVar="thisReturn">
+          <SUCCESS>
+            <Message Value="Wrapper Rule Failed"/>
+          </SUCCESS>
+        </TO_DOCVAR>
+      </action>
+    </HANDLE_SYSTEM_EXCEPTION>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="TESTEMAIL">
+    <RULE>
+      <ACTION>
+        <!--<GET_DOCUMENT Name="V_SRC_EMAIL_DETAIL" AssignToVar="resSrcEmail" DirtyRead="yes" ServiceName="BCM_MASTER">
+          <SELECT>
+            <SOURCE_ID/>
+            <REQ_MAIL_ID/>
+            <AGN_CON_MAIL_ID/>
+          </SELECT>
+          <LOAD_ID Value="{$thisParam/LoadId/@Value}"/>
+          <GROUP_BY>
+            <SOURCE_ID/>
+            <REQ_MAIL_ID/>
+            <AGN_CON_MAIL_ID/>
+          </GROUP_BY>
+        </GET_DOCUMENT>-->
+        <EXECUTE_SQL_QUERY Value="SEL DISTINCT SOURCE_ID,REQ_MAIL_ID,AGN_CON_MAIL_ID FROM V_SRC_EMAIL_DETAIL WHERE LOAD_ID IN({$thisParam/LoadId/@Value});" AssignToVar="resSrcEmail"/>
+        <TO_DOCVAR AssignToVar="srcdetails">
+          <ROOT>
+            <TO_XML SelectList="$resSrcEmail/*"/>
+          </ROOT>
+        </TO_DOCVAR>
+        <REQUEST Name="wrappersuccess" ServiceName="BCM_MASTER" AssignToVar="reswrapper" Synchronous="no">
+          <BatchId Value="{$thisParam/LoadId/@Value}"/>
+          <TO_XML DocVar="srcdetails"/>
+        </REQUEST>
+        <EXECUTE_SQL_QUERY Value="SELECT DISTINCT LOAD_ID,SYS_TARGET_ID FROM ERR_PRSNA_STG WHERE SYS_ERR_CODE LIKE'%Untranslatable character%' AND LOAD_ID IN({$thisParam/LoadId/@Value});" AssignToVar="resdistinctSourceId"/>
+        <IF_TEST Test="$resdistinctSourceId/SQL_RESULT/SYS_TARGET_ID/@Value != NULL">
+          <THEN>
+            <SET Var="Sample" FromValue="1"/>
+            <FOR_EACH SelectList="$resdistinctSourceId/*" CurrentElement="currSource">
+              <IF_TEST Test="$Sample=1">
+                <THEN>
+                  <SET Var="SourceId" FromValue="{$currSource/SYS_TARGET_ID/@Value}"/>
+                  <SET Var="LoadId" FromValue="{$currSource/LOAD_ID/@Value}"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="SourceId" FromValue="{concat($SourceId/@Value,',',$currSource/SYS_TARGET_ID/@Value)}"/>
+                  <SET Var="LoadId" FromValue="{concat($LoadId/@Value,',',$currSource/LOAD_ID/@Value)}"/>
+                </ELSE>
+              </IF_TEST>
+              <SET Var="Sample" FromValue="{int(int($Sample)+1)}"/>
+            </FOR_EACH>
+            <!--<GET_DOCUMENT Name="V_SRC_EMAIL_DETAIL" AssignToVar="resUnSrcEmail" DirtyRead="yes" ServiceName="BCM_MASTER">
+              <SELECT>
+                <SOURCE_ID/>
+                <REQ_MAIL_ID/>
+                <AGN_CON_MAIL_ID/>
+              </SELECT>
+              <LOAD_ID Value="{$LoadId}"/>
+              <SOURCE_ID Value="{$SourceId}"/>
+              <GROUP_BY>
+                <SOURCE_ID/>
+                <REQ_MAIL_ID/>
+                <AGN_CON_MAIL_ID/>
+              </GROUP_BY>
+            </GET_DOCUMENT>-->
+            <EXECUTE_SQL_QUERY Value="SEL DISTINCT SOURCE_ID,REQ_MAIL_ID,AGN_CON_MAIL_ID FROM V_SRC_EMAIL_DETAIL WHERE LOAD_ID IN({$LoadId}) AND SOURCE_ID IN({$SourceId});" AssignToVar="resUnSrcEmail"/>
+            <TO_DOCVAR AssignToVar="Unsrcdetails">
+              <ROOT>
+                <TO_XML SelectList="$resUnSrcEmail/*"/>
+              </ROOT>
+            </TO_DOCVAR>
+            <REQUEST Name="UntranslatableChar" ServiceName="BCM_MASTER" AssignToVar="resUntransChar" Synchronous="no">
+              <LOAD_ID Value="{$LoadId}"/>
+              <TO_XML DocVar="Unsrcdetails"/>
+              <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+              <!--<LOAD_ID Value="{$thisParam/LoadId/@Value}"/>-->
+            </REQUEST>
+          </THEN>
+          <ELSE>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

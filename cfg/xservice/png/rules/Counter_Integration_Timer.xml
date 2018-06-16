@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+ 	 Copyright (c) 2009 by Teradata Corporation. 
+	 All Rights Reserved. 
+	 Teradata CONFIDENTIAL AND TRADE SECRET 
+ -->
+  <DEFINE_METHOD Name="startTimerForCounterIntegration">
+    <RULE>
+      <ACTION>
+        <START_TIMER>
+          <IDENTIFIED_BY>
+            <NAME Value="TIMER_FOR_COUNTER_INTEGRATION"/>
+          </IDENTIFIED_BY>
+          <CALLBACK_DATE Value="{incrDate(date(), duration(0, 0, 15, 0))}"/>
+          <CALLBACK_DURATION Value="{duration(0,0,15,0)}"/>
+          <CALLBACK_ACTIONS>
+            <EXECUTE_SQL_QUERY Value="Sel LOAD_ID from MDM_LOAD_CONTROL_CI" AssignToVar="resMdmLoadControl" ReturnRowCount="yes"/>
+            <IF_TEST Test="$resMdmLoadControl/@TotalRowCount != 0">
+              <THEN>
+                <REQUEST Name="invokeTestTrilliumService" ServiceName="Trillium" AssignToVar="result" Synchronous="true" HandleException="true"/>
+                <IF_TEST Test="subString($result/@Description,0,17)= 'Service Not Found'">
+                  <THEN>
+                    <REQUEST Name="emailOnSerdownNPrevLoadInFailState" AssignToVar="resTrilliumdown" ServiceName="BCM_MASTER">
+                      <SUBJECT Value="MDM Service down on Trillium Box"/>
+                      <DATA Value="MDM Service down on Trillium Box and hence workflow wont be executed"/>
+                    </REQUEST>
+                  </THEN>
+                  <ELSE>
+                    <GET_DOCUMENT Name="LOAD_INFO" AssignToVar="respLoadInfo" ServiceName="BCM_MASTER" DirtyRead="yes" MaxRows="1" ReturnRowCount="yes">
+                      <ORDER_BY>
+                        <PROCESS_START_TIME Sort="Descending"/>
+                      </ORDER_BY>
+                    </GET_DOCUMENT>
+                    <IF_TEST Test="$respLoadInfo/@TotalRowCount=0">
+                      <THEN>
+                        <START_WORKFLOW>
+                          <TEMPLATE Value="Counter_Integ_wf"/>
+                        </START_WORKFLOW>
+                      </THEN>
+                      <ELSE>
+                        <IF_TEST Test="($respLoadInfo/LOAD_INFO/PROCESS_NAME/@Value='Wrapper' and $respLoadInfo/LOAD_INFO/STATUS/@Value='Success') or ($respLoadInfo/LOAD_INFO/PROCESS_NAME/@Value='Validations-BadFile' and $respLoadInfo/LOAD_INFO/STATUS/@Value='Failure-BadFile')">
+                          <THEN>
+                            <START_WORKFLOW>
+                              <TEMPLATE Value="Counter_Integ_wf"/>
+                            </START_WORKFLOW>
+                          </THEN>
+                          <ELSE>
+                            <IF_TEST Test="$respLoadInfo/LOAD_INFO/STATUS/@Value='Failed'">
+                              <THEN>
+                                <REQUEST Name="emailOnSerdownNPrevLoadInFailState" AssignToVar="resPreviousLoad" ServiceName="BCM_MASTER">
+                                 <SUBJECT Value="Previous Load Still in Failed State"/>
+                                 <DATA Value="Previous Load is still in Failed State and hence the Workflow wont be executed"/>
+                                </REQUEST>
+                              </THEN>
+                            </IF_TEST>
+                          </ELSE>
+                        </IF_TEST>
+                      </ELSE>
+                    </IF_TEST>
+                  </ELSE>
+                </IF_TEST>
+              </THEN>
+              <ELSE>
+              </ELSE>
+            </IF_TEST>
+          </CALLBACK_ACTIONS>
+        </START_TIMER>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

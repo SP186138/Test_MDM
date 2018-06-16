@@ -1,0 +1,87 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_form" source="studio.controller:load">
+  <ui:container id="adCont" scrollable="true">
+    <ui:step displayText="Configure Advanced Filter" id="adStep" scrollable="true">
+      <ui:help displayPage="{$root/URL_V/@Value}"/>
+      <ui:dynamic-pgl id="dyn1" select="$root/DYNAMIC_PGL/*"/>
+      <ui:field-group id="f1">
+        <ui:dropdown id="targetChange" name="targetChange" selectOne="true" displayText="Target Table"/>
+      </ui:field-group>
+      <ui:grid>
+        <ui:row>
+          <ui:cell width="30%" height="100%" valign="top">
+            <ui:container id="PropertiesTableContainer" height="100%">
+              <ui:step displayText="All Properties" id="PropertiesStep">
+                <ui:field-group>
+                  <ui:dropdown size="20" id="properties" name="properties">
+                  </ui:dropdown>
+                </ui:field-group>
+                <ui:buttons>
+                  <ui:button id="AND" name="AND" displayText="AND&amp;nbsp;" onClick="javascript:group_operation('AND');"/>
+                  <ui:button id="or" name="or" displayText="OR" onClick="javascript:group_operation('OR');"/>
+                  <ui:button id="oB" name="oB" displayText="(" onClick="javascript:group_operation('(');"/>
+                  <ui:button id="cB" name="cB" displayText=")" onClick="javascript:group_operation(')');"/>
+                </ui:buttons>
+              </ui:step>
+            </ui:container>
+          </ui:cell>
+          <ui:cell width="30%" height="100%" valign="top" scrollable="true">
+            <ui:container id="FilterDescriptionContainer" height="100%" scrollable="true">
+              <ui:step displayText="Filter Description" id="FilterDescriptionStep">
+                <ui:field-group>
+                  <ui:hidden-field id="Document_Name" name="Document_Name" value="{$root/DATA/Document/DocumentDisplayName/@Value}"/>
+                  <ui:hidden-field name="field_name_display" value="" id="field_name_display"/>
+                  <ui:entry-field displayText="Property Name" name="field_sel_by_name" id="field_sel_by_name" size="30" readOnly="true"/>
+                  <ui:entry-field displayText="Data Type" name="field_sel_data_type" id="field_sel_data_type" size="20" readOnly="true"/>
+                  <ui:hidden-field name="field_orig_type" value="" id="field_orig_type"/>
+                  <ui:dropdown displayText="Operation" name="operation" id="operation">
+                    <ui:option value="="/>
+                    <ui:option value="&lt;>"/>
+                    <ui:option value="&lt;"/>
+                    <ui:option value=">"/>
+                    <ui:option value="&lt;="/>
+                    <ui:option value=">="/>
+                    <ui:option value="like"/>
+                    <ui:option value="not like"/>
+                    <ui:option value="is null"/>
+                    <ui:option value="is not null"/>
+                    <ui:option value="in"/>
+                    <ui:option value="not in"/>
+					<ui:option value="As on"/>
+                  </ui:dropdown>
+                  <ui:entry-field displayText="Filter Value" size="30" name="value_box_str" id="value_box_str"/>
+                  <ui:entry-field displayText="Filter Value" size="30" name="value_box_num" id="value_box_num" dataType="Number" align="left" displayCondition="true"/>
+                  <ui:entry-field displayText="Filter Value" size="30" name="value_box_date" id="value_box_date" dataType="Date" displayCondition="true"/>
+                  <ui:entry-field displayText="Filter Value" size="30" name="value_box_datetime" id="value_box_datetime" dataType="DateTime" displayCondition="true"/>
+                  <ui:dropdown displayText="Filter Value" displayCondition="true" id="value_box_valid_value" name="value_box_valid_value"/>
+                </ui:field-group>
+                <ui:buttons>
+                  <ui:button id="button_table" name="button_table" displayText="Add" onClick="javascript:onAddClick();"/>
+                </ui:buttons>
+              </ui:step>
+            </ui:container>
+          </ui:cell>
+          <ui:cell height="100%" valign="top" width="40%">
+            <ui:container id="ExpressionEditorContainer" height="100%" scrollable="true">
+              <ui:step displayText="Expression Editor" id="ExpressionEditorStep">
+                <ui:field-group>
+                  <ui:textarea rows="20" columns="60  " id="filter_string" name="filter_string" readOnly="true"/>
+                  <ui:hidden-field name="orgFilterExp" id="orgFilterExp" value="{$root/FILTER_EXPRESSION/SQL_RESULT/EXECUTABLE_EXPRESSION/@Value}"/>
+                  <ui:hidden-field name="displayFilterExp" id="displayFilterExp" value="{$root/FILTER_EXPRESSION/SQL_RESULT/DISPLAY_EXPRESSION/@Value}"/>
+                </ui:field-group>
+                <ui:buttons>
+                  <ui:button displayText="Undo" onClick="javascript:filter_value_undo();"/>
+                  <ui:button displayText="Clear" onClick="javascript:filter_value_clear();"/>
+                </ui:buttons>
+              </ui:step>
+            </ui:container>
+          </ui:cell>
+        </ui:row>
+      </ui:grid>
+      <ui:buttons>
+        <ui:button displayText="Cancel" id="Cancel" name="Cancel"/>
+        <ui:button displayText="Apply and Return" id="Apply_And_Return" name="Apply_And_Return" onClick="javascript:onApplyAndReturn()"/>
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:script id="adFil" src="/td/javascript/advancedFiterConfigUI.js"/>
+</ui:page-group>

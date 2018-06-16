@@ -1,0 +1,27 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_entry" source="studio.controller:load">
+  <ui:container id="Outer" scrollable="true">
+    <ui:step id="OuterStep" displayText="SC_ISG_LOGS" scrollable="true">
+	  <ui:help displayPage="../../bcm/help/Model_Builder_Log_help.htm"/>
+      <ui:table id="uiTable" displayText="SC_SEARCH_LOGS" scrollable="true" displayTextNoRecords="SC_NO_LOGS_FOUND" collapsable="false" doPaging="true" selectable="single" select="$root/RESPONSE" totalRowCount="$root/totalRowCount/@Value" startAtRow="$root/startAtRow/@Value" postRowIdAs="SELECTED_ID" maxRows="20" filter="true" rowId="EXECUTION_ID">
+        <ui:field-group>
+          <ui:display-field name="EXECUTION_ID" id="EXECUTION_ID" displayText="SC_EXECUTION_ID" title="ISG_EXECUTION_ID_LOG_HOV" sortable="true" unFormat="true"/>
+          <ui:display-field name="ISG_STATUS" id="ISG_STATUS" displayText="SC_ISG_STATUS" title="ISG_STATUS_HOV" unFormat="true"/>
+          <ui:display-field name="ISG_START_TIME" id="ISG_START_TIME" displayText="SC_START_TIME" title="ISG_START_TIME_HOV" unFormat="true" dataType="DateTime"/>
+          <ui:display-field name="ISG_END_TIME" id="ISG_END_TIME" displayText="SC_END_TIME" title="ISG_END_TIME_HOV" unFormat="true" dataType="DateTime"/>
+          <ui:hidden-field name="tableId" id="tableId" value="{$root/tableId/@Value}"/>
+        </ui:field-group>        
+        <ui:buttons>
+          <ui:button id="back" name="back" displayText="Back" emphasized="false"/>
+          <ui:divider/>
+          <ui:button id="logDetails" name="logDetails" displayText="SC_DETAIL_LOG" emphasized="false" enabledBySelections="true"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+function onLoad(){
+	onLoadSuper();
+	onResize();
+}
+  </ui:script>
+</ui:page-group>

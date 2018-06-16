@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+ 	 Copyright (c) 2009 by Teradata Corporation. 
+	 All Rights Reserved. 
+	 Teradata CONFIDENTIAL AND TRADE SECRET 
+ -->
+  <DEFINE_METHOD Name="pngstopORIGTimer">
+    <RULE>
+      <ACTION>
+        <STOP_TIMER>
+          <IDENTIFIED_BY>
+            <NAME Value="TIMER_FOR_ORIG"/>
+          </IDENTIFIED_BY>
+        </STOP_TIMER>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="pngstartORIGTimer">
+    <RULE>
+      <ACTION>
+        <START_TIMER>
+          <IDENTIFIED_BY>
+            <NAME Value="TIMER_FOR_ORIG"/>
+          </IDENTIFIED_BY>
+          <CALLBACK_DATE Value="{incrDate(date(), duration(0, 0, 10, 0))}"/>
+          <CALLBACK_DURATION Value="{duration(0,0,10,0)}"/>
+          <CALLBACK_ACTIONS>
+            <EXECUTE_SQL_QUERY Value="SELECT DISTINCT 1 FROM LOAD_CONTROL B WHERE B.FORMAT_ID=22 AND B.LOAD_TYPE='ETL' AND CAST(LOADSTARTTS AS DATE FORMAT 'YYYY-MM-DD') =CURRENT_DATE AND LOADSTATUS IN ('Success','In Progress');" AssignToVar="resLoadInfo" ReturnRowCount="yes"/>
+            <IF_TEST Test="$resLoadInfo/@TotalRowCount = 0">
+              <THEN>
+                <START_WORKFLOW>
+                  <TEMPLATE Value="ORIG_wf"/>
+                </START_WORKFLOW>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+          </CALLBACK_ACTIONS>
+        </START_TIMER>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

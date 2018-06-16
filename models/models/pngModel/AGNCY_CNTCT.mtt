@@ -1,0 +1,41 @@
+<document>
+  <properties>
+    <property Name="CNTCT_NBR" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="CNTCT_NBR" />
+    </property>
+    <property Name="AGNCY_NBR" PhysicalName="AGNCY_NBR" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="AGNCY_NBR" />
+    </property>
+    <property Name="PRMRY_CNTCT_IND" PhysicalName="PRMRY_CNTCT_IND" Required="true" CharSet="LATIN">
+      <default>N</default>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="PRMRY_CNTCT_IND" />
+    </property>
+  </properties>
+  <keys>
+    <key Active="true" Name="AGNCY_CNTCT_UPI" PhysicalName="AGNCY_CNTCT_UPI" Kind="PRIMARY">
+      <property Name="AGNCY_NBR" />
+      <property Name="CNTCT_NBR" />
+    </key>
+  </keys>
+  <links>
+    <link Active="true" Name="Link1" PhysicalName="Agncy_cntct_nbr_link">
+      <keymap ToPackage="models/pngModel" ToModelUnit="CNTCT.mtt" ToKey="CNTCT_UPI" ReverseLink="true" ReverseLinkName="Agncy_cntct_nbr" DeleteRule="RESTRICT">
+        <mapping FromProperty="CNTCT_NBR" ToProperty="CNTCT_NBR" />
+      </keymap>
+    </link>
+    <link Active="true" Name="Link2" PhysicalName="Agncy_nbr_link">
+      <keymap ToPackage="models/pngModel" ToModelUnit="AGNCY.mtt" ToKey="AGNCY_UPI" ReverseLink="true" ReverseLinkName="Agncy_nbr" DeleteRule="RESTRICT">
+        <mapping FromProperty="AGNCY_NBR" ToProperty="AGNCY_NBR" />
+      </keymap>
+    </link>
+  </links>
+  <docFacets>
+    <mdmWebServiceFacet />
+    <mdmSysTableMapFacet TableClass="MASTER" Source="MASTER" MasterTable="AGNCY_CNTCT" />
+    <miscFacet PhysicalName="AGNCY_CNTCT" Active="true" />
+    <mdmConfigFacet SchemaGen="true" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql />
+</document>
+

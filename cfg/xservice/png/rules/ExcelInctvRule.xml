@@ -1,0 +1,1008 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <DEFINE_METHOD Name="excelInctvUpload">
+    <RULE>
+      <ACTION>
+        <FOR_EACH SelectList="$thisParam/INCTV" CurrentElement="curElem">
+          <SET Var="indicator" FromValue="{$curElem/INCTV_RECORD_IND/@Value}"/>
+          <!--IF_TEST Test="$indicator = 'INSERT'  or $indicator = 'UPDATE' "-->
+          <IF_TEST Test="(upperCase($indicator) = 'INSERT') or (upperCase($indicator) = 'UPDATE') ">
+            <THEN>
+              <EXECUTE_SQL_QUERY AssignToVar="respID" ReturnRowCount="yes" Value="SEL MAX(cast(id as integer))as ID FROM UPLD_PRGS_RPT WHERE TEMPLATE_NAME='EntityINCTVTemplate'"/>
+              <!--IF_TEST Test="$curElem/INCTV_RECORD_IND/@Value = 'INSERT'"-->
+              <SET Var="inctvName" FromValue="{$curElem/INCTV_NAME/@Value}"/>
+              <IF_TEST Test="$inctvName = null or $inctvName ='' or strlen(trim($inctvName)) = 0">
+                <THEN>
+                  <SET Var="inctvName1" FromValue="xxxxx"/>
+                </THEN>
+                <ELSE>
+                  <THEN>
+                    <SET Var="inctvName1" FromValue="{$curElem/INCTV_NAME/@Value}"/>
+                  </THEN>
+                </ELSE>
+              </IF_TEST>
+              <SET Var="inctvValAmt" FromValue="{$curElem/INCTV_VAL_AMT/@Value}"/>
+              <IF_TEST Test="$inctvValAmt = null or $inctvValAmt ='' or strlen(trim($inctvValAmt)) = 0">
+                <THEN>
+                  <SET Var="inctvValAmt1" FromValue="0"/>
+                </THEN>
+                <ELSE>
+                  <THEN>
+                    <SET Var="inctvValAmt1" FromValue="{$curElem/INCTV_VAL_AMT/@Value}"/>
+                  </THEN>
+                </ELSE>
+              </IF_TEST>
+              <SET Var="inctvValPct" FromValue="{$curElem/INCTV_VAL_PCT/@Value}"/>
+              <IF_TEST Test="$inctvValPct = null or $inctvValPct ='' or strlen(trim($inctvValPct)) = 0">
+                <THEN>
+                  <SET Var="inctvValPct1" FromValue="0"/>
+                </THEN>
+                <ELSE>
+                  <THEN>
+                    <SET Var="inctvValPct1" FromValue="{$curElem/INCTV_VAL_PCT/@Value}"/>
+                  </THEN>
+                </ELSE>
+              </IF_TEST>
+              <SET Var="inctvExprnDayCnt" FromValue="{$curElem/INCTV_EXPRN_DAY_CNT/@Value}"/>
+              <IF_TEST Test="$inctvExprnDayCnt = null or $inctvExprnDayCnt ='' or strlen(trim($inctvExprnDayCnt)) = 0">
+                <THEN>
+                  <SET Var="inctvExprnDayCnt1" FromValue="0"/>
+                </THEN>
+                <ELSE>
+                  <THEN>
+                    <SET Var="inctvExprnDayCnt1" FromValue="{$curElem/INCTV_EXPRN_DAY_CNT/@Value}"/>
+                  </THEN>
+                </ELSE>
+              </IF_TEST>
+              <SET Var="tgtDstQty" FromValue="{$curElem/TGT_DST_QTY/@Value}"/>
+              <IF_TEST Test="$tgtDstQty = null or $tgtDstQty ='' or strlen(trim($tgtDstQty)) = 0">
+                <THEN>
+                  <SET Var="tgtDstQty1" FromValue="0"/>
+                </THEN>
+                <ELSE>
+                  <THEN>
+                    <SET Var="tgtDstQty1" FromValue="{$curElem/TGT_DST_QTY/@Value}"/>
+                  </THEN>
+                </ELSE>
+              </IF_TEST>
+              <SET Var="inctvStartDate" FromValue="{$curElem/INCTV_START_DATE/@Value}"/>
+              <IF_TEST Test="$inctvStartDate = null or $inctvStartDate ='' or strlen(trim($inctvStartDate)) = 0">
+                <THEN>
+                  <SET Var="inctvStartDate1" FromValue="11/11/1111"/>
+                </THEN>
+                <ELSE>
+                  <THEN>
+                    <SET Var="inctvStartDate1" FromValue="{$curElem/INCTV_START_DATE/@Value}"/>
+                  </THEN>
+                </ELSE>
+              </IF_TEST>
+              <SET Var="inctvEndDate" FromValue="{$curElem/INCTV_END_DATE/@Value}"/>
+              <IF_TEST Test="$inctvEndDate = null or $inctvEndDate ='' or strlen(trim($inctvEndDate)) = 0">
+                <THEN>
+                  <SET Var="inctvEndDate1" FromValue="11/11/1111"/>
+                </THEN>
+                <ELSE>
+                  <THEN>
+                    <SET Var="inctvEndDate1" FromValue="{$curElem/INCTV_END_DATE/@Value}"/>
+                  </THEN>
+                </ELSE>
+              </IF_TEST>
+              <SET Var="inctvCrtDate" FromValue="{$curElem/INCTV_CRTN_DATE/@Value}"/>
+              <IF_TEST Test="$inctvCrtDate = null or $inctvCrtDate ='' or strlen(trim($inctvCrtDate)) = 0">
+                <THEN>
+                  <SET Var="inctvCrtDate1" FromValue="{date()}"/>
+                </THEN>
+                <ELSE>
+                  <THEN>
+                    <SET Var="inctvCrtDate1" FromValue="{$curElem/INCTV_CRTN_DATE/@Value}"/>
+                  </THEN>
+                </ELSE>
+              </IF_TEST>
+              <SET Var="inctvExtrCpnDataSrceNbr" FromValue="{$curElem/EXTRN_COUPN_DATA_SRCE_NBR/@Value}"/>
+              <IF_TEST Test="$inctvExtrCpnDataSrceNbr = null or $inctvExtrCpnDataSrceNbr ='' or strlen(trim($inctvExtrCpnDataSrceNbr)) = 0">
+                <THEN>
+                  <SET Var="srceAvailable" FromValue="0"/>
+                </THEN>
+                <ELSE>
+                  <THEN>
+                    <EXECUTE_SQL_QUERY AssignToVar="srceNbr" ReturnRowCount="yes" Value="SEL DISTINCT DATA_SRCE_NBR FROM DATA_SRCE where DATA_SRCE_NBR='{$inctvExtrCpnDataSrceNbr}';"/>
+                    <SET Var="srceAvailable" FromValue="{$srceNbr/@TotalRowCount}"/>
+                  </THEN>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$srceAvailable > 0">
+                <THEN>
+                  <SET Var="inctvExtrCpnDataSrceNbr1" FromValue="{$inctvExtrCpnDataSrceNbr}"/>
+                </THEN>
+                <ELSE>
+                  <THEN>
+                    <SET Var="inctvExtrCpnDataSrceNbr1" FromValue="0000"/>
+                  </THEN>
+                </ELSE>
+              </IF_TEST>
+              <SET Var="inctvTypeCode" FromValue="{$curElem/INCTV_TYPE_CODE/@Value}"/>
+              <SET Var="cpnUniqueInd" FromValue="{$curElem/COUPN_UNIQUE_IND/@Value}"/>
+              <IF_TEST Test="$inctvTypeCode ='CP'">
+                <THEN>
+                  <IF_TEST Test="(upperCase($cpnUniqueInd) ='Y') or (upperCase($cpnUniqueInd) ='N')">
+                    <THEN>
+                      <IF_TEST Test="(upperCase($cpnUniqueInd) ='Y')">
+                        <THEN>
+                          <IF_TEST Test="$srceAvailable > 0">
+                            <THEN>
+                              <SET Var="cpnUniqueInd1" FromValue="{upperCase($cpnUniqueInd)}"/>
+                            </THEN>
+                            <ELSE>
+                              <THEN>
+                                <SET Var="cpnUniqueInd1" FromValue="Z"/>
+                              </THEN>
+                            </ELSE>
+                          </IF_TEST>
+                        </THEN>
+                        <ELSE>
+                          <THEN>
+                            <IF_TEST Test="(upperCase($cpnUniqueInd) ='N')">
+                              <THEN>
+                                <IF_TEST Test="$srceAvailable > 0">
+                                  <THEN>
+                                    <SET Var="cpnUniqueInd1" FromValue="Z"/>
+                                  </THEN>
+                                  <ELSE>
+                                    <THEN>
+                                      <SET Var="cpnUniqueInd1" FromValue="{upperCase($cpnUniqueInd)}"/>
+                                      <SET Var="inctvExtrCpnDataSrceNbr1" FromValue="0"/>
+                                    </THEN>
+                                  </ELSE>
+                                </IF_TEST>
+                              </THEN>
+                              <ELSE>
+                                <THEN>
+                                </THEN>
+                              </ELSE>
+                            </IF_TEST>
+                          </THEN>
+                        </ELSE>
+                      </IF_TEST>
+                    </THEN>
+                    <ELSE>
+                      <THEN>
+                        <SET Var="cpnUniqueInd1" FromValue="Z"/>
+                      </THEN>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <THEN>
+                    <IF_TEST Test="strlen(trim($cpnUniqueInd)) = 0 and $srceAvailable = 0">
+                      <THEN>
+                        <SET Var="cpnUniqueInd1" FromValue="{$cpnUniqueInd}"/>
+                        <SET Var="inctvExtrCpnDataSrceNbr1" FromValue="0"/>
+                      </THEN>
+                      <ELSE>
+                        <THEN>
+                          <SET Var="cpnUniqueInd1" FromValue="Z"/>
+                        </THEN>
+                      </ELSE>
+                    </IF_TEST>
+                  </THEN>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="upperCase($curElem/INCTV_RECORD_IND/@Value) = 'INSERT'">
+                <THEN>
+                  <CREATE_DOCUMENT_ID Name="INCTV_ID" AssignToVar="inctvId"/>
+                  <SET Var="InctvIDNew" FromValue="{$inctvId}"/>
+                  <SET Var="numberOfItem" FromValue="{$curElem/NUM_OF_INCTV_ITEM/@Value}"/>
+                  <IF_TEST Test="$numberOfItem = null or $numberOfItem ='' or strlen(trim($numberOfItem)) = 0">
+                    <THEN>
+                      <SET Var="numberOfItem1" FromValue="0"/>
+                    </THEN>
+                    <ELSE>
+                      <THEN>
+                        <SET Var="numberOfItem1" FromValue="{$curElem/NUM_OF_INCTV_ITEM/@Value}"/>
+                      </THEN>
+                    </ELSE>
+                  </IF_TEST>
+                  <SET Var="counter1" FromValue="1"/>
+                  <TO_DOCVAR AssignToVar="inctvItemList">
+                    <root/>
+                  </TO_DOCVAR>
+                  <WHILE Condition="$counter1 != $numberOfItem1+1">
+                    <CREATE_DOCUMENT_ID Name="INCTV_ITEM_ID" AssignToVar="inctvItemId"/>
+                    <SET Var="InctvItemIDNew" FromValue="{$inctvItemId}"/>
+                    <!--SET Var="var1" FromValue="{concat('INCTV_ITEM_NAME_',$counter1)}"/>
+
+
+
+<SET Var="INCTV_ITEM_NAME_NEW"  FromValue="{$curElem/*[name()=$var1]/@Value}"/-->
+                    <SET Var="var1" FromValue="{concat('CATEG_CODE_',$counter1)}"/>
+                    <SET Var="CATEG_CODE_New" FromValue="{$curElem/*[name()=$var1]/@Value}"/>
+                    <SET Var="var2" FromValue="{concat('SEG_CODE_',$counter1)}"/>
+                    <SET Var="SEG_CODE_New" FromValue="{$curElem/*[name()=$var2]/@Value}"/>
+                    <SET Var="var3" FromValue="{concat('BRAND_CODE_',$counter1)}"/>
+                    <SET Var="BRAND_CODE_New" FromValue="{$curElem/*[name()=$var3]/@Value}"/>
+                    <SET Var="var4" FromValue="{concat('SUB_BRAND_CODE_',$counter1)}"/>
+                    <SET Var="SUB_BRAND_CODE_New" FromValue="{$curElem/*[name()=$var4]/@Value}"/>
+                    <SET Var="var5" FromValue="{concat('ITEM_VERS_CODE_',$counter1)}"/>
+                    <SET Var="ITEM_VERS_CODE_New" FromValue="{$curElem/*[name()=$var5]/@Value}"/>
+                    <SET Var="var6" FromValue="{concat('GLOBAL_FORM_CODE_',$counter1)}"/>
+                    <SET Var="GLOBAL_FORM_CODE_New" FromValue="{$curElem/*[name()=$var6]/@Value}"/>
+                    <SET Var="var7" FromValue="{concat('INCTV_ITEM_QTY_',$counter1)}"/>
+                    <SET Var="INCTV_ITEM_QTY_New" FromValue="{$curElem/*[name()=$var7]/@Value}"/>
+                    <SET Var="var8" FromValue="{concat('INCTV_ITEM_NAME_',$counter1)}"/>
+                    <SET Var="INCTV_ITEM_NAME_New" FromValue="{$curElem/*[name()=$var8]/@Value}"/>
+                    <SET Var="var9" FromValue="{concat('INCTV_ITEM_DESC_',$counter1)}"/>
+                    <SET Var="INCTV_ITEM_DESC_New" FromValue="{$curElem/*[name()=$var9]/@Value}"/>
+                    <SET Var="var10" FromValue="{concat('PROD_ITEM_UPC_',$counter1)}"/>
+                    <SET Var="PROD_ITEM_UPC_New" FromValue="{$curElem/*[name()=$var10]/@Value}"/>
+                    <SET Var="var12" FromValue="{concat('BRAND_FAMLY_ID_',$counter1)}"/>
+                    <SET Var="BRAND_FAMLY_ID_New" FromValue="{$curElem/*[name()=$var12]/@Value}"/>
+                    <SET Var="var13" FromValue="{concat('PROD_FAMLY_ID_',$counter1)}"/>
+                    <SET Var="PROD_FAMLY_ID_New" FromValue="{$curElem/*[name()=$var13]/@Value}"/>
+                    <IF_TEST Test="trim($INCTV_ITEM_NAME_New) = null or trim($INCTV_ITEM_NAME_New) ='' or strlen(trim($INCTV_ITEM_NAME_New))=0 ">
+                      <THEN>
+                        <!--IF_TEST Test="trim($PROD_ITEM_UPC_New) = null or trim($PROD_ITEM_UPC_New)=''"-->
+                        <IF_TEST Test="trim($PROD_ITEM_UPC_New) = null or trim($PROD_ITEM_UPC_New)='' or strlen(trim($PROD_ITEM_UPC_New))=0 ">
+                          <THEN>
+                            <EXECUTE_SQL_QUERY AssignToVar="brandName" Value="SEL brand_name FROM BRAND where brand_code='{$BRAND_CODE_New/@Value}';"/>
+                            <SET Var="INCTV_ITEM_NAME_UPDT" FromValue="{$brandName/SQL_RESULT/BRAND_NAME/@Value}"/>
+                          </THEN>
+                          <ELSE>
+                            <THEN>
+                              <EXECUTE_SQL_QUERY AssignToVar="prodName" Value="SEL  prod_item_name FROM PROD_ITEM where prod_item_upc={$PROD_ITEM_UPC_New/@Value};"/>
+                              <SET Var="INCTV_ITEM_NAME_UPDT" FromValue="{$prodName/SQL_RESULT/PROD_ITEM_NAME/@Value}"/>
+                              <!--IF_TEST Test="trim($INCTV_ITEM_NAME_UPDT) = null or trim($INCTV_ITEM_NAME_UPDT)=''"-->
+                              <IF_TEST Test="trim($INCTV_ITEM_NAME_UPDT) = null or trim($INCTV_ITEM_NAME_UPDT)='' or strlen(trim($INCTV_ITEM_NAME_UPDT))=0 ">
+                                <THEN>
+                                  <EXECUTE_SQL_QUERY AssignToVar="brandName" Value="SEL brand_name FROM BRAND where brand_code='{$BRAND_CODE_New/@Value}';"/>
+                                  <SET Var="INCTV_ITEM_NAME_UPDT" FromValue="{$brandName/SQL_RESULT/BRAND_NAME/@Value}"/>
+                                </THEN>
+                              </IF_TEST>
+                            </THEN>
+                          </ELSE>
+                        </IF_TEST>
+                      </THEN>
+                      <ELSE>
+                        <THEN>
+                          <SET Var="INCTV_ITEM_NAME_UPDT" FromValue="{$INCTV_ITEM_NAME_New}"/>
+                        </THEN>
+                      </ELSE>
+                    </IF_TEST>
+                    <EXECUTE_SQL_QUERY AssignToVar="brandNameCheck" ReturnRowCount="yes" Value="SEL brand_name FROM BRAND where brand_code='{$BRAND_CODE_New/@Value}';"/>
+                    <SET Var="brandNameAvail" FromValue="{$brandNameCheck/@TotalRowCount}"/>
+                    <SET Var="INCTV_ITEM_QTY1" FromValue="{$INCTV_ITEM_QTY_New}"/>
+                    <SET Var="errDate" FromValue="{date()}"/>
+                    <IF_TEST Test="$INCTV_ITEM_QTY1 = null or $INCTV_ITEM_QTY1 ='' or strlen(trim($INCTV_ITEM_QTY1)) = 0">
+                      <THEN>
+                        <SET Var="INCTV_ITEM_QTY2" FromValue="0"/>
+                      </THEN>
+                      <ELSE>
+                        <THEN>
+                          <SET Var="INCTV_ITEM_QTY2" FromValue="{$INCTV_ITEM_QTY1}"/>
+                        </THEN>
+                      </ELSE>
+                    </IF_TEST>
+                    <IF_TEST Test="$brandNameAvail = 0 or $INCTV_ITEM_QTY2 = 0">
+                      <THEN>
+                        <IF_TEST Test="$brandNameAvail = 0 and $INCTV_ITEM_QTY2 =0">
+                          <THEN>
+                            <ADD_DOC_SMART Name="error_INCTV_ITEM">
+                              <INCTV_NBR Value="{$InctvIDNew}"/>
+                              <INCTV_ITEM_NBR Value="{$InctvItemIDNew}"/>
+                              <CATEG_CODE Value="{$CATEG_CODE_New}"/>
+                              <SEG_CODE Value="{$SEG_CODE_New}"/>
+                              <BRAND_CODE Value="{$BRAND_CODE_New}"/>
+                              <SUB_BRAND_CODE Value="{$SUB_BRAND_CODE_New}"/>
+                              <ITEM_VERS_CODE Value="{$ITEM_VERS_CODE_New}"/>
+                              <GLOBAL_FORM_CODE Value="{$GLOBAL_FORM_CODE_New}"/>
+                              <INCTV_ITEM_QTY Value="0"/>
+                              <INCTV_ITEM_NAME Value="No Name"/>
+                              <INCTV_ITEM_DESC Value="{$INCTV_ITEM_DESC_New}"/>
+                              <PROD_ITEM_UPC Value="0"/>
+                              <PROD_FAMLY_ID Value="{$PROD_FAMLY_ID_New}"/>
+                              <BRAND_FAMLY_ID Value="{$BRAND_FAMLY_ID_New}"/>
+                              <ERROR_MESSAGE Value=";GIVEN BRAND_CODE IS NOT VALID || INCTV_ITEM_QTY IS NULL"/>
+                              <SYS_ERR_SEVERITY Value="SEVERE_ERROR"/>
+                              <ERROR_TIME Value="{$errDate}"/>
+                              <SYS_LOAD_ID Value="{$respID/SQL_RESULT/ID/@Value}"/>
+                              <WORKFLOW_ID Value="XL_WF1234"/>
+                            </ADD_DOC_SMART>
+                          </THEN>
+                        </IF_TEST>
+                        <IF_TEST Test="$brandNameAvail = 0 and $INCTV_ITEM_QTY2 !=0">
+                          <THEN>
+                            <ADD_DOC_SMART Name="error_INCTV_ITEM">
+                              <INCTV_NBR Value="{$InctvIDNew}"/>
+                              <INCTV_ITEM_NBR Value="{$InctvItemIDNew}"/>
+                              <CATEG_CODE Value="{$CATEG_CODE_New}"/>
+                              <SEG_CODE Value="{$SEG_CODE_New}"/>
+                              <BRAND_CODE Value="{$BRAND_CODE_New}"/>
+                              <SUB_BRAND_CODE Value="{$SUB_BRAND_CODE_New}"/>
+                              <ITEM_VERS_CODE Value="{$ITEM_VERS_CODE_New}"/>
+                              <GLOBAL_FORM_CODE Value="{$GLOBAL_FORM_CODE_New}"/>
+                              <INCTV_ITEM_QTY Value="{$INCTV_ITEM_QTY_New}"/>
+                              <INCTV_ITEM_NAME Value="No Name"/>
+                              <INCTV_ITEM_DESC Value="{$INCTV_ITEM_DESC_New}"/>
+                              <PROD_ITEM_UPC Value="0"/>
+                              <PROD_FAMLY_ID Value="{$PROD_FAMLY_ID_New}"/>
+                              <BRAND_FAMLY_ID Value="{$BRAND_FAMLY_ID_New}"/>
+                              <ERROR_MESSAGE Value=";GIVEN BRAND_CODE IS NOT VALID"/>
+                              <SYS_ERR_SEVERITY Value="SEVERE_ERROR"/>
+                              <ERROR_TIME Value="{$errDate}"/>
+                              <SYS_LOAD_ID Value="{$respID/SQL_RESULT/ID/@Value}"/>
+                              <WORKFLOW_ID Value="XL_WF1234"/>
+                            </ADD_DOC_SMART>
+                          </THEN>
+                        </IF_TEST>
+                        <IF_TEST Test="$brandNameAvail != 0 and $INCTV_ITEM_QTY2 =0">
+                          <THEN>
+                            <ADD_DOC_SMART Name="error_INCTV_ITEM">
+                              <INCTV_NBR Value="{$InctvIDNew}"/>
+                              <INCTV_ITEM_NBR Value="{$InctvItemIDNew}"/>
+                              <CATEG_CODE Value="{$CATEG_CODE_New}"/>
+                              <SEG_CODE Value="{$SEG_CODE_New}"/>
+                              <BRAND_CODE Value="{$BRAND_CODE_New}"/>
+                              <SUB_BRAND_CODE Value="{$SUB_BRAND_CODE_New}"/>
+                              <ITEM_VERS_CODE Value="{$ITEM_VERS_CODE_New}"/>
+                              <GLOBAL_FORM_CODE Value="{$GLOBAL_FORM_CODE_New}"/>
+                              <INCTV_ITEM_QTY Value="0"/>
+                              <INCTV_ITEM_NAME Value="{$INCTV_ITEM_NAME_UPDT}"/>
+                              <INCTV_ITEM_DESC Value="{$INCTV_ITEM_DESC_New}"/>
+                              <PROD_ITEM_UPC Value="0"/>
+                              <PROD_FAMLY_ID Value="{$PROD_FAMLY_ID_New}"/>
+                              <BRAND_FAMLY_ID Value="{$BRAND_FAMLY_ID_New}"/>
+                              <ERROR_MESSAGE Value=";GIVEN INCTV_ITEM_QTY IS NULL"/>
+                              <SYS_ERR_SEVERITY Value="SEVERE_ERROR"/>
+                              <ERROR_TIME Value="{$errDate}"/>
+                              <SYS_LOAD_ID Value="{$respID/SQL_RESULT/ID/@Value}"/>
+                              <WORKFLOW_ID Value="XL_WF1234"/>
+                            </ADD_DOC_SMART>
+                          </THEN>
+                        </IF_TEST>
+                      </THEN>
+                      <ELSE>
+                        <THEN>
+                          <TO_DOCVAR AssignToVar="inctvItemDoc">
+                            <INCTV_ITEM>
+                              <INCTV_NBR Value="{$InctvIDNew}"/>
+                              <INCTV_ITEM_NBR Value="{$InctvItemIDNew}"/>
+                              <CATEG_CODE Value="{$CATEG_CODE_New}"/>
+                              <SEG_CODE Value="{$SEG_CODE_New}"/>
+                              <BRAND_CODE Value="{$BRAND_CODE_New}"/>
+                              <SUB_BRAND_CODE Value="{$SUB_BRAND_CODE_New}"/>
+                              <ITEM_VERS_CODE Value="{$ITEM_VERS_CODE_New}"/>
+                              <GLOBAL_FORM_CODE Value="{$GLOBAL_FORM_CODE_New}"/>
+                              <!--MKTNG_PGM_NBR Value="{$INCTV_ITEM_QTY_New}"/-->
+                              <INCTV_ITEM_QTY Value="{$INCTV_ITEM_QTY_New}"/>
+                              <INCTV_ITEM_NAME Value="{$INCTV_ITEM_NAME_UPDT}"/>
+                              <INCTV_ITEM_DESC Value="{$INCTV_ITEM_DESC_New}"/>
+                              <!--VISUAL_CODE Value="{$curElem/VISUAL_CODE/@Value}"/-->
+                              <PROD_ITEM_UPC Value="{$PROD_ITEM_UPC_New}"/>
+                              <PROD_FAMLY_ID Value="{$PROD_FAMLY_ID_New}"/>
+                              <BRAND_FAMLY_ID Value="{$BRAND_FAMLY_ID_New}"/>
+                            </INCTV_ITEM>
+                          </TO_DOCVAR>
+                          <APPEND_TO_XML DocVar="inctvItemList">
+                            <TO_XML DocVar="inctvItemDoc"/>
+                          </APPEND_TO_XML>
+                        </THEN>
+                      </ELSE>
+                    </IF_TEST>
+                    <SET Var="counter1" FromValue="{int($counter1+1)}"/>
+                  </WHILE>
+                  <IF_TEST Test="strlen(trim($cpnUniqueInd1)) = 0">
+                    <THEN>
+                      <DO_DB_PERSIST DocumentName="INCTV" Source="EXTERNAL" Action="INSERT" ServiceName="BCM_MASTER" AssignToVar="InctvResponse" SysLoadId="{$respID/SQL_RESULT/ID/@Value}" SysWfId="XL_WF1234" HandleException="true">
+                        <INCTV>
+                          <INCTV_NBR Value="{$InctvIDNew}"/>
+                          <INCTV_NAME Value="{$inctvName1}"/>
+                          <INCTV_DESC Value="{$curElem/INCTV_DESC/@Value}"/>
+                          <!--LEGAL_ENT_NBR Value="{$curElem/LEGAL_ENT_NBR/@Value}"/-->
+                          <MKTNG_PGM_NBR Value="{$curElem/MKTNG_PGM_NBR/@Value}"/>
+                          <INCTV_STATUS_CODE Value="{$curElem/INCTV_STATUS_CODE/@Value}"/>
+                          <INCTV_TYPE_CODE Value="{$curElem/INCTV_TYPE_CODE/@Value}"/>
+                          <INCTV_VAL_AMT Value="{$inctvValAmt1}"/>
+                          <INCTV_VAL_PCT Value="{$inctvValPct1}"/>
+                          <COUPN_TYPE_CODE Value="{$curElem/COUPN_TYPE_CODE/@Value}"/>
+                          <!--OTHER_INCENTIVE_TXT Value="{$curElem/OTHER_INCENTIVE_TXT/@Value}"/-->
+                          <BUNDLE_PACK_IND Value="{$curElem/BUNDLE_PACK_IND/@Value}"/>
+                          <CONTEST_NBR Value="{$curElem/CONTEST_NBR/@Value}"/>
+                          <PREMARKET_OFFER_IND Value="{$curElem/PREMARKET_OFFER_IND/@Value}"/>
+                          <!--LYLTY_OFFER_NBR Value="{$curElem/LYLTY_OFFER_NBR/@Value}"/-->
+                          <INCTV_EXPRN_DAY_CNT Value="{$inctvExprnDayCnt1}"/>
+                          <INCTV_CRTN_DATE Value="{$inctvCrtDate1}"/>
+                          <ALT_SYS_INCTV_ID Value="{$curElem/ALT_SYS_INCTV_ID/@Value}"/>
+                          <BRAND_NAME Value="{$curElem/BRAND_NAME/@Value}"/>
+                          <EXT_INCTV_CD Value="{$curElem/EXT_INCTV_CD/@Value}"/>
+                          <COUPN_EXT_CD Value="{$curElem/COUPN_EXT_CD/@Value}"/>
+                          <TGT_DST_QTY Value="{$tgtDstQty1}"/>
+                          <CLRNG_HS_CD Value="{$curElem/CLRNG_HS_CD/@Value}"/>
+                          <INCTV_START_DATE Value="{$inctvStartDate1}"/>
+                          <INCTV_END_DATE Value="{$inctvEndDate1}"/>
+                          <EXTRN_COUPN_DATA_SRCE_NBR Value="{$inctvExtrCpnDataSrceNbr1}"/>
+                          <!--COUPN_UNIQUE_IND Value="{$cpnUniqueInd1}"/-->
+                          <INCTV_EXPRN_DATETM Value="{$curElem/INCTV_EXPRN_DATETM/@Value}"/>
+                        </INCTV>
+                      </DO_DB_PERSIST>
+                    </THEN>
+                    <ELSE>
+                      <THEN>
+                        <DO_DB_PERSIST DocumentName="INCTV" Source="EXTERNAL" Action="INSERT" ServiceName="BCM_MASTER" AssignToVar="InctvResponse" SysLoadId="{$respID/SQL_RESULT/ID/@Value}" SysWfId="XL_WF1234" HandleException="true">
+                          <INCTV>
+                            <INCTV_NBR Value="{$InctvIDNew}"/>
+                            <INCTV_NAME Value="{$inctvName1}"/>
+                            <INCTV_DESC Value="{$curElem/INCTV_DESC/@Value}"/>
+                            <!--LEGAL_ENT_NBR Value="{$curElem/LEGAL_ENT_NBR/@Value}"/-->
+                            <MKTNG_PGM_NBR Value="{$curElem/MKTNG_PGM_NBR/@Value}"/>
+                            <INCTV_STATUS_CODE Value="{$curElem/INCTV_STATUS_CODE/@Value}"/>
+                            <INCTV_TYPE_CODE Value="{$curElem/INCTV_TYPE_CODE/@Value}"/>
+                            <INCTV_VAL_AMT Value="{$inctvValAmt1}"/>
+                            <INCTV_VAL_PCT Value="{$inctvValPct1}"/>
+                            <COUPN_TYPE_CODE Value="{$curElem/COUPN_TYPE_CODE/@Value}"/>
+                            <!--OTHER_INCENTIVE_TXT Value="{$curElem/OTHER_INCENTIVE_TXT/@Value}"/-->
+                            <BUNDLE_PACK_IND Value="{$curElem/BUNDLE_PACK_IND/@Value}"/>
+                            <CONTEST_NBR Value="{$curElem/CONTEST_NBR/@Value}"/>
+                            <PREMARKET_OFFER_IND Value="{$curElem/PREMARKET_OFFER_IND/@Value}"/>
+                            <!--LYLTY_OFFER_NBR Value="{$curElem/LYLTY_OFFER_NBR/@Value}"/-->
+                            <INCTV_EXPRN_DAY_CNT Value="{$inctvExprnDayCnt1}"/>
+                            <INCTV_CRTN_DATE Value="{$inctvCrtDate1}"/>
+                            <ALT_SYS_INCTV_ID Value="{$curElem/ALT_SYS_INCTV_ID/@Value}"/>
+                            <BRAND_NAME Value="{$curElem/BRAND_NAME/@Value}"/>
+                            <EXT_INCTV_CD Value="{$curElem/EXT_INCTV_CD/@Value}"/>
+                            <COUPN_EXT_CD Value="{$curElem/COUPN_EXT_CD/@Value}"/>
+                            <TGT_DST_QTY Value="{$tgtDstQty1}"/>
+                            <CLRNG_HS_CD Value="{$curElem/CLRNG_HS_CD/@Value}"/>
+                            <INCTV_START_DATE Value="{$inctvStartDate1}"/>
+                            <INCTV_END_DATE Value="{$inctvEndDate1}"/>
+                            <EXTRN_COUPN_DATA_SRCE_NBR Value="{$inctvExtrCpnDataSrceNbr1}"/>
+                            <COUPN_UNIQUE_IND Value="{$cpnUniqueInd1}"/>
+                            <INCTV_EXPRN_DATETM Value="{$curElem/INCTV_EXPRN_DATETM/@Value}"/>
+                          </INCTV>
+                        </DO_DB_PERSIST>
+                      </THEN>
+                    </ELSE>
+                  </IF_TEST>
+                  <IF_TEST Test="$InctvResponse/VALIDATION_RESULT/ERROR_SEVERITY/@Value='SEVERE_ERROR' or $InctvResponse/@Status='Error'">
+                    <THEN/>
+                    <ELSE>
+                      <IF_TEST Test="$curElem/INCTV_TYPE_CODE/@Value='CP'">
+                        <THEN>
+                          <CREATE_DOCUMENT_ID Name="CNTNT_ID" AssignToVar="cntntId"/>
+                          <SET Var="selectedContentID" FromValue="{$cntntId}"/>
+                          <ADD_DOC_SMART Name="CNTNT_ELEM" ServiceName="BCM_MASTER" AssignToVar="createContentIncresult">
+                            <CNTNT_ELEM_ID Value="{$selectedContentID/@Value}"/>
+                            <INCTV_NBR Value="{$InctvIDNew}"/>
+                            <MKTNG_PGM_NBR Value="{$curElem/MKTNG_PGM_NBR/@Value}"/>
+                            <CNTNT_ELEM_TYPE_CODE Value="CC"/>
+                            <CNTNT_NAME Value="{$curElem/INCTV_NAME/@Value}"/>
+                            <CNTNT_ACTIVE_START_DATE Value="{$inctvStartDate1}"/>
+                            <CNTNT_ACTIVE_END_DATE Value="{$inctvEndDate1}"/>
+                          </ADD_DOC_SMART>
+                        </THEN>
+                      </IF_TEST>
+                    </ELSE>
+                  </IF_TEST>
+                  <IF_TEST Test="$InctvResponse/VALIDATION_RESULT/ERROR_SEVERITY/@Value='SEVERE_ERROR'  or $InctvResponse/@Status='Error'">
+                    <THEN/>
+                    <ELSE>
+                      <SET Var="itemNumber" FromValue="{$curElem/NUM_OF_INCTV_ITEM/@Value}"/>
+                      <IF_TEST Test="strlen(trim($itemNumber)) > 0 and $itemNumber != 0">
+                        <THEN>
+                          <DO_DB_PERSIST DocumentName="INCTV_ITEM" Source="EXTERNAL" Action="INSERT" ServiceName="BCM_MASTER" AssignToVar="InctvItmResponse" SysLoadId="{$respID/SQL_RESULT/ID/@Value}" SysWfId="XL_WF1234" HandleException="true">
+                            <TO_XML SelectList="$inctvItemList/*"/>
+                          </DO_DB_PERSIST>
+                        </THEN>
+                      </IF_TEST>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+              </IF_TEST>
+              <!--IF_TEST Test="$curElem/INCTV_RECORD_IND/@Value = 'UPDATE'"-->
+              <IF_TEST Test="upperCase($curElem/INCTV_RECORD_IND/@Value) = 'UPDATE'">
+                <THEN>
+                  <SET Var="InctvIDNew" FromValue="{$curElem/INCTV_NBR/@Value}"/>
+                  <EXECUTE_SQL_QUERY AssignToVar="deleteID" Value="DELETE FROM INCTV_ITEM WHERE INCTV_NBR= {$InctvIDNew};"/>
+                  <IF_TEST Test="$InctvIDNew = null or $InctvIDNew ='' or strlen(trim($InctvIDNew)) = 0">
+                    <THEN>
+                      <SET Var="InctvIDNew1" FromValue="0"/>
+                    </THEN>
+                    <ELSE>
+                      <THEN>
+                        <SET Var="InctvIDNew1" FromValue="{$curElem/INCTV_NBR/@Value}"/>
+                      </THEN>
+                    </ELSE>
+                  </IF_TEST>
+                  <SET Var="numberOfItem" FromValue="{$curElem/NUM_OF_INCTV_ITEM/@Value}"/>
+                  <IF_TEST Test="$numberOfItem = null or $numberOfItem ='' or strlen(trim($numberOfItem)) = 0">
+                    <THEN>
+                      <SET Var="numberOfItem1" FromValue="0"/>
+                    </THEN>
+                    <ELSE>
+                      <THEN>
+                        <SET Var="numberOfItem1" FromValue="{$curElem/NUM_OF_INCTV_ITEM/@Value}"/>
+                      </THEN>
+                    </ELSE>
+                  </IF_TEST>
+                  <SET Var="counter1" FromValue="1"/>
+                  <TO_DOCVAR AssignToVar="inctvItemList">
+                    <root/>
+                  </TO_DOCVAR>
+                  <WHILE Condition="$counter1 != $numberOfItem1+1">
+                    <CREATE_DOCUMENT_ID Name="INCTV_ITEM_ID" AssignToVar="inctvItemId"/>
+                    <SET Var="InctvItemIDNew" FromValue="{$inctvItemId}"/>
+                    <!--SET Var="var1" FromValue="{concat('INCTV_ITEM_NAME_',$counter1)}"/>
+
+
+
+<SET Var="INCTV_ITEM_NAME_NEW"  FromValue="{$curElem/*[name()=$var1]/@Value}"/-->
+                    <SET Var="var1" FromValue="{concat('CATEG_CODE_',$counter1)}"/>
+                    <SET Var="CATEG_CODE_New" FromValue="{$curElem/*[name()=$var1]/@Value}"/>
+                    <SET Var="var2" FromValue="{concat('SEG_CODE_',$counter1)}"/>
+                    <SET Var="SEG_CODE_New" FromValue="{$curElem/*[name()=$var2]/@Value}"/>
+                    <SET Var="var3" FromValue="{concat('BRAND_CODE_',$counter1)}"/>
+                    <SET Var="BRAND_CODE_New" FromValue="{$curElem/*[name()=$var3]/@Value}"/>
+                    <SET Var="var4" FromValue="{concat('SUB_BRAND_CODE_',$counter1)}"/>
+                    <SET Var="SUB_BRAND_CODE_New" FromValue="{$curElem/*[name()=$var4]/@Value}"/>
+                    <SET Var="var5" FromValue="{concat('ITEM_VERS_CODE_',$counter1)}"/>
+                    <SET Var="ITEM_VERS_CODE_New" FromValue="{$curElem/*[name()=$var5]/@Value}"/>
+                    <SET Var="var6" FromValue="{concat('GLOBAL_FORM_CODE_',$counter1)}"/>
+                    <SET Var="GLOBAL_FORM_CODE_New" FromValue="{$curElem/*[name()=$var6]/@Value}"/>
+                    <SET Var="var7" FromValue="{concat('INCTV_ITEM_QTY_',$counter1)}"/>
+                    <SET Var="INCTV_ITEM_QTY_New" FromValue="{$curElem/*[name()=$var7]/@Value}"/>
+                    <SET Var="var8" FromValue="{concat('INCTV_ITEM_NAME_',$counter1)}"/>
+                    <SET Var="INCTV_ITEM_NAME_New" FromValue="{$curElem/*[name()=$var8]/@Value}"/>
+                    <SET Var="var9" FromValue="{concat('INCTV_ITEM_DESC_',$counter1)}"/>
+                    <SET Var="INCTV_ITEM_DESC_New" FromValue="{$curElem/*[name()=$var9]/@Value}"/>
+                    <SET Var="var10" FromValue="{concat('PROD_ITEM_UPC_',$counter1)}"/>
+                    <SET Var="PROD_ITEM_UPC_New" FromValue="{$curElem/*[name()=$var10]/@Value}"/>
+                    <SET Var="var12" FromValue="{concat('BRAND_FAMLY_ID_',$counter1)}"/>
+                    <SET Var="BRAND_FAMLY_ID_New" FromValue="{$curElem/*[name()=$var12]/@Value}"/>
+                    <SET Var="var13" FromValue="{concat('PROD_FAMLY_ID_',$counter1)}"/>
+                    <SET Var="PROD_FAMLY_ID_New" FromValue="{$curElem/*[name()=$var13]/@Value}"/>
+                    <IF_TEST Test="trim($INCTV_ITEM_NAME_New) = null or trim($INCTV_ITEM_NAME_New) ='' or strlen(trim($INCTV_ITEM_NAME_New))=0">
+                      <THEN>
+                        <!--IF_TEST Test="trim($PROD_ITEM_UPC_New) = null or trim($PROD_ITEM_UPC_New)=''"-->
+                        <IF_TEST Test="trim($PROD_ITEM_UPC_New) = null or trim($PROD_ITEM_UPC_New)='' or strlen(trim($PROD_ITEM_UPC_New))=0">
+                          <THEN>
+                            <EXECUTE_SQL_QUERY AssignToVar="brandName" Value="SEL brand_name FROM BRAND where brand_code='{$BRAND_CODE_New/@Value}';"/>
+                            <SET Var="INCTV_ITEM_NAME_UPDT" FromValue="{$brandName/SQL_RESULT/BRAND_NAME/@Value}"/>
+                          </THEN>
+                          <ELSE>
+                            <THEN>
+                              <EXECUTE_SQL_QUERY AssignToVar="prodName" Value="SEL  prod_item_name FROM PROD_ITEM where prod_item_upc={$PROD_ITEM_UPC_New/@Value};"/>
+                              <SET Var="INCTV_ITEM_NAME_UPDT" FromValue="{$prodName/SQL_RESULT/PROD_ITEM_NAME/@Value}"/>
+                              <!--IF_TEST Test="trim($INCTV_ITEM_NAME_UPDT) = null or trim($INCTV_ITEM_NAME_UPDT)=''"-->
+                              <IF_TEST Test="trim($INCTV_ITEM_NAME_UPDT) = null or trim($INCTV_ITEM_NAME_UPDT)='' or strlen(trim($INCTV_ITEM_NAME_UPDT))=0">
+                                <THEN>
+                                  <EXECUTE_SQL_QUERY AssignToVar="brandName" Value="SEL brand_name FROM BRAND where brand_code='{$BRAND_CODE_New/@Value}';"/>
+                                  <SET Var="INCTV_ITEM_NAME_UPDT" FromValue="{$brandName/SQL_RESULT/BRAND_NAME/@Value}"/>
+                                </THEN>
+                              </IF_TEST>
+                            </THEN>
+                          </ELSE>
+                        </IF_TEST>
+                      </THEN>
+                      <ELSE>
+                        <THEN>
+                          <SET Var="INCTV_ITEM_NAME_UPDT" FromValue="{$INCTV_ITEM_NAME_New}"/>
+                        </THEN>
+                      </ELSE>
+                    </IF_TEST>
+                    <EXECUTE_SQL_QUERY AssignToVar="brandNameCheck" ReturnRowCount="yes" Value="SEL brand_name FROM BRAND where brand_code='{$BRAND_CODE_New/@Value}';"/>
+                    <SET Var="brandNameAvail" FromValue="{$brandNameCheck/@TotalRowCount}"/>
+                    <SET Var="INCTV_ITEM_QTY1" FromValue="{$INCTV_ITEM_QTY_New}"/>
+                    <SET Var="errDate" FromValue="{date()}"/>
+                    <IF_TEST Test="$INCTV_ITEM_QTY1 = null or $INCTV_ITEM_QTY1 ='' or strlen(trim($INCTV_ITEM_QTY1)) = 0">
+                      <THEN>
+                        <SET Var="INCTV_ITEM_QTY2" FromValue="0"/>
+                      </THEN>
+                      <ELSE>
+                        <THEN>
+                          <SET Var="INCTV_ITEM_QTY2" FromValue="{$INCTV_ITEM_QTY1}"/>
+                        </THEN>
+                      </ELSE>
+                    </IF_TEST>
+                    <IF_TEST Test="$brandNameAvail = 0 or $INCTV_ITEM_QTY2 =0">
+                      <THEN>
+                        <IF_TEST Test="$brandNameAvail = 0 and $INCTV_ITEM_QTY2=0">
+                          <THEN>
+                            <ADD_DOC_SMART Name="error_INCTV_ITEM">
+                              <INCTV_NBR Value="{$InctvIDNew}"/>
+                              <INCTV_ITEM_NBR Value="{$InctvItemIDNew}"/>
+                              <CATEG_CODE Value="{$CATEG_CODE_New}"/>
+                              <SEG_CODE Value="{$SEG_CODE_New}"/>
+                              <BRAND_CODE Value="{$BRAND_CODE_New}"/>
+                              <SUB_BRAND_CODE Value="{$SUB_BRAND_CODE_New}"/>
+                              <ITEM_VERS_CODE Value="{$ITEM_VERS_CODE_New}"/>
+                              <GLOBAL_FORM_CODE Value="{$GLOBAL_FORM_CODE_New}"/>
+                              <INCTV_ITEM_QTY Value="0"/>
+                              <INCTV_ITEM_NAME Value="No Name"/>
+                              <INCTV_ITEM_DESC Value="{$INCTV_ITEM_DESC_New}"/>
+                              <PROD_ITEM_UPC Value="0"/>
+                              <PROD_FAMLY_ID Value="{$PROD_FAMLY_ID_New}"/>
+                              <BRAND_FAMLY_ID Value="{$BRAND_FAMLY_ID_New}"/>
+                              <ERROR_MESSAGE Value=";GIVEN BRAND_CODE IS NOT VALID || INCTV_ITEM_QTY IS NULL"/>
+                              <SYS_ERR_SEVERITY Value="SEVERE_ERROR"/>
+                              <ERROR_TIME Value="{$errDate}"/>
+                              <SYS_LOAD_ID Value="{$respID/SQL_RESULT/ID/@Value}"/>
+                              <WORKFLOW_ID Value="XL_WF1234"/>
+                            </ADD_DOC_SMART>
+                          </THEN>
+                        </IF_TEST>
+                        <IF_TEST Test="$brandNameAvail = 0 and $INCTV_ITEM_QTY2!=0">
+                          <THEN>
+                            <ADD_DOC_SMART Name="error_INCTV_ITEM">
+                              <INCTV_NBR Value="{$InctvIDNew}"/>
+                              <INCTV_ITEM_NBR Value="{$InctvItemIDNew}"/>
+                              <CATEG_CODE Value="{$CATEG_CODE_New}"/>
+                              <SEG_CODE Value="{$SEG_CODE_New}"/>
+                              <BRAND_CODE Value="{$BRAND_CODE_New}"/>
+                              <SUB_BRAND_CODE Value="{$SUB_BRAND_CODE_New}"/>
+                              <ITEM_VERS_CODE Value="{$ITEM_VERS_CODE_New}"/>
+                              <GLOBAL_FORM_CODE Value="{$GLOBAL_FORM_CODE_New}"/>
+                              <INCTV_ITEM_QTY Value="{$INCTV_ITEM_QTY_New}"/>
+                              <INCTV_ITEM_NAME Value="No Name"/>
+                              <INCTV_ITEM_DESC Value="{$INCTV_ITEM_DESC_New}"/>
+                              <PROD_ITEM_UPC Value="0"/>
+                              <PROD_FAMLY_ID Value="{$PROD_FAMLY_ID_New}"/>
+                              <BRAND_FAMLY_ID Value="{$BRAND_FAMLY_ID_New}"/>
+                              <ERROR_MESSAGE Value=";GIVEN BRAND_CODE IS NOT VALID"/>
+                              <SYS_ERR_SEVERITY Value="SEVERE_ERROR"/>
+                              <ERROR_TIME Value="{$errDate}"/>
+                              <SYS_LOAD_ID Value="{$respID/SQL_RESULT/ID/@Value}"/>
+                              <WORKFLOW_ID Value="XL_WF1234"/>
+                            </ADD_DOC_SMART>
+                          </THEN>
+                        </IF_TEST>
+                        <IF_TEST Test="$brandNameAvail != 0 and $INCTV_ITEM_QTY2 =0">
+                          <THEN>
+                            <ADD_DOC_SMART Name="error_INCTV_ITEM">
+                              <INCTV_NBR Value="{$InctvIDNew}"/>
+                              <INCTV_ITEM_NBR Value="{$InctvItemIDNew}"/>
+                              <CATEG_CODE Value="{$CATEG_CODE_New}"/>
+                              <SEG_CODE Value="{$SEG_CODE_New}"/>
+                              <BRAND_CODE Value="{$BRAND_CODE_New}"/>
+                              <SUB_BRAND_CODE Value="{$SUB_BRAND_CODE_New}"/>
+                              <ITEM_VERS_CODE Value="{$ITEM_VERS_CODE_New}"/>
+                              <GLOBAL_FORM_CODE Value="{$GLOBAL_FORM_CODE_New}"/>
+                              <INCTV_ITEM_QTY Value="0"/>
+                              <INCTV_ITEM_NAME Value="{$INCTV_ITEM_NAME_UPDT}"/>
+                              <INCTV_ITEM_DESC Value="{$INCTV_ITEM_DESC_New}"/>
+                              <PROD_ITEM_UPC Value="0"/>
+                              <PROD_FAMLY_ID Value="{$PROD_FAMLY_ID_New}"/>
+                              <BRAND_FAMLY_ID Value="{$BRAND_FAMLY_ID_New}"/>
+                              <ERROR_MESSAGE Value=";GIVEN INCTV_ITEM_QTY IS NULL"/>
+                              <SYS_ERR_SEVERITY Value="SEVERE_ERROR"/>
+                              <ERROR_TIME Value="{$errDate}"/>
+                              <SYS_LOAD_ID Value="{$respID/SQL_RESULT/ID/@Value}"/>
+                              <WORKFLOW_ID Value="XL_WF1234"/>
+                            </ADD_DOC_SMART>
+                          </THEN>
+                        </IF_TEST>
+                      </THEN>
+                      <ELSE>
+                        <THEN>
+                          <TO_DOCVAR AssignToVar="inctvItemDoc">
+                            <INCTV_ITEM>
+                              <INCTV_NBR Value="{$InctvIDNew}"/>
+                              <INCTV_ITEM_NBR Value="{$InctvItemIDNew}"/>
+                              <CATEG_CODE Value="{$CATEG_CODE_New}"/>
+                              <SEG_CODE Value="{$SEG_CODE_New}"/>
+                              <BRAND_CODE Value="{$BRAND_CODE_New}"/>
+                              <SUB_BRAND_CODE Value="{$SUB_BRAND_CODE_New}"/>
+                              <ITEM_VERS_CODE Value="{$ITEM_VERS_CODE_New}"/>
+                              <GLOBAL_FORM_CODE Value="{$GLOBAL_FORM_CODE_New}"/>
+                              <!--MKTNG_PGM_NBR Value="{$INCTV_ITEM_QTY_New}"/-->
+                              <INCTV_ITEM_QTY Value="{$INCTV_ITEM_QTY_New}"/>
+                              <INCTV_ITEM_NAME Value="{$INCTV_ITEM_NAME_UPDT}"/>
+                              <INCTV_ITEM_DESC Value="{$INCTV_ITEM_DESC_New}"/>
+                              <!--VISUAL_CODE Value="{$curElem/VISUAL_CODE/@Value}"/-->
+                              <PROD_ITEM_UPC Value="{$PROD_ITEM_UPC_New}"/>
+                              <PROD_FAMLY_ID Value="{$PROD_FAMLY_ID_New}"/>
+                              <BRAND_FAMLY_ID Value="{$BRAND_FAMLY_ID_New}"/>
+                            </INCTV_ITEM>
+                          </TO_DOCVAR>
+                          <APPEND_TO_XML DocVar="inctvItemList">
+                            <TO_XML DocVar="inctvItemDoc"/>
+                          </APPEND_TO_XML>
+                        </THEN>
+                      </ELSE>
+                    </IF_TEST>
+                    <SET Var="counter1" FromValue="{int($counter1+1)}"/>
+                  </WHILE>
+                  <IF_TEST Test="strlen(trim($cpnUniqueInd1)) = 0">
+                    <THEN>
+                      <DO_DB_PERSIST DocumentName="INCTV" Source="EXTERNAL" Action="UPDATE" ServiceName="BCM_MASTER" AssignToVar="InctvResponse" SysLoadId="{$respID/SQL_RESULT/ID/@Value}" SysWfId="XL_WF1234" HandleException="true">
+                        <INCTV>
+                          <INCTV_NBR Value="{$InctvIDNew1}"/>
+                          <INCTV_NAME Value="{$inctvName1}"/>
+                          <INCTV_DESC Value="{$curElem/INCTV_DESC/@Value}"/>
+                          <!--LEGAL_ENT_NBR Value="{$curElem/LEGAL_ENT_NBR/@Value}"/-->
+                          <MKTNG_PGM_NBR Value="{$curElem/MKTNG_PGM_NBR/@Value}"/>
+                          <INCTV_STATUS_CODE Value="{$curElem/INCTV_STATUS_CODE/@Value}"/>
+                          <INCTV_TYPE_CODE Value="{$curElem/INCTV_TYPE_CODE/@Value}"/>
+                          <INCTV_VAL_AMT Value="{$inctvValAmt1}"/>
+                          <INCTV_VAL_PCT Value="{$inctvValPct1}"/>
+                          <COUPN_TYPE_CODE Value="{$curElem/COUPN_TYPE_CODE/@Value}"/>
+                          <!--OTHER_INCENTIVE_TXT Value="{$curElem/OTHER_INCENTIVE_TXT/@Value}"/-->
+                          <BUNDLE_PACK_IND Value="{$curElem/BUNDLE_PACK_IND/@Value}"/>
+                          <CONTEST_NBR Value="{$curElem/CONTEST_NBR/@Value}"/>
+                          <PREMARKET_OFFER_IND Value="{$curElem/PREMARKET_OFFER_IND/@Value}"/>
+                          <!--LYLTY_OFFER_NBR Value="{$curElem/LYLTY_OFFER_NBR/@Value}"/-->
+                          <INCTV_EXPRN_DAY_CNT Value="{$inctvExprnDayCnt1}"/>
+                          <INCTV_CRTN_DATE Value="{substringBefore($inctvCrtDate1, ' ')}"/>
+                          <ALT_SYS_INCTV_ID Value="{$curElem/ALT_SYS_INCTV_ID/@Value}"/>
+                          <BRAND_NAME Value="{$curElem/BRAND_NAME/@Value}"/>
+                          <EXT_INCTV_CD Value="{$curElem/EXT_INCTV_CD/@Value}"/>
+                          <COUPN_EXT_CD Value="{$curElem/COUPN_EXT_CD/@Value}"/>
+                          <TGT_DST_QTY Value="{$tgtDstQty1}"/>
+                          <CLRNG_HS_CD Value="{$curElem/CLRNG_HS_CD/@Value}"/>
+                          <INCTV_START_DATE Value="{$inctvStartDate1}"/>
+                          <INCTV_END_DATE Value="{$inctvEndDate1}"/>
+                          <EXTRN_COUPN_DATA_SRCE_NBR Value="{$inctvExtrCpnDataSrceNbr1}"/>
+                          <!--COUPN_UNIQUE_IND Value="{$cpnUniqueInd1}"/-->
+                          <INCTV_EXPRN_DATETM Value="{$curElem/INCTV_EXPRN_DATETM/@Value}"/>
+                        </INCTV>
+                      </DO_DB_PERSIST>
+                    </THEN>
+                    <ELSE>
+                      <THEN>
+                        <DO_DB_PERSIST DocumentName="INCTV" Source="EXTERNAL" Action="UPDATE" ServiceName="BCM_MASTER" AssignToVar="InctvResponse" SysLoadId="{$respID/SQL_RESULT/ID/@Value}" SysWfId="XL_WF1234" HandleException="true">
+                          <INCTV>
+                            <INCTV_NBR Value="{$InctvIDNew1}"/>
+                            <INCTV_NAME Value="{$inctvName1}"/>
+                            <INCTV_DESC Value="{$curElem/INCTV_DESC/@Value}"/>
+                            <!--LEGAL_ENT_NBR Value="{$curElem/LEGAL_ENT_NBR/@Value}"/-->
+                            <MKTNG_PGM_NBR Value="{$curElem/MKTNG_PGM_NBR/@Value}"/>
+                            <INCTV_STATUS_CODE Value="{$curElem/INCTV_STATUS_CODE/@Value}"/>
+                            <INCTV_TYPE_CODE Value="{$curElem/INCTV_TYPE_CODE/@Value}"/>
+                            <INCTV_VAL_AMT Value="{$inctvValAmt1}"/>
+                            <INCTV_VAL_PCT Value="{$inctvValPct1}"/>
+                            <COUPN_TYPE_CODE Value="{$curElem/COUPN_TYPE_CODE/@Value}"/>
+                            <!--OTHER_INCENTIVE_TXT Value="{$curElem/OTHER_INCENTIVE_TXT/@Value}"/-->
+                            <BUNDLE_PACK_IND Value="{$curElem/BUNDLE_PACK_IND/@Value}"/>
+                            <CONTEST_NBR Value="{$curElem/CONTEST_NBR/@Value}"/>
+                            <PREMARKET_OFFER_IND Value="{$curElem/PREMARKET_OFFER_IND/@Value}"/>
+                            <!--LYLTY_OFFER_NBR Value="{$curElem/LYLTY_OFFER_NBR/@Value}"/-->
+                            <INCTV_EXPRN_DAY_CNT Value="{$inctvExprnDayCnt1}"/>
+                            <INCTV_CRTN_DATE Value="{substringBefore($inctvCrtDate1, ' ')}"/>
+                            <ALT_SYS_INCTV_ID Value="{$curElem/ALT_SYS_INCTV_ID/@Value}"/>
+                            <BRAND_NAME Value="{$curElem/BRAND_NAME/@Value}"/>
+                            <EXT_INCTV_CD Value="{$curElem/EXT_INCTV_CD/@Value}"/>
+                            <COUPN_EXT_CD Value="{$curElem/COUPN_EXT_CD/@Value}"/>
+                            <TGT_DST_QTY Value="{$tgtDstQty1}"/>
+                            <CLRNG_HS_CD Value="{$curElem/CLRNG_HS_CD/@Value}"/>
+                            <INCTV_START_DATE Value="{$inctvStartDate1}"/>
+                            <INCTV_END_DATE Value="{$inctvEndDate1}"/>
+                            <EXTRN_COUPN_DATA_SRCE_NBR Value="{$inctvExtrCpnDataSrceNbr1}"/>
+                            <COUPN_UNIQUE_IND Value="{$cpnUniqueInd1}"/>
+                            <INCTV_EXPRN_DATETM Value="{$curElem/INCTV_EXPRN_DATETM/@Value}"/>
+                          </INCTV>
+                        </DO_DB_PERSIST>
+                      </THEN>
+                    </ELSE>
+                  </IF_TEST>
+                  <IF_TEST Test="$InctvResponse/VALIDATION_RESULT/ERROR_SEVERITY/@Value='SEVERE_ERROR'  or $InctvResponse/@Status='Error'">
+                    <THEN/>
+                    <ELSE>
+                      <SET Var="itemNumber" FromValue="{$curElem/NUM_OF_INCTV_ITEM/@Value}"/>
+                      <IF_TEST Test="strlen(trim($itemNumber)) > 0 and $itemNumber != 0">
+                        <THEN>
+                          <DO_DB_PERSIST DocumentName="INCTV_ITEM" Source="EXTERNAL" Action="INSERT" ServiceName="BCM_MASTER" AssignToVar="InctvItmResponse" SysLoadId="{$respID/SQL_RESULT/ID/@Value}" SysWfId="XL_WF1234" HandleException="true">
+                            <TO_XML SelectList="$inctvItemList/*"/>
+                          </DO_DB_PERSIST>
+                        </THEN>
+                      </IF_TEST>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+              </IF_TEST>
+              <EXECUTE_SQL_QUERY Value="SEL INCTV_NBR,INCTV_ITEM_NBR,INCTV_ITEM_NAME,INCTV_ITEM_QTY,INCTV_ITEM_DESC,CATEG_CODE,SEG_CODE,BRAND_CODE,SUB_BRAND_CODE,ITEM_VERS_CODE, GLOBAL_FORM_CODE,PROD_ITEM_UPC,BRAND_FAMLY_ID,PROD_FAMLY_ID,SYS_ERROR_ID,SYS_ERR_CODE,SYS_ERR_SVRTY,SYS_LOAD_ID,SYS_WORKFLOW_ID FROM ERR_INCTV_ITEM WHERE SYS_LOAD_ID='{$respID/SQL_RESULT/ID/@Value}';" AssignToVar="errCount" ReturnRowCount="yes"/>
+              <IF_TEST Test="$errCount/@TotalRowCount > 0 or $InctvResponse/@Status='Error'">
+                <THEN>
+                  <IF_TEST Test="$InctvResponse/@Status='Error'">
+                    <THEN>
+                      <SET Var="errMessage" FromValue="DATABASE EXCEPTION !!!"/>
+                      <ADD_DOCUMENT AssignToVar="inctvErrAdd" Name="error_INCTV">
+                        <INCTV_NBR Value="9999"/>
+                        <INCTV_NAME Value="XYZ"/>
+                        <!--INCTV_DESC Value="{$curElem/INCTV_DESC/@Value}"/-->
+                        <!--LEGAL_ENT_NBR Value="{$curElem/LEGAL_ENT_NBR/@Value}"/-->
+                        <MKTNG_PGM_NBR Value="99"/>
+                        <INCTV_STATUS_CODE Value="XX"/>
+                        <INCTV_TYPE_CODE Value="XX"/>
+                        <!--INCTV_VAL_AMT Value="{$inctvValAmt1}"/>
+
+
+
+<INCTV_VAL_PCT Value="{$inctvValPct1}"/>
+
+
+
+<COUPN_TYPE_CODE Value="{$curElem/COUPN_TYPE_CODE/@Value}"/>
+
+
+
+<OTHER_INCENTIVE_TXT Value="{$curElem/OTHER_INCENTIVE_TXT/@Value}"/>
+
+
+
+<BUNDLE_PACK_IND Value="{$curElem/BUNDLE_PACK_IND/@Value}"/>
+
+
+
+<CONTEST_NBR Value="{$curElem/CONTEST_NBR/@Value}"/>
+
+
+
+<PREMARKET_OFFER_IND Value="{$curElem/PREMARKET_OFFER_IND/@Value}"/-->
+                        <!--LYLTY_OFFER_NBR Value="{$curElem/LYLTY_OFFER_NBR/@Value}"/-->
+                        <!--INCTV_EXPRN_DAY_CNT Value="{$inctvExprnDayCnt1}"/>
+
+
+
+<INCTV_CRTN_DATE Value="{substringBefore($inctvCrtDate1, ' ')}"/>
+
+
+
+<ALT_SYS_INCTV_ID Value="{$curElem/ALT_SYS_INCTV_ID/@Value}"/>
+
+
+
+<BRAND_NAME Value="{$curElem/BRAND_NAME/@Value}"/>
+
+
+
+<EXT_INCTV_CD Value="{$curElem/EXT_INCTV_CD/@Value}"/>
+
+
+
+<COUPN_EXT_CD Value="{$curElem/COUPN_EXT_CD/@Value}"/>
+
+
+
+<TGT_DST_QTY Value="{$tgtDstQty1}"/>
+
+
+
+<CLRNG_HS_CD Value="{$curElem/CLRNG_HS_CD/@Value}"/>
+
+
+
+<INCTV_START_DATE Value="{$inctvStartDate1}"/>
+
+
+
+<INCTV_END_DATE Value="{$inctvEndDate1}"/-->
+                        <ERROR_MESSAGE Value="{$errMessage}"/>
+                        <SYS_ERR_SEVERITY Value="SEVERE_ERROR"/>
+                        <ERROR_TIME Value="{$errDate}"/>
+                        <SYS_LOAD_ID Value="{$respID/SQL_RESULT/ID/@Value}"/>
+                        <WORKFLOW_ID Value="XL_WF1234"/>
+                      </ADD_DOCUMENT>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="errMessage" FromValue="{concat('For INCTV:- ',$InctvIDNew,' the INCTV_ITEM:- ',$errCount/SQL_RESULT/INCTV_ITEM_NBR/@Value,' failed because ',$errCount/SQL_RESULT/SYS_ERR_CODE/@Value,'!!!')}"/>
+                      <ADD_DOCUMENT AssignToVar="inctvErrAdd" Name="error_INCTV">
+                        <INCTV_NBR Value="{$errCount/SQL_RESULT/INCTV_NBR/@Value}"/>
+                        <INCTV_NAME Value="{$inctvName1}"/>
+                        <INCTV_DESC Value="{$curElem/INCTV_DESC/@Value}"/>
+                        <!--LEGAL_ENT_NBR Value="{$curElem/LEGAL_ENT_NBR/@Value}"/-->
+                        <MKTNG_PGM_NBR Value="{$curElem/MKTNG_PGM_NBR/@Value}"/>
+                        <INCTV_STATUS_CODE Value="{$curElem/INCTV_STATUS_CODE/@Value}"/>
+                        <INCTV_TYPE_CODE Value="{$curElem/INCTV_TYPE_CODE/@Value}"/>
+                        <INCTV_VAL_AMT Value="{$inctvValAmt1}"/>
+                        <INCTV_VAL_PCT Value="{$inctvValPct1}"/>
+                        <COUPN_TYPE_CODE Value="{$curElem/COUPN_TYPE_CODE/@Value}"/>
+                        <!--OTHER_INCENTIVE_TXT Value="{$curElem/OTHER_INCENTIVE_TXT/@Value}"/-->
+                        <BUNDLE_PACK_IND Value="{$curElem/BUNDLE_PACK_IND/@Value}"/>
+                        <CONTEST_NBR Value="{$curElem/CONTEST_NBR/@Value}"/>
+                        <PREMARKET_OFFER_IND Value="{$curElem/PREMARKET_OFFER_IND/@Value}"/>
+                        <!--LYLTY_OFFER_NBR Value="{$curElem/LYLTY_OFFER_NBR/@Value}"/-->
+                        <INCTV_EXPRN_DAY_CNT Value="{$inctvExprnDayCnt1}"/>
+                        <INCTV_CRTN_DATE Value="{substringBefore($inctvCrtDate1, ' ')}"/>
+                        <ALT_SYS_INCTV_ID Value="{$curElem/ALT_SYS_INCTV_ID/@Value}"/>
+                        <BRAND_NAME Value="{$curElem/BRAND_NAME/@Value}"/>
+                        <EXT_INCTV_CD Value="{$curElem/EXT_INCTV_CD/@Value}"/>
+                        <COUPN_EXT_CD Value="{$curElem/COUPN_EXT_CD/@Value}"/>
+                        <TGT_DST_QTY Value="{$tgtDstQty1}"/>
+                        <CLRNG_HS_CD Value="{$curElem/CLRNG_HS_CD/@Value}"/>
+                        <INCTV_START_DATE Value="{$inctvStartDate1}"/>
+                        <INCTV_END_DATE Value="{$inctvEndDate1}"/>
+                        <ERROR_MESSAGE Value="{$errMessage}"/>
+                        <SYS_ERR_SEVERITY Value="SEVERE_ERROR"/>
+                        <ERROR_TIME Value="{$errDate}"/>
+                        <SYS_LOAD_ID Value="{$respID/SQL_RESULT/ID/@Value}"/>
+                        <WORKFLOW_ID Value="XL_WF1234"/>
+                      </ADD_DOCUMENT>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+            <ELSE>
+              <SET Var="errDate" FromValue="{date()}"/>
+              <EXECUTE_SQL_QUERY AssignToVar="respID" ReturnRowCount="yes" Value="SEL MAX(cast(id as integer))as ID FROM UPLD_PRGS_RPT WHERE TEMPLATE_NAME='EntityINCTVTemplate'"/>
+              <ADD_DOCUMENT AssignToVar="inctvErrAddIndicator" Name="error_INCTV">
+                <INCTV_NBR Value="9999"/>
+                <INCTV_NAME Value="XXX"/>
+                <MKTNG_PGM_NBR Value="999"/>
+                <INCTV_STATUS_CODE Value="XX"/>
+                <INCTV_TYPE_CODE Value="XX"/>
+                <INCTV_VAL_AMT Value="99"/>
+                <INCTV_VAL_PCT Value="99"/>
+                <INCTV_EXPRN_DAY_CNT Value="99"/>
+                <INCTV_CRTN_DATE Value="9/9/9999"/>
+                <TGT_DST_QTY Value="99"/>
+                <INCTV_START_DATE Value="9/9/9999"/>
+                <INCTV_END_DATE Value="9/9/9999"/>
+                <ERROR_MESSAGE Value="INDICATOR IS NOT PROPER"/>
+                <SYS_ERR_SEVERITY Value="SEVERE_ERROR"/>
+                <ERROR_TIME Value="{$errDate}"/>
+                <SYS_LOAD_ID Value="{$respID/SQL_RESULT/ID/@Value}"/>
+                <WORKFLOW_ID Value="XL_WF1234"/>
+              </ADD_DOCUMENT>
+            </ELSE>
+          </IF_TEST>
+        </FOR_EACH>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="EmailIncentiveForBatch">
+    <RULE>
+      <ACTION>
+        <REQUEST Name="getUser" ServiceName="USER_SECURITY" AssignToVar="userDetails">
+          <ID Value="{$thisParam/userName/@Value}"/>
+        </REQUEST>
+        <TO_DOCVAR AssignToVar="emailRecipients">
+          <TO_ADDRS>
+            <TO_ADDR Value="{$userDetails/USER_PROFILE/EMAIL_ADDRESS/@Value}"/>
+          </TO_ADDRS>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="emailFormat">
+          <ROOT>
+            <FORMAT Value="text/html"/>
+          </ROOT>
+        </TO_DOCVAR>
+        <GET_DOCUMENT Name="UPLOAD_PROGRESS_REPORT" ServiceName="DATAUPLOAD" AssignToVar="RptProgress" HandleException="true">
+          <ID Value="{$thisParam/ReportId/@Value}"/>
+        </GET_DOCUMENT>        
+        <IF_TEST Test="$thisParam/SttsDesc/@Value = 'Success' and ($RptProgress/UPLOAD_PROGRESS_REPORT/PROGRESS/@Value = 'Completed' or $RptProgress/UPLOAD_PROGRESS_REPORT/PROGRESS/@Value = 'Completed with gaps')">
+          <THEN>
+            <TO_DOCVAR AssignToVar="emailSubject">
+              <ROOT>
+                <SUBJECT Value="Incentive uploaded successfully"/>
+              </ROOT>
+            </TO_DOCVAR>
+            <TO_DOCVAR AssignToVar="emailMessage">
+              <ROOT>
+                <MESSAGE>
+                  <DATA Value="Incentive uploaded successfully. Report Id is {$thisParam/ReportId/@Value}"/>
+                </MESSAGE>
+              </ROOT>
+            </TO_DOCVAR>
+          </THEN>
+          <ELSE>
+            <TO_DOCVAR AssignToVar="emailSubject">
+              <ROOT>
+                <SUBJECT Value="Incentive upload failed"/>
+              </ROOT>
+            </TO_DOCVAR>
+            <TO_DOCVAR AssignToVar="emailMessage">
+              <ROOT>
+                <MESSAGE>
+                  <DATA Value="Incentive upload failed. Report Id is {$thisParam/ReportId/@Value}. An incident has been opened in Service Now. Operations team would work on the incident to resolve the issue."/>
+                </MESSAGE>
+              </ROOT>
+            </TO_DOCVAR>
+          </ELSE>
+        </IF_TEST>
+        <REQUEST Name="sendEmailNotification" AssignToVar="respEmail" ServiceName="BCM_MASTER" HandleException="true">
+          <TO_XML DocVar="emailRecipients"/>
+          <TO_XML SelectList="$emailSubject/*"/>
+          <TO_XML SelectList="$emailFormat/*"/>
+          <TO_XML SelectList="$emailMessage/*"/>
+        </REQUEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+<!--
+    Document   : tk_bcmInputRule.xml
+    Updated by : Rosmon Sidhik for making web-services available thru API_DOC
+    Updated on : 20-04-2005
+-->
+  <DEFINE_METHOD Name="getErrorFolders">
+    <API_DOC>
+       <INPUT>
+        <REQUEST Name="getErrorFolders">
+          <ALL_FOLDERS_REQ Value="true"/> 
+        </REQUEST>
+       </INPUT>
+       <OUTPUT>
+         <ON_SUCCESS>
+           <RESPONSE Status="Success">
+              <ALL_FOLDERS>
+                <FOLDER Name="parent1">
+                  <FOLDERS>
+                    <FOLDER Name="child1">
+                      <DOCUMENTS>
+                        <DOCUMENT Name="error_PACKAGE"/>
+                      </DOCUMENTS>
+                    </FOLDER>
+                    <FOLDER Name="child2">
+                      <DOCUMENTS>
+                        <DOCUMENT Name="error_PACKAGE"/>
+                      </DOCUMENTS>
+                    </FOLDER>
+                  </FOLDERS>
+                  <DOCUMENTS>
+                    <DOCUMENT Name="error_PACKAGE"/>
+                  </DOCUMENTS>
+                </FOLDER>
+              </ALL_FOLDERS>
+            </RESPONSE>
+          </ON_SUCCESS>  
+       </OUTPUT>
+    </API_DOC>
+    <RULE>
+      <ACTION>
+        <GET_FOLDERS IsErrorDocRequired="true" AssignToVar="res">
+          <TO_XML SelectList="$thisParam/*"/>
+        </GET_FOLDERS>
+        <APPEND_CHILDREN DocVar="thisReturn" FromDocVar="res"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

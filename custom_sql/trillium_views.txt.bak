@@ -1,0 +1,671 @@
+
+		REPLACE VIEW MDM.CNSMR_TSS_MATCH_CRM
+	AS
+	LOCKING ROW FOR ACCESS
+	
+	SELECT
+	  REGIS_PRSNA_1.MKTNG_PGM_NBR
+	 ,REGIS_PRSNA_1.REGIS_CNSMR_ID_VAL
+	 ,REGIS_PRSNA_1.NAME_PREFX_TXT
+	 ,REGIS_PRSNA_1.GVN_NAME
+	 ,REGIS_PRSNA_1.MID_NAME
+	 ,REGIS_PRSNA_1.FAMLY_NAME
+	 ,REGIS_PRSNA_1.NAME_SUFFX_TXT
+	 ,REGIS_PRSNA_1.FULL_NAME
+	 ,REGIS_PRSNA_1.GENDR_IND
+	 ,REGIS_PRSNA_1.BRTH_DATE
+	 ,REGIS_PRSNA_1.CNSMR_USER_NAME
+	 ,REGIS_PRSNA_1.LANG_CODE
+	 ,PRSNA_POSTL_ADDR_1.ADDR_LINE_1_TXT
+	 ,PRSNA_POSTL_ADDR_1.ADDR_LINE_2_TXT
+	 ,PRSNA_POSTL_ADDR_1.ADDR_LINE_3_TXT
+	 ,PRSNA_POSTL_ADDR_1.STRET_NUM
+	 ,PRSNA_POSTL_ADDR_1.STRET_NAME
+	 ,PRSNA_POSTL_ADDR_1.APT_NUM
+	 ,PRSNA_POSTL_ADDR_1.PO_BOX_NUM
+	 ,PRSNA_POSTL_ADDR_1.CITY_NAME
+	 ,PRSNA_POSTL_ADDR_1.POSTL_AREA_CODE
+	 ,PRSNA_POSTL_ADDR_1.TERR_CODE
+	 ,PRSNA_POSTL_ADDR_1.CNTRY_CODE
+	 ,PRSNA_EMAIL_ADDR_1.EMAIL_ADDR_TXT AS EMAIL_ADDR_TXT_1
+	 ,PRSNA_PHONE_1.PHONE_CNTRY_NBR AS PHONE_CNTRY_NBR_1
+	 ,PRSNA_PHONE_1.PHONE_AREA_NBR  AS PHONE_AREA_NBR_1
+	 ,PRSNA_PHONE_1.PHONE_EXCHG_NBR AS PHONE_EXCHG_NBR_1
+	 ,PRSNA_PHONE_1.PHONE_LINE_NBR  AS PHONE_LINE_NBR_1
+	 ,PRSNA_PHONE_1.PHONE_EXTSN_NUM AS PHONE_EXTSN_NUM_1
+	 ,PRSNA_PHONE_1.FULL_PHONE_NUM  AS FULL_PHONE_NUM_1
+	 ,PRSNA_POSTL_ADDR_1.WIN_KEY
+	 ,DPEND_1.DPEND_NAME
+	 ,PET_1.PET_NAME
+	 ,REGIS_PRSNA_1.REGIS_PRSNA_ID 
+	 ,LEGAL_ENT_PRSNA_1.MATCHD_CNSMR_PRSNA_ID
+	 ,LEGAL_ENT_PRSNA_1.HSHLD_PRSNA_ID
+	 ,REGIS_PRSNA_1.LEGAL_ENT_NBR
+	
+	  FROM ICRM_TBL.REGIS_PRSNA REGIS_PRSNA_1
+	
+	  LEFT OUTER JOIN ICRM_TBL.MATCHD_CNSMR_PRSNA LEGAL_ENT_PRSNA_1
+	    ON REGIS_PRSNA_1.MATCHD_CNSMR_PRSNA_ID = LEGAL_ENT_PRSNA_1.MATCHD_CNSMR_PRSNA_ID
+	   
+	  LEFT OUTER JOIN ICRM_TBL.REGIS_PRSNA_POSTL_ADDR PRSNA_POSTL_ADDR_1
+	    ON REGIS_PRSNA_1.REGIS_PRSNA_ID = PRSNA_POSTL_ADDR_1.REGIS_PRSNA_ID
+	   AND REGIS_PRSNA_1.MKTNG_PGM_NBR = PRSNA_POSTL_ADDR_1.MKTNG_PGM_NBR
+	   AND REGIS_PRSNA_1.LEGAL_ENT_NBR = PRSNA_POSTL_ADDR_1.LEGAL_ENT_NBR
+	
+	  LEFT OUTER JOIN ICRM_TBL.REGIS_PRSNA_PHONE PRSNA_PHONE_1
+	    ON REGIS_PRSNA_1.REGIS_PRSNA_ID = PRSNA_PHONE_1.REGIS_PRSNA_ID
+	   AND REGIS_PRSNA_1.MKTNG_PGM_NBR = PRSNA_PHONE_1.MKTNG_PGM_NBR
+	   AND REGIS_PRSNA_1.LEGAL_ENT_NBR = PRSNA_PHONE_1.LEGAL_ENT_NBR
+	    
+	  LEFT OUTER JOIN ICRM_TBL.REGIS_PRSNA_EMAIL_ADDR PRSNA_EMAIL_ADDR_1
+	    ON REGIS_PRSNA_1.REGIS_PRSNA_ID = PRSNA_EMAIL_ADDR_1.REGIS_PRSNA_ID
+	   AND REGIS_PRSNA_1.MKTNG_PGM_NBR = PRSNA_EMAIL_ADDR_1.MKTNG_PGM_NBR
+	   AND REGIS_PRSNA_1.LEGAL_ENT_NBR = PRSNA_EMAIL_ADDR_1.LEGAL_ENT_NBR 
+	
+	  LEFT OUTER JOIN ICRM_TBL.DPEND DPEND_1
+	    ON REGIS_PRSNA_1.REGIS_PRSNA_ID = DPEND_1.REGIS_PRSNA_ID
+	   AND REGIS_PRSNA_1.MKTNG_PGM_NBR = DPEND_1.MKTNG_PGM_NBR
+	   AND REGIS_PRSNA_1.LEGAL_ENT_NBR = DPEND_1.LEGAL_ENT_NBR
+	
+	  LEFT OUTER JOIN ICRM_TBL.PET PET_1
+	    ON REGIS_PRSNA_1.REGIS_PRSNA_ID = PET_1.REGIS_PRSNA_ID
+	   AND REGIS_PRSNA_1.MKTNG_PGM_NBR = PET_1.MKTNG_PGM_NBR
+	   AND REGIS_PRSNA_1.LEGAL_ENT_NBR = PET_1.LEGAL_ENT_NBR
+	;
+
+
+REPLACE VIEW MDM.CNSMR_TSS_CLEANSE_INPUT
+ AS
+ LOCKING ROW FOR ACCESS
+ 
+ SELECT
+   MKTNG_PGM_1.LEGAL_ENT_NBR
+  ,PRSNA_STG_1.MKTNG_PGM_NBR
+  ,PRSNA_STG_1.REGIS_CNSMR_ID_VAL
+  ,PRSNA_STG_1.NAME_PREFX_TXT
+  ,PRSNA_STG_1.GVN_NAME
+  ,PRSNA_STG_1.MID_NAME
+  ,PRSNA_STG_1.FAMLY_NAME
+  ,PRSNA_STG_1.NAME_SUFFX_TXT
+  ,PRSNA_STG_1.FULL_NAME
+  ,PRSNA_STG_1.GENDR_IND
+  ,PRSNA_STG_1.BRTH_DATE
+  ,PRSNA_POSTL_ADDR_STG_1.ADDR_LINE_1_TXT
+  ,PRSNA_POSTL_ADDR_STG_1.ADDR_LINE_2_TXT
+  ,PRSNA_POSTL_ADDR_STG_1.ADDR_LINE_3_TXT
+  ,PRSNA_POSTL_ADDR_STG_1.STRET_NUM
+  ,PRSNA_POSTL_ADDR_STG_1.STRET_NAME
+  ,PRSNA_POSTL_ADDR_STG_1.APT_NUM
+  ,PRSNA_POSTL_ADDR_STG_1.PO_BOX_NUM
+  ,PRSNA_POSTL_ADDR_STG_1.CITY_NAME
+  ,PRSNA_POSTL_ADDR_STG_1.POSTL_AREA_CODE
+  ,PRSNA_POSTL_ADDR_STG_1.TERR_NAME
+  ,COALESCE(PRSNA_POSTL_ADDR_STG_1.CNTRY_NAME,PRSNA_STG_1.CNTRY_CODE) AS CNTRY_NAME
+  ,DPEND_STG_1.DPEND_NAME
+  ,PET_STG_1.PET_NAME
+  ,PRSNA_STG_1.WIN_KEY
+  ,PRSNA_STG_1.SYNC_STATUS
+  ,PRSNA_STG_1.USER_NAME
+  ,PRSNA_STG_1.LANG_CODE
+  ,TRIM(CAST(PRSNA_STG_1.SYS_SOURCE AS INTEGER)) AS SYS_SOURCE
+  ,PRSNA_STG_1.SYS_NC_TYPE      
+  ,PRSNA_STG_1.SYS_CREATION_DATE
+  ,MIN(PRSNA_EMAIL_ADDR_STG_1.EMAIL_ADDR_TXT) AS EMAIL_ADDR_TXT_1
+  ,MIN(PRSNA_PHONE_STG_1.PHONE_EXTSN_NUM) AS PHONE_EXTSN_NUM_1
+  ,MIN(PRSNA_PHONE_STG_1.FULL_PHONE_NUM)  AS FULL_PHONE_NUM_1
+  ,MIN(PRSNA_PHONE_STG_1.PHONE_LINE_NBR)  AS PHONE_LINE_NBR_1
+  ,MIN(PRSNA_PHONE_STG_1.PHONE_AREA_NBR)  AS PHONE_AREA_NBR_1
+  ,MIN(PRSNA_PHONE_STG_1.PHONE_EXCHG_NBR) AS PHONE_EXCHG_NBR_1
+  ,MIN(PRSNA_PHONE_STG_1.PHONE_CNTRY_NBR) AS PHONE_CNTRY_NBR_1
+ 
+   FROM mdm.PRSNA_STG PRSNA_STG_1
+ 
+   LEFT OUTER JOIN mdm.PRSNA_POSTL_ADDR_STG PRSNA_POSTL_ADDR_STG_1
+     ON PRSNA_STG_1.MKTNG_PGM_NBR = PRSNA_POSTL_ADDR_STG_1.MKTNG_PGM_NBR
+    AND PRSNA_STG_1.REGIS_CNSMR_ID_VAL = PRSNA_POSTL_ADDR_STG_1.REGIS_CNSMR_ID_VAL
+    AND PRSNA_STG_1.SYS_SOURCE = PRSNA_POSTL_ADDR_STG_1.SYS_SOURCE
+    AND PRSNA_STG_1.SYS_NC_TYPE = PRSNA_POSTL_ADDR_STG_1.SYS_NC_TYPE
+--    AND PRSNA_STG_1.SYS_CREATION_DATE = PRSNA_POSTL_ADDR_STG_1.SYS_CREATION_DATE
+ 
+   LEFT OUTER JOIN mdm.PRSNA_PHONE_STG PRSNA_PHONE_STG_1
+     ON PRSNA_STG_1.MKTNG_PGM_NBR = PRSNA_PHONE_STG_1.MKTNG_PGM_NBR
+    AND PRSNA_STG_1.REGIS_CNSMR_ID_VAL = PRSNA_PHONE_STG_1.REGIS_CNSMR_ID_VAL
+    AND PRSNA_STG_1.SYS_SOURCE = PRSNA_PHONE_STG_1.SYS_SOURCE
+    AND PRSNA_STG_1.SYS_NC_TYPE = PRSNA_PHONE_STG_1.SYS_NC_TYPE
+--    AND PRSNA_STG_1.SYS_CREATION_DATE = PRSNA_PHONE_STG_1.SYS_CREATION_DATE
+  
+   LEFT OUTER JOIN mdm.PRSNA_EMAIL_ADDR_STG PRSNA_EMAIL_ADDR_STG_1
+     ON PRSNA_STG_1.MKTNG_PGM_NBR = PRSNA_EMAIL_ADDR_STG_1.MKTNG_PGM_NBR
+    AND PRSNA_STG_1.REGIS_CNSMR_ID_VAL = PRSNA_EMAIL_ADDR_STG_1.REGIS_CNSMR_ID_VAL
+    AND PRSNA_STG_1.SYS_SOURCE = PRSNA_EMAIL_ADDR_STG_1.SYS_SOURCE
+    AND PRSNA_STG_1.SYS_NC_TYPE = PRSNA_EMAIL_ADDR_STG_1.SYS_NC_TYPE
+--    AND PRSNA_STG_1.SYS_CREATION_DATE = PRSNA_EMAIL_ADDR_STG_1.SYS_CREATION_DATE
+ 
+   LEFT OUTER JOIN mdm.DPEND_STG DPEND_STG_1
+     ON PRSNA_STG_1.MKTNG_PGM_NBR = DPEND_STG_1.MKTNG_PGM_NBR
+    AND PRSNA_STG_1.REGIS_CNSMR_ID_VAL = DPEND_STG_1.REGIS_CNSMR_ID_VAL
+    AND PRSNA_STG_1.SYS_SOURCE = DPEND_STG_1.SYS_SOURCE
+    AND PRSNA_STG_1.SYS_NC_TYPE = DPEND_STG_1.SYS_NC_TYPE
+--    AND PRSNA_STG_1.SYS_CREATION_DATE = DPEND_STG_1.SYS_CREATION_DATE
+ 
+   LEFT OUTER JOIN mdm.PET_STG PET_STG_1
+     ON PRSNA_STG_1.MKTNG_PGM_NBR = PET_STG_1.MKTNG_PGM_NBR
+    AND PRSNA_STG_1.REGIS_CNSMR_ID_VAL = PET_STG_1.REGIS_CNSMR_ID_VAL
+    AND PRSNA_STG_1.SYS_SOURCE = PET_STG_1.SYS_SOURCE
+    AND PRSNA_STG_1.SYS_NC_TYPE = PET_STG_1.SYS_NC_TYPE
+--    AND PRSNA_STG_1.SYS_CREATION_DATE = PET_STG_1.SYS_CREATION_DATE
+    
+   LEFT OUTER JOIN mdm.MKTNG_PGM MKTNG_PGM_1
+     ON PRSNA_STG_1.MKTNG_PGM_NBR = MKTNG_PGM_1.MKTNG_PGM_NBR
+ 
+  WHERE PRSNA_STG_1.SYNC_STATUS IN ('VALIDATED')
+    AND (PRSNA_POSTL_ADDR_STG_1.SYNC_STATUS IN ('VALIDATED') OR PRSNA_POSTL_ADDR_STG_1.SYNC_STATUS IS NULL)
+    AND (PRSNA_PHONE_STG_1.SYNC_STATUS IN ('VALIDATED') OR PRSNA_PHONE_STG_1.SYNC_STATUS IS NULL)
+    AND (PRSNA_EMAIL_ADDR_STG_1.SYNC_STATUS IN ('VALIDATED') OR PRSNA_EMAIL_ADDR_STG_1.SYNC_STATUS IS NULL)
+ 
+ GROUP BY 
+   MKTNG_PGM_1.LEGAL_ENT_NBR
+  ,PRSNA_STG_1.MKTNG_PGM_NBR
+  ,PRSNA_STG_1.REGIS_CNSMR_ID_VAL
+  ,PRSNA_STG_1.NAME_PREFX_TXT
+  ,PRSNA_STG_1.GVN_NAME
+  ,PRSNA_STG_1.MID_NAME
+  ,PRSNA_STG_1.FAMLY_NAME
+  ,PRSNA_STG_1.NAME_SUFFX_TXT
+  ,PRSNA_STG_1.FULL_NAME
+  ,PRSNA_STG_1.GENDR_IND
+  ,PRSNA_STG_1.BRTH_DATE
+  ,PRSNA_POSTL_ADDR_STG_1.ADDR_LINE_1_TXT
+  ,PRSNA_POSTL_ADDR_STG_1.ADDR_LINE_2_TXT
+  ,PRSNA_POSTL_ADDR_STG_1.ADDR_LINE_3_TXT
+  ,PRSNA_POSTL_ADDR_STG_1.STRET_NUM
+  ,PRSNA_POSTL_ADDR_STG_1.STRET_NAME
+  ,PRSNA_POSTL_ADDR_STG_1.APT_NUM
+  ,PRSNA_POSTL_ADDR_STG_1.PO_BOX_NUM
+  ,PRSNA_POSTL_ADDR_STG_1.CITY_NAME
+  ,PRSNA_POSTL_ADDR_STG_1.POSTL_AREA_CODE
+  ,PRSNA_POSTL_ADDR_STG_1.TERR_NAME
+  ,COALESCE(PRSNA_POSTL_ADDR_STG_1.CNTRY_NAME,PRSNA_STG_1.CNTRY_CODE) 
+  ,DPEND_STG_1.DPEND_NAME
+  ,PET_STG_1.PET_NAME
+  ,PRSNA_STG_1.WIN_KEY
+  ,PRSNA_STG_1.SYNC_STATUS
+  ,PRSNA_STG_1.USER_NAME
+  ,PRSNA_STG_1.LANG_CODE
+  ,TRIM(CAST(PRSNA_STG_1.SYS_SOURCE AS INTEGER)) 
+  ,PRSNA_STG_1.SYS_NC_TYPE      
+  ,PRSNA_STG_1.SYS_CREATION_DATE
+ 
+ union
+ 
+ SELECT
+          MKTNG_PGM_1.LEGAL_ENT_NBR
+  ,PRSNA_STG_1.MKTNG_PGM_NBR
+  ,PRSNA_STG_1.REGIS_CNSMR_ID_VAL
+  ,PRSNA_STG_1.NAME_PREFX_TXT
+  ,PRSNA_STG_1.GVN_NAME
+  ,PRSNA_STG_1.MID_NAME
+  ,PRSNA_STG_1.FAMLY_NAME
+  ,PRSNA_STG_1.NAME_SUFFX_TXT
+  ,PRSNA_STG_1.FULL_NAME
+  ,PRSNA_STG_1.GENDR_IND
+  ,PRSNA_STG_1.BRTH_DATE
+  ,PRSNA_POSTL_ADDR_STG_1.ADDR_LINE_1_TXT
+  ,PRSNA_POSTL_ADDR_STG_1.ADDR_LINE_2_TXT
+  ,PRSNA_POSTL_ADDR_STG_1.ADDR_LINE_3_TXT
+  ,PRSNA_POSTL_ADDR_STG_1.STRET_NUM
+  ,PRSNA_POSTL_ADDR_STG_1.STRET_NAME
+  ,PRSNA_POSTL_ADDR_STG_1.APT_NUM
+  ,PRSNA_POSTL_ADDR_STG_1.PO_BOX_NUM
+  ,PRSNA_POSTL_ADDR_STG_1.CITY_NAME
+  ,PRSNA_POSTL_ADDR_STG_1.POSTL_AREA_CODE
+  ,PRSNA_POSTL_ADDR_STG_1.TERR_NAME
+  ,COALESCE(PRSNA_POSTL_ADDR_STG_1.CNTRY_NAME,PRSNA_STG_1.CNTRY_CODE) AS CNTRY_NAME
+  ,DPEND_STG_1.DPEND_NAME
+  ,PET_STG_1.PET_NAME
+  ,PRSNA_STG_1.WIN_KEY
+  ,PRSNA_STG_1.SYNC_STATUS
+  ,PRSNA_STG_1.USER_NAME
+  ,PRSNA_STG_1.LANG_CODE
+  ,TRIM(CAST(PRSNA_STG_1.SYS_SOURCE AS INTEGER)) AS SYS_SOURCE
+  ,PRSNA_STG_1.SYS_NC_TYPE      
+  ,PRSNA_STG_1.SYS_CREATION_DATE
+  ,MAX(PRSNA_EMAIL_ADDR_STG_1.EMAIL_ADDR_TXT) AS EMAIL_ADDR_TXT_1
+  ,MAX(PRSNA_PHONE_STG_1.PHONE_EXTSN_NUM) AS PHONE_EXTSN_NUM_1
+  ,MAX(PRSNA_PHONE_STG_1.FULL_PHONE_NUM)  AS FULL_PHONE_NUM_1
+  ,MAX(PRSNA_PHONE_STG_1.PHONE_LINE_NBR)  AS PHONE_LINE_NBR_1
+  ,MAX(PRSNA_PHONE_STG_1.PHONE_AREA_NBR)  AS PHONE_AREA_NBR_1
+  ,MAX(PRSNA_PHONE_STG_1.PHONE_EXCHG_NBR) AS PHONE_EXCHG_NBR_1
+  ,MAX(PRSNA_PHONE_STG_1.PHONE_CNTRY_NBR) AS PHONE_CNTRY_NBR_1
+  
+ 
+   FROM mdm.PRSNA_STG PRSNA_STG_1
+ 
+   LEFT OUTER JOIN mdm.PRSNA_POSTL_ADDR_STG PRSNA_POSTL_ADDR_STG_1
+     ON PRSNA_STG_1.MKTNG_PGM_NBR = PRSNA_POSTL_ADDR_STG_1.MKTNG_PGM_NBR
+    AND PRSNA_STG_1.REGIS_CNSMR_ID_VAL = PRSNA_POSTL_ADDR_STG_1.REGIS_CNSMR_ID_VAL
+    AND PRSNA_STG_1.SYS_SOURCE = PRSNA_POSTL_ADDR_STG_1.SYS_SOURCE
+    AND PRSNA_STG_1.SYS_NC_TYPE = PRSNA_POSTL_ADDR_STG_1.SYS_NC_TYPE
+--    AND PRSNA_STG_1.SYS_CREATION_DATE = PRSNA_POSTL_ADDR_STG_1.SYS_CREATION_DATE
+ 
+   LEFT OUTER JOIN mdm.PRSNA_PHONE_STG PRSNA_PHONE_STG_1
+     ON PRSNA_STG_1.MKTNG_PGM_NBR = PRSNA_PHONE_STG_1.MKTNG_PGM_NBR
+    AND PRSNA_STG_1.REGIS_CNSMR_ID_VAL = PRSNA_PHONE_STG_1.REGIS_CNSMR_ID_VAL
+    AND PRSNA_STG_1.SYS_SOURCE = PRSNA_PHONE_STG_1.SYS_SOURCE
+    AND PRSNA_STG_1.SYS_NC_TYPE = PRSNA_PHONE_STG_1.SYS_NC_TYPE
+--    AND PRSNA_STG_1.SYS_CREATION_DATE = PRSNA_PHONE_STG_1.SYS_CREATION_DATE
+  
+   LEFT OUTER JOIN mdm.PRSNA_EMAIL_ADDR_STG PRSNA_EMAIL_ADDR_STG_1
+     ON PRSNA_STG_1.MKTNG_PGM_NBR = PRSNA_EMAIL_ADDR_STG_1.MKTNG_PGM_NBR
+    AND PRSNA_STG_1.REGIS_CNSMR_ID_VAL = PRSNA_EMAIL_ADDR_STG_1.REGIS_CNSMR_ID_VAL
+    AND PRSNA_STG_1.SYS_SOURCE = PRSNA_EMAIL_ADDR_STG_1.SYS_SOURCE
+    AND PRSNA_STG_1.SYS_NC_TYPE = PRSNA_EMAIL_ADDR_STG_1.SYS_NC_TYPE
+--    AND PRSNA_STG_1.SYS_CREATION_DATE = PRSNA_EMAIL_ADDR_STG_1.SYS_CREATION_DATE
+ 
+   LEFT OUTER JOIN mdm.DPEND_STG DPEND_STG_1
+     ON PRSNA_STG_1.MKTNG_PGM_NBR = DPEND_STG_1.MKTNG_PGM_NBR
+    AND PRSNA_STG_1.REGIS_CNSMR_ID_VAL = DPEND_STG_1.REGIS_CNSMR_ID_VAL
+    AND PRSNA_STG_1.SYS_SOURCE = DPEND_STG_1.SYS_SOURCE
+    AND PRSNA_STG_1.SYS_NC_TYPE = DPEND_STG_1.SYS_NC_TYPE
+--    AND PRSNA_STG_1.SYS_CREATION_DATE = DPEND_STG_1.SYS_CREATION_DATE
+ 
+   LEFT OUTER JOIN mdm.PET_STG PET_STG_1
+     ON PRSNA_STG_1.MKTNG_PGM_NBR = PET_STG_1.MKTNG_PGM_NBR
+    AND PRSNA_STG_1.REGIS_CNSMR_ID_VAL = PET_STG_1.REGIS_CNSMR_ID_VAL
+    AND PRSNA_STG_1.SYS_SOURCE = PET_STG_1.SYS_SOURCE
+    AND PRSNA_STG_1.SYS_NC_TYPE = PET_STG_1.SYS_NC_TYPE
+--    AND PRSNA_STG_1.SYS_CREATION_DATE = PET_STG_1.SYS_CREATION_DATE
+    
+   LEFT OUTER JOIN mdm.MKTNG_PGM MKTNG_PGM_1
+     ON PRSNA_STG_1.MKTNG_PGM_NBR = MKTNG_PGM_1.MKTNG_PGM_NBR
+ 
+  WHERE PRSNA_STG_1.SYNC_STATUS IN ('VALIDATED')
+    AND (PRSNA_POSTL_ADDR_STG_1.SYNC_STATUS IN ('VALIDATED') OR PRSNA_POSTL_ADDR_STG_1.SYNC_STATUS IS NULL)
+    AND (PRSNA_PHONE_STG_1.SYNC_STATUS IN ('VALIDATED') OR PRSNA_PHONE_STG_1.SYNC_STATUS IS NULL)
+    AND (PRSNA_EMAIL_ADDR_STG_1.SYNC_STATUS IN ('VALIDATED') OR PRSNA_EMAIL_ADDR_STG_1.SYNC_STATUS IS NULL)
+ 
+ GROUP BY 
+   MKTNG_PGM_1.LEGAL_ENT_NBR
+  ,PRSNA_STG_1.MKTNG_PGM_NBR
+  ,PRSNA_STG_1.REGIS_CNSMR_ID_VAL
+  ,PRSNA_STG_1.NAME_PREFX_TXT
+  ,PRSNA_STG_1.GVN_NAME
+  ,PRSNA_STG_1.MID_NAME
+  ,PRSNA_STG_1.FAMLY_NAME
+  ,PRSNA_STG_1.NAME_SUFFX_TXT
+  ,PRSNA_STG_1.FULL_NAME
+  ,PRSNA_STG_1.GENDR_IND
+  ,PRSNA_STG_1.BRTH_DATE
+  ,PRSNA_POSTL_ADDR_STG_1.ADDR_LINE_1_TXT
+  ,PRSNA_POSTL_ADDR_STG_1.ADDR_LINE_2_TXT
+  ,PRSNA_POSTL_ADDR_STG_1.ADDR_LINE_3_TXT
+  ,PRSNA_POSTL_ADDR_STG_1.STRET_NUM
+  ,PRSNA_POSTL_ADDR_STG_1.STRET_NAME
+  ,PRSNA_POSTL_ADDR_STG_1.APT_NUM
+  ,PRSNA_POSTL_ADDR_STG_1.PO_BOX_NUM
+  ,PRSNA_POSTL_ADDR_STG_1.CITY_NAME
+  ,PRSNA_POSTL_ADDR_STG_1.POSTL_AREA_CODE
+  ,PRSNA_POSTL_ADDR_STG_1.TERR_NAME
+  ,COALESCE(PRSNA_POSTL_ADDR_STG_1.CNTRY_NAME,PRSNA_STG_1.CNTRY_CODE) 
+  ,DPEND_STG_1.DPEND_NAME
+  ,PET_STG_1.PET_NAME
+  ,PRSNA_STG_1.WIN_KEY
+  ,PRSNA_STG_1.SYNC_STATUS
+  ,PRSNA_STG_1.USER_NAME
+  ,PRSNA_STG_1.LANG_CODE
+  ,TRIM(CAST(PRSNA_STG_1.SYS_SOURCE AS INTEGER))
+  ,PRSNA_STG_1.SYS_NC_TYPE      
+  ,PRSNA_STG_1.SYS_CREATION_DATE
+ 
+ ;
+
+
+	REPLACE VIEW MDM.CNSMR_TSS_WINKEY
+	AS
+	LOCKING ROW FOR ACCESS
+	
+	SELECT
+	   WINDOW_KEY_01                 
+	  ,EMAIL_ADDR_TXT
+	         ,PHONE
+	
+	  FROM ICRM_TBL.WINKEY_TRIGGER
+	;
+
+	
+	REPLACE VIEW MDM.CNSMR_TSS_MATCH_INPUT
+	AS
+	LOCKING ROW FOR ACCESS
+	
+	SELECT 
+	   CNSMR_TSS_MATCH_CRM_1.MKTNG_PGM_NBR      AS MKTNG_PGM_NBR_CRM            
+	  ,CNSMR_TSS_MATCH_CRM_1.REGIS_CNSMR_ID_VAL AS REGIS_CNSMR_ID_VAL_CRM       
+	  ,CNSMR_TSS_MATCH_CRM_1.NAME_PREFX_TXT     AS NAME_PREFX_TXT_CRM           
+	  ,CNSMR_TSS_MATCH_CRM_1.GVN_NAME           AS GVN_NAME_CRM                 
+	  ,CNSMR_TSS_MATCH_CRM_1.MID_NAME           AS MID_NAME_CRM                 
+	  ,CNSMR_TSS_MATCH_CRM_1.FAMLY_NAME         AS FAMLY_NAME_CRM               
+	  ,CNSMR_TSS_MATCH_CRM_1.NAME_SUFFX_TXT     AS NAME_SUFFX_TXT_CRM           
+	  ,CNSMR_TSS_MATCH_CRM_1.FULL_NAME          AS FULL_NAME_CRM                
+	  ,CNSMR_TSS_MATCH_CRM_1.GENDR_IND          AS GENDR_IND_CRM                
+	  ,CNSMR_TSS_MATCH_CRM_1.BRTH_DATE          AS BRTH_DATE_CRM                
+	  ,CNSMR_TSS_MATCH_CRM_1.CNSMR_USER_NAME    AS USER_NAME_CRM                
+	  ,CNSMR_TSS_MATCH_CRM_1.LANG_CODE          AS LANG_CODE_CRM    
+	  ,CNSMR_TSS_MATCH_CRM_1.ADDR_LINE_1_TXT    AS ADDR_LINE_1_TXT_CRM          
+	  ,CNSMR_TSS_MATCH_CRM_1.ADDR_LINE_2_TXT    AS ADDR_LINE_2_TXT_CRM          
+	  ,CNSMR_TSS_MATCH_CRM_1.ADDR_LINE_3_TXT    AS ADDR_LINE_3_TXT_CRM          
+	  ,CNSMR_TSS_MATCH_CRM_1.STRET_NUM          AS STRET_NUM_CRM                
+	  ,CNSMR_TSS_MATCH_CRM_1.STRET_NAME         AS STRET_NAME_CRM               
+	  ,CNSMR_TSS_MATCH_CRM_1.APT_NUM            AS APT_NUM_CRM                  
+	  ,CNSMR_TSS_MATCH_CRM_1.PO_BOX_NUM         AS PO_BOX_NUM_CRM               
+	  ,CNSMR_TSS_MATCH_CRM_1.CITY_NAME          AS CITY_NAME_CRM                
+	  ,CNSMR_TSS_MATCH_CRM_1.POSTL_AREA_CODE    AS POSTL_AREA_CODE_CRM                          
+	  ,CNSMR_TSS_MATCH_CRM_1.TERR_CODE          AS TERR_CODE_CRM
+	  ,CNSMR_TSS_MATCH_CRM_1.CNTRY_CODE         AS CNTRY_CODE_CRM          
+	  ,CNSMR_TSS_MATCH_CRM_1.EMAIL_ADDR_TXT_1   AS EMAIL_ADDR_TXT_1_CRM              
+	  ,CNSMR_TSS_MATCH_CRM_1.PHONE_CNTRY_NBR_1  AS PHONE_CNTRY_NBR_1_CRM        
+	  ,CNSMR_TSS_MATCH_CRM_1.PHONE_AREA_NBR_1   AS PHONE_AREA_NBR_1_CRM         
+	  ,CNSMR_TSS_MATCH_CRM_1.PHONE_EXCHG_NBR_1  AS PHONE_EXCHG_NBR_1_CRM        
+	  ,CNSMR_TSS_MATCH_CRM_1.PHONE_LINE_NBR_1   AS PHONE_LINE_NBR_1_CRM         
+	  ,CNSMR_TSS_MATCH_CRM_1.PHONE_EXTSN_NUM_1  AS PHONE_EXTSN_NUM_1_CRM        
+	  ,CNSMR_TSS_MATCH_CRM_1.FULL_PHONE_NUM_1   AS FULL_PHONE_NUM_1_CRM 
+	  ,CNSMR_TSS_MATCH_CRM_1.WIN_KEY      AS WIN_KEY_CRM         
+	  ,CNSMR_TSS_MATCH_CRM_1.DPEND_NAME         AS DPEND_NAME_CRM
+	  ,CNSMR_TSS_MATCH_CRM_1.PET_NAME           AS PET_NAME_CRM
+	  ,CNSMR_TSS_MATCH_CRM_1.REGIS_PRSNA_ID                  
+	  ,CNSMR_TSS_MATCH_CRM_1.MATCHD_CNSMR_PRSNA_ID AS LEGAL_ENT_PRSNA_ID        
+	  ,CNSMR_TSS_MATCH_CRM_1.HSHLD_PRSNA_ID     AS HSHLD_PRSNA_ID  
+	  ,CNSMR_TSS_MATCH_CRM_1.LEGAL_ENT_NBR
+	
+	
+	  FROM MDM.CNSMR_TSS_WINKEY CNSMR_TSS_MATCH_STG_1
+	
+	  INNER JOIN MDM.CNSMR_TSS_MATCH_CRM CNSMR_TSS_MATCH_CRM_1
+	    ON (CNSMR_TSS_MATCH_STG_1.WINDOW_KEY_01 = CNSMR_TSS_MATCH_CRM_1.WIN_KEY
+	   AND  CNSMR_TSS_MATCH_STG_1.WINDOW_KEY_01 <> ''
+	       )
+	    OR (CNSMR_TSS_MATCH_STG_1.EMAIL_ADDR_TXT = CNSMR_TSS_MATCH_CRM_1.EMAIL_ADDR_TXT_1
+	   AND  CNSMR_TSS_MATCH_STG_1.EMAIL_ADDR_TXT <> ''
+	       )
+	    OR (CNSMR_TSS_MATCH_STG_1.PHONE = CNSMR_TSS_MATCH_CRM_1.FULL_PHONE_NUM_1
+	   AND  CNSMR_TSS_MATCH_STG_1.PHONE <> ''
+	       )
+	
+	;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 REPLACE VIEW MDM.TRILLIUM_OUTPUT (                                              
+  MKTNG_PGM_NBR                                                                 
+ ,REGIS_CNSMR_ID_VAL                                                            
+ ,DR_ALIAS_CONTACT                                                              
+ ,DR_FIRST_NAME                                                                 
+ ,DR_MIDDLE_NAME                                                                
+ ,DR_LAST_NAME                                                                  
+ ,DR_MRMRS                                                                      
+ ,DR_NAME_GENER                                                                 
+ ,DR_NAME_SUFFIX                                                                
+ ,DR_NAME_GENDER                                                                
+ ,DR_COUNTRY_NAME                                                               
+ ,DR_REGION_NAME                                                                
+ ,DR_CITY_NAME                                                                  
+ ,DR_POSTAL_CODE                                                                
+ ,DR_STREET_NAME                                                                
+ ,DR_HOUSE_NUMBER1                                                              
+ ,DR_HOUSE_NUMBER2                                                              
+ ,DR_POBOX_NUMBER                                                               
+ ,DR_ADDRESS                                                                    
+ ,DR_ADDRESS2                                                                   
+ ,DR_ADDRESS3                                                                   
+ ,CLEANSED_PHONE_1                                                              
+ ,CLEANSED_EMAIL_1                                                              
+ ,PR_REV_GROUP                                                                  
+ ,GOUT_MATCH_LEVEL                                                              
+ ,WINDOW_KEY_01                                                                 
+ ,REFERENCE_HOUSEHOLD_ID                                                        
+ ,REFERENCE_LEGALENTITYKEY                                                      
+ ,REFERENCE_REGISTRATIONKEY                                                     
+ ,LEGAL_ENT_NBR                                                                 
+ ,BRTH_DATE                                                                     
+ ,LANG_CODE                                                                     
+ ,CNSMR_USER_NAME                                                               
+ ,STATUS                                                                        
+ ,FULL_NAME                                                                     
+ ,DPEND_NAME                                                                    
+ ,PET_NAME                                                                      
+ ,PR_NAME_FORM_01                                                               
+ ,DR_ALIAS_ACCOUNT                                                              
+ ,REFERENCE_MATCHED_LEV1_PATTERN                                                
+ ,REFERENCE_MATCHED_LEV2_PATTERN                                                
+ ,DR_BUSINESS_NAME                                                              
+ ,EMAIL_IND                                                                     
+ ,SYS_TARGET_ID                                                                 
+ ,SYS_AUTH_ID                                                                   
+ ,SYS_SOURCE                                                                    
+ ,SYS_CREATED_BY                                                                
+ ,SYS_CREATION_DATE                                                             
+ ,SYS_ENT_STATE                                                                 
+ ,SYS_LAST_MODIFIED_BY                                                          
+ ,SYS_LAST_MODIFIED_DATE                                                        
+ ,SYS_NC_TYPE                                                                   
+ ,SYS_ERR_CODE                                                                  
+ ,SYS_ERR_SVRTY                                                                 
+) AS LOCKING ROW FOR ACCESS SELECT                                              
+  MKTNG_PGM_NBR                                                                 
+ ,REGIS_CNSMR_ID_VAL                                                            
+ ,DR_ALIAS_CONTACT                                                              
+ ,DR_FIRST_NAME                                                                 
+ ,DR_MIDDLE_NAME                                                                
+ ,DR_LAST_NAME                                                                  
+ ,DR_MRMRS                                                                      
+ ,DR_NAME_GENER                                                                 
+ ,DR_NAME_SUFFIX                                                                
+ ,DR_NAME_GENDER                                                                
+ ,DR_COUNTRY_NAME                                                               
+ ,DR_REGION_NAME                                                                
+ ,DR_CITY_NAME                                                                  
+ ,DR_POSTAL_CODE                                                                
+ ,DR_STREET_NAME                                                                
+ ,DR_HOUSE_NUMBER1                                                              
+ ,DR_HOUSE_NUMBER2                                                              
+ ,DR_POBOX_NUMBER                                                               
+ ,DR_ADDRESS                                                                    
+ ,DR_ADDRESS2                                                                   
+ ,DR_ADDRESS3                                                                   
+ ,CLEANSED_PHONE_1                                                              
+ ,CLEANSED_EMAIL_1                                                              
+ ,PR_REV_GROUP                                                                  
+ ,GOUT_MATCH_LEVEL                                                              
+ ,WINDOW_KEY_01                                                                 
+ ,REFERENCE_HOUSEHOLD_ID                                                        
+ ,REFERENCE_LEGALENTITYKEY                                                      
+ ,REFERENCE_REGISTRATIONKEY                                                     
+ ,LEGAL_ENT_NBR                                                                 
+ ,BRTH_DATE                                                                     
+ ,LANG_CODE                                                                     
+ ,CNSMR_USER_NAME                                                               
+ ,STATUS                                                                        
+ ,FULL_NAME                                                                     
+ ,DPEND_NAME                                                                    
+ ,PET_NAME                                                                      
+ ,PR_NAME_FORM_01                                                               
+ ,DR_ALIAS_ACCOUNT                                                              
+ ,REFERENCE_MATCHED_LEV1_PATTERN                                                
+ ,REFERENCE_MATCHED_LEV2_PATTERN                                                
+ ,DR_BUSINESS_NAME                                                              
+ ,EMAIL_IND                                                                     
+ ,SYS_TARGET_ID                                                                 
+ ,SYS_AUTH_ID                                                                   
+ ,SYS_SOURCE                                                                    
+ ,SYS_CREATED_BY                                                                
+ ,SYS_CREATION_DATE                                                             
+ ,SYS_ENT_STATE                                                                 
+ ,SYS_LAST_MODIFIED_BY                                                          
+ ,SYS_LAST_MODIFIED_DATE                                                        
+ ,SYS_NC_TYPE                                                                   
+ ,SYS_ERR_CODE                                                                  
+ ,SYS_ERR_SVRTY                                                                 
+FROM MDM.TRILLIUM_OUTPUT1;
+
+REPLACE PROCEDURE MDM.FLDCLEANUP (
+INOUT RETURNCODE INTEGER,
+IN TABLE_NAME VARCHAR(30),
+IN DATABASE_NAME VARCHAR(30)
+)
+
+LMAIN: BEGIN
+
+DECLARE SYSTEMDATE VARCHAR(19);
+DECLARE ERRORTABLE1 VARCHAR(30);
+DECLARE ERRORTABLE2 VARCHAR(30);
+DECLARE ERRORTABLE3 VARCHAR(30);
+DECLARE ERRORTABLE4 VARCHAR(30);
+DECLARE DBNAME VARCHAR(30);
+DECLARE TBLNAME VARCHAR(30);
+DECLARE TABLEDEFN VARCHAR(10000);
+DECLARE GRANTDEFN VARCHAR(10000);
+DECLARE STMT VARCHAR(1);
+DECLARE STMT1 VARCHAR(10000);
+
+SET DBNAME = DATABASE_NAME;
+SET TBLNAME = TABLE_NAME;
+SET ERRORTABLE1 = TABLE_NAME||'_ERR1';
+SET ERRORTABLE2 = TABLE_NAME||'_ERR2';
+
+     CREATE VOLATILE TABLE ACCESSRIGHT_V2R61_REF
+     (
+      ACCESSRIGHT VARCHAR(2) NOT NULL,
+      ACCESSRIGHT_DESC VARCHAR(10000) NOT NULL
+     ) UNIQUE PRIMARY INDEX (ACCESSRIGHT)
+     ON COMMIT PRESERVE ROWS;
+
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('AE','ALTER EXTERNAL PROCEDURE');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('AF','ALTER FUNCTION');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('AP','ALTER PROCEDURE');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('AS','ABORT SESSION');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('CA','CREATE AUTHORIZATION');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('CD','CREATE DATABASE');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('CE','CREATE EXTERNAL PROCEDURE');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('CF','CREATE FUNCTION');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('CG','CREATE TRIGGER');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('CM','CREATE MACRO');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('CO','CREATE PROFILE');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('CP','CHECKPOINT');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('CR','CREATE ROLE');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('CT','CREATE TABLE');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('CU','CREATE USER');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('CV','CREATE VIEW');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('D','DELETE');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('DA','DROP AUTHORIZATION');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('DD','DROP DATABASE');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('DF','DROP FUNCTION');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('DG','DROP TRIGGER');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('DM','DROP MACRO');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('DO','DROP PROFILE');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('DP','DUMP');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('DR','DROP ROLE');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('DT','DROP TABLE');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('DU','DROP USER');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('DV','DROP VIEW');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('E','EXECUTE');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('EF','EXECUTE FUNCTION');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('I','INSERT');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('IX','INDEX');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('MR','MONITOR RESOURCE');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('MS','MONITOR SESSION');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('PC','CREATE PROCEDURE');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('PD','DROP PROCEDURE');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('PE','EXECUTE PROCEDURE');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('R','SELECT');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('RF','REFERENCE');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('RS','RESTORE');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('RO','REPLICATION OVERIDE');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('SR','SET RESOURCE RATE');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('SS','SET SESSION RATE');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('U','UPDATE');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('UM','UDT METHOD');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('UT','UDT TYPE');
+     INSERT INTO ACCESSRIGHT_V2R61_REF VALUES ('UU','UDT USAGE');
+
+   
+SELECT DISTINCT CAST(CAST(CURRENT_DATE AS DATE FORMAT 'YYYYMMDD') AS VARCHAR(8))||
+CAST(CAST(CURRENT_TIME AS TIME FORMAT 'HHMISS') AS VARCHAR(6)) INTO :SYSTEMDATE FROM SYS_CALENDAR.CALENDAR;
+
+SET ERRORTABLE3 = TABLE_NAME||'_ERR1'||SYSTEMDATE;
+SET ERRORTABLE4 = TABLE_NAME||'_ERR2'||SYSTEMDATE;
+
+SEL REQUESTTEXT INTO :TABLEDEFN FROM DBC.TABLES WHERE DATABASENAME=:DATABASE_NAME
+AND TABLENAME=:TABLE_NAME
+AND TABLEKIND='T';
+
+SELECT 'GRANT '||TRIM(B.ACCESSRIGHT_DESC)||' ON '||TRIM(A.DATABASENAME)||'.'||TRIM(A.TABLENAME)||' TO '||
+TRIM(A.USERNAME)||CASE WHEN A.GRANTAUTHORITY = 'Y' THEN ' WITH GRANT OPTION;' ELSE ';' END INTO :GRANTDEFN
+FROM DBC.ALLRIGHTS A
+INNER JOIN ACCESSRIGHT_V2R61_REF B
+ON A.ACCESSRIGHT = B.ACCESSRIGHT
+WHERE A.TABLENAME=:DATABASE_NAME
+AND A.DATABASENAME=:TABLE_NAME;
+
+L1: BEGIN
+
+SEL 1 INTO :STMT FROM SYSADMIN.FASTLOGV WHERE DATABASENAME=:DATABASE_NAME
+AND TABLENAME=:TABLE_NAME;
+
+IF ACTIVITY_COUNT = 1 THEN 
+SET STMT1 = 'DROP TABLE '||DBNAME||'.'||TBLNAME||';';
+CALL DBC.SYSEXECSQL (STMT1);
+CALL DBC.SYSEXECSQL (TABLEDEFN);
+CALL DBC.SYSEXECSQL (GRANTDEFN);
+END IF;
+
+END L1;
+
+L2: BEGIN
+
+SEL REQUESTTEXT INTO :TABLEDEFN FROM DBC.TABLES WHERE DATABASENAME=:DATABASE_NAME
+AND TABLENAME=:ERRORTABLE1
+AND TABLEKIND='T';
+
+IF ACTIVITY_COUNT = 1 THEN 
+SEL 1 INTO :STMT FROM SYSADMIN.FASTLOGV WHERE DATABASENAME=:DATABASE_NAME
+AND TABLENAME=:TABLE_NAME;
+
+IF ACTIVITY_COUNT = 1 THEN 
+SET STMT1 = 'DROP TABLE '||DBNAME||'.'||ERRORTABLE1||';';
+CALL DBC.SYSEXECSQL (STMT1);
+LEAVE L2;
+END IF;
+
+SET STMT1 = 'RENAME TABLE '||DBNAME||'.'||ERRORTABLE1||' TO '||DBNAME||'.'||ERRORTABLE3||';';
+CALL DBC.SYSEXECSQL (STMT1);
+END IF;
+
+END L2;
+
+L3: BEGIN
+
+SEL REQUESTTEXT INTO :TABLEDEFN FROM DBC.TABLES WHERE DATABASENAME=:DATABASE_NAME
+AND TABLENAME=:ERRORTABLE2
+AND TABLEKIND='T';
+
+IF ACTIVITY_COUNT = 1 THEN 
+SEL 1 INTO :STMT FROM SYSADMIN.FASTLOGV WHERE DATABASENAME=:DATABASE_NAME
+AND TABLENAME=:TABLE_NAME;
+
+IF ACTIVITY_COUNT = 1 THEN 
+SET STMT1 = 'DROP TABLE '||DBNAME||'.'||ERRORTABLE2||';';
+CALL DBC.SYSEXECSQL (STMT1);
+LEAVE L3;
+END IF;
+
+SET STMT1 = 'RENAME TABLE '||DBNAME||'.'||ERRORTABLE2||' TO '||DBNAME||'.'||ERRORTABLE4||';';
+CALL DBC.SYSEXECSQL (STMT1);
+END IF;
+
+END L3;
+
+DELETE FROM SYSADMIN.FASTLOGV WHERE DATABASENAME=:DATABASE_NAME
+AND TABLENAME=:TABLE_NAME;
+
+DROP TABLE ACCESSRIGHT_V2R61_REF;
+
+SET RETURNCODE = SQLCODE;
+
+END LMAIN;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        

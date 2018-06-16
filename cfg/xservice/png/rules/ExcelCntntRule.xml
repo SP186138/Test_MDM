@@ -1,0 +1,1316 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <DEFINE_METHOD Name="excelCntntUpload">
+    <RULE>
+      <ACTION>
+        <FOR_EACH SelectList="$thisParam/CNTNT_ELEM" CurrentElement="curElem">
+          <SET Var="indicator" FromValue="{$curElem/CNTNT_RECORD_IND/@Value}"/>
+          <IF_TEST Test="(upperCase($indicator) = 'INSERT') or (upperCase($indicator) = 'UPDATE') ">
+            <THEN>
+              <SET Var="level" FromValue="{$curElem/LEVEL_IND/@Value}"/>
+              <EXECUTE_SQL_QUERY AssignToVar="respID" ReturnRowCount="yes" Value="SEL MAX(cast(id as integer))as ID FROM UPLD_PRGS_RPT WHERE TEMPLATE_NAME='EntityCNTNT_ELEMTemplate'"/>
+              <!--<SET Var="level" FromValue="{$thisParam/CNTNT_ELEM/LEVEL_IND/@Value}"/>-->
+              <!--<TO_DOCVAR AssignToVar="leveltest">
+                <TO_XML SelectList="$curElem"/>
+              </TO_DOCVAR>-->
+              <IF_TEST Test="(upperCase($level)='GLOBAL')">
+                <THEN>
+                  <IF_TEST Test="($curElem/MKTNG_PGM_NBR/@Value!=null and $curElem/MKTNG_PGM_NBR/@Value!='')or ($curElem/GBL_CNTNT_ELEM_ID/@Value!=null and $curElem/GBL_CNTNT_ELEM_ID/@Value!='') or ($curElem/CNTNT_ELEM_TYPE_CODE/@Value!='MC' and $curElem/CNTNT_ELEM_TYPE_CODE/@Value!='LC' )">
+                    <THEN>
+                      <SET Var="Gbl_id" FromValue=""/>
+                      <EXECUTE_SQL_QUERY AssignToVar="errGbl" Value="INSERT INTO MDM.ERR_CNTNT_ELEM(CNTNT_ELEM_ID , MKTNG_PGM_NBR , ALT_SYS_CNTNT_ID, CNTNT_NAME , CNTNT_SHORT_NAME , CNTNT_DESC , CNSMR_ACTN_TYPE_CODE , TRGT_PATH_TYPE_CODE ,TRGT_SUB_PATH_TYPE_CODE, TRGT_CNSMR_SEG_CODE , VIEW_WEB_SITE_URL_TXT, CNTNT_OWNER_NAME , CNTNT_PHYS_LOCATION, CNTNT_ACTIVE_START_DATE, CNTNT_ACTIVE_END_DATE ,INCTV_NBR , CNTNT_ELEM_TYPE_CODE , GBL_CNTNT_ELEM_ID, SYS_ERR_CODE , SYS_ERR_SVRTY)    VALUES('{$CntntIDNew}','{$curElem/MKTNG_PGM_NBR/@Value}','{$curElem/ALT_SYS_CNTNT_ID/@Value}','{$curElem/CNTNT_NAME/@Value}','{$curElem/CNTNT_SHORT_NAME/@Value}','{ $curElem/CNTNT_DESC/@Value}','{$curElem/CNSMR_ACTN_TYPE_CODE/@Value}','{$curElem/TRGT_PATH_TYPE_CODE/@Value}','{$curElem/TRGT_SUB_PATH_TYPE_CODE/@Value}','{$curElem/TRGT_CNSMR_SEG_CODE/@Value}','{ $curElem/VIEW_WEB_SITE_URL_TXT/@Value}','{$curElem/CNTNT_OWNER_NAME/@Value}','{$curElem/CNTNT_PHYS_LOCATION/@Value}','{$curElem/CNTNT_ACTIVE_START_DATE/@Value}','{ $curElem/CNTNT_ACTIVE_END_DATE/@Value}','{$curElem/INCTV_NBR/@Value}','{$curElem/CNTNT_ELEM_TYPE_CODE/@Value}','{$curElem/GBL_CNTNT_ELEM_ID/@Value}','For Global level Indicator,Marketing program and Global content element id should be null and CNTNT_ELEM_TYPE_CODE should be either MC or LC ','SEVERE_ERROR') ">
+                      </EXECUTE_SQL_QUERY>
+                    </THEN>
+                    <ELSE>
+                      <EXECUTE_SQL_QUERY AssignToVar="Valid_user" Value="SELECT count(*)ROWCOUNT FROM USER_PROFILE WHERE USER_GRP_ID='PNG_UGP' AND STATUS='ACTIVE'AND LOGIN_NAME='{$UserId}'" ReturnRowCount="true"/>
+                      <IF_TEST Test="$Valid_user/SQL_RESULT/ROWCOUNT/@Value=0">
+                        <THEN>
+                          <EXECUTE_SQL_QUERY AssignToVar="errGbl1" Value="INSERT INTO MDM.ERR_CNTNT_ELEM(CNTNT_ELEM_ID , MKTNG_PGM_NBR , ALT_SYS_CNTNT_ID, CNTNT_NAME , CNTNT_SHORT_NAME , CNTNT_DESC , CNSMR_ACTN_TYPE_CODE , TRGT_PATH_TYPE_CODE ,TRGT_SUB_PATH_TYPE_CODE, TRGT_CNSMR_SEG_CODE , VIEW_WEB_SITE_URL_TXT, CNTNT_OWNER_NAME , CNTNT_PHYS_LOCATION, CNTNT_ACTIVE_START_DATE, CNTNT_ACTIVE_END_DATE ,INCTV_NBR , CNTNT_ELEM_TYPE_CODE , GBL_CNTNT_ELEM_ID, SYS_ERR_CODE , SYS_ERR_SVRTY)    VALUES('{$CntntIDNew}','{$curElem/MKTNG_PGM_NBR/@Value}','{$curElem/ALT_SYS_CNTNT_ID/@Value}','{$curElem/CNTNT_NAME/@Value}','{$curElem/CNTNT_SHORT_NAME/@Value}','{ $curElem/CNTNT_DESC/@Value}','{$curElem/CNSMR_ACTN_TYPE_CODE/@Value}','{$curElem/TRGT_PATH_TYPE_CODE/@Value}','{$curElem/TRGT_SUB_PATH_TYPE_CODE/@Value}','{$curElem/TRGT_CNSMR_SEG_CODE/@Value}','{ $curElem/VIEW_WEB_SITE_URL_TXT/@Value}','{$curElem/CNTNT_OWNER_NAME/@Value}','{$curElem/CNTNT_PHYS_LOCATION/@Value}','{$curElem/CNTNT_ACTIVE_START_DATE/@Value}','{ $curElem/CNTNT_ACTIVE_END_DATE/@Value}','{$curElem/INCTV_NBR/@Value}','{$curElem/CNTNT_ELEM_TYPE_CODE/@Value}','{$curElem/GBL_CNTNT_ELEM_ID/@Value}','Only Data Stewards can create Content Element at Global Level','SEVERE_ERROR') "/>
+                        </THEN>
+                        <ELSE>
+                          <SET Var="cntntName" FromValue="{$curElem/CNTNT_NAME/@Value}"/>
+                          <IF_TEST Test="$cntntName = null or $cntntName ='' or strlen(trim($cntntName)) = 0">
+                            <THEN>
+                              <SET Var="cntntName1" FromValue="xxxxx"/>
+                            </THEN>
+                            <ELSE>
+                              <THEN>
+                                <SET Var="cntntName1" FromValue="{$curElem/CNTNT_NAME/@Value}"/>
+                              </THEN>
+                            </ELSE>
+                          </IF_TEST>
+                          <SET Var="inctvNbr" FromValue="{$curElem/INCTV_NBR/@Value}"/>
+                          <IF_TEST Test="$inctvNbr = null or $inctvNbr ='' or strlen(trim($inctvNbr)) = 0">
+                            <THEN>
+                              <SET Var="inctvNbr" FromValue="0"/>
+                            </THEN>
+                            <ELSE>
+                              <THEN>
+                                <SET Var="inctvNbr" FromValue="{$curElem/INCTV_NBR/@Value}"/>
+                              </THEN>
+                            </ELSE>
+                          </IF_TEST>
+                          <IF_TEST Test="upperCase($curElem/CNTNT_RECORD_IND/@Value) = 'INSERT'">
+                            <THEN>
+                              <CREATE_DOCUMENT_ID Name="CNTNT_ID" AssignToVar="cntntId"/>
+                              <SET Var="CntntIDNew" FromValue="{$cntntId}"/>
+                              <SET Var="numberOfItem" FromValue="{$curElem/NUM_OF_CNTNT_ITEM/@Value}"/>
+                              <IF_TEST Test="$numberOfItem = null or $numberOfItem ='' or strlen(trim($numberOfItem)) = 0">
+                                <THEN>
+                                  <SET Var="numberOfItem1" FromValue="0"/>
+                                </THEN>
+                                <ELSE>
+                                  <THEN>
+                                    <SET Var="numberOfItem1" FromValue="{$curElem/NUM_OF_CNTNT_ITEM/@Value}"/>
+                                  </THEN>
+                                </ELSE>
+                              </IF_TEST>
+                              <SET Var="counter1" FromValue="1"/>
+                              <TO_DOCVAR AssignToVar="cntntItemList">
+                                <root/>
+                              </TO_DOCVAR>
+                              <SET Var="numberOfTrt" FromValue="{$curElem/NUM_OF_CNTNT_TRT/@Value}"/>
+                              <IF_TEST Test="$numberOfTrt = null or $numberOfTrt ='' or strlen(trim($numberOfTrt)) = 0">
+                                <THEN>
+                                  <SET Var="numberOfTrt1" FromValue="0"/>
+                                </THEN>
+                                <ELSE>
+                                  <THEN>
+                                    <SET Var="numberOfTrt1" FromValue="{$curElem/NUM_OF_CNTNT_TRT/@Value}"/>
+                                  </THEN>
+                                </ELSE>
+                              </IF_TEST>
+                              <SET Var="counter2" FromValue="1"/>
+                              <TO_DOCVAR AssignToVar="cntntTrtList">
+                                <root/>
+                              </TO_DOCVAR>
+                              <WHILE Condition="$counter1 != $numberOfItem1+1">
+                                <CREATE_DOCUMENT_ID Name="CNTNT_ELEM_ITEM_ID" AssignToVar="cntntItemId"/>
+                                <SET Var="CntntItemIDNew" FromValue="{$cntntItemId}"/>
+                                <SET Var="var1" FromValue="{concat('CATEG_CODE_',$counter1)}"/>
+                                <SET Var="CATEG_CODE_New" FromValue="{$curElem/*[name()=$var1]/@Value}"/>
+                                <SET Var="var2" FromValue="{concat('SEG_CODE_',$counter1)}"/>
+                                <SET Var="SEG_CODE_New" FromValue="{$curElem/*[name()=$var2]/@Value}"/>
+                                <SET Var="var3" FromValue="{concat('BRAND_CODE_',$counter1)}"/>
+                                <SET Var="BRAND_CODE_New" FromValue="{$curElem/*[name()=$var3]/@Value}"/>
+                                <SET Var="var4" FromValue="{concat('SUB_BRAND_CODE_',$counter1)}"/>
+                                <SET Var="SUB_BRAND_CODE_New" FromValue="{$curElem/*[name()=$var4]/@Value}"/>
+                                <SET Var="var5" FromValue="{concat('ITEM_VERS_CODE_',$counter1)}"/>
+                                <SET Var="ITEM_VERS_CODE_New" FromValue="{$curElem/*[name()=$var5]/@Value}"/>
+                                <SET Var="var6" FromValue="{concat('GLOBAL_FORM_CODE_',$counter1)}"/>
+                                <SET Var="GLOBAL_FORM_CODE_New" FromValue="{$curElem/*[name()=$var6]/@Value}"/>
+                                <SET Var="var7" FromValue="{concat('CNTNT_ELEM_ITEM_QTY_',$counter1)}"/>
+                                <SET Var="CNTNT_ELEM_ITEM_QTY_New" FromValue="{$curElem/*[name()=$var7]/@Value}"/>
+                                <SET Var="var8" FromValue="{concat('CNTNT_ELEM_ITEM_NAME_',$counter1)}"/>
+                                <SET Var="CNTNT_ELEM_ITEM_NAME_New" FromValue="{$curElem/*[name()=$var8]/@Value}"/>
+                                <SET Var="var9" FromValue="{concat('CNTNT_ELEM_ITEM_DESC_',$counter1)}"/>
+                                <SET Var="CNTNT_ELEM_ITEM_DESC_New" FromValue="{$curElem/*[name()=$var9]/@Value}"/>
+                                <SET Var="var10" FromValue="{concat('PROD_ITEM_UPC_',$counter1)}"/>
+                                <SET Var="PROD_ITEM_UPC_New" FromValue="{$curElem/*[name()=$var10]/@Value}"/>
+                                <SET Var="var11" FromValue="{concat('ENTITY_STATE_CNTNT_ELEM_ITEM_',$counter1)}"/>
+                                <SET Var="ENTITY_STATE_CNTNT_ELEM_ITEM_New" FromValue="{$curElem/*[name()=$var11]/@Value}"/>
+                                <SET Var="var12" FromValue="{concat('BRAND_FAMLY_ID_',$counter1)}"/>
+                                <SET Var="BRAND_FAMLY_ID_New" FromValue="{$curElem/*[name()=$var12]/@Value}"/>
+                                <SET Var="var13" FromValue="{concat('PROD_FAMLY_ID_',$counter1)}"/>
+                                <SET Var="PROD_FAMLY_ID_New" FromValue="{$curElem/*[name()=$var13]/@Value}"/>
+                                <IF_TEST Test="trim($CNTNT_ELEM_ITEM_NAME_New) = null or trim($CNTNT_ELEM_ITEM_NAME_New) ='' or strlen(trim($CNTNT_ELEM_ITEM_NAME_New))=0 ">
+                                  <THEN>
+                                    <IF_TEST Test="trim($PROD_ITEM_UPC_New) = null or trim($PROD_ITEM_UPC_New)='' or strlen(trim($PROD_ITEM_UPC_New))=0 ">
+                                      <THEN>
+                                        <EXECUTE_SQL_QUERY AssignToVar="brandName" Value="SEL CATEG_NAME FROM CATEG where CATEG_CODE='{$CATEG_CODE_New/@Value}';"/>
+                                        <SET Var="CNTNT_ELEM_ITEM_NAME_UPDT" FromValue="{$brandName/SQL_RESULT/CATEG_NAME/@Value}"/>
+                                      </THEN>
+                                      <ELSE>
+                                        <THEN>
+                                          <EXECUTE_SQL_QUERY AssignToVar="prodName" Value="SEL  prod_item_name FROM PROD_ITEM where prod_item_upc={$PROD_ITEM_UPC_New/@Value};"/>
+                                          <SET Var="CNTNT_ELEM_ITEM_NAME_UPDT" FromValue="{$prodName/SQL_RESULT/PROD_ITEM_NAME/@Value}"/>
+                                          <IF_TEST Test="trim($CNTNT_ELEM_ITEM_NAME_UPDT) = null or trim($CNTNT_ELEM_ITEM_NAME_UPDT)='' or strlen(trim($CNTNT_ELEM_ITEM_NAME_UPDT))=0 ">
+                                            <THEN>
+                                              <EXECUTE_SQL_QUERY AssignToVar="brandName" Value="SEL CATEG_NAME FROM CATEG where CATEG_CODE='{$CATEG_CODE_New/@Value}';"/>
+                                              <SET Var="CNTNT_ELEM_ITEM_NAME_UPDT" FromValue="{$brandName/SQL_RESULT/CATEG_NAME/@Value}"/>
+                                            </THEN>
+                                          </IF_TEST>
+                                        </THEN>
+                                      </ELSE>
+                                    </IF_TEST>
+                                  </THEN>
+                                  <ELSE>
+                                    <THEN>
+                                      <SET Var="CNTNT_ELEM_ITEM_NAME_UPDT" FromValue="{$CNTNT_ELEM_ITEM_NAME_New}"/>
+                                    </THEN>
+                                  </ELSE>
+                                </IF_TEST>
+                                <EXECUTE_SQL_QUERY AssignToVar="brandNameCheck" ReturnRowCount="yes" Value="SEL CATEG_NAME FROM CATEG where CATEG_CODE='{$CATEG_CODE_New/@Value}';"/>
+                                <SET Var="brandNameAvail" FromValue="{$brandNameCheck/@TotalRowCount}"/>
+                                <SET Var="CNTNT_ELEM_ITEM_QTY1" FromValue="{$CNTNT_ELEM_ITEM_QTY_New}"/>
+                                <SET Var="errDate" FromValue="{date()}"/>
+                                <IF_TEST Test="$CNTNT_ELEM_ITEM_QTY1 = null or $CNTNT_ELEM_ITEM_QTY1 ='' or strlen(trim($CNTNT_ELEM_ITEM_QTY1)) = 0">
+                                  <THEN>
+                                    <SET Var="CNTNT_ELEM_ITEM_QTY2" FromValue="0"/>
+                                  </THEN>
+                                  <ELSE>
+                                    <THEN>
+                                      <SET Var="CNTNT_ELEM_ITEM_QTY2" FromValue="{$CNTNT_ELEM_ITEM_QTY1}"/>
+                                    </THEN>
+                                  </ELSE>
+                                </IF_TEST>
+                                <IF_TEST Test="$brandNameAvail = 0 or $CNTNT_ELEM_ITEM_QTY2 = 0">
+                                  <THEN>
+                                    <IF_TEST Test="$brandNameAvail = 0 and $CNTNT_ELEM_ITEM_QTY2 =0">
+                                      <THEN>
+                                        <ADD_DOC_SMART Name="error_CNTNT_ELEM_ITEM">
+                                          <CNTNT_ELEM_ID Value="{$CntntIDNew}"/>
+                                          <CNTNT_ELEM_ITEM_NBR Value="{$CntntItemIDNew}"/>
+                                          <CATEG_CODE Value="{$CATEG_CODE_New}"/>
+                                          <SEG_CODE Value="{$SEG_CODE_New}"/>
+                                          <BRAND_CODE Value="{$BRAND_CODE_New}"/>
+                                          <SUB_BRAND_CODE Value="{$SUB_BRAND_CODE_New}"/>
+                                          <ITEM_VERS_CODE Value="{$ITEM_VERS_CODE_New}"/>
+                                          <GLOBAL_FORM_CODE Value="{$GLOBAL_FORM_CODE_New}"/>
+                                          <CNTNT_ELEM_ITEM_QTY Value="0"/>
+                                          <CNTNT_ELEM_ITEM_NAME Value="No Name"/>
+                                          <CNTNT_ELEM_ITEM_DESC Value="{$CNTNT_ELEM_ITEM_DESC_New}"/>
+                                          <PROD_ITEM_UPC Value="{$PROD_ITEM_UPC_New}"/>
+                                          <ERROR_MESSAGE Value=";GIVEN CATEG_CODE IS NOT VALID || CNTNT_ELEM_ITEM_QTY IS NULL"/>
+                                          <SYS_ERR_SEVERITY Value="SEVERE_ERROR"/>
+                                          <ERROR_TIME Value="{$errDate}"/>
+                                          <SYS_LOAD_ID Value="{$respID/SQL_RESULT/ID/@Value}"/>
+                                          <WORKFLOW_ID Value="XL_WF1234"/>
+                                        </ADD_DOC_SMART>
+                                      </THEN>
+                                    </IF_TEST>
+                                    <IF_TEST Test="$brandNameAvail = 0 and $CNTNT_ELEM_ITEM_QTY2 !=0">
+                                      <THEN>
+                                        <ADD_DOC_SMART Name="error_CNTNT_ELEM_ITEM">
+                                          <CNTNT_ELEM_ID Value="{$CntntIDNew}"/>
+                                          <CNTNT_ELEM_ITEM_NBR Value="{$CntntItemIDNew}"/>
+                                          <CATEG_CODE Value="{$CATEG_CODE_New}"/>
+                                          <SEG_CODE Value="{$SEG_CODE_New}"/>
+                                          <BRAND_CODE Value="{$BRAND_CODE_New}"/>
+                                          <SUB_BRAND_CODE Value="{$SUB_BRAND_CODE_New}"/>
+                                          <ITEM_VERS_CODE Value="{$ITEM_VERS_CODE_New}"/>
+                                          <GLOBAL_FORM_CODE Value="{$GLOBAL_FORM_CODE_New}"/>
+                                          <CNTNT_ELEM_ITEM_QTY Value="0"/>
+                                          <CNTNT_ELEM_ITEM_NAME Value="No Name"/>
+                                          <CNTNT_ELEM_ITEM_DESC Value="{$CNTNT_ELEM_ITEM_DESC_New}"/>
+                                          <PROD_ITEM_UPC Value="{$PROD_ITEM_UPC_New}"/>
+                                          <PROD_FAMLY_ID Value="{$PROD_FAMLY_ID_New}"/>
+                                          <BRAND_FAMLY_ID Value="{$BRAND_FAMLY_ID_New}"/>
+                                          <ERROR_MESSAGE Value=";GIVEN CATEG_CODE IS NOT VALID"/>
+                                          <SYS_ERR_SEVERITY Value="SEVERE_ERROR"/>
+                                          <ERROR_TIME Value="{$errDate}"/>
+                                          <SYS_LOAD_ID Value="{$respID/SQL_RESULT/ID/@Value}"/>
+                                          <WORKFLOW_ID Value="XL_WF1234"/>
+                                        </ADD_DOC_SMART>
+                                      </THEN>
+                                    </IF_TEST>
+                                    <IF_TEST Test="$brandNameAvail != 0 and $CNTNT_ELEM_ITEM_QTY2 =0">
+                                      <THEN>
+                                        <ADD_DOC_SMART Name="error_CNTNT_ELEM_ITEM">
+                                          <CNTNT_ELEM_ID Value="{$CntntIDNew}"/>
+                                          <CNTNT_ELEM_ITEM_NBR Value="{$CntntItemIDNew}"/>
+                                          <CATEG_CODE Value="{$CATEG_CODE_New}"/>
+                                          <SEG_CODE Value="{$SEG_CODE_New}"/>
+                                          <BRAND_CODE Value="{$BRAND_CODE_New}"/>
+                                          <SUB_BRAND_CODE Value="{$SUB_BRAND_CODE_New}"/>
+                                          <ITEM_VERS_CODE Value="{$ITEM_VERS_CODE_New}"/>
+                                          <GLOBAL_FORM_CODE Value="{$GLOBAL_FORM_CODE_New}"/>
+                                          <CNTNT_ELEM_ITEM_QTY Value="0"/>
+                                          <CNTNT_ELEM_ITEM_NAME Value="{$CNTNT_ELEM_ITEM_NAME_UPDT}"/>
+                                          <CNTNT_ELEM_ITEM_DESC Value="{$CNTNT_ELEM_ITEM_DESC_New}"/>
+                                          <PROD_ITEM_UPC Value="{$PROD_ITEM_UPC_New}"/>
+                                          <PROD_FAMLY_ID Value="{$PROD_FAMLY_ID_New}"/>
+                                          <BRAND_FAMLY_ID Value="{$BRAND_FAMLY_ID_New}"/>
+                                          <ERROR_MESSAGE Value=";GIVEN CNTNT_ITEM_QTY IS NULL"/>
+                                          <SYS_ERR_SEVERITY Value="SEVERE_ERROR"/>
+                                          <ERROR_TIME Value="{$errDate}"/>
+                                          <SYS_LOAD_ID Value="{$respID/SQL_RESULT/ID/@Value}"/>
+                                          <WORKFLOW_ID Value="XL_WF1234"/>
+                                        </ADD_DOC_SMART>
+                                      </THEN>
+                                    </IF_TEST>
+                                  </THEN>
+                                  <ELSE>
+                                    <THEN>
+                                      <TO_DOCVAR AssignToVar="cntntItemDoc">
+                                        <CNTNT_ELEM_ITEM>
+                                          <CNTNT_ELEM_ID Value="{$CntntIDNew}"/>
+                                          <CNTNT_ELEM_ITEM_NBR Value="{$CntntItemIDNew}"/>
+                                          <CATEG_CODE Value="{$CATEG_CODE_New}"/>
+                                          <SEG_CODE Value="{$SEG_CODE_New}"/>
+                                          <BRAND_CODE Value="{$BRAND_CODE_New}"/>
+                                          <SUB_BRAND_CODE Value="{$SUB_BRAND_CODE_New}"/>
+                                          <ITEM_VERS_CODE Value="{$ITEM_VERS_CODE_New}"/>
+                                          <GLOBAL_FORM_CODE Value="{$GLOBAL_FORM_CODE_New}"/>
+                                          <CNTNT_ELEM_ITEM_QTY Value="{$CNTNT_ELEM_ITEM_QTY_New}"/>
+                                          <CNTNT_ELEM_ITEM_NAME Value="{$CNTNT_ELEM_ITEM_NAME_UPDT}"/>
+                                          <CNTNT_ELEM_ITEM_DESC Value="{$CNTNT_ELEM_ITEM_DESC_New}"/>
+                                          <PROD_ITEM_UPC Value="{$PROD_ITEM_UPC_New}"/>
+                                          <PROD_FAMLY_ID Value="{$PROD_FAMLY_ID_New}"/>
+                                          <BRAND_FAMLY_ID Value="{$BRAND_FAMLY_ID_New}"/>
+                                          <ENTITY_STATE Value="{$ENTITY_STATE_CNTNT_ELEM_ITEM_New}"/>
+                                        </CNTNT_ELEM_ITEM>
+                                      </TO_DOCVAR>
+                                      <APPEND_TO_XML DocVar="cntntItemList">
+                                        <TO_XML DocVar="cntntItemDoc"/>
+                                      </APPEND_TO_XML>
+                                    </THEN>
+                                  </ELSE>
+                                </IF_TEST>
+                                <SET Var="counter1" FromValue="{int($counter1+1)}"/>
+                              </WHILE>
+                              <WHILE Condition="$counter2 != $numberOfTrt1+1">
+                                <CREATE_DOCUMENT_ID Name="CNTNT_ELEM_TRT_SEQ_NBR" AssignToVar="cntntTrtId"/>
+                                <SET Var="CntnttrtIDNew" FromValue="{$cntntTrtId}"/>
+                                <SET Var="var11" FromValue="{concat('TRT_NBR_',$counter2)}"/>
+                                <SET Var="TRT_NBR_New" FromValue="{$curElem/*[name()=$var11]/@Value}"/>
+                                <SET Var="var22" FromValue="{concat('CNTNT_ELEM_TRT_DATE_',$counter2)}"/>
+                                <SET Var="CNTNT_ELEM_TRT_DATE_New" FromValue="{$curElem/*[name()=$var22]/@Value}"/>
+                                <SET Var="var33" FromValue="{concat('CNTNT_ELEM_TRT_TXT_',$counter2)}"/>
+                                <SET Var="CNTNT_ELEM_TRT_TXT_New" FromValue="{$curElem/*[name()=$var33]/@Value}"/>
+                                <SET Var="var44" FromValue="{concat('CNTNT_ELEM_TRT_DESC_',$counter2)}"/>
+                                <SET Var="CNTNT_ELEM_TRT_DESC_New" FromValue="{$curElem/*[name()=$var44]/@Value}"/>
+                                <SET Var="var55" FromValue="{concat('ENTITY_STATE_CNTNT_TRT_',$counter2)}"/>
+                                <SET Var="ENTITY_STATE_CNTNT_TRT_New" FromValue="{$curElem/*[name()=$var55]/@Value}"/>
+                                <TO_DOCVAR AssignToVar="cntntTrtDoc">
+                                  <CNTNT_ELEM_TRT>
+                                    <CNTNT_ELEM_ID Value="{$CntntIDNew}"/>
+                                    <TRT_NBR Value="{$TRT_NBR_New}"/>
+                                    <CNTNT_ELEM_TRT_SEQ_NBR Value="{$CntnttrtIDNew}"/>
+                                    <CNTNT_ELEM_TRT_DATE Value="{$CNTNT_ELEM_TRT_DATE_New}"/>
+                                    <CNTNT_ELEM_TRT_TXT Value="{$CNTNT_ELEM_TRT_TXT_New}"/>
+                                    <CNTNT_ELEM_TRT_DESC Value="{$CNTNT_ELEM_TRT_DESC_New}"/>
+                                    <ENTITY_STATE Value="{$ENTITY_STATE_CNTNT_TRT_New}"/>
+                                  </CNTNT_ELEM_TRT>
+                                </TO_DOCVAR>
+                                <APPEND_TO_XML DocVar="cntntTrtList">
+                                  <TO_XML DocVar="cntntTrtDoc"/>
+                                </APPEND_TO_XML>
+                                <SET Var="counter2" FromValue="{int($counter2+1)}"/>
+                              </WHILE>
+                              <IF_TEST Test="$curElem/CNTNT_ACTIVE_END_DATE/@Value!=''">
+                                <THEN>
+                                  <APPEND_TO_XML SelectList="$endDate">
+                                    <CNTNT_ACTIVE_END_DATE Value="{$curElem/CNTNT_ACTIVE_END_DATE/@Value}"/>
+                                  </APPEND_TO_XML>
+                                </THEN>
+                                <ELSE/>
+                              </IF_TEST>
+                              <DO_DB_PERSIST DocumentName="CNTNT_ELEM" Source="EXTERNAL" Action="INSERT" ServiceName="BCM_MASTER" AssignToVar="CntntResponse" SysLoadId="{$respID/SQL_RESULT/ID/@Value}" SysWfId="XL_WF1234">
+                                <CNTNT_ELEM>
+                                  <CNTNT_ELEM_ID Value="{$CntntIDNew}"/>
+                                  <!--<MKTNG_PGM_NBR Value="{$curElem/MKTNG_PGM_NBR/@Value}"/>-->
+                                  <ALT_SYS_CNTNT_ID Value="{$curElem/ALT_SYS_CNTNT_ID/@Value}"/>
+                                  <CNTNT_NAME Value="{$cntntName1}"/>
+                                  <CNTNT_SHORT_NAME Value="{$curElem/CNTNT_SHORT_NAME/@Value}"/>
+                                  <CNTNT_DESC Value="{$curElem/CNTNT_DESC/@Value}"/>
+                                  <CNSMR_ACTN_TYPE_CODE Value="{$curElem/CNSMR_ACTN_TYPE_CODE/@Value}"/>
+                                  <TRGT_PATH_TYPE_CODE Value="{$curElem/TRGT_PATH_TYPE_CODE/@Value}"/>
+                                  <TRGT_SUB_PATH_TYPE_CODE Value="{$curElem/TRGT_SUB_PATH_TYPE_CODE/@Value}"/>
+                                  <TRGT_CNSMR_SEG_CODE Value="{$curElem/TRGT_CNSMR_SEG_CODE/@Value}"/>
+                                  <VIEW_WEB_SITE_URL_TXT Value="{$curElem/VIEW_WEB_SITE_URL_TXT/@Value}"/>
+                                  <CNTNT_OWNER_NAME Value="{$curElem/CNTNT_OWNER_NAME/@Value}"/>
+                                  <CNTNT_PHYS_LOCATION Value="{$curElem/CNTNT_PHYS_LOCATION/@Value}"/>
+                                  <CNTNT_ACTIVE_START_DATE Value="{$curElem/CNTNT_ACTIVE_START_DATE/@Value}"/>
+                                  <!--<CNTNT_ACTIVE_END_DATE Value="{$curElem/CNTNT_ACTIVE_END_DATE/@Value}"/>-->
+                                  <INCTV_NBR Value="{$curElem/INCTV_NBR/@Value}"/>
+                                  <CNTNT_ELEM_TYPE_CODE Value="{$curElem/CNTNT_ELEM_TYPE_CODE/@Value}"/>
+                                  <ENTITY_STATE Value="{$curElem/ENTITY_STATE_CNTNT/@Value}"/>
+                                  <TO_XML SelectList="$endDate/*"/>
+                                </CNTNT_ELEM>
+                              </DO_DB_PERSIST>
+                              <IF_TEST Test="$CntntResponse/VALIDATION_RESULT/ERROR_SEVERITY/@Value='SEVERE_ERROR'">
+                                <THEN/>
+                                <ELSE>
+                                  <SET Var="itemNumber" FromValue="{$curElem/NUM_OF_CNTNT_ITEM/@Value}"/>
+                                  <IF_TEST Test="strlen(trim($itemNumber)) > 0 and $itemNumber != 0">
+                                    <THEN>
+                                      <DO_DB_PERSIST DocumentName="CNTNT_ELEM_ITEM" Source="EXTERNAL" Action="INSERT" ServiceName="BCM_MASTER" AssignToVar="CntntItmResponse" SysLoadId="{$respID/SQL_RESULT/ID/@Value}" SysWfId="XL_WF1234">
+                                        <TO_XML SelectList="$cntntItemList/*"/>
+                                      </DO_DB_PERSIST>
+                                    </THEN>
+                                  </IF_TEST>
+                                  <SET Var="trtNumber" FromValue="{$curElem/NUM_OF_CNTNT_TRT/@Value}"/>
+                                  <IF_TEST Test="strlen(trim($trtNumber)) > 0 and $trtNumber != 0">
+                                    <THEN>
+                                      <DO_DB_PERSIST DocumentName="CNTNT_ELEM_TRT" Source="EXTERNAL" Action="INSERT" ServiceName="BCM_MASTER" AssignToVar="CntntTrtResponse" SysLoadId="{$respID/SQL_RESULT/ID/@Value}" SysWfId="XL_WF1234">
+                                        <TO_XML SelectList="$cntntTrtList/*"/>
+                                      </DO_DB_PERSIST>
+                                    </THEN>
+                                  </IF_TEST>
+                                </ELSE>
+                              </IF_TEST>
+                            </THEN>
+                          </IF_TEST>
+                          <IF_TEST Test="upperCase($curElem/CNTNT_RECORD_IND/@Value) = 'UPDATE'">
+                            <THEN>
+                              <SET Var="CntntIDNew" FromValue="{$curElem/CNTNT_ELEM_ID/@Value}"/>
+                              <EXECUTE_SQL_QUERY AssignToVar="deleteID" Value="DELETE FROM CNTNT_ELEM_ITEM WHERE CNTNT_ELEM_ID= {$CntntIDNew};"/>
+                              <EXECUTE_SQL_QUERY AssignToVar="deleteTrtID" Value="DELETE FROM CNTNT_ELEM_TRT WHERE CNTNT_ELEM_ID= {$CntntIDNew};"/>
+                              <IF_TEST Test="$CntntIDNew = null or $CntntIDNew ='' or strlen(trim($CntntIDNew)) = 0">
+                                <THEN>
+                                  <SET Var="CntntIDNew1" FromValue="0"/>
+                                </THEN>
+                                <ELSE>
+                                  <THEN>
+                                    <SET Var="CntntIDNew1" FromValue="{$curElem/CNTNT_ELEM_ID/@Value}"/>
+                                  </THEN>
+                                </ELSE>
+                              </IF_TEST>
+                              <SET Var="numberOfItem" FromValue="{$curElem/NUM_OF_CNTNT_ITEM/@Value}"/>
+                              <IF_TEST Test="$numberOfItem = null or $numberOfItem ='' or strlen(trim($numberOfItem)) = 0">
+                                <THEN>
+                                  <SET Var="numberOfItem1" FromValue="0"/>
+                                </THEN>
+                                <ELSE>
+                                  <THEN>
+                                    <SET Var="numberOfItem1" FromValue="{$curElem/NUM_OF_CNTNT_ITEM/@Value}"/>
+                                  </THEN>
+                                </ELSE>
+                              </IF_TEST>
+                              <SET Var="counter1" FromValue="1"/>
+                              <TO_DOCVAR AssignToVar="cntntItemList">
+                                <root/>
+                              </TO_DOCVAR>
+                              <SET Var="numberOfTrt" FromValue="{$curElem/NUM_OF_CNTNT_TRT/@Value}"/>
+                              <IF_TEST Test="$numberOfTrt = null or $numberOfTrt ='' or strlen(trim($numberOfTrt)) = 0">
+                                <THEN>
+                                  <SET Var="numberOfTrt1" FromValue="0"/>
+                                </THEN>
+                                <ELSE>
+                                  <THEN>
+                                    <SET Var="numberOfTrt1" FromValue="{$curElem/NUM_OF_CNTNT_TRT/@Value}"/>
+                                  </THEN>
+                                </ELSE>
+                              </IF_TEST>
+                              <SET Var="counter2" FromValue="1"/>
+                              <TO_DOCVAR AssignToVar="cntntTrtList">
+                                <root/>
+                              </TO_DOCVAR>
+                              <WHILE Condition="$counter1 != $numberOfItem1+1">
+                                <CREATE_DOCUMENT_ID Name="CNTNT_ELEM_ITEM_ID" AssignToVar="cntntItemId"/>
+                                <SET Var="CntntItemIDNew" FromValue="{$cntntItemId}"/>
+                                <SET Var="var1" FromValue="{concat('CATEG_CODE_',$counter1)}"/>
+                                <SET Var="CATEG_CODE_New" FromValue="{$curElem/*[name()=$var1]/@Value}"/>
+                                <SET Var="var2" FromValue="{concat('SEG_CODE_',$counter1)}"/>
+                                <SET Var="SEG_CODE_New" FromValue="{$curElem/*[name()=$var2]/@Value}"/>
+                                <SET Var="var3" FromValue="{concat('BRAND_CODE_',$counter1)}"/>
+                                <SET Var="BRAND_CODE_New" FromValue="{$curElem/*[name()=$var3]/@Value}"/>
+                                <SET Var="var4" FromValue="{concat('SUB_BRAND_CODE_',$counter1)}"/>
+                                <SET Var="SUB_BRAND_CODE_New" FromValue="{$curElem/*[name()=$var4]/@Value}"/>
+                                <SET Var="var5" FromValue="{concat('ITEM_VERS_CODE_',$counter1)}"/>
+                                <SET Var="ITEM_VERS_CODE_New" FromValue="{$curElem/*[name()=$var5]/@Value}"/>
+                                <SET Var="var6" FromValue="{concat('GLOBAL_FORM_CODE_',$counter1)}"/>
+                                <SET Var="GLOBAL_FORM_CODE_New" FromValue="{$curElem/*[name()=$var6]/@Value}"/>
+                                <SET Var="var7" FromValue="{concat('CNTNT_ELEM_ITEM_QTY_',$counter1)}"/>
+                                <SET Var="CNTNT_ELEM_ITEM_QTY_New" FromValue="{$curElem/*[name()=$var7]/@Value}"/>
+                                <SET Var="var8" FromValue="{concat('CNTNT_ELEM_ITEM_NAME_',$counter1)}"/>
+                                <SET Var="CNTNT_ELEM_ITEM_NAME_New" FromValue="{$curElem/*[name()=$var8]/@Value}"/>
+                                <SET Var="var9" FromValue="{concat('CNTNT_ELEM_ITEM_DESC_',$counter1)}"/>
+                                <SET Var="CNTNT_ELEM_ITEM_DESC_New" FromValue="{$curElem/*[name()=$var9]/@Value}"/>
+                                <SET Var="var10" FromValue="{concat('PROD_ITEM_UPC_',$counter1)}"/>
+                                <SET Var="PROD_ITEM_UPC_New" FromValue="{$curElem/*[name()=$var10]/@Value}"/>
+                                <SET Var="var11" FromValue="{concat('ENTITY_STATE_CNTNT_ELEM_ITEM_',$counter1)}"/>
+                                <SET Var="ENTITY_STATE_CNTNT_ELEM_ITEM_New" FromValue="{$curElem/*[name()=$var11]/@Value}"/>
+                                <SET Var="var12" FromValue="{concat('BRAND_FAMLY_ID_',$counter1)}"/>
+                                <SET Var="BRAND_FAMLY_ID_New" FromValue="{$curElem/*[name()=$var12]/@Value}"/>
+                                <SET Var="var13" FromValue="{concat('PROD_FAMLY_ID_',$counter1)}"/>
+                                <SET Var="PROD_FAMLY_ID_New" FromValue="{$curElem/*[name()=$var13]/@Value}"/>
+                                <IF_TEST Test="trim($CNTNT_ELEM_ITEM_NAME_New) = null or trim($CNTNT_ELEM_ITEM_NAME_New) ='' or strlen(trim($CNTNT_ELEM_ITEM_NAME_New))=0 ">
+                                  <THEN>
+                                    <IF_TEST Test="trim($PROD_ITEM_UPC_New) = null or trim($PROD_ITEM_UPC_New)='' or strlen(trim($PROD_ITEM_UPC_New))=0 ">
+                                      <THEN>
+                                        <EXECUTE_SQL_QUERY AssignToVar="brandName" Value="SEL CATEG_NAME FROM CATEG where CATEG_CODE='{$CATEG_CODE_New/@Value}';"/>
+                                        <SET Var="CNTNT_ELEM_ITEM_NAME_UPDT" FromValue="{$brandName/SQL_RESULT/CATEG_NAME/@Value}"/>
+                                      </THEN>
+                                      <ELSE>
+                                        <THEN>
+                                          <EXECUTE_SQL_QUERY AssignToVar="prodName" Value="SEL  prod_item_name FROM PROD_ITEM where prod_item_upc={$PROD_ITEM_UPC_New/@Value};"/>
+                                          <SET Var="CNTNT_ELEM_ITEM_NAME_UPDT" FromValue="{$prodName/SQL_RESULT/PROD_ITEM_NAME/@Value}"/>
+                                          <IF_TEST Test="trim($CNTNT_ELEM_ITEM_NAME_UPDT) = null or trim($CNTNT_ELEM_ITEM_NAME_UPDT)='' or strlen(trim($CNTNT_ELEM_ITEM_NAME_UPDT))=0 ">
+                                            <THEN>
+                                              <EXECUTE_SQL_QUERY AssignToVar="brandName" Value="SEL CATEG_NAME FROM CATEG where CATEG_CODE='{$CATEG_CODE_New/@Value}';"/>
+                                              <SET Var="CNTNT_ELEM_ITEM_NAME_UPDT" FromValue="{$brandName/SQL_RESULT/CATEG_NAME/@Value}"/>
+                                            </THEN>
+                                          </IF_TEST>
+                                        </THEN>
+                                      </ELSE>
+                                    </IF_TEST>
+                                  </THEN>
+                                  <ELSE>
+                                    <THEN>
+                                      <SET Var="CNTNT_ELEM_ITEM_NAME_UPDT" FromValue="{$CNTNT_ELEM_ITEM_NAME_New}"/>
+                                    </THEN>
+                                  </ELSE>
+                                </IF_TEST>
+                                <EXECUTE_SQL_QUERY AssignToVar="brandNameCheck" ReturnRowCount="yes" Value="SEL CATEG_NAME FROM CATEG where CATEG_CODE='{$CATEG_CODE_New/@Value}';"/>
+                                <SET Var="brandNameAvail" FromValue="{$brandNameCheck/@TotalRowCount}"/>
+                                <SET Var="CNTNT_ELEM_ITEM_QTY1" FromValue="{$CNTNT_ELEM_ITEM_QTY_New}"/>
+                                <SET Var="errDate" FromValue="{date()}"/>
+                                <IF_TEST Test="$CNTNT_ELEM_ITEM_QTY1 = null or $CNTNT_ELEM_ITEM_QTY1 ='' or strlen(trim($CNTNT_ELEM_ITEM_QTY1)) = 0">
+                                  <THEN>
+                                    <SET Var="CNTNT_ELEM_ITEM_QTY2" FromValue="0"/>
+                                  </THEN>
+                                  <ELSE>
+                                    <THEN>
+                                      <SET Var="CNTNT_ELEM_ITEM_QTY2" FromValue="{$CNTNT_ELEM_ITEM_QTY1}"/>
+                                    </THEN>
+                                  </ELSE>
+                                </IF_TEST>
+                                <IF_TEST Test="$brandNameAvail = 0 or $CNTNT_ELEM_ITEM_QTY2 = 0">
+                                  <THEN>
+                                    <IF_TEST Test="$brandNameAvail = 0 and $CNTNT_ELEM_ITEM_QTY2 =0">
+                                      <THEN>
+                                        <ADD_DOC_SMART Name="error_CNTNT_ELEM_ITEM">
+                                          <CNTNT_ELEM_ID Value="{$CntntIDNew}"/>
+                                          <CNTNT_ELEM_ITEM_NBR Value="{$CntntItemIDNew}"/>
+                                          <CATEG_CODE Value="{$CATEG_CODE_New}"/>
+                                          <SEG_CODE Value="{$SEG_CODE_New}"/>
+                                          <BRAND_CODE Value="{$BRAND_CODE_New}"/>
+                                          <SUB_BRAND_CODE Value="{$SUB_BRAND_CODE_New}"/>
+                                          <ITEM_VERS_CODE Value="{$ITEM_VERS_CODE_New}"/>
+                                          <GLOBAL_FORM_CODE Value="{$GLOBAL_FORM_CODE_New}"/>
+                                          <CNTNT_ELEM_ITEM_QTY Value="0"/>
+                                          <CNTNT_ELEM_ITEM_NAME Value="No Name"/>
+                                          <CNTNT_ELEM_ITEM_DESC Value="{$CNTNT_ELEM_ITEM_DESC_New}"/>
+                                          <PROD_ITEM_UPC Value="{$PROD_ITEM_UPC_New}"/>
+                                          <PROD_FAMLY_ID Value="{$PROD_FAMLY_ID_New}"/>
+                                          <BRAND_FAMLY_ID Value="{$BRAND_FAMLY_ID_New}"/>
+                                          <ERROR_MESSAGE Value=";GIVEN CATEG_CODE IS NOT VALID || CNTNT_ELEM_ITEM_QTY IS NULL"/>
+                                          <SYS_ERR_SEVERITY Value="SEVERE_ERROR"/>
+                                          <ERROR_TIME Value="{$errDate}"/>
+                                          <SYS_LOAD_ID Value="{$respID/SQL_RESULT/ID/@Value}"/>
+                                          <WORKFLOW_ID Value="XL_WF1234"/>
+                                        </ADD_DOC_SMART>
+                                      </THEN>
+                                    </IF_TEST>
+                                    <IF_TEST Test="$brandNameAvail = 0 and $CNTNT_ELEM_ITEM_QTY2 !=0">
+                                      <THEN>
+                                        <ADD_DOC_SMART Name="error_CNTNT_ELEM_ITEM">
+                                          <CNTNT_ELEM_ID Value="{$CntntIDNew}"/>
+                                          <CNTNT_ELEM_ITEM_NBR Value="{$CntntItemIDNew}"/>
+                                          <CATEG_CODE Value="{$CATEG_CODE_New}"/>
+                                          <SEG_CODE Value="{$SEG_CODE_New}"/>
+                                          <BRAND_CODE Value="{$BRAND_CODE_New}"/>
+                                          <SUB_BRAND_CODE Value="{$SUB_BRAND_CODE_New}"/>
+                                          <ITEM_VERS_CODE Value="{$ITEM_VERS_CODE_New}"/>
+                                          <GLOBAL_FORM_CODE Value="{$GLOBAL_FORM_CODE_New}"/>
+                                          <CNTNT_ELEM_ITEM_QTY Value="0"/>
+                                          <CNTNT_ELEM_ITEM_NAME Value="No Name"/>
+                                          <CNTNT_ELEM_ITEM_DESC Value="{$CNTNT_ELEM_ITEM_DESC_New}"/>
+                                          <PROD_ITEM_UPC Value="{$PROD_ITEM_UPC_New}"/>
+                                          <PROD_FAMLY_ID Value="{$PROD_FAMLY_ID_New}"/>
+                                          <BRAND_FAMLY_ID Value="{$BRAND_FAMLY_ID_New}"/>
+                                          <ERROR_MESSAGE Value=";GIVEN CATEG_CODE IS NOT VALID"/>
+                                          <SYS_ERR_SEVERITY Value="SEVERE_ERROR"/>
+                                          <ERROR_TIME Value="{$errDate}"/>
+                                          <SYS_LOAD_ID Value="{$respID/SQL_RESULT/ID/@Value}"/>
+                                          <WORKFLOW_ID Value="XL_WF1234"/>
+                                        </ADD_DOC_SMART>
+                                      </THEN>
+                                    </IF_TEST>
+                                    <IF_TEST Test="$brandNameAvail != 0 and $CNTNT_ELEM_ITEM_QTY2 =0">
+                                      <THEN>
+                                        <ADD_DOC_SMART Name="error_CNTNT_ELEM_ITEM">
+                                          <CNTNT_ELEM_ID Value="{$CntntIDNew}"/>
+                                          <CNTNT_ELEM_ITEM_NBR Value="{$CntntItemIDNew}"/>
+                                          <CATEG_CODE Value="{$CATEG_CODE_New}"/>
+                                          <SEG_CODE Value="{$SEG_CODE_New}"/>
+                                          <BRAND_CODE Value="{$BRAND_CODE_New}"/>
+                                          <SUB_BRAND_CODE Value="{$SUB_BRAND_CODE_New}"/>
+                                          <ITEM_VERS_CODE Value="{$ITEM_VERS_CODE_New}"/>
+                                          <GLOBAL_FORM_CODE Value="{$GLOBAL_FORM_CODE_New}"/>
+                                          <CNTNT_ELEM_ITEM_QTY Value="0"/>
+                                          <CNTNT_ELEM_ITEM_NAME Value="{$CNTNT_ELEM_ITEM_NAME_UPDT}"/>
+                                          <CNTNT_ELEM_ITEM_DESC Value="{$CNTNT_ELEM_ITEM_DESC_New}"/>
+                                          <PROD_ITEM_UPC Value="{$PROD_ITEM_UPC_New}"/>
+                                          <PROD_FAMLY_ID Value="{$PROD_FAMLY_ID_New}"/>
+                                          <BRAND_FAMLY_ID Value="{$BRAND_FAMLY_ID_New}"/>
+                                          <ERROR_MESSAGE Value=";GIVEN CNTNT_ITEM_QTY IS NULL"/>
+                                          <SYS_ERR_SEVERITY Value="SEVERE_ERROR"/>
+                                          <ERROR_TIME Value="{$errDate}"/>
+                                          <SYS_LOAD_ID Value="{$respID/SQL_RESULT/ID/@Value}"/>
+                                          <WORKFLOW_ID Value="XL_WF1234"/>
+                                        </ADD_DOC_SMART>
+                                      </THEN>
+                                    </IF_TEST>
+                                  </THEN>
+                                  <ELSE>
+                                    <THEN>
+                                      <TO_DOCVAR AssignToVar="cntntItemDoc">
+                                        <CNTNT_ELEM_ITEM>
+                                          <CNTNT_ELEM_ID Value="{$CntntIDNew}"/>
+                                          <CNTNT_ELEM_ITEM_NBR Value="{$CntntItemIDNew}"/>
+                                          <CATEG_CODE Value="{$CATEG_CODE_New}"/>
+                                          <SEG_CODE Value="{$SEG_CODE_New}"/>
+                                          <BRAND_CODE Value="{$BRAND_CODE_New}"/>
+                                          <SUB_BRAND_CODE Value="{$SUB_BRAND_CODE_New}"/>
+                                          <ITEM_VERS_CODE Value="{$ITEM_VERS_CODE_New}"/>
+                                          <GLOBAL_FORM_CODE Value="{$GLOBAL_FORM_CODE_New}"/>
+                                          <CNTNT_ELEM_ITEM_QTY Value="{$CNTNT_ELEM_ITEM_QTY_New}"/>
+                                          <CNTNT_ELEM_ITEM_NAME Value="{$CNTNT_ELEM_ITEM_NAME_UPDT}"/>
+                                          <CNTNT_ELEM_ITEM_DESC Value="{$CNTNT_ELEM_ITEM_DESC_New}"/>
+                                          <PROD_ITEM_UPC Value="{$PROD_ITEM_UPC_New}"/>
+                                          <ENTITY_STATE Value="{$ENTITY_STATE_CNTNT_ELEM_ITEM_New}"/>
+                                        </CNTNT_ELEM_ITEM>
+                                      </TO_DOCVAR>
+                                      <APPEND_TO_XML DocVar="cntntItemList">
+                                        <TO_XML DocVar="cntntItemDoc"/>
+                                      </APPEND_TO_XML>
+                                    </THEN>
+                                  </ELSE>
+                                </IF_TEST>
+                                <SET Var="counter1" FromValue="{int($counter1+1)}"/>
+                              </WHILE>
+                              <WHILE Condition="$counter2 != $numberOfTrt1+1">
+                                <CREATE_DOCUMENT_ID Name="CNTNT_ELEM_TRT_SEQ_NBR" AssignToVar="cntntTrtId"/>
+                                <SET Var="CntnttrtIDNew" FromValue="{$cntntTrtId}"/>
+                                <SET Var="var11" FromValue="{concat('TRT_NBR_',$counter2)}"/>
+                                <SET Var="TRT_NBR_New" FromValue="{$curElem/*[name()=$var11]/@Value}"/>
+                                <SET Var="var22" FromValue="{concat('CNTNT_ELEM_TRT_DATE_',$counter2)}"/>
+                                <SET Var="CNTNT_ELEM_TRT_DATE_New" FromValue="{$curElem/*[name()=$var22]/@Value}"/>
+                                <SET Var="var33" FromValue="{concat('CNTNT_ELEM_TRT_TXT_',$counter2)}"/>
+                                <SET Var="CNTNT_ELEM_TRT_TXT_New" FromValue="{$curElem/*[name()=$var33]/@Value}"/>
+                                <SET Var="var44" FromValue="{concat('CNTNT_ELEM_TRT_DESC_',$counter2)}"/>
+                                <SET Var="CNTNT_ELEM_TRT_DESC_New" FromValue="{$curElem/*[name()=$var44]/@Value}"/>
+                                <SET Var="var55" FromValue="{concat('ENTITY_STATE_CNTNT_TRT_',$counter2)}"/>
+                                <SET Var="ENTITY_STATE_CNTNT_TRT_New" FromValue="{$curElem/*[name()=$var55]/@Value}"/>
+                                <TO_DOCVAR AssignToVar="cntntTrtDoc">
+                                  <CNTNT_ELEM_TRT>
+                                    <CNTNT_ELEM_ID Value="{$CntntIDNew}"/>
+                                    <TRT_NBR Value="{$TRT_NBR_New}"/>
+                                    <CNTNT_ELEM_TRT_SEQ_NBR Value="{$CntnttrtIDNew}"/>
+                                    <CNTNT_ELEM_TRT_DATE Value="{$CNTNT_ELEM_TRT_DATE_New}"/>
+                                    <CNTNT_ELEM_TRT_TXT Value="{$CNTNT_ELEM_TRT_TXT_New}"/>
+                                    <CNTNT_ELEM_TRT_DESC Value="{$CNTNT_ELEM_TRT_DESC_New}"/>
+                                    <ENTITY_STATE Value="{$ENTITY_STATE_CNTNT_TRT_New}"/>
+                                  </CNTNT_ELEM_TRT>
+                                </TO_DOCVAR>
+                                <APPEND_TO_XML DocVar="cntntTrtList">
+                                  <TO_XML DocVar="cntntTrtDoc"/>
+                                </APPEND_TO_XML>
+                                <SET Var="counter2" FromValue="{int($counter2+1)}"/>
+                              </WHILE>
+                              <IF_TEST Test="$curElem/CNTNT_ACTIVE_END_DATE/@Value!=''">
+                                <THEN>
+                                  <APPEND_TO_XML SelectList="$endDate">
+                                    <CNTNT_ACTIVE_END_DATE Value="{$curElem/CNTNT_ACTIVE_END_DATE/@Value}"/>
+                                  </APPEND_TO_XML>
+                                </THEN>
+                                <ELSE/>
+                              </IF_TEST>
+                              <DO_DB_PERSIST DocumentName="CNTNT_ELEM" Source="EXTERNAL" Action="UPDATE" ServiceName="BCM_MASTER" AssignToVar="CntntResponse" SysLoadId="{$respID/SQL_RESULT/ID/@Value}" SysWfId="XL_WF1234">
+                                <CNTNT_ELEM>
+                                  <CNTNT_ELEM_ID Value="{$CntntIDNew}"/>
+                                  <!--<MKTNG_PGM_NBR Value="{$curElem/MKTNG_PGM_NBR/@Value}"/>-->
+                                  <ALT_SYS_CNTNT_ID Value="{$curElem/ALT_SYS_CNTNT_ID/@Value}"/>
+                                  <!--<CNTNT_NAME Value="{$cntntName1}"/>
+                                  <CNTNT_SHORT_NAME Value="{$curElem/CNTNT_SHORT_NAME/@Value}"/>-->
+                                  <CNTNT_DESC Value="{$curElem/CNTNT_DESC/@Value}"/>
+                                  <!--<CNSMR_ACTN_TYPE_CODE Value="{$curElem/CNSMR_ACTN_TYPE_CODE/@Value}"/>
+                                  <TRGT_PATH_TYPE_CODE Value="{$curElem/TRGT_PATH_TYPE_CODE/@Value}"/>
+                                  <TRGT_SUB_PATH_TYPE_CODE Value="{$curElem/TRGT_SUB_PATH_TYPE_CODE/@Value}"/>
+                                  <TRGT_CNSMR_SEG_CODE Value="{$curElem/TRGT_CNSMR_SEG_CODE/@Value}"/>-->
+                                  <VIEW_WEB_SITE_URL_TXT Value="{$curElem/VIEW_WEB_SITE_URL_TXT/@Value}"/>
+                                  <!--<CNTNT_OWNER_NAME Value="{$curElem/CNTNT_OWNER_NAME/@Value}"/>
+                                  <CNTNT_PHYS_LOCATION Value="{$curElem/CNTNT_PHYS_LOCATION/@Value}"/>
+                                  <CNTNT_ACTIVE_START_DATE Value="{$curElem/CNTNT_ACTIVE_START_DATE/@Value}"/>-->
+                                  <!--<CNTNT_ACTIVE_END_DATE Value="{$curElem/CNTNT_ACTIVE_END_DATE/@Value}"/>-->
+                                  <!--<INCTV_NBR Value="{$curElem/INCTV_NBR/@Value}"/>
+                                  <CNTNT_ELEM_TYPE_CODE Value="{$curElem/CNTNT_ELEM_TYPE_CODE/@Value}"/>-->
+                                  <ENTITY_STATE Value="{$curElem/ENTITY_STATE_CNTNT/@Value}"/>
+                                  <TO_XML SelectList="$endDate/*"/>
+                                </CNTNT_ELEM>
+                              </DO_DB_PERSIST>
+                              <IF_TEST Test="$CntntResponse/VALIDATION_RESULT/ERROR_SEVERITY/@Value='SEVERE_ERROR'">
+                                <THEN/>
+                                <ELSE>
+                                  <SET Var="itemNumber" FromValue="{$curElem/NUM_OF_CNTNT_ITEM/@Value}"/>
+                                  <IF_TEST Test="strlen(trim($itemNumber)) > 0 and $itemNumber != 0">
+                                    <THEN>
+                                      <DO_DB_PERSIST DocumentName="CNTNT_ELEM_ITEM" Source="EXTERNAL" Action="INSERT" ServiceName="BCM_MASTER" AssignToVar="CntntItmResponse" SysLoadId="{$respID/SQL_RESULT/ID/@Value}" SysWfId="XL_WF1234">
+                                        <TO_XML SelectList="$cntntItemList/*"/>
+                                      </DO_DB_PERSIST>
+                                    </THEN>
+                                  </IF_TEST>
+                                  <SET Var="trtNumber" FromValue="{$curElem/NUM_OF_CNTNT_TRT/@Value}"/>
+                                  <IF_TEST Test="strlen(trim($trtNumber)) > 0 and $trtNumber != 0">
+                                    <THEN>
+                                      <DO_DB_PERSIST DocumentName="CNTNT_ELEM_TRT" Source="EXTERNAL" Action="INSERT" ServiceName="BCM_MASTER" AssignToVar="CntntTrtResponse" SysLoadId="{$respID/SQL_RESULT/ID/@Value}" SysWfId="XL_WF1234">
+                                        <TO_XML SelectList="$cntntTrtList/*"/>
+                                      </DO_DB_PERSIST>
+                                    </THEN>
+                                  </IF_TEST>
+                                </ELSE>
+                              </IF_TEST>
+                            </THEN>
+                          </IF_TEST>
+                        </ELSE>
+                      </IF_TEST>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <EXECUTE_SQL_QUERY AssignToVar="Gbl_id" Value="SELECT CNTNT_ELEM_ID FROM CNTNT_ELEM WHERE GBL_CNTNT_ELEM_ID IS NULL AND MKTNG_PGM_NBR IS NULL"/>
+                  <SET Var="cnt1" FromValue="0"/>
+                  <FOR_EACH SelectList="$Gbl_id/SQL_RESULT" CurrentElement="currGbl">
+                    <IF_TEST Test="$currGbl/CNTNT_ELEM_ID/@Value=$curElem/GBL_CNTNT_ELEM_ID/@Value">
+                      <THEN>
+                        <SET Var="cnt1" FromValue="1"/>
+                      </THEN>
+                    </IF_TEST>
+                  </FOR_EACH>
+                  <IF_TEST Test="$cnt1='0' and (strlen(trim($curElem/GBL_CNTNT_ELEM_ID/@Value)) != 0)">
+                    <THEN>
+                      <EXECUTE_SQL_QUERY AssignToVar="errGblID" Value="INSERT INTO MDM.ERR_CNTNT_ELEM(CNTNT_ELEM_ID , MKTNG_PGM_NBR , ALT_SYS_CNTNT_ID, CNTNT_NAME , CNTNT_SHORT_NAME , CNTNT_DESC , CNSMR_ACTN_TYPE_CODE , TRGT_PATH_TYPE_CODE ,TRGT_SUB_PATH_TYPE_CODE, TRGT_CNSMR_SEG_CODE , VIEW_WEB_SITE_URL_TXT, CNTNT_OWNER_NAME , CNTNT_PHYS_LOCATION, CNTNT_ACTIVE_START_DATE, CNTNT_ACTIVE_END_DATE ,INCTV_NBR , CNTNT_ELEM_TYPE_CODE , GBL_CNTNT_ELEM_ID, SYS_ERR_CODE , SYS_ERR_SVRTY)    VALUES('{$CntntIDNew}','{$curElem/MKTNG_PGM_NBR/@Value}','{$curElem/ALT_SYS_CNTNT_ID/@Value}','{$curElem/CNTNT_NAME/@Value}','{$curElem/CNTNT_SHORT_NAME/@Value}','{ $curElem/CNTNT_DESC/@Value}','{$curElem/CNSMR_ACTN_TYPE_CODE/@Value}','{$curElem/TRGT_PATH_TYPE_CODE/@Value}','{$curElem/TRGT_SUB_PATH_TYPE_CODE/@Value}','{$curElem/TRGT_CNSMR_SEG_CODE/@Value}','{ $curElem/VIEW_WEB_SITE_URL_TXT/@Value}','{$curElem/CNTNT_OWNER_NAME/@Value}','{$curElem/CNTNT_PHYS_LOCATION/@Value}','{$curElem/CNTNT_ACTIVE_START_DATE/@Value}','{ $curElem/CNTNT_ACTIVE_END_DATE/@Value}','{$curElem/INCTV_NBR/@Value}','{$curElem/CNTNT_ELEM_TYPE_CODE/@Value}','{$curElem/GBL_CNTNT_ELEM_ID/@Value}','Invalid GBL_CNTNT_ELEM_ID','SEVERE_ERROR') ">
+                      </EXECUTE_SQL_QUERY>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="cntntName" FromValue="{$curElem/CNTNT_NAME/@Value}"/>
+                      <IF_TEST Test="$cntntName = null or $cntntName ='' or strlen(trim($cntntName)) = 0">
+                        <THEN>
+                          <SET Var="cntntName1" FromValue="xxxxx"/>
+                        </THEN>
+                        <ELSE>
+                          <THEN>
+                            <SET Var="cntntName1" FromValue="{$curElem/CNTNT_NAME/@Value}"/>
+                          </THEN>
+                        </ELSE>
+                      </IF_TEST>
+                      <SET Var="inctvNbr" FromValue="{$curElem/INCTV_NBR/@Value}"/>
+                      <IF_TEST Test="$inctvNbr = null or $inctvNbr ='' or strlen(trim($inctvNbr)) = 0">
+                        <THEN>
+                          <SET Var="inctvNbr" FromValue="0"/>
+                        </THEN>
+                        <ELSE>
+                          <THEN>
+                            <SET Var="inctvNbr" FromValue="{$curElem/INCTV_NBR/@Value}"/>
+                          </THEN>
+                        </ELSE>
+                      </IF_TEST>
+                      <IF_TEST Test="upperCase($curElem/CNTNT_RECORD_IND/@Value) = 'INSERT'">
+                        <THEN>
+                          <CREATE_DOCUMENT_ID Name="CNTNT_ID" AssignToVar="cntntId"/>
+                          <SET Var="CntntIDNew" FromValue="{$cntntId}"/>
+                          <SET Var="numberOfItem" FromValue="{$curElem/NUM_OF_CNTNT_ITEM/@Value}"/>
+                          <IF_TEST Test="$numberOfItem = null or $numberOfItem ='' or strlen(trim($numberOfItem)) = 0">
+                            <THEN>
+                              <SET Var="numberOfItem1" FromValue="0"/>
+                            </THEN>
+                            <ELSE>
+                              <THEN>
+                                <SET Var="numberOfItem1" FromValue="{$curElem/NUM_OF_CNTNT_ITEM/@Value}"/>
+                              </THEN>
+                            </ELSE>
+                          </IF_TEST>
+                          <SET Var="counter1" FromValue="1"/>
+                          <TO_DOCVAR AssignToVar="cntntItemList">
+                            <root/>
+                          </TO_DOCVAR>
+                          <SET Var="numberOfTrt" FromValue="{$curElem/NUM_OF_CNTNT_TRT/@Value}"/>
+                          <IF_TEST Test="$numberOfTrt = null or $numberOfTrt ='' or strlen(trim($numberOfTrt)) = 0">
+                            <THEN>
+                              <SET Var="numberOfTrt1" FromValue="0"/>
+                            </THEN>
+                            <ELSE>
+                              <THEN>
+                                <SET Var="numberOfTrt1" FromValue="{$curElem/NUM_OF_CNTNT_TRT/@Value}"/>
+                              </THEN>
+                            </ELSE>
+                          </IF_TEST>
+                          <SET Var="counter2" FromValue="1"/>
+                          <TO_DOCVAR AssignToVar="cntntTrtList">
+                            <root/>
+                          </TO_DOCVAR>
+                          <WHILE Condition="$counter1 != $numberOfItem1+1">
+                            <CREATE_DOCUMENT_ID Name="CNTNT_ELEM_ITEM_ID" AssignToVar="cntntItemId"/>
+                            <SET Var="CntntItemIDNew" FromValue="{$cntntItemId}"/>
+                            <SET Var="var1" FromValue="{concat('CATEG_CODE_',$counter1)}"/>
+                            <SET Var="CATEG_CODE_New" FromValue="{$curElem/*[name()=$var1]/@Value}"/>
+                            <SET Var="var2" FromValue="{concat('SEG_CODE_',$counter1)}"/>
+                            <SET Var="SEG_CODE_New" FromValue="{$curElem/*[name()=$var2]/@Value}"/>
+                            <SET Var="var3" FromValue="{concat('BRAND_CODE_',$counter1)}"/>
+                            <SET Var="BRAND_CODE_New" FromValue="{$curElem/*[name()=$var3]/@Value}"/>
+                            <SET Var="var4" FromValue="{concat('SUB_BRAND_CODE_',$counter1)}"/>
+                            <SET Var="SUB_BRAND_CODE_New" FromValue="{$curElem/*[name()=$var4]/@Value}"/>
+                            <SET Var="var5" FromValue="{concat('ITEM_VERS_CODE_',$counter1)}"/>
+                            <SET Var="ITEM_VERS_CODE_New" FromValue="{$curElem/*[name()=$var5]/@Value}"/>
+                            <SET Var="var6" FromValue="{concat('GLOBAL_FORM_CODE_',$counter1)}"/>
+                            <SET Var="GLOBAL_FORM_CODE_New" FromValue="{$curElem/*[name()=$var6]/@Value}"/>
+                            <SET Var="var7" FromValue="{concat('CNTNT_ELEM_ITEM_QTY_',$counter1)}"/>
+                            <SET Var="CNTNT_ELEM_ITEM_QTY_New" FromValue="{$curElem/*[name()=$var7]/@Value}"/>
+                            <SET Var="var8" FromValue="{concat('CNTNT_ELEM_ITEM_NAME_',$counter1)}"/>
+                            <SET Var="CNTNT_ELEM_ITEM_NAME_New" FromValue="{$curElem/*[name()=$var8]/@Value}"/>
+                            <SET Var="var9" FromValue="{concat('CNTNT_ELEM_ITEM_DESC_',$counter1)}"/>
+                            <SET Var="CNTNT_ELEM_ITEM_DESC_New" FromValue="{$curElem/*[name()=$var9]/@Value}"/>
+                            <SET Var="var10" FromValue="{concat('PROD_ITEM_UPC_',$counter1)}"/>
+                            <SET Var="PROD_ITEM_UPC_New" FromValue="{$curElem/*[name()=$var10]/@Value}"/>
+                            <SET Var="var11" FromValue="{concat('ENTITY_STATE_CNTNT_ELEM_ITEM_',$counter1)}"/>
+                            <SET Var="ENTITY_STATE_CNTNT_ELEM_ITEM_New" FromValue="{$curElem/*[name()=$var11]/@Value}"/>
+                            <SET Var="var12" FromValue="{concat('BRAND_FAMLY_ID_',$counter1)}"/>
+                            <SET Var="BRAND_FAMLY_ID_New" FromValue="{$curElem/*[name()=$var12]/@Value}"/>
+                            <SET Var="var13" FromValue="{concat('PROD_FAMLY_ID_',$counter1)}"/>
+                            <SET Var="PROD_FAMLY_ID_New" FromValue="{$curElem/*[name()=$var13]/@Value}"/>
+                            <IF_TEST Test="trim($CNTNT_ELEM_ITEM_NAME_New) = null or trim($CNTNT_ELEM_ITEM_NAME_New) ='' or strlen(trim($CNTNT_ELEM_ITEM_NAME_New))=0 ">
+                              <THEN>
+                                <IF_TEST Test="trim($PROD_ITEM_UPC_New) = null or trim($PROD_ITEM_UPC_New)='' or strlen(trim($PROD_ITEM_UPC_New))=0 ">
+                                  <THEN>
+                                    <EXECUTE_SQL_QUERY AssignToVar="brandName" Value="SEL CATEG_NAME FROM CATEG where CATEG_CODE='{$CATEG_CODE_New/@Value}';"/>
+                                    <SET Var="CNTNT_ELEM_ITEM_NAME_UPDT" FromValue="{$brandName/SQL_RESULT/CATEG_NAME/@Value}"/>
+                                  </THEN>
+                                  <ELSE>
+                                    <THEN>
+                                      <EXECUTE_SQL_QUERY AssignToVar="prodName" Value="SEL  prod_item_name FROM PROD_ITEM where prod_item_upc={$PROD_ITEM_UPC_New/@Value};"/>
+                                      <SET Var="CNTNT_ELEM_ITEM_NAME_UPDT" FromValue="{$prodName/SQL_RESULT/PROD_ITEM_NAME/@Value}"/>
+                                      <IF_TEST Test="trim($CNTNT_ELEM_ITEM_NAME_UPDT) = null or trim($CNTNT_ELEM_ITEM_NAME_UPDT)='' or strlen(trim($CNTNT_ELEM_ITEM_NAME_UPDT))=0 ">
+                                        <THEN>
+                                          <EXECUTE_SQL_QUERY AssignToVar="brandName" Value="SEL CATEG_NAME FROM CATEG where CATEG_CODE='{$CATEG_CODE_New/@Value}';"/>
+                                          <SET Var="CNTNT_ELEM_ITEM_NAME_UPDT" FromValue="{$brandName/SQL_RESULT/CATEG_NAME/@Value}"/>
+                                        </THEN>
+                                      </IF_TEST>
+                                    </THEN>
+                                  </ELSE>
+                                </IF_TEST>
+                              </THEN>
+                              <ELSE>
+                                <THEN>
+                                  <SET Var="CNTNT_ELEM_ITEM_NAME_UPDT" FromValue="{$CNTNT_ELEM_ITEM_NAME_New}"/>
+                                </THEN>
+                              </ELSE>
+                            </IF_TEST>
+                            <EXECUTE_SQL_QUERY AssignToVar="brandNameCheck" ReturnRowCount="yes" Value="SEL CATEG_NAME FROM CATEG where CATEG_CODE='{$CATEG_CODE_New/@Value}';"/>
+                            <SET Var="brandNameAvail" FromValue="{$brandNameCheck/@TotalRowCount}"/>
+                            <SET Var="CNTNT_ELEM_ITEM_QTY1" FromValue="{$CNTNT_ELEM_ITEM_QTY_New}"/>
+                            <SET Var="errDate" FromValue="{date()}"/>
+                            <IF_TEST Test="$CNTNT_ELEM_ITEM_QTY1 = null or $CNTNT_ELEM_ITEM_QTY1 ='' or strlen(trim($CNTNT_ELEM_ITEM_QTY1)) = 0">
+                              <THEN>
+                                <SET Var="CNTNT_ELEM_ITEM_QTY2" FromValue="0"/>
+                              </THEN>
+                              <ELSE>
+                                <THEN>
+                                  <SET Var="CNTNT_ELEM_ITEM_QTY2" FromValue="{$CNTNT_ELEM_ITEM_QTY1}"/>
+                                </THEN>
+                              </ELSE>
+                            </IF_TEST>
+                            <IF_TEST Test="$brandNameAvail = 0 or $CNTNT_ELEM_ITEM_QTY2 = 0">
+                              <THEN>
+                                <IF_TEST Test="$brandNameAvail = 0 and $CNTNT_ELEM_ITEM_QTY2 =0">
+                                  <THEN>
+                                    <ADD_DOC_SMART Name="error_CNTNT_ELEM_ITEM">
+                                      <CNTNT_ELEM_ID Value="{$CntntIDNew}"/>
+                                      <CNTNT_ELEM_ITEM_NBR Value="{$CntntItemIDNew}"/>
+                                      <CATEG_CODE Value="{$CATEG_CODE_New}"/>
+                                      <SEG_CODE Value="{$SEG_CODE_New}"/>
+                                      <BRAND_CODE Value="{$BRAND_CODE_New}"/>
+                                      <SUB_BRAND_CODE Value="{$SUB_BRAND_CODE_New}"/>
+                                      <ITEM_VERS_CODE Value="{$ITEM_VERS_CODE_New}"/>
+                                      <GLOBAL_FORM_CODE Value="{$GLOBAL_FORM_CODE_New}"/>
+                                      <CNTNT_ELEM_ITEM_QTY Value="0"/>
+                                      <CNTNT_ELEM_ITEM_NAME Value="No Name"/>
+                                      <CNTNT_ELEM_ITEM_DESC Value="{$CNTNT_ELEM_ITEM_DESC_New}"/>
+                                      <PROD_ITEM_UPC Value="{$PROD_ITEM_UPC_New}"/>
+                                      <PROD_FAMLY_ID Value="{$PROD_FAMLY_ID_New}"/>
+                                      <BRAND_FAMLY_ID Value="{$BRAND_FAMLY_ID_New}"/>
+                                      <ERROR_MESSAGE Value=";GIVEN CATEG_CODE IS NOT VALID || CNTNT_ELEM_ITEM_QTY IS NULL"/>
+                                      <SYS_ERR_SEVERITY Value="SEVERE_ERROR"/>
+                                      <ERROR_TIME Value="{$errDate}"/>
+                                      <SYS_LOAD_ID Value="{$respID/SQL_RESULT/ID/@Value}"/>
+                                      <WORKFLOW_ID Value="XL_WF1234"/>
+                                    </ADD_DOC_SMART>
+                                  </THEN>
+                                </IF_TEST>
+                                <IF_TEST Test="$brandNameAvail = 0 and $CNTNT_ELEM_ITEM_QTY2 !=0">
+                                  <THEN>
+                                    <ADD_DOC_SMART Name="error_CNTNT_ELEM_ITEM">
+                                      <CNTNT_ELEM_ID Value="{$CntntIDNew}"/>
+                                      <CNTNT_ELEM_ITEM_NBR Value="{$CntntItemIDNew}"/>
+                                      <CATEG_CODE Value="{$CATEG_CODE_New}"/>
+                                      <SEG_CODE Value="{$SEG_CODE_New}"/>
+                                      <BRAND_CODE Value="{$BRAND_CODE_New}"/>
+                                      <SUB_BRAND_CODE Value="{$SUB_BRAND_CODE_New}"/>
+                                      <ITEM_VERS_CODE Value="{$ITEM_VERS_CODE_New}"/>
+                                      <GLOBAL_FORM_CODE Value="{$GLOBAL_FORM_CODE_New}"/>
+                                      <CNTNT_ELEM_ITEM_QTY Value="0"/>
+                                      <CNTNT_ELEM_ITEM_NAME Value="No Name"/>
+                                      <CNTNT_ELEM_ITEM_DESC Value="{$CNTNT_ELEM_ITEM_DESC_New}"/>
+                                      <PROD_ITEM_UPC Value="{$PROD_ITEM_UPC_New}"/>
+                                      <PROD_FAMLY_ID Value="{$PROD_FAMLY_ID_New}"/>
+                                      <BRAND_FAMLY_ID Value="{$BRAND_FAMLY_ID_New}"/>
+                                      <ERROR_MESSAGE Value=";GIVEN CATEG_CODE IS NOT VALID"/>
+                                      <SYS_ERR_SEVERITY Value="SEVERE_ERROR"/>
+                                      <ERROR_TIME Value="{$errDate}"/>
+                                      <SYS_LOAD_ID Value="{$respID/SQL_RESULT/ID/@Value}"/>
+                                      <WORKFLOW_ID Value="XL_WF1234"/>
+                                    </ADD_DOC_SMART>
+                                  </THEN>
+                                </IF_TEST>
+                                <IF_TEST Test="$brandNameAvail != 0 and $CNTNT_ELEM_ITEM_QTY2 =0">
+                                  <THEN>
+                                    <ADD_DOC_SMART Name="error_CNTNT_ELEM_ITEM">
+                                      <CNTNT_ELEM_ID Value="{$CntntIDNew}"/>
+                                      <CNTNT_ELEM_ITEM_NBR Value="{$CntntItemIDNew}"/>
+                                      <CATEG_CODE Value="{$CATEG_CODE_New}"/>
+                                      <SEG_CODE Value="{$SEG_CODE_New}"/>
+                                      <BRAND_CODE Value="{$BRAND_CODE_New}"/>
+                                      <SUB_BRAND_CODE Value="{$SUB_BRAND_CODE_New}"/>
+                                      <ITEM_VERS_CODE Value="{$ITEM_VERS_CODE_New}"/>
+                                      <GLOBAL_FORM_CODE Value="{$GLOBAL_FORM_CODE_New}"/>
+                                      <CNTNT_ELEM_ITEM_QTY Value="0"/>
+                                      <CNTNT_ELEM_ITEM_NAME Value="{$CNTNT_ELEM_ITEM_NAME_UPDT}"/>
+                                      <CNTNT_ELEM_ITEM_DESC Value="{$CNTNT_ELEM_ITEM_DESC_New}"/>
+                                      <PROD_ITEM_UPC Value="{$PROD_ITEM_UPC_New}"/>
+                                      <PROD_FAMLY_ID Value="{$PROD_FAMLY_ID_New}"/>
+                                      <BRAND_FAMLY_ID Value="{$BRAND_FAMLY_ID_New}"/>
+                                      <ERROR_MESSAGE Value=";GIVEN CNTNT_ITEM_QTY IS NULL"/>
+                                      <SYS_ERR_SEVERITY Value="SEVERE_ERROR"/>
+                                      <ERROR_TIME Value="{$errDate}"/>
+                                      <SYS_LOAD_ID Value="{$respID/SQL_RESULT/ID/@Value}"/>
+                                      <WORKFLOW_ID Value="XL_WF1234"/>
+                                    </ADD_DOC_SMART>
+                                  </THEN>
+                                </IF_TEST>
+                              </THEN>
+                              <ELSE>
+                                <THEN>
+                                  <TO_DOCVAR AssignToVar="cntntItemDoc">
+                                    <CNTNT_ELEM_ITEM>
+                                      <CNTNT_ELEM_ID Value="{$CntntIDNew}"/>
+                                      <CNTNT_ELEM_ITEM_NBR Value="{$CntntItemIDNew}"/>
+                                      <CATEG_CODE Value="{$CATEG_CODE_New}"/>
+                                      <SEG_CODE Value="{$SEG_CODE_New}"/>
+                                      <BRAND_CODE Value="{$BRAND_CODE_New}"/>
+                                      <SUB_BRAND_CODE Value="{$SUB_BRAND_CODE_New}"/>
+                                      <ITEM_VERS_CODE Value="{$ITEM_VERS_CODE_New}"/>
+                                      <GLOBAL_FORM_CODE Value="{$GLOBAL_FORM_CODE_New}"/>
+                                      <CNTNT_ELEM_ITEM_QTY Value="{$CNTNT_ELEM_ITEM_QTY_New}"/>
+                                      <CNTNT_ELEM_ITEM_NAME Value="{$CNTNT_ELEM_ITEM_NAME_UPDT}"/>
+                                      <CNTNT_ELEM_ITEM_DESC Value="{$CNTNT_ELEM_ITEM_DESC_New}"/>
+                                      <PROD_ITEM_UPC Value="{$PROD_ITEM_UPC_New}"/>
+                                      <PROD_FAMLY_ID Value="{$PROD_FAMLY_ID_New}"/>
+                                      <BRAND_FAMLY_ID Value="{$BRAND_FAMLY_ID_New}"/>
+                                      <ENTITY_STATE Value="{$ENTITY_STATE_CNTNT_ELEM_ITEM_New}"/>
+                                    </CNTNT_ELEM_ITEM>
+                                  </TO_DOCVAR>
+                                  <APPEND_TO_XML DocVar="cntntItemList">
+                                    <TO_XML DocVar="cntntItemDoc"/>
+                                  </APPEND_TO_XML>
+                                </THEN>
+                              </ELSE>
+                            </IF_TEST>
+                            <SET Var="counter1" FromValue="{int($counter1+1)}"/>
+                          </WHILE>
+                          <WHILE Condition="$counter2 != $numberOfTrt1+1">
+                            <CREATE_DOCUMENT_ID Name="CNTNT_ELEM_TRT_SEQ_NBR" AssignToVar="cntntTrtId"/>
+                            <SET Var="CntnttrtIDNew" FromValue="{$cntntTrtId}"/>
+                            <SET Var="var11" FromValue="{concat('TRT_NBR_',$counter2)}"/>
+                            <SET Var="TRT_NBR_New" FromValue="{$curElem/*[name()=$var11]/@Value}"/>
+                            <SET Var="var22" FromValue="{concat('CNTNT_ELEM_TRT_DATE_',$counter2)}"/>
+                            <SET Var="CNTNT_ELEM_TRT_DATE_New" FromValue="{$curElem/*[name()=$var22]/@Value}"/>
+                            <SET Var="var33" FromValue="{concat('CNTNT_ELEM_TRT_TXT_',$counter2)}"/>
+                            <SET Var="CNTNT_ELEM_TRT_TXT_New" FromValue="{$curElem/*[name()=$var33]/@Value}"/>
+                            <SET Var="var44" FromValue="{concat('CNTNT_ELEM_TRT_DESC_',$counter2)}"/>
+                            <SET Var="CNTNT_ELEM_TRT_DESC_New" FromValue="{$curElem/*[name()=$var44]/@Value}"/>
+                            <SET Var="var55" FromValue="{concat('ENTITY_STATE_CNTNT_TRT_',$counter2)}"/>
+                            <SET Var="ENTITY_STATE_CNTNT_TRT_New" FromValue="{$curElem/*[name()=$var55]/@Value}"/>
+                            <TO_DOCVAR AssignToVar="cntntTrtDoc">
+                              <CNTNT_ELEM_TRT>
+                                <CNTNT_ELEM_ID Value="{$CntntIDNew}"/>
+                                <TRT_NBR Value="{$TRT_NBR_New}"/>
+                                <CNTNT_ELEM_TRT_SEQ_NBR Value="{$CntnttrtIDNew}"/>
+                                <CNTNT_ELEM_TRT_DATE Value="{$CNTNT_ELEM_TRT_DATE_New}"/>
+                                <CNTNT_ELEM_TRT_TXT Value="{$CNTNT_ELEM_TRT_TXT_New}"/>
+                                <CNTNT_ELEM_TRT_DESC Value="{$CNTNT_ELEM_TRT_DESC_New}"/>
+                                <ENTITY_STATE Value="{$ENTITY_STATE_CNTNT_TRT_New}"/>
+                              </CNTNT_ELEM_TRT>
+                            </TO_DOCVAR>
+                            <APPEND_TO_XML DocVar="cntntTrtList">
+                              <TO_XML DocVar="cntntTrtDoc"/>
+                            </APPEND_TO_XML>
+                            <SET Var="counter2" FromValue="{int($counter2+1)}"/>
+                          </WHILE>
+                          <IF_TEST Test="$Gbl_id=''">
+                            <THEN>
+                              <DO_DB_PERSIST DocumentName="CNTNT_ELEM" Source="EXTERNAL" Action="INSERT" ServiceName="BCM_MASTER" AssignToVar="CntntResponse" SysLoadId="{$respID/SQL_RESULT/ID/@Value}" SysWfId="XL_WF1234">
+                                <CNTNT_ELEM>
+                                  <CNTNT_ELEM_ID Value="{$CntntIDNew}"/>
+                                  <MKTNG_PGM_NBR Value="{$curElem/MKTNG_PGM_NBR/@Value}"/>
+                                  <ALT_SYS_CNTNT_ID Value="{$curElem/ALT_SYS_CNTNT_ID/@Value}"/>
+                                  <CNTNT_NAME Value="{$cntntName1}"/>
+                                  <CNTNT_SHORT_NAME Value="{$curElem/CNTNT_SHORT_NAME/@Value}"/>
+                                  <CNTNT_DESC Value="{$curElem/CNTNT_DESC/@Value}"/>
+                                  <CNSMR_ACTN_TYPE_CODE Value="{$curElem/CNSMR_ACTN_TYPE_CODE/@Value}"/>
+                                  <TRGT_PATH_TYPE_CODE Value="{$curElem/TRGT_PATH_TYPE_CODE/@Value}"/>
+                                  <TRGT_SUB_PATH_TYPE_CODE Value="{$curElem/TRGT_SUB_PATH_TYPE_CODE/@Value}"/>
+                                  <TRGT_CNSMR_SEG_CODE Value="{$curElem/TRGT_CNSMR_SEG_CODE/@Value}"/>
+                                  <VIEW_WEB_SITE_URL_TXT Value="{$curElem/VIEW_WEB_SITE_URL_TXT/@Value}"/>
+                                  <CNTNT_OWNER_NAME Value="{$curElem/CNTNT_OWNER_NAME/@Value}"/>
+                                  <CNTNT_PHYS_LOCATION Value="{$curElem/CNTNT_PHYS_LOCATION/@Value}"/>
+                                  <CNTNT_ACTIVE_START_DATE Value="{$curElem/CNTNT_ACTIVE_START_DATE/@Value}"/>
+                                  <CNTNT_ACTIVE_END_DATE Value="{$curElem/CNTNT_ACTIVE_END_DATE/@Value}"/>
+                                  <INCTV_NBR Value="{$curElem/INCTV_NBR/@Value}"/>
+                                  <CNTNT_ELEM_TYPE_CODE Value="{$curElem/CNTNT_ELEM_TYPE_CODE/@Value}"/>
+                                  <ENTITY_STATE Value="{$curElem/ENTITY_STATE_CNTNT/@Value}"/>
+                                </CNTNT_ELEM>
+                              </DO_DB_PERSIST>
+                            </THEN>
+                            <ELSE>
+                              <DO_DB_PERSIST DocumentName="CNTNT_ELEM" Source="EXTERNAL" Action="INSERT" ServiceName="BCM_MASTER" AssignToVar="CntntResponse" SysLoadId="{$respID/SQL_RESULT/ID/@Value}" SysWfId="XL_WF1234">
+                                <CNTNT_ELEM>
+                                  <CNTNT_ELEM_ID Value="{$CntntIDNew}"/>
+                                  <MKTNG_PGM_NBR Value="{$curElem/MKTNG_PGM_NBR/@Value}"/>
+                                  <ALT_SYS_CNTNT_ID Value="{$curElem/ALT_SYS_CNTNT_ID/@Value}"/>
+                                  <CNTNT_NAME Value="{$cntntName1}"/>
+                                  <CNTNT_SHORT_NAME Value="{$curElem/CNTNT_SHORT_NAME/@Value}"/>
+                                  <CNTNT_DESC Value="{$curElem/CNTNT_DESC/@Value}"/>
+                                  <CNSMR_ACTN_TYPE_CODE Value="{$curElem/CNSMR_ACTN_TYPE_CODE/@Value}"/>
+                                  <TRGT_PATH_TYPE_CODE Value="{$curElem/TRGT_PATH_TYPE_CODE/@Value}"/>
+                                  <TRGT_SUB_PATH_TYPE_CODE Value="{$curElem/TRGT_SUB_PATH_TYPE_CODE/@Value}"/>
+                                  <TRGT_CNSMR_SEG_CODE Value="{$curElem/TRGT_CNSMR_SEG_CODE/@Value}"/>
+                                  <VIEW_WEB_SITE_URL_TXT Value="{$curElem/VIEW_WEB_SITE_URL_TXT/@Value}"/>
+                                  <CNTNT_OWNER_NAME Value="{$curElem/CNTNT_OWNER_NAME/@Value}"/>
+                                  <CNTNT_PHYS_LOCATION Value="{$curElem/CNTNT_PHYS_LOCATION/@Value}"/>
+                                  <CNTNT_ACTIVE_START_DATE Value="{$curElem/CNTNT_ACTIVE_START_DATE/@Value}"/>
+                                  <CNTNT_ACTIVE_END_DATE Value="{$curElem/CNTNT_ACTIVE_END_DATE/@Value}"/>
+                                  <INCTV_NBR Value="{$curElem/INCTV_NBR/@Value}"/>
+                                  <CNTNT_ELEM_TYPE_CODE Value="{$curElem/CNTNT_ELEM_TYPE_CODE/@Value}"/>
+                                  <ENTITY_STATE Value="{$curElem/ENTITY_STATE_CNTNT/@Value}"/>
+                                  <GBL_CNTNT_ELEM_ID Value="{$curElem/GBL_CNTNT_ELEM_ID/@Value}"/>
+                                </CNTNT_ELEM>
+                              </DO_DB_PERSIST>
+                            </ELSE>
+                          </IF_TEST>
+                          <IF_TEST Test="$CntntResponse/VALIDATION_RESULT/ERROR_SEVERITY/@Value='SEVERE_ERROR'">
+                            <THEN/>
+                            <ELSE>
+                              <SET Var="itemNumber" FromValue="{$curElem/NUM_OF_CNTNT_ITEM/@Value}"/>
+                              <IF_TEST Test="strlen(trim($itemNumber)) > 0 and $itemNumber != 0">
+                                <THEN>
+                                  <DO_DB_PERSIST DocumentName="CNTNT_ELEM_ITEM" Source="EXTERNAL" Action="INSERT" ServiceName="BCM_MASTER" AssignToVar="CntntItmResponse" SysLoadId="{$respID/SQL_RESULT/ID/@Value}" SysWfId="XL_WF1234">
+                                    <TO_XML SelectList="$cntntItemList/*"/>
+                                  </DO_DB_PERSIST>
+                                </THEN>
+                              </IF_TEST>
+                              <SET Var="trtNumber" FromValue="{$curElem/NUM_OF_CNTNT_TRT/@Value}"/>
+                              <IF_TEST Test="strlen(trim($trtNumber)) > 0 and $trtNumber != 0">
+                                <THEN>
+                                  <DO_DB_PERSIST DocumentName="CNTNT_ELEM_TRT" Source="EXTERNAL" Action="INSERT" ServiceName="BCM_MASTER" AssignToVar="CntntTrtResponse" SysLoadId="{$respID/SQL_RESULT/ID/@Value}" SysWfId="XL_WF1234">
+                                    <TO_XML SelectList="$cntntTrtList/*"/>
+                                  </DO_DB_PERSIST>
+                                </THEN>
+                              </IF_TEST>
+                            </ELSE>
+                          </IF_TEST>
+                        </THEN>
+                      </IF_TEST>
+                      <IF_TEST Test="upperCase($curElem/CNTNT_RECORD_IND/@Value) = 'UPDATE'">
+                        <THEN>
+                          <SET Var="CntntIDNew" FromValue="{$curElem/CNTNT_ELEM_ID/@Value}"/>
+                          <EXECUTE_SQL_QUERY AssignToVar="deleteID" Value="DELETE FROM CNTNT_ELEM_ITEM WHERE CNTNT_ELEM_ID= {$CntntIDNew};"/>
+                          <EXECUTE_SQL_QUERY AssignToVar="deleteTrtID" Value="DELETE FROM CNTNT_ELEM_TRT WHERE CNTNT_ELEM_ID= {$CntntIDNew};"/>
+                          <IF_TEST Test="$CntntIDNew = null or $CntntIDNew ='' or strlen(trim($CntntIDNew)) = 0">
+                            <THEN>
+                              <SET Var="CntntIDNew1" FromValue="0"/>
+                            </THEN>
+                            <ELSE>
+                              <THEN>
+                                <SET Var="CntntIDNew1" FromValue="{$curElem/CNTNT_ELEM_ID/@Value}"/>
+                              </THEN>
+                            </ELSE>
+                          </IF_TEST>
+                          <SET Var="numberOfItem" FromValue="{$curElem/NUM_OF_CNTNT_ITEM/@Value}"/>
+                          <IF_TEST Test="$numberOfItem = null or $numberOfItem ='' or strlen(trim($numberOfItem)) = 0">
+                            <THEN>
+                              <SET Var="numberOfItem1" FromValue="0"/>
+                            </THEN>
+                            <ELSE>
+                              <THEN>
+                                <SET Var="numberOfItem1" FromValue="{$curElem/NUM_OF_CNTNT_ITEM/@Value}"/>
+                              </THEN>
+                            </ELSE>
+                          </IF_TEST>
+                          <SET Var="counter1" FromValue="1"/>
+                          <TO_DOCVAR AssignToVar="cntntItemList">
+                            <root/>
+                          </TO_DOCVAR>
+                          <SET Var="numberOfTrt" FromValue="{$curElem/NUM_OF_CNTNT_TRT/@Value}"/>
+                          <IF_TEST Test="$numberOfTrt = null or $numberOfTrt ='' or strlen(trim($numberOfTrt)) = 0">
+                            <THEN>
+                              <SET Var="numberOfTrt1" FromValue="0"/>
+                            </THEN>
+                            <ELSE>
+                              <THEN>
+                                <SET Var="numberOfTrt1" FromValue="{$curElem/NUM_OF_CNTNT_TRT/@Value}"/>
+                              </THEN>
+                            </ELSE>
+                          </IF_TEST>
+                          <SET Var="counter2" FromValue="1"/>
+                          <TO_DOCVAR AssignToVar="cntntTrtList">
+                            <root/>
+                          </TO_DOCVAR>
+                          <WHILE Condition="$counter1 != $numberOfItem1+1">
+                            <CREATE_DOCUMENT_ID Name="CNTNT_ELEM_ITEM_ID" AssignToVar="cntntItemId"/>
+                            <SET Var="CntntItemIDNew" FromValue="{$cntntItemId}"/>
+                            <SET Var="var1" FromValue="{concat('CATEG_CODE_',$counter1)}"/>
+                            <SET Var="CATEG_CODE_New" FromValue="{$curElem/*[name()=$var1]/@Value}"/>
+                            <SET Var="var2" FromValue="{concat('SEG_CODE_',$counter1)}"/>
+                            <SET Var="SEG_CODE_New" FromValue="{$curElem/*[name()=$var2]/@Value}"/>
+                            <SET Var="var3" FromValue="{concat('BRAND_CODE_',$counter1)}"/>
+                            <SET Var="BRAND_CODE_New" FromValue="{$curElem/*[name()=$var3]/@Value}"/>
+                            <SET Var="var4" FromValue="{concat('SUB_BRAND_CODE_',$counter1)}"/>
+                            <SET Var="SUB_BRAND_CODE_New" FromValue="{$curElem/*[name()=$var4]/@Value}"/>
+                            <SET Var="var5" FromValue="{concat('ITEM_VERS_CODE_',$counter1)}"/>
+                            <SET Var="ITEM_VERS_CODE_New" FromValue="{$curElem/*[name()=$var5]/@Value}"/>
+                            <SET Var="var6" FromValue="{concat('GLOBAL_FORM_CODE_',$counter1)}"/>
+                            <SET Var="GLOBAL_FORM_CODE_New" FromValue="{$curElem/*[name()=$var6]/@Value}"/>
+                            <SET Var="var7" FromValue="{concat('CNTNT_ELEM_ITEM_QTY_',$counter1)}"/>
+                            <SET Var="CNTNT_ELEM_ITEM_QTY_New" FromValue="{$curElem/*[name()=$var7]/@Value}"/>
+                            <SET Var="var8" FromValue="{concat('CNTNT_ELEM_ITEM_NAME_',$counter1)}"/>
+                            <SET Var="CNTNT_ELEM_ITEM_NAME_New" FromValue="{$curElem/*[name()=$var8]/@Value}"/>
+                            <SET Var="var9" FromValue="{concat('CNTNT_ELEM_ITEM_DESC_',$counter1)}"/>
+                            <SET Var="CNTNT_ELEM_ITEM_DESC_New" FromValue="{$curElem/*[name()=$var9]/@Value}"/>
+                            <SET Var="var10" FromValue="{concat('PROD_ITEM_UPC_',$counter1)}"/>
+                            <SET Var="PROD_ITEM_UPC_New" FromValue="{$curElem/*[name()=$var10]/@Value}"/>
+                            <SET Var="var11" FromValue="{concat('ENTITY_STATE_CNTNT_ELEM_ITEM_',$counter1)}"/>
+                            <SET Var="ENTITY_STATE_CNTNT_ELEM_ITEM_New" FromValue="{$curElem/*[name()=$var11]/@Value}"/>
+                            <SET Var="var12" FromValue="{concat('BRAND_FAMLY_ID_',$counter1)}"/>
+                            <SET Var="BRAND_FAMLY_ID_New" FromValue="{$curElem/*[name()=$var12]/@Value}"/>
+                            <SET Var="var13" FromValue="{concat('PROD_FAMLY_ID_',$counter1)}"/>
+                            <SET Var="PROD_FAMLY_ID_New" FromValue="{$curElem/*[name()=$var13]/@Value}"/>
+                            <IF_TEST Test="trim($CNTNT_ELEM_ITEM_NAME_New) = null or trim($CNTNT_ELEM_ITEM_NAME_New) ='' or strlen(trim($CNTNT_ELEM_ITEM_NAME_New))=0 ">
+                              <THEN>
+                                <IF_TEST Test="trim($PROD_ITEM_UPC_New) = null or trim($PROD_ITEM_UPC_New)='' or strlen(trim($PROD_ITEM_UPC_New))=0 ">
+                                  <THEN>
+                                    <EXECUTE_SQL_QUERY AssignToVar="brandName" Value="SEL CATEG_NAME FROM CATEG where CATEG_CODE='{$CATEG_CODE_New/@Value}';"/>
+                                    <SET Var="CNTNT_ELEM_ITEM_NAME_UPDT" FromValue="{$brandName/SQL_RESULT/CATEG_NAME/@Value}"/>
+                                  </THEN>
+                                  <ELSE>
+                                    <THEN>
+                                      <EXECUTE_SQL_QUERY AssignToVar="prodName" Value="SEL  prod_item_name FROM PROD_ITEM where prod_item_upc={$PROD_ITEM_UPC_New/@Value};"/>
+                                      <SET Var="CNTNT_ELEM_ITEM_NAME_UPDT" FromValue="{$prodName/SQL_RESULT/PROD_ITEM_NAME/@Value}"/>
+                                      <IF_TEST Test="trim($CNTNT_ELEM_ITEM_NAME_UPDT) = null or trim($CNTNT_ELEM_ITEM_NAME_UPDT)='' or strlen(trim($CNTNT_ELEM_ITEM_NAME_UPDT))=0 ">
+                                        <THEN>
+                                          <EXECUTE_SQL_QUERY AssignToVar="brandName" Value="SEL CATEG_NAME FROM CATEG where CATEG_CODE='{$CATEG_CODE_New/@Value}';"/>
+                                          <SET Var="CNTNT_ELEM_ITEM_NAME_UPDT" FromValue="{$brandName/SQL_RESULT/CATEG_NAME/@Value}"/>
+                                        </THEN>
+                                      </IF_TEST>
+                                    </THEN>
+                                  </ELSE>
+                                </IF_TEST>
+                              </THEN>
+                              <ELSE>
+                                <THEN>
+                                  <SET Var="CNTNT_ELEM_ITEM_NAME_UPDT" FromValue="{$CNTNT_ELEM_ITEM_NAME_New}"/>
+                                </THEN>
+                              </ELSE>
+                            </IF_TEST>
+                            <EXECUTE_SQL_QUERY AssignToVar="brandNameCheck" ReturnRowCount="yes" Value="SEL CATEG_NAME FROM CATEG where CATEG_CODE='{$CATEG_CODE_New/@Value}';"/>
+                            <SET Var="brandNameAvail" FromValue="{$brandNameCheck/@TotalRowCount}"/>
+                            <SET Var="CNTNT_ELEM_ITEM_QTY1" FromValue="{$CNTNT_ELEM_ITEM_QTY_New}"/>
+                            <SET Var="errDate" FromValue="{date()}"/>
+                            <IF_TEST Test="$CNTNT_ELEM_ITEM_QTY1 = null or $CNTNT_ELEM_ITEM_QTY1 ='' or strlen(trim($CNTNT_ELEM_ITEM_QTY1)) = 0">
+                              <THEN>
+                                <SET Var="CNTNT_ELEM_ITEM_QTY2" FromValue="0"/>
+                              </THEN>
+                              <ELSE>
+                                <THEN>
+                                  <SET Var="CNTNT_ELEM_ITEM_QTY2" FromValue="{$CNTNT_ELEM_ITEM_QTY1}"/>
+                                </THEN>
+                              </ELSE>
+                            </IF_TEST>
+                            <IF_TEST Test="$brandNameAvail = 0 or $CNTNT_ELEM_ITEM_QTY2 = 0">
+                              <THEN>
+                                <IF_TEST Test="$brandNameAvail = 0 and $CNTNT_ELEM_ITEM_QTY2 =0">
+                                  <THEN>
+                                    <ADD_DOC_SMART Name="error_CNTNT_ELEM_ITEM">
+                                      <CNTNT_ELEM_ID Value="{$CntntIDNew}"/>
+                                      <CNTNT_ELEM_ITEM_NBR Value="{$CntntItemIDNew}"/>
+                                      <CATEG_CODE Value="{$CATEG_CODE_New}"/>
+                                      <SEG_CODE Value="{$SEG_CODE_New}"/>
+                                      <BRAND_CODE Value="{$BRAND_CODE_New}"/>
+                                      <SUB_BRAND_CODE Value="{$SUB_BRAND_CODE_New}"/>
+                                      <ITEM_VERS_CODE Value="{$ITEM_VERS_CODE_New}"/>
+                                      <GLOBAL_FORM_CODE Value="{$GLOBAL_FORM_CODE_New}"/>
+                                      <CNTNT_ELEM_ITEM_QTY Value="0"/>
+                                      <CNTNT_ELEM_ITEM_NAME Value="No Name"/>
+                                      <CNTNT_ELEM_ITEM_DESC Value="{$CNTNT_ELEM_ITEM_DESC_New}"/>
+                                      <PROD_ITEM_UPC Value="{$PROD_ITEM_UPC_New}"/>
+                                      <PROD_FAMLY_ID Value="{$PROD_FAMLY_ID_New}"/>
+                                      <BRAND_FAMLY_ID Value="{$BRAND_FAMLY_ID_New}"/>
+                                      <ERROR_MESSAGE Value=";GIVEN CATEG_CODE IS NOT VALID || CNTNT_ELEM_ITEM_QTY IS NULL"/>
+                                      <SYS_ERR_SEVERITY Value="SEVERE_ERROR"/>
+                                      <ERROR_TIME Value="{$errDate}"/>
+                                      <SYS_LOAD_ID Value="{$respID/SQL_RESULT/ID/@Value}"/>
+                                      <WORKFLOW_ID Value="XL_WF1234"/>
+                                    </ADD_DOC_SMART>
+                                  </THEN>
+                                </IF_TEST>
+                                <IF_TEST Test="$brandNameAvail = 0 and $CNTNT_ELEM_ITEM_QTY2 !=0">
+                                  <THEN>
+                                    <ADD_DOC_SMART Name="error_CNTNT_ELEM_ITEM">
+                                      <CNTNT_ELEM_ID Value="{$CntntIDNew}"/>
+                                      <CNTNT_ELEM_ITEM_NBR Value="{$CntntItemIDNew}"/>
+                                      <CATEG_CODE Value="{$CATEG_CODE_New}"/>
+                                      <SEG_CODE Value="{$SEG_CODE_New}"/>
+                                      <BRAND_CODE Value="{$BRAND_CODE_New}"/>
+                                      <SUB_BRAND_CODE Value="{$SUB_BRAND_CODE_New}"/>
+                                      <ITEM_VERS_CODE Value="{$ITEM_VERS_CODE_New}"/>
+                                      <GLOBAL_FORM_CODE Value="{$GLOBAL_FORM_CODE_New}"/>
+                                      <CNTNT_ELEM_ITEM_QTY Value="0"/>
+                                      <CNTNT_ELEM_ITEM_NAME Value="No Name"/>
+                                      <CNTNT_ELEM_ITEM_DESC Value="{$CNTNT_ELEM_ITEM_DESC_New}"/>
+                                      <PROD_ITEM_UPC Value="{$PROD_ITEM_UPC_New}"/>
+                                      <PROD_FAMLY_ID Value="{$PROD_FAMLY_ID_New}"/>
+                                      <BRAND_FAMLY_ID Value="{$BRAND_FAMLY_ID_New}"/>
+                                      <ERROR_MESSAGE Value=";GIVEN CATEG_CODE IS NOT VALID"/>
+                                      <SYS_ERR_SEVERITY Value="SEVERE_ERROR"/>
+                                      <ERROR_TIME Value="{$errDate}"/>
+                                      <SYS_LOAD_ID Value="{$respID/SQL_RESULT/ID/@Value}"/>
+                                      <WORKFLOW_ID Value="XL_WF1234"/>
+                                    </ADD_DOC_SMART>
+                                  </THEN>
+                                </IF_TEST>
+                                <IF_TEST Test="$brandNameAvail != 0 and $CNTNT_ELEM_ITEM_QTY2 =0">
+                                  <THEN>
+                                    <ADD_DOC_SMART Name="error_CNTNT_ELEM_ITEM">
+                                      <CNTNT_ELEM_ID Value="{$CntntIDNew}"/>
+                                      <CNTNT_ELEM_ITEM_NBR Value="{$CntntItemIDNew}"/>
+                                      <CATEG_CODE Value="{$CATEG_CODE_New}"/>
+                                      <SEG_CODE Value="{$SEG_CODE_New}"/>
+                                      <BRAND_CODE Value="{$BRAND_CODE_New}"/>
+                                      <SUB_BRAND_CODE Value="{$SUB_BRAND_CODE_New}"/>
+                                      <ITEM_VERS_CODE Value="{$ITEM_VERS_CODE_New}"/>
+                                      <GLOBAL_FORM_CODE Value="{$GLOBAL_FORM_CODE_New}"/>
+                                      <CNTNT_ELEM_ITEM_QTY Value="0"/>
+                                      <CNTNT_ELEM_ITEM_NAME Value="{$CNTNT_ELEM_ITEM_NAME_UPDT}"/>
+                                      <CNTNT_ELEM_ITEM_DESC Value="{$CNTNT_ELEM_ITEM_DESC_New}"/>
+                                      <PROD_ITEM_UPC Value="{$PROD_ITEM_UPC_New}"/>
+                                      <PROD_FAMLY_ID Value="{$PROD_FAMLY_ID_New}"/>
+                                      <BRAND_FAMLY_ID Value="{$BRAND_FAMLY_ID_New}"/>
+                                      <ERROR_MESSAGE Value=";GIVEN CNTNT_ITEM_QTY IS NULL"/>
+                                      <SYS_ERR_SEVERITY Value="SEVERE_ERROR"/>
+                                      <ERROR_TIME Value="{$errDate}"/>
+                                      <SYS_LOAD_ID Value="{$respID/SQL_RESULT/ID/@Value}"/>
+                                      <WORKFLOW_ID Value="XL_WF1234"/>
+                                    </ADD_DOC_SMART>
+                                  </THEN>
+                                </IF_TEST>
+                              </THEN>
+                              <ELSE>
+                                <THEN>
+                                  <TO_DOCVAR AssignToVar="cntntItemDoc">
+                                    <CNTNT_ELEM_ITEM>
+                                      <CNTNT_ELEM_ID Value="{$CntntIDNew}"/>
+                                      <CNTNT_ELEM_ITEM_NBR Value="{$CntntItemIDNew}"/>
+                                      <CATEG_CODE Value="{$CATEG_CODE_New}"/>
+                                      <SEG_CODE Value="{$SEG_CODE_New}"/>
+                                      <BRAND_CODE Value="{$BRAND_CODE_New}"/>
+                                      <SUB_BRAND_CODE Value="{$SUB_BRAND_CODE_New}"/>
+                                      <ITEM_VERS_CODE Value="{$ITEM_VERS_CODE_New}"/>
+                                      <GLOBAL_FORM_CODE Value="{$GLOBAL_FORM_CODE_New}"/>
+                                      <CNTNT_ELEM_ITEM_QTY Value="{$CNTNT_ELEM_ITEM_QTY_New}"/>
+                                      <CNTNT_ELEM_ITEM_NAME Value="{$CNTNT_ELEM_ITEM_NAME_UPDT}"/>
+                                      <CNTNT_ELEM_ITEM_DESC Value="{$CNTNT_ELEM_ITEM_DESC_New}"/>
+                                      <PROD_ITEM_UPC Value="{$PROD_ITEM_UPC_New}"/>
+                                      <PROD_FAMLY_ID Value="{$PROD_FAMLY_ID_New}"/>
+                                      <BRAND_FAMLY_ID Value="{$BRAND_FAMLY_ID_New}"/>
+                                      <ENTITY_STATE Value="{$ENTITY_STATE_CNTNT_ELEM_ITEM_New}"/>
+                                    </CNTNT_ELEM_ITEM>
+                                  </TO_DOCVAR>
+                                  <APPEND_TO_XML DocVar="cntntItemList">
+                                    <TO_XML DocVar="cntntItemDoc"/>
+                                  </APPEND_TO_XML>
+                                </THEN>
+                              </ELSE>
+                            </IF_TEST>
+                            <SET Var="counter1" FromValue="{int($counter1+1)}"/>
+                          </WHILE>
+                          <WHILE Condition="$counter2 != $numberOfTrt1+1">
+                            <CREATE_DOCUMENT_ID Name="CNTNT_ELEM_TRT_SEQ_NBR" AssignToVar="cntntTrtId"/>
+                            <SET Var="CntnttrtIDNew" FromValue="{$cntntTrtId}"/>
+                            <SET Var="var11" FromValue="{concat('TRT_NBR_',$counter2)}"/>
+                            <SET Var="TRT_NBR_New" FromValue="{$curElem/*[name()=$var11]/@Value}"/>
+                            <SET Var="var22" FromValue="{concat('CNTNT_ELEM_TRT_DATE_',$counter2)}"/>
+                            <SET Var="CNTNT_ELEM_TRT_DATE_New" FromValue="{$curElem/*[name()=$var22]/@Value}"/>
+                            <SET Var="var33" FromValue="{concat('CNTNT_ELEM_TRT_TXT_',$counter2)}"/>
+                            <SET Var="CNTNT_ELEM_TRT_TXT_New" FromValue="{$curElem/*[name()=$var33]/@Value}"/>
+                            <SET Var="var44" FromValue="{concat('CNTNT_ELEM_TRT_DESC_',$counter2)}"/>
+                            <SET Var="CNTNT_ELEM_TRT_DESC_New" FromValue="{$curElem/*[name()=$var44]/@Value}"/>
+                            <SET Var="var55" FromValue="{concat('ENTITY_STATE_CNTNT_TRT_',$counter2)}"/>
+                            <SET Var="ENTITY_STATE_CNTNT_TRT_New" FromValue="{$curElem/*[name()=$var55]/@Value}"/>
+                            <TO_DOCVAR AssignToVar="cntntTrtDoc">
+                              <CNTNT_ELEM_TRT>
+                                <CNTNT_ELEM_ID Value="{$CntntIDNew}"/>
+                                <TRT_NBR Value="{$TRT_NBR_New}"/>
+                                <CNTNT_ELEM_TRT_SEQ_NBR Value="{$CntnttrtIDNew}"/>
+                                <CNTNT_ELEM_TRT_DATE Value="{$CNTNT_ELEM_TRT_DATE_New}"/>
+                                <CNTNT_ELEM_TRT_TXT Value="{$CNTNT_ELEM_TRT_TXT_New}"/>
+                                <CNTNT_ELEM_TRT_DESC Value="{$CNTNT_ELEM_TRT_DESC_New}"/>
+                                <ENTITY_STATE Value="{$ENTITY_STATE_CNTNT_TRT_New}"/>
+                              </CNTNT_ELEM_TRT>
+                            </TO_DOCVAR>
+                            <APPEND_TO_XML DocVar="cntntTrtList">
+                              <TO_XML DocVar="cntntTrtDoc"/>
+                            </APPEND_TO_XML>
+                            <SET Var="counter2" FromValue="{int($counter2+1)}"/>
+                          </WHILE>
+                          <DO_DB_PERSIST DocumentName="CNTNT_ELEM" Source="EXTERNAL" Action="UPDATE" ServiceName="BCM_MASTER" AssignToVar="CntntResponse" SysLoadId="{$respID/SQL_RESULT/ID/@Value}" SysWfId="XL_WF1234">
+                            <CNTNT_ELEM>
+                              <CNTNT_ELEM_ID Value="{$CntntIDNew}"/>
+                              <!--<MKTNG_PGM_NBR Value="{$curElem/MKTNG_PGM_NBR/@Value}"/>
+                              -->
+                              <ALT_SYS_CNTNT_ID Value="{$curElem/ALT_SYS_CNTNT_ID/@Value}"/>
+                              <!--<CNTNT_NAME Value="{$cntntName1}"/>
+                              <CNTNT_SHORT_NAME Value="{$curElem/CNTNT_SHORT_NAME/@Value}"/>
+                              -->
+                              <CNTNT_DESC Value="{$curElem/CNTNT_DESC/@Value}"/>
+                              <!--<CNSMR_ACTN_TYPE_CODE Value="{$curElem/CNSMR_ACTN_TYPE_CODE/@Value}"/>
+                              <TRGT_PATH_TYPE_CODE Value="{$curElem/TRGT_PATH_TYPE_CODE/@Value}"/>
+                              <TRGT_SUB_PATH_TYPE_CODE Value="{$curElem/TRGT_SUB_PATH_TYPE_CODE/@Value}"/>
+                              <TRGT_CNSMR_SEG_CODE Value="{$curElem/TRGT_CNSMR_SEG_CODE/@Value}"/>
+                              <VIEW_WEB_SITE_URL_TXT Value="{$curElem/VIEW_WEB_SITE_URL_TXT/@Value}"/>-->
+                              <!--<CNTNT_OWNER_NAME Value="{$curElem/CNTNT_OWNER_NAME/@Value}"/>
+                              <CNTNT_PHYS_LOCATION Value="{$curElem/CNTNT_PHYS_LOCATION/@Value}"/>
+                              <CNTNT_ACTIVE_START_DATE Value="{$curElem/CNTNT_ACTIVE_START_DATE/@Value}"/>
+                              -->
+                              <CNTNT_ACTIVE_END_DATE Value="{$curElem/CNTNT_ACTIVE_END_DATE/@Value}"/>
+                              <!--<INCTV_NBR Value="{$curElem/INCTV_NBR/@Value}"/>
+                              <CNTNT_ELEM_TYPE_CODE Value="{$curElem/CNTNT_ELEM_TYPE_CODE/@Value}"/>
+                              -->
+                              <ENTITY_STATE Value="{$curElem/ENTITY_STATE_CNTNT/@Value}"/>
+                              <GBL_CNTNT_ELEM_ID Value="{$curElem/GBL_CNTNT_ELEM_ID/@Value}"/>
+                            </CNTNT_ELEM>
+                          </DO_DB_PERSIST>
+                          <IF_TEST Test="$CntntResponse/VALIDATION_RESULT/ERROR_SEVERITY/@Value='SEVERE_ERROR'">
+                            <THEN/>
+                            <ELSE>
+                              <SET Var="itemNumber" FromValue="{$curElem/NUM_OF_CNTNT_ITEM/@Value}"/>
+                              <IF_TEST Test="strlen(trim($itemNumber)) > 0 and $itemNumber != 0">
+                                <THEN>
+                                  <DO_DB_PERSIST DocumentName="CNTNT_ELEM_ITEM" Source="EXTERNAL" Action="INSERT" ServiceName="BCM_MASTER" AssignToVar="CntntItmResponse" SysLoadId="{$respID/SQL_RESULT/ID/@Value}" SysWfId="XL_WF1234">
+                                    <TO_XML SelectList="$cntntItemList/*"/>
+                                  </DO_DB_PERSIST>
+                                </THEN>
+                              </IF_TEST>
+                              <SET Var="trtNumber" FromValue="{$curElem/NUM_OF_CNTNT_TRT/@Value}"/>
+                              <IF_TEST Test="strlen(trim($trtNumber)) > 0 and $trtNumber != 0">
+                                <THEN>
+                                  <DO_DB_PERSIST DocumentName="CNTNT_ELEM_TRT" Source="EXTERNAL" Action="INSERT" ServiceName="BCM_MASTER" AssignToVar="CntntTrtResponse" SysLoadId="{$respID/SQL_RESULT/ID/@Value}" SysWfId="XL_WF1234">
+                                    <TO_XML SelectList="$cntntTrtList/*"/>
+                                  </DO_DB_PERSIST>
+                                </THEN>
+                              </IF_TEST>
+                            </ELSE>
+                          </IF_TEST>
+                        </THEN>
+                      </IF_TEST>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+        </FOR_EACH>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

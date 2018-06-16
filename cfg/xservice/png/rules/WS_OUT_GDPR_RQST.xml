@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+ 	 Copyright (c) 2009 by Teradata Corporation. 
+	 All Rights Reserved. 
+	 Teradata CONFIDENTIAL AND TRADE SECRET 
+  
+ -->
+  <DEFINE_METHOD Name="WS_OUT_GDPR_RQST" Access="public">
+    <API_DOC>
+      <INPUT>
+      </INPUT>
+      <OUTPUT>
+      </OUTPUT>
+    </API_DOC>
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="getGDPRDetails">
+          <ROOT>
+LOCKING ROW FOR ACCESS
+SEL A.GDPR_CASE_ID, A.GDPR_RQST_STATUS_CD, B.GDPR_RQST_STATUS_NAME
+FROM  GDPR_RQST A,  GDPR_RQST_STATUS B
+WHERE A.GDPR_RQST_STATUS_CD IN ('RP','NM')
+AND A.GDPR_RQST_STATUS_CD=B.GDPR_RQST_STATUS_CD
+    </ROOT>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY AssignToVar="resGDPRDetails" Value="{$getGDPRDetails/@text}" ReturnRowCount="yes" HandleException="true"/>
+        <FOR_EACH CurrentElement="currCaseID" SelectList="$resGDPRDetails/SQL_RESULT">
+          <START_WORKFLOW ServiceName="BCM_MASTER" AssignToVar="startWfResponse" HandleException="true" IsQbEnabled="false" QbIdentifier="WfProcessUI">
+            <TEMPLATE Value="OUTBOUND_WS_OUT_GDPR_RQST"/>
+            <ADDITIONAL_PARAMETERS>
+              <TO_XML SelectList="$currCaseID/*"/>
+            </ADDITIONAL_PARAMETERS>
+          </START_WORKFLOW>
+          <!--If contact us call sucess-->
+          <!--<IF_TEST Test="">
+          <THEN>
+<TO_DOCVAR AssignToVar="updateGDPR">
+<ROOT>
+UPDATE  GDPR_RQST
+SET GDPR_RQST_STATUS_CD='KS',
+GVN_NAME=NULL,
+MID_NAME=NULL,
+FAMLY_NAME=NULL,
+NAME_SUFFX_TXT=NULL,
+EMAIL_ADDR_TXT=NULL,
+ADDR_LINE_1_TXT=NULL,
+ADDR_LINE_2_TXT=NULL,
+ADDR_LINE_3_TXT=NULL,
+CITY_NAME=NULL,
+TERR_NAME=NULL,
+POSTL_AREA_CODE=NULL,
+CNTRY_CODE=NULL,
+FULL_PHONE_NUM=NULL,
+NATIONAL_ID_NBR=NULL
+WHERE GDPR_CASE_ID='{$currCaseID/GDPR_CASE_ID/@Value}'
+AND GDPR_RQST_TYPE_CD IN ('RP','NM')
+</ROOT>
+</TO_DOCVAR>
+          <EXECUTE_SQL_QUERY AssignToVar="resUpdateGDPR"  ReturnRowCount="yes" Value="{$updateGDPR/@text}" HandleException="true"/>
+          </THEN>
+          <ELSE>
+       
+          </ELSE>
+        </IF_TEST>-->
+        </FOR_EACH>
+        
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

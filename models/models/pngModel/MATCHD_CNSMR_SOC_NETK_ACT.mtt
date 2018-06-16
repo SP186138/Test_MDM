@@ -1,0 +1,55 @@
+<document>
+  <documentation>An electronic address where P&amp;G can send messages to the consumer represented by a PERSONA via a SOCIAL NETWORK SERVICE.</documentation>
+  <properties>
+    <property Name="SOCIAL_NETWK_ACCT_ID_VAL" CharSet="UNICODE">
+      <documentation>The value that the SOCIAL NETWORK SERVICE uses to uniquely distinguish the PERSONA SOCIAL NETWORK ACCOUNT from all others in the same service.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="SOCIAL_NETWK_ACCT_ID_VAL" />
+    </property>
+    <property Name="VALID_CNTCT_POINT_IND">
+      <documentation>Indicates whether the contact information is valid. This is set to "valid" when the PERSONA CONTACT POINT is initially recorded. Subsequently if it is found to be invalid (e.g., if direct mail is returned as undeliverable or an email message is bounced), this attribute is changed to "invalid".</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="VALID_CNTCT_POINT_IND" />
+    </property>
+    <property Name="PREF_CNTCT_POINT_IND" Required="true">
+      <documentation>Indicates whether the consumer represented by the PERSONA wants P&amp;G to use the PERSONA CONTACT POINT in lieu of others.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="PREF_CNTCT_POINT_IND" />
+    </property>
+    <property Name="CNTCT_POINT_CATEG_CODE" Required="false">
+      <documentation>e.g.&#xD;
+&#xD;
+      H = Home&#xD;
+      B = Business</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="CNTCT_POINT_CATEG_CODE" />
+    </property>
+    <property Name="MATCHD_CNSMR_PRSNA_ID" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="MATCHD_CNSMR_PRSNA_ID" />
+    </property>
+    <property Name="LEGAL_ENT_NBR" Required="true">
+      <documentation>The number that P&amp;G assigned to uniquely distinguish the LEGAL ENTITY from all others.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="LEGAL_ENT_NBR" />
+    </property>
+  </properties>
+  <keys>
+    <key Active="true" Name="MATCHD_CNSMR_SOC_NW_ACT_UPI" PhysicalName="MATCHD_CNSMR_SOC_NW_ACT_UPI" Kind="PRIMARY">
+      <property Name="LEGAL_ENT_NBR" />
+      <property Name="MATCHD_CNSMR_PRSNA_ID" />
+    </key>
+  </keys>
+  <links>
+    <link Active="true" Name="MATCHD_CNSMR_SOC_NW_ACT_FK" PhysicalName="MATCHD_CNSMR_SOC_NW_ACT_FK">
+      <keymap FromKey="MATCHD_CNSMR_SOC_NW_ACT_UPI" ToPackage="models/pngModel" ToModelUnit="MATCHD_CNSMR_PRSNA.mtt" ToKey="MATCHD_CNSMR_PRSNA_UPI" ReverseLink="true" ReverseLinkName="R_MATCHD_CNSMR_SOC_NT_AC" DeleteRule="RESTRICT">
+        <mapping FromProperty="LEGAL_ENT_NBR" ToProperty="MATCHD_CNSMR_PRSNA_ID" />
+        <mapping FromProperty="MATCHD_CNSMR_PRSNA_ID" ToProperty="LEGAL_ENT_NBR" />
+      </keymap>
+    </link>
+  </links>
+  <docFacets>
+    <mdmWebServiceFacet />
+    <mdmAuthorizationFacet />
+    <mdmSysTableMapFacet TableClass="MASTER" Source="MASTER" InputTable="IN_MATCHD_CNSMR_SOC_NETK_ACT" ErrorTable="ERR_MATCHD_CNSMR_SOC_NETK_ACT" MasterTable="MATCHD_CNSMR_SOC_NETK_ACT" OutputTable="OUT_MATCHD_CNSMR_SOC_NETK_ACT" NetChangeTable="NC_MATCHD_CNSMR_SOC_NETK_ACT" VersionTable="VER_MATCHD_CNSMR_SOC_NETK_ACT" />
+    <miscFacet PhysicalName="MATCHD_CNSMR_SOC_NETK_ACT" Active="true" />
+    <mdmConfigFacet SchemaGen="true" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql />
+</document>
+

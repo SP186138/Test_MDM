@@ -1,0 +1,1005 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" Id="Node5.pgl" version="3">
+  <ui:container id="topContainer" type="tabs" collapsable="true" scrollable="true">
+    <ui:step id="caseReview" displayText="Review Case">
+      
+      <ui:field-group id="caseTab" columns="1">
+       <ui:display-field  displayText="Case Details" style="font-size:11px;font-weight:bold" value=""></ui:display-field>
+       <ui:field-space displayText=""></ui:field-space>
+        <ui:display-field id="GDPR_CASE_ID" displayText="GDPR Case Id" name="GDPR_CASE_ID" dataType="Constant" value="{$root/SQL_RESULT/GDPR_CASE_ID/@Value}"/>
+        
+        <ui:display-field id="GDPR_RQST_TYPE_NAME" displayText="GDPR Request Type Name" name="GDPR_RQST_TYPE_NAME" dataType="Constant" value="{$root/SQL_RESULT/GDPR_RQST_TYPE_NAME/@Value}"/>
+      
+        <ui:display-field displayText="GDPR Status Name" title="GDPR_RQST_STATUS_NAME" id="GDPR_RQST_STATUS_NAME" name="GDPR_RQST_STATUS_NAME" dataType="Constant" value="{$root/SQL_RESULT/GDPR_RQST_STATUS_NAME/@Value}"/>
+        <ui:field-space displayText=""></ui:field-space>
+        <ui:display-field id="GDPR_RQST_CRTN_DATETM" displayText="GDPR Request creation Date" name="GDPR_RQST_CRTN_DATETM" dataType="Constant" value="{$root/SQL_RESULT/GDPR_RQST_CRTN_DATETM/@Value}"/>
+      
+        <ui:display-field id="GDPR_RQST_FULFLMT_DATETM" displayText="GDPR Request fullfillment date" name="GDPR_RQST_FULFLMT_DATETM" dataType="Constant" value="{$root/SQL_RESULT/GDPR_RQST_FULFLMT_DATETM/@Value}"/>
+      
+        <ui:display-field id="GDPR_RQST_IDNTY_VFYD_DATETM" displayText="GDPR Request Identity Verified date" name="GDPR_RQST_IDNTY_VFYD_DATETM" dataType="Constant" value="{$root/SQL_RESULT/GDPR_RQST_IDNTY_VFYD_DATETM/@Value}"/>
+        <ui:field-space displayText=""></ui:field-space>
+        <ui:display-field id="GRS_AUTHENTICATION" name="GRS_AUTHENTICATION" displayText="GRS Authentication"></ui:display-field>
+        <ui:display-field id="DATA_SRCE_NBR" displayText="Data Source Nbr" name="DATA_SRCE_NBR" dataType="Constant" value="{$root/SQL_RESULT/DATA_SRCE_NBR/@Value}"/>
+        <ui:display-field id="REGIS_CNSMR_ID_VAL" displayText="Regis Consumer ID Value" name="REGIS_CNSMR_ID_VAL" dataType="Constant" value="{$root/SQL_RESULT/REGIS_CNSMR_ID_VAL/@Value}"/>
+        <ui:display-field id="MKTNG_PGM_DESC" displayText="Marketing Program Description" name="MKTNG_PGM_DESC" dataType="Constant" value="{$root/SQL_RESULT/MKTNG_PGM_DESC/@Value}"/>
+        <ui:field-space displayText=""></ui:field-space>
+        
+      </ui:field-group>
+ <ui:field-group id="caseTabDetails" columns="2">
+        <ui:display-field  displayText="Request Details" style="font-size:11px;font-weight:bold" value=""></ui:display-field>
+ 
+        <ui:display-field  displayText="1CP Details" style="font-size:11px;font-weight:bold" value="" displayCondition="{DisplaySubjectRights/@Value='true'}"></ui:display-field>
+        <ui:field-space displayText=""></ui:field-space>
+ </ui:field-group>
+
+ <ui:field-group id="caseTab2" columns="2">
+        <ui:display-field id="GVN_NAME" displayText="Given Name" name="GVN_NAME" dataType="Constant" value="{$root/SQL_RESULT/GVN_NAME/@Value}"/>
+    
+        <ui:choose-field displayText="1CP Given Name" name="GVN_NAME" id="GVN_NAME" displayCondition="{DisplayGreen/@Value = 'true'}">
+          <ui:when displayCondition="{DisplayGreen/@Value = 'true'}">
+            <ui:display-field displayText="1CP Given Name" title="GVN_NAME" id="GVN_NAME" name="GVN_NAME" style="background-color:lightgreen"/>
+          </ui:when>
+        </ui:choose-field>
+        <ui:choose-field displayText="1CP Given Name" name="GVN_NAME" id="GVN_NAME" displayCondition="{DisplayRed/@Value = 'true'}">
+          <ui:when displayCondition="{DisplayRed/@Value = 'true'}">
+            <ui:display-field displayText="1CP Given Name" title="GVN_NAME" id="GVN_NAME" name="GVN_NAME" style="background-color:yellow"/>
+          </ui:when>
+        </ui:choose-field>
+        <ui:choose-field displayText="1CP Given Name" name="GVN_NAME" id="GVN_NAME" displayCondition="{DisplayBlank/@Value = 'true'}">
+          <ui:when displayCondition="{DisplayBlank/@Value = 'true'}">
+            <ui:display-field displayText="1CP Given Name" title="GVN_NAME" id="GVN_NAME" name="GVN_NAME" style="background-color:white"/>
+          </ui:when>
+        </ui:choose-field>
+        
+        <ui:display-field id="MID_NAME" displayText="Middle Name" name="MID_NAME" dataType="Constant" value="{$root/SQL_RESULT/MID_NAME/@Value}"/>
+        <ui:choose-field displayText="1CP Middle Name" name="MID_NAME" id="MID_NAME" displayCondition="{DisplayMidGreen/@Value = 'true'}">
+          <ui:when displayCondition="{DisplayMidGreen/@Value = 'true'}">
+            <ui:display-field displayText=" 1CP Middle Name" title="MID_NAME" id="MID_NAME" name="MID_NAME" style="background-color:lightgreen"/>
+          </ui:when>
+        </ui:choose-field>
+        <ui:choose-field displayText="1CP Middle Name" name="MID_NAME" id="MID_NAME" displayCondition="{DisplayMidRed/@Value = 'true'}">
+          <ui:when displayCondition="{DisplayMidRed/@Value = 'true'}">
+            <ui:display-field displayText="1CP Middle Name" title="MID_NAME" id="MID_NAME" name="MID_NAME" style="background-color:yellow"/>
+          </ui:when>
+        </ui:choose-field>
+        <ui:choose-field displayText="1CP Middle Name" name="MID_NAME" id="MID_NAME" displayCondition="{DisplayMidBlank/@Value = 'true'}">
+          <ui:when displayCondition="{DisplayMidBlank/@Value = 'true'}">
+            <ui:display-field displayText="1CP Middle Name" title="MID_NAME" id="MID_NAME" name="MID_NAME" style="background-color:white"/>
+          </ui:when>
+        </ui:choose-field>
+        <ui:display-field id="FAMLY_NAME" displayText="Family Name" name="FAMLY_NAME" dataType="Constant" value="{$root/SQL_RESULT/FAMLY_NAME/@Value}"/>
+        <ui:choose-field displayText="1CP Family Name" name="FAMLY_NAME" id="FAMLY_NAME" displayCondition="{DisplayFamlyGreen/@Value = 'true'}">
+          <ui:when displayCondition="{DisplayFamlyGreen/@Value = 'true'}">
+            <ui:display-field displayText=" 1CP Family Name" title="FAMLY_NAME" id="FAMLY_NAME" name="FAMLY_NAME" style="background-color:lightgreen"/>
+          </ui:when>
+        </ui:choose-field>
+        <ui:choose-field displayText="1CP Family Name" name="FAMLY_NAME" id="FAMLY_NAME" displayCondition="{DisplayFamlyRed/@Value = 'true'}">
+          <ui:when displayCondition="{DisplayFamlyRed/@Value = 'true'}">
+            <ui:display-field displayText="1CP Family Name" title="FAMLY_NAME" id="FAMLY_NAME" name="FAMLY_NAME" style="background-color:yellow"/>
+          </ui:when>
+        </ui:choose-field>
+        <ui:choose-field displayText="1CP Family Name" name="FAMLY_NAME" id="FAMLY_NAME" displayCondition="{DisplayFamlyBlank/@Value = 'true'}">
+          <ui:when displayCondition="{DisplayFamlyBlank/@Value = 'true'}">
+            <ui:display-field displayText="1CP Family Name" title="FAMLY_NAME" id="FAMLY_NAME" name="FAMLY_NAME" style="background-color:white"/>
+          </ui:when>
+        </ui:choose-field>
+        <ui:display-field id="FULL_NAME" displayText="Full Name" name="FULL_NAME" dataType="Constant" value="{$root/SQL_RESULT/FULL_NAME/@Value}"/>
+        <ui:choose-field displayText="1CP Full Name" name="FULL_NAME" id="FULL_NAME" displayCondition="{DisplayFullGreen/@Value = 'true'}">
+<ui:when displayCondition="{DisplayFullGreen/@Value = 'true'}">
+<ui:display-field displayText="1CP Full Name" title="FULL_NAME" id="FULL_NAME" name="FULL_NAME" style="background-color:lightgreen"/>
+</ui:when>
+        </ui:choose-field>
+        <ui:choose-field displayText="1CP Full Name" name="FULL_NAME" id="FULL_NAME" displayCondition="{DisplayFullRed/@Value = 'true'}">
+<ui:when displayCondition="{DisplayFullRed/@Value = 'true'}">
+<ui:display-field displayText="1CP Full Name" title="NATIONAL_ID_NBR" id="FULL_NAME" name="FULL_NAME" style="background-color:yellow"/>
+</ui:when>
+        </ui:choose-field>
+        <ui:choose-field displayText="1CP Full Name" name="FULL_NAME" id="FULL_NAME" displayCondition="{DisplayFullBlank/@Value = 'true'}">
+<ui:when displayCondition="{DisplayFullBlank/@Value = 'true'}">
+<ui:display-field displayText="1CP Full Name" title="FULL_NAME" id="FULL_NAME" name="FULL_NAME" style="background-color:white"/>
+</ui:when>
+        </ui:choose-field>
+        <ui:display-field id="NAME_SUFFX_TXT" displayText="Name Suffix text" name="NAME_SUFFX_TXT" dataType="Constant" value="{$root/SQL_RESULT/NAME_SUFFX_TXT/@Value}"/>
+        <ui:choose-field displayText="1CP Name Suffix text" name="NAME_SUFFX_TXT" id="NAME_SUFFX_TXT" displayCondition="{DisplayNameSuffGreen/@Value = 'true'}">
+<ui:when displayCondition="{DisplayNameSuffGreen/@Value = 'true'}">
+<ui:display-field displayText="1CP Name Suffix text" title="NAME_SUFFX_TXT" id="NAME_SUFFX_TXT" name="NAME_SUFFX_TXT" style="background-color:lightgreen"/>
+</ui:when>
+        </ui:choose-field>
+        <ui:choose-field displayText="1CP Name Suffix text" name="NAME_SUFFX_TXT" id="NAME_SUFFX_TXT" displayCondition="{DisplayNameSuffRed/@Value = 'true'}">
+<ui:when displayCondition="{DisplayNameSuffRed/@Value = 'true'}">
+<ui:display-field displayText="1CP Name Suffix text" title="NAME_SUFFX_TXT" id="NAME_SUFFX_TXT" name="NAME_SUFFX_TXT" style="background-color:yellow"/>
+</ui:when>
+        </ui:choose-field>
+        <ui:choose-field displayText="1CP Name Suffix text" name="NAME_SUFFX_TXT" id="NAME_SUFFX_TXT" displayCondition="{DisplayNameSuffBlank/@Value = 'true'}">
+<ui:when displayCondition="{DisplayNameSuffBlank/@Value = 'true'}">
+<ui:display-field displayText="1CP Name Suffix text" title="NAME_SUFFX_TXT" id="NAME_SUFFX_TXT" name="NAME_SUFFX_TXT" style="background-color:white"/>
+</ui:when>
+        </ui:choose-field>
+        <ui:display-field id="ADDR_LINE_1_TXT" displayText="Address Line 1" name="ADDR_LINE_1_TXT" dataType="Constant" value="{$root/SQL_RESULT/ADDR_LINE_1_TXT/@Value}"/>
+        <ui:choose-field displayText="1CP Address Line 1" name="ADDR_LINE_1_TXT" id="ADDR_LINE_1_TXT" displayCondition="{DisplayAdd1Green/@Value = 'true'}">
+          <ui:when displayCondition="{DisplayAdd1Green/@Value = 'true'}">
+            <ui:display-field displayText="1CP Address Line 1" title="ADDR_LINE_1_TXT" id="ADDR_LINE_1_TXT" name="ADDR_LINE_1_TXT" style="background-color:lightgreen"/>
+          </ui:when>
+        </ui:choose-field>
+        <ui:choose-field displayText="1CP Address Line 1" name="ADDR_LINE_1_TXT" id="ADDR_LINE_1_TXT" displayCondition="{DisplayAdd1Red/@Value = 'true'}">
+          <ui:when displayCondition="{DisplayAdd1Red/@Value = 'true'}">
+            <ui:display-field displayText="1CP Address Line 1" title="ADDR_LINE_1_TXT" id="ADDR_LINE_1_TXT" name="ADDR_LINE_1_TXT" style="background-color:yellow"/>
+          </ui:when>
+        </ui:choose-field>
+        <ui:choose-field displayText="1CP Address Line 1" name="ADDR_LINE_1_TXT" id="ADDR_LINE_1_TXT" displayCondition="{DisplayAdd1Blank/@Value = 'true'}">
+          <ui:when displayCondition="{DisplayAdd1Blank/@Value = 'true'}">
+            <ui:display-field displayText="1CP Address Line 1" title="ADDR_LINE_1_TXT" id="ADDR_LINE_1_TXT" name="ADDR_LINE_1_TXT" style="background-color:white"/>
+          </ui:when>
+        </ui:choose-field>
+        
+        <ui:display-field id="ADDR_LINE_2_TXT" displayText="Address Line 2" name="ADDR_LINE_2_TXT" dataType="Constant" value="{$root/SQL_RESULT/ADDR_LINE_2_TXT/@Value}"/>
+        <ui:choose-field displayText="1CP Address Line 2" name="ADDR_LINE_2_TXT" id="ADDR_LINE_2_TXT" displayCondition="{DisplayAdd2Green/@Value = 'true'}">
+          <ui:when displayCondition="{DisplayAdd2Green/@Value = 'true'}">
+            <ui:display-field displayText="1CP Address Line 2" title="ADDR_LINE_2_TXT" id="ADDR_LINE_2_TXT" name="ADDR_LINE_2_TXT" style="background-color:lightgreen"/>
+          </ui:when>
+        </ui:choose-field>
+        <ui:choose-field displayText="1CP Address Line 2" name="ADDR_LINE_2_TXT" id="ADDR_LINE_2_TXT" displayCondition="{DisplayAdd2Red/@Value = 'true'}">
+          <ui:when displayCondition="{DisplayAdd2Red/@Value = 'true'}">
+            <ui:display-field displayText="1CP Address Line 2" title="ADDR_LINE_2_TXT" id="ADDR_LINE_2_TXT" name="ADDR_LINE_2_TXT" style="background-color:yellow"/>
+          </ui:when>
+        </ui:choose-field>
+        <ui:choose-field displayText="1CP Address Line 2" name="ADDR_LINE_2_TXT" id="ADDR_LINE_2_TXT" displayCondition="{DisplayAdd2Blank/@Value = 'true'}">
+          <ui:when displayCondition="{DisplayAdd2Blank/@Value = 'true'}">
+            <ui:display-field displayText="1CP Address Line 2" title="ADDR_LINE_2_TXT" id="ADDR_LINE_2_TXT" name="ADDR_LINE_2_TXT" style="background-color:white"/>
+          </ui:when>
+        </ui:choose-field>
+        
+        <ui:display-field id="ADDR_LINE_3_TXT" displayText="Address Line 3" name="ADDR_LINE_3_TXT" dataType="Constant" value="{$root/SQL_RESULT/ADDR_LINE_3_TXT/@Value}"/>
+        <ui:choose-field displayText="1CP Address Line 3" name="ADDR_LINE_3_TXT" id="ADDR_LINE_3_TXT" displayCondition="{DisplayAdd3Green/@Value = 'true'}">
+          <ui:when displayCondition="{DisplayAdd3Green/@Value = 'true'}">
+            <ui:display-field displayText="1CP Address Line 3" title="ADDR_LINE_3_TXT" id="ADDR_LINE_3_TXT" name="ADDR_LINE_3_TXT" style="background-color:lightgreen"/>
+          </ui:when>
+        </ui:choose-field>
+        <ui:choose-field displayText="1CP Address Line 3" name="ADDR_LINE_3_TXT" id="ADDR_LINE_3_TXT" displayCondition="{DisplayAdd3Red/@Value = 'true'}">
+          <ui:when displayCondition="{DisplayAdd3Red/@Value = 'true'}">
+            <ui:display-field displayText="1CP Address Line 3" title="ADDR_LINE_3_TXT" id="ADDR_LINE_3_TXT" name="ADDR_LINE_3_TXT" style="background-color:yellow"/>
+          </ui:when>
+        </ui:choose-field>
+        <ui:choose-field displayText="1CP Address Line 3" name="ADDR_LINE_3_TXT" id="ADDR_LINE_3_TXT" displayCondition="{DisplayAdd3Blank/@Value = 'true'}">
+          <ui:when displayCondition="{DisplayAdd3Blank/@Value = 'true'}">
+            <ui:display-field displayText="1CP Address Line 3" title="ADDR_LINE_3_TXT" id="ADDR_LINE_3_TXT" name="ADDR_LINE_3_TXT" style="background-color:white"/>
+          </ui:when>
+        </ui:choose-field>
+        <ui:display-field id="CITY_NAME" displayText="City Name" name="CITY_NAME" dataType="Constant" value="{$root/SQL_RESULT/CITY_NAME/@Value}"/>
+        <ui:choose-field displayText="1CP City Name" name="CITY_NAME" id="CITY_NAME" displayCondition="{DisplayCityGreen/@Value = 'true'}">
+<ui:when displayCondition="{DisplayCityGreen/@Value = 'true'}">
+<ui:display-field displayText="1CP City Name" title="CITY_NAME" id="CITY_NAME" name="CITY_NAME" style="background-color:lightgreen"/>
+</ui:when>
+        </ui:choose-field>
+        <ui:choose-field displayText="1CP City Name" name="CITY_NAME" id="CITY_NAME" displayCondition="{DisplayCityRed/@Value = 'true'}">
+<ui:when displayCondition="{DisplayCityRed/@Value = 'true'}">
+<ui:display-field displayText="1CP City Name" title="CITY_NAME" id="CITY_NAME" name="CITY_NAME" style="background-color:yellow"/>
+</ui:when>
+        </ui:choose-field>
+        <ui:choose-field displayText="1CP City Name" name="CITY_NAME" id="CITY_NAME" displayCondition="{DisplayCityBlank/@Value = 'true'}">
+<ui:when displayCondition="{DisplayCityBlank/@Value = 'true'}">
+<ui:display-field displayText="1CP City Name" title="CITY_NAME" id="CITY_NAME" name="CITY_NAME" style="background-color:white"/>
+</ui:when>
+        </ui:choose-field>
+        <ui:display-field id="POSTL_AREA_CODE" displayText="Postal Area Code" name="POSTL_AREA_CODE" dataType="Constant" value="{$root/SQL_RESULT/POSTL_AREA_CODE/@Value}"/>
+        
+        <ui:choose-field displayText="1CP Postal Area Code" name="POSTL_AREA_CODE" id="POSTL_AREA_CODE" displayCondition="{DisplayPostGreen/@Value = 'true'}">
+<ui:when displayCondition="{DisplayPostGreen/@Value = 'true'}">
+<ui:display-field displayText="1CP Postal Area Code" title="POSTL_AREA_CODE" id="POSTL_AREA_CODE" name="POSTL_AREA_CODE" style="background-color:lightgreen"/>
+</ui:when>
+        </ui:choose-field>
+        <ui:choose-field displayText="1CP Postal Area Code" name="POSTL_AREA_CODE" id="POSTL_AREA_CODE" displayCondition="{DisplayPostRed/@Value = 'true'}">
+<ui:when displayCondition="{DisplayPostRed/@Value = 'true'}">
+<ui:display-field displayText="1CP Postal Area Code" title="POSTL_AREA_CODE" id="POSTL_AREA_CODE" name="POSTL_AREA_CODE" style="background-color:yellow"/>
+</ui:when>
+        </ui:choose-field>
+        <ui:choose-field displayText="1CP Postal Area Code" name="POSTL_AREA_CODE" id="POSTL_AREA_CODE" displayCondition="{DisplayPostBlank/@Value = 'true'}">
+<ui:when displayCondition="{DisplayPostBlank/@Value = 'true'}">
+<ui:display-field displayText="1CP Postal Area Code" title="POSTL_AREA_CODE" id="POSTL_AREA_CODE" name="POSTL_AREA_CODE" style="background-color:white"/>
+</ui:when>
+        </ui:choose-field>
+        
+        <ui:display-field id="TERR_NAME" displayText="Territory Name" name="TERR_NAME" dataType="Constant" value="{$root/SQL_RESULT/TERR_NAME/@Value}"/>
+        
+        <ui:choose-field displayText="1CP Territory Name" name="TERR_NAME" id="TERR_NAME" displayCondition="{DisplayTerrGreen/@Value = 'true'}">
+          <ui:when displayCondition="{DisplayTerrGreen/@Value = 'true'}">
+            <ui:display-field displayText="1CP Territory Name" title="TERR_NAME" id="TERR_NAME" name="TERR_NAME" style="background-color:lightgreen"/>
+          </ui:when>
+        </ui:choose-field>
+        <ui:choose-field displayText="1CP Territory Name" name="TERR_NAME" id="TERR_NAME" displayCondition="{DisplayTerrRed/@Value = 'true'}">
+          <ui:when displayCondition="{DisplayTerrRed/@Value = 'true'}">
+            <ui:display-field displayText="1CP Territory Name" title="TERR_NAME" id="TERR_NAME" name="TERR_NAME" style="background-color:yellow"/>
+          </ui:when>
+        </ui:choose-field>
+        <ui:choose-field displayText="1CP Territory Name" name="TERR_NAME" id="TERR_NAME" displayCondition="{DisplayTerrBlank/@Value = 'true'}">
+          <ui:when displayCondition="{DisplayTerrBlank/@Value = 'true'}">
+            <ui:display-field displayText="1CP Territory Name" title="TERR_NAME" id="TERR_NAME" name="TERR_NAME" style="background-color:white"/>
+          </ui:when>
+        </ui:choose-field>
+        <ui:display-field id="CNTRY_NAME" displayText="Country Name" name="CNTRY_NAME" dataType="Constant" value="{$root/SQL_RESULT/CNTRY_NAME/@Value}"/>
+        <ui:choose-field displayText="1CP Country Name" name="CNTRY_NAME" id="CNTRY_NAME" displayCondition="{DisplayCountryGreen/@Value = 'true'}">
+<ui:when displayCondition="{DisplayCountryGreen/@Value = 'true'}">
+<ui:display-field displayText="1CP Country Name" title="CNTRY_NAME" id="CNTRY_NAME" name="CNTRY_NAME" style="background-color:lightgreen"/>
+</ui:when>
+        </ui:choose-field>
+        <ui:choose-field displayText="1CP Country Name" name="CNTRY_NAME" id="CNTRY_NAME" displayCondition="{DisplayCountryRed/@Value = 'true'}">
+<ui:when displayCondition="{DisplayCountryRed/@Value = 'true'}">
+<ui:display-field displayText="1CP Country Name" title="CNTRY_NAME" id="CNTRY_NAME" name="CNTRY_NAME" style="background-color:yellow"/>
+</ui:when>
+        </ui:choose-field>
+        <ui:choose-field displayText="1CP Country Name" name="CNTRY_NAME" id="CNTRY_NAME" displayCondition="{DisplayCountryBlank/@Value = 'true'}">
+<ui:when displayCondition="{DisplayCountryBlank/@Value = 'true'}">
+<ui:display-field displayText="1CP Country Name" title="CNTRY_NAME" id="CNTRY_NAME" name="CNTRY_NAME" style="background-color:white"/>
+</ui:when>
+        </ui:choose-field>
+        <ui:display-field id="EMAIL_ADDR_TXT" displayText="Email" name="EMAIL_ADDR_TXT" dataType="Constant" value="{$root/SQL_RESULT/EMAIL_ADDR_TXT/@Value}"/>
+        
+        <ui:choose-field displayText="1CP Email" name="EMAIL_ADDR_TXT" id="EMAIL_ADDR_TXT" displayCondition="{DisplayEmailGreen/@Value = 'true'}">
+          <ui:when displayCondition="{DisplayEmailGreen/@Value = 'true'}">
+            <ui:display-field displayText="1CP Email" title="EMAIL_ADDR_TXT" id="EMAIL_ADDR_TXT" name="EMAIL_ADDR_TXT" style="background-color:lightgreen"/>
+          </ui:when>
+        </ui:choose-field>
+        <ui:choose-field displayText="1CP Email" name="EMAIL_ADDR_TXT" id="EMAIL_ADDR_TXT" displayCondition="{DisplayEmailRed/@Value = 'true'}">
+          <ui:when displayCondition="{DisplayEmailRed/@Value = 'true'}">
+            <ui:display-field displayText="1CP Email" title="EMAIL_ADDR_TXT" id="EMAIL_ADDR_TXT" name="EMAIL_ADDR_TXT" style="background-color:yellow"/>
+          </ui:when>
+        </ui:choose-field>
+        <ui:choose-field displayText="1CP Email" name="EMAIL_ADDR_TXT" id="EMAIL_ADDR_TXT" displayCondition="{DisplayEmailBlank/@Value = 'true'}">
+          <ui:when displayCondition="{DisplayEmailBlank/@Value = 'true'}">
+            <ui:display-field displayText="1CP Email" title="EMAIL_ADDR_TXT" id="EMAIL_ADDR_TXT" name="EMAIL_ADDR_TXT" style="background-color:white"/>
+          </ui:when>
+        </ui:choose-field>
+        <ui:display-field id="FULL_PHONE_NUM" displayText="Phone Number" name="FULL_PHONE_NUM" dataType="Constant" value="{$root/SQL_RESULT/FULL_PHONE_NUM/@Value}"/>
+        
+        <ui:choose-field displayText="1CP Phone Number" name="FULL_PHONE_NUM" id="FULL_PHONE_NUM" displayCondition="{DisplayPhoneGreen/@Value = 'true'}">
+          <ui:when displayCondition="{DisplayPhoneGreen/@Value = 'true'}">
+            <ui:display-field displayText="1CP Phone Number" title="FULL_PHONE_NUM" id="FULL_PHONE_NUM" name="FULL_PHONE_NUM" style="background-color:lightgreen"/>
+          </ui:when>
+        </ui:choose-field>
+        <ui:choose-field displayText="1CP Phone Number" name="FULL_PHONE_NUM" id="FULL_PHONE_NUM" displayCondition="{DisplayPhoneRed/@Value = 'true'}">
+          <ui:when displayCondition="{DisplayPhoneRed/@Value = 'true'}">
+            <ui:display-field displayText="1CP Phone Number" title="FULL_PHONE_NUM" id="FULL_PHONE_NUM" name="FULL_PHONE_NUM" style="background-color:yellow"/>
+          </ui:when>
+        </ui:choose-field>
+        <ui:choose-field displayText="1CP Phone Number" name="FULL_PHONE_NUM" id="FULL_PHONE_NUM" displayCondition="{DisplayPhoneBlank/@Value = 'true'}">
+          <ui:when displayCondition="{DisplayPhoneBlank/@Value = 'true'}">
+            <ui:display-field displayText="1CP Phone Number" title="FULL_PHONE_NUM" id="FULL_PHONE_NUM" name="FULL_PHONE_NUM" style="background-color:white"/>
+          </ui:when>
+        </ui:choose-field>
+        <ui:display-field id="NATIONAL_ID_NBR" displayText="National ID Number" name="NATIONAL_ID_NBR" dataType="Constant" value="{$root/SQL_RESULT/NATIONAL_ID_NBR/@Value}"/>
+        <ui:choose-field displayText="1CP National ID Number" name="NATIONAL_ID_NBR" id="NATIONAL_ID_NBR" displayCondition="{DisplayNationIDGreen/@Value = 'true'}">
+<ui:when displayCondition="{DisplayNationIDGreen/@Value = 'true'}">
+<ui:display-field displayText="1CP National ID Number" title="NATIONAL_ID_NBR" id="NATIONAL_ID_NBR" name="NATIONAL_ID_NBR" style="background-color:lightgreen"/>
+</ui:when>
+        </ui:choose-field>
+        <ui:choose-field displayText="1CP National ID Number" name="NATIONAL_ID_NBR" id="NATIONAL_ID_NBR" displayCondition="{DisplayNationIDRed/@Value = 'true'}">
+<ui:when displayCondition="{DisplayNationIDRed/@Value = 'true'}">
+<ui:display-field displayText="1CP National ID Number" title="NATIONAL_ID_NBR" id="NATIONAL_ID_NBR" name="NATIONAL_ID_NBR" style="background-color:yellow"/>
+</ui:when>
+        </ui:choose-field>
+        <ui:choose-field displayText="1CP National ID Number" name="NATIONAL_ID_NBR" id="NATIONAL_ID_NBR" displayCondition="{DisplayNationIDBlank/@Value = 'true'}">
+<ui:when displayCondition="{DisplayNationIDBlank/@Value = 'true'}">
+<ui:display-field displayText="1CP National ID Number" title="NATIONAL_ID_NBR" id="NATIONAL_ID_NBR" name="NATIONAL_ID_NBR" style="background-color:white"/>
+</ui:when>
+        </ui:choose-field>
+      
+      
+     
+       
+       
+      
+        <ui:display-field id="TOTAL_COUNT" name="TOTAL_COUNT" displayText="Total Number of registrations" value="{$root/TOTAL_COUNT/@Value}" displayCondition="{DisplayRegistration/@Value='true'}"/>
+        <ui:display-field id="PROCESS_COUNT" name="PROCESS_COUNT" displayText="Total Number of registrations Processed" value="{$root/PROCESS_COUNT/@Value}" displayCondition="{DisplayRegistration/@Value='true'}"/>
+        <ui:dropdown id="SPECIALIST" name="SPECIALIST" displayText="Specialist Name" selectOne="true" optionSrc="$root/DROP_DOWNS/USER_CODE/user_output_details"/>
+ </ui:field-group>
+      <ui:buttons id="buttons">
+        <!--<ui:button id="UpdateContactUs" displayText="Update Contact Us"/>-->
+        <ui:button id="UpdateContactUs" name="UpdateContactUs" displayText="Update Contact Us" displayCondition="{DisplayContactUs/@Value = 'true'}"/>
+        <ui:divider/>
+        <ui:button id="DataAccessRequest" displayText="Data Access Request" displayCondition="{DisplayDataAccess/@Value = 'true'}"/>
+        <ui:divider/>
+        <ui:button id="DataDeletionRequest" displayText="Data Deletion Request" displayCondition="{DisplayDataDeletion/@Value = 'true'}"/>
+        <ui:button id="AssignToOther" displayText="Assign To Other" />
+        <ui:button id="UploadExcel" displayText="Upload Excel" displayCondition="{DisplayUploadExcel/@Value = 'true'}"/>
+        <ui:button id="Downloadtemplate" name="Downloadtemplate" displayText="Download Template" displayCondition="{DisplayUploadExcel/@Value = 'true'}" onClick="javascript:onClick();"/>
+        <ui:button id="Back" displayText="Return to Case"/>
+        <ui:divider/>
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:container id="outerContainer1" name="outerContainer1" scrollable="true" displayCondition="{DisplayConsumerSearch/@Value = 'true'}" collapsable="true">
+    <ui:step id="outerStep1" name="outerStep1" scrollable="true">
+      <ui:container id="searchContainer">
+        <ui:step id="searchStep">
+          <ui:validation id="validation1" anyFieldIsRequired="true" instructionMessage="For wildcard searches use the * character; e.g. *text*."/>
+          <ui:field-group id="searchFG" displayText="Search Individuals" collapsable="true">
+            <ui:field-group columns="3" id="fieldGroups" select="$this">
+              <ui:dropdown id="LEGAL_ENT_NAME" name="LEGAL_ENT_NAME" displayText="Matched Domain" optionSrc="$root/LEGAL_ENT/LEGAL_ENT_NAME" onChange="javascript:loadProgramList();" disabled="true" displayCondition="{count($root/LEGAL_ENT)>1}" required="true"/>
+              <ui:entry-field id="LEGAL_ENT_NAME" name="LEGAL_ENT_NAME" displayText="Matched Domain" readOnly="true" value="{$root/LEGAL_ENT_NAME/@Value}" displayCondition="{count($root/LEGAL_ENT)&lt;=1}" required="true" editable="false"/>
+              <!--<ui:entry-field id="REGIS_PRSNA_ID" name="REGIS_PRSNA_ID" displayText="Persona ID" onKeyUp="javascript:checkAsterik();" />
+
+<ui:entry-field id="MATCHD_CNSMR_PRSNA_ID" name="MATCHD_CNSMR_PRSNA_ID" displayText="Matched Consumer Persona ID" onKeyUp="javascript:checkAsterik();" />              -->
+              <ui:dropdown id="MKTNG_PGM_NUMBER" name="MKTNG_PGM_NUMBER" displayText="Program Name" optionSrc="$root/MKTNG_PGM/OPTION"/>
+              <ui:entry-field id="REGIS_CNSMR_ID_VAL" name="REGIS_CNSMR_ID_VAL" displayText="Registered Consumer ID" onKeyUp="javascript:checkAsterik();" value="{$root/REGIS_CNSMR_ID_VAL/@Value}"/>
+              <ui:entry-field id="GVN_NAME" name="GVN_NAME" displayText="First Name" value="{$root/GVN_NAME/@Value}"/>
+              <ui:entry-field id="FAMLY_NAME" name="FAMLY_NAME" displayText="Last Name" value="{$root/FAMLY_NAME/@Value}"/>
+              <ui:entry-field id="BRTH_DATE" name="BRTH_DATE" displayText="Date Of Birth(mm/dd/yyyy)" dataType="Date" displayCondition="True"/>
+              <ui:entry-field id="ADDR_LINE_1_TXT" name="ADDR_LINE_1_TXT" displayText="Address Line 1" value="{$root/ADDR_LINE_1_TXT/@Value}"/>
+              <ui:entry-field id="ADDR_LINE_2_TXT" name="ADDR_LINE_2_TXT" displayText="Address Line 2" value="{$root/ADDR_LINE_2_TXT/@Value}"/>
+              <ui:entry-field id="ADDR_LINE_3_TXT" name="ADDR_LINE_3_TXT" displayText="Address Line 3" value="{$root/ADDR_LINE_3_TXT/@Value}"/>
+              <ui:dropdown id="CNTRY_CODE" name="CNTRY_CODE" displayText="Country" selectOne="true" optionSrc="$root/DROP_DOWNS/CNTRY_CODE/cntry_output_details" onChange="javascript:loadStates();"/>
+              <ui:dropdown id="TERR_CODE" name="TERR_CODE" displayText="State" optionSrc="$root/TERR_CODE/OPTION" selectOne="true"/>
+              <ui:entry-field id="CITY_NAME" name="CITY_NAME" displayText="City" value="{$root/CITY_NAME/@Value}"/>
+              <ui:entry-field id="POSTL_AREA_CODE" name="POSTL_AREA_CODE" displayText="Zip Code" value="{$root/POSTL_AREA_CODE/@Value}"/>
+              <ui:entry-field id="EMAIL_ADDR_TXT" name="EMAIL_ADDR_TXT" displayText="Email" value="{$root/EMAIL_ADDR_TXT/@Value}"/>
+              <ui:entry-field id="FULL_PHONE_NUMBER" name="FULL_PHONE_NUMBER" displayText="Phone" value="{$root/FULL_PHONE_NUMBER/@Value}"/>
+              <ui:entry-field id="LYLTY_ACCT_NUM" name="LYLTY_ACCT_NUM" displayText="Loyalty ID" value="{$root/LYLTY_ACCT_NUM/@Value}"/>
+              <ui:entry-field id="NATIONAL_ID_NBR" name="NATIONAL_ID_NBR" displayText="National ID" value="{$root/NATIONAL_ID_NBR/@Value}"/>
+            </ui:field-group>
+          </ui:field-group>
+          <ui:buttons>
+            <ui:button id="RESET" displayText="Reset"/>
+            <ui:button id="SEARCH_INDIVIDUAL" displayText="Search Individuals" emphasized="true" onClick="javascript:onSearchClick();"/>
+            <!--ui:button id="SEARCH_INDIVIDUAL" displayText="Search Individuals" emphasized="true"  /-->
+          </ui:buttons>
+        </ui:step>
+      </ui:container>
+      <!-- changed  by Ruchi maxrow to 50, added match cnsmr persna id as row id-->
+      <ui:table id="searchResultsTable" displayText="Individuals Search Results" selectable="All" rowId="REGIS_PRSNA_ID" rowSrc="$root/RESPONSE/V_REGIS_PRSNA" rowscollapsable="true" scrollable="true" displayTextNoRecords="No Individuals found" maxRows="100" postRowIdAs="selectedIndividualID" doPaging="true" totalRowCount="$root/RESPONSE/@TotalRowCount">
+        <ui:help id="bottomTableHelp"/>
+        <ui:field-group id="tableColumns" select="$root/RESPONSE/*">
+          <!--ui:display-field id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR" displayText="Program ID"/-->
+          <ui:entry-field id="MKTNG_PGM_NAME" name="MKTNG_PGM_NAME" displayText="Program Name" editable="false"/>
+          <ui:entry-field id="REGIS_PRSNA_ID" name="REGIS_PRSNA_ID" displayText="Persona ID" editable="false"/>
+          <!-- added by Ruchi-->
+          <ui:display-field id="REGIS_CNSMR_ID_VAL" name="REGIS_CNSMR_ID_VAL" displayText="Registered Consumer ID" />
+          <ui:entry-field id="HSHLD_PRSNA_ID" name="HSHLD_PRSNA_ID" displayText="House Hold ID" editable="false"/>
+          <ui:entry-field id="MATCHD_CNSMR_PRSNA_ID" name="MATCHD_CNSMR_PRSNA_ID" displayText="Matched Consumer ID" editable="false"/>
+          <ui:entry-field id="PRSNA_STATUS_CODE" name="PRSNA_STATUS_CODE" displayText="Registered Personal Status" editable="false"/>
+          <ui:display-field id="NATIONAL_ID_NBR" name="NATIONAL_ID_NBR" displayText="National Id Number"/>
+          <ui:entry-field id="FULL_NAME" name="FULL_NAME" displayText="Full Name" editable="false"/>
+          <ui:display-field id="EMAIL_ADDR_TXT" name="EMAIL_ADDR_TXT" displayText="Email" />
+          <ui:display-field id="FULL_PHONE_NUM" name="FULL_PHONE_NUM" displayText="Phone" />
+          <ui:display-field id="FULL_ADDRESS" name="FULL_ADDRESS" displayText="Full Address" />
+          <!-- <ui:display-field id="NATIONAL_ID" name="NATIONAL_ID" displayText="National Id" />-->
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button displayText="Select and Return " id="SELECT_RETURN" name="SELECT_RETURN" enabledBySelections="true"/>
+          <!--onClick="javascript:MngOpt();"-->
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:container id="searchDetails" type="tabs" displayText="- Search Results" displayCondition="{DisplaySearchResult/@Value = 'true'}" collapsable="true" width="20">
+    <ui:step id="searchStep">
+      <ui:validation id="validation1" anyFieldIsRequired="true" instructionMessage="Please Check either Process or Do Not Process CheckBox"/>
+      <ui:table displayText="-Search Results" configurable="true" id="searchResults" rowId="PROC_IND#REGIS_ID#MKTNG_PGM_NBR#LEGAL_ENT_NBR#GDPR_SRCH_TYPE_CODE" select="$ROOT" displayTextNoRecords="No Records Found" postRowIdAs="SelectedProcInd" displayCondition="{DisplaySearchResult/@Value = 'true'}" selectable="All" filter="true">
+        <ui:table-row select="DATA"/>
+        <ui:field-group>
+          <!--ui:checkbox name="PROC_IND" id="PROC_IND" displayText="Process Indicator" select="{$root/DATA/PROC_IND/@Value}" sortable="true" /-->
+          <!--ui:radiobutton id="PROCESS" name="PROCESS" displayText="Process"></ui:radiobutton>
+
+    
+
+  <ui:radiobutton id="DONOTPROCESS" name="DONOTPROCESS" displayText="Do Not Process"></ui:radiobutton-->
+          <ui:hidden-field name="PROC_IND" id="PROC_IND" displayText="Process Indicator"/>
+          <ui:hidden-field id="REGIS_ID" name="REGIS_ID" displayText="REGIS_ID"/>
+          <ui:hidden-field id="GDPR_SRCH_TYPE_CODE" name="GDPR_SRCH_TYPE_CODE" displayText="GDPR_SRCH_TYPE_CODE"/>
+          <ui:link-field displayText=" Regis Prsna ID" name="REGIS_PRSNA_ID" id="REGIS_PRSNA_ID" style="font-weight:bold; text-decoration:underline; color:#5060cf" sortable="true">
+            <ui:url page="view.x2ps">
+              <BUTTON_ID select="'REGIS_PRSNA_ID'"/>
+              <MKTNG_PGM_NBR select="MKTNG_PGM_NBR/@Value"/>
+              <REGIS_PRSNA_ID select="REGIS_ID/@Value"/>
+              <LEGAL_ENT_NBR select="LEGAL_ENT_NBR/@Value"/>
+            </ui:url>
+          </ui:link-field>
+          <ui:entry-field displayText="Marketing Program" title="MKTNG_PGM_NBR" id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR" editable="false" sortable="true"/>
+          <ui:entry-field displayText="Legal Entity" title="LEGAL_ENT_NBR" id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR" editable="false" sortable="true"/>
+          <ui:entry-field displayText="GDPR Search Type Name" title="GDPR_SRCH_TYPE_NAME" id="GDPR_SRCH_TYPE_NAME" name="GDPR_SRCH_TYPE_NAME" editable="false" sortable="true"/>
+          <!--ui:checkbox name="PROC_IND" id="PROC_IND" displayText="Process Indicator" select="{$root/DATA/PROC_IND/@Value}" sortable="true" /-->
+          <ui:checkbox displayText="Process" id="PROCESS" name="PROCESS" select="{$root/DATA/PROCESS/@Value}" onClick="javascript:on_ProcessClk();"/>
+          <ui:checkbox displayText="Do Not Process" id="DO_NOT_PROCESS" name="DO_NOT_PROCESS" select="{$root/DATA/DO_NOT_PROCESS/@Value}" onClick="javascript:on_DoNotProcessClk();"/>
+          <ui:hidden-field displayText="Abc" name="ABC" id="ABC"/>
+          <ui:hidden-field displayText="Xyz" name="XYZ" id="XYZ"/>
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button displayText="Process" id="processButton" displayCondition="{DisplayProcess/@Value = 'true'}" onClick="javascript:on_processButton();"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:container id="BottomContainer" displayText="Subject Rights History" displayCondition="{DisplaySubjectRights/@Value='true'}" collapsable="true">
+    <ui:step id="caseReview1">
+      <ui:table displayText="Subject Rights History" configurable="true" id="subjectresults" displayTextNoRecords="No Records Found" rowId="GDPR_CASE_ID" postRowIdAs="SelectedSuject" displayCondition="{DisplaySubjectRights/@Value='true'}" select="$ROOT">
+        <ui:table-row select="HISTORY"/>
+        <ui:field-group>
+          <ui:entry-field id="GDPR_CASE_ID" displayText="GDPR Case Id" name="GDPR_CASE_ID" editable="false"/>
+          <ui:entry-field id="GVN_NAME" displayText="Given Name" name="GVN_NAME" editable="false"/>
+          <ui:entry-field id="MID_NAME" displayText="Middle Name" name="MID_NAME" editable="false"/>
+          <ui:entry-field id="FULL_NAME" displayText="Full Name" name="FULL_NAME" editable="false"/>
+          <ui:display-field id="FAMLY_NAME" displayText="Family Name" name="FAMLY_NAME"/>
+          <ui:display-field id="ADDR_LINE_1_TXT" displayText="Address Line 1" name="ADDR_LINE_1_TXT"/>
+          <ui:display-field id="ADDR_LINE_2_TXT" displayText="Address Line 2" name="ADDR_LINE_2_TXT"/>
+          <ui:display-field id="ADDR_LINE_3_TXT" displayText="Address Line 3" name="ADDR_LINE_3_TXT"/>
+          <ui:display-field id="CITY_NAME" displayText="City" name="CITY_NAME"/>
+          <ui:display-field id="TERR_NAME" displayText="Territory Name" name="TERR_NAME"/>
+          <ui:display-field id="POSTL_AREA_CODE" displayText="Postal Area Code" name="POSTL_AREA_CODE"/>
+          <ui:display-field id="GDPR_RQST_CRTN_DATETM" displayText="GDPR Request creation Date" name="GDPR_RQST_CRTN_DATETM"/>
+          <ui:display-field id="EMAIL_ADDR_TXT" displayText="Email" name="EMAIL_ADDR_TXT"/>
+          <ui:display-field id="FULL_PHONE_NUM" displayText="Phone" name="FULL_PHONE_NUM"/>
+          <ui:display-field id="DATA_SRCE_NBR" displayText="Data Source Nbr" name="DATA_SRCE_NBR"/>
+          <ui:display-field id="NAME_SUFFX_TXT" displayText="Name Suffix text" name="NAME_SUFFX_TXT"/>
+          <ui:display-field id="REGIS_CNSMR_ID_VAL" displayText="Regis Consumer ID Value" name="REGIS_CNSMR_ID_VAL"/>
+          <ui:display-field id="NATIONAL_ID_NBR" displayText="National ID Number" name="NATIONAL_ID_NBR"/>
+          <ui:display-field id="GDPR_RQST_FULFLMT_DATETM" displayText="GDPR Request fullfilment date" name="GDPR_RQST_FULFLMT_DATETM"/>
+          <ui:display-field id="GDPR_RQST_IDNTY_VFYD_DATETM" displayText="GDPR Request Identity Verified date" name="GDPR_RQST_IDNTY_VFYD_DATETM"/>
+          <ui:display-field id="GDPR_RQST_TYPE_NAME" displayText="GDPR Request Type Name" name="GDPR_RQST_TYPE_NAME"/>
+          <ui:display-field displayText="GDPR Status Name" title="GDPR_RQST_STATUS_NAME" id="GDPR_RQST_STATUS_NAME" name="GDPR_RQST_STATUS_NAME"/>
+          <ui:display-field id="CNTRY_CODE" displayText="Country Name" name="CNTRY_CODE"/>
+          <ui:display-field id="MKTNG_PGM_DESC" displayText="Marketing Program Description" name="MKTNG_PGM_DESC"/>
+          <!--ui:display-field id="TEMPORAL_TIME" displayText="Temporal Time" name="TEMPORAL_TIME" /-->
+        </ui:field-group>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>function IEEnterKey()
+
+{
+
+if( window.event.keyCode == 13)
+
+{
+
+var ele=document.form.CNTRY_CODE;
+
+for ( var x =0 ; x &lt; ele.length; x++ ) {
+
+if(ele.value!=''){
+
+if ( ele.options[ x ].selected != ele.options[ x ].defaultSelected ){
+
+return true;
+
+}
+
+}
+
+}
+
+onSearchClick();
+
+}
+
+}
+
+browserName = navigator.appName;
+
+function NetEnterKey(e)
+
+{
+
+key = e.which;
+
+if(key == 13)
+
+{
+
+onSearchClick();
+
+}
+
+}
+
+if (browserName == &quot;Netscape&quot;)
+
+{
+
+document.captureEvents(Event.KEYPRESS);
+
+document.onkeypress=NetEnterKey;
+
+}
+
+else
+
+{
+
+if (browserName.indexOf(&quot;Explorer&quot;) >= 0)
+
+{
+
+document.onkeypress=IEEnterKey;
+
+}
+
+}
+
+function onSearchClick()
+
+{
+
+
+
+var validate=doValidateForm();
+
+if(validate){
+
+
+
+document.form.BUTTON_ID.value = 'SEARCH_INDIVIDUAL';
+
+document.form.action = 'view.x2ps';
+
+document.form.submit();
+
+grayOut(true);
+
+//return false;
+
+}
+
+else
+
+{
+
+return ;
+
+}
+
+}
+
+function doValidateForm(){
+    
+
+
+if((document.form.GVN_NAME.value==''  &amp;&amp; document.form.FAMLY_NAME.value=='')&amp;&amp;(document.form.EMAIL_ADDR_TXT.value=='' &amp;&amp; document.form.FULL_PHONE_NUMBER.value=='')&amp;&amp;(document.form.ADDR_LINE_1_TXT.value=='' &amp;&amp; document.form.ADDR_LINE_2_TXT.value=='' &amp;&amp; document.form.ADDR_LINE_3_TXT.value=='' &amp;&amp; document.form.CITY_NAME.value=='' &amp;&amp; document.form.TERR_CODE.value=='' &amp;&amp; document.form.CNTRY_CODE.value=='' &amp;&amp; document.form.POSTL_AREA_CODE.value=='')&amp;&amp; (document.form.REGIS_CNSMR_ID_VAL.value=='')&amp;&amp; (document.form.LYLTY_ACCT_NUM.value=='') &amp;&amp; (document.form.NATIONAL_ID_NBR.value==''))
+
+
+//if((document.form.GVN_NAME.value==''  &amp;&amp; document.form.FAMLY_NAME.value=='')&amp;&amp;(document.form.EMAIL_ADDR_TXT.value=='' &amp;&amp; document.form.FULL_PHONE_NUMBER.value=='')&amp;&amp;(document.form.ADDR_LINE_1_TXT.value=='' &amp;&amp; document.form.ADDR_LINE_2_TXT.value=='' &amp;&amp; document.form.ADDR_LINE_3_TXT.value=='' &amp;&amp; document.form.CITY_NAME.value=='' &amp;&amp; document.form.TERR_CODE.value=='' &amp;&amp; document.form.CNTRY_CODE.value=='' &amp;&amp; document.form.POSTL_AREA_CODE.value=='')&amp;&amp; (document.form.REGIS_CNSMR_ID_VAL.value=='')&amp;&amp; (document.form.LYLTY_ACCT_NUM.value==''))
+
+{
+
+core_alert('Please enter either of Registered Consumer ID, First Name, Last Name, any Address field, Phone, Email, Loyalty ID.');
+
+return false;
+
+}
+
+    else
+
+    if((document.form.CNTRY_CODE.value!=&quot;&quot; &amp;&amp; document.form.TERR_CODE.value!=&quot;&quot;) &amp;&amp; (document.form.ADDR_LINE_1_TXT.value==&quot;&quot; &amp;&amp; document.form.ADDR_LINE_2_TXT.value==&quot;&quot; &amp;&amp; document.form.ADDR_LINE_3_TXT.value==&quot;&quot; &amp;&amp; document.form.CITY_NAME.value==&quot;&quot; &amp;&amp; document.form.POSTL_AREA_CODE.value==&quot;&quot;))
+
+    {
+
+    core_alert(&quot;Please enter either of address 1, address 2,address 3, city,pincode&quot;);
+
+    return false;
+
+    }
+
+else if(document.form.REGIS_CNSMR_ID_VAL.value.charAt(document.form.REGIS_CNSMR_ID_VAL.value.length-1)=='*'){
+
+core_alert('Wildcard search(*) is not allowed for numbers.');
+
+return false;
+
+}
+
+else if(document.form.BRTH_DATE.value!=''){
+
+var isdateformatvalid=validateDate(document.form.BRTH_DATE);
+
+if(!isdateformatvalid)
+
+return false;
+
+else
+
+return true;
+
+}else  return true;
+
+}
+
+function checkAsterik()
+
+{
+
+if(document.form.REGIS_CNSMR_ID_VAL.value.charAt(document.form.REGIS_CNSMR_ID_VAL.value.length-1)=='*'){
+
+core_alert('Wildcard search(*) is not allowed for numbers.');
+
+}
+
+return;
+
+}
+
+
+
+function checkDate(fld) {
+
+var mo, day, yr;
+
+var entry = fld.value;
+
+var re = /\b\d{1,2}[\/-]\d{1,2}[\/-]\d{4}\b/;
+
+if (re.test(entry)) {
+
+var delimChar = (entry.indexOf(&quot;/&quot;) != -1) ? &quot;/&quot; : &quot;-&quot;;
+
+var delim1 = entry.indexOf(delimChar);
+
+var delim2 = entry.lastIndexOf(delimChar);
+
+mo = parseInt(entry.substring(0, delim1), 10);
+
+day = parseInt(entry.substring(delim1+1, delim2), 10);
+
+yr = parseInt(entry.substring(delim2+1), 10);
+
+var testDate = new Date(yr, mo-1, day);
+
+if (testDate.getDate() == day) {
+
+if (testDate.getMonth() + 1 == mo) {
+
+if (testDate.getFullYear() == yr) {
+
+return true;
+
+} else {
+
+core_alert(&quot;There is a problem with the year entry.&quot;);
+
+}
+
+} else {
+
+core_alert(&quot;There is a problem with the month entry.&quot;);
+
+}
+
+} else {
+
+core_alert(&quot;There is a problem with the date entry.&quot;);
+
+}
+
+} else {
+
+core_alert(&quot;Incorrect date format. Enter as mm/dd/yyyy.&quot;);
+
+}
+
+return false;
+
+}
+
+function validateDate(fld) {
+
+if (!checkDate(fld)) {
+
+// focus if validation fails
+
+fld.focus();
+
+fld.select();
+
+return false;
+
+}
+
+else return true;
+
+}
+
+function loadStates(){
+
+document.form.BUTTON_ID.value = 'LOAD_STATES';
+
+document.form.action = 'view.x2ps';
+
+document.form.submit();
+
+}    
+
+function loadProgramList(){
+
+document.form.BUTTON_ID.value = 'LOAD_PROGRAM_LIST';
+
+document.form.action = 'view.x2ps';
+
+document.form.submit();
+
+}
+
+    function MngOpt()
+
+    {
+
+document.form.BUTTON_ID.value = 'ManageOpts';
+
+document.form.action = 'view.x2ps';
+
+document.form.submit();
+
+    }
+function onClick()
+{
+  
+togglenav();
+onLoadSuper();
+
+//alert('abc');
+window.location.href ='download1.jsp?file_name=GDPR_SRCH_RSLTTemplate.xlsx';
+// alert('print'+window.location.href);
+
+onResize();
+}
+    
+    function Colour()
+    {
+if (document.form.GVN_NAME.value== document.form.GVN_NAME.value)
+    
+    {
+var style = &quot;table,th {background-color: #000000;color:#ffffff;}&quot;;
+    }
+    else 
+    {
+var style = &quot;table,th {background-color: #000000;color:#ffffff;}&quot;;
+    }
+    }
+function onEdit(action)
+{
+var vercd=document.getElementsByName('FS_HIER_VERS_CD')[0].value;
+if(vercd=='PRIOR' )
+{
+core_alert(&quot;You are in PRIOR and cannot change the records&quot;);
+}
+else
+{
+document.form.BUTTON_ID.value=action;
+document.form.action = 'view.x2ps';
+document.form.submit();
+}
+}
+    
+function on_processButton()
+
+{
+
+
+var sArrLength=document.form.SelectedProcInd.length;
+
+var isError='false';
+
+
+
+if(sArrLength==undefined)
+
+{
+
+
+
+if(document.form.PROCESS.checked==false &amp;&amp; document.form.DO_NOT_PROCESS.checked==false || document.form.PROCESS.checked==true &amp;&amp; document.form.DO_NOT_PROCESS.checked==true )
+
+ 
+
+{
+
+
+
+isError='true';
+
+core_alert('Please check Either Process OR Do Not Process Checkbox to Proceed');
+
+}
+
+}
+
+else{
+
+var checkedRecordCount=0;
+
+for(var iCount=0;iCount&lt;(sArrLength);iCount++){
+
+if(document.form.SelectedProcInd[iCount].checked==true){
+
+if(document.form.PROCESS[(iCount)].checked==false &amp;&amp; document.form.DO_NOT_PROCESS[(iCount)].checked==false || document.form.PROCESS[(iCount)].checked==true &amp;&amp; document.form.DO_NOT_PROCESS[(iCount)].checked==true){
+
+
+
+
+
+isError='true';
+
+
+
+core_alert('Please check Either Process OR Do Not Process Checkbox to Proceed');
+
+break;
+
+}
+
+}
+
+}
+
+}
+
+if(isError=='false')
+
+{
+
+var bIsValid = true;
+
+document.form.SUBMIT_AS_XML.value = 'false';
+
+
+
+bIsValid = (isValid_searchResults());
+
+ 
+
+if( bIsValid == false )
+
+{
+
+validation_alert('searchResults');
+
+}
+
+if ( bIsValid == true)
+
+{
+
+disableButtons();
+
+trapExcelPivotChanges();
+
+document.form.BUTTON_ID.value = 'processButton';
+
+document.form.action = 'view.x2ps';
+
+document.form.submit();
+
+grayOut(true);
+
+}
+
+
+onResize();
+return;
+
+}
+
+}
+function on_ProcessClk()
+{
+var sArrLength=document.form.SelectedProcInd.length;
+
+if(sArrLength==undefined)
+    {
+	
+
+if(document.form.PROCESS.checked==false  )
+
+{
+
+
+document.form.ABC.value=&quot;Not_SELECTED&quot;;
+
+
+
+
+
+}
+else
+	
+{
+    
+document.form.ABC.value=&quot;SELECTED&quot;;
+
+}
+    }
+else {
+var checkedRecordCount=0;
+var sArrLength=document.form.SelectedProcInd.length;
+
+
+for(var iCount=0;iCount&lt;(sArrLength);iCount++){
+
+
+    
+if(document.form.PROCESS[(iCount)].checked==false  )
+
+{
+
+
+document.form.ABC[(iCount)].value=&quot;Not_SELECTED&quot;;
+
+
+
+
+
+}
+else
+	
+{
+    
+document.form.ABC[(iCount)].value=&quot;SELECTED&quot;;
+
+}
+
+//}
+}
+
+}
+}
+function on_DoNotProcessClk()
+{
+    
+var sArrLength=document.form.SelectedProcInd.length;
+
+if(sArrLength==undefined)
+{
+	
+
+if(document.form.DO_NOT_PROCESS.checked==false  )
+
+{
+
+
+document.form.XYZ.value=&quot;Not_SELECTED&quot;;
+
+
+
+
+
+}
+else
+	
+{
+    
+document.form.XYZ.value=&quot;SELECTED&quot;;
+
+}
+}
+else {
+var checkedRecordCount=0;
+var sArrLength=document.form.SelectedProcInd.length;
+
+for(var iCount=0;iCount&lt;(sArrLength);iCount++){
+
+
+    
+if(document.form.DO_NOT_PROCESS[(iCount)].checked==false  )
+
+{
+
+
+document.form.XYZ[(iCount)].value=&quot;Not_SELECTED&quot;;
+
+
+
+
+
+}
+else
+	
+{
+    
+document.form.XYZ[(iCount)].value=&quot;SELECTED&quot;;
+
+}
+
+//}
+}
+}
+
+}
+
+      
+  </ui:script>
+</ui:page-group>

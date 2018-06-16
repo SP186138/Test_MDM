@@ -1,0 +1,165 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" Id="TaskDetails.pgl">
+  <ui:container id="taskdetailscontainer" inner="false" scrollable="true">
+    <ui:help displayPage="{$pages:WfTaskDetailsHelp}"/>
+    <ui:step id="taskdetailsstep" displayText="Task Details">
+      <ui:container id="detailsContainer" inner="true">
+        <ui:step id="detailsStep">
+          <ui:field-group id="alert_fields" columns="4">
+            <ui:image src="/bpi_check.gif" id="AlertGreenIconAjax"/>
+            <ui:image src="/cancel.gif" id="AlertRedIconAjax"/>
+            <ui:display-field id="alertValue" value=""/>
+          </ui:field-group>
+          <ui:field-group id="hiddenFileds">
+            <ui:hidden-field id="alertStatus" name="alertStatus" value="{$root/alert_status/@Value}"/>
+            <ui:hidden-field id="alertMsg" name="alertMsg" value="{$root/alert_msg/@Value}"/>
+            <ui:hidden-field id="WfTaskNode" name="WfTaskNode" value="{$root/task_node/@Value}"/>
+            <ui:hidden-field id="WfProcessId" name="WfProcessId" value="{$root/p_id/@Value}"/>
+            <ui:hidden-field id="WfProcessName" name="WfProcessName"  value="{$root/p_name/@Value}"/>
+            <ui:hidden-field id="WfTaskId" name="WfTaskId" value="{$root/t_id/@Value}"/>
+            <ui:hidden-field id="WfUserId" name="WfUserId" value="{$root/user_id/@Value}"/>
+          </ui:field-group>
+          <ui:field-group id="taskdetailsmeta">
+            <ui:display-field id="WfProcessIdDisp" name="WfProcessIdDisp" displayText="Workflow Id" value="{$root/p_id/@Value}"/>
+            <ui:display-field id="WfTaskIdDisp" name="WfTaskIdDisp" displayText="Instance Id" value="{$root/t_id/@Value}"/>
+            <ui:field-space/>
+          </ui:field-group>
+        </ui:step>
+      </ui:container>
+      <ui:table id="matchMapDetailTbl" rowId="Task_Node" postRowIdAs="SELECTED_TASK_NODE" selectable="{$root/Table_Selectable/@Value}" select="$root/TASK_DETAILS/Wf_Process_Tasks" rowSrc="$root/TASK_DETAILS/Wf_Process_Tasks" displayText="{concat($root/Task_Status/@Value,' Tasks for ',$root/user_id/@Value)}" displayTextNoRecords="No Task Found" maxRows="-1" collapsable="false" title="User Task Inbox" scrollable="true">
+        <ui:field-group>
+          <ui:hidden-field id="Task_Id" name="Task_Id" displayText="Task Id"/>
+          <ui:hidden-field id="Locked_By" name="Locked_By"/>
+          <ui:display-field id="Task_Node" name="Task_Node" displayText="Task Node"/>
+          <ui:display-field id="Node_Status" name="Status" displayText="Status"/>
+          <ui:display-field id="Assigned_To" name="Assigned_To" displayText="Assigned To"/>
+          <ui:display-field id="Assigned_By" name="Assigned_By" displayText="Assigned By"/>
+          <ui:display-field id="Locked_By" name="Locked_By" displayText="Locked By"/>
+          <ui:display-field id="Assigned_Date" name="Assigned_Date" dataType="Date" displayText="Assigned Date"/>
+          <ui:display-field id="Completion_Date" name="Completion_Date" dataType="Date" displayText="Completion Date"/>
+          <ui:display-field id="Message" name="Message" displayText="Message"/>
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button id="Back" name="Back" displayText="Back"/>
+          <ui:divider displayCondition="{$root/Task_Status/@Value!='Completed'}"/>
+          <!--ui:button id="UnlockTask" name="UnlockTask" displayText="Unlock" enabledBySelections="true" displayCondition="{$root/Task_Status/@Value!='Completed'}"/>
+          <ui:divider displayCondition="{$root/Task_Status/@Value!='Completed'}"/-->
+          <ui:button id="LockTask" name="LockTask" displayText="Assign To Me" enabledBySelections="true"  displayCondition="{$root/Task_Status/@Value!='Completed'}"/>
+          <ui:divider displayCondition="{$root/Task_Status/@Value!='Completed'}"/>
+          <ui:button id="Reassign" name="Reassign" displayText="Reassign" enabledBySelections="true" displayCondition="{$root/Task_Status/@Value!='Completed'}"/>
+          <ui:divider displayCondition="{$root/Task_Status/@Value!='Completed'}"/>
+          <ui:button id="MarkComplete" name="MarkComplete" displayText="Mark Complete" enabledBySelections="true" emphasized="true" displayCondition="{$root/Task_Status/@Value!='Completed'}"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+function onLoad()
+{
+	jQuery.each( $('td[id="Message_td"]') , function( i, eachNode ) {
+		$(eachNode).html($(eachNode).text())
+	});
+	onLoadSuper();
+    var alertStatus=document.getElementById('alertStatus').value;
+	var alertMsg=document.getElementById('alertMsg').value;
+    if(alertStatus==='Success')
+    {
+		showSuccessAlertFields(alertMsg);
+    }
+    else if(alertStatus==='Failure'){
+		showFailureAlertFields(alertMsg);
+    }
+    else{
+		hideAlertFields();
+    }
+	onResize();
+}
+function hideAlertFields()
+{
+toggleField('AlertGreenIconAjax','hide');
+toggleField('AlertRedIconAjax','hide');
+toggleField('alertValue_td','hide');
+}
+function showSuccessAlertFields(msg)
+{
+toggleField('AlertGreenIconAjax','show');
+toggleField('AlertRedIconAjax','hide');
+toggleField('alertValue_td','show');
+document.getElementById('alertValue_td').innerHTML=msg;
+}
+function showFailureAlertFields(msg)
+{
+toggleField('AlertGreenIconAjax','hide');
+toggleField('AlertRedIconAjax','show');
+toggleField('alertValue_td','show');
+document.getElementById('alertValue_td').innerHTML=msg;
+}
+function toggleField(id,state)
+{
+	fieldCell  = document.getElementById(id);
+	fieldRow = fieldCell.parentNode;
+	toggleItemVisibility(fieldRow, state);
+	var i = document.getElementById(id);
+	if (state=='hide')
+	{
+		i.disabled = true;
+	}
+	else
+	{
+		i.disabled = false;
+		i.enabled = true;
+	}
+}
+    
+function  pglToggleButton(buttonId,hasNoSelections){
+  	if(hasNoSelections == true)
+	{
+		tduiToggleButtonState(buttonId, 'disabled');
+	}
+	else
+	{
+		var type = btnTypes[buttonId];
+		var elementsLen = document.form.elements.length;
+		var checkboxElem = document.getElementsByName('SELECTED_TASK_NODE');
+		var index = 0;
+		var hiddenValue='';
+		for(var count=0;count&lt;checkboxElem.length;count++)
+		{
+			if(checkboxElem[count].checked)
+			{
+				break;
+			}
+		}
+		index=count;
+		var hiddenElem = document.getElementsByName('Locked_By');
+		var lockedByUser=hiddenElem[index].value;
+		if( !lockedByUser)
+		{
+			if(buttonId == 'MarkComplete')
+			{
+				tduiToggleButtonState(buttonId, 'disabled');
+			}
+			else
+			{
+				tduiToggleButtonState(buttonId, 'enabled',type);
+			}
+		}
+		else
+		{
+			var loggedInUser =document.getElementById('WfUserId').value;
+    		if(loggedInUser !== lockedByUser &amp;&amp; buttonId == 'MarkComplete')
+    		{
+					tduiToggleButtonState(buttonId, 'disabled');
+		    }	
+    		else{
+					if(buttonId == 'LockTask')
+					{
+						tduiToggleButtonState(buttonId, 'disabled');
+					}
+    				else
+						tduiToggleButtonState(buttonId, 'enabled',type);
+    		}
+		}
+	}
+}
+  </ui:script>
+</ui:page-group>

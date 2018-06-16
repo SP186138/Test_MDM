@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="4" ShowInBreadCrumbs="true" Version="1.0" Name="GDPR_RegisPRSNA" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="GDPR_RegisPRSNA"/>
+  <nodes>
+    <start Name="start">
+      <actions>
+        <action/>
+      </actions>
+      <next_nodes>
+        <next_node Name="GDPR_RegisPRSNATab"/>
+      </next_nodes>
+    </start>
+    <done Name="done2">
+      <actions/>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="GDPR_RegisPRSNATab" ShowInBreadCrumbs="HIDE" Template="Node3.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="getRegistrations">
+            <ROOT>
+				LOCKING  ROW FOR ACCESS
+				SELECT    DISTINCT A.REGIS_PRSNA_ID, A.MKTNG_PGM_NBR, A.LEGAL_ENT_NBR, A.GVN_NAME,
+				B.EMAIL_ADDR_TXT, C.FULL_PHONE_NUM, D.LEGAL_ENT_NAME, E.MKTNG_PGM_NAME
+				,F.ADDR_LINE_1_TXT
+				, F.ADDR_LINE_2_TXT
+				, F.ADDR_LINE_3_TXT
+				, F.CITY_NAME
+				, F.POSTL_AREA_CODE
+				, F.TERR_NAME
+				, F.CNTRY_CODE
+				FROM      REGIS_PRSNA A LEFT JOIN REGIS_PRSNA_EMAIL_ADDR B
+				ON           A.REGIS_PRSNA_ID=B.REGIS_PRSNA_ID
+				AND A.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR
+				LEFT JOIN REGIS_PRSNA_PHONE C
+				ON           A.REGIS_PRSNA_ID=C.REGIS_PRSNA_ID
+				AND A.MKTNG_PGM_NBR=C.MKTNG_PGM_NBR
+				LEFT JOIN REGIS_PRSNA_POSTL_ADDR F
+				ON           A.REGIS_PRSNA_ID=F.REGIS_PRSNA_ID
+				AND A.MKTNG_PGM_NBR=F.MKTNG_PGM_NBR
+				LEFT JOIN LEGAL_ENT D
+				ON           A.LEGAL_ENT_NBR=D.LEGAL_ENT_NBR
+				LEFT JOIN MKTNG_PGM E
+				ON           A.MKTNG_PGM_NBR=E.MKTNG_PGM_NBR
+				WHERE A.REGIS_PRSNA_ID='{$thisParam/REGIS_PRSNA_ID/@Value}'
+				AND A.LEGAL_ENT_NBR='{$thisParam/LEGAL_ENT_NBR/@Value}'
+				AND A.MKTNG_PGM_NBR='{$thisParam/MKTNG_PGM_NBR/@Value}'
+		 </ROOT>
+          </TO_DOCVAR>
+          <EXECUTE_SQL_QUERY AssignToVar="resRegistrations" ReturnRowCount="yes" Value="{$getRegistrations/@text}" HandleException="true"/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <root/>
+          </TO_DOCVAR>
+          <FOR_EACH CurrentElement="currRegis" SelectList="$resRegistrations/SQL_RESULT">
+            <APPEND_TO_XML SelectList="$pglFormInput">
+              <DATA>
+                <TO_XML SelectList="$currRegis/*"/>
+              </DATA>
+            </APPEND_TO_XML>
+          </FOR_EACH>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <if_cond Value="$userAction ='reviewCaseButton'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done2" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <start font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="131,53" size="732,526">
+        <iconProps iconfile="z1start.gif"/>
+      </start>
+      <done2 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="351,59">
+        <iconProps iconfile="z1end.gif"/>
+      </done2>
+      <GDPR_RegisPRSNATab font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="242,63" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </GDPR_RegisPRSNATab>
+    </mgcnodes>
+    <mgcconnectors>
+      <start>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="176,75" endpoint="242,85" ctrlRect1="223,73,4,4" ctrlRect2="190,83,4,4"/>
+      </start>
+      <GDPR_RegisPRSNATab>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="280,78" endpoint="356,75" ctrlRect1="335,76,4,4" ctrlRect2="297,73,4,4"/>
+      </GDPR_RegisPRSNATab>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions/>
+    <post_actions/>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

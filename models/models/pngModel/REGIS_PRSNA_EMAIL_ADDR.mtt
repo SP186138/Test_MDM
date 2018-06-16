@@ -1,0 +1,103 @@
+<document>
+  <documentation>An electronic address where P&amp;G can send messages to the consumer represented by a PERSONA via an email system.</documentation>
+  <properties>
+    <property Name="EMAIL_ADDR_TXT" Required="false" CharSet="UNICODE">
+      <documentation>The complete text of the email address, including the @ sign and the domain name that follows it.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="EMAIL_ADDR_TXT" />
+    </property>
+    <property Name="EMAIL_FORMT_CODE">
+      <documentation>The code that P&amp;G assigned to uniquely distinguish the EMAIL FORMAT from all others.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="EMAIL_FORMT_CODE" />
+    </property>
+    <property Name="VALID_CNTCT_POINT_IND" Required="true">
+      <documentation>Indicates whether the contact information is valid. This is set to "valid" when the PERSONA CONTACT POINT is initially recorded. Subsequently if it is found to be invalid (e.g., if direct mail is returned as undeliverable or an email message is bounced), this attribute is changed to "invalid".</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="VALID_CNTCT_POINT_IND" />
+    </property>
+    <property Name="PREF_CNTCT_POINT_IND" Required="true">
+      <documentation>Indicates whether the consumer represented by the PERSONA wants P&amp;G to use the PERSONA CONTACT POINT in lieu of others.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="PREF_CNTCT_POINT_IND" />
+    </property>
+    <property Name="SUBSCRPTN_OPT_IND">
+      <documentation>Indicates whether the consumer represented by the PERSONA opted in or out of being contacted via the CONTACT OPTION.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="SUBSCRPTN_OPT_IND" />
+    </property>
+    <property Name="CNSMR_CHCE_DATETM">
+      <documentation>The date and time when the consumer represented by the PERSONA chose to opt in/out of the particular CONTACT OPTION.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="CNSMR_CHCE_DATETM" />
+    </property>
+    <property Name="GUARDN_NAME" CharSet="UNICODE">
+      <documentation>The name of the parent or legal guardian who provided parental consent for a minor to register for the MARKETING PROGRAM, which resulted in the creation of the PERSONA for that minor. This is only used for CONTACT OPTIONs that involve parental consent; otherwise, it is null.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="GUARDN_NAME" />
+    </property>
+    <property Name="GUARDN_EMAIL_ADDR_TXT" CharSet="UNICODE">
+      <documentation>The email address of the parent or legal guardian who provided parental consent for a minor to register for the MARKETING PROGRAM, which resulted in the creation of the PERSONA for that minor. This is only used for CONTACT OPTIONs that involve parental consent; otherwise, it is null.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="GUARDN_EMAIL_ADDR_TXT" />
+    </property>
+    <property Name="GUARDN_CNSNT_IND">
+      <documentation>Indicates whether the parent or legal guardian provided parental consent for a minor to register for the MARKETING PROGRAM, which resulted in the creation of the PERSONA for that minor. This is only used for CONTACT OPTIONs that involve parental consent; otherwise, it is null.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="GUARDN_CNSNT_IND" />
+    </property>
+    <property Name="ACNLGMT_DATE">
+      <documentation>The date when P&amp;G sent a message to the consumer represented by the PERSONA acknowledging that the consumer chose to opt in/out of the particular CONTACT OPTION.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="ACNLGMT_DATE" />
+    </property>
+    <property Name="CNTCT_POINT_CATEG_CODE" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="CNTCT_POINT_CATEG_CODE" />
+    </property>
+    <property Name="SUBSCRPTN_OPT_NBR">
+      <documentation>The number that P&amp;G assigned to uniquely distinguish the CONTACT OPTION from all others.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="SUBSCRPTN_OPT_NBR" />
+    </property>
+    <property Name="REGIS_PRSNA_ID" Required="true">
+      <documentation>The DW surrogate key that was assigned to uniquely distinguish the PERSONA from all others.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="REGIS_PRSNA_ID" />
+    </property>
+    <property Name="MKTNG_PGM_NBR" Required="true">
+      <documentation>The number that P&amp;G assigned to uniquely distinguish the MARKETING PROGRAM from all others.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="MKTNG_PGM_NBR" />
+    </property>
+    <property Name="LEGAL_ENT_NBR" Required="true">
+      <documentation>The number that P&amp;G assigned to uniquely distinguish the LEGAL ENTITY from all others.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="LEGAL_ENT_NBR" />
+    </property>
+    <property Name="EMAIL_STATUS_CODE" PhysicalName="EMAIL_STATUS_CODE">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="EMAIL_STATUS_CODE" />
+    </property>
+    <property Name="DATA_SRCE_NBR">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="DATA_SRCE_NBR" />
+    </property>
+    <property Name="LAST_RTN_DATETM">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="LAST_RTN_DATETM" />
+    </property>
+    <property Name="EMAIL_ADDR_TXT_HASH">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="EMAIL_ADDR_TXT_HASH" />
+    </property>
+  </properties>
+  <keys>
+    <key Active="true" Name="REGIS_PRSNA_EMAIL_ADDR_UPI" PhysicalName="REGIS_PRSNA_EMAIL_ADDR_UPI" Kind="PRIMARY">
+      <property Name="MKTNG_PGM_NBR" />
+      <property Name="REGIS_PRSNA_ID" />
+    </key>
+    <key Active="true" Name="REGIS_PRSNA_EMAIL_ADDR_IX" PhysicalName="REGIS_PRSNA_EMAIL_ADDR_IX" Kind="INDEX">
+      <property Name="EMAIL_ADDR_TXT" />
+    </key>
+  </keys>
+  <links>
+    <link Active="true" Name="REGIS_PRSNA_EMAIL_ADDR_FK" PhysicalName="REGIS_PRSNA_EMAIL_ADDR_FK">
+      <keymap FromKey="REGIS_PRSNA_EMAIL_ADDR_UPI" ToPackage="models/pngModel" ToModelUnit="REGIS_PRSNA.mtt" ToKey="REGIS_PRSNA_UPI" ReverseLink="true" ReverseLinkName="R_REGIS_PRSNA_EMAIL_ADR" DeleteRule="RESTRICT">
+        <mapping FromProperty="MKTNG_PGM_NBR" ToProperty="REGIS_PRSNA_ID" />
+        <mapping FromProperty="REGIS_PRSNA_ID" ToProperty="MKTNG_PGM_NBR" />
+      </keymap>
+    </link>
+  </links>
+  <docFacets>
+    <mdmWebServiceFacet />
+    <mdmAuthorizationFacet />
+    <mdmSysTableMapFacet TableClass="MASTER" Source="MASTER" MasterTable="REGIS_PRSNA_EMAIL_ADDR" />
+    <miscFacet PhysicalName="REGIS_PRSNA_EMAIL_ADDR" Active="true" />
+    <mdmConfigFacet SchemaGen="true" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql />
+</document>
+

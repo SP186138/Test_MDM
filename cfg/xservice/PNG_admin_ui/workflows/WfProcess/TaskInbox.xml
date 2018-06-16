@@ -1,0 +1,386 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="1" ShowInBreadCrumbs="true" Version="1.0" Name="TaskInbox" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Description="Manage Process Task Inbox">
+    <variable Name="TaskIdEventKey" Type="string" Comment="Task Id Event Key"/>
+    <variable Name="selectedwftask" Type="string" Comment=""/>
+    <variable Name="TaskStatusFilter" Type="string" Comment=""/>
+    <variable Name="alert_status" Type="string" Comment=""/>
+    <variable Name="alert_msg" Type="string" Comment=""/>
+    <variable Name="TaskUserGroup" Type="string" Comment=""/>
+    <variable Name="SelectedTaskDetails" Type="xml" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start">
+      <actions>
+        <action/>
+      </actions>
+      <next_nodes>
+        <next_node Name="Task Inbox"/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Task Inbox" Description="Task Inbox" ShowInBreadCrumbs="SHOW" Template="AllTasks.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="Tasks">
+            <TASKS/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Back'">
+            <THEN/>
+            <ELSE>
+              <SET Var="TaskStatusFilter" FromValue="{ifElse($thisParam/TaskStatusFilter/@Value='Completed','Completed',ifElse($thisParam/TaskStatusFilter/@Value='Aborted','Aborted','In Progress'))}"/>
+            </ELSE>
+          </IF_TEST>
+          <SET Var="sortOrder" FromValue="{ifElse($thisParam/SORT_ORDER/@Value='Ascending',Ascending,'Descending')}"/>
+          <REQUEST Name="getUserTasks" AssignToVar="allTasks" ServiceName="BCM_MASTER">
+            <UserId Value="{$userId}"/>
+            <TaskStatusFilter Value="{$TaskStatusFilter}"/>
+          </REQUEST>
+          <FOR_EACH SelectList="$allTasks/SQL_RESULT" CurrentElement="currRes">
+            <ADD_CHILDREN DocVar="Tasks" FromDocVar="currRes"/>
+          </FOR_EACH>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="Tasks"/>
+          <SET Property="Task_Status" FromValue="{$TaskStatusFilter}" DocVar="pglFormInput"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="selectedwftask" FromValue="{$thisParam/SELECTED_PROCESS_ID/@Value}"/>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='ViewTaskStatus'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='TaskFilterChange'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Task Inbox" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Details'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Task Details" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Test'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="Task Details" Description="Task Details" ShowInBreadCrumbs="SHOW" Template="TaskDetails.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="TasksDetails">
+            <TASK_DETAILS/>
+          </TO_DOCVAR>
+          <SET Var="ProcessId" FromValue="{substringBefore($selectedwftask,'#')}"/>
+          <SET Var="ProcessId" FromValue="{substringAfter($ProcessId,'=')}"/>
+          <SET Var="TaskId" FromValue="{substringAfter($selectedwftask,'#')}"/>
+          <SET Var="TaskId" FromValue="{substringAfter($TaskId,'=')}"/>
+          <SET Var="TaskIdEventKey" FromValue="{$TaskId}"/>
+          <SET Var="taskStatus" FromValue="{ifElse($TaskStatusFilter='Completed','Completed','Pending')}"/>
+          <GET_DOCUMENT Name="Wf_Process_Tasks" ServiceName="BCM_MASTER" AssignToVar="allTaskDetails" DirtyRead="true">
+            <Process_Id Value="{$ProcessId}"/>
+            <Task_Id Value="{$TaskId}"/>
+            <Status Value="{$taskStatus}"/>
+            <ORDER_BY>
+              <Assigned_Date Sort="Ascending"/>
+            </ORDER_BY>
+          </GET_DOCUMENT>
+          <SET Var="pname" FromValue=""/>
+          <SET Var="taskNode" FromValue=""/>
+          <TO_DOCVAR AssignToVar="SelectedTaskDetails">
+            <PROCESS_DETAILS>
+              <ProcessId Value="{$ProcessId}"/>
+              <TaskWfId Value="{$TaskId}"/>
+              <ProcessName Value="{$allTaskDetails/Wf_Process_Tasks/Process_Name/@Value}"/>
+            </PROCESS_DETAILS>
+          </TO_DOCVAR>
+          <GET_DOCUMENT Name="USER_GRP_PROFILE" AssignToVar="usrGrpDoc" ServiceName="USER_SECURITY" DirtyRead="true" Distinct="true"/>
+          <FOR_EACH SelectList="$allTaskDetails/Wf_Process_Tasks" CurrentElement="currRes">
+            <SET Var="pname" FromValue="{$currRes/Process_Name/@Value}"/>
+            <SET Var="taskNode" FromValue="{$currRes/Task_Node/@Value}"/>
+            <SET Var="TaskUserGroup" FromValue="{$currRes/Assigned_To/@Value}"/>
+            <SET DocVar="currRes" Property="Assigned_To" FromValue="{$usrGrpDoc/USER_GRP_PROFILE[ID/@Value=$TaskUserGroup]/GRP_NAME/@Value}"/>
+            <ADD_CHILDREN DocVar="TasksDetails" FromDocVar="currRes"/>
+          </FOR_EACH>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="TasksDetails"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='MarkComplete' or $thisParam/BUTTON_ID/@Value='LockTask' or $thisParam/BUTTON_ID/@Value='Refresh'">
+            <THEN>
+              <SET Property="alert_status" DocVar="pglFormInput" FromValue="{$alert_status}"/>
+              <SET Property="alert_msg" DocVar="pglFormInput" FromValue="{$alert_msg}"/>
+            </THEN>
+            <ELSE>
+              <SET Var="alert_msg" FromValue=""/>
+              <SET Var="alert_status" FromValue=""/>
+            </ELSE>
+          </IF_TEST>
+          <SET Property="user_id" DocVar="pglFormInput" FromValue="{$userId}"/>
+          <SET Property="p_id" DocVar="pglFormInput" FromValue="{$ProcessId}"/>
+          <SET Property="t_id" DocVar="pglFormInput" FromValue="{$TaskId}"/>
+          <SET Property="p_name" DocVar="pglFormInput" FromValue="{$pname}"/>
+          <SET Property="task_node" DocVar="pglFormInput" FromValue="{$taskNode}"/>
+          <SET Property="Task_Status" FromValue="{$taskStatus}" DocVar="pglFormInput"/>
+          <SET Property="Table_Selectable" FromValue="{ifElse($TaskStatusFilter='Completed','None','Single')}" DocVar="pglFormInput"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Back'">
+            <THEN/>
+            <ELSE>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LockTask'">
+                <THEN>
+                  <REQUEST Name="validateUserTaskLock" AssignToVar="lockTaskResp" ServiceName="BCM_MASTER">
+                    <ProcessId Value="{$SelectedTaskDetails/ProcessId/@Value}"/>
+                    <TaskId Value="{$SelectedTaskDetails/TaskWfId/@Value}"/>
+                    <TaskNode Value="{$thisParam/SELECTED_TASK_NODE/@Value}"/>
+                    <LockRequestedBy Value="{$userId}"/>
+                  </REQUEST>
+                  <IF_TEST Test="$lockTaskResp/Lock_Status/@Value='lock_availaible'">
+                    <THEN>
+                      <REQUEST Name="lockWfProcessTask" AssignToVar="lockTaskResp" ServiceName="BCM_MASTER">
+                        <ProcessId Value="{$SelectedTaskDetails/ProcessId/@Value}"/>
+                        <TaskId Value="{$SelectedTaskDetails/TaskWfId/@Value}"/>
+                        <TaskNode Value="{$thisParam/SELECTED_TASK_NODE/@Value}"/>
+                        <LockedBy Value="{$userId}"/>
+                        <Operation Value="AssignMe"/>
+                      </REQUEST>
+                      <SET Var="alert_msg" FromValue="Task lock acquired successfully."/>
+                      <SET Var="alert_status" FromValue="Success"/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="alert_msg" FromValue="Task already locked by {$lockTaskResp/Locked_By/@Value}"/>
+                      <SET Var="alert_status" FromValue="Failure"/>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <REQUEST Name="validateTaskStatus" ServiceName="BCM_MASTER" AssignToVar="taskStatusResp">
+                    <ProcessId Value="{$SelectedTaskDetails/ProcessId/@Value}"/>
+                    <TaskId Value="{$SelectedTaskDetails/TaskWfId/@Value}"/>
+                    <TaskNode Value="{$thisParam/SELECTED_TASK_NODE/@Value}"/>
+                  </REQUEST>
+                  <IF_TEST Test="$taskStatusResp/Task_Status/@Value='Pending'">
+                    <THEN>
+                      <IF_TEST Test="$thisParam/BUTTON_ID/@Value='MarkComplete'">
+                        <THEN>
+                          <RAISE_EVENT Name="TaskInboxEvent" ServiceName="BCM_MASTER" AssignToVar="completeTask">
+                            <WorkflowInstanceId Value="{$TaskIdEventKey}"/>
+                            <WF_MON_LOG_LEVEL Value="Node"/>
+                          </RAISE_EVENT>
+                          <SET Var="alert_msg" FromValue="Task complete status updated successfully."/>
+                          <SET Var="alert_status" FromValue="Success"/>
+                        </THEN>
+                        <ELSE>
+                          <SET Var="taskStatus" FromValue="{ifElse($TaskStatusFilter='Completed','Completed','Pending')}"/>
+                          <GET_DOCUMENT Name="Wf_Process_Tasks" ServiceName="BCM_MASTER" AssignToVar="allTaskDetails" DirtyRead="true">
+                            <Process_Id Value="{$SelectedTaskDetails/ProcessId/@Value}"/>
+                            <Task_Id Value="{$SelectedTaskDetails/TaskWfId/@Value}"/>
+                            <Status Value="{$taskStatus}"/>
+                          </GET_DOCUMENT>
+                          <SET_NAME DocVar="allTaskDetails" FromValue="TASK_DETAILS"/>
+                          <ADD_CHILDREN DocVar="SelectedTaskDetails" FromDocVar="allTaskDetails"/>
+                          <TO_DOCVAR AssignToVar="NodeOuput">
+                            <NODE_DATA>
+                              <ProcessId Value="{$SelectedTaskDetails/ProcessId/@Value}"/>
+                              <TaskId Value="{$SelectedTaskDetails/TaskWfId/@Value}"/>
+                              <TaskNode Value="{$thisParam/SELECTED_TASK_NODE/@Value}"/>
+                              <ProcessName Value="{$SelectedTaskDetails/ProcessName/@Value}"/>
+                              <LockedBy Value="{$SelectedTaskDetails/TASK_DETAILS/Wf_Process_Tasks/Locked_By/@Value}"/>
+                            </NODE_DATA>
+                          </TO_DOCVAR>
+                        </ELSE>
+                      </IF_TEST>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="alert_msg" FromValue="Task is already marked as completed."/>
+                      <SET Var="alert_status" FromValue="Failure"/>
+                      <SET Var="userAction" FromValue="Refresh"/>
+                      <SET Property="BUTTON_ID" FromValue="Refresh" DocVar="thisParam"/>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='ViewTaskStatus'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Task Inbox" Description="Back"/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='MarkComplete'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Task Details" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='UnlockTask'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LockTask'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Task Details" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Reassign'">
+        <next_nodes OutputVar="{NodeOuput,xml}">
+          <next_node Name="Reassign Task" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Refresh'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Task Details" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="Reassign Task" Description="Reassign Task" ShowInBreadCrumbs="SHOW" Template="ReassignTask.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" InputVar="{NodeInput,xml}">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <REQUEST Name="getActiveUsersForGroup" AssignToVar="mdmusers" ServiceName="BCM_MASTER">
+            <USER_GROUP_ID Value="{$TaskUserGroup}"/>
+            <LOCKEDBY_USER_ID Value="{$NodeInput/LockedBy/@Value}"/>
+            <REASSIGNED_BY_ID Value="{$userId}"/>
+          </REQUEST>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelect="$mdmusers/*"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value!='ReassignTask'">
+            <THEN>
+              <SET Var="alert_status" FromValue=""/>
+              <SET Property="exec_status" DocVar="pglFormInput" FromValue="{$alert_status}"/>
+            </THEN>
+            <ELSE>
+              <SET Property="exec_status" DocVar="pglFormInput" FromValue="{$alert_status}"/>
+              <SET Property="reassigned_to" DocVar="pglFormInput" FromValue="{$thisParam/ReassignUser/@Value}"/>
+              <SET Property="reassign_comment" DocVar="pglFormInput" FromValue="{$thisParam/ReassignComment/@Value}"/>
+              <SET Property="notify_user" DocVar="pglFormInput" FromValue="{$thisParam/NotifyUser/@Value}"/>
+            </ELSE>
+          </IF_TEST>
+          <SET Property="locked_by" DocVar="pglFormInput" FromValue="{ifElse($NodeInput/LockedBy/@Value!=null and $NodeInput/LockedBy/@Value!='',$NodeInput/LockedBy/@Value,'None')}"/>
+          <SET Property="process_id" DocVar="pglFormInput" FromValue="{$NodeInput/ProcessId/@Value}"/>
+          <SET Property="task_id" DocVar="pglFormInput" FromValue="{$NodeInput/TaskId/@Value}"/>
+          <SET Property="process_name" DocVar="pglFormInput" FromValue="{$NodeInput/ProcessName/@Value}"/>
+          <SET Property="task_node" DocVar="pglFormInput" FromValue="{$NodeInput/TaskNode/@Value}"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='ReassignTask'">
+            <THEN>
+              <REQUEST Name="lockWfProcessTask" AssignToVar="lockTaskResp" ServiceName="BCM_MASTER">
+                <ProcessId Value="{$SelectedTaskDetails/ProcessId/@Value}"/>
+                <TaskId Value="{$SelectedTaskDetails/TaskWfId/@Value}"/>
+                <TaskNode Value="{$SelectedTaskDetails/TASK_DETAILS/Wf_Process_Tasks/Task_Node/@Value}"/>
+                <LockedBy Value="{$thisParam/ReassignUser/@Value}"/>
+                <ReassignComment Value="{$thisParam/ReassignComment/@Value}"/>
+                <Operation Value="Reassign"/>
+                <ReassignedBy Value="{$userId}"/>
+                <NotifyUser Value="{ifElse($thisParam/NotifyUser/@Value='Y','Y','N')}"/>
+              </REQUEST>
+              <SET Var="LockedBy" FromValue="{ifElse($thisParam/ReassignUser/@Value!=null and $thisParam/ReassignUser/@Value !='',$thisParam/ReassignUser/@Value,'None')}"/>
+              <SET Var="alert_status" FromValue="{ifElse($lockTaskResp/@Status='Success','Success','Failure')}"/>
+              <TO_DOCVAR AssignToVar="NodeOuput">
+                <NODE_DATA>
+                  <ProcessId Value="{$SelectedTaskDetails/ProcessId/@Value}"/>
+                  <TaskId Value="{$SelectedTaskDetails/TaskWfId/@Value}"/>
+                  <TaskNode Value="{$SelectedTaskDetails/TASK_DETAILS/Wf_Process_Tasks/Task_Node/@Value}"/>
+                  <ProcessName Value="{$SelectedTaskDetails/ProcessName/@Value}"/>
+                  <LockedBy Value="{$LockedBy}"/>
+                </NODE_DATA>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Task Details" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='ReassignTask'">
+        <next_nodes OutputVar="{NodeOuput,xml}">
+          <next_node Name="Reassign Task" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <start font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="194,275" size="744,599">
+        <iconProps iconfile="z1start.gif"/>
+      </start>
+      <mgcnode Name="Task Inbox" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="353,275" size="1920,1050">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <mgcnode Name="Task Details" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="552,275" size="1920,1050">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <mgcnode Name="Reassign Task" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="726,275" size="1920,1050">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+    </mgcnodes>
+    <mgcconnectors>
+      <start>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="239,297" endpoint="353,297" ctrlRect1="322,295,4,4" ctrlRect2="265,295,4,4"/>
+      </start>
+      <mgcnode Name="Task Inbox">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="398,297" endpoint="375,320" ctrlRect1="456,280,4,4" ctrlRect2="363,396,4,4" textRect="403,336,17,8" ctrlRect1Dirty="true" ctrlRect2Dirty="true">
+          <textProps text="TaskFilterChange"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="398,297" endpoint="552,297" ctrlRect1="452,295,4,4" ctrlRect2="559,295,4,4" ctrlRect1Dirty="true" textRect="499,293,17,8" ctrlRect2Dirty="true">
+          <textProps text="View Details"/>
+        </nextNodeView>
+      </mgcnode>
+      <mgcnode Name="Task Details">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="574,275" endpoint="375,275" ctrlRect1="563,201,4,4" ctrlRect2="367,205,4,4" ctrlRect2Dirty="true" textRect="463,201,9,8" ctrlRect1Dirty="true">
+          <textProps text="Back"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="574,275" endpoint="574,275" ctrlRect1="572,198,4,4" ctrlRect2="607,243,4,4" ctrlRect2Dirty="true" textRect="582,218,18,8">
+          <textProps text="Mark Complete"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="574,320" endpoint="574,320" ctrlRect1="572,393,4,4" ctrlRect2="618,359,4,4" textRect="590,374,15,8" ctrlRect2Dirty="true">
+          <textProps text="AssignToMe"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="597,297" endpoint="726,297" ctrlRect1="691,295,4,4" ctrlRect2="627,295,4,4">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="590,307" endpoint="590,307" ctrlRect1="663,305,4,4" ctrlRect2="663,305,4,4"/>
+      </mgcnode>
+      <mgcnode Name="Reassign Task">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="726,297" endpoint="574,275" ctrlRect1="610,295,4,4" ctrlRect2="615,208,4,4" textRect="610,249,9,8" ctrlRect2Dirty="true">
+          <textProps text="Back"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="771,297" endpoint="771,297" ctrlRect1="844,295,4,4" ctrlRect2="844,295,4,4" textRect="838,293,17,8">
+          <textProps text="ReassignTask"/>
+        </nextNodeView>
+      </mgcnode>
+    </mgcconnectors>
+    <mgctexts>
+      <text location="152,21" componentTextColor="0,128,128" font="Verdana,1,10" textAttrsKey0="Manage Process Task Inbox"/>
+    </mgctexts>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions/>
+    <post_actions/>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

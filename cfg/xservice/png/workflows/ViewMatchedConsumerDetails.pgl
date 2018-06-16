@@ -1,0 +1,895 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" Id="ViewMatchedConsumerDetails.pgl" version="3">
+  <ui:container id="outerContainer" scrollable="true" type="Tabs">
+<ui:step id="outerStep1" scrollable="true" displayText="PII Details" >
+<ui:field-group id="outerFG" columns="3" select="$root/CONSUMER_DETAILS">
+<!--ui:display-field id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR" displayText="Program ID" readOnly="true" disabled="true"/-->
+<!--ui:display-field id="MKTNG_PGM_NAME" name="MKTNG_PGM_NAME" displayText="Program Name" readOnly="true" disabled="true"/-->
+<ui:dropdown id="MKTNG_PGM_NAME" name="MKTNG_PGM_NAME" displayText="Program Name" optionSrc="$root/MKTNG_PGM/OPTION" onChange="javascript:loadProgramID();"/>
+<ui:display-field id="REGIS_PRSNA_ID" name="REGIS_PRSNA_ID" displayText="Persona ID" readOnly="true" disabled="true"/>
+<ui:display-field id="MATCHD_CNSMR_PRSNA_ID" name="MATCHD_CNSMR_PRSNA_ID" displayText="Matched Consumer ID" readOnly="true" disabled="true"/>
+<ui:display-field id="NAME_PREFX_TXT" name="NAME_PREFX_TXT" displayText="Name Prefix"/>
+<!--ui:dropdown id="NAME_PREFX_TXT" name="NAME_PREFX_TXT" displayText="Name Prefix" selectOne="true">
+<ui:option id="Ms" value="MISS" />
+<ui:option id="Mrs" value="MRS" />
+<ui:option id="Mr" value="MR" />
+</ui:dropdown-->
+<ui:entry-field id="GVN_NAME" name="GVN_NAME" displayText="First Name" onChange="javascript:profileChanged();"/>
+<ui:entry-field id="MID_NAME" name="MID_NAME" displayText="Middle Name" onChange="javascript:profileChanged();"/>
+<ui:entry-field id="FAMLY_NAME" name="FAMLY_NAME" displayText="Last Name" onChange="javascript:profileChanged();"/>
+<ui:display-field id="NAME_SUFFX_TXT" name="NAME_SUFFX_TXT" displayText="Name Suffix" readOnly="true"/>
+<!--ui:dropdown id="NAME_SUFFX_TXT" name="NAME_SUFFX_TXT" displayText="Name Suffix" selectOne="true">
+<ui:option id="Jr" value="Junior" />
+<ui:option id="Sr" value="Senior" />
+</ui:dropdown-->
+<ui:entry-field id="BRTH_DATE" name="BRTH_DATE" displayText="Date Of Birth(mm/dd/yyyy)" dataType="Date" format="MM/dd/yyyy" onChange="javascript:profileChanged();"/>
+<ui:display-field id="NATIONAL_ID_NBR" name="NATIONAL_ID_NBR" displayText="National ID" readOnly="true" disabled="true"/>
+<!--
+checkdate   <ui:entry-field id="BRTH_DATE" name="BRTH_DATE" displayText="Date Of Birth" dataType="Date" format="MM/dd/yyyy" onClick="javascript:validateDate(document.form.BRTH_DATE);"/>
+-->
+<!--ui:entry-field id="CNSMR_USER_NAME" name="CNSMR_USER_NAME" displayText="User Name"/-->
+<ui:choose-field displayText="Gender">
+<ui:when test="GENDR_IND/@Value='U'">
+<ui:dropdown id="GENDR_IND" name="GENDR_IND" displayText="Gender" onChange="javascript:profileChanged();">
+<ui:option id="M" value="Male"/>
+<ui:option id="F" value="Female"/>
+<ui:option id="U" value="Other"/>
+</ui:dropdown>
+</ui:when>
+<ui:otherwise>
+<ui:dropdown id="GENDR_IND" name="GENDR_IND" displayText="Gender" onChange="javascript:profileChanged();">
+<ui:option id="M" value="Male"/>
+<ui:option id="F" value="Female"/>
+</ui:dropdown>
+</ui:otherwise>
+</ui:choose-field>
+<!--ui:entry-field id="LANG_NAME" name="LANG_NAME" displayText="Language" readOnly="true" onChange="javascript:profileChanged();"/-->
+<ui:hidden-field id="MATCHD_CNSMR_PRSNA_ID" name="MATCHD_CNSMR_PRSNA_ID"/>
+<ui:hidden-field id="IS_PROFILE_CHANGED" name="IS_PROFILE_CHANGED" defaultValue="false"/>
+<ui:hidden-field id="MAX_AGE" name="MAX_AGE"/>
+</ui:field-group>
+<ui:grid>
+<ui:row>
+<ui:cell>
+<ui:container id="outerContainer2" scrollable="true">
+<ui:step id="outerStep2" scrollable="true" displayText="Postal Address">
+<ui:field-group select="$root/CONSUMER_DETAILS" columns="2">
+<!--ui:textarea id="ADDR_LINE_1_TXT" name="ADDR_LINE_1_TXT" displayText="Address line 1" columns="50" />
+<ui:textarea id="ADDR_LINE_2_TXT" name="ADDR_LINE_2_TXT" displayText="Address line 2" columns="50" /-->
+<ui:entry-field id="ADDR_LINE_1_TXT" name="ADDR_LINE_1_TXT" displayText="Address line 1" size="50" onChange="javascript:addressChanged();"/>
+<ui:entry-field id="ADDR_LINE_2_TXT" name="ADDR_LINE_2_TXT" displayText="Address line 2" size="50" onChange="javascript:addressChanged();"/>
+<ui:entry-field id="ADDR_LINE_3_TXT" name="ADDR_LINE_3_TXT" displayText="Address line 3" size="50" onChange="javascript:addressChanged();"/>
+<ui:entry-field id="CITY_NAME" name="CITY_NAME" displayText="City" onChange="javascript:addressChanged();"/>
+<!--ui:entry-field id="TERR_CODE" name="TERR_CODE" displayText="State/Province" editable="true" onChange="javascript:addressChanged();"/>
+<ui:entry-field id="CNTRY_NAME" name="CNTRY_NAME" displayText="Country" editable="false" onChange="javascript:addressChanged();"/-->
+<ui:dropdown id="TERR_CODE" name="TERR_CODE" displayText="State" optionSrc="$root/TERR_CODE/OPTION" selectOne="true" onChange="javascript:addressChanged();"/>
+<ui:dropdown id="CNTRY_CODE" name="CNTRY_CODE" displayText="Country" optionSrc="$root/CNTRY_CODE/OPTION" selectOne="true" onChange="javascript:loadStates();javascript:addressChanged();"/>
+<ui:entry-field id="POSTL_AREA_CODE" name="POSTL_AREA_CODE" displayText="Zip Code" onChange="javascript:addressChanged();"/>
+<ui:hidden-field id="IS_ADDRESS_CHANGED" name="IS_ADDRESS_CHANGED" defaultValue="false"/>
+<ui:hidden-field id="PARENTAL_CNTRL" name="PARENTAL_CNTRL"/>
+</ui:field-group>
+</ui:step>
+</ui:container>
+</ui:cell>
+</ui:row>
+</ui:grid>
+<ui:grid>
+<ui:row>
+<ui:cell width="50%">
+<ui:table id="EmailTable" displayText="Email Address" maxRows="3" rowSrc="EMAILDETAILS" doPaging="true" totalRowCount="$root/EmailRowCount/@Value">
+<ui:field-group id="tableColumns1" columns="3">
+<ui:hidden-field id="IS_EMAIL_CHANGED" name="IS_EMAIL_CHANGED" defaultValue="false" onlyInHeader="true"/>
+<ui:hidden-field id="EMAIL_CODE" name="EMAIL_CODE"/>
+<ui:hidden-field id="PARENTAL_CNTRL" name="PARENTAL_CNTRL"/>
+<ui:display-field id="EMAIL_TYPE" name="EMAIL_TYPE" displayText="Email Type" size="40"/>
+<ui:entry-field id="EMAIL_ADDR_TXT" name="EMAIL_ADDR_TXT" displayText="Email" size="50" onChange="javascript:emailChanged();"/>
+</ui:field-group>
+</ui:table>
+</ui:cell>
+<ui:cell width="50%">
+<ui:table id="PhoneTable" displayText="Phone Number" maxRows="3" rowSrc="PHONEDETAILS" doPaging="true" totalRowCount="$root/PhoneRowCount/@Value">
+<ui:field-group id="tableColumns2" columns="3">
+<ui:hidden-field id="IS_PHONE_CHANGED" name="IS_PHONE_CHANGED" defaultValue="false" onlyInHeader="true"/>
+<ui:hidden-field id="PHONE_CODE" name="PHONE_CODE"/>
+<ui:hidden-field id="PARENTAL_CNTRL" name="PARENTAL_CNTRL"/>
+<ui:display-field id="PHONE_TYPE" name="PHONE_TYPE" displayText="Phone Type" size="40"/>
+<ui:entry-field id="FULL_PHONE" name="FULL_PHONE" displayText="Phone Number" size="50" onChange="javascript:phoneChanged();"/>
+</ui:field-group>
+</ui:table>
+</ui:cell>
+<ui:cell width="50%">
+<ui:table id="SocialTable" displayText="Social" maxRows="3" rowSrc="SOCIALDETAILS" doPaging="true" totalRowCount="$root/SocialRowCount/@Value">
+<ui:field-group id="tableColumns2" columns="3">
+<ui:hidden-field id="IS_SOCIAL_CHANGED" name="IS_SOCIAL_CHANGED" defaultValue="false" onlyInHeader="true"/>
+<ui:hidden-field id="SOCIAL_CODE" name="SOCIAL_CODE"/>
+<ui:hidden-field id="PARENTAL_CNTRL" name="PARENTAL_CNTRL"/>
+<ui:display-field id="SOCIAL_TYPE" name="SOCIAL_TYPE" displayText="Social Type" size="40"/>
+<ui:entry-field id="SOCIAL_NETWK" name="SOCIAL_NETWK" displayText="Social" size="50" onChange="javascript:socialChanged();"/>
+</ui:field-group>
+</ui:table>
+</ui:cell>
+</ui:row>
+</ui:grid>
+<ui:hr/>
+<ui:table id="OTHER_PROGRAMS" name="OTHER_PROGRAMS" displayText="Other Programs" rowSrc="V_REGIS_PRSNA" displayTextNoRecords="No Other Programs Found" maxRows="5" selectable="All" rowId="PROGRAM_PRSNA_ID" postRowIdAs="PROGRAM_AND_PRSNA_ID" doPaging="true" totalRowCount="$root/OtherRowCount/@Value" scrollable="true">
+<ui:field-group id="tableColumns">
+<ui:hidden-field id="PROGRAM_PRSNA_ID" name="PROGRAM_PRSNA_ID"/>
+<ui:display-field name="MKTNG_PGM_NAME" displayText="Program Name"/>
+<!--ui:display-field name="MKTNG_PGM_NBR" displayText="Program ID"/-->
+<ui:link-field displayText="Persona ID" name="REGIS_PRSNA_ID">
+<ui:url page="page.x2ps">
+<BUTTON_ID select="'VIEW_CONSUMER_DETAILS'"/>
+<PRSNA_ID select="REGIS_PRSNA_ID/@Value"/>
+<PROGRAM_ID select="MKTNG_PGM_NBR/@Value"/>
+<MKTNG_PGM_NAME select="MKTNG_PGM_NAME/@Value"/>
+<LEGAL_ENT_NBR select="LEGAL_ENT_NBR/@Value"/>
+<CONSUMER_ID select="MATCHD_CNSMR_PRSNA_ID/@Value"/>
+</ui:url>
+</ui:link-field>
+<ui:display-field name="FULL_NAME" displayText="Name"/>
+<ui:display-field name="ADDR_LINE_1_TXT" displayText="Address"/>
+<ui:display-field name="CITY_NAME" displayText="City"/>
+<ui:display-field name="TERR_CODE" displayText="State"/>
+<ui:display-field name="POSTL_AREA_CODE" displayText="Postal Code"/>
+</ui:field-group>
+<ui:buttons id="tableButtons">
+<ui:button id="SYNC_ADDRESS" name="SYNC_ADDRESS" displayText="Sync Address" emphasized="true" enabledBySelections="true"/>
+</ui:buttons>
+</ui:table>
+<ui:buttons>
+<ui:button id="CANCEL" name="CANCEL" displayText="Cancel" onClick="javascript:onCancel();"/>
+<ui:button id="UNNIVERSAL_OPT_OUT" name="UNNIVERSAL_OPT_OUT" displayText="Universal Opt Out" onClick="javascript:onUniOptOut();"/>
+<ui:button id="UNI_EMAIL_OPT_OUT" name="UNI_EMAIL_OPT_OUT" displayText="Universal Email Opt Out" onClick="javascript:onUniEmailOptOut();"/>
+<ui:button id="UNI_PHONE_OPT_OUT" name="UNI_PHONE_OPT_OUT" displayText="Universal Phone Opt Out" onClick="javascript:onUniPhoneOptOut();"/>
+<ui:button id="UNI_POSTL_OPT_OUT" name="abc" displayText="Universal Postal Opt Out" onClick="javascript:onUniPostlOptOut();"/>
+<ui:button id="UNI_SOCIAL_OPT_OUT" name="UNI_SOCIAL_OPT_OUT" displayText="Social Opt Out" onClick="javascript:onUniSocialOptOut();"/>
+<!--   <ui:button id="UNI_SOCIAL_OPT_OUT" name="UNI_SOCIAL_OPT_OUT" displayText="Universal Social Opt Out" onClick="javascript:onUniSocialOptOut();"/> -->
+<!--ui:button id="UNNIVERSAL_CHANNEL_OPT_OUT" name="UNNIVERSAL_CHANNEL_OPT_OUT" displayText="Universal Channel Opt Out" onClick="javascript:onUniChannelOptOut('CHANNEL_FIELD','inline');"/-->
+<ui:button id="SAVE" name="SAVE" displayText="Save" emphasized="true" onClick="javascript:onSave();"/>
+</ui:buttons>
+</ui:step>
+
+    <ui:step id="outerStep7" select="$root" scrollable="true" displayText="Summary" activity="CSRView">
+      <ui:grid>
+        <ui:row>
+     
+      
+      <ui:cell id="Main">
+        
+
+
+<ui:dynamic-pgl select="$root/PGL/*"/>
+
+
+</ui:cell>
+     
+        </ui:row>
+      </ui:grid>
+      <ui:buttons>
+        <ui:button id="Print" name="Print" displayText="Print" onClick="javascript:onPrint1();"/>
+      </ui:buttons>
+    </ui:step>
+    <ui:script>/*if(document.getElementById('GENDER')){
+var frm = document.forms[0];
+var ele = frm.elements;
+for ( i=0; i &lt; ele.length; i++ ) {
+if ( ele[i].name ==  'GENDR_IND' ){
+if(ele[i].value!=''){
+document.getElementById('GENDER').value=ele[i].value;
+}
+}
+}
+}  */function onPrint1()
+{
+//alert(&quot;abc&quot;);
+    
+var url= 'view.x2ps?BUTTON_ID=Print&amp;PAGE=BCM_MASTER.IndividualMgmt.Summary_print.pgl';
+//url=url.concat('&amp;sku_id=',l1);
+//url=url.concat('&amp;sku_number=',l2);
+//	togglenavcust();
+//window.open( url, popUp, 'dialogheight:' + 1080 +'px;dialogwidth:'+1080+'px;');
+window.showModalDialog( url, window, 'dialogheight:' + 1900 +'px;dialogwidth:'+1900+'px;' );
+//		my_window = window.open(url,'',&quot;height=500,width=900,top=250,left=400,channelmode=no,directories=no,fullscreen=no,location=no,menubar=no,resizable=no,scrollbars=no,status=no,titlebar=no,toolbar=no&quot;);
+								
+
+    
+}
+
+function onCancel()
+{
+var cancelMessage = &quot;Are you sure you want to discard all modified information?&quot;;
+if (	core_confirm( cancelMessage ) == 'yes' )
+{
+form.BUTTON_ID.value = &quot;CANCEL&quot; ;
+form.submit();
+}
+else
+{
+return;
+}
+}
+function onDelete()
+{
+var deleteMessage = &quot;Are you sure you want to delete selected items?&quot;;
+if (	core_confirm( deleteMessage ) == 'yes' )
+{
+form.BUTTON_ID.value = &quot;DELETE&quot; ;
+form.submit();
+}
+else
+{
+return;
+}
+}
+function onUniOptOut()
+{
+var optOutMessage = &quot;This will opt out all subscriptions for this consumer. Are you sure you want to continue?&quot;;
+if (	core_confirm( optOutMessage ) == 'yes' )
+{
+form.BUTTON_ID.value = &quot;UNNIVERSAL_OPT_OUT&quot; ;
+form.submit();
+}
+else
+{
+return;
+}
+}
+function onProgOptOut()
+{
+var optOutMessage = &quot;This will opt out all the subscriptions from this program. Are you sure you want to continue?&quot;;
+if (	core_confirm( optOutMessage ) == 'yes' )
+{
+form.BUTTON_ID.value = &quot;PROGRAM_OPT_OUT&quot; ;
+form.submit();
+}
+else
+{
+return;
+}
+}
+function onEmailOptOut()
+{
+var frm = document.forms[0];
+var ele = frm.elements;
+for ( i=0; i &lt; ele.length; i++ ) {
+if ( ele[i].name ==  'CHECKED_EMAIL_SUBSCRPTN' &amp;&amp; ele[i].checked){
+if(ele[i].value.charAt(ele[i].value.length-1) == 'O'){
+core_alert('Please unselect already opted out subscription(s)');
+return;
+}
+}
+}
+var optOutMessage = &quot;Selected subscriptions from this program will be opted out. Are you sure you want to continue?&quot;;
+if (	core_confirm( optOutMessage ) == 'yes' )
+{
+form.BUTTON_ID.value = &quot;EMAIL_OPT_OUT&quot; ;
+form.submit();
+}
+else
+{
+return;
+}
+}
+function onPhoneOptOut()
+{
+var frm = document.forms[0];
+var ele = frm.elements;
+for ( i=0; i &lt; ele.length; i++ ) {
+if ( ele[i].name ==  'CHECKED_PHONE_SUBSCRPTN' &amp;&amp; ele[i].checked){
+if(ele[i].value.charAt(ele[i].value.length-1) == 'O'){
+core_alert('Please unselect already opted out subscription(s)');
+return;
+}
+}
+}
+var optOutMessage = &quot;Selected subscriptions from this program will be opted out. Are you sure you want to continue?&quot;;
+if (	core_confirm( optOutMessage ) == 'yes' )
+{
+form.BUTTON_ID.value = &quot;PHONE_OPT_OUT&quot; ;
+form.submit();
+}
+else
+{
+return;
+}
+}
+
+function onSocialOptOut()
+{
+var frm = document.forms[0];
+var ele = frm.elements;
+for ( i=0; i &lt; ele.length; i++ ) {
+if ( ele[i].name ==  'CHECKED_SOCIAL_SUBSCRPTN' &amp;&amp; ele[i].checked){
+if(ele[i].value.charAt(ele[i].value.length-1) == 'O'){
+core_alert('Please unselect already opted out subscription(s)');
+return;
+}
+}
+}
+var optOutMessage = &quot;Selected subscriptions from this program will be opted out. Are you sure you want to continue?&quot;;
+if (	core_confirm( optOutMessage ) == 'yes' )
+{
+form.BUTTON_ID.value = &quot;SOCIAL_OPT_OUT&quot; ;
+form.submit();
+}
+else
+{
+return;
+}
+}function onPostalOptOut()
+{
+var frm = document.forms[0];
+var ele = frm.elements;
+for ( i=0; i &lt; ele.length; i++ ) {
+if ( ele[i].name ==  'CHECKED_POSTAL_SUBSCRPTN' &amp;&amp; ele[i].checked){
+if(ele[i].value.charAt(ele[i].value.length-1) == 'O'){
+core_alert('Please unselect already opted out subscription(s)');
+return;
+}
+}
+}
+var optOutMessage = &quot;Selected subscriptions from this program will be opted out. Are you sure you want to continue?&quot;;
+if (	core_confirm( optOutMessage ) == 'yes' )
+{
+form.BUTTON_ID.value = &quot;POSTAL_OPT_OUT&quot; ;
+form.submit();
+}
+else
+{
+return;
+}
+}
+function onUniEmailOptOut()
+{
+var optOutMessage = &quot;All Email subscriptions will be opted out. Are you sure you want to continue?&quot;;
+if (	core_confirm( optOutMessage ) == 'yes' )
+{
+form.BUTTON_ID.value = &quot;UNI_EMAIL_OPT_OUT&quot; ;
+form.submit();
+}
+else
+{
+return;
+}
+}
+function onUniPhoneOptOut()
+{
+var optOutMessage = &quot;All Phone subscriptions will be opted out. Are you sure you want to continue?&quot;;
+if (	core_confirm( optOutMessage ) == 'yes' )
+{
+form.BUTTON_ID.value = &quot;UNI_PHONE_OPT_OUT&quot; ;
+form.submit();
+}
+else
+{
+return;
+}
+}
+function onUniPostlOptOut()
+{
+var optOutMessage = &quot;All Postal subscriptions will be opted out. Are you sure you want to continue?&quot;;
+if (	core_confirm( optOutMessage ) == 'yes' )
+{
+form.BUTTON_ID.value = &quot;UNI_POSTL_OPT_OUT&quot; ;
+form.submit();
+}
+else
+{
+return;
+}
+}
+
+function onUniSocialOptOut()
+
+{
+
+var optOutMessage = &quot;All Social subscriptions will be opted out. Are you sure you want to continue?&quot;;
+
+if (	core_confirm( optOutMessage ) == 'yes' )
+
+{
+
+form.BUTTON_ID.value = &quot;UNI_SOCIAL_OPT_OUT&quot; ;
+
+form.submit();
+
+}
+
+else
+
+{
+
+return;
+
+}
+
+}
+
+function onSave()
+
+{
+
+var formchanged=isFormChanged();
+
+if(formchanged){
+
+var formvalid=isFormValid();
+
+if(formvalid){
+
+trimAllValues();
+
+form.BUTTON_ID.value = &quot;SAVE&quot; ;
+
+form.submit();
+
+}
+
+}else{
+
+return;
+
+}
+
+}
+
+  
+
+function onSave()
+{
+var formchanged=isFormChanged();
+if(formchanged){
+var formvalid=isFormValid();
+if(formvalid){
+trimAllValues();
+form.BUTTON_ID.value = &quot;SAVE&quot; ;
+form.submit();
+}
+}else{
+return;
+}
+}
+function isFormChanged() {
+var rtnVal = false;
+var frm = document.forms[0];
+var ele = frm.elements;
+for ( i=0; i &lt; ele.length; i++ ) {
+if ( ele[i].type.length > 0 ) {
+if ( isElementChanged( ele, i ) ) {
+rtnVal = true;
+break;
+}
+}
+}
+return rtnVal;
+}function isElementChanged( ele, i ) {
+var isEleChanged = false;
+switch ( ele[i].type ) {
+case &quot;text&quot; :
+if ( ele[i].value != ele[i].defaultValue ){
+return true;
+}
+break;
+
+case &quot;textarea&quot; :
+if ( ele[i].value != ele[i].defaultValue ) return true;
+break;
+
+case &quot;radio&quot; :
+val = &quot;&quot;;
+if ( ele[i].checked != ele[i].defaultChecked ) return true;
+break;
+
+case &quot;select-one&quot; :
+for ( var x =0 ; x &lt; ele[i].length; x++ ) {
+if(ele[i].value!=''){
+if(ele[i].name!='MKTNG_PGM_NAME'){
+if ( ele[i].options[ x ].selected != ele[i].options[ x ].defaultSelected ){
+return true;
+}
+}
+}
+}
+break;
+
+case &quot;select-multiple&quot; :
+for ( var x =0 ; x &lt; ele[i].length; x++ ) {
+if ( ele[i].options[ x ].selected
+!= ele[i].options[ x ].defaultSelected )
+return true;
+}
+break;
+
+case &quot;checkbox&quot; :
+if ( ele[i].checked != ele[i].defaultChecked ) return true;
+  
+default:
+return false;
+break;
+}
+}
+function onTab( tabId, containerId )
+{
+var userAction;
+if (isFormChanged())
+userAction = core_confirm('This Tab has unsaved data. Are you sure you want to continue without saving ?');
+if (userAction == 'no'){
+
+tduiToggleTab('tabs_container','alttext',document.getElementById('tabSelected').childNodes[0]);
+return;
+}
+var alertPrefix = &quot;onTab(): &quot;;
+var form = document.forms['form' ];
+
+if( form != null )
+{
+var selectedStep = containerId + &quot;_SELECTED_STEP&quot;;
+var selectedStepId = containerId + &quot;_STEP_ID&quot;;
+for( i=0; i &lt; form.elements.length; i++ )
+{
+var input = form.elements[i];
+
+if( input.name == selectedStep )
+{
+input.value = tabId;
+}
+else if( input.name == selectedStepId )
+{
+input.value = tabId;
+}
+else if( input.name == 'BUTTON_ID' )
+{
+input.value = 'SYS_TAB';
+}
+else if( input.name == 'START_COUNT' )
+{
+input.value = 0;
+}
+else if( input.name == 'SYS_ID' )
+{
+if( form.PAGE_SYS_ID != null )
+{
+input.value = form.PAGE_SYS_ID.value;
+}
+}
+}
+form.submit();
+}
+else
+{
+alertPrefix + alert( 'no form!' );
+}
+}
+
+function checkdate(input){
+var validformat=/^\d{2}\/\d{2}\/\d{4}$/ //Basic check for format validity
+var returnval=false
+if (!validformat.test(input.value))
+alert(&quot;Invalid Date Format. Please correct and submit again.&quot;)
+else{ //Detailed check for valid date ranges
+var monthfield=input.value.split(&quot;/&quot;)[0]
+var dayfield=input.value.split(&quot;/&quot;)[1]
+var yearfield=input.value.split(&quot;/&quot;)[2]
+var dayobj = new Date(yearfield, monthfield-1, dayfield)
+if ((dayobj.getMonth()+1!=monthfield)||(dayobj.getDate()!=dayfield)||(dayobj.getFullYear()!=yearfield))
+alert(&quot;Invalid Day, Month, or Year range detected. Please correct and submit again.&quot;)
+else
+returnval=true
+}
+if (returnval==false) input.select()
+return returnval
+}
+
+    
+function profileChanged(){
+var frm = document.forms[0];
+var ele = frm.elements;
+for ( i=0; i &lt; ele.length; i++ ) {
+if ( ele[i].name ==  'IS_PROFILE_CHANGED' ){
+ele[i].value='true';
+}
+}
+}
+function addressChanged(){
+var frm = document.forms[0];
+var ele = frm.elements;
+for ( i=0; i &lt; ele.length; i++ ) {
+if ( ele[i].name ==  'IS_ADDRESS_CHANGED' ){
+ele[i].value='true';
+}
+}
+}
+function emailChanged(){
+var frm = document.forms[0];
+var ele = frm.elements;
+for ( i=0; i &lt; ele.length; i++ ) {
+if ( ele[i].name ==  'IS_EMAIL_CHANGED' ){
+ele[i].value='true';
+}
+}
+}
+function phoneChanged(){
+var frm = document.forms[0];
+var ele = frm.elements;
+for ( i=0; i &lt; ele.length; i++ ) {
+if ( ele[i].name ==  'IS_PHONE_CHANGED' ){
+ele[i].value='true';
+}
+}
+}
+
+function socialChanged(){
+var frm = document.forms[0];
+var ele = frm.elements;
+for ( i=0; i &lt; ele.length; i++ ) {
+if ( ele[i].name ==  'IS_SOCIAL_CHANGED' ){
+ele[i].value='true';
+}
+}
+}
+
+function isFormValid(){
+if(document.form.BRTH_DATE)
+var isdateformatvalid=validateDate(document.form.BRTH_DATE);
+
+var frm = document.forms[0];
+var ele = frm.elements;
+var count = 1;
+for ( i=0; i &lt; ele.length; i++ ) {
+if ( ele[i].type == 'text' ) {
+if(ele[i].value!=''){
+if(ele[i].id=='DPEND_BRTH_DATE'){
+var str=ele[i].value;
+var isdateformatvalid=validateDate(ele[i]);
+if(!isdateformatvalid) return false;
+}
+if(ele[i].id=='PET_BRTH_DATE'){
+var str=ele[i].value;
+var isdateformatvalid=validateDate(ele[i]);
+if(!isdateformatvalid) return false;
+}
+}
+}
+}
+
+//if(document.form.DPEND_BRTH_DATE)
+
+
+
+//var isdateformatvalid=validateDate(document.form.DPEND_BRTH_DATE);
+
+
+
+//if(document.form.PET_BRTH_DATE)
+
+
+//var isdateformatvalid=validateDate(document.form.PET_BRTH_DATE);
+
+
+
+if(!isdateformatvalid) return false;
+var isagevalid=validateAge();
+if(!isagevalid) return false;
+var isemailvalid=validateEmail();
+if(!isemailvalid) return false;
+var isphonevalid=validatePhone();
+if(!isphonevalid) return false;
+else return true;
+}
+function validateDate(fld) {
+if(fld.value!=''){
+if (!checkDate(fld)) {
+// focus if validation fails
+fld.focus();
+fld.select();
+return false;
+}
+else return true;
+}
+else return true;
+}
+function validateAge(){
+//Do this validation for only PII details page.
+if(!document.getElementById('BRTH_DATE'))
+return true;
+if(document.getElementById('BRTH_DATE').value==''){
+return true;
+}
+var frm = document.forms[0];
+var ele = frm.elements;
+for ( i=0; i &lt; ele.length; i++ ) {
+if ( ele[i].name == 'PARENTAL_CNTRL' ) {
+if(ele[i].value=='Y'){
+return true;
+}
+}
+}
+var maxage=parseInt(document.form.MAX_AGE.value);
+if(document.form.MAX_AGE.value=='')
+return true;
+var currdate= new Date();
+var brthdate=new Date(document.form.BRTH_DATE.value);
+var curryear=currdate.getFullYear();
+var currmonth = currdate.getMonth() + 1;
+var currday = currdate.getDate();
+var brthyear=brthdate.getFullYear();
+var brthmonth = brthdate.getMonth() + 1;
+var brthday = brthdate.getDate();
+var yeardiff=curryear-brthyear;
+var monthdiff=currmonth-brthmonth;
+var daydiff=currday-brthday;
+if(yeardiff > maxage){
+return true;
+}else
+if(yeardiff==maxage &amp;&amp; monthdiff>=0 &amp;&amp; daydiff>=0){
+return true;
+}else{
+core_alert('Age is under legal age limit.');
+//document.form.BRTH_DATE.value=document.form.BRTH_DATE.defaultValue;
+return false;
+}
+}
+function checkDate(fld) {
+var mo, day, yr;
+var entry = fld.value;
+var re = /\b\d{1,2}[\/-]\d{1,2}[\/-]\d{4}\b/;
+if (re.test(entry)) {
+var delimChar = (entry.indexOf(&quot;/&quot;) != -1) ? &quot;/&quot; : &quot;-&quot;;
+var delim1 = entry.indexOf(delimChar);
+var delim2 = entry.lastIndexOf(delimChar);
+mo = parseInt(entry.substring(0, delim1), 10);
+day = parseInt(entry.substring(delim1+1, delim2), 10);
+yr = parseInt(entry.substring(delim2+1), 10);
+var testDate = new Date(yr, mo-1, day);
+if (testDate.getDate() == day) {
+if (testDate.getMonth() + 1 == mo) {
+if (testDate.getFullYear() == yr) {
+return true;
+} else {
+core_alert(&quot;There is a problem with the year entry.&quot;);
+}
+} else {
+core_alert(&quot;There is a problem with the month entry.&quot;);
+}
+} else {
+core_alert(&quot;There is a problem with the date entry.&quot;);
+}
+} else {
+core_alert(&quot;Incorrect date format. Enter as mm/dd/yyyy.&quot;);
+}
+return false;
+}
+function emailcheck(str) {
+var at=&quot;@&quot;;
+var dot=&quot;.&quot;;
+var lat=str.indexOf(at);
+var lstr=str.length;
+
+// 'No @ symbol' in the e-mail entered or 'start with @' or 'ends with @'
+if (str.indexOf(at)==-1 || str.indexOf(at)==0 || str.indexOf(at)==(lstr - 1) || str.indexOf(at, lstr - 1)==(lstr - 1)){
+return false;
+}
+// 'No .(dot) symbol' in the e-mail entered or 'start with .' or 'ends with .'
+if (str.indexOf(dot)==-1 || str.indexOf(dot)==0 || str.indexOf(dot)==(lstr - 1) || str.indexOf(dot, lstr - 1)==(lstr - 1)){
+return false;
+}
+// e-mail should not have 2 @'s
+if (str.indexOf(at,(lat+1))!=-1){
+return false;
+}
+// e-mail should not have '@.'or '.@' in it (dot and @ in consecutive order)
+if (str.substring(lat-1,lat)==dot || str.substring(lat+1,lat+2)==dot){
+return false;
+}
+// atleast 1 dot should exist after @ (atleast 2 chars away)
+if (str.indexOf(dot,(lat+2))==-1){
+return false;
+}
+// No spaces allowed in the e-mail entered
+if (str.indexOf(&quot; &quot;)!=-1){
+return false;
+}
+return true;
+}
+function validateEmail() {
+//Do this validation for only PII details page.
+if(!document.getElementById('EMAIL_ADDR_TXT'))
+return true;
+var frm = document.forms[0];
+var ele = frm.elements;
+var returnval=false;
+for ( i=0; i &lt; ele.length; i++ ) {
+if ( ele[i].name ==  'EMAIL_ADDR_TXT' ){
+var emailvalue=(ele[i].value);
+if(emailvalue!=''){
+if (!emailcheck(emailvalue)) {
+core_alert('Invalid Email');
+returnval=false;
+return returnval;
+}else {returnval=true;}
+}else {returnval=true;}
+}
+}
+return returnval;
+}
+function validatePhone() {
+//Do this validation for only PII details page.
+if(!document.getElementById('FULL_PHONE'))
+return true;
+var frm = document.forms[0];
+var ele = frm.elements;
+var returnval=false;
+for ( i=0; i &lt; ele.length; i++ ) {
+if ( ele[i].name ==  'FULL_PHONE' ){
+var phonevalue=(ele[i].value);
+if(phonevalue!='' &amp;&amp; ele[i].value != ele[i].defaultValue){
+if (!phonecheck(phonevalue)) {
+alert('Invalid Phone Number. \n e.g. +91 (123) 220 1234); 0-9, +, (, ) and - are the only allowed characters for Phone Numbers.');
+returnval=false;
+return returnval;
+}else {returnval=true;}
+}else {returnval=true;}
+}
+}
+return returnval;
+}
+function phonecheck(str){
+var lstr=str.length;
+var validchars=&quot;0123456789+()- &quot;;
+for (var i = 0; i &lt; lstr; i++) {
+if (validchars.indexOf(str.charAt(i)) == -1) {
+return false;
+}
+}
+return true;
+}
+    
+function trimAllValues(){
+var frm = document.forms[0];
+var ele = frm.elements;
+var count = 1;
+for ( i=0; i &lt; ele.length; i++ ) {
+if ( ele[i].type == 'text' ) {
+if(ele[i].value!=''){
+var str=ele[i].value;
+ele[i].value=str.replace(/^\s+|\s+$/g,'');//trim(str);//
+}
+if(ele[i].value=='' &amp;&amp; ele[i].id ==  'BRTH_DATE'){//This is not to nullify BRTH_DATE value in the form.
+if(ele[i].value!=ele[i].defaultValue &amp;&amp; count==1){
+core_alert('You can not update Birth Date with blank. Birth Date will be restored to its original value.');
+count=2;
+}
+ele[i].value=ele[i].defaultValue;
+}
+}
+}
+}
+    
+function loadStates(){
+document.form.BUTTON_ID.value = 'LOAD_STATES';
+document.form.action = 'view.x2ps';
+document.form.submit();
+}
+function loadProgramID(){
+var formchanged=isFormChanged();
+if(formchanged){
+userAction = core_confirm('There is unsaved data for this profile. Are you sure you want to continue without saving ?');
+if (userAction == 'no'){
+//var mktngPrgmObj=document.getElementById('MKTNG_PGM_NAME');
+//mktngPrgmObj.selectedIndex=0;
+return true;
+}else{
+document.form.BUTTON_ID.value = 'LOAD_PROGRAM';
+document.form.action = 'view.x2ps';
+document.form.submit();
+}
+}
+else{
+document.form.BUTTON_ID.value = 'LOAD_PROGRAM';
+document.form.action = 'view.x2ps';
+document.form.submit();
+}
+}
+
+</ui:script>
+  </ui:container>
+</ui:page-group>

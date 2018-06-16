@@ -1,0 +1,26 @@
+<ui:page-group version="3" xmlns:ui="http://www.teradata.com/ui" Id="ui_form29.pgl">
+  <ui:container id="searchCont" displayText="Add Code  Master Type ">
+    <!--Line added for fix of issue MDM-1937 by Ankur Goyal-->
+    <ui:help displayPage="{$pages: manageCodeMasterTypeHelp}" />
+    <ui:step id="ItemStep">
+      <ui:field-group id="leftFields1" columns="3">
+        <ui:image src="/cancel.gif" displayCondition="{string-length($root/AlertRed/@Value) != 0}" />
+        <ui:display-field value="{$root/AlertRed/@Value}" displayCondition="{string-length($root/AlertRed/@Value) != 0}" name="error" class="requiredIndicator" />
+      </ui:field-group>
+      <ui:field-group>
+        <ui:entry-field displayText="Code Type Id" id="TYPE_ID" name="TYPE_ID" required="true" />
+        <ui:entry-field displayText="Description" name="Description" id="Description" required="true" maxlength="1024" />
+        <ui:dropdown displayText="Is Editable" id="IS_EDITABLE" name="IS_EDITABLE" required="true" selectOne="true">
+          <ui:option value="true" />
+          <ui:option value="false" />
+        </ui:dropdown>
+      </ui:field-group>
+      <ui:buttons>
+        <!--<ui:button id="Cancel" name="Cancel" displayText="Back" onClick="/mdm/view.x2ps?START_WORKFLOW=ManageCodemasterType&amp;SOLUTION_NAME=MDM&amp;SERVICE_NAME=ADMIN_UI"/>-->
+        <ui:button id="Cancel" name="Cancel" displayText="Back" validate="false" />
+        <ui:button id="Save" name="Save" displayText="Save" emphasized="true" />
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+</ui:page-group>
+

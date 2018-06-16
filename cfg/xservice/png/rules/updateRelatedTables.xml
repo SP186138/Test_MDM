@@ -1,0 +1,1144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+ 	 Copyright (c) 2009 by Teradata Corporation. 
+	 All Rights Reserved. 
+	 Teradata CONFIDENTIAL AND TRADE SECRET 
+ -->
+  <DEFINE_METHOD Name="updatePostalAddLegal">
+    <RULE>
+      <ACTION>
+        <GET_DOC_SMART Name="PRSNA_POSTL_ADDR_STG" AssignToVar="resPrsnaPostlAddrStg" ServiceName="BCM_MASTER" DirtyRead="yes">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+          <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+          <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+          <SYNC_STATUS Value="VALIDATED"/>
+        </GET_DOC_SMART>
+        <IF_TEST Test="$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/MKTNG_PGM_NBR != null">
+          <THEN>
+            <GET_DOC_SMART Name="MATCHD_CNSMR_POSTL_ADDR" AssignToVar="resPrsnaPostlAddr" ServiceName="BCM_MASTER" DirtyRead="yes">
+              <MATCHD_CNSMR_PRSNA_ID Value="{$thisParam/MATCHD_CNSMR_PRSNA_ID/@Value}"/>
+              <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+            </GET_DOC_SMART>
+            <IF_TEST Test="($resPrsnaPostlAddr/MATCHD_CNSMR_POSTL_ADDR/MATCHD_CNSMR_PRSNA_ID != null and $resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/CNTCT_POINT_CATEG_CODE/@Value='AR') or ($resPrsnaPostlAddr/MATCHD_CNSMR_PRSNA_POSTL_ADDR/CNTCT_POINT_CATEG_CODE/@Value='AB' and $resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/CNTCT_POINT_CATEG_CODE/@Value='AB')">
+              <THEN>
+                <IF_TEST Test="$thisParam/DR_COUNTRY_NAME/@Value = 'Jap' and $thisParam/PR_REV_GROUP/@Value &gt; 0">
+                  <THEN>
+                    <SET Var="VALID_CNTCT_POINT_IND" FromValue="N"/>
+                  </THEN>
+                  <ELSE>
+                    <SET Var="VALID_CNTCT_POINT_IND" FromValue=""/>
+                  </ELSE>
+                </IF_TEST>
+                <IF_TEST Test="$thisParam/DR_COUNTRY_NAME/@Value = 'IND'">
+                  <THEN>
+                    <MODIFY_DOC_SMART Name="MATCHD_CNSMR_POSTL_ADDR" AssignToVar="resModifyPostal" ServiceName="BCM_MASTER">
+                     <DOCUMENT_CONTEXT>
+                      <MATCHD_CNSMR_PRSNA_ID Value="{$thisParam/MATCHD_CNSMR_PRSNA_ID/@Value}"/>
+                      <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                      <CNTCT_POINT_CATEG_CODE Value="{$resPrsnaPostlAddr/MATCHD_CNSMR_POSTL_ADDR/CNTCT_POINT_CATEG_CODE/@Value}"/>
+                     </DOCUMENT_CONTEXT>
+                     <UPDATE_PROPERTIES>
+						<CNTCT_POINT_CATEG_CODE Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/CNTCT_POINT_CATEG_CODE/@Value}"/>
+						<VALID_CNTCT_POINT_IND Value="{$VALID_CNTCT_POINT_IND}"/>
+						<PREF_CNTCT_POINT_IND Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/PREFR_IND/@Value}"/>
+						<ADDR_LINE_1_TXT Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/ADDR_LINE_1_TXT/@Value}"/>
+						<ADDR_LINE_2_TXT Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/ADDR_LINE_2_TXT/@Value}"/>
+						<ADDR_LINE_3_TXT Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/ADDR_LINE_3_TXT/@Value}"/>
+						<LAT_MEAS/>
+						<LONG_MEAS/>
+						<STRET_NUM Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/STRET_NUM/@Value}"/>
+						<STRET_NAME Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/STRET_NAME/@Value}"/>
+						<APT_NUM Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/APT_NUM/@Value}"/>
+						<PO_BOX_NUM Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/PO_BOX_NUM/@Value}"/>
+						<CITY_NAME Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/CITY_NAME/@Value}"/>
+						<POSTL_AREA_CODE Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/POSTL_AREA_CODE/@Value}"/>
+						<TERR_CODE Value="{$thisParam/DR_REGION_NAME/@Value}"/>
+						<CNTRY_CODE Value="{$thisParam/DR_COUNTRY_NAME/@Value}"/>
+						<SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+						<SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                     </UPDATE_PROPERTIES>
+                    </MODIFY_DOC_SMART>
+                  </THEN>
+                  <ELSE>
+                    <MODIFY_DOC_SMART Name="MATCHD_CNSMR_POSTL_ADDR" AssignToVar="resModifyPostal" ServiceName="BCM_MASTER">
+                     <DOCUMENT_CONTEXT>
+                       <MATCHD_CNSMR_PRSNA_ID Value="{$thisParam/MATCHD_CNSMR_PRSNA_ID/@Value}"/>
+                       <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                       <CNTCT_POINT_CATEG_CODE Value="{$resPrsnaPostlAddr/MATCHD_CNSMR_POSTL_ADDR/CNTCT_POINT_CATEG_CODE/@Value}"/>
+                     </DOCUMENT_CONTEXT>
+                     <UPDATE_PROPERTIES>
+                       <CNTCT_POINT_CATEG_CODE Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/CNTCT_POINT_CATEG_CODE/@Value}"/>
+                       <VALID_CNTCT_POINT_IND Value="{$VALID_CNTCT_POINT_IND}"/>
+                       <PREF_CNTCT_POINT_IND Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/PREFR_IND/@Value}"/>
+                       <ADDR_LINE_1_TXT Value="{$thisParam/DR_ADDRESS/@Value}"/>
+                       <ADDR_LINE_2_TXT Value="{$thisParam/DR_ADDRESS2/@Value}"/>
+                       <ADDR_LINE_3_TXT Value="{$thisParam/DR_ADDRESS3/@Value}"/>
+                       <LAT_MEAS/>
+                       <LONG_MEAS/>
+                       <STRET_NUM Value="{$thisParam/DR_HOUSE_NUMBER1/@Value}"/>
+                       <STRET_NAME Value="{$thisParam/DR_STREET_NAME/@Value}"/>
+                       <APT_NUM Value="{$thisParam/DR_HOUSE_NUMBER2/@Value}"/>
+                       <PO_BOX_NUM Value="{$thisParam/DR_POBOX_NUMBER/@Value}"/>
+                       <CITY_NAME Value="{$thisParam/DR_CITY_NAME/@Value}"/>
+                       <POSTL_AREA_CODE Value="{$thisParam/DR_POSTAL_CODE/@Value}"/>
+                       <TERR_CODE Value="{$thisParam/DR_REGION_NAME/@Value}"/>
+                       <CNTRY_CODE Value="{$thisParam/DR_COUNTRY_NAME/@Value}"/>
+                       <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                       <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                     </UPDATE_PROPERTIES>
+                    </MODIFY_DOC_SMART>
+                  </ELSE>
+                </IF_TEST>
+              </THEN>
+              <ELSE>
+                <IF_TEST Test="$resPrsnaPostlAddr/MATCHD_CNSMR_POSTL_ADDR/MATCHD_CNSMR_PRSNA_ID = null">
+                  <THEN>
+                    <REQUEST Name="createPostalAddLegal" AssignToVar="resPostalAddress" ServiceName="BCM_MASTER">
+                      <TO_XML SelectList="$thisParam/*"/>
+                    </REQUEST>
+                  </THEN>
+                  <ELSE>
+                  </ELSE>
+                </IF_TEST>
+              </ELSE>
+            </IF_TEST>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+    <HANDLE_SYSTEM_EXCEPTION>
+      <action>
+        <SET Var="Success_Error_Message" FromValue="updatePostalAddLegal Failed" Scope="Global"/>
+      </action>
+    </HANDLE_SYSTEM_EXCEPTION>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="updatePostalAddReg">
+    <RULE>
+      <ACTION>
+        <GET_DOC_SMART Name="PRSNA_POSTL_ADDR_STG" AssignToVar="resPrsnaPostlAddrStg" ServiceName="BCM_MASTER" DirtyRead="yes">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+          <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+          <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+          <SYNC_STATUS Value="VALIDATED"/>
+        </GET_DOC_SMART>
+        <IF_TEST Test="$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/MKTNG_PGM_NBR != null">
+          <THEN>
+            <GET_DOC_SMART Name="REGIS_PRSNA_POSTL_ADDR" AssignToVar="resRegisPrsnaPostl" DirtyRead="yes" ServiceName="BCM_MASTER">
+              <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+              <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+              <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+            </GET_DOC_SMART>
+            <IF_TEST Test="$resRegisPrsnaPostl/REGIS_PRSNA_POSTL_ADDR/REGIS_PRSNA_ID != null">
+              <THEN>
+                <IF_TEST Test="$thisParam/DR_COUNTRY_NAME/@Value = 'Jap' and $thisParam/PR_REV_GROUP/@Value &gt; 0">
+                  <THEN>
+                    <SET Var="VALID_CNTCT_POINT_IND" FromValue="N"/>
+                  </THEN>
+                  <ELSE>
+                    <SET Var="VALID_CNTCT_POINT_IND" FromValue=""/>
+                  </ELSE>
+                </IF_TEST>
+                <IF_TEST Test="$thisParam/DR_COUNTRY_NAME/@Value = 'IND'">
+                  <THEN>
+                   <MODIFY_DOC_SMART Name="REGIS_PRSNA_POSTL_ADDR" AssignToVar="resModifyPostal" ServiceName="BCM_MASTER">
+                    <DOCUMENT_CONTEXT>
+                      <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                      <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                      <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                      <CNTCT_POINT_CATEG_CODE Value="{$resRegisPrsnaPostl/REGIS_PRSNA_POSTL_ADDR/CNTCT_POINT_CATEG_CODE/@Value}"/>
+                    </DOCUMENT_CONTEXT>
+                    <UPDATE_PROPERTIES>
+                      <CNTCT_POINT_CATEG_CODE Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/CNTCT_POINT_CATEG_CODE/@Value}"/>
+                      <SUBSCRPTN_OPT_NBR Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/CNTCT_OPTN_NBR/@Value}"/>
+                      <SUBSCRPTN_OPT_IND Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/CNTCT_OPTN_IND/@Value}"/>
+                      <CNSMR_CHCE_DATETM Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/CNSMR_CHCE_DATETM/@Value}"/>
+                      <PREF_CNTCT_POINT_IND Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/PREFR_IND/@Value}"/>
+                      <ADDR_LINE_1_TXT Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/ADDR_LINE_1_TXT/@Value}"/>
+                      <ADDR_LINE_2_TXT Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/ADDR_LINE_2_TXT/@Value}"/>
+                      <ADDR_LINE_3_TXT Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/ADDR_LINE_3_TXT/@Value}"/>
+                      <LAT_MEAS/>
+                      <LONG_MEAS/>
+                      <STRET_NUM Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/STRET_NUM/@Value}"/>
+                      <STRET_NAME Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/STRET_NAME/@Value}"/>
+                      <APT_NUM Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/APT_NUM/@Value}"/>
+                      <PO_BOX_NUM Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/PO_BOX_NUM/@Value}"/>
+                      <CITY_NAME Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/CITY_NAME/@Value}"/>
+                      <POSTL_AREA_CODE Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/POSTL_AREA_CODE/@Value}"/>
+                      <TERR_CODE Value="{$thisParam/DR_REGION_NAME/@Value}"/>
+                      <CNTRY_CODE Value="{$thisParam/DR_COUNTRY_NAME/@Value}"/>
+                      <VALID_CNTCT_POINT_IND Value="{$VALID_CNTCT_POINT_IND}"/>
+                      <GUARDN_NAME Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/GUARDN_NAME/@Value}"/>
+                      <GUARDN_EMAIL_ADDR_TXT Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/GUARDN_EMAIL_ADDR_TXT/@Value}"/>
+                      <GUARDN_CNSNT_IND Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/GUARDN_CNSNT_IND/@Value}"/>
+                      <ACNLGMT_DATE Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/ACNLGMT_DATE/@Value}"/>
+                      <WIN_KEY Value="{$thisParam/WINDOW_KEY_01/@Value}"/>
+                      <PR_GEOCODE_FAIL Value="{$thisParam/GOUT_MATCH_LEVEL/@Value}"/>
+                      <PR_REV_GROUP Value="{$thisParam/PR_REV_GROUP/@Value}"/>
+                      <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                      <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                    </UPDATE_PROPERTIES>
+                   </MODIFY_DOC_SMART>
+                  </THEN>
+                  <ELSE>
+                   <MODIFY_DOC_SMART Name="REGIS_PRSNA_POSTL_ADDR" AssignToVar="resModifyPostal" ServiceName="BCM_MASTER">
+                    <DOCUMENT_CONTEXT>
+                     <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                     <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                     <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                     <CNTCT_POINT_CATEG_CODE Value="{$resRegisPrsnaPostl/REGIS_PRSNA_POSTL_ADDR/CNTCT_POINT_CATEG_CODE/@Value}"/>
+                    </DOCUMENT_CONTEXT>
+                    <UPDATE_PROPERTIES>
+                     <CNTCT_POINT_CATEG_CODE Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/CNTCT_POINT_CATEG_CODE/@Value}"/>
+                     <SUBSCRPTN_OPT_NBR Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/CNTCT_OPTN_NBR/@Value}"/>
+                     <SUBSCRPTN_OPT_IND Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/CNTCT_OPTN_IND/@Value}"/>
+                     <CNSMR_CHCE_DATETM Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/CNSMR_CHCE_DATETM/@Value}"/>
+                     <PREF_CNTCT_POINT_IND Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/PREFR_IND/@Value}"/>
+                     <ADDR_LINE_1_TXT Value="{$thisParam/DR_ADDRESS/@Value}"/>
+                     <ADDR_LINE_2_TXT Value="{$thisParam/DR_ADDRESS2/@Value}"/>
+                     <ADDR_LINE_3_TXT Value="{$thisParam/DR_ADDRESS3/@Value}"/>
+                     <LAT_MEAS/>
+                     <LONG_MEAS/>
+                     <STRET_NUM Value="{$thisParam/DR_HOUSE_NUMBER1/@Value}"/>
+                     <STRET_NAME Value="{$thisParam/DR_STREET_NAME/@Value}"/>
+                     <APT_NUM Value="{$thisParam/DR_HOUSE_NUMBER2/@Value}"/>
+                     <PO_BOX_NUM Value="{$thisParam/DR_POBOX_NUMBER/@Value}"/>
+                     <CITY_NAME Value="{$thisParam/DR_CITY_NAME/@Value}"/>
+                     <POSTL_AREA_CODE Value="{$thisParam/DR_POSTAL_CODE/@Value}"/>
+                     <TERR_CODE Value="{$thisParam/DR_REGION_NAME/@Value}"/>
+                     <CNTRY_CODE Value="{$thisParam/DR_COUNTRY_NAME/@Value}"/>
+                     <VALID_CNTCT_POINT_IND Value="{$VALID_CNTCT_POINT_IND}"/>
+                     <GUARDN_NAME Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/GUARDN_NAME/@Value}"/>
+                     <GUARDN_EMAIL_ADDR_TXT Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/GUARDN_EMAIL_ADDR_TXT/@Value}"/>
+                     <GUARDN_CNSNT_IND Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/GUARDN_CNSNT_IND/@Value}"/>
+                     <ACNLGMT_DATE Value="{$resPrsnaPostlAddrStg/PRSNA_POSTL_ADDR_STG/ACNLGMT_DATE/@Value}"/>
+                     <WIN_KEY Value="{$thisParam/WINDOW_KEY_01/@Value}"/>
+                     <PR_GEOCODE_FAIL Value="{$thisParam/GOUT_MATCH_LEVEL/@Value}"/>
+                     <PR_REV_GROUP Value="{$thisParam/PR_REV_GROUP/@Value}"/>
+                     <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                     <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                    </UPDATE_PROPERTIES>
+                   </MODIFY_DOC_SMART>
+                  </ELSE>
+                </IF_TEST>
+              </THEN>
+              <ELSE>
+                <REQUEST Name="createPostalAddReg" AssignToVar="resPostalAddress" ServiceName="BCM_MASTER">
+                  <TO_XML SelectList="$thisParam/*"/>
+                </REQUEST>
+              </ELSE>
+            </IF_TEST>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+    <HANDLE_SYSTEM_EXCEPTION>
+      <action>
+        <SET Var="Success_Error_Message" FromValue="updatePostalAddReg Failed" Scope="Global"/>
+      </action>
+    </HANDLE_SYSTEM_EXCEPTION>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="updateEmailReg">
+    <RULE>
+      <ACTION>
+        <GET_DOC_SMART Name="PRSNA_EMAIL_ADDR_STG" AssignToVar="resPrsnaEmailAddrStg" ServiceName="BCM_MASTER" DirtyRead="yes">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+          <SYNC_STATUS Value="VALIDATED"/>
+          <!--<EMAIL_ADDR_TXT Value="{$thisParam/CLEANSED_EMAIL_1/@Value}"/>-->
+          <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+          <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+        </GET_DOC_SMART>
+        <IF_TEST Test="$resPrsnaEmailAddrStg/PRSNA_EMAIL_ADDR_STG/MKTNG_PGM_NBR != null">
+          <THEN>
+            <FOR_EACH SelectList="$resPrsnaEmailAddrStg/PRSNA_EMAIL_ADDR_STG" CurrentElement="currElement">
+            <GET_DOC_SMART Name="REGIS_PRSNA_EMAIL_ADDR" AssignToVar="resPrsnaEmailAddr" ServiceName="BCM_MASTER" DirtyRead="yes">
+              <!--<CNTCT_POINT_CATEG_CODE Value="{$resPrsnaEmailAddrStg/PRSNA_EMAIL_ADDR_STG/CNTCT_POINT_CATEG_CODE/@Value}"/>-->
+              <EMAIL_ADDR_TXT Value="{$currElement/EMAIL_ADDR_TXT/@Value}"/>
+              <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+              <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+              <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+            </GET_DOC_SMART>
+            <IF_TEST Test="$resPrsnaEmailAddr/REGIS_PRSNA_EMAIL_ADDR/REGIS_PRSNA_ID != null">
+              <THEN>
+                <MODIFY_DOC_SMART Name="REGIS_PRSNA_EMAIL_ADDR" AssignToVar="resModifyEmail" ServiceName="BCM_MASTER">
+                  <DOCUMENT_CONTEXT>
+                    <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                    <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                    <!--<CNTCT_POINT_CATEG_CODE Value="{$resPrsnaEmailAddrStg/PRSNA_EMAIL_ADDR_STG/CNTCT_POINT_CATEG_CODE/@Value}"/>-->
+                    <!--<SUBSCRPTN_OPT_NBR Value="{$resPrsnaEmailAddrStg/PRSNA_EMAIL_ADDR_STG/CNTCT_OPTN_NBR/@Value}"/>-->
+                    <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                    <EMAIL_ADDR_TXT Value="{$currElement/EMAIL_ADDR_TXT/@Value}"/>
+                  </DOCUMENT_CONTEXT>
+                  <UPDATE_PROPERTIES>
+                    <SUBSCRPTN_OPT_NBR Value="{$currElement/CNTCT_OPTN_NBR/@Value}"/>
+                    <CNTCT_POINT_CATEG_CODE Value="{$currElement/CNTCT_POINT_CATEG_CODE/@Value}"/>
+                    <SUBSCRPTN_OPT_IND Value="{$currElement/CNTCT_OPTN_IND/@Value}"/>
+                    <CNSMR_CHCE_DATETM Value="{$currElement/CNSMR_CHCE_DATETM/@Value}"/>
+                    <PREF_CNTCT_POINT_IND Value="{$currElement/PREFR_IND/@Value}"/>
+                    <EMAIL_ADDR_TXT Value="{$currElement/EMAIL_ADDR_TXT/@Value}"/>
+                    <EMAIL_FORMT_CODE Value="{$currElement/EMAIL_FORMT_CODE/@Value}"/>
+                    <VALID_CNTCT_POINT_IND Value="{$currElement/VALID_IND/@Value}"/>
+                    <GUARDN_NAME Value="{$currElement/GUARDN_NAME/@Value}"/>
+                    <GUARDN_EMAIL_ADDR_TXT Value="{$currElement/GUARDN_EMAIL_ADDR_TXT/@Value}"/>
+                    <GUARDN_CNSNT_IND Value="{$currElement/GUARDN_CNSNT_IND/@Value}"/>
+                    <ACNLGMT_DATE Value="{$currElement/ACNLGMT_DATE/@Value}"/>
+                    <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                    <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                  </UPDATE_PROPERTIES>
+                </MODIFY_DOC_SMART>
+              </THEN>
+              <ELSE>
+                <GET_DOC_SMART Name="REGIS_PRSNA_EMAIL_ADDR" AssignToVar="resPrsnaEmailAddr1" ServiceName="BCM_MASTER" DirtyRead="yes">
+                  <CNTCT_POINT_CATEG_CODE Value="{$currElement/CNTCT_POINT_CATEG_CODE/@Value}"/>
+                  <!--<EMAIL_ADDR_TXT Value="{$thisParam/CLEANSED_EMAIL_1/@Value}"/>-->
+                  <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                  <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                </GET_DOC_SMART>
+                <IF_TEST Test="$resPrsnaEmailAddr1/REGIS_PRSNA_EMAIL_ADDR/REGIS_PRSNA_ID != null">
+                  <THEN>
+                    <MODIFY_DOC_SMART Name="REGIS_PRSNA_EMAIL_ADDR" ServiceName="BCM_MASTER" AssignToVar="resModifyEmail1">
+                      <DOCUMENT_CONTEXT>
+                        <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                        <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                        <CNTCT_POINT_CATEG_CODE Value="{$currElement/CNTCT_POINT_CATEG_CODE/@Value}"/>
+                        <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                      </DOCUMENT_CONTEXT>
+                      <UPDATE_PROPERTIES>
+                        <SUBSCRPTN_OPT_NBR Value="{currElement/CNTCT_OPTN_NBR/@Value}"/>
+                        <!--<CNTCT_POINT_CATEG_CODE Value="{$currElement/CNTCT_POINT_CATEG_CODE/@Value}"/>-->
+                        <SUBSCRPTN_OPT_IND Value="{$currElement/CNTCT_OPTN_IND/@Value}"/>
+                        <CNSMR_CHCE_DATETM Value="{$currElement/CNSMR_CHCE_DATETM/@Value}"/>
+                        <PREF_CNTCT_POINT_IND Value="{$currElement/PREFR_IND/@Value}"/>
+                        <EMAIL_ADDR_TXT Value="{$currElement/EMAIL_ADDR_TXT/@Value}"/>
+                        <EMAIL_FORMT_CODE Value="{$currElement/EMAIL_FORMT_CODE/@Value}"/>
+                        <VALID_CNTCT_POINT_IND Value="{$currElement/VALID_IND/@Value}"/>
+                        <GUARDN_NAME Value="{$currElement/GUARDN_NAME/@Value}"/>
+                        <GUARDN_EMAIL_ADDR_TXT Value="{$currElement/GUARDN_EMAIL_ADDR_TXT/@Value}"/>
+                        <GUARDN_CNSNT_IND Value="{$currElement/GUARDN_CNSNT_IND/@Value}"/>
+                        <ACNLGMT_DATE Value="{$currElement/ACNLGMT_DATE/@Value}"/>
+                        <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                        <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                      </UPDATE_PROPERTIES>
+                    </MODIFY_DOC_SMART>
+                  </THEN>
+                  <ELSE>
+                    <REQUEST Name="createEmailReg" AssignToVar="resEmail" ServiceName="BCM_MASTER">
+                      <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                      <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+                      <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                      <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                      <VALID_CNTCT_POINT_IND Value="{$currElement/VALID_IND/@Value}"/>
+                      <EMAIL_ADDR_TXT Value="{$currElement/EMAIL_ADDR_TXT/@Value}"/>
+                      <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                      <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                    </REQUEST>
+                  </ELSE>
+                </IF_TEST>
+              </ELSE>
+            </IF_TEST>
+           </FOR_EACH>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+    <HANDLE_SYSTEM_EXCEPTION>
+      <action>
+        <SET Var="Success_Error_Message" FromValue="updateEmailReg Failed" Scope="Global"/>
+      </action>
+    </HANDLE_SYSTEM_EXCEPTION>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="updatePhoneReg">
+    <RULE>
+      <ACTION>
+        <GET_DOC_SMART Name="PRSNA_PHONE_STG" AssignToVar="resPrsnaPhoneStg" ServiceName="BCM_MASTER" DirtyRead="yes">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+          <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+          <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+          <SYNC_STATUS Value="VALIDATED"/>
+        </GET_DOC_SMART>
+        <IF_TEST Test="$resPrsnaPhoneStg/PRSNA_PHONE_STG/MKTNG_PGM_NBR != null">
+          <THEN>
+            <FOR_EACH SelectList="$resPrsnaPhoneStg/PRSNA_PHONE_STG" CurrentElement="currElement">
+              <GET_DOC_SMART Name="REGIS_PRSNA_PHONE" AssignToVar="resPrsnaPhone" ServiceName="BCM_MASTER" DirtyRead="yes">
+                <!--<CNTCT_POINT_CATEG_CODE Value="{$currElement/CNTCT_POINT_CATEG_CODE/@Value}"/>-->
+                <FULL_PHONE_NUM Value="{$currElement/FULL_PHONE_NUM/@Value}"/>
+                <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+              </GET_DOC_SMART>
+              <IF_TEST Test="$resPrsnaPhone/REGIS_PRSNA_PHONE/REGIS_PRSNA_ID != null">
+                <THEN>
+                  <MODIFY_DOC_SMART Name="REGIS_PRSNA_PHONE" AssignToVar="resModifyPhone" ServiceName="BCM_MASTER">
+                    <DOCUMENT_CONTEXT>
+                      <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                      <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                      <!--<CNTCT_POINT_CATEG_CODE Value="{$currElement/CNTCT_POINT_CATEG_CODE/@Value}"/>
+                      <SUBSCRPTN_OPT_NBR Value="{$currElement/CNTCT_OPTN_NBR/@Value}"/>-->
+                      <FULL_PHONE_NUM Value="{$currElement/FULL_PHONE_NUM/@Value}"/>
+                      <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                    </DOCUMENT_CONTEXT>
+                    <UPDATE_PROPERTIES>
+                      <CNTCT_POINT_CATEG_CODE Value="{$currElement/CNTCT_POINT_CATEG_CODE/@Value}"/>
+                      <SUBSCRPTN_OPT_NBR Value="{$currElement/CNTCT_OPTN_NBR/@Value}"/>
+                      <SUBSCRPTN_OPT_IND Value="{$currElement/CNTCT_OPTN_IND/@Value}"/>
+                      <CNSMR_CHCE_DATETM Value="{$currElement/CNSMR_CHCE_DATETM/@Value}"/>
+                      <PREF_CNTCT_POINT_IND Value="{$currElement/PREFR_IND/@Value}"/>
+                      <PHONE_EXTSN_NUM Value="{$currElement/PHONE_EXTSN_NUM/@Value}"/>
+                      <SMS_PREFR_IND Value="{$currElement/SMS_PREFR_IND/@Value}"/>
+                      <!--<FULL_PHONE_NUM Value="{$currElement/FULL_PHONE_NUM/@Value}"/>-->
+                      <PHONE_LINE_NBR Value="{$currElement/PHONE_LINE_NBR/@Value}"/>
+                      <PHONE_AREA_NBR Value="{$currElement/PHONE_AREA_NBR/@Value}"/>
+                      <PHONE_EXCHG_NBR Value="{$currElement/PHONE_EXCHG_NBR/@Value}"/>
+                      <PHONE_CNTRY_NBR Value="{$currElement/PHONE_CNTRY_NBR/@Value}"/>
+                      <SMS_AVAIL_START_TIME Value="{$currElement/SMS_AVAIL_START_TIME/@Value}"/>
+                      <SMS_AVAIL_END_TIME Value="{$currElement/SMS_AVAIL_END_TIME/@Value}"/>
+                      <VALID_CNTCT_POINT_IND Value="{$currElement/VALID_IND/@Value}"/>
+                      <GUARDN_NAME Value="{$currElement/GUARDN_NAME/@Value}"/>
+                      <GUARDN_EMAIL_ADDR_TXT Value="{$currElement/GUARDN_EMAIL_ADDR_TXT/@Value}"/>
+                      <GUARDN_CNSNT_IND Value="{$currElement/GUARDN_CNSNT_IND/@Value}"/>
+                      <ACNLGMT_DATE Value="{$currElement/ACNLGMT_DATE/@Value}"/>
+                      <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                      <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                    </UPDATE_PROPERTIES>
+                  </MODIFY_DOC_SMART>
+                </THEN>
+                <ELSE>
+                  <GET_DOC_SMART Name="REGIS_PRSNA_PHONE" AssignToVar="resPrsnaPhone1" ServiceName="BCM_MASTER" DirtyRead="yes">
+                    <CNTCT_POINT_CATEG_CODE Value="{$currElement/CNTCT_POINT_CATEG_CODE/@Value}"/>
+                    <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                    <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                    <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                  </GET_DOC_SMART>
+                  <IF_TEST Test="$resPrsnaPhone1/REGIS_PRSNA_PHONE/REGIS_PRSNA_ID != null">
+                    <THEN>
+                      <MODIFY_DOC_SMART Name="REGIS_PRSNA_PHONE" AssignToVar="resModifyPhone" ServiceName="BCM_MASTER">
+                        <DOCUMENT_CONTEXT>
+                          <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                          <CNTCT_POINT_CATEG_CODE Value="{$currElement/CNTCT_POINT_CATEG_CODE/@Value}"/>
+                          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                        </DOCUMENT_CONTEXT>
+                        <UPDATE_PROPERTIES>
+                          <!--<CNTCT_POINT_CATEG_CODE Value="{$currElement/CNTCT_POINT_CATEG_CODE/@Value}"/>-->
+                          <SUBSCRPTN_OPT_NBR Value="{$currElement/CNTCT_OPTN_NBR/@Value}"/>
+                          <SUBSCRPTN_OPT_IND Value="{$currElement/CNTCT_OPTN_IND/@Value}"/>
+                          <CNSMR_CHCE_DATETM Value="{$currElement/CNSMR_CHCE_DATETM/@Value}"/>
+                          <PREF_CNTCT_POINT_IND Value="{$currElement/PREFR_IND/@Value}"/>
+                          <PHONE_EXTSN_NUM Value="{$currElement/PHONE_EXTSN_NUM/@Value}"/>
+                          <SMS_PREFR_IND Value="{$currElement/SMS_PREFR_IND/@Value}"/>
+                          <FULL_PHONE_NUM Value="{$currElement/FULL_PHONE_NUM/@Value}"/>
+                          <PHONE_LINE_NBR Value="{$currElement/PHONE_LINE_NBR/@Value}"/>
+                          <PHONE_AREA_NBR Value="{$currElement/PHONE_AREA_NBR/@Value}"/>
+                          <PHONE_EXCHG_NBR Value="{$currElement/PHONE_EXCHG_NBR/@Value}"/>
+                          <PHONE_CNTRY_NBR Value="{$currElement/PHONE_CNTRY_NBR/@Value}"/>
+                          <SMS_AVAIL_START_TIME Value="{$currElement/SMS_AVAIL_START_TIME/@Value}"/>
+                          <SMS_AVAIL_END_TIME Value="{$currElement/SMS_AVAIL_END_TIME/@Value}"/>
+                          <VALID_CNTCT_POINT_IND Value="{$currElement/VALID_IND/@Value}"/>
+                          <GUARDN_NAME Value="{$currElement/GUARDN_NAME/@Value}"/>
+                          <GUARDN_EMAIL_ADDR_TXT Value="{$currElement/GUARDN_EMAIL_ADDR_TXT/@Value}"/>
+                          <GUARDN_CNSNT_IND Value="{$currElement/GUARDN_CNSNT_IND/@Value}"/>
+                          <ACNLGMT_DATE Value="{$currElement/ACNLGMT_DATE/@Value}"/>
+                          <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                          <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                        </UPDATE_PROPERTIES>
+                      </MODIFY_DOC_SMART>
+                    </THEN>
+                    <ELSE>
+                      <REQUEST Name="createPhoneReg" AssignToVar="resPhone" ServiceName="BCM_MASTER">
+                        <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                        <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+                        <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                        <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                        <FULL_PHONE_NUM Value="{$currElement/FULL_PHONE_NUM/@Value}"/>
+                        <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                        <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                      </REQUEST>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </FOR_EACH>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+    <HANDLE_SYSTEM_EXCEPTION>
+      <action>
+        <SET Var="Success_Error_Message" FromValue="updatePhoneReg Failed" Scope="Global"/>
+      </action>
+    </HANDLE_SYSTEM_EXCEPTION>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="updateSocNetwkReg">
+    <RULE>
+      <ACTION>
+        <GET_DOC_SMART Name="PRSNA_SOC_NETWK_ACCT_STG" AssignToVar="resPrsnaSocNetwkAcctStg" ServiceName="BCM_MASTER" DirtyRead="yes">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+          <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+          <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+          <SYNC_STATUS Value="VALIDATED"/>
+        </GET_DOC_SMART>
+        <IF_TEST Test="$resPrsnaSocNetwkAcctStg/PRSNA_SOC_NETWK_ACCT_STG/MKTNG_PGM_NBR != null">
+          <THEN>
+            <FOR_EACH SelectList="$resPrsnaSocNetwkAcctStg/PRSNA_SOC_NETWK_ACCT_STG" CurrentElement="currElement">
+              <GET_DOC_SMART Name="REGIS_PRSNA_SOC_NETK_ACT" AssignToVar="resPrsnaSocNetwkAcct" ServiceName="BCM_MASTER" DirtyRead="yes">
+                <CNTCT_POINT_CATEG_CODE Value="{$currElement/CNTCT_POINT_CATEG_CODE/@Value}"/>
+                <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+              </GET_DOC_SMART>
+              <IF_TEST Test="$resPrsnaSocNetwkAcct/REGIS_PRSNA_SOC_NETK_ACT/REGIS_PRSNA_ID != null">
+                <THEN>
+                  <MODIFY_DOC_SMART Name="REGIS_PRSNA_SOC_NETK_ACT" AssignToVar="resModifyPrsnaSocialNetwkAcct" ServiceName="BCM_MASTER">
+                    <DOCUMENT_CONTEXT>
+                      <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                      <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                      <CNTCT_POINT_CATEG_CODE Value="{$currElement/CNTCT_POINT_CATEG_CODE/@Value}"/>
+                      <!--<SUBSCRPTN_OPT_NBR Value="{$currElement/CNTCT_OPTN_NBR/@Value}"/>
+                      <SOCIAL_NETWK_ACCT_ID_VAL Value="{$currElement/SOCIAL_NETWK_ACCT_ID_VAL/@Value}"/>-->
+                      <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                    </DOCUMENT_CONTEXT>
+                    <UPDATE_PROPERTIES>
+                      <!--<CNTCT_POINT_CATEG_CODE Value="{$currElement/CNTCT_POINT_CATEG_CODE/@Value}"/>-->
+                      <SUBSCRPTN_OPT_NBR Value="{$currElement/CNTCT_OPTN_NBR/@Value}"/>
+                      <SUBSCRPTN_OPT_IND Value="{$currElement/CNTCT_OPTN_IND/@Value}"/>
+                      <CNSMR_CHCE_DATETM Value="{$currElement/CNSMR_CHCE_DATETM/@Value}"/>
+                      <PREF_CNTCT_POINT_IND Value="{$currElement/PREFR_IND/@Value}"/>
+                      <SOCIAL_NETWK_ACCT_ID_VAL Value="{$currElement/SOCIAL_NETWK_ACCT_ID_VAL/@Value}"/>
+                      <VALID_CNTCT_POINT_IND Value="{$currElement/VALID_IND/@Value}"/>
+                      <GUARDN_NAME Value="{$currElement/GUARDN_NAME/@Value}"/>
+                      <GUARDN_EMAIL_ADDR_TXT Value="{$currElement/GUARDN_EMAIL_ADDR_TXT/@Value}"/>
+                      <GUARDN_CNSNT_IND Value="{$currElement/GUARDN_CNSNT_IND/@Value}"/>
+                      <ACNLGMT_DATE Value="{$currElement/ACNLGMT_DATE/@Value}"/>
+                      <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                      <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                    </UPDATE_PROPERTIES>
+                  </MODIFY_DOC_SMART>
+                </THEN>
+                <ELSE>
+                  <REQUEST Name="createSocNetwkReg" AssignToVar="resSocialNetwork" ServiceName="BCM_MASTER">
+                    <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                    <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+                    <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                    <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                    <SOCIAL_NETWK_ACCT_ID_VAL Value="{$currElement/SOCIAL_NETWK_ACCT_ID_VAL/@Value}"/>
+                    <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                    <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                  </REQUEST>
+                </ELSE>
+              </IF_TEST>
+            </FOR_EACH>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+    <HANDLE_SYSTEM_EXCEPTION>
+      <action>
+        <SET Var="Success_Error_Message" FromValue="updateSocNetwkReg Failed" Scope="Global"/>
+      </action>
+    </HANDLE_SYSTEM_EXCEPTION>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="updateDependent">
+    <RULE>
+      <ACTION>
+        <GET_DOC_SMART Name="DPEND_STG" AssignToVar="resDpendStg" ServiceName="BCM_MASTER" DirtyRead="yes">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+          <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+          <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+          <!--<DPEND_NAME Value="{$thisParam/DPEND_NAME/@Value}"/>-->
+          <SYNC_STATUS Value="VALIDATED"/>
+        </GET_DOC_SMART>
+        <IF_TEST Test="$resDpendStg/DPEND_STG/MKTNG_PGM_NBR != null">
+          <THEN>
+            <FOR_EACH SelectList="$resDpendStg/DPEND_STG" CurrentElement="currElement">
+              <GET_DOC_SMART Name="DPEND" AssignToVar="resDpend" DirtyRead="yes" ServiceName="BCM_MASTER">
+                <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                <!--<DPEND_SEQ_NBR Value="{$currElement/DPEND_SEQ_NBR/@Value}"/>-->
+                <DPEND_NAME Value="{$currElement/DPEND_NAME/@Value}"/>
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+              </GET_DOC_SMART>
+              <IF_TEST Test="$resDpend/DPEND/REGIS_PRSNA_ID != null">
+                <THEN>
+                  <MODIFY_DOC_SMART Name="DPEND" AssignToVar="resModifyDpend" ServiceName="BCM_MASTER">
+                    <DOCUMENT_CONTEXT>
+                      <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                      <!--<DPEND_SEQ_NBR Value="{$currElement/DPEND_SEQ_NBR/@Value}"/>-->
+                      <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                      <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                      <DPEND_NAME Value="{$currElement/DPEND_NAME/@Value}"/>
+                    </DOCUMENT_CONTEXT>
+                    <UPDATE_PROPERTIES>
+                      <DPEND_SEQ_NBR Value="{$currElement/DPEND_SEQ_NBR/@Value}"/>
+                      <!--<DPEND_NAME Value="{$currElement/DPEND_NAME/@Value}"/>-->
+                      <DPEND_BRTH_DATE Value="{$currElement/DPEND_BRTH_DATE/@Value}"/>
+                      <DPEND_AGE_NBR Value="{$currElement/DPEND_AGE_NBR/@Value}"/>
+                      <DPEND_GENDR_IND Value="{$currElement/DPEND_GENDR_IND/@Value}"/>
+                      <DPEND_TYPE_CODE Value="{$currElement/DPEND_TYPE_CODE/@Value}"/>
+                      <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                      <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                    </UPDATE_PROPERTIES>
+                  </MODIFY_DOC_SMART>
+                </THEN>
+                <ELSE>
+                  <REQUEST Name="createDependent" AssignToVar="resDependent" ServiceName="BCM_MASTER">
+                    <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                    <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+                    <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                    <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                    <DPEND_NAME Value="{$currElement/DPEND_NAME/@Value}"/>
+                    <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                    <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                  </REQUEST>
+                </ELSE>
+              </IF_TEST>
+            </FOR_EACH>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+    <HANDLE_SYSTEM_EXCEPTION>
+      <action>
+        <SET Var="Success_Error_Message" FromValue="updateDependent Failed" Scope="Global"/>
+      </action>
+    </HANDLE_SYSTEM_EXCEPTION>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="updatePet">
+    <RULE>
+      <ACTION>
+        <GET_DOC_SMART Name="PET_STG" AssignToVar="resPetStg" ServiceName="BCM_MASTER" DirtyRead="yes">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+          <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+          <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+          <!--<PET_NAME Value="{$thisParam/PET_NAME/@Value}"/>-->
+          <SYNC_STATUS Value="VALIDATED"/>
+        </GET_DOC_SMART>
+        <IF_TEST Test="$resPetStg/PET_STG/MKTNG_PGM_NBR != null">
+          <THEN>
+            <FOR_EACH SelectList="$resPetStg/PET_STG" CurrentElement="currElement">
+              <GET_DOC_SMART Name="PET" AssignToVar="resPet" DirtyRead="yes" ServiceName="BCM_MASTER">
+                <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                <!--<PET_SEQ_NBR Value="{$currElement/PET_SEQ_NBR/@Value}"/>-->
+                <PET_NAME Value="{$currElement/PET_NAME/@Value}"/>
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+              </GET_DOC_SMART>
+              <IF_TEST Test="$resPet/PET/REGIS_PRSNA_ID != null">
+                <THEN>
+                  <MODIFY_DOC_SMART Name="PET" AssignToVar="resModifyPet" ServiceName="BCM_MASTER">
+                    <DOCUMENT_CONTEXT>
+                      <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                      <!--<PET_SEQ_NBR Value="{$currElement/PET_SEQ_NBR/@Value}"/>-->
+                      <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                      <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                      <PET_NAME Value="{$currElement/PET_NAME/@Value}"/>
+                    </DOCUMENT_CONTEXT>
+                    <UPDATE_PROPERTIES>
+                      <!--<PET_NAME Value="{$currElement/PET_NAME/@Value}"/>-->
+                      <PET_SEQ_NBR Value="{$currElement/PET_SEQ_NBR/@Value}"/>
+                      <PET_BRTH_DATE Value="{$currElement/PET_BRTH_DATE/@Value}"/>
+                      <PET_AGE_NBR Value="{$currElement/PET_AGE_NBR/@Value}"/>
+                      <PET_GENDR_IND Value="{$currElement/PET_GENDR_IND/@Value}"/>
+                      <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                      <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                    </UPDATE_PROPERTIES>
+                  </MODIFY_DOC_SMART>
+                </THEN>
+                <ELSE>
+                  <REQUEST Name="createPet" AssignToVar="resPet" ServiceName="BCM_MASTER">
+                    <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                    <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+                    <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                    <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                    <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                    <PET_NAME Value="{$currElement/PET_NAME/@Value}"/>
+                    <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                  </REQUEST>
+                </ELSE>
+              </IF_TEST>
+            </FOR_EACH>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+    <HANDLE_SYSTEM_EXCEPTION>
+      <action>
+        <SET Var="Success_Error_Message" FromValue="updatePet Failed" Scope="Global"/>
+      </action>
+    </HANDLE_SYSTEM_EXCEPTION>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="updateConsumerAffil">
+    <RULE>
+      <ACTION>
+        <GET_DOC_SMART Name="CNSMR_AFFLTN_STG" AssignToVar="resCnsmrAffltnStg" ServiceName="BCM_MASTER" DirtyRead="yes">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+          <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+          <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+          <SYNC_STATUS Value="VALIDATED"/>
+        </GET_DOC_SMART>
+        <IF_TEST Test="$resCnsmrAffltnStg/CNSMR_AFFLTN_STG/MKTNG_PGM_NBR != null">
+          <THEN>
+            <FOR_EACH SelectList="$resCnsmrAffltnStg/CNSMR_AFFLTN_STG" CurrentElement="currElement">
+              <GET_DOC_SMART Name="CNSMR_AFFLTN" AssignToVar="resCnsmrAffltn" DirtyRead="yes" ServiceName="BCM_MASTER">
+                <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                <CNSMR_GRP_NBR Value="{$currElement/CNSMR_GRP_NBR/@Value}"/>
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+              </GET_DOC_SMART>
+              <IF_TEST Test="$resCnsmrAffltn/CNSMR_AFFLTN/REGIS_PRSNA_ID != null">
+                <THEN>
+                  <MODIFY_DOC_SMART Name="CNSMR_AFFLTN" AssignToVar="resModifyCnsmrAffltn" ServiceName="BCM_MASTER">
+                    <DOCUMENT_CONTEXT>
+                      <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                      <CNSMR_GRP_NBR Value="{$currElement/CNSMR_GRP_NBR/@Value}"/>
+                      <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                      <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                    </DOCUMENT_CONTEXT>
+                    <UPDATE_PROPERTIES>
+                      <AFFLTN_START_DATE Value="{$currElement/AFFLTN_START_DATE/@Value}"/>
+                      <AFFLTN_END_DATE Value="{$currElement/AFFLTN_END_DATE/@Value}"/>
+                      <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                      <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                    </UPDATE_PROPERTIES>
+                  </MODIFY_DOC_SMART>
+                </THEN>
+                <ELSE>
+                  <REQUEST Name="createConsumerAffil" AssignToVar="resConsumerAffil" ServiceName="BCM_MASTER">
+                    <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                    <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+                    <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                    <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                    <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                    <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                  </REQUEST>
+                </ELSE>
+              </IF_TEST>
+            </FOR_EACH>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+    <HANDLE_SYSTEM_EXCEPTION>
+      <action>
+        <SET Var="Success_Error_Message" FromValue="updateConsumerAffil Failed" Scope="Global"/>
+      </action>
+    </HANDLE_SYSTEM_EXCEPTION>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="updateDependTrait">
+    <RULE>
+      <ACTION>
+        <GET_DOC_SMART Name="DPEND_TRT_STG" AssignToVar="resDpendTrtStg" ServiceName="BCM_MASTER" DirtyRead="yes">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+          <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+          <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+          <SYNC_STATUS Value="VALIDATED"/>
+        </GET_DOC_SMART>
+        <IF_TEST Test="$resDpendTrtStg/DPEND_TRT_STG/MKTNG_PGM_NBR != null">
+          <THEN>
+            <FOR_EACH SelectList="$resDpendTrtStg/DPEND_TRT_STG" CurrentElement="currElement">
+              <GET_DOC_SMART Name="DPEND_TRT" AssignToVar="resDpendTrt" DirtyRead="yes" ServiceName="BCM_MASTER">
+                <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                <DPEND_SEQ_NBR Value="{$currElement/DPEND_SEQ_NBR/@Value}"/>
+                <TRT_NBR Value="{$currElement/TRT_NBR/@Value}"/>
+                <DPEND_TRT_SEQ_NBR Value="{$currElement/DPEND_TRT_SEQ_NBR/@Value}"/>
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+              </GET_DOC_SMART>
+              <IF_TEST Test="$resDpendTrt/DPEND_TRT/REGIS_PRSNA_ID != null">
+                <THEN>
+                  <MODIFY_DOC_SMART Name="DPEND_TRT" AssignToVar="resModifyDpendTrt" ServiceName="BCM_MASTER">
+                    <DOCUMENT_CONTEXT>
+                      <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                      <DPEND_SEQ_NBR Value="{$currElement/DPEND_SEQ_NBR/@Value}"/>
+                      <TRT_NBR Value="{$currElement/TRT_NBR/@Value}"/>
+                      <DPEND_TRT_SEQ_NBR Value="{$currElement/DPEND_TRT_SEQ_NBR/@Value}"/>
+                      <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                      <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                    </DOCUMENT_CONTEXT>
+                    <UPDATE_PROPERTIES>
+                      <DPEND_TRT_DATE Value="{$currElement/DPEND_TRT_DATE/@Value}"/>
+                      <DPEND_TRT_SMALL_NBR/>
+                      <DPEND_TRT_MDM_NBR/>
+                      <DPEND_TRT_LARGE_NBR/>
+                      <DPEND_TRT_TXT Value="{$currElement/DPEND_TRT_TXT/@Value}"/>
+                      <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                      <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                    </UPDATE_PROPERTIES>
+                  </MODIFY_DOC_SMART>
+                </THEN>
+                <ELSE>
+                  <REQUEST Name="createDependTrait" AssignToVar="resDependTrait" ServiceName="BCM_MASTER">
+                    <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                    <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+                    <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                    <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                    <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                    <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                  </REQUEST>
+                </ELSE>
+              </IF_TEST>
+            </FOR_EACH>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+    <HANDLE_SYSTEM_EXCEPTION>
+      <action>
+        <SET Var="Success_Error_Message" FromValue="updateDependTrait Failed" Scope="Global"/>
+      </action>
+    </HANDLE_SYSTEM_EXCEPTION>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="updatePersonaTrait">
+    <RULE>
+      <ACTION>
+        <GET_DOC_SMART Name="PRSNA_TRT_STG" AssignToVar="resPrsnaTrtStg" ServiceName="BCM_MASTER" DirtyRead="yes">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+          <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+          <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+          <SYNC_STATUS Value="VALIDATED"/>
+        </GET_DOC_SMART>
+        <IF_TEST Test="$resPrsnaTrtStg/PRSNA_TRT_STG/MKTNG_PGM_NBR != null">
+          <THEN>
+            <FOR_EACH SelectList="$resPrsnaTrtStg/PRSNA_TRT_STG" CurrentElement="currElement">
+              <GET_DOC_SMART Name="PRSNA_TRT" AssignToVar="resPrsnaTrt" DirtyRead="yes" ServiceName="BCM_MASTER">
+                <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                <TRT_NBR Value="{$currElement/TRT_NBR/@Value}"/>
+                <PRSNA_TRT_SEQ_NBR Value="{$currElement/PRSNA_TRT_SEQ_NBR/@Value}"/>
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+              </GET_DOC_SMART>
+              <IF_TEST Test="$resPrsnaTrt/PRSNA_TRT/REGIS_PRSNA_ID != null">
+                <THEN>
+                  <MODIFY_DOC_SMART Name="PRSNA_TRT" AssignToVar="resModifyPrsnaTrt" ServiceName="BCM_MASTER">
+                    <DOCUMENT_CONTEXT>
+                      <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                      <TRT_NBR Value="{$currElement/TRT_NBR/@Value}"/>
+                      <PRSNA_TRT_SEQ_NBR Value="{$currElement/PRSNA_TRT_SEQ_NBR/@Value}"/>
+                      <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                      <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                    </DOCUMENT_CONTEXT>
+                    <UPDATE_PROPERTIES>
+                      <PRSNA_TRT_DATE Value="{$currElement/PRSNA_TRT_DATE/@Value}"/>
+                      <PRSNA_TRT_SMALL_NBR/>
+                      <PRSNA_TRT_MDM_NBR/>
+                      <PRSNA_TRT_LARGE_NBR/>
+                      <PRSNA_TRT_TXT Value="{$currElement/PRSNA_TRT_TXT/@Value}"/>
+                      <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                      <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                    </UPDATE_PROPERTIES>
+                  </MODIFY_DOC_SMART>
+                </THEN>
+                <ELSE>
+                  <REQUEST Name="createPersonaTrait" AssignToVar="resPersonaTrait" ServiceName="BCM_MASTER">
+                    <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                    <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+                    <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                    <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                    <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                    <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                  </REQUEST>
+                </ELSE>
+              </IF_TEST>
+            </FOR_EACH>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+    <HANDLE_SYSTEM_EXCEPTION>
+      <action>
+        <SET Var="Success_Error_Message" FromValue="updatePersonaTrait Failed" Scope="Global"/>
+      </action>
+    </HANDLE_SYSTEM_EXCEPTION>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="updatePetTrait">
+    <RULE>
+      <ACTION>
+        <GET_DOC_SMART Name="PET_TRT_STG" AssignToVar="resPetTrtStg" ServiceName="BCM_MASTER" DirtyRead="yes">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+          <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+          <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+          <SYNC_STATUS Value="VALIDATED"/>
+        </GET_DOC_SMART>
+        <IF_TEST Test="$resPetTrtStg/PET_TRT_STG/MKTNG_PGM_NBR != null">
+          <THEN>
+            <FOR_EACH SelectList="$resPetTrtStg/PET_TRT_STG" CurrentElement="currElement">
+              <GET_DOC_SMART Name="PET_TRT" AssignToVar="resPetTrt" DirtyRead="yes" ServiceName="BCM_MASTER">
+                <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                <PET_SEQ_NBR Value="{$currElement/PET_SEQ_NBR/@Value}"/>
+                <TRT_NBR Value="{$currElement/TRT_ID/@Value}"/>
+                <PET_TRT_SEQ_NBR Value="{$currElement/PET_TRT_SEQ_NBR/@Value}"/>
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+              </GET_DOC_SMART>
+            </FOR_EACH>
+            <IF_TEST Test="$resPetTrt/PET_TRT/REGIS_PRSNA_ID != null">
+              <THEN>
+                <MODIFY_DOC_SMART Name="PET_TRT" AssignToVar="resModifyPetTrt" ServiceName="BCM_MASTER">
+                  <DOCUMENT_CONTEXT>
+                    <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                    <PET_SEQ_NBR Value="{$currElement/PET_SEQ_NBR/@Value}"/>
+                    <TRT_NBR Value="{$currElement/TRT_ID/@Value}"/>
+                    <PET_TRT_SEQ_NBR Value="{$currElement/PET_TRT_SEQ_NBR/@Value}"/>
+                    <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                    <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                  </DOCUMENT_CONTEXT>
+                  <UPDATE_PROPERTIES>
+                    <PET_TRT_DATE Value="{$currElement/PET_TRT_DATE/@Value}"/>
+                    <PET_TRT_SMALL_NBR/>
+                    <PET_TRT_MDM_NBR/>
+                    <PET_TRT_LARGE_NBR/>
+                    <PET_TRT_TXT Value="{$currElement/PET_TRT_TXT/@Value}"/>
+                    <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                    <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                  </UPDATE_PROPERTIES>
+                </MODIFY_DOC_SMART>
+              </THEN>
+              <ELSE>
+                <REQUEST Name="createPetTrait" AssignToVar="resPetTrait" ServiceName="BCM_MASTER">
+                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                  <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+                  <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                  <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                  <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                  <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                </REQUEST>
+              </ELSE>
+            </IF_TEST>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+    <HANDLE_SYSTEM_EXCEPTION>
+      <action>
+        <SET Var="Success_Error_Message" FromValue="updatePetTrait Failed" Scope="Global"/>
+      </action>
+    </HANDLE_SYSTEM_EXCEPTION>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="updateRegisPrsna">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="PRSNA_STG" AssignToVar="resPrsnaStg" ServiceName="BCM_MASTER" DirtyRead="yes">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+        </GET_DOCUMENT>
+        <MODIFY_DOC_SMART Name="REGIS_PRSNA" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+            <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+            <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <MATCHD_CNSMR_PRSNA_ID Value="{$thisParam/REFERENCE_LegalEntityKEY/@Value}"/>
+            <NAME_PREFX_TXT Value="{$thisParam/DR_MRMRS/@Value}"/>
+            <GVN_NAME Value="{$thisParam/DR_FIRST_NAME/@Value}"/>
+            <MID_NAME Value="{$thisParam/DR_MIDDLE_NAME/@Value}"/>
+            <FAMLY_NAME Value="{$thisParam/DR_LAST_NAME/@Value}"/>
+            <NAME_SUFFX_TXT Value="{$thisParam/DR_NAME_SUFFIX/@Value}"/>
+            <FULL_NAME Value="{$resPrsnaStg/PRSNA_STG/FULL_NAME/@Value}"/>
+            <GENDR_IND Value="{$resPrsnaStg/PRSNA_STG/GENDR_IND/@Value}"/>
+            <BRTH_DATE Value="{$thisParam/BRTH_DATE/@Value}"/>
+            <LANG_CODE Value="{$thisParam/LANG_CODE/@Value}"/>
+            <!--<EMAIL_SUPRSN_IND Value=""/>
+            <PHONE_SUPRSN_IND Value=""/>
+            <POSTL_SUPRSN_IND Value=""/>
+            <SOCIAL_NETWK_SUPRSN_IND Value=""/>
+            <CNSMR_SENTIMENT Value=""/>
+            <LEAD_KEY Value=""/>-->
+            <LATST_ACTVY_DATE Value="{$resPrsnaStg/PRSNA_STG/PRSNA_REG_DT/@Value}"/>
+            <CNSMR_USER_NAME Value="{$thisParam/CNSMR_USER_NAME/@Value}"/>
+            <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+            <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOC_SMART>
+      </ACTION>
+    </RULE>
+    <HANDLE_SYSTEM_EXCEPTION>
+      <action>
+        <SET Var="Success_Error_Message" FromValue="update of Registration Persona Failed" Scope="Global"/>
+      </action>
+    </HANDLE_SYSTEM_EXCEPTION>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="updateMatchdCnsmr">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="PRSNA_STG" AssignToVar="resPrsnaStg" ServiceName="BCM_MASTER" DirtyRead="yes">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+        </GET_DOCUMENT>
+        <MODIFY_DOC_SMART Name="MATCHD_CNSMR_PRSNA" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <MATCHD_CNSMR_PRSNA_ID Value="{$thisParam/MATCHD_CNSMR_PRSNA_ID/@Value}"/>
+            <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <!--<UNIVERSAL_OPT_OUT Value=""/>-->
+            <HSHLD_PRSNA_ID Value="{$thisParam/REFERENCE_Household_ID/@Value}"/>
+            <NAME_PREFX_TXT Value="{$thisParam/DR_MRMRS/@Value}"/>
+            <GVN_NAME Value="{$thisParam/DR_FIRST_NAME/@Value}"/>
+            <MID_NAME Value="{$thisParam/DR_MIDDLE_NAME/@Value}"/>
+            <FAMLY_NAME Value="{$thisParam/DR_LAST_NAME/@Value}"/>
+            <NAME_SUFFX_TXT Value="{$thisParam/DR_NAME_SUFFIX/@Value}"/>
+            <FULL_NAME Value="{$resPrsnaStg/PRSNA_STG/FULL_NAME/@Value}"/>
+            <GENDR_IND Value="{$resPrsnaStg/PRSNA_STG/GENDR_IND/@Value}"/>
+            <BRTH_DATE Value="{$thisParam/BRTH_DATE/@Value}"/>
+            <LANG_CODE Value="{$thisParam/LANG_CODE/@Value}"/>
+            <NOTE_TXT Value=""/>
+            <LATST_ACTVY_DATE Value="{$resPrsnaStg/PRSNA_STG/PRSNA_REG_DT/@Value}"/>
+            <!--  <PRSNA_STTUS_CODE Value="ACTIVATED"/>-->
+            <CNSMR_USER_NAME Value="{$thisParam/CNSMR_USER_NAME/@Value}"/>
+            <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+            <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOC_SMART>
+      </ACTION>
+    </RULE>
+    <HANDLE_SYSTEM_EXCEPTION>
+      <action>
+        <SET Var="Success_Error_Message" FromValue="update of Matched Consumer Failed" Scope="Global"/>
+      </action>
+    </HANDLE_SYSTEM_EXCEPTION>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="modifySyncStatus">
+    <RULE>
+      <ACTION>
+        <MODIFY_DOC_SMART Name="PRSNA_STG" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <SYNC_STATUS Value="VALIDATED"/>
+            <!--<SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+            <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>-->
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <SYNC_STATUS Value="PROCESSED"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOC_SMART>
+        <MODIFY_DOC_SMART Name="PRSNA_POSTL_ADDR_STG" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <SYNC_STATUS Value="VALIDATED"/>
+           <!-- <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+            <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>-->
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <SYNC_STATUS Value="PROCESSED"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOC_SMART>
+        <MODIFY_DOC_SMART Name="PRSNA_EMAIL_ADDR_STG" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <SYNC_STATUS Value="VALIDATED"/>
+            <!--<SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+            <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>-->
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <SYNC_STATUS Value="PROCESSED"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOC_SMART>
+        <MODIFY_DOC_SMART Name="PRSNA_PHONE_STG" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <SYNC_STATUS Value="VALIDATED"/>
+            <!--<SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+            <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>-->
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <SYNC_STATUS Value="PROCESSED"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOC_SMART>
+        <MODIFY_DOC_SMART Name="PRSNA_SOC_NETWK_ACCT_STG" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <SYNC_STATUS Value="VALIDATED"/>
+           <!-- <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+            <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>-->
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <SYNC_STATUS Value="PROCESSED"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOC_SMART>
+        <MODIFY_DOC_SMART Name="DPEND_STG" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <SYNC_STATUS Value="VALIDATED"/>
+           <!-- <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+            <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>-->
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <SYNC_STATUS Value="PROCESSED"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOC_SMART>
+        <MODIFY_DOC_SMART Name="PET_STG" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <SYNC_STATUS Value="VALIDATED"/>
+           <!-- <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+            <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>-->
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <SYNC_STATUS Value="PROCESSED"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOC_SMART>
+        <MODIFY_DOC_SMART Name="CNSMR_AFFLTN_STG" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <SYNC_STATUS Value="VALIDATED"/>
+            <!--<SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+            <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>-->
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <SYNC_STATUS Value="PROCESSED"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOC_SMART>
+        <MODIFY_DOC_SMART Name="DPEND_TRT_STG" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <SYNC_STATUS Value="VALIDATED"/>
+            <!--<SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+            <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>-->
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <SYNC_STATUS Value="PROCESSED"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOC_SMART>
+        <MODIFY_DOC_SMART Name="PRSNA_TRT_STG" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <SYNC_STATUS Value="VALIDATED"/>
+            <!--<SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+            <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>-->
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <SYNC_STATUS Value="PROCESSED"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOC_SMART>
+        <MODIFY_DOC_SMART Name="PET_TRT_STG" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <SYNC_STATUS Value="VALIDATED"/>
+            <!--<SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+            <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>-->
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <SYNC_STATUS Value="PROCESSED"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOC_SMART>
+      </ACTION>
+    </RULE>
+    <HANDLE_SYSTEM_EXCEPTION>
+      <action>
+        <SET Var="Success_Error_Message" FromValue="modify of sync status Failed" Scope="Global"/>
+      </action>
+    </HANDLE_SYSTEM_EXCEPTION>
+  </DEFINE_METHOD>
+</DOCUMENTS>

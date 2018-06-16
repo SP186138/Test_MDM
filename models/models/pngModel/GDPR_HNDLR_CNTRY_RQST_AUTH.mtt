@@ -1,0 +1,42 @@
+<document>
+  <properties>
+    <property Name="CNTRY_CODE" PhysicalName="CNTRY_CODE" Required="true" CharSet="LATIN">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="CNTRY_CODE" />
+    </property>
+    <property Name="HNDLR_ID" PhysicalName="HNDLR_ID" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="HNDLR_ID" />
+    </property>
+    <property Name="GDPR_RQST_TYPE_CD" PhysicalName="GDPR_RQST_TYPE_CD" Required="true" CharSet="LATIN">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="GDPR_RQST_TYPE_CD" />
+    </property>
+  </properties>
+  <keys>
+    <key Active="true" Name="GDPR_HNDLR_CNTRY_RQST_AUTH_UPI" PhysicalName="GDPR_HNDLR_CNTRY_RQST_AUTH_UPI" Kind="PRIMARY">
+      <property Name="CNTRY_CODE" />
+      <property Name="GDPR_RQST_TYPE_CD" />
+      <property Name="HNDLR_ID" />
+    </key>
+  </keys>
+  <links>
+    <link Active="true" Name="Link1" PhysicalName="GDPR_RQST_UPI_LINK">
+      <keymap ToPackage="models/pngModel" ToModelUnit="GDPR_HNDLR_CNTRY.mtt" ToKey="GDPR_HNDLR_CNTRY_UPI" ReverseLink="true" ReverseLinkName="GDPR_RQST_UPI" DeleteRule="RESTRICT">
+        <mapping FromProperty="CNTRY_CODE" ToProperty="CNTRY_CODE" />
+        <mapping FromProperty="HNDLR_ID" ToProperty="HNDLR_ID" />
+      </keymap>
+    </link>
+    <link Active="true" Name="Link2" PhysicalName="GDPR_RQST_CD_LINK">
+      <keymap ToPackage="models/pngModel" ToModelUnit="GDPR_RQST_TYPE.mtt" ToKey="GDPR_RQST_TYPE_UPI" ReverseLink="true" ReverseLinkName="GDPR_RQST_CD" DeleteRule="RESTRICT">
+        <mapping FromProperty="GDPR_RQST_TYPE_CD" ToProperty="GDPR_RQST_TYPE_CD" />
+      </keymap>
+    </link>
+  </links>
+  <docFacets>
+    <mdmWebServiceFacet />
+    <mdmSysTableMapFacet TableClass="MASTER" Source="MASTER" MasterTable="GDPR_HNDLR_CNTRY_RQST_AUTH" />
+    <miscFacet PhysicalName="GDPR_HNDLR_CNTRY_RQST_AUTH" Active="true" />
+    <mdmConfigFacet SchemaGen="true" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql />
+</document>
+

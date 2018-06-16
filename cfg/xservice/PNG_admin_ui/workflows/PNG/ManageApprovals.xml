@@ -1,0 +1,537 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="73" ShowInBreadCrumbs="true" Version="1.0" Name="ManageApprovals" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Description="Manage Approval Groups and Approvals">
+    <variable Name="ruleGrpId" Type="string" Comment=""/>
+    <variable Name="alertGreen" Type="string" Comment=""/>
+    <variable Name="alertRed" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start1">
+      <actions>
+        <action>
+          <TO_DOCVAR AssignToVar="nodeOutputXml">
+            <FILTER>
+              <EVENT_NAME Value="*"/>
+            </FILTER>
+          </TO_DOCVAR>
+        </action>
+      </actions>
+      <next_nodes OutputVar="{nodeOutputXml,xml}">
+        <next_node Name="Manage Approvals"/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Manage Approvals" InputVar="{nodeInputXml,xml}" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="SearchApprovalGrp.pgl">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="orderByXml">
+            <ORDER_BY/>
+          </TO_DOCVAR>
+          <SET Var="sortOrder" FromValue="{ifElse($thisParam/SORT_ORDER/@Value = null, 'Ascending', $thisParam/SORT_ORDER/@Value)}"/>
+          <SET Var="sortBy" FromValue="{ifElse(($thisParam/SORT_BY/@Value = null) or($thisParam/SORT_BY/@Value = 'ID') , 'SEQID', $thisParam/SORT_BY/@Value)}"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SYS_RELOAD'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="sortByColumn">
+                <TEMP/>
+              </TO_DOCVAR>
+              <SET_NAME DocVar="sortByColumn" FromValue="{$sortBy}"/>
+              <SET Attribute="Sort" DocVar="sortByColumn" FromValue="{$sortOrder}"/>
+              <ADD_CHILDREN DocVar="orderByXml" FromDocVar="sortByColumn"/>
+            </THEN>
+            <ELSE>
+              <TO_DOCVAR AssignToVar="sortByColumn">
+                <TEMP/>
+              </TO_DOCVAR>
+              <SET_NAME DocVar="sortByColumn" FromValue="SEQID"/>
+              <SET Attribute="Sort" DocVar="sortByColumn" FromValue="Ascending"/>
+              <ADD_CHILDREN DocVar="orderByXml" FromDocVar="sortByColumn"/>
+            </ELSE>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$thisParam/ALERT/*"/>
+          <TO_DOCVAR AssignToVar="approvalGroupSearch">
+            <TEST/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='search' or $thisParam/BUTTON_ID/@Value='createFavourite'">
+            <THEN>
+              <SET DocVar="thisParam" Property="START_COUNT" FromValue="0"/>
+              <SET Var="search_by_Approval" FromValue="true"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$search_by_Approval = 'true'">
+            <THEN>
+              <IF_TEST Test="strlen($thisParam/APPROVAL_GROUP_NAME/@Value)!=0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="APPROVAL_GROUP_NAME">
+                    <TEST>
+                      <APPROVAL_GROUP_NAME Value="{$thisParam/APPROVAL_GROUP_NAME/@Value}" MatchBy="CONTAINS"/>
+                    </TEST>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="approvalGroupSearch" FromSelectList="$APPROVAL_GROUP_NAME/*"/>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$APPROVAL_GROUP_NAME/*"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($thisParam/APPROVAL_GROUP_DESCRIPTION/@Value)!=0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="APPROVAL_GROUP_DESCRIPTION">
+                    <TEST>
+                      <APPROVAL_GROUP_DESCRIPTION Value="{$thisParam/APPROVAL_GROUP_DESCRIPTION/@Value}" MatchBy="CONTAINS"/>
+                    </TEST>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="approvalGroupSearch" FromSelectList="$APPROVAL_GROUP_DESCRIPTION/*"/>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$APPROVAL_GROUP_DESCRIPTION/*"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($thisParam/IS_ROLE/@Value)!=0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="IS_ROLE">
+                    <TEST>
+                      <IS_ROLE Value="{$thisParam/IS_ROLE/@Value}" MatchBy="CONTAINS"/>
+                    </TEST>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="approvalGroupSearch" FromSelectList="$IS_ROLE/*"/>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$IS_ROLE/*"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($thisParam/APPROVAL_GROUP_TYPE/@Value)!=0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="APPROVAL_GROUP_TYPE">
+                    <TEST>
+                      <APPROVAL_GROUP_TYPE Value="{$thisParam/APPROVAL_GROUP_TYPE/@Value}" MatchBy="CONTAINS"/>
+                    </TEST>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="approvalGroupSearch" FromSelectList="$APPROVAL_GROUP_TYPE/*"/>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$APPROVAL_GROUP_TYPE/*"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($thisParam/APPROVAL_OBJECT_TYPE/@Value)!=0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="APPROVAL_OBJECT_TYPE">
+                    <TEST>
+                      <APPROVAL_OBJECT_TYPE Value="{$thisParam/APPROVAL_OBJECT_TYPE/@Value}" MatchBy="CONTAINS"/>
+                    </TEST>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="approvalGroupSearch" FromSelectList="$APPROVAL_OBJECT_TYPE/*"/>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$APPROVAL_OBJECT_TYPE/*"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($thisParam/EVENT_NAME/@Value)!=0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="EVENT_NAME">
+                    <TEST>
+                      <EVENT_NAME Value="{$thisParam/EVENT_NAME/@Value}" MatchBy="CONTAINS"/>
+                    </TEST>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="approvalGroupSearch" FromSelectList="$EVENT_NAME/*"/>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$EVENT_NAME/*"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($thisParam/ACTION_TYPE/@Value)!=0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="ACTION_TYPE">
+                    <TEST>
+                      <ACTION_TYPE Value="{$thisParam/ACTION_TYPE/@Value}" MatchBy="CONTAINS"/>
+                    </TEST>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="approvalGroupSearch" FromSelectList="$ACTION_TYPE/*"/>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$ACTION_TYPE/*"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($thisParam/IS_ACTIVE/@Value)!=0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="IS_ACTIVE">
+                    <TEST>
+                      <IS_ACTIVE Value="{$thisParam/IS_ACTIVE/@Value}" MatchBy="CONTAINS"/>
+                    </TEST>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="approvalGroupSearch" FromSelectList="$IS_ACTIVE/*"/>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$IS_ACTIVE/*"/>
+                </THEN>
+              </IF_TEST>
+              <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="approvalGroupSearch">
+                <TO_XML SelectList="$approvalGroupSearch/*"/>
+              </FORM_SEARCH_FILTER>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SYS_RELOAD'">
+                <THEN>
+                  <SET Var="alertGreen" FromValue=""/>
+                  <SET Var="alertRed" FromValue=""/>
+                  <TO_DOCVAR AssignToVar="sortByColumn">
+                    <TEMP/>
+                  </TO_DOCVAR>
+                  <SET_NAME DocVar="sortByColumn" FromValue="{$sortBy}"/>
+                  <SET Attribute="Sort" DocVar="sortByColumn" FromValue="{$sortOrder}"/>
+                  <ADD_CHILDREN DocVar="orderByXml" FromDocVar="sortByColumn"/>
+                </THEN>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="tt">
+                <A/>
+              </TO_DOCVAR>
+              <FOR_EACH SelectList="$approvalGroupSearch/FILTER" CurrentElement="thisFilter">
+                <APPEND_TO_XML SelectList="$tt">
+                  <TO_XML SelectList="$thisFilter/*"/>
+                </APPEND_TO_XML>
+              </FOR_EACH>
+              <SET Var="maxRows" FromValue="20"/>
+              <IF_TEST Test="$thisParam/EXPORT_ALL/@Value='yes'">
+                <THEN>
+                  <SET Var="paginateStart" FromValue="0"/>
+                  <SET Var="maxRows" FromValue="{$thisParam/MAX_ROWS/@Value}"/>
+                </THEN>
+              </IF_TEST>
+              <GET_DOCUMENT Name="Approval_Groups" ServiceName="APPROVAL" AssignToVar="customerResults" ReturnRowCount="yes" MaxRows="{$maxRows}" StartAtRow="{$paginateStart}" DirtyRead="true">
+                <TO_XML SelectList="$tt/*"/>
+                <!-- <ENTITY_STATE Value="ACTIVE"/>-->
+                <ORDER_BY>
+                  <SEQID Sort="Aescending"/>
+                </ORDER_BY>
+              </GET_DOCUMENT>
+            </THEN>
+          </IF_TEST>
+          <CLONE_XML AssignToVar="nodeInputXml" DocVar="thisParam"/>
+          <SET Var="sortBy" FromValue="{ifElse($thisParam/SORT_BY/@Value = null, 'APPROVAL_GROUP_NAME', $thisParam/SORT_BY/@Value)}"/>
+          <SET Var="paginateStart" FromValue="{ifElse($thisParam/START_COUNT/@Value = null, '0', $thisParam/START_COUNT/@Value)}"/>
+          <SET Var="sortOrder" FromValue="{ifElse($thisParam/SORT_ORDER/@Value = null, 'Aescending', $thisParam/SORT_ORDER/@Value)}"/>
+          <SET Var="maxRows" FromValue="{ifElse($thisParam/MAX_ROWS/@Value = null, '20', $thisParam/MAX_ROWS/@Value)}"/>
+          <MAKE_INSTANCE_DOCUMENT Name="{$sortBy}" AssignToVar="sortByTag"/>
+          <SET DocVar="sortByTag" Attribute="Sort" FromValue="{$sortOrder}"/>
+          <FORM_SEARCH_FILTER Value="{$nodeInputXml}" AssignToVar="filters">
+            <APPROVAL_GROUP_NAME/>
+            <APPROVAL_GROUP_DESCRIPTION MatchBy="CONTAINS"/>
+            <EVENT_NAME/>
+            <APPROVAL_GROUP_TYPE/>
+            <IS_ACTIVE/>
+          </FORM_SEARCH_FILTER>
+          <SET Var="maxRows" FromValue="20"/>
+          <IF_TEST Test="$thisParam/EXPORT_ALL/@Value='yes'">
+            <THEN>
+              <SET Var="paginateStart" FromValue="0"/>
+              <SET Var="maxRows" FromValue="{$thisParam/MAX_ROWS/@Value}"/>
+            </THEN>
+          </IF_TEST>
+          <GET_DOCUMENT Name="Approval_Groups" ServiceName="APPROVAL" AssignToVar="customerResults" ReturnRowCount="yes" MaxRows="{$maxRows}" StartAtRow="{$paginateStart}" DirtyRead="true">
+            <TO_XML SelectList="$tt/*"/>
+            <ORDER_BY>
+              <TO_XML SelectList="$orderByXml/*"/>
+              <SEQID Sort="Aescending"/>
+            </ORDER_BY>
+          </GET_DOCUMENT>
+          <!--SET Var="test" FromValue="{$approvalGroupSearch/FILTER/*}"/>
+
+<IF_TEST Test="strlen($test/@Value)!=0">
+<THEN>
+<GET_DOCUMENT Name="Approval_Groups" ServiceName="APPROVAL" AssignToVar="customerResults" ReturnRowCount="yes" MaxRows="{$maxRows}" StartAtRow="{$paginateStart}">
+<TO_XML SelectList="$tt/*" />
+<ORDER_BY>
+<SEQID Sort="Aescending" />
+</ORDER_BY>
+</GET_DOCUMENT>
+</THEN>
+<ELSE>
+<GET_DOCUMENT Name="Approval_Groups" ServiceName="APPROVAL" AssignToVar="customerResults" ReturnRowCount="yes" MaxRows="{$maxRows}" StartAtRow="{$paginateStart}">
+<ORDER_BY>
+<SEQID Sort="Aescending" />
+</ORDER_BY>
+</GET_DOCUMENT>
+</ELSE>
+</IF_TEST-->
+          <REMOVE_CHILDREN DocVar="thisParam" ChildName="SEQID"/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <SORT_BY Value="{$sortBy}"/>
+              <SORT_ORDER Value="{$sortOrder}"/>
+              <TO_XML SelectList="$thisParam/*"/>
+              <TO_XML SelectList="$customerResults"/>
+            </ROOT>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <if_cond Value="$userAction ='CREATE'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Goto Add Approval Groups" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='EDIT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Goto Add Approval Groups" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='DELETE'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Delete APPROVAL_GROUP" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ISACTIVE'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Activate - De Actiavte" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ISDEACTIVE'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Activate - De Actiavte" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Clear'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='search'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Approvals" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <task Name="Delete APPROVAL_GROUP">
+      <actions>
+        <action>
+          <!--PRINTLN Value="Deleet Rule....{$thisParam}"/-->
+          <REMOVE_DOCUMENT AssignToVar="rules" Name="Approvals" ServiceName="APPROVAL">
+            <APPROVAL_GROUP_ID Value="{$thisParam/selectedRuleGrpId/@Value}" MatchBy="EQUAL"/>
+          </REMOVE_DOCUMENT>
+          <REMOVE_DOCUMENT Name="Approval_Groups" ServiceName="APPROVAL">
+            <SEQID Value="{$thisParam/selectedRuleGrpId/@Value}"/>
+          </REMOVE_DOCUMENT>
+          <SET Var="message" FromValue="Approval deleted successfully."/>
+          <SET Var="alertGreen" FromValue="Approval deleted successfully."/>
+          <TO_DOCVAR AssignToVar="alert">
+            <ALERT/>
+          </TO_DOCVAR>
+          <APPEND_TO_XML Select="$alert">
+            <message Value="{$message/@Value}"/>
+            <alertGreen Value="{$alertGreen/@Value}"/>
+          </APPEND_TO_XML>
+          <ADD_CHILDREN DocVar="thisParam" FromSelectList="$alert"/>
+        </action>
+      </actions>
+      <next_nodes OutputVar="{outPut,xml}">
+        <next_node Name="Manage Approvals"/>
+      </next_nodes>
+    </task>
+    <sub_workflow Name="Goto Add Approval Groups" Workflow="Manage_Approval_Groups_AddWf">
+      <pre_actions/>
+      <post_actions/>
+      <input>
+        <TO_XML SelectList="$thisParam/*"/>
+      </input>
+      <next_nodes/>
+    </sub_workflow>
+    <task Name="Activate - De Actiavte">
+      <actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='ISACTIVE'">
+            <THEN>
+              <!-- AJIT: MODIFY_DOC REPLACED WITH STORED PROCEDURE -->
+              <!--EXEC_PROC Name="CUSTOM_APPROVAL_GRP_ACTIVE" AssignToVar="ColumnDetails">
+<SEQID Type="IN" Value="{$thisParam/selectedRuleGrpId/@Value}" DataType="string"/>
+<ENT_STAT Type="IN" Value="ACTIVE" DataType="string"/>
+<IS_ACT Type="IN" Value="True" DataType="string"/>
+</EXEC_PROC-->
+              <GET_DOCUMENT Name="Approval_Groups" AssignToVar="Approval_Groups_Results" ServiceName="APPROVAL" DirtyRead="true">
+                <SEQID Value="{$thisParam/selectedRuleGrpId/@Value}"/>
+              </GET_DOCUMENT>
+              <IF_TEST Test="$Approval_Groups_Results/Approval_Groups/IS_ACTIVE/@Value != 'True'">
+                <THEN>
+                  <GET_DOCUMENT Name="Approval_Groups" AssignToVar="Results" ServiceName="APPROVAL" ReturnRowCount="yes" DirtyRead="true">
+                    <SEQID Value="{$thisParam/selectedRuleGrpId/@Value}" MatchBy="NOT_EQUAL"/>
+                    <ACTION_TYPE Value="{$Approval_Groups_Results/Approval_Groups/ACTION_TYPE/@Value}"/>
+                    <EVENT_NAME Value="{$Approval_Groups_Results/Approval_Groups/EVENT_NAME/@Value}"/>
+                    <ENTITY_STATE Value="ACTIVE"/>
+                    <IS_ACTIVE Value="True"/>
+                  </GET_DOCUMENT>
+                  <GET_DOCUMENT Name="Approval_Groups" AssignToVar="allResults" ServiceName="APPROVAL" ReturnRowCount="yes" DirtyRead="true">
+                    <SEQID Value="{$thisParam/selectedRuleGrpId/@Value}" MatchBy="NOT_EQUAL"/>
+                    <ACTION_TYPE Value="ALL"/>
+                    <EVENT_NAME Value="{$Approval_Groups_Results/Approval_Groups/EVENT_NAME/@Value}"/>
+                    <ENTITY_STATE Value="ACTIVE"/>
+                    <IS_ACTIVE Value="True"/>
+                  </GET_DOCUMENT>
+                  <IF_TEST Test="count($Results/*)&lt;1">
+                    <THEN>
+                      <IF_TEST Test="count($allResults/*)&lt;= 0">
+                        <THEN>
+                          <IF_TEST Test="$Approval_Groups_Results/Approval_Groups/ACTION_TYPE/@Value= 'ALL'">
+                            <THEN>
+                              <GET_DOCUMENT Name="Approval_Groups" AssignToVar="Results" ServiceName="APPROVAL" DirtyRead="true">
+                                <SEQID Value="{$thisParam/selectedRuleGrpId/@Value}" MatchBy="NOT_EQUAL"/>
+                                <EVENT_NAME Value="{$Approval_Groups_Results/Approval_Groups/EVENT_NAME/@Value}"/>
+                                <ENTITY_STATE Value="ACTIVE"/>
+                              </GET_DOCUMENT>
+                              <FOR_EACH SelectList="$Results/Approval_Groups" CurrentElement="currElem">
+                                <REMOVE_DOCUMENT AssignToVar="rules" Name="Approvals" ServiceName="APPROVAL">
+                                  <APPROVAL_GROUP_ID Value="{$currElem/SEQID/@Value}" MatchBy="EQUAL"/>
+                                </REMOVE_DOCUMENT>
+                              </FOR_EACH>
+                              <REMOVE_DOCUMENT Name="Approval_Groups" ServiceName="APPROVAL">
+                                <EVENT_NAME Value="{$Approval_Groups_Results/Approval_Groups/EVENT_NAME/@Value}"/>
+                                <ENTITY_STATE Value="ACTIVE"/>
+                              </REMOVE_DOCUMENT>
+                            </THEN>
+                          </IF_TEST>
+                          <MODIFY_DOCUMENT Name="Approval_Groups" ServiceName="APPROVAL">
+                            <DOCUMENT_CONTEXT>
+                              <SEQID Value="{$thisParam/selectedRuleGrpId/@Value}"/>
+                            </DOCUMENT_CONTEXT>
+                            <UPDATE_PROPERTIES>
+                              <ENTITY_STATE Value="ACTIVE"/>
+                              <IS_ACTIVE Value="True"/>
+                            </UPDATE_PROPERTIES>
+                          </MODIFY_DOCUMENT>
+                          <SET Var="message" FromValue="Approval activated successfully."/>
+                          <SET Var="alertGreen" FromValue="Approval activated successfully."/>
+                        </THEN>
+                        <ELSE>
+                          <SET Var="message" FromValue="Similar approval Action Type exist for this document."/>
+                          <SET Var="alertRed" FromValue="Similar approval Action Type exist for this document."/>
+                        </ELSE>
+                      </IF_TEST>
+                      <!--TO_DOCVAR AssignToVar="alert">
+                        <ALERT/>
+                      </TO_DOCVAR>
+                      <APPEND_TO_XML Select="$alert">
+                        <message Value="{$message/@Value}"/>
+                        <alertGreen Value="{$alertGreen/@Value}"/>
+                        <alertRed Value="{$alertRed/@Value}"/>
+                      </APPEND_TO_XML>
+                      <ADD_CHILDREN DocVar="thisParam" FromSelectList="$alert"/-->
+                    </THEN>
+                    <ELSE>
+                      <SET Var="message" FromValue="Similar approval Action Type exist for this document."/>
+                      <SET Var="alertRed" FromValue="Similar approval Action Type exist for this document."/>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <SET Var="message" FromValue="The approval is already in Active state."/>
+                  <SET Var="alertRed" FromValue="The approval is already in Active state."/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='ISDEACTIVE'">
+            <THEN>
+              <!--EXEC_PROC Name="CUSTOM_APPROVAL_GRP_ACTIVE" AssignToVar="ColumnDetails">
+<SEQID Type="IN" Value="{$thisParam/selectedRuleGrpId/@Value}" DataType="string"/>
+<ENT_STAT Type="IN" Value="INACTIVE" DataType="string"/>
+<IS_ACT Type="IN" Value="False" DataType="string"/>
+</EXEC_PROC-->
+              <GET_DOCUMENT Name="Approval_Groups" AssignToVar="Approval_Groups_Results" ServiceName="APPROVAL" DirtyRead="true">
+                <SEQID Value="{$thisParam/selectedRuleGrpId/@Value}"/>
+              </GET_DOCUMENT>
+              <IF_TEST Test="$Approval_Groups_Results/Approval_Groups/IS_ACTIVE/@Value != 'False'">
+                <THEN>
+                  <MODIFY_DOCUMENT Name="Approval_Groups" ServiceName="APPROVAL">
+                    <DOCUMENT_CONTEXT>
+                      <SEQID Value="{$thisParam/selectedRuleGrpId/@Value}"/>
+                    </DOCUMENT_CONTEXT>
+                    <UPDATE_PROPERTIES>
+                      <ENTITY_STATE Value="INACTIVE"/>
+                      <IS_ACTIVE Value="False"/>
+                    </UPDATE_PROPERTIES>
+                  </MODIFY_DOCUMENT>
+                  <SET Var="message" FromValue="Approval deactivated successfully."/>
+                  <SET Var="alertGreen" FromValue="Approval deactivated successfully."/>
+                </THEN>
+                <ELSE>
+                  <SET Var="message" FromValue="The approval is already in Inactive state."/>
+                  <SET Var="alertRed" FromValue="The approval is already in Inactive state."/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="alert">
+            <ALERT/>
+          </TO_DOCVAR>
+          <APPEND_TO_XML Select="$alert">
+            <message Value="{$message/@Value}"/>
+            <alertGreen Value="{$alertGreen/@Value}"/>
+            <alertRed Value="{$alertRed/@Value}"/>
+          </APPEND_TO_XML>
+          <ADD_CHILDREN DocVar="thisParam" FromSelectList="$alert"/>
+        </action>
+      </actions>
+      <next_nodes OutputVar="{thisParam,xml}">
+        <next_node Name="Manage Approvals"/>
+      </next_nodes>
+    </task>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="475,167" compId="MgcDashboard1" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="1" textAttrsKey0="ruleGrpId : string">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="ruleGrpId" Type="string"/>
+      </variables>
+    </mgcdashboard>
+    <mgcnodes>
+      <start1 font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="213,264">
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+        <textProps text="start1" font="Verdana,0,9" textColor="80,80,80"/>
+      </start1>
+      <mgcnode Name="Manage Approvals" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="351,267" size="1920,1044">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <mgcnode Name="Delete APPROVAL_GROUP" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="337,137">
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+        <textProps text="Delete APPROVAL_GROUP" font="Verdana,0,9" textColor="80,80,80"/>
+      </mgcnode>
+      <mgcnode Name="Goto Add Approval Groups" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="507,417">
+        <iconProps iconfile="z1sub_workflow.gif" location="0,0"/>
+        <textProps text="Goto Add Approval Groups" font="Verdana,0,9" textColor="80,80,80"/>
+      </mgcnode>
+      <mgcnode Name="Activate - De Actiavte" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="216,453" size="732,560">
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+        <textProps text="Activate - De Actiavte" font="Verdana,0,9" textColor="80,80,80"/>
+      </mgcnode>
+    </mgcnodes>
+    <mgcconnectors>
+      <start1>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="70,81,173" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="258,286" endpoint="351,289" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="325,284,4,4" ctrlRect2="279,287,4,4"/>
+      </start1>
+      <mgcnode Name="Manage Approvals">
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="373,312" endpoint="507,439" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="371,404,4,4" ctrlRect2="404,437,4,4" textRect="378,419,23,7">
+          <textProps text="ADD" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="396,289" endpoint="529,417" ctrlRect1="493,287,4,4" ctrlRect2="604,381,4,4" textRect="546,332,9,8" ctrlRect2Dirty="true">
+          <textProps text="EDIT"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="373,267" endpoint="382,159" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="389,203,4,4" ctrlRect2="441,121,4,4" textRect="401,160,32,8">
+          <textProps text="Delete" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="373,312" endpoint="238,453" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="371,415,4,4" ctrlRect2="236,345,4,4" textRect="286,378,38,9">
+          <textProps text="Manage" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="373,312" endpoint="238,453" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="398,361,4,4" ctrlRect2="217,337,4,4" textRect="288,347,42,8">
+          <textProps text="ACTIVE"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="351,289" endpoint="351,289" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="274,287,4,4" ctrlRect2="142,113,4,4" textRect="193,198,34,8">
+          <textProps text="Search" font="Verdana,0,9"/>
+        </nextNodeView>
+      </mgcnode>
+      <mgcnode Name="Delete APPROVAL_GROUP">
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="70,81,173" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="359,182" endpoint="373,267" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="357,243,4,4" ctrlRect2="371,201,4,4"/>
+      </mgcnode>
+      <mgcnode Name="Activate - De Actiavte">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="238,453" endpoint="351,289" ctrlRect1="236,328,4,4" ctrlRect2="153,367,4,4" ctrlRect2Dirty="true"/>
+      </mgcnode>
+    </mgcconnectors>
+    <mgctexts>
+      <text location="80,24" componentTextColor="245,255,255" font="Verdana,0,10" textAttrsKey0="Enter Text Here"/>
+      <text location="164,55" componentTextColor="153,153,153" font="Arial,0,9" textAttrsKey0="This task for Approval groups and in which create, " textAttrsKey1="modify and delete the Approval Groups as a separate " textAttrsKey2="workflows and in the same way, manage the approvals. In that Approvals " textAttrsKey3="also add, edit and delete an approvals with respective to Approval groups"/>
+      <text location="107,32" componentTextColor="0,153,153" font="Arial,1,18" textAttrsKey0="Manage Approval Groups and Approvals"/>
+    </mgctexts>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+      <action/>
+    </pre_actions>
+    <post_actions>
+      <action/>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+ 	 Copyright (c) 2009 by Teradata Corporation. 
+	 All Rights Reserved. 
+	 Teradata CONFIDENTIAL AND TRADE SECRET 
+ -->
+  <DEFINE_METHOD Name="getCountriesList">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="CountriesOutputList">
+          <root/>
+        </TO_DOCVAR>
+        <!--GET_DOCUMENT Name="CNTRY" ServiceName="BCM_MASTER" AssignToVar="cntryDetails" DirtyRead="true">
+          <SELECT>
+            <CNTRY_CODE/>
+            <CNTRY_NAME/>
+          </SELECT>
+          <ORDER_BY>
+            <CNTRY_NAME Sort="Ascending"/>
+          </ORDER_BY>
+        </GET_DOCUMENT-->
+        <TO_DOCVAR AssignToVar="Qry2">
+          <ROOT>
+sel CNTRY_CODE,CNTRY_NAME from CNTRY ORDER BY CNTRY_CODE,CNTRY_NAME ASC
+</ROOT>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY Value="{$Qry2/@text}" AssignToVar="cntryDetails"/>
+        <FOR_EACH SelectList="$cntryDetails/SQL_RESULT" CurrentElement="curr">
+          <!--<SET FromValue="{(trim($curr/crncy_cd/@Value))}" Var="Business_output_Details"/>-->
+          <SET Var="cntry_output_details" FromValue="{$curr/CNTRY_NAME/@Value}"/>
+          <!--SET Var="cntry_output_details" FromValue="{$curr/CNTRY_CODE/@Value}" /-->
+          <APPEND_TO_XML SelectList="$CountriesOutputList">
+            <cntry_output_details Value="{$cntry_output_details}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <APPEND_TO_XML DocVar="thisReturn">
+          <TO_XML SelectList="$CountriesOutputList/*"/>
+          <TO_XML SelectList="$cntryDetails/*"/>
+        </APPEND_TO_XML>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getReviewSpecialistUser">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="ReviewSpecialistOutputList">
+          <root/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="Qry3">
+          <ROOT>
+sel ID from MDM.USR_GRP_PROFIL WHERE GRP_NAME='UGPReviewScreen'
+</ROOT>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY Value="{$Qry3/@text}" AssignToVar="UsergrpDetails"/>
+        <TO_DOCVAR AssignToVar="Qry4">
+          <ROOT>
+sel USER_ID from MDM.USER_UG_RELATION WHERE USER_GRP_ID='{$UsergrpDetails/SQL_RESULT/ID/@Value}'
+</ROOT>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY Value="{$Qry4/@text}" AssignToVar="UserDetails"/>
+        <FOR_EACH SelectList="$UserDetails/SQL_RESULT" CurrentElement="curr">
+          <!--<SET FromValue="{(trim($curr/crncy_cd/@Value))}" Var="Business_output_Details"/>-->
+          <SET Var="user_output_details" FromValue="{$curr/USER_ID/@Value}"/>
+          <!--SET Var="cntry_output_details" FromValue="{$curr/CNTRY_CODE/@Value}" /-->
+          <APPEND_TO_XML SelectList="$ReviewSpecialistOutputList">
+            <user_output_details Value="{$user_output_details}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <APPEND_TO_XML DocVar="thisReturn">
+          <TO_XML SelectList="$ReviewSpecialistOutputList/*"/>
+          <TO_XML SelectList="$UserDetails/*"/>
+        </APPEND_TO_XML>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <!--****************************************************************************************************************************************
+  ** Module Name(s)             :   GetSummaryDetails
+  ** Create Date                : Dec 29 , 2017
+  ** Created By                 : Reshma Ramesh
+  ** Called Functions           :
+  ** Called By Functions        :
+  ** Short Desc                 :
+  ** Change Log                 : This method is written for getting the Summary details
+  *******************************************************************************************************************************************-->
+  <DEFINE_METHOD Name="GetSummaryDetails">
+    <RULE>
+      <ACTION>
+        <SET Var="subFilter" FromValue="{$thisParam/FILTER_DETAIL/@Value}"/>
+        <SET Var="caseID" FromValue="{$thisParam/GDPR_CASE_ID/@Value}"/>
+        <SET Var="quote" FromValue="'"/>
+        <SET Var="varSumDetails" FromValue="{concat('LOCKING ROW FOR ACCESS SELECT EXTRACT_ID, GDPR_CASE_ID, GDPR_CASE_RQST_TYPE, CNTRY_CODE,SUPPLIER_QUAD,SENT_TIMESTAMP,SYS_LAST_MODIFIED_DATE, LOAD_ID, GDPR_RQST_STATUS_CD FROM GDPR_BRODCAST_HIST_V WHERE 1=1 AND GDPR_CASE_ID=',$quote,$caseID,$quote)} "/>
+        <SET Var="tempStringSum" FromValue="{concat($varSumDetails,$subFilter)}"/>
+        <IF_TEST Test="$thisParam/SORT_ORDER/@Value!='' and $thisParam/SORT_BY/@Value!=''">
+          <THEN>
+            <SET Var="SortString" FromValue=" ORDER BY {$thisParam/SORT_BY/@Value} {$thisParam/SORT_ORDER/@Value}"/>
+            <SET Var="tempStringSum" FromValue="{concat($varSumDetails,$subFilter,$SortString)}"/>
+          </THEN>
+        </IF_TEST>
+        <TO_DOCVAR AssignToVar="Qry1">
+          <ROOT>{$tempStringSum}</ROOT>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY AssignToVar="varSearchSumDetails" Value="{$Qry1/@text}" MaxRows="{$thisParam/MaxRec/@Value}" StartAtRow="{$thisParam/START_COUNT/@Value}" ReturnRowCount="yes">
+        </EXECUTE_SQL_QUERY>
+        <TO_DOCVAR AssignToVar="thisReturn">
+          <ROOT>
+            <TO_XML SelectList="$varSearchSumDetails/*"/>
+            <MaxRec Value="{$thisParam/MaxRec/@Value}"/>
+            <TotalRowCount Value="{$varSearchSumDetails/@TotalRowCount}"/>
+            <START_COUNT Value="{$thisParam/START_COUNT/@Value}"/>
+          </ROOT>
+        </TO_DOCVAR>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <!--****************************************************************************************************************************************
+  ** Module Name(s)             :     EditSummaryDetails
+  ** Create Date                : Dec 29 , 2017
+  ** Created By                 : Reshma Ramesh
+  ** Called Functions           :
+  ** Called By Functions        :
+  ** Short Desc                 :
+  ** Change Log                 : This method is written for getting the Summary details
+  *******************************************************************************************************************************************-->
+  <DEFINE_METHOD Name="EditSummaryDetails">
+    <RULE>
+      <ACTION>
+        <FOR_EACH SelectList="$thisParam/Row_Collate_Detail" CurrentElement="currElem">
+          <SET Var="comma" FromValue=","/>
+          <SET Var="quote" FromValue="'"/>
+          <SET Var="updateQuery" FromValue="{concat('UPDATE iCRM_STAGE_TBL.GDPR_BRODCAST_HIST SET GDPR_RQST_STATUS_CD=',$quote,$currElem/GDPR_RQST_STATUS_CD/@Value,$quote,$comma,' SYS_LAST_MODIFIED_DATE=CURRENT_timestamp(0) WHERE GDPR_CASE_ID=',$quote,$currElem/GDPR_CASE_ID/@Value,$quote,' AND CNTRY_CODE=',$quote,$currElem/CNTRY_CODE/@Value,$quote,' AND SUPPLIER_QUAD=',$quote,$currElem/SUPPLIER_QUAD/@Value,$quote,' AND GDPR_CASE_RQST_TYPE=',$quote,$currElem/GDPR_CASE_RQST_TYPE/@Value,$quote)}"/>
+          <!--<EXECUTE_SQL_QUERY AssignToVar="varEditSumDetails" Value="UPDATE iCRM_STAGE_TBL.GDPR_BRODCAST_HIST SET GDPR_RQST_STATUS_CD= '{$currElem/GDPR_RQST_STATUS_CD/@Value}',SYS_LAST_MODIFIED_DATE=CURRENT_DATE WHERE GDPR_CASE_ID ='{$currElem/GDPR_CASE_ID/@Value}'  AND CNTRY_CODE='{$currElem/CNTRY_CODE/@Value}' AND SUPPLIER_QUAD='{$currElem/SUPPLIER_QUAD/@Value}' AND GDPR_CASE_RQST_TYPE='{$currElem/GDPR_CASE_RQST_TYPE/@Value}'   "/>-->
+          <EXECUTE_SQL_QUERY AssignToVar="varEditSumDetails" Value="{$updateQuery}"/>
+          <TO_DOCVAR AssignToVar="thisReturn">
+            <ROOT>
+              <TO_XML SelectList="$varEditSumDetails/*"/>
+              <!--<MaxRec Value="{$thisParam/MaxRec/@Value}"/>
+            <TotalRowCount Value="{$varSearchSumDetails/@TotalRowCount}"/>
+            <START_COUNT Value="{$thisParam/START_COUNT/@Value}"/>-->
+            </ROOT>
+          </TO_DOCVAR>
+        </FOR_EACH>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

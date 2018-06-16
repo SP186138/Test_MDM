@@ -1,0 +1,57 @@
+<document>
+  <properties>
+    <property Name="AGNCY_NBR" PhysicalName="AGNCY_NBR" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="AGNCY_NBR" />
+    </property>
+    <property Name="MKTNG_PGM_NBR" PhysicalName="MKTNG_PGM_NBR" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel - Copy (2).mdt" Name="MKTNG_PGM_NBR" />
+    </property>
+    <property Name="PREF_SRC_IND" PhysicalName="PREF_SRC_IND" Required="true" CharSet="LATIN">
+      <default>N</default>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="PREF_SRC_IND" />
+    </property>
+    <property Name="WEBSITE_REGIS_IND" PhysicalName="WEBSITE_REGIS_IND" Required="true" CharSet="LATIN">
+      <default>N</default>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="WEBSITE_REGIS_IND" />
+    </property>
+    <property Name="DTC_REGIS_PRIOR_IND" PhysicalName="DTC_REGIS_PRIOR_IND" Required="true" CharSet="LATIN">
+      <default>N</default>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="DTC_REGIS_PRIOR_IND" />
+    </property>
+    <property Name="LEGAL_ENT_NBR" PhysicalName="LEGAL_ENT_NBR" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel - Copy (2).mdt" Name="LEGAL_ENT_NBR" />
+    </property>
+  </properties>
+  <keys>
+    <key Active="true" Name="AGNCY_MKTNG_PGM_UPI" PhysicalName="AGNCY_MKTNG_PGM_UPI" Kind="PRIMARY">
+      <property Name="AGNCY_NBR" />
+      <property Name="MKTNG_PGM_NBR" />
+    </key>
+  </keys>
+  <links>
+    <link Active="true" Name="Link1" PhysicalName="AMP_FK">
+      <keymap ToPackage="models/pngModel" ToModelUnit="AGNCY.mtt" ToKey="AGNCY_UPI" ReverseLink="true" ReverseLinkName="AMP_RL" DeleteRule="RESTRICT">
+        <mapping FromProperty="AGNCY_NBR" ToProperty="AGNCY_NBR" />
+      </keymap>
+    </link>
+    <link Active="true" Name="Link2" PhysicalName="AMP_MKTNG_LINK">
+      <keymap ToPackage="models/pngModel" ToModelUnit="MKTNG_PGM.mtt" ToKey="MKTNG_PGM_UPI" ReverseLink="true" ReverseLinkName="MKTNG_PGM" DeleteRule="RESTRICT">
+        <mapping FromProperty="MKTNG_PGM_NBR" ToProperty="MKTNG_PGM_NBR" />
+      </keymap>
+    </link>
+    <link Active="true" Name="Link3" PhysicalName="AMP_LEGAL_ENTY_LINK">
+      <keymap ToPackage="models/pngModel" ToModelUnit="MKTNG_PGM.mtt" ToKey="MKTNG_PGM_IX" ReverseLink="true" ReverseLinkName="Legal_entity" DeleteRule="RESTRICT">
+        <mapping FromProperty="LEGAL_ENT_NBR" ToProperty="LEGAL_ENT_NBR" />
+      </keymap>
+    </link>
+  </links>
+  <docFacets>
+    <mdmWebServiceFacet />
+    <mdmSysTableMapFacet TableClass="MASTER" Source="MASTER" MasterTable="AGNCY_MKTNG_PGM" />
+    <miscFacet PhysicalName="AGNCY_MKTNG_PGM" Active="true" />
+    <mdmConfigFacet SchemaGen="true" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql />
+</document>
+

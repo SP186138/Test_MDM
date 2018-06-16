@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <DEFINE_METHOD Name="checkForValidCombinationforSubs" Category="VALIDATIONS">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="testThisParam">
+          <root>
+<TO_XML SelectList="$thisParam/LEGAL_ENT_NBR"/>
+<TO_XML SelectList="$thisParam/MKTNG_PGM_NBR"/>
+          </root>
+     
+        </TO_DOCVAR>
+        <!--<REMOVE_CHILDREN ChildName="SUBSCRPTN_OPT_STMT_TXT" DocVar="testThisParam"/>
+        <REMOVE_CHILDREN ChildName="PARNTL_CNSNT_IND" DocVar="testThisParam"/>
+        <REMOVE_CHILDREN ChildName="SUBSCRPTN_OPT_FREQ_TXT" DocVar="testThisParam"/>
+        <REMOVE_CHILDREN ChildName="SUBSCRPTN_OPT_NBR" DocVar="testThisParam"/>
+        <REMOVE_CHILDREN ChildName="SUBSCRPTN_OPT_NAME" DocVar="testThisParam"/>
+        <REMOVE_CHILDREN ChildName="SYS_DOCUMENT" DocVar="testThisParam"/>
+       <REMOVE_CHILDREN ChildName="CNTCT_CHANL_TYPE_CODE" DocVar="testThisParam"/>
+        <REMOVE_CHILDREN ChildName="OPERATION" DocVar="testThisParam"/>-->
+        <FOR_EACH CurrentElement="currElement" SelectList="$testThisParam/*">
+          <GET_DOC_SMART Name="MKTNG_PGM" AssignToVar="respMktngPgm" DirtyRead="true">
+            <SELECT>
+              <MKTNG_PGM_NAME/>
+            </SELECT>
+            <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+            <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          </GET_DOC_SMART>
+          <IF_TEST Test="strlen($respMktngPgm/MKTNG_PGM/MKTNG_PGM_NAME/@Value)&gt; 0">
+            <THEN>
+              <SET Var="combinationExist" FromValue="TRUE"/>
+            </THEN>
+          </IF_TEST>
+        </FOR_EACH>
+        <SET DocVar="thisReturn" Property="_RESULT" FromValue="{ifElse($combinationExist='TRUE','SUCCESS','ERROR')}"/>
+        
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

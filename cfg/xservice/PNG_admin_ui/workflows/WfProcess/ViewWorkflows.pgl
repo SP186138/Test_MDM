@@ -1,0 +1,135 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" Id="ViewWorkflows.pgl">
+  <ui:container id="Outer" scrollable="true" showFavorite="true">
+    <ui:step id="OuterStep" displayText="Configure Workflows" scrollable="true">
+      <ui:help displayPage="../../bcm/help/ConfigWorkflowWorkbenchHelp.htm"/>
+      <ui:field-group id="hiddenFieldsGroup">
+        <ui:hidden-field id="status" value="{$root/status/@Value}" name="status"/>
+        <ui:hidden-field id="status_msg" value="{$root/status_msg/@Value}" name="status_msg"/>
+      </ui:field-group>
+      <ui:field-group columns="4" id="alertFields">
+        <ui:image src="/bpi_check.gif" id="AlertGreenIconAjax"/>
+        <ui:image src="/cancel.gif" id="AlertRedIconAjax"/>
+        <ui:display-field id="alertValue" value="{$root/status_msg/@Value}" name="alertValueDisp"/>
+      </ui:field-group>
+      <ui:table id="wfProcesses" displayText="WF_SEARCH_PROCESSES" displayTextNoRecords="WF_SEARCH_NO_PROCESS" rowId="Process_Id" collapsable="false" scrollable="true" selectable="Single" select="$root/WORKFLOW_RESULTS" postRowIdAs="SELECTED_PROCESS_ID" startAtRow="$root/StartRowCount/@Value" totalRowCount="$root/TotalRowCount/@Value" maxRows="$root/PaginateMaxRows/@Value" filter="true">
+        <ui:field-group>
+          <ui:hidden-field id="ProcessID" name="Process_Id"/>
+          <ui:display-field name="Process_Name" id="Process_Name" displayText="WF_PROCESS_NAME" sortable="true" title="WF_PROCESS_NAME_HOVER" unFormat="true"/>
+          <ui:display-field name="Service" id="Service" displayText="Service" title="Workflow Service" filter="true" sortable="true"/>
+          <ui:display-field name="Category" id="Category" displayText="Category" title="Workflow Category" filter="true" sortable="true"/>
+          <ui:display-field name="Process_Template" id="Process_Template" displayText="WF_PROCESS_CAT" title="WF_PROCESS_CAT_HOVER" filter="true" unFormat="true"/>
+          <ui:hidden-field name="Category" id="Category"/>
+          <ui:display-field name="Log_Level" id="Log_Level" displayText="Log Level" title="Workflow log level" filter="true"/>
+          <ui:display-field name="Is_Schedulable" id="Is_Schedulable" displayText="Schedulable" title="Is workflow schedulable" filter="true"/>
+          <ui:display-field name="Is_Favorite" id="Is_Favorite" displayText="Favorite" title="Is favorite workflow" filter="true"/>
+          <ui:display-field name="Process_Description" id="Process_Description" displayText="WF_PROCESS_DESC" title="WF_PROCESS_DESC_HOVER" sortable="true" style="width:130pt;word-wrap: break-word;" unFormat="true" maxlength="20"/>
+          <ui:display-field name="CREATED_BY" id="CREATED_BY" displayText="WF_CREATED_BY" sortable="true" title="WF_CREATED_BY_HOVER"/>
+          <ui:display-field name="CREATION_DATE" id="CREATION_DATE" displayText="WF_CREATION_DATE" sortable="true" title="WF_CREATION_DATE_HOVER" dataType="DateTime"/>
+          <ui:display-field name="LAST_MODIFIED_BY" id="LAST_MODIFIED_BY" displayText="WF_MODIFIED_BY" sortable="true" title="WF_MODIFIED_BY_HOVER"/>
+          <ui:display-field name="LAST_MODIFIED_DATE" id="LAST_MODIFIED_DATE" displayText="WF_MODIFIED_DATE" sortable="true" title="WF_MODIFIED_DATE_HOVER" dataType="DateTime"/>
+        </ui:field-group>
+        <ui:buttons id="tblButtons">
+          <ui:button id="ManageLogLevel" name="ManageLogLevels" displayText="Set Log Levels"/>
+          <ui:divider/>
+          <ui:button id="Remove" name="Remove" enabledBySelections="true" displayText="Remove"/>
+          <ui:button id="Configure" name="Configure" enabledBySelections="true" displayText="Configure"/>
+          <ui:button id="Add" name="Add" displayText="Add Workflow" emphasized="true"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+function onLoad(){
+		var status = document.getElementById('status').value;
+		if(status === 'Success'){
+			showSuccessAlertFields();
+		}
+		else if(status === 'Failure'){
+			showFailureAlertFields();
+		}
+		else
+			hideAlertFields();
+			onResize();
+			onLoadSuper();
+		}
+function onDomainChange(domainname){
+		document.form.BUTTON_ID.value = 'DomainChange';
+		document.form.submit();
+		grayOut(true);
+}
+function on_Remove(){
+		var workflowCat = getSelectedNodeId('Category');
+		if(workflowCat==='Runtime'){
+			core_alert_jquery('RUNTIME_WF_MANAGE_WF_PAGE_REMOVE');
+			return;
+		}
+		else{
+			core_confirm_jquery('WF_REMOVE_WORKFLOW','onRemoveCallback');
+			
+    	}
+}
+function onRemoveCallback(response){
+		if(response == 'yes'){
+			document.form.BUTTON_ID.value = 'Remove';
+			document.form.submit();
+			grayOut(true);
+		}
+		
+}
+function on_Configure(){
+    var workflowCat = getSelectedNodeId('Category');
+    if(workflowCat==='Runtime'){
+    	core_alert_jquery('RUNTIME_WF_MANAGE_WF_PAGE_CONFIG');
+    	return;
+    }
+    else{
+		document.form.BUTTON_ID.value = 'Configure';
+		document.form.submit();
+		grayOut(true);
+	}
+}  
+function getSelectedNodeId(field){
+	var checkboxElem = document.getElementsByName('SELECTED_PROCESS_ID');
+	var index = -1;
+	for(var count=0;count&lt;checkboxElem.length;count++){
+		if(checkboxElem[count].checked){
+			index = count+1;
+			break;
+		}
+	}
+	if(index==-1)
+		return 'none';
+	var hiddenElem = document.getElementsByName(field);
+	var hiddenValue=hiddenElem[index-1].value;
+	return hiddenValue;
+}
+function hideAlertFields(){
+	toggleField('AlertGreenIconAjax','hide');
+	toggleField('AlertRedIconAjax','hide');
+	toggleField('alertValue_td','hide');
+}
+function showSuccessAlertFields(){
+	toggleField('AlertGreenIconAjax','show');
+	toggleField('AlertRedIconAjax','hide');
+	toggleField('alertValue_td','show');
+}
+function showFailureAlertFields(){
+	toggleField('AlertGreenIconAjax','hide');
+	toggleField('AlertRedIconAjax','show');
+	toggleField('alertValue_td','show');
+}
+function toggleField(id,state){
+	fieldCell  = document.getElementById(id);
+	fieldRow = fieldCell.parentNode;
+	toggleItemVisibility(fieldRow, state);
+	var i = document.getElementById(id);
+	if (state=='hide'){
+		i.disabled = true;
+	}
+	else{
+		i.disabled = false;
+		i.enabled = true;
+	}
+}
+</ui:script>
+</ui:page-group>

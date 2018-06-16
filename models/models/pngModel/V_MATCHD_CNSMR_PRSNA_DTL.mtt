@@ -1,0 +1,67 @@
+<document IsDocView="true">
+  <properties>
+    <property Name="GVN_NAME">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="GVN_NAME" />
+    </property>
+    <property Name="FAMLY_NAME">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="FAMLY_NAME" />
+    </property>
+    <property Name="FULL_NAME">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="FULL_NAME" />
+    </property>
+    <property Name="MATCHD_CNSMR_PRSNA_ID">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="MATCHD_CNSMR_PRSNA_ID" />
+    </property>
+    <property Name="GENDR_IND">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="GENDR_IND" />
+    </property>
+    <property Name="BRTH_DATE">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="BRTH_DATE" />
+    </property>
+    <property Name="FULL_ADDRESS" PhysicalName="FULL_ADDRESS" Active="true" Type="String_200" />
+    <property Name="LEGAL_ENT_NBR">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="LEGAL_ENT_NBR" />
+    </property>
+  </properties>
+  <keys />
+  <links />
+  <docFacets>
+    <miscFacet Active="true" />
+    <mdmConfigFacet SchemaGen="false" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql OnMDMTables="true" IsSimpleView="true">REPLACE VIEW MDM.V_MATCHD_CNSMR_PRSNA_DTL&#xD;
+AS&#xD;
+LOCKING ROW FOR ACCESS&#xD;
+SELECT&#xD;
+ LEGAL_ENT_PRSNA_1.GVN_NAME&#xD;
+,LEGAL_ENT_PRSNA_1.FAMLY_NAME&#xD;
+,TRIM(LEGAL_ENT_PRSNA_1.FAMLY_NAME) ||','|| TRIM(LEGAL_ENT_PRSNA_1.GVN_NAME) as FULL_NAME     &#xD;
+,LEGAL_ENT_PRSNA_1.MATCHD_CNSMR_PRSNA_ID&#xD;
+,LEGAL_ENT_PRSNA_1.GENDR_IND&#xD;
+,LEGAL_ENT_PRSNA_1.BRTH_DATE&#xD;
+,COALESCE(TRIM(PRSNA_POSTL_ADDR_1.ADDR_LINE_1_TXT),'') ||    ' ' ||&#xD;
+ COALESCE(TRIM(PRSNA_POSTL_ADDR_1.ADDR_LINE_2_TXT),'') ||  ' ' ||&#xD;
+ COALESCE(TRIM(PRSNA_POSTL_ADDR_1.CITY_NAME),'') ||  ' ' ||&#xD;
+ COALESCE(TRIM(PRSNA_POSTL_ADDR_1.POSTL_AREA_CODE),'') as FULL_ADDRESS&#xD;
+          &#xD;
+,LEGAL_ENT_PRSNA_1.LEGAL_ENT_NBR&#xD;
+,NULL (INTEGER) 		AS  SYS_TARGET_ID&#xD;
+,NULL (VARCHAR(25)) 	AS SYS_AUTH_ID&#xD;
+,NULL (VARCHAR(25)) 	AS SYS_SOURCE&#xD;
+,NULL (VARCHAR(70)) 	AS SYS_CREATED_BY&#xD;
+,NULL (TIMESTAMP(0)) 	AS SYS_CREATION_DATE&#xD;
+,'ACTIVE'  (VARCHAR(25)) 	AS  SYS_ENT_STATE&#xD;
+,NULL (VARCHAR(70)) 	AS SYS_LAST_MODIFIED_BY&#xD;
+,NULL (TIMESTAMP(0)) 	AS SYS_LAST_MODIFIED_DATE&#xD;
+,NULL (VARCHAR(25)) 	AS SYS_NC_TYPE&#xD;
+,NULL (VARCHAR(10000)) 	AS SYS_ERR_CODE&#xD;
+,NULL (VARCHAR(30)) 	AS SYS_ERR_SVRTY   &#xD;
+ FROM MDM.MATCHD_CNSMR_PRSNA LEGAL_ENT_PRSNA_1   &#xD;
+ LEFT OUTER JOIN MDM.MATCHD_CNSMR_POSTL_ADDR PRSNA_POSTL_ADDR_1&#xD;
+ ON LEGAL_ENT_PRSNA_1.MATCHD_CNSMR_PRSNA_ID = &#xD;
+ PRSNA_POSTL_ADDR_1.MATCHD_CNSMR_PRSNA_ID&#xD;
+ AND LEGAL_ENT_PRSNA_1.LEGAL_ENT_NBR = PRSNA_POSTL_ADDR_1.LEGAL_ENT_NBR&#xD;
+;</viewsql>
+</document>
+

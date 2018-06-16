@@ -1,0 +1,1016 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="13" ShowInBreadCrumbs="true" Version="1.0" Name="ApprovalMonitor" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="ApprovalMonitor">
+    <variable Name="alertGreen" Type="string" Comment=""/>
+    <variable Name="showHistory" Type="string" Comment=""/>
+    <variable Name="paginateStartBackup" Type="string" Comment=""/>
+    <variable Name="fromViewRecordPage" Type="string" Comment=""/>
+    <variable Name="sortOrderBackUp" Type="string" Comment=""/>
+    <variable Name="sortByBackUp" Type="string" Comment=""/>
+    <variable Name="stepInfo" Type="xml" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start0">
+      <actions/>
+      <next_nodes>
+        <next_node Name="Approval Monitor"/>
+      </next_nodes>
+    </start>
+    <done Name="done1">
+      <actions/>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="Approval Monitor" OutputFormVar="pglFormOutput" InputFormVar="pglFormInput" ShowInBreadCrumbs="SHOW" Template="Tree_Cell.pgl">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="orderByXml">
+            <ORDER_BY/>
+          </TO_DOCVAR>
+          <!--paginate variables-->
+          <SET Var="paginateStart" FromValue="{int(ifElse($thisParam/START_COUNT/@Value = null, 0, $thisParam/START_COUNT/@Value))}"/>
+          <SET Var="maxRow" FromValue="{int(ifElse($thisParam/MAX_ROWS/@Value = null, 100, $thisParam/MAX_ROWS/@Value))}"/>
+          <IF_TEST Test="$thisParam/EXPORT_ALL/@Value='yes'">
+            <THEN>
+              <SET Var="paginateStart" FromValue="0"/>
+              <SET Var="maxRow" FromValue="{$thisParam/MAX_ROWS/@Value}"/>
+            </THEN>
+          </IF_TEST>
+          <!--paginate variables-->
+          <IF_TEST Test="$fromViewRecordPage/@Value='yes'">
+            <THEN>
+              <SET DocVar="thisParam" Property="START_COUNT" FromValue="{$paginateStartBackup/@Value}"/>
+              <SET DocVar="thisParam" Property="SORT_ORDER" FromValue="{$sortOrderBackUp/@Value}"/>
+              <SET DocVar="thisParam" Property="SORT_BY" FromValue="{$sortByBackUp/@Value}"/>
+              <SET Var="fromViewRecordPage" FromValue=""/>
+            </THEN>
+          </IF_TEST>
+          <SET Var="sortOrder" FromValue="{ifElse($thisParam/SORT_ORDER/@Value = null, 'Ascending', $thisParam/SORT_ORDER/@Value)}"/>
+          <IF_TEST Test="$thisParam/SORT_BY/@Value='Age'">
+            <THEN>
+              <SET Var="sortBy" FromValue="DATE_CREATED"/>
+            </THEN>
+            <ELSE>
+              <SET Var="sortBy" FromValue="{ifElse(($thisParam/SORT_BY/@Value = null) or($thisParam/SORT_BY/@Value = 'ID') , 'ID', $thisParam/SORT_BY/@Value)}"/>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/SORT_ORDER and $thisParam/SORT_BY">
+            <THEN>
+              <TO_DOCVAR AssignToVar="sortByColumn">
+                <TEMP/>
+              </TO_DOCVAR>
+              <SET_NAME DocVar="sortByColumn" FromValue="{$sortBy}"/>
+              <SET Attribute="Sort" DocVar="sortByColumn" FromValue="{$sortOrder}"/>
+              <ADD_CHILDREN DocVar="orderByXml" FromDocVar="sortByColumn"/>
+            </THEN>
+            <ELSE>
+              <TO_DOCVAR AssignToVar="sortByColumn">
+                <TEMP/>
+              </TO_DOCVAR>
+              <SET_NAME DocVar="sortByColumn" FromValue="DATE_CREATED"/>
+              <SET Attribute="Sort" DocVar="sortByColumn" FromValue="Descending"/>
+              <ADD_CHILDREN DocVar="orderByXml" FromDocVar="sortByColumn"/>
+            </ELSE>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="orderBy">
+            <TO_XML SelectList="$orderByXml"/>
+          </TO_DOCVAR>
+          <SET Var="starSign" FromValue="\*"/>
+          <SET Var="percentSign" FromValue="\%"/>
+          <SET Var="qu" FromValue="'"/>
+          <SET Var="filterQuery" FromValue=""/>
+          <SET Var="filterQuery2" FromValue=""/>
+          <SET Var="filterDate" FromValue=""/>
+          <SET Var="filterQuery" FromValue="and"/>
+          <SET Var="filterQuery2" FromValue="and"/>
+          <SET Var="filterDateAndStatus" FromValue="and"/>
+          <FOR_EACH SelectList="$thisParam/*" CurrentElement="currentSearchRow">
+            <SET Var="temp" FromValue="{substringBefore($currentSearchRow/name(),'_')}"/>
+            <IF_TEST Test="($thisParam/BUTTON_ID/@Value='SYS_TAB') and (($temp='FILTER' and $currentSearchRow/@Value!='') or starts-with($currentSearchRow/name(), 'FILTER_FROM') or starts-with($currentSearchRow/name(), 'FILTER_TO') or ends-with($currentSearchRow/name(), 'MATCH_BY'))">
+              <THEN>
+                <SET DocVar="currentSearchRow" Attribute="Value" FromValue=""/>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="($temp='FILTER' and $currentSearchRow/@Value!='') or starts-with($currentSearchRow/name(), 'FILTER_FROM') or starts-with($currentSearchRow/name(), 'FILTER_TO') or ends-with($currentSearchRow/name(), 'MATCH_BY')">
+              <THEN>
+                <IF_TEST Test="substringAfter($currentSearchRow/name(),'FILTER_')='ID'">
+                  <THEN>
+                    <SET Var="replacedString" FromValue="{strReplaceAll($currentSearchRow/@Value,$starSign,$percentSign)}"/>
+                    <SET Var="filterQuery" FromValue="{concat($filterQuery,' A.INST_DOC_ID LIKE ',$qu,$replacedString,$qu,' and ')}"/>
+                    <CONTINUE/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="substringAfter($currentSearchRow/name(),'FILTER_')='INST_LINE_ID'">
+                  <THEN>
+                    <SET Var="replacedString" FromValue="{strReplaceAll($currentSearchRow/@Value,$starSign,$percentSign)}"/>
+                    <SET Var="filterQuery" FromValue="{concat($filterQuery,' A.INST_LINE_ID LIKE ',$qu,$replacedString,$qu,' and ')}"/>
+                    <CONTINUE/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="substringAfter($currentSearchRow/name(),'FILTER_')='INSTANCE_TYPE'">
+                  <THEN>
+                    <SET Var="replacedString" FromValue="{strReplaceAll($currentSearchRow/@Value,$starSign,$percentSign)}"/>
+                    <SET Var="filterQuery" FromValue="{concat($filterQuery,' A.INSTANCE_TYPE LIKE ',$qu,$replacedString,$qu,' and ')}"/>
+                    <CONTINUE/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="substringAfter($currentSearchRow/name(),'FILTER_')='DOCUMENTACTION'">
+                  <THEN>
+                    <SET Var="replacedString" FromValue="{strReplaceAll($currentSearchRow/@Value,$starSign,$percentSign)}"/>
+                    <SET Var="filterQuery" FromValue="{concat($filterQuery,' A.INSTANCE_MODE LIKE ',$qu,$replacedString,$qu,' and ')}"/>
+                    <CONTINUE/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="substringAfter($currentSearchRow/name(),'FILTER_')='REQUESTOR'">
+                  <THEN>
+                    <SET Var="replacedString" FromValue="{strReplaceAll($currentSearchRow/@Value,$starSign,$percentSign)}"/>
+                    <SET Var="filterQuery" FromValue="{concat($filterQuery,' t2.SUBMITBYID LIKE ',$qu,$replacedString,$qu,' and ')}"/>
+                    <CONTINUE/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="substringAfter($currentSearchRow/name(),'FILTER_')='APPROVER_NAME'">
+                  <THEN>
+                    <SET Var="replacedString" FromValue="{strReplaceAll($currentSearchRow/@Value,$starSign,$percentSign)}"/>
+                    <SET Var="filterQuery2" FromValue="{concat($filterQuery2,' APPROVER_ID LIKE ',$qu,$replacedString,$qu,' and ')}"/>
+                    <CONTINUE/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="substringAfter($currentSearchRow/name(),'FILTER_')='A_Status'">
+                  <THEN>
+                    <SET Var="filterStatus" FromValue="{$currentSearchRow/@Value}"/>
+                    <SET Var="filterDateAndStatus" FromValue="{concat($filterDateAndStatus,' STATUS LIKE ',$qu,$filterStatus,$qu,' and ')}"/>
+                    <CONTINUE/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="substringAfter($currentSearchRow/name(),'FILTER_')='COMMENTS'">
+                  <THEN>
+                    <SET Var="replacedString" FromValue="{strReplaceAll($currentSearchRow/@Value,$starSign,$percentSign)}"/>
+                    <SET Var="filterQuery2" FromValue="{concat($filterQuery2,' COMMENTS LIKE ',$qu,$replacedString,$qu,' and ')}"/>
+                    <CONTINUE/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="substringAfter($currentSearchRow/name(),'FILTER_')='FROM_DATE_CREATED'">
+                  <THEN>
+                    <IF_TEST Test="$currentSearchRow/@Value!=''">
+                      <THEN>
+                        <SET Var="timeValue" FromValue="{trim($currentSearchRow/@Value)}"/>
+                        <SET Var="timeFormat" FromValue="MM/dd/yyyy HH:mm:ss"/>
+                        <SET Var="dbFormat" FromValue="MM/dd/yyyy HH:mm:ss"/>
+                        <NATIVE_FUNCTION ClassName="com.teradata.xservice.userSecurity.DynamicPGLGenerator" MethodName="parseDate" AssignToVar="nativeReturn">
+                          <PARAM Var="timeValue" Caption="date"/>
+                          <PARAM Var="timeFormat" Caption="format"/>
+                          <PARAM Var="dbFormat" Caption="dbFormat"/>
+                        </NATIVE_FUNCTION>
+                        <SET Var="formatValue" FromValue="(timestamp(0), format 'MM/DD/YYYYBHH:MI:SS')"/>
+                        <IF_TEST Test="$showHistory='false'">
+                          <THEN>
+                            <SET Var="filterQuery" FromValue="{concat($filterQuery,' (A.DATE_CREATED >= ',$qu,$nativeReturn/@Value,$qu,$formatValue,') and ')}"/>
+                          </THEN>
+                          <ELSE>
+                            <SET Var="filterDateAndStatus" FromValue="{concat($filterDateAndStatus,' (DATE_CREATED >= ',$qu,$nativeReturn/@Value,$qu,$formatValue,') and ')}"/>
+                          </ELSE>
+                        </IF_TEST>
+                      </THEN>
+                    </IF_TEST>
+                    <CONTINUE/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="substringAfter($currentSearchRow/name(),'FILTER_')='TO_DATE_CREATED'">
+                  <THEN>
+                    <IF_TEST Test="$currentSearchRow/@Value!=''">
+                      <THEN>
+                        <SET Var="timeValue" FromValue="{trim($currentSearchRow/@Value)}"/>
+                        <SET Var="timeFormat" FromValue="MM/dd/yyyy HH:mm:ss"/>
+                        <SET Var="dbFormat" FromValue="MM/dd/yyyy HH:mm:ss"/>
+                        <NATIVE_FUNCTION ClassName="com.teradata.xservice.userSecurity.DynamicPGLGenerator" MethodName="parseDate" AssignToVar="nativeReturn">
+                          <PARAM Var="timeValue" Caption="date"/>
+                          <PARAM Var="timeFormat" Caption="format"/>
+                          <PARAM Var="dbFormat" Caption="dbFormat"/>
+                        </NATIVE_FUNCTION>
+                        <SET Var="formatValue" FromValue=" (timestamp(0), format 'MM/DD/YYYYBHH:MI:SS') "/>
+                        <IF_TEST Test="$showHistory='false'">
+                          <THEN>
+                            <SET Var="filterQuery" FromValue="{concat($filterQuery,' (A.DATE_CREATED &lt;= ',$qu,$nativeReturn/@Value,$qu,$formatValue,') and ')}"/>
+                          </THEN>
+                          <ELSE>
+                            <SET Var="filterDateAndStatus" FromValue="{concat($filterDateAndStatus,' (DATE_CREATED &lt;= ',$qu,$nativeReturn/@Value,$qu,$formatValue,') and ')}"/>
+                          </ELSE>
+                        </IF_TEST>
+                      </THEN>
+                    </IF_TEST>
+                    <CONTINUE/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="substringAfter($currentSearchRow/name(),'FILTER_')='NODE_TYPE'">
+                  <THEN>
+                    <SET Var="nodeTypeValue" FromValue="{ifElse($currentSearchRow/@Value ='Serial' , 'S', 'P')}"/>
+                    <SET Var="filterQuery" FromValue="{concat($filterQuery,' A.NODE_TYPE LIKE ',$qu,$nodeTypeValue,$qu,' and ')}"/>
+                    <CONTINUE/>
+                  </THEN>
+                </IF_TEST>
+                <SET Var="filterQuery" FromValue="{concat($filterQuery,' ',substringAfter($currentSearchRow/name(),'FILTER_'),' LIKE ',$qu,$currentSearchRow/@Value,$qu,' and ')}"/>
+              </THEN>
+            </IF_TEST>
+          </FOR_EACH>
+          <SET Var="filterQuery" FromValue="{concat($filterQuery,' 1=1 ')}"/>
+          <SET Var="filterQuery2" FromValue="{concat($filterQuery2,' 1=1 ')}"/>
+          <SET Var="filterDateAndStatus" FromValue="{concat($filterDateAndStatus,' 1=1 ')}"/>
+          <IF_TEST Test="($thisParam/container2_STEP_ID/@Value ='step2' or $thisParam/container2_STEP_ID/@Value =null) and $thisParam/BUTTON_ID/@Value!='Back' and $thisParam/BUTTON_ID/@Value!='SYS_REFRESH'">
+            <THEN>
+              <SET Var="showHistory" FromValue="false"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/container2_STEP_ID/@Value ='History' and $thisParam/BUTTON_ID/@Value!='Back' and $thisParam/BUTTON_ID/@Value!='SYS_REFRESH'">
+            <THEN>
+              <SET Var="showHistory" FromValue="true"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$showHistory='false'">
+            <THEN>
+              <REQUEST Name="getAllApprovals" ServiceName="ADMIN_UI" AssignToVar="pglFormInput">
+                <TO_XML DocVar="orderBy"/>
+                <paginateStart Value="{$paginateStart}"/>
+                <maxRow Value="{$maxRow}"/>
+                <filterQuery Value="{$filterQuery}"/>
+                <filterQuery2 Value="{$filterQuery2}"/>
+                <filterStatus Value="{$filterStatus}"/>
+              </REQUEST>
+              <SET Var="ageCalculationParam" FromSelect="$pglFormInput"/>
+              <REQUEST Name="ageCalculateforMonitor" ServiceName="ADMIN_UI" AssignToVar="testResult">
+                <TO_XML DocVar="ageCalculationParam"/>
+              </REQUEST>
+            </THEN>
+            <ELSE>
+              <REQUEST Name="getAllApprovalHistory" ServiceName="ADMIN_UI" AssignToVar="pglFormInput">
+                <TO_XML DocVar="orderBy"/>
+                <paginateStart Value="{$paginateStart}"/>
+                <maxRow Value="{$maxRow}"/>
+                <filterQuery Value="{$filterQuery}"/>
+                <filterQuery2 Value="{$filterQuery2}"/>
+                <filterDateAndStatus Value="{$filterDateAndStatus}"/>
+              </REQUEST>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="($thisParam/BUTTON_ID/@Value='ACCEPT' or $thisParam/BUTTON_ID/@Value='REJECT' or $thisParam/BUTTON_ID/@Value='REASSIGN')">
+            <THEN>
+              <TO_DOCVAR AssignToVar="alertDetails">
+                <ALERTMSG Value="{$alertGreen/@Value}"/>
+              </TO_DOCVAR>
+            </THEN>
+            <ELSE>
+              <TO_DOCVAR AssignToVar="alertDetails">
+                <ALERTMSG Value=""/>
+              </TO_DOCVAR>
+              <SET Var="alertGreen" FromValue=""/>
+            </ELSE>
+          </IF_TEST>
+          <SET Var="ctr" FromValue="1"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Purge'">
+            <THEN>
+              <APPEND_TO_XML Select="$pglFormInput">
+                <TO_XML Select="$thisReturn"/>
+              </APPEND_TO_XML>
+            </THEN>
+            <ELSE>
+              <APPEND_TO_XML Select="$pglFormInput">
+                <TO_XML Select="$alertDetails"/>
+              </APPEND_TO_XML>
+            </ELSE>
+          </IF_TEST>
+          <FOR_EACH CurrentElement="currAlert" SelectList="$pglFormInput/APPROVALS/APPROVAL">
+            <IF_TEST Test="count($pglFormInput/APPROVALS/APPROVAL)=1">
+              <THEN>
+                <SET_PROPS SelectList="$currAlert">
+                  <Age Value="{$testResult/age/@Value}"/>
+                </SET_PROPS>
+              </THEN>
+              <ELSE>
+                <SET_PROPS SelectList="$currAlert">
+                  <Age Value="{$testResult/age[int($ctr)]/@Value}"/>
+                </SET_PROPS>
+                <SET Var="ctr" FromValue="{int($ctr)+1}"/>
+              </ELSE>
+            </IF_TEST>
+          </FOR_EACH>
+          <APPEND_TO_XML Select="$pglFormInput">
+            <SORT_ORDER Value="{$orderByXml/*/@Sort}"/>
+            <SORT_BY Value="{$orderByXml/*/name()}"/>
+            <StartRowCount Value="{$pglFormInput/@StartRowCount}"/>
+            <TotalRowCount Value="{$pglFormInput/@TotalRowCount}"/>
+          </APPEND_TO_XML>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="paginateStartBackup" FromValue="{int(ifElse($thisParam/START_COUNT/@Value = null, 0, $thisParam/START_COUNT/@Value))}"/>
+          <SET Var="sortOrderBackUp" FromValue="{$thisParam/SORT_ORDER/@Value}"/>
+          <SET Var="sortByBackUp" FromValue="{$thisParam/SORT_BY/@Value}"/>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='DONE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='VIEW'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="View Record" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ACTION'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Take Action" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Purge'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="task9" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='showHistory'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ShowHistory'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done1" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="View Record" ShowInBreadCrumbs="SHOW" Template="viewRecord.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <SET Var="fromViewRecordPage" FromValue="yes"/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <table>
+              <APPEND_TO_XML>
+                <TO_XML SelectList="$thisParam/insDocType"/>
+              </APPEND_TO_XML>
+            </table>
+          </TO_DOCVAR>
+          <IF_TEST Test="($thisParam/selected_ID/@Value =null)">
+            <THEN>
+              <SET_PROPS SelectList="$thisParam">
+                <selected_ID Value="{$thisParam/ID/@Value}" Overwrite="true"/>
+              </SET_PROPS>
+            </THEN>
+          </IF_TEST>
+          <REQUEST Name="viewApprovalRecords" AssignToVar="resultVar">
+            <TO_XML SelectList="$thisParam/*"/>
+          </REQUEST>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$resultVar/*"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$thisParam/*"/>
+          <TO_DOCVAR AssignToVar="stepInfo">
+            <step>
+              <APPEND_TO_XML>
+                <Container2SelectedStep Value="{$thisParam/container2_SELECTED_STEP/@Value}"/>
+                <Container2SelectedStepId Value="{$thisParam/container2_STEP_ID/@Value}"/>
+              </APPEND_TO_XML>
+            </step>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET_PROPS SelectList="$pglFormOutput">
+            <container2_STEP_ID Value="{$stepInfo/Container2SelectedStepId/@Value}" Overwrite="true"/>
+            <container2_SELECTED_STEP Value="{$stepInfo/Container2SelectedStep/@Value}" Overwrite="true"/>
+          </SET_PROPS>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Approval Monitor" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='REJECT'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ACCEPT'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="Take Action" ShowInBreadCrumbs="SHOW" Template="takeAction.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="stepInfo">
+            <step>
+              <APPEND_TO_XML>
+                <Container2SelectedStep Value="{$thisParam/container2_SELECTED_STEP/@Value}"/>
+                <Container2SelectedStepId Value="{$thisParam/container2_STEP_ID/@Value}"/>
+              </APPEND_TO_XML>
+            </step>
+          </TO_DOCVAR>
+          <SET Var="fromViewRecordPage" FromValue="yes"/>
+          <REQUEST Name="getApprovalDetails" ServiceName="ADMIN_UI" AssignToVar="pglFormInput">
+            <FILTER Value="AND A.INST_DOC_ID='{$thisParam/ID/@Value}'"/>
+          </REQUEST>
+          <REQUEST Name="getMdmAllUser" ServiceName="ADMIN_UI" AssignToVar="allMDMUser"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$thisParam/*"/>
+          <REMOVE_CHILDREN ChildName="LOGIN_NAME" SelectList="$pglFormInput"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$allMDMUser/*"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET_PROPS SelectList="$pglFormOutput">
+            <container2_STEP_ID Value="{$stepInfo/Container2SelectedStepId/@Value}" Overwrite="true"/>
+            <container2_SELECTED_STEP Value="{$stepInfo/Container2SelectedStep/@Value}" Overwrite="true"/>
+          </SET_PROPS>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='VIEW'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='ACTION'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='DONE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='REJECT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Reject" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ACCEPT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Accept" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='RESET'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Accept'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Reject'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Approval Monitor" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Poke'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='REASSIGN'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="task12" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <task Name="Accept">
+      <actions>
+        <action>
+          <GET_DOCUMENT Name="Alert" ServiceName="APPROVAL" AssignToVar="curAlert" DirtyRead="true">
+            <InstanceDocID Value="{$thisParam/ID/@Value}"/>
+            <ApproverID Value="{$thisParam/user_id/@Value}"/>
+            <Status Value="A"/>
+          </GET_DOCUMENT>
+          <REQUEST Name="AssignToMyself" ServiceName="ADMIN_UI" AssignToVar="currUser">
+            <selected_ID Value="{$thisParam/ID/@Value}"/>
+            <User Value="{$thisParam/user_id/@Value}"/>
+          </REQUEST>
+          <GET_DOCUMENT Name="Approval_Groups" AssignToVar="ApprovalGroups" ServiceName="APPROVAL" ReturnRowCount="yes" DirtyRead="true">
+            <EVENT_NAME Value="{$thisParam/INSTANCE_TYPE/@Value}"/>
+            <IS_ACTIVE Value="True"/>
+            <OR>
+              <ACTION_TYPE Value="{$thisParam/DOCUMENTACTION/@Value}"/>
+              <ACTION_TYPE Value="ALL"/>
+            </OR>
+          </GET_DOCUMENT>
+          <GET_DOCUMENT Name="Approvals" AssignToVar="Approvals" ServiceName="APPROVAL" ReturnRowCount="yes" DirtyRead="true">
+            <SELECT>
+              <NOTIFICATION_TYPE/>
+            </SELECT>
+            <APPROVAL_GROUP_ID Value="{$ApprovalGroups/Approval_Groups/SEQID/@Value}"/>
+            <IS_ACTIVE Value="True"/>
+            <ENTITY_STATE Value="ACTIVE"/>
+            <EXECUTION_ORDER Value="1"/>
+          </GET_DOCUMENT>
+          <REQUEST Name="ACTIVATE_APPROVAL_NODE" AssignToVar="activateAppNodeResp">
+            <Result Value="APPROVED"/>
+            <ID Value="{$thisParam/ID/@Value}"/>
+            <InstanceDocID Value="{$curAlert/Alert/InstanceDocID/@Value}"/>
+            <InstanceType Value="{$curAlert/Alert/InstanceType/@Value}"/>
+            <Comment Value="{$thisParam/Comment/@Value}"/>
+            <messageType Value="{$curAlert/Alert/InstanceType/@Value}"/>
+            <EMAIL_NODE_TYPE Value="{$curAlert/Alert/InstanceMode/@Value}"/>
+            <TokenId Value="{$curAlert/Alert/TokenID/@Value}"/>
+          </REQUEST>
+          <SET Var="DocumentName" FromValue="{$activateAppNodeResp/InstanceType/@Value}"/>
+          <GET_DOCUMENT Name="DocumentInstance" AssignToVar="DocumentInstance" ServiceName="APPROVAL" DirtyRead="true">
+            <AlertID Value="{$thisParam/ID/@Value}"/>
+          </GET_DOCUMENT>
+          <GET_DOCUMENT Name="ApprovalHistory" AssignToVar="ApprovalHistory" ServiceName="APPROVAL" DirtyRead="true">
+            <InstanceDocID Value="{$thisParam/ID/@Value}"/>
+          </GET_DOCUMENT>
+          <GET_DOCUMENT AssignToVar="ApprovalGroups" Name="Approval_Groups" ReturnRowCount="yes" ServiceName="APPROVAL" DirtyRead="true">
+            <OR>
+              <ACTION_TYPE Value="{$DocumentInstance/DocumentInstance/DocumentAction/@Value}"/>
+              <ACTION_TYPE Value="ALL"/>
+            </OR>
+            <EVENT_NAME Value="{$DocumentInstance/DocumentInstance/DocumentType/@Value}"/>
+            <IS_ACTIVE Value="True"/>
+          </GET_DOCUMENT>
+          <SET Var="approvers" FromValue=""/>
+          <SET Var="ctr" FromValue="0"/>
+          <SET Var="present" FromValue="false"/>
+          <GET_DOCUMENT AssignToVar="existingApprovers" Name="Approvals" ReturnRowCount="yes" ServiceName="APPROVAL" DirtyRead="true">
+            <SELECT>
+              <APPROVER_NAME/>
+            </SELECT>
+            <ORDER_BY>
+              <EXECUTION_ORDER Sort="{$sortOrder}"/>
+            </ORDER_BY>
+            <APPROVAL_GROUP_ID Value="{$ApprovalGroups/Approval_Groups/SEQID/@Value}"/>
+          </GET_DOCUMENT>
+          <REQUEST Name="GetApprovalUserType" ServiceName="ADMIN_UI" AssignToVar="ApprovalUserType">
+            <EVENT_NAME Value="{$thisParam/INSTANCE_TYPE/@Value}"/>
+            <ACTION_TYPE Value="{$thisParam/DOCUMENTACTION/@Value}"/>
+          </REQUEST>
+          <SET Var="msg" FromValue="User Group Based"/>
+          <FOR_EACH SelectList="$existingApprovers/Approvals" CurrentElement="currAct">
+            <FOR_EACH SelectList="$ApprovalHistory/ApprovalHistory" CurrentElement="currApprover">
+              <IF_TEST Test="$ApprovalUserType/ApprovalUserType/@Value = $msg">
+                <THEN>
+                  <IF_TEST Test="$currAct/APPROVER_NAME/@Value = $currApprover/OriginalApproverID/@Value">
+                    <THEN>
+                      <SET Var="present" FromValue="true"/>
+                    </THEN>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$currAct/APPROVER_NAME/@Value = $currApprover/OriginalApproverID/@Value">
+                    <THEN>
+                      <SET Var="present" FromValue="true"/>
+                    </THEN>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </FOR_EACH>
+            <IF_TEST Test="$present = 'false'">
+              <THEN>
+                <SET Var="ctr" FromValue="{int($ctr)+1}"/>
+                <SET Var="approvers" FromValue="{$approvers}{int($ctr)}. {$currAct/APPROVER_NAME/@Value}&lt;br/>"/>
+              </THEN>
+            </IF_TEST>
+            <SET Var="present" FromValue="false"/>
+          </FOR_EACH>
+          <IF_TEST Test="$curAlert/Alert/NodeName/@Value = 'serial_approval_node'">
+            <THEN>
+              <SET Var="ApprovalType" FromValue="Serial"/>
+            </THEN>
+            <ELSE>
+              <SET Var="ApprovalType" FromValue="Parallel"/>
+            </ELSE>
+          </IF_TEST>
+          <REQUEST Name="getUser" ServiceName="USER_SECURITY" AssignToVar="creatorDetails">
+            <ID Value="{$DocumentInstance/DocumentInstance/SubmitByID/@Value}"/>
+          </REQUEST>
+          <GET_DOCUMENT AssignToVar="curDetails" Name="USER_PROFILE" ServiceName="USER_SECURITY" Distinct="true" DirtyRead="true">
+            <ID Value="{$userId/@Value}"/>
+          </GET_DOCUMENT>
+          <REQUEST Name="getUser" ServiceName="USER_SECURITY" AssignToVar="approverDetails" ReturnRowCount="true">
+            <ID Value="{$curDetails/USER_PROFILE/ID/@Value}"/>
+          </REQUEST>
+          <REQUEST Name="getUser" ServiceName="USER_SECURITY" AssignToVar="curApproverDetails" ReturnRowCount="true">
+            <ID Value="{$userId/@Value}"/>
+          </REQUEST>
+          <SET Var="alertGreen" FromValue="Approval accepted successfully."/>
+          <IF_TEST Test="$DocumentInstance/DocumentInstance/SubmitByID != null">
+            <THEN>
+              <IF_TEST Test="$Approvals/Approvals/NOTIFICATION_TYPE/@Value ='ALL' or $Approvals/Approvals/NOTIFICATION_TYPE/@Value ='WEB'">
+                <THEN>
+                  <REQUEST Name="sendAlert">
+                    <DOCUMENT_ID Value="{$DocumentInstance/DocumentInstance/ID/@Value}"/>
+                    <DOCUMENT_NAME Value="{$DocumentInstance/DocumentInstance/DocumentType/@Value}"/>
+                    <ARG_INDEX Value="0"/>
+                    <PRIORITY Value="3"/>
+                    <USER_ID Value="{$creatorDetails/USER_PROFILE/ID/@Value}"/>
+                    <SERVICE_NAME Value="APPROVAL"/>
+                    <MESSAGE Value="{$DocumentInstance/DocumentInstance[1]/DocumentAction/@Value} request for {$DocumentName/@Value} is Approved by {$curApproverDetails/USER_PROFILE/LOGIN_NAME/@Value}"/>
+                  </REQUEST>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$Approvals/Approvals/NOTIFICATION_TYPE/@Value ='ALL' or $Approvals/Approvals/NOTIFICATION_TYPE/@Value ='EMAIL'">
+                <THEN>
+                  <REQUEST Name="sendEmail" ServiceName="OMS_MESSAGE_SERVICE" Synchronous="no">
+                    <SUBJECT Value="[MDM] {$DocumentInstance/DocumentInstance[1]/DocumentAction/@Value} request for {$DocumentName/@Value} is Approved"/>
+                    <TO_ADDRS>
+                      <TO_ADDR Value="{$creatorDetails/USER_PROFILE/EMAIL_ADDRESS/@Value}"/>
+                      <TO_ADDR Value="{$approverDetails/USER_PROFILE/EMAIL_ADDRESS/@Value}"/>
+                    </TO_ADDRS>
+                    <FORMAT Value="text/html"/>
+                    <MESSAGE>
+                      <XML_DATA XsltFileName="xservice/email/xml/GenericApproval_Approved_Rejected_Template.xsl">
+                        <DATA>
+                          <DocumentAction Value="{$DocumentInstance/DocumentInstance[1]/DocumentAction/@Value}"/>
+                          <DocumentType Value="{$DocumentName/@Value}"/>
+                          <LOGIN_NAME Value="{$curApproverDetails/USER_PROFILE/LOGIN_NAME/@Value}"/>
+                          <ApprovalType Value="{$ApprovalType/@Value}"/>
+                          <approvers Value="{$approvers/@Value}"/>
+                          <creatorDetails Value="{$creatorDetails/USER_PROFILE/LOGIN_NAME/@Value}"/>
+                          <DocumentInstance Value="{$DocumentInstance/DocumentInstance/ID/@Value}"/>
+                          <APPROVED_REJECTED Value="Approved"/>
+                        </DATA>
+                      </XML_DATA>
+                    </MESSAGE>
+                  </REQUEST>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$curAlert/Alert/NodeName/@Value = 'serial_approval_node'">
+            <THEN>
+              <SET Var="nextApprover" FromValue="{substringBefore(substringAfter($approvers,'1. '),'&lt;br/>')}"/>
+              <GET_DOCUMENT AssignToVar="curDetails" Name="USER_PROFILE" ServiceName="USER_SECURITY" Distinct="true" DirtyRead="true">
+                <LOGIN_NAME Value="{$nextApprover/@Value}"/>
+              </GET_DOCUMENT>
+              <REQUEST Name="GetApprovalUserType" ServiceName="ADMIN_UI" AssignToVar="ApprovalUserType">
+                <EVENT_NAME Value="{$thisParam/INSTANCE_TYPE/@Value}"/>
+                <ACTION_TYPE Value="{$thisParam/DOCUMENTACTION/@Value}"/>
+              </REQUEST>
+              <SET Var="msg" FromValue="User Group Based"/>
+              <IF_TEST Test="$ApprovalUserType/ApprovalUserType/@Value = $msg">
+                <THEN>
+                  <REQUEST Name="getGrpMembers" AssignToVar="userNameResp" ServiceName="ADMIN_UI">
+                    <userName Value="{$nextApprover/@Value}"/>
+                  </REQUEST>
+                  <TO_DOCVAR AssignToVar="curDetails">
+                    <USER_PROFILE/>
+                  </TO_DOCVAR>
+                  <FOR_EACH SelectList="$userNameResp/*" CurrentElement="curr">
+                    <SET_NAME DocVar="curr" FromValue="ID"/>
+                    <ADD_CHILDREN DocVar="curDetails" FromDocVar="curr"/>
+                  </FOR_EACH>
+                </THEN>
+              </IF_TEST>
+              <!-- Remove All duplicates-->
+              <TO_DOCVAR AssignToVar="UniqueApprovedUsers">
+                <APPROVED_USER/>
+              </TO_DOCVAR>
+              <FOR_EACH SelectList="$curDetails/*" CurrentElement="allApprovers">
+                <FOR_EACH SelectList="$UniqueApprovedUsers/*" CurrentElement="UniqueApprovers">
+                  <IF_TEST Test="$allApprovers/ID/@Value=$UniqueApprovers/@Value">
+                    <THEN>
+                      <SET Var="available" FromValue="true"/>
+                      <BREAK/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="available" FromValue="false"/>
+                    </ELSE>
+                  </IF_TEST>
+                </FOR_EACH>
+                <IF_TEST Test="$available!='true'">
+                  <THEN>
+                    <SET Var="checkNull" FromSelect="$allApprovers/*"/>
+                    <IF_TEST Test="$checkNull!=null ">
+                      <THEN>
+                        <APPEND_TO_XML Select="$UniqueApprovedUsers">
+                          <ID Value="{$allApprovers/ID/@Value}"/>
+                        </APPEND_TO_XML>
+                      </THEN>
+                      <ELSE>
+                        <APPEND_TO_XML Select="$UniqueApprovedUsers">
+                          <ID Value="{$allApprovers/@Value}"/>
+                        </APPEND_TO_XML>
+                      </ELSE>
+                    </IF_TEST>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <!-- Remove All duplicates-->
+              <FOR_EACH SelectList="$UniqueApprovedUsers" CurrentElement="current">
+                <REQUEST Name="getUser" ServiceName="USER_SECURITY" AssignToVar="approverDetails" ReturnRowCount="true">
+                  <ID Value="{$current/ID/@Value}"/>
+                </REQUEST>
+                <IF_TEST Test="$nextApprover/@Value != ''">
+                  <THEN>
+                    <IF_TEST Test="$Approvals/Approvals/NOTIFICATION_TYPE/@Value ='ALL' or $Approvals/Approvals/NOTIFICATION_TYPE/@Value ='WEB'">
+                      <THEN>
+                        <REQUEST Name="sendAlert">
+                          <DOCUMENT_ID Value="{$DocumentInstance/DocumentInstance/ID/@Value}"/>
+                          <DOCUMENT_NAME Value="{$DocumentInstance/DocumentInstance/DocumentType/@Value}"/>
+                          <ARG_INDEX Value="0"/>
+                          <PRIORITY Value="3"/>
+                          <USER_ID Value="{$approverDetails/USER_PROFILE/ID/@Value}"/>
+                          <SERVICE_NAME Value="APPROVAL"/>
+                          <MESSAGE Value="{$DocumentInstance/DocumentInstance[1]/DocumentAction/@Value} request for {$DocumentName/@Value} is pending for your Approval Approval ID:  {$DocumentInstance/DocumentInstance/ID/@Value}"/>
+                        </REQUEST>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$Approvals/Approvals/NOTIFICATION_TYPE/@Value ='ALL' or $Approvals/Approvals/NOTIFICATION_TYPE/@Value ='EMAIL'">
+                      <THEN>
+                        <REQUEST Name="sendEmail" ServiceName="OMS_MESSAGE_SERVICE" Synchronous="no">
+                          <SUBJECT Value="[MDM] {$DocumentInstance/DocumentInstance[1]/DocumentAction/@Value} request for {$DocumentName/@Value} is pending for your Approval"/>
+                          <TO_ADDRS>
+                            <TO_ADDR Value="{$approverDetails/USER_PROFILE/EMAIL_ADDRESS/@Value}"/>
+                          </TO_ADDRS>
+                          <FORMAT Value="text/html"/>
+                          <MESSAGE>
+                            <XML_DATA XsltFileName="xservice/email/xml/GenericApproval_Pending_For_Approval_Template.xsl">
+                              <DATA>
+                                <DocumentAction Value="{$DocumentInstance/DocumentInstance[1]/DocumentAction/@Value}"/>
+                                <DocumentType Value="{$DocumentName/@Value}"/>
+                                <ApprovalType Value="{$ApprovalType/@Value}"/>
+                                <approvers Value="{$approvers/@Value}"/>
+                                <creatorDetails Value="{$creatorDetails/USER_PROFILE/LOGIN_NAME/@Value}"/>
+                                <DocumentInstance Value="{$DocumentInstance/DocumentInstance/ID/@Value}"/>
+                              </DATA>
+                            </XML_DATA>
+                          </MESSAGE>
+                        </REQUEST>
+                      </THEN>
+                    </IF_TEST>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Approval Monitor"/>
+      </next_nodes>
+    </task>
+    <task Name="Reject">
+      <actions>
+        <action>
+          <GET_DOCUMENT Name="Alert" ServiceName="APPROVAL" AssignToVar="curAlert" DirtyRead="true">
+            <InstanceDocID Value="{$thisParam/ID/@Value}"/>
+            <ApproverID Value="{$thisParam/user_id/@Value}"/>
+            <Status Value="A"/>
+          </GET_DOCUMENT>
+          <REQUEST Name="AssignToMyself" ServiceName="ADMIN_UI" AssignToVar="currUser">
+            <selected_ID Value="{$thisParam/ID/@Value}"/>
+            <User Value="{$thisParam/user_id/@Value}"/>
+          </REQUEST>
+          <GET_DOCUMENT Name="Approval_Groups" AssignToVar="ApprovalGroups" ServiceName="APPROVAL" ReturnRowCount="yes" DirtyRead="true">
+            <EVENT_NAME Value="{$thisParam/INSTANCE_TYPE/@Value}"/>
+            <IS_ACTIVE Value="True"/>
+            <OR>
+              <ACTION_TYPE Value="{$thisParam/DOCUMENTACTION/@Value}"/>
+              <ACTION_TYPE Value="ALL"/>
+            </OR>
+          </GET_DOCUMENT>
+          <GET_DOCUMENT Name="Approvals" AssignToVar="Approvals" ServiceName="APPROVAL" ReturnRowCount="yes" DirtyRead="true">
+            <SELECT>
+              <NOTIFICATION_TYPE/>
+            </SELECT>
+            <APPROVAL_GROUP_ID Value="{$ApprovalGroups/Approval_Groups/SEQID/@Value}"/>
+            <IS_ACTIVE Value="True"/>
+            <EXECUTION_ORDER Value="1"/>
+            <ENTITY_STATE Value="ACTIVE"/>
+          </GET_DOCUMENT>
+          <REQUEST Name="GetApprovalUserType" ServiceName="ADMIN_UI" AssignToVar="ApprovalUserType">
+            <ID Value="{$thisParam/ID/@Value}"/>
+          </REQUEST>
+          <GET_DOCUMENT Name="Alert" AssignToVar="alertforMailUser" ReturnRowCount="true" ServiceName="APPROVAL" DirtyRead="true">
+            <InstanceDocID Value="{$thisParam/ID/@Value}"/>
+            <NodeType Value="P"/>
+          </GET_DOCUMENT>
+          <REQUEST Name="ACTIVATE_APPROVAL_NODE" AssignToVar="activateAppNodeResp">
+            <Result Value="REJECTED"/>
+            <ID Value="{$thisParam/ID/@Value}"/>
+            <InstanceDocID Value="{$curAlert/Alert/InstanceDocID/@Value}"/>
+            <InstanceType Value="{$curAlert/Alert/InstanceType/@Value}"/>
+            <Comment Value="{$thisParam/Comment/@Value}"/>
+            <messageType Value="{$curAlert/Alert/InstanceType/@Value}"/>
+            <EMAIL_NODE_TYPE Value="{$curAlert/Alert/InstanceMode/@Value}"/>
+            <TokenId Value="{$curAlert/Alert/TokenID/@Value}"/>
+          </REQUEST>
+          <SET Var="DocumentName" FromValue="{$activateAppNodeResp/InstanceType/@Value}"/>
+          <IF_TEST Test="$curAlert/Alert/NodeName/@Value = 'serial_approval_node'">
+            <THEN>
+              <SET Var="ApprovalType" FromValue="Serial"/>
+            </THEN>
+            <ELSE>
+              <SET Var="ApprovalType" FromValue="Parallel"/>
+            </ELSE>
+          </IF_TEST>
+          <GET_DOCUMENT Name="DocumentInstance" AssignToVar="DocumentInstance" ServiceName="APPROVAL" DirtyRead="true">
+            <AlertID Value="{$thisParam/ID/@Value}"/>
+          </GET_DOCUMENT>
+          <REQUEST Name="getUser" ServiceName="USER_SECURITY" AssignToVar="curApproverDetails">
+            <ID Value="{$userId/@Value}"/>
+          </REQUEST>
+          <GET_DOCUMENT AssignToVar="curDetails" Name="USER_PROFILE" ServiceName="USER_SECURITY" Distinct="true" DirtyRead="true">
+            <ID Value="{$userId/@Value}"/>
+          </GET_DOCUMENT>
+          <REQUEST Name="getUser" ServiceName="USER_SECURITY" AssignToVar="approverDetails" ReturnRowCount="true">
+            <ID Value="{$curDetails/USER_PROFILE/ID/@Value}"/>
+          </REQUEST>
+          <REQUEST Name="getUser" ServiceName="USER_SECURITY" AssignToVar="creatorDetails">
+            <ID Value="{$DocumentInstance/DocumentInstance/SubmitByID/@Value}"/>
+          </REQUEST>
+          <SET Var="alertGreen" FromValue="Approval rejected successfully."/>
+          <IF_TEST Test="$DocumentInstance/DocumentInstance/SubmitByID != null">
+            <THEN>
+              <IF_TEST Test="$Approvals/Approvals/NOTIFICATION_TYPE/@Value ='ALL' or $Approvals/Approvals/NOTIFICATION_TYPE/@Value ='WEB'">
+                <THEN>
+                  <REQUEST Name="sendAlert">
+                    <DOCUMENT_ID Value="{$DocumentInstance/DocumentInstance/ID/@Value}"/>
+                    <DOCUMENT_NAME Value="{$DocumentInstance/DocumentInstance/DocumentType/@Value}"/>
+                    <ARG_INDEX Value="0"/>
+                    <PRIORITY Value="3"/>
+                    <USER_ID Value="{$creatorDetails/USER_PROFILE/ID/@Value}"/>
+                    <SERVICE_NAME Value="APPROVAL"/>
+                    <MESSAGE Value="{$DocumentInstance/DocumentInstance[1]/DocumentAction/@Value} request for {$DocumentName/@Value} is Rejected by {$curApproverDetails/USER_PROFILE/LOGIN_NAME/@Value}"/>
+                  </REQUEST>
+                  <REQUEST Name="sendAlert">
+                    <DOCUMENT_ID Value="{$DocumentInstance/DocumentInstance/ID/@Value}"/>
+                    <DOCUMENT_NAME Value="{$DocumentInstance/DocumentInstance/DocumentType/@Value}"/>
+                    <ARG_INDEX Value="0"/>
+                    <PRIORITY Value="3"/>
+                    <USER_ID Value="{$approverDetails/USER_PROFILE/ID/@Value}"/>
+                    <SERVICE_NAME Value="APPROVAL"/>
+                    <MESSAGE Value="{$DocumentInstance/DocumentInstance[1]/DocumentAction/@Value} request for {$DocumentName/@Value} is Rejected by {$curApproverDetails/USER_PROFILE/LOGIN_NAME/@Value}"/>
+                  </REQUEST>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$Approvals/Approvals/NOTIFICATION_TYPE/@Value ='ALL' or $Approvals/Approvals/NOTIFICATION_TYPE/@Value ='EMAIL'">
+                <THEN>
+                  <REQUEST Name="sendEmail" ServiceName="OMS_MESSAGE_SERVICE" Synchronous="no">
+                    <SUBJECT Value="[MDM] {$DocumentInstance/DocumentInstance[1]/DocumentAction/@Value} request for {$DocumentName/@Value} is Rejected"/>
+                    <TO_ADDRS>
+                      <TO_ADDR Value="{$approverDetails/USER_PROFILE/EMAIL_ADDRESS/@Value}"/>
+                      <TO_ADDR Value="{$creatorDetails/USER_PROFILE/EMAIL_ADDRESS/@Value}"/>
+                    </TO_ADDRS>
+                    <FORMAT Value="text/html"/>
+                    <MESSAGE>
+                      <XML_DATA XsltFileName="xservice/email/xml/GenericApproval_Approved_Rejected_Template.xsl">
+                        <DATA>
+                          <DocumentAction Value="{$DocumentInstance/DocumentInstance[1]/DocumentAction/@Value}"/>
+                          <DocumentType Value="{$DocumentName/@Value}"/>
+                          <LOGIN_NAME Value="{$curApproverDetails/USER_PROFILE/LOGIN_NAME/@Value}"/>
+                          <creatorDetails Value="{$creatorDetails/USER_PROFILE/LOGIN_NAME/@Value}"/>
+                          <DocumentInstance Value="{$DocumentInstance/DocumentInstance/ID/@Value}"/>
+                          <APPROVED_REJECTED Value="Rejected"/>
+                          <ApprovalType Value="{$ApprovalType/@Value}"/>
+                        </DATA>
+                      </XML_DATA>
+                    </MESSAGE>
+                  </REQUEST>
+                </THEN>
+              </IF_TEST>
+              <REQUEST Name="sendMail2ApprovedUsers" ServiceName="ADMIN_UI">
+                <ID Value="{$thisParam/ID/@Value}"/>
+                <ApprovalType Value="{$ApprovalType/@Value}"/>
+                <DocumentInstanceID Value="{$DocumentInstance/DocumentInstance/ID/@Value}"/>
+                <DocumentInstanceType Value="{$DocumentInstance/DocumentInstance/DocumentType/@Value}"/>
+                <DocumentAction Value="{$DocumentInstance/DocumentInstance[1]/DocumentAction/@Value}"/>
+                <DocumentName Value="{$DocumentName/@Value}"/>
+                <ApproverName Value="{$curApproverDetails/USER_PROFILE/LOGIN_NAME/@Value}"/>
+                <CreatorName Value="{$creatorDetails/USER_PROFILE/LOGIN_NAME/@Value}"/>
+                <NOTIFICATION_TYPE Value="{$Approvals/Approvals/NOTIFICATION_TYPE/@Value}"/>
+                <ApprovalUserType Value="{$ApprovalUserType/ApprovalUserType/@Value}"/>
+                <Alert>
+                  <TO_XML SelectList="$alertforMailUser/*"/>
+                </Alert>
+              </REQUEST>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Approval Monitor"/>
+      </next_nodes>
+    </task>
+    <task Name="task9">
+      <actions>
+        <action>
+          <EXEC_PROC Name="EXECUTE_PURGE_APPROVAL" AssignToVar="PurgeDetails"/>
+          <TO_DOCVAR AssignToVar="thisReturn">
+            <ALERTMSG Value="Approval history record/s purged successfully."/>
+          </TO_DOCVAR>
+        </action>
+      </actions>
+      <next_nodes OutputVar="{thisReturn,xml}">
+        <next_node Name="Approval Monitor"/>
+      </next_nodes>
+    </task>
+    <task Name="task12">
+      <actions>
+        <action>
+          <REQUEST Name="reAssignApprover" AssignToVar="result" HandleException="true">
+            <TO_XML SelectList="$thisParam/*"/>
+          </REQUEST>
+          <IF_TEST Test="$result/@Status='Error'">
+            <THEN>
+              <SET Var="alertGreen" FromValue="Approval reassign failed."/>
+            </THEN>
+            <ELSE>
+              <SET Var="alertGreen" FromValue="Approval reassigned successfully."/>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Approval Monitor"/>
+      </next_nodes>
+    </task>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <start0 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="90,198" size="744,599">
+        <iconProps iconfile="z1start.gif"/>
+      </start0>
+      <done1 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="572,316">
+        <iconProps iconfile="z1end.gif"/>
+      </done1>
+      <mgcnode Name="Approval Monitor" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="272,339" size="1600,818">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <mgcnode Name="View Record" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="264,54" size="1600,818">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <mgcnode Name="Take Action" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="690,150" size="1600,818">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <Accept font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="483,96" size="732,560">
+        <iconProps iconfile="z1task.gif"/>
+      </Accept>
+      <Reject font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="427,12" size="732,560">
+        <iconProps iconfile="z1task.gif"/>
+      </Reject>
+      <task9 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="164,110" size="732,560">
+        <iconProps iconfile="z1task.gif"/>
+      </task9>
+      <task12 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="545,503" size="1616,834">
+        <iconProps iconfile="z1task.gif"/>
+      </task12>
+    </mgcnodes>
+    <mgcconnectors>
+      <start0>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="135,220" endpoint="272,361" ctrlRect1="235,218,4,4" ctrlRect2="167,359,4,4"/>
+      </start0>
+      <mgcnode Name="Approval Monitor">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="294,339" endpoint="309,76" ctrlRect1="292,141,4,4" ctrlRect2="419,183,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="317,361" endpoint="690,172" ctrlRect1="594,359,4,4" ctrlRect2="408,170,4,4">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="294,339" endpoint="186,155" ctrlRect1="292,199,4,4" ctrlRect2="184,291,4,4" textRect="235,243,10,8">
+          <textProps text="Purge"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="317,361" endpoint="594,316" ctrlRect1="522,359,4,4" ctrlRect2="511,204,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+      </mgcnode>
+      <mgcnode Name="View Record">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="286,99" endpoint="294,339" ctrlRect1="241,170,4,4" ctrlRect2="292,157,4,4" ctrlRect1Dirty="true">
+          <textProps/>
+        </nextNodeView>
+      </mgcnode>
+      <mgcnode Name="Take Action">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="690,172" endpoint="472,34" ctrlRect1="525,170,4,4" ctrlRect2="634,32,4,4">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="690,172" endpoint="528,118" ctrlRect1="567,170,4,4" ctrlRect2="648,116,4,4">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="690,172" endpoint="317,361" ctrlRect1="409,170,4,4" ctrlRect2="595,359,4,4">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="712,195" endpoint="567,503" ctrlRect1="710,424,4,4" ctrlRect2="572,494,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+      </mgcnode>
+      <Accept>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="505,141" endpoint="294,339" ctrlRect1="503,287,4,4" ctrlRect2="292,188,4,4"/>
+      </Accept>
+      <Reject>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="449,57" endpoint="294,339" ctrlRect1="447,266,4,4" ctrlRect2="292,125,4,4"/>
+      </Reject>
+      <task9>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="186,155" endpoint="294,339" ctrlRect1="184,291,4,4" ctrlRect2="292,199,4,4"/>
+      </task9>
+      <task12>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="550,509" endpoint="310,364" ctrlRect1="368,507,4,4" ctrlRect2="488,362,4,4"/>
+      </task12>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+      <action/>
+    </pre_actions>
+    <post_actions>
+      <action/>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

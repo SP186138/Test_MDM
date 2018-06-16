@@ -1,0 +1,54 @@
+<document>
+  <documentation>A data value that is in the list of possible values for a TRAIT.</documentation>
+  <properties>
+    <property Name="PREDFND_TRT_DATE">
+      <documentation>The date value for the PREDEFINED TRAIT VALUE. This is used when the Trait Datatype Code for the TRAIT = "D"; otherwise, it is null.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="PREDFND_TRT_DATE" />
+    </property>
+    <property Name="PREDFND_TRT_VAL_NAME" CharSet="UNICODE">
+      <documentation>The name that is associated with the PREDEFINED TRAIT VALUE, if any. This is used mainly when the predefined values are codes, and each code value has an associated descriptive name. For example, if a TRAIT for gender has two predefined values: F and M, then the associated names might be "Female" and "Male", respectively.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="PREDFND_TRT_VAL_NAME" />
+    </property>
+    <property Name="PREDFND_TRT_VAL_NBR" Required="true">
+      <documentation>The number that was assigned to uniquely distinguish the PREDEFINED TRAIT VALUE from all others for the same TRAIT.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="PREDFND_TRT_VAL_NBR" />
+    </property>
+    <property Name="PREDFND_TRT_TXT" CharSet="UNICODE">
+      <documentation>The text value for the PREDEFINED TRAIT VALUE. This is used when the Trait Datatype Code for the TRAIT = "T"; otherwise, it is null.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="PREDFND_TRT_TXT" />
+    </property>
+    <property Name="TRT_NBR" Required="true">
+      <documentation>The number that P&amp;G assigned to uniquely distinguish the TRAIT from all others.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="TRT_NBR" />
+    </property>
+    <property Name="PREDFND_TRT_DESC">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="PREDFND_TRT_DESC" />
+    </property>
+    <property Name="LANG_CODE">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="LANG_CODE" />
+    </property>
+  </properties>
+  <keys>
+    <key Active="true" Name="PREDFND_TRT_VAL_UPI" PhysicalName="PREDFND_TRT_VAL_UPI" Kind="PRIMARY">
+      <property Name="PREDFND_TRT_VAL_NBR" />
+      <property Name="TRT_NBR" />
+    </key>
+  </keys>
+  <links>
+    <link Active="true" Name="PREDFND_TRT_VAL_FK" PhysicalName="PREDFND_TRT_VAL_FK">
+      <keymap FromKey="PREDFND_TRT_VAL_UPI" ToPackage="models/pngModel" ToModelUnit="TRT.mtt" ToKey="TRT_UPI" ReverseLink="true" ReverseLinkName="R_PREDFND_TRT_VAL" DeleteRule="RESTRICT">
+        <mapping FromProperty="TRT_NBR" ToProperty="TRT_NBR" />
+      </keymap>
+    </link>
+  </links>
+  <docFacets>
+    <mdmWebServiceFacet />
+    <mdmAuthorizationFacet />
+    <mdmSysTableMapFacet TableClass="MASTER" Source="MASTER" MasterTable="PREDFND_TRT_VAL" />
+    <miscFacet PhysicalName="PREDFND_TRT_VAL" Active="true" />
+    <mdmConfigFacet SchemaGen="true" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql />
+</document>
+

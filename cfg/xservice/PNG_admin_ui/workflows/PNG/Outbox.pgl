@@ -1,0 +1,75 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_entry" source="studio.controller:load">
+  <ui:container showFavorite="true" scrollable="true">
+    <ui:help displayPage="/mdm/bcm/help/Approval_Monitor_Help.htm"/>
+    <ui:step id="OuterMostStep" displayText="Makers Inbox">
+      <ui:container id="container2" name="container2">
+        <ui:step id="step2">
+          <ui:field-group name="mesg" select="$root" displayCondition="{string-length($root/ALERTMSG/@Value) != 0}">
+            <ui:choose-field name="BUTTON_ID">
+              <ui:when test="$root/ALERTMSG/@Value != ''">
+                <ui:field-group id="leftFields1" columns="3">
+                  <ui:image src="/bpi_check.gif" displayCondition="{string-length($root/ALERTMSG/@Value) != 0}"/>
+                  <ui:display-field displayText="" name="success" value="{$root/ALERTMSG/@Value}" class="requiredIndicatorGreen"/>
+                </ui:field-group>
+              </ui:when>
+              <ui:otherwise/>
+            </ui:choose-field>
+          </ui:field-group>
+          <ui:table id="approvalMonitorList" displayText="Approval List" rowSrc="$root/APPROVALS/APPROVAL" rowSubTreeSrc="APPROVERS/ SQL_RESULT" collapsable="false" selectable="single" scrollable="true" stepScrollable="false" doPaging="true" maxRows="100" totalRowCount="$root/TotalRowCount/@Value" startAtRow="$root/StartRowCount/@Value" configurable="true" filter="true">
+            <ui:field-group>
+              <ui:treecell displayText="ID" name="ID" noChildren="{count(APPROVERS/SQL_RESULT) = 0}" depth="{count(ancestor::node()[name()='APPROVERS'] )}" column="0" title="ManageApprovalsId" sortable="true"/>
+              <ui:display-field displayText="Requestor" id="REQUESTOR" name="REQUESTOR" title="REQUESTOR" filter="true" sortable="true" unFormat="true"/>
+              <ui:link-field id="INST_LINE_ID" name="INST_LINE_ID" displayText="Load ID" title="Load ID" sortable="true">
+                <ui:url page="{$pages:ViewReports}">
+                  <BUTTON_ID select="'Search'"/>
+                  <ID select="INST_LINE_ID/@Value"/>
+                </ui:url>
+              </ui:link-field>
+              <ui:display-field displayText="Total Records" id="recordCount" name="recordCount" title="Total Records" sortable="true" filter="false"/>
+              <ui:display-field displayText="Approval Object" name="INSTANCE_TYPE" title="ManageApprovalsDocumentName" sortable="true" unFormat="true"/>
+              <ui:display-field displayText="Action" name="DOCUMENTACTION" title="ManageApprovalsApprovalActionType" sortable="true"/>
+              <ui:display-field displayText="Approval Type" name="NODE_TYPE" title="ManageApprovalsApprovalGroupType" sortable="true"/>
+              <ui:display-field displayText="Approver Name" name="APPROVER_NAME" title="ManageApprovalsApproverName" sortable="false" unFormat="true"/>
+              <ui:display-field displayText="Inbox Status" name="A_Status" title="ManageApprovalsInboxStatus" sortable="false"/>
+              <ui:display-field displayText="Created Date" name="DATE_CREATED" title="ManageApprovalsCreatedDate" dataType="DateTime" sortable="true"/>
+              <ui:display-field displayText="Pending Since" name="Age" id="AGE" title="ManageApprovalsAge" sortable="true" filter="false"/>
+            </ui:field-group>
+            <ui:buttons>
+              <ui:button id="VIEW" name="VIEW" displayText="View Record/s" enabledBySelections="true" validate="false"/>
+              <ui:divider/>
+              <ui:button displayText="Withdraw" id="REJECT" name="REJECT" enabledBySelections="true" onClick="javascript:submitRejectForm();"/>
+            </ui:buttons>
+          </ui:table>
+          <ui:field-group>
+            <ui:textarea displayText="Comments" id="Comment" name="Comment" required="true" title="ApprovalInboxComments" filter="false" configurable="false"/>
+          </ui:field-group>
+        </ui:step>
+      </ui:container>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+
+function submitRejectForm()
+{
+	if(document.form.Comment.value=='')
+	{
+			core_alert_jquery(&quot;Please enter comment for Rejection&quot;);
+			document.form.Comment.focus();
+			return;
+	}
+// LOGIC FOR SUBMIT A FORM
+var bIsValid = true;
+document.form.SUBMIT_AS_XML.value = 'false';
+disableButtons();
+trapExcelPivotChanges();
+document.form.BUTTON_ID.value = 'REJECT';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+onResize();
+return;
+}    
+    
+    
+  </ui:script>
+</ui:page-group>

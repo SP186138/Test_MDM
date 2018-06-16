@@ -1,0 +1,2415 @@
+<DOCUMENTS>
+  <!--[png]::models/Toolkit Models/Group/AttributeSet.mtt-->
+  <DEFINE_DOCUMENT Name="AttributeSet" TableName="IN_GRP_ATTR_SET" TempTable="GT_GRP_ATTR_SET" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[png]::models/Toolkit Models/Group/AttributeSet.mtt-->
+    <!--Toolkit::models/Toolkit Models/Group/AttributeSet.mtt-->
+    <PROPERTY Name="Attribute_Set_Id" Type="int" ColumnName="ATTRIBUTE_SET_ID" Required="true" />
+    <PROPERTY Name="Attribute_Set_Name" Type="string(40)" ColumnName="ATTRIBUTE_SET_NAME" Required="true" />
+    <PROPERTY Name="Attribute_Set_Description" Type="string(255)" ColumnName="ATTRIBUTE_SET_DESCRIPTION" />
+    <PROPERTY Name="Group_Class_Id" Type="int" ColumnName="GROUP_CLASS_ID" Required="true" />
+    <PROPERTY Name="Updt_Priority" Type="int" ColumnName="UPDT_PRIORITY" />
+    <UNIQUE PhysicalName="AttributeSet_PK" PrimaryKey="true">
+      <KEY Property="Attribute_Set_Id" />
+    </UNIQUE>
+    <UNIQUE PhysicalName="AttributeSetUk1">
+      <KEY Property="Attribute_Set_Name" />
+      <KEY Property="Group_Class_Id" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="AttributeSet_FK" LinkedDocument="GroupClass">
+      <!--HardLink#Toolkit::models/Toolkit Models/Group/GroupClass.mtt [Unique Key] GroupClass_PK-->
+      <MAP_PROPERTY From="Group_Class_Id" To="Group_Class_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+    <!--reverse links-->
+    <DOCUMENTLINK Name="R_Link_AttributeSetDetail" LinkedDocument="AttributeSetDetail" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/Group/AttributeSetDetail.mtt [Hard Link] AttributeSetDetail_FK-->
+      <MAP_PROPERTY From="Attribute_Set_Id" To="Attribute_Set_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="R_Link_GrpAttrValInst" LinkedDocument="GroupAttributeValInstance" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/Group/GroupAttributeValInstance.mtt [Hard Link] GroupAttributeValIns_FK-->
+      <MAP_PROPERTY From="Attribute_Set_Id" To="Attribute_Set_Id" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/Group/AttributeSetDetail.mtt-->
+  <DEFINE_DOCUMENT Name="AttributeSetDetail" TableName="IN_GRP_ATTR_SET_DETAIL" TempTable="GT_GRP_ATTR_SET_DETAIL" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[png]::models/Toolkit Models/Group/AttributeSetDetail.mtt-->
+    <!--Toolkit::models/Toolkit Models/Group/AttributeSetDetail.mtt-->
+    <PROPERTY Name="Attribute_Set_Id" Type="int" ColumnName="ATTRIBUTE_SET_ID" Required="true" />
+    <PROPERTY Name="Attribute_Description" Type="string(255)" ColumnName="ATTRIBUTE_DESCRIPTION" />
+    <PROPERTY Name="Updt_Phy_Col_Name" Type="string(50)" ColumnName="UPDT_PHY_COL_NAME" />
+    <PROPERTY Name="Updt_Log_Col_Name" Type="string(50)" ColumnName="UPDT_LOG_COL_NAME" Required="true" />
+    <UNIQUE PhysicalName="Attribute_Set_Detail_PK" PrimaryKey="true">
+      <KEY Property="Attribute_Set_Id" />
+      <KEY Property="Updt_Log_Col_Name" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="AttributeSetDetail_FK" LinkedDocument="AttributeSet">
+      <!--HardLink#Toolkit::models/Toolkit Models/Group/AttributeSet.mtt [Unique Key] AttributeSet_PK-->
+      <MAP_PROPERTY From="Attribute_Set_Id" To="Attribute_Set_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+    <!--reverse links-->
+    <DOCUMENTLINK Name="R_Link_GrpAttrVal" LinkedDocument="GroupAttributeValue" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/Group/GroupAttributeValue.mtt [Hard Link] GroupAttributeValue_FK-->
+      <MAP_PROPERTY From="Attribute_Set_Id" To="Attribute_Set_Id" />
+      <MAP_PROPERTY From="Updt_Log_Col_Name" To="Updt_Log_Col_Name" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Code_Set.mtt-->
+  <DEFINE_DOCUMENT Name="Code_Set" TableName="IN_CODE_SET" TempTable="GT_CODE_SET" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Code_Set.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Code_Set.mtt-->
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Map_Table_Name" Type="string(30)" ColumnName="Map_Table_Name" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="IS_EDITABLE" Type="boolean" ColumnName="IS_EDITABLE" Default="true" />
+    <PROPERTY Name="IS_PROMOTED" Type="boolean" ColumnName="IS_PROMOTED" Default="true" />
+    <PROPERTY Name="Code_Name" Type="string(30)" ColumnName="NAME" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Parent_Code_Set_Id" Type="int" ColumnName="PARENT_CODE_SET_ID" />
+    <PROPERTY Name="Is_Custom_Map_Table" Type="boolean" ColumnName="Is_Custom_Map_Table" />
+    <PROPERTY Name="Values_Table_Name" Type="string(30)" ColumnName="Values_Table_Name" />
+    <PROPERTY Name="Reference_Desc_Table_Name" Type="string(30)" ColumnName="Reference_Desc_Table_Name" />
+    <PROPERTY Name="Service_Name" Type="string(30)" ColumnName="SERVICE_NAME" />
+    <PROPERTY Name="Database_Name" Type="string(30)" ColumnName="DATABASE_NAME" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="CODE_SET_PK" PrimaryKey="true">
+      <KEY Property="Code_Set_Id" />
+    </UNIQUE>
+    <UNIQUE PhysicalName="CODE_SET_UK">
+      <KEY Property="Code_Name" />
+    </UNIQUE>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+    <!--reverse links-->
+    <DOCUMENTLINK Name="R_Link_Code_Set_Stats" LinkedDocument="Code_Set_Stats" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/LRDM/Code_Set_Stats.mtt [Hard Link] Code_Set_Stats_FK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="R_Link_Domain" LinkedDocument="Domain" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/LRDM/Domain.mtt [Hard Link] Domain_FK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="R_LINK" LinkedDocument="Reference_Code" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/LRDM/Reference_Code.mtt [Hard Link] Reference_Code_FK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Code_Set_Stats.mtt-->
+  <DEFINE_DOCUMENT Name="Code_Set_Stats" TableName="IN_CODE_SET_STATS" TempTable="GT_CODE_SET_STATS" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[png]::models/Toolkit Models/LRDM/Code_Set_Stats.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Code_Set_Stats.mtt-->
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="Value_Id_Count" Type="int" ColumnName="Value_Id_Count" Required="true" />
+    <PROPERTY Name="Mapped_Source_Count" Type="int" ColumnName="Mapped_Source_Count" />
+    <PROPERTY Name="Unmapped_Source_Count" Type="int" ColumnName="Unmapped_Source_Count" />
+    <UNIQUE PhysicalName="Code_Set_Stats_Pk" PrimaryKey="true">
+      <KEY Property="Code_Set_Id" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="Code_Set_Stats_FK" LinkedDocument="Code_Set">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Code_Set.mtt [Unique Key] Code_set_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Custom_Code_Set_Clm.mtt-->
+  <DEFINE_DOCUMENT Name="Custom_Code_Set_Clm" TableName="IN_CUSTOM_CODE_SET_CLM" TempTable="GT_CUSTOM_CODE_SET_CLM" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Custom_Code_Set_Clm.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Custom_Code_Set_Clm.mtt-->
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="Column_Type" Type="string(256)" ColumnName="Column_Type" Required="true" />
+    <PROPERTY Name="Logical_Column_Name" Type="string(256)" ColumnName="Logical_Column_Name" Required="true" />
+    <PROPERTY Name="Physical_Column_Name" Type="string(256)" ColumnName="Physical_Column_Name" />
+    <PROPERTY Name="Column_Sequence" Type="int" ColumnName="Column_Sequence" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="Cust_Code_Set_Col_Pk" PrimaryKey="true">
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="Column_Type" />
+      <KEY Property="Logical_Column_Name" />
+    </UNIQUE>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Domain.mtt-->
+  <DEFINE_DOCUMENT Name="Domain" TableName="IN_DOMAIN" TempTable="GT_DOMAIN" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Domain.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Domain.mtt-->
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="Domain_Id" Type="int" ColumnName="Domain_Id" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="DOMAIN_PK" PrimaryKey="true">
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="Domain_Id" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="Domain_FK" LinkedDocument="Code_Set">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Code_Set.mtt [Unique Key] Code_set_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+    <!--reverse links-->
+    <DOCUMENTLINK Name="Domain_FK_HardLink" LinkedDocument="Standard_Map" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/LRDM/Standard_Map.mtt [Hard Link] DomainFk-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="Domain_Id" To="Domain_Id" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/Manage Entity/EntityObject.mtt-->
+  <DEFINE_DOCUMENT Name="EntityObject" TableName="IN_ENTITY_OBJECT" TempTable="GT_ENTITY_OBJECT" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[png]::models/Toolkit Models/Manage Entity/EntityObject.mtt-->
+    <!--Toolkit::models/Toolkit Models/Manage Entity/EntityObject.mtt-->
+    <PROPERTY Name="Entity_Id" Type="int" ColumnName="ENTITY_ID" Required="true" />
+    <PROPERTY Name="Entity_Name" Type="string(64)" ColumnName="ENTITY_NAME" CharSet="UNICODE" />
+    <PROPERTY Name="Entity_Description" Type="string(1024)" ColumnName="ENTITY_DESCRIPTION" CharSet="UNICODE" />
+    <PROPERTY Name="Entity_Status" Type="string(20)" ColumnName="ENTITY_STATUS" CharSet="UNICODE" />
+    <PROPERTY Name="Entity_Effective_Start_date" Type="timestamp" ColumnName="ENTITY_EFFECTIVE_START_DATE" />
+    <PROPERTY Name="Entity_Effective_End_date" Type="timestamp" ColumnName="ENTITY_EFFECTIVE_END_DATE" />
+    <UNIQUE PhysicalName="ENTITY_OBJECT_PROP_GRP1" PrimaryKey="true">
+      <KEY Property="Entity_Id" />
+    </UNIQUE>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/Manage Entity/EntityTables.mtt-->
+  <DEFINE_DOCUMENT Name="EntityTables" TableName="IN_ENTITY_TABLES" TempTable="GT_ENTITY_TABLES" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[png]::models/Toolkit Models/Manage Entity/EntityTables.mtt-->
+    <!--Toolkit::models/Toolkit Models/Manage Entity/EntityTables.mtt-->
+    <PROPERTY Name="Entity_Id" Type="int" ColumnName="ENTITY_ID" Required="true" />
+    <PROPERTY Name="DbName" Type="string(64)" ColumnName="DB_NAME" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="TableName" Type="string(64)" ColumnName="TABLE_NAME" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="ServiceName" Type="string(32)" ColumnName="SERVICE_NAME" CharSet="UNICODE" />
+    <PROPERTY Name="Table_Type" Type="string(10)" ColumnName="TABLE_TYPE" CharSet="UNICODE" />
+    <PROPERTY Name="Is_Src" Type="boolean" ColumnName="IS_SRC" Required="true" Default="0" />
+    <UNIQUE PhysicalName="ENTITY_TABLES_PROP_GRP1" PrimaryKey="true">
+      <KEY Property="DbName" />
+      <KEY Property="Entity_Id" />
+      <KEY Property="TableName" />
+    </UNIQUE>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/Manage Entity/Entity_Rel_Reference.mtt-->
+  <DEFINE_DOCUMENT Name="Entity_Rel_Reference" TableName="IN_ENTITY_REL_REFERENCE" TempTable="GT_ENTITY_REL_REFERENCE" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[png]::models/Toolkit Models/Manage Entity/Entity_Rel_Reference.mtt-->
+    <!--Toolkit::models/Toolkit Models/Manage Entity/Entity_Rel_Reference.mtt-->
+    <PROPERTY Name="Entity_Id" Type="int" ColumnName="ENTITY_ID" Required="true" />
+    <PROPERTY Name="Rel_Entity_Id" Type="int" ColumnName="REL_ENTITY_ID" Required="true" />
+    <UNIQUE PhysicalName="ENTITY_REL_REFERENCE_PROP_GRP1" PrimaryKey="true">
+      <KEY Property="Entity_Id" />
+      <KEY Property="Rel_Entity_Id" />
+    </UNIQUE>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/Group/GroupAttributeValInstance.mtt-->
+  <DEFINE_DOCUMENT Name="GroupAttributeValInstance" TableName="IN_GRP_ATTR_VAL_INST" TempTable="GT_GRP_ATTR_VAL_INST" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[png]::models/Toolkit Models/Group/GroupAttributeValInstance.mtt-->
+    <!--Toolkit::models/Toolkit Models/Group/GroupAttributeValInstance.mtt-->
+    <PROPERTY Name="Log_Id" Type="int" ColumnName="LOG_ID" Required="true" />
+    <PROPERTY Name="Attribute_Set_Id" Type="int" ColumnName="ATTRIBUTE_SET_ID" />
+    <PROPERTY Name="Group_Id" Type="int" ColumnName="GROUP_ID" Required="true" />
+    <PROPERTY Name="Updt_Log_Col_Name" Type="string(50)" ColumnName="UPDT_LOG_COL_NAME" />
+    <PROPERTY Name="Updt_Col_Value" Type="string(800)" ColumnName="UPDT_COL_VALUE" />
+    <UNIQUE PhysicalName="GroupAttributeValInstance_Pk" PrimaryKey="true">
+      <KEY Property="Group_Id" />
+      <KEY Property="Log_Id" />
+      <KEY Property="Updt_Log_Col_Name" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="GroupAttributeValIns_FK" LinkedDocument="AttributeSet">
+      <!--HardLink#Toolkit::models/Toolkit Models/Group/AttributeSet.mtt [Unique Key] AttributeSet_PK-->
+      <MAP_PROPERTY From="Attribute_Set_Id" To="Attribute_Set_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="GroupAttributeValIns_FK1" LinkedDocument="GroupAttributeValue">
+      <!--HardLink#Toolkit::models/Toolkit Models/Group/GroupAttributeValue.mtt [Unique Key] GroupAttributeValue_PK-->
+      <MAP_PROPERTY From="Group_Id" To="Group_Id" />
+      <MAP_PROPERTY From="Updt_Log_Col_Name" To="Updt_Log_Col_Name" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="GroupAttributeValIns_FK2" LinkedDocument="GroupExecutionLog">
+      <!--HardLink#Toolkit::models/Toolkit Models/Group/GroupExecutionLog.mtt [Unique Key] Group_Execution_Log_PK-->
+      <MAP_PROPERTY From="Log_Id" To="Log_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/Group/GroupAttributeValue.mtt-->
+  <DEFINE_DOCUMENT Name="GroupAttributeValue" TableName="IN_GRP_ATTR_VAL" TempTable="GT_GRP_ATTR_VAL" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[png]::models/Toolkit Models/Group/GroupAttributeValue.mtt-->
+    <!--Toolkit::models/Toolkit Models/Group/GroupAttributeValue.mtt-->
+    <PROPERTY Name="Attribute_Set_Id" Type="int" ColumnName="ATTRIBUTE_SET_ID" Required="true" />
+    <PROPERTY Name="Group_Id" Type="int" ColumnName="GROUP_ID" Required="true" />
+    <PROPERTY Name="Updt_Log_Col_Name" Type="string(50)" ColumnName="UPDT_LOG_COL_NAME" Required="true" />
+    <PROPERTY Name="Updt_Col_Value" Type="string(800)" ColumnName="UPDT_COL_VALUE" />
+    <UNIQUE PhysicalName="GroupAttributeValue_PK" PrimaryKey="true">
+      <KEY Property="Attribute_Set_Id" />
+      <KEY Property="Group_Id" />
+      <KEY Property="Updt_Log_Col_Name" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="GroupAttributeValue_FK" LinkedDocument="AttributeSetDetail">
+      <!--HardLink#Toolkit::models/Toolkit Models/Group/AttributeSetDetail.mtt [Unique Key] Attribute_Set_Detail_PK-->
+      <MAP_PROPERTY From="Attribute_Set_Id" To="Attribute_Set_Id" />
+      <MAP_PROPERTY From="Updt_Log_Col_Name" To="Updt_Log_Col_Name" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="GroupAttributeValue_FK1" LinkedDocument="GroupMaster">
+      <!--HardLink#Toolkit::models/Toolkit Models/Group/GroupMaster.mtt [Unique Key] GroupMaster_PK-->
+      <MAP_PROPERTY From="Group_Id" To="Group_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+    <!--reverse links-->
+    <DOCUMENTLINK Name="R_Link_GrpAttrValInst1" LinkedDocument="GroupAttributeValInstance" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/Group/GroupAttributeValInstance.mtt [Hard Link] GroupAttributeValIns_FK1-->
+      <MAP_PROPERTY From="Group_Id" To="Group_Id" />
+      <MAP_PROPERTY From="Updt_Log_Col_Name" To="Updt_Log_Col_Name" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/Group/GroupClass.mtt-->
+  <DEFINE_DOCUMENT Name="GroupClass" TableName="IN_GRP_CLASS" TempTable="GT_GRP_CLASS" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[png]::models/Toolkit Models/Group/GroupClass.mtt-->
+    <!--Toolkit::models/Toolkit Models/Group/GroupClass.mtt-->
+    <PROPERTY Name="Group_Class_Id" Type="int" ColumnName="GROUP_CLASS_ID" Required="true" />
+    <PROPERTY Name="Class_Name" Type="string(50)" ColumnName="CLASS_NAME" Required="true" />
+    <PROPERTY Name="Class_Description" Type="string(255)" ColumnName="CLASS_DESCRIPTION" />
+    <PROPERTY Name="Phy_Tbl_Name" Type="string(50)" ColumnName="PHY_TBL_NAME" />
+    <PROPERTY Name="Log_Tbl_Name" Type="string(50)" ColumnName="LOG_TBL_NAME" Required="true" />
+    <UNIQUE PhysicalName="GroupClass_PK" PrimaryKey="true">
+      <KEY Property="Group_Class_Id" />
+    </UNIQUE>
+    <UNIQUE PhysicalName="GroupClass_UK">
+      <KEY Property="Class_Name" />
+      <KEY Property="Log_Tbl_Name" />
+    </UNIQUE>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+    <!--reverse links-->
+    <DOCUMENTLINK Name="R_Link_AttributeSet" LinkedDocument="AttributeSet" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/Group/AttributeSet.mtt [Hard Link] AttributeSet_FK-->
+      <MAP_PROPERTY From="Group_Class_Id" To="Group_Class_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="R_Link_GroupMaster" LinkedDocument="GroupMaster" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/Group/GroupMaster.mtt [Hard Link] GroupMaster_FK-->
+      <MAP_PROPERTY From="Group_Class_Id" To="Group_Class_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="R_Link_GroupMember" LinkedDocument="GroupMember" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/Group/GroupMember.mtt [Hard Link] GroupMemeber_FK-->
+      <MAP_PROPERTY From="Group_Class_Id" To="Group_Class_Id" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/Group/GroupExecutionLog.mtt-->
+  <DEFINE_DOCUMENT Name="GroupExecutionLog" TableName="IN_GRP_EXEC_LOG" TempTable="GT_GRP_EXEC_LOG" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[png]::models/Toolkit Models/Group/GroupExecutionLog.mtt-->
+    <!--Toolkit::models/Toolkit Models/Group/GroupExecutionLog.mtt-->
+    <PROPERTY Name="Log_Id" Type="int" ColumnName="LOG_ID" Required="true" />
+    <PROPERTY Name="Group_Id" Type="int" ColumnName="GROUP_ID" />
+    <PROPERTY Name="Execution_Status" Type="string(255)" ColumnName="EXECUTION_STATUS" />
+    <PROPERTY Name="Execution_Time" Type="timestamp" ColumnName="EXECUTION_TIME" />
+    <PROPERTY Name="Group_Name" Type="string(40)" ColumnName="GROUP_NAME" />
+    <PROPERTY Name="Attribute_Set_Name" Type="string(40)" ColumnName="ATTRIBUTE_SET_NAME" />
+    <PROPERTY Name="Execution_Response" Type="string(1000)" ColumnName="EXECUTION_RESPONSE" />
+    <UNIQUE PhysicalName="Group_Execution_Log_PK" PrimaryKey="true">
+      <KEY Property="Log_Id" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="GroupExecutionLog_FK" LinkedDocument="GroupMaster">
+      <!--HardLink#Toolkit::models/Toolkit Models/Group/GroupMaster.mtt [Unique Key] GroupMaster_PK-->
+      <MAP_PROPERTY From="Group_Id" To="Group_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+    <!--reverse links-->
+    <DOCUMENTLINK Name="Link_GrpAttrValInst2" LinkedDocument="GroupAttributeValInstance" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/Group/GroupAttributeValInstance.mtt [Hard Link] GroupAttributeValIns_FK2-->
+      <MAP_PROPERTY From="Log_Id" To="Log_Id" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/Group/GroupMaster.mtt-->
+  <DEFINE_DOCUMENT Name="GroupMaster" TableName="IN_GRP_MASTER" TempTable="GT_GRP_MASTER" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[png]::models/Toolkit Models/Group/GroupMaster.mtt-->
+    <!--Toolkit::models/Toolkit Models/Group/GroupMaster.mtt-->
+    <PROPERTY Name="Group_Id" Type="int" ColumnName="GROUP_ID" Required="true" />
+    <PROPERTY Name="Group_Name" Type="string(40)" ColumnName="GROUP_NAME" Required="true" />
+    <PROPERTY Name="Group_Description" Type="string(255)" ColumnName="GROUP_DESCRIPTION" />
+    <PROPERTY Name="Group_Class_Id" Type="int" ColumnName="GROUP_CLASS_ID" Required="true" />
+    <PROPERTY Name="Group_Rule_Id" Type="int" ColumnName="GROUP_RULE_ID" />
+    <PROPERTY Name="Group_Precedence" Type="int" ColumnName="GROUP_PRECENDENCE" />
+    <UNIQUE PhysicalName="GroupMaster_PK" PrimaryKey="true">
+      <KEY Property="Group_Id" />
+    </UNIQUE>
+    <UNIQUE PhysicalName="GroupMasterUk1">
+      <KEY Property="Group_Class_Id" />
+      <KEY Property="Group_Name" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="GroupMaster_FK" LinkedDocument="GroupClass">
+      <!--HardLink#Toolkit::models/Toolkit Models/Group/GroupClass.mtt [Unique Key] GroupClass_PK-->
+      <MAP_PROPERTY From="Group_Class_Id" To="Group_Class_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+    <!--reverse links-->
+    <DOCUMENTLINK Name="R_Link_GrpAttrVal1" LinkedDocument="GroupAttributeValue" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/Group/GroupAttributeValue.mtt [Hard Link] GroupAttributeValue_FK1-->
+      <MAP_PROPERTY From="Group_Id" To="Group_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="R_Link_GrpExecLog" LinkedDocument="GroupExecutionLog" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/Group/GroupExecutionLog.mtt [Hard Link] GroupExecutionLog_FK-->
+      <MAP_PROPERTY From="Group_Id" To="Group_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="R_Link_GroupMember1" LinkedDocument="GroupMember" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/Group/GroupMember.mtt [Hard Link] GroupMember_FK1-->
+      <MAP_PROPERTY From="Group_Id" To="Group_Id" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/Group/GroupMember.mtt-->
+  <DEFINE_DOCUMENT Name="GroupMember" TableName="IN_GRP_MEMBER" TempTable="GT_GRP_MEMBER" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[png]::models/Toolkit Models/Group/GroupMember.mtt-->
+    <!--Toolkit::models/Toolkit Models/Group/GroupMember.mtt-->
+    <PROPERTY Name="Member_Id" Type="int" ColumnName="MEMBER_ID" Required="true" />
+    <PROPERTY Name="Group_Class_Id" Type="int" ColumnName="GROUP_CLASS_ID" Required="true" />
+    <PROPERTY Name="Group_Id" Type="int" ColumnName="GROUP_ID" Required="true" />
+    <PROPERTY Name="Pk_Col_Val1" Type="string(800)" ColumnName="PK_COL_VAL1" />
+    <PROPERTY Name="Pk_Col_Val2" Type="string(800)" ColumnName="PK_COL_VAL2" />
+    <PROPERTY Name="Pk_Col_Val3" Type="string(800)" ColumnName="PK_COL_VAL3" />
+    <PROPERTY Name="Pk_Col_Val4" Type="string(800)" ColumnName="PK_COL_VAL4" />
+    <PROPERTY Name="Pk_Col_Val5" Type="string(800)" ColumnName="PK_COL_VAL5" />
+    <PROPERTY Name="Pk_Col_Val6" Type="string(800)" ColumnName="PK_COL_VAL6" />
+    <PROPERTY Name="Pk_Col_Val7" Type="string(800)" ColumnName="PK_COL_VAL7" />
+    <PROPERTY Name="Pk_Col_Val8" Type="string(800)" ColumnName="PK_COL_VAL8" />
+    <PROPERTY Name="Pk_Col_Val9" Type="string(800)" ColumnName="PK_COL_VAL9" />
+    <PROPERTY Name="Pk_Col_Val10" Type="string(800)" ColumnName="PK_COL_VAL10" />
+    <UNIQUE PhysicalName="GroupMember_PK" PrimaryKey="true">
+      <KEY Property="Member_Id" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="GroupMemeber_FK" LinkedDocument="GroupClass">
+      <!--HardLink#Toolkit::models/Toolkit Models/Group/GroupClass.mtt [Unique Key] GroupClass_PK-->
+      <MAP_PROPERTY From="Group_Class_Id" To="Group_Class_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="GroupMember_FK1" LinkedDocument="GroupMaster">
+      <!--HardLink#Toolkit::models/Toolkit Models/Group/GroupMaster.mtt [Unique Key] GroupMaster_PK-->
+      <MAP_PROPERTY From="Group_Id" To="Group_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Reference_0001_Code.mtt-->
+  <DEFINE_DOCUMENT Name="Reference_0001_Code" TableName="IN_REFERENCE_0001_CODE" TempTable="GT_REFERENCE_0001_CODE" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Reference_0001_Code.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Reference_0001_Code.mtt-->
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="VALUE_ID" Type="string(100)" ColumnName="VALUE_ID" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Parent_EDW_Code" Type="int" ColumnName="PARENT_EDW_CODE" />
+    <PROPERTY Name="Parent_Code_Set_Id" Type="int" ColumnName="PARENT_CODE_SET_ID" />
+    <PROPERTY Name="Parent_VALUE_ID" Type="string(100)" ColumnName="PARENT_VALUE_ID" />
+    <PROPERTY Name="Code_Name" Type="string(30)" ColumnName="CODE_NAME" />
+    <PROPERTY Name="Parent_Code_Name" Type="string(30)" ColumnName="PARENT_CODE_NAME" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="REFERENCE_0001_CODE_PK" PrimaryKey="true">
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="EDW_Code" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="Reference_0001_Code_FK" LinkedDocument="Code_Set">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Code_Set.mtt [Unique Key] Code_set_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+    <!--reverse links-->
+    <DOCUMENTLINK Name="Reference_0001_Code_LINK" LinkedDocument="Reference_0001_Desc" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/LRDM/Reference_0001_Desc.mtt [Hard Link] _Reference_0001_Desc_FK2-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="EDW_Code" To="EDW_Code" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Reference_0001_Desc.mtt-->
+  <DEFINE_DOCUMENT Name="Reference_0001_Desc" TableName="IN_REFERENCE_0001_DESC" TempTable="GT_REFERENCE_0001_DESC" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Reference_0001_Desc.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Reference_0001_Desc.mtt-->
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="Language_Id" Type="int" ColumnName="Language_Id" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="REFERENCE_0001_DESC_PK" PrimaryKey="true">
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="EDW_Code" />
+      <KEY Property="Language_Id" />
+      <KEY Property="Start_Date" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="_Reference_Desc_FK1" LinkedDocument="Valid_Language">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Valid_Language.mtt [Unique Key] Valid_Language_PK-->
+      <MAP_PROPERTY From="Language_Id" To="Language_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="_Reference_0001_Desc_FK2" LinkedDocument="Reference_0001_Code">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Reference_0001_Code.mtt [Unique Key] Reference_0001_Code_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="EDW_Code" To="EDW_Code" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Reference_0002_Code.mtt-->
+  <DEFINE_DOCUMENT Name="Reference_0002_Code" TableName="IN_REFERENCE_0002_CODE" TempTable="GT_REFERENCE_0002_CODE" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Reference_0002_Code.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Reference_0002_Code.mtt-->
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="VALUE_ID" Type="string(100)" ColumnName="VALUE_ID" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Parent_EDW_Code" Type="int" ColumnName="PARENT_EDW_CODE" />
+    <PROPERTY Name="Parent_Code_Set_Id" Type="int" ColumnName="PARENT_CODE_SET_ID" />
+    <PROPERTY Name="Parent_VALUE_ID" Type="string(100)" ColumnName="PARENT_VALUE_ID" />
+    <PROPERTY Name="Code_Name" Type="string(30)" ColumnName="CODE_NAME" />
+    <PROPERTY Name="Parent_Code_Name" Type="string(30)" ColumnName="PARENT_CODE_NAME" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="REFERENCE_0002_CODE_PK" PrimaryKey="true">
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="EDW_Code" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="Reference_0002_Code_FK" LinkedDocument="Code_Set">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Code_Set.mtt [Unique Key] Code_set_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+    <!--reverse links-->
+    <DOCUMENTLINK Name="Reference_0002_Code_LINK" LinkedDocument="Reference_0002_Desc" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/LRDM/Reference_0002_Desc.mtt [Hard Link] _Reference_0002_Desc_FK2-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="EDW_Code" To="EDW_Code" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Reference_0002_Desc.mtt-->
+  <DEFINE_DOCUMENT Name="Reference_0002_Desc" TableName="IN_REFERENCE_0002_DESC" TempTable="GT_REFERENCE_0002_DESC" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Reference_0002_Desc.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Reference_0002_Desc.mtt-->
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="Language_Id" Type="int" ColumnName="Language_Id" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="REFERENCE_0002_DESC_PK" PrimaryKey="true">
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="EDW_Code" />
+      <KEY Property="Language_Id" />
+      <KEY Property="Start_Date" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="_Reference_Desc_FK1" LinkedDocument="Valid_Language">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Valid_Language.mtt [Unique Key] Valid_Language_PK-->
+      <MAP_PROPERTY From="Language_Id" To="Language_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="_Reference_0002_Desc_FK2" LinkedDocument="Reference_0002_Code">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Reference_0002_Code.mtt [Unique Key] Reference_0002_Code_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="EDW_Code" To="EDW_Code" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Reference_0003_Code.mtt-->
+  <DEFINE_DOCUMENT Name="Reference_0003_Code" TableName="IN_REFERENCE_0003_CODE" TempTable="GT_REFERENCE_0003_CODE" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Reference_0003_Code.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Reference_0003_Code.mtt-->
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="VALUE_ID" Type="string(100)" ColumnName="VALUE_ID" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Parent_EDW_Code" Type="int" ColumnName="PARENT_EDW_CODE" />
+    <PROPERTY Name="Parent_Code_Set_Id" Type="int" ColumnName="PARENT_CODE_SET_ID" />
+    <PROPERTY Name="Parent_VALUE_ID" Type="string(100)" ColumnName="PARENT_VALUE_ID" />
+    <PROPERTY Name="Code_Name" Type="string(30)" ColumnName="CODE_NAME" />
+    <PROPERTY Name="Parent_Code_Name" Type="string(30)" ColumnName="PARENT_CODE_NAME" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="REFERENCE_0003_CODE_PK" PrimaryKey="true">
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="EDW_Code" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="Reference_0003_Code_FK" LinkedDocument="Code_Set">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Code_Set.mtt [Unique Key] Code_set_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+    <!--reverse links-->
+    <DOCUMENTLINK Name="Reference_0003_Code_LINK" LinkedDocument="Reference_0003_Desc" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/LRDM/Reference_0003_Desc.mtt [Hard Link] _Reference_0003_Desc_FK2-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="EDW_Code" To="EDW_Code" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Reference_0003_Desc.mtt-->
+  <DEFINE_DOCUMENT Name="Reference_0003_Desc" TableName="IN_REFERENCE_0003_DESC" TempTable="GT_REFERENCE_0003_DESC" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Reference_0003_Desc.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Reference_0003_Desc.mtt-->
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="Language_Id" Type="int" ColumnName="Language_Id" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="REFERENCE_0003_DESC_PK" PrimaryKey="true">
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="EDW_Code" />
+      <KEY Property="Language_Id" />
+      <KEY Property="Start_Date" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="_Reference_Desc_FK1" LinkedDocument="Valid_Language">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Valid_Language.mtt [Unique Key] Valid_Language_PK-->
+      <MAP_PROPERTY From="Language_Id" To="Language_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="_Reference_0003_Desc_FK2" LinkedDocument="Reference_0003_Code">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Reference_0003_Code.mtt [Unique Key] Reference_0003_Code_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="EDW_Code" To="EDW_Code" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Reference_0004_Code.mtt-->
+  <DEFINE_DOCUMENT Name="Reference_0004_Code" TableName="IN_REFERENCE_0004_CODE" TempTable="GT_REFERENCE_0004_CODE" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Reference_0004_Code.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Reference_0004_Code.mtt-->
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="VALUE_ID" Type="string(100)" ColumnName="VALUE_ID" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Parent_EDW_Code" Type="int" ColumnName="PARENT_EDW_CODE" />
+    <PROPERTY Name="Parent_Code_Set_Id" Type="int" ColumnName="PARENT_CODE_SET_ID" />
+    <PROPERTY Name="Parent_VALUE_ID" Type="string(100)" ColumnName="PARENT_VALUE_ID" />
+    <PROPERTY Name="Code_Name" Type="string(30)" ColumnName="CODE_NAME" />
+    <PROPERTY Name="Parent_Code_Name" Type="string(30)" ColumnName="PARENT_CODE_NAME" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="REFERENCE_0004_CODE_PK" PrimaryKey="true">
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="EDW_Code" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="Reference_0004_Code_FK" LinkedDocument="Code_Set">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Code_Set.mtt [Unique Key] Code_set_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+    <!--reverse links-->
+    <DOCUMENTLINK Name="Reference_0004_Code_LINK" LinkedDocument="Reference_0004_Desc" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/LRDM/Reference_0004_Desc.mtt [Hard Link] _Reference_0004_Desc_FK2-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="EDW_Code" To="EDW_Code" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Reference_0004_Desc.mtt-->
+  <DEFINE_DOCUMENT Name="Reference_0004_Desc" TableName="IN_REFERENCE_0004_DESC" TempTable="GT_REFERENCE_0004_DESC" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Reference_0004_Desc.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Reference_0004_Desc.mtt-->
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="Language_Id" Type="int" ColumnName="Language_Id" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="REFERENCE_0004_DESC_PK" PrimaryKey="true">
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="EDW_Code" />
+      <KEY Property="Language_Id" />
+      <KEY Property="Start_Date" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="_Reference_Desc_FK1" LinkedDocument="Valid_Language">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Valid_Language.mtt [Unique Key] Valid_Language_PK-->
+      <MAP_PROPERTY From="Language_Id" To="Language_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="_Reference_0004_Desc_FK2" LinkedDocument="Reference_0004_Code">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Reference_0004_Code.mtt [Unique Key] Reference_0004_Code_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="EDW_Code" To="EDW_Code" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Reference_0005_Code.mtt-->
+  <DEFINE_DOCUMENT Name="Reference_0005_Code" TableName="IN_REFERENCE_0005_CODE" TempTable="GT_REFERENCE_0005_CODE" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Reference_0005_Code.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Reference_0005_Code.mtt-->
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="VALUE_ID" Type="string(100)" ColumnName="VALUE_ID" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Parent_EDW_Code" Type="int" ColumnName="PARENT_EDW_CODE" />
+    <PROPERTY Name="Parent_Code_Set_Id" Type="int" ColumnName="PARENT_CODE_SET_ID" />
+    <PROPERTY Name="Parent_VALUE_ID" Type="string(100)" ColumnName="PARENT_VALUE_ID" />
+    <PROPERTY Name="Code_Name" Type="string(30)" ColumnName="CODE_NAME" />
+    <PROPERTY Name="Parent_Code_Name" Type="string(30)" ColumnName="PARENT_CODE_NAME" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="REFERENCE_0005_CODE_PK" PrimaryKey="true">
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="EDW_Code" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="Reference_0005_Code_FK" LinkedDocument="Code_Set">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Code_Set.mtt [Unique Key] Code_set_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+    <!--reverse links-->
+    <DOCUMENTLINK Name="Reference_0005_Code_LINK" LinkedDocument="Reference_0005_Desc" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/LRDM/Reference_0005_Desc.mtt [Hard Link] _Reference_0005_Desc_FK2-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="EDW_Code" To="EDW_Code" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Reference_0005_Desc.mtt-->
+  <DEFINE_DOCUMENT Name="Reference_0005_Desc" TableName="IN_REFERENCE_0005_DESC" TempTable="GT_REFERENCE_0005_DESC" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Reference_0005_Desc.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Reference_0005_Desc.mtt-->
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="Language_Id" Type="int" ColumnName="Language_Id" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="REFERENCE_0005_DESC_PK" PrimaryKey="true">
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="EDW_Code" />
+      <KEY Property="Language_Id" />
+      <KEY Property="Start_Date" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="_Reference_Desc_FK1" LinkedDocument="Valid_Language">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Valid_Language.mtt [Unique Key] Valid_Language_PK-->
+      <MAP_PROPERTY From="Language_Id" To="Language_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="_Reference_0005_Desc_FK2" LinkedDocument="Reference_0005_Code">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Reference_0005_Code.mtt [Unique Key] Reference_0005_Code_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="EDW_Code" To="EDW_Code" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Reference_0006_Code.mtt-->
+  <DEFINE_DOCUMENT Name="Reference_0006_Code" TableName="IN_REFERENCE_0006_CODE" TempTable="GT_REFERENCE_0006_CODE" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Reference_0006_Code.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Reference_0006_Code.mtt-->
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="VALUE_ID" Type="string(100)" ColumnName="VALUE_ID" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Parent_EDW_Code" Type="int" ColumnName="PARENT_EDW_CODE" />
+    <PROPERTY Name="Parent_Code_Set_Id" Type="int" ColumnName="PARENT_CODE_SET_ID" />
+    <PROPERTY Name="Parent_VALUE_ID" Type="string(100)" ColumnName="PARENT_VALUE_ID" />
+    <PROPERTY Name="Code_Name" Type="string(30)" ColumnName="CODE_NAME" />
+    <PROPERTY Name="Parent_Code_Name" Type="string(30)" ColumnName="PARENT_CODE_NAME" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="REFERENCE_0006_CODE_PK" PrimaryKey="true">
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="EDW_Code" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="Reference_0006_Code_FK" LinkedDocument="Code_Set">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Code_Set.mtt [Unique Key] Code_set_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+    <!--reverse links-->
+    <DOCUMENTLINK Name="Reference_0006_Code_LINK" LinkedDocument="Reference_0006_Desc" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/LRDM/Reference_0006_Desc.mtt [Hard Link] _Reference_0006_Desc_FK2-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="EDW_Code" To="EDW_Code" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Reference_0006_Desc.mtt-->
+  <DEFINE_DOCUMENT Name="Reference_0006_Desc" TableName="IN_REFERENCE_0006_DESC" TempTable="GT_REFERENCE_0006_DESC" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Reference_0006_Desc.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Reference_0006_Desc.mtt-->
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="Language_Id" Type="int" ColumnName="Language_Id" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="REFERENCE_0006_DESC_PK" PrimaryKey="true">
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="EDW_Code" />
+      <KEY Property="Language_Id" />
+      <KEY Property="Start_Date" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="_Reference_Desc_FK1" LinkedDocument="Valid_Language">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Valid_Language.mtt [Unique Key] Valid_Language_PK-->
+      <MAP_PROPERTY From="Language_Id" To="Language_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="_Reference_0006_Desc_FK2" LinkedDocument="Reference_0006_Code">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Reference_0006_Code.mtt [Unique Key] Reference_0006_Code_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="EDW_Code" To="EDW_Code" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Reference_0007_Code.mtt-->
+  <DEFINE_DOCUMENT Name="Reference_0007_Code" TableName="IN_REFERENCE_0007_CODE" TempTable="GT_REFERENCE_0007_CODE" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Reference_0007_Code.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Reference_0007_Code.mtt-->
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="VALUE_ID" Type="string(100)" ColumnName="VALUE_ID" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Parent_EDW_Code" Type="int" ColumnName="PARENT_EDW_CODE" />
+    <PROPERTY Name="Parent_Code_Set_Id" Type="int" ColumnName="PARENT_CODE_SET_ID" />
+    <PROPERTY Name="Parent_VALUE_ID" Type="string(100)" ColumnName="PARENT_VALUE_ID" />
+    <PROPERTY Name="Code_Name" Type="string(30)" ColumnName="CODE_NAME" />
+    <PROPERTY Name="Parent_Code_Name" Type="string(30)" ColumnName="PARENT_CODE_NAME" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="REFERENCE_0007_CODE_PK" PrimaryKey="true">
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="EDW_Code" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="Reference_0007_Code_FK" LinkedDocument="Code_Set">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Code_Set.mtt [Unique Key] Code_set_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+    <!--reverse links-->
+    <DOCUMENTLINK Name="Reference_0007_Code_LINK" LinkedDocument="Reference_0007_Desc" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/LRDM/Reference_0007_Desc.mtt [Hard Link] _Reference_0007_Desc_FK2-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="EDW_Code" To="EDW_Code" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Reference_0007_Desc.mtt-->
+  <DEFINE_DOCUMENT Name="Reference_0007_Desc" TableName="IN_REFERENCE_0007_DESC" TempTable="GT_REFERENCE_0007_DESC" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Reference_0007_Desc.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Reference_0007_Desc.mtt-->
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="Language_Id" Type="int" ColumnName="Language_Id" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="REFERENCE_0007_DESC_PK" PrimaryKey="true">
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="EDW_Code" />
+      <KEY Property="Language_Id" />
+      <KEY Property="Start_Date" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="_Reference_Desc_FK1" LinkedDocument="Valid_Language">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Valid_Language.mtt [Unique Key] Valid_Language_PK-->
+      <MAP_PROPERTY From="Language_Id" To="Language_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="_Reference_0007_Desc_FK2" LinkedDocument="Reference_0007_Code">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Reference_0007_Code.mtt [Unique Key] Reference_0007_Code_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="EDW_Code" To="EDW_Code" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Reference_0008_Code.mtt-->
+  <DEFINE_DOCUMENT Name="Reference_0008_Code" TableName="IN_REFERENCE_0008_CODE" TempTable="GT_REFERENCE_0008_CODE" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Reference_0008_Code.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Reference_0008_Code.mtt-->
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="VALUE_ID" Type="string(100)" ColumnName="VALUE_ID" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Parent_EDW_Code" Type="int" ColumnName="PARENT_EDW_CODE" />
+    <PROPERTY Name="Parent_Code_Set_Id" Type="int" ColumnName="PARENT_CODE_SET_ID" />
+    <PROPERTY Name="Parent_VALUE_ID" Type="string(100)" ColumnName="PARENT_VALUE_ID" />
+    <PROPERTY Name="Code_Name" Type="string(30)" ColumnName="CODE_NAME" />
+    <PROPERTY Name="Parent_Code_Name" Type="string(30)" ColumnName="PARENT_CODE_NAME" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="REFERENCE_0008_CODE_PK" PrimaryKey="true">
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="EDW_Code" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="Reference_0008_Code_FK" LinkedDocument="Code_Set">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Code_Set.mtt [Unique Key] Code_set_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+    <!--reverse links-->
+    <DOCUMENTLINK Name="Reference_0008_Code_LINK" LinkedDocument="Reference_0008_Desc" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/LRDM/Reference_0008_Desc.mtt [Hard Link] _Reference_0008_Desc_FK2-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="EDW_Code" To="EDW_Code" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Reference_0008_Desc.mtt-->
+  <DEFINE_DOCUMENT Name="Reference_0008_Desc" TableName="IN_REFERENCE_0008_DESC" TempTable="GT_REFERENCE_0008_DESC" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Reference_0008_Desc.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Reference_0008_Desc.mtt-->
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="Language_Id" Type="int" ColumnName="Language_Id" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="REFERENCE_0008_DESC_PK" PrimaryKey="true">
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="EDW_Code" />
+      <KEY Property="Language_Id" />
+      <KEY Property="Start_Date" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="_Reference_Desc_FK1" LinkedDocument="Valid_Language">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Valid_Language.mtt [Unique Key] Valid_Language_PK-->
+      <MAP_PROPERTY From="Language_Id" To="Language_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="_Reference_0008_Desc_FK2" LinkedDocument="Reference_0008_Code">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Reference_0008_Code.mtt [Unique Key] Reference_0008_Code_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="EDW_Code" To="EDW_Code" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Reference_0009_Code.mtt-->
+  <DEFINE_DOCUMENT Name="Reference_0009_Code" TableName="IN_REFERENCE_0009_CODE" TempTable="GT_REFERENCE_0009_CODE" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Reference_0009_Code.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Reference_0009_Code.mtt-->
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="VALUE_ID" Type="string(100)" ColumnName="VALUE_ID" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Parent_EDW_Code" Type="int" ColumnName="PARENT_EDW_CODE" />
+    <PROPERTY Name="Parent_Code_Set_Id" Type="int" ColumnName="PARENT_CODE_SET_ID" />
+    <PROPERTY Name="Parent_VALUE_ID" Type="string(100)" ColumnName="PARENT_VALUE_ID" />
+    <PROPERTY Name="Code_Name" Type="string(30)" ColumnName="CODE_NAME" />
+    <PROPERTY Name="Parent_Code_Name" Type="string(30)" ColumnName="PARENT_CODE_NAME" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="REFERENCE_0009_CODE_PK" PrimaryKey="true">
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="EDW_Code" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="Reference_0009_Code_FK" LinkedDocument="Code_Set">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Code_Set.mtt [Unique Key] Code_set_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+    <!--reverse links-->
+    <DOCUMENTLINK Name="Reference_0009_Code_LINK" LinkedDocument="Reference_0009_Desc" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/LRDM/Reference_0009_Desc.mtt [Hard Link] _Reference_0009_Desc_FK2-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="EDW_Code" To="EDW_Code" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Reference_0009_Desc.mtt-->
+  <DEFINE_DOCUMENT Name="Reference_0009_Desc" TableName="IN_REFERENCE_0009_DESC" TempTable="GT_REFERENCE_0009_DESC" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Reference_0009_Desc.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Reference_0009_Desc.mtt-->
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="Language_Id" Type="int" ColumnName="Language_Id" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="REFERENCE_0009_DESC_PK" PrimaryKey="true">
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="EDW_Code" />
+      <KEY Property="Language_Id" />
+      <KEY Property="Start_Date" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="_Reference_Desc_FK1" LinkedDocument="Valid_Language">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Valid_Language.mtt [Unique Key] Valid_Language_PK-->
+      <MAP_PROPERTY From="Language_Id" To="Language_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="_Reference_0009_Desc_FK2" LinkedDocument="Reference_0009_Code">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Reference_0009_Code.mtt [Unique Key] Reference_0009_Code_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="EDW_Code" To="EDW_Code" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Reference_Code.mtt-->
+  <DEFINE_DOCUMENT Name="Reference_Code" TableName="IN_REFERENCE_CODE" TempTable="GT_REFERENCE_CODE" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Reference_Code.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Reference_Code.mtt-->
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="VALUE_ID" Type="string(100)" ColumnName="VALUE_ID" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Parent_EDW_Code" Type="int" ColumnName="PARENT_EDW_CODE" />
+    <PROPERTY Name="Parent_Code_Set_Id" Type="int" ColumnName="PARENT_CODE_SET_ID" />
+    <PROPERTY Name="Parent_VALUE_ID" Type="string(100)" ColumnName="PARENT_VALUE_ID" />
+    <PROPERTY Name="Code_Name" Type="string(30)" ColumnName="CODE_NAME" />
+    <PROPERTY Name="Parent_Code_Name" Type="string(30)" ColumnName="PARENT_CODE_NAME" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="REFERENCE_CODE_PK" PrimaryKey="true">
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="EDW_Code" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="Reference_Code_FK" LinkedDocument="Code_Set">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Code_Set.mtt [Unique Key] Code_set_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+    <!--reverse links-->
+    <DOCUMENTLINK Name="Reference_Code_LINK" LinkedDocument="Reference_Description" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/LRDM/Reference_Description.mtt [Hard Link] _Reference_Desc_FK2-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="EDW_Code" To="EDW_Code" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Reference_Description.mtt-->
+  <DEFINE_DOCUMENT Name="Reference_Description" TableName="IN_REFERENCE_DESCRIPTION" TempTable="GT_REFERENCE_DESCRIPTION" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Reference_Description.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Reference_Description.mtt-->
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="Language_Id" Type="int" ColumnName="Language_Id" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="REFERENCE_DESC_PK" PrimaryKey="true">
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="EDW_Code" />
+      <KEY Property="Language_Id" />
+      <KEY Property="Start_Date" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="_Reference_Desc_FK1" LinkedDocument="Valid_Language">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Valid_Language.mtt [Unique Key] Valid_Language_PK-->
+      <MAP_PROPERTY From="Language_Id" To="Language_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="_Reference_Desc_FK2" LinkedDocument="Reference_Code">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Reference_Code.mtt [Unique Key] Reference_Code_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="EDW_Code" To="EDW_Code" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Standard_0001_Map.mtt-->
+  <DEFINE_DOCUMENT Name="Standard_0001_Map" TableName="IN_STANDARD_0001_MAP" TempTable="GT_STANDARD_0001_MAP" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Standard_0001_Map.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Standard_0001_Map.mtt-->
+    <PROPERTY Name="Source_Code" Type="string(100)" ColumnName="Source_Code" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Domain_Id" Type="int" ColumnName="Domain_Id" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="Source_Code_Value_Id" Type="string(100)" ColumnName="Source_Code_Value_Id" CharSet="UNICODE" />
+    <PROPERTY Name="Other_Description" Type="string(1024)" ColumnName="OTHER_DESCRIPTION" CharSet="UNICODE" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="STANDARD_0001_MAP_PK" PrimaryKey="true">
+      <KEY Property="Ctl_Id" />
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="Source_Code" />
+      <KEY Property="EDW_Code" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="Standard_0001_Map_FK" LinkedDocument="Code_Set">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Code_Set.mtt [Unique Key] Code_set_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="DomainFk" LinkedDocument="Domain">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Domain.mtt [Unique Key] Domain_Pk-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="Domain_Id" To="Domain_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Standard_0002_Map.mtt-->
+  <DEFINE_DOCUMENT Name="Standard_0002_Map" TableName="IN_STANDARD_0002_MAP" TempTable="GT_STANDARD_0002_MAP" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Standard_0002_Map.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Standard_0002_Map.mtt-->
+    <PROPERTY Name="Source_Code" Type="string(100)" ColumnName="Source_Code" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Domain_Id" Type="int" ColumnName="Domain_Id" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="Source_Code_Value_Id" Type="string(100)" ColumnName="Source_Code_Value_Id" CharSet="UNICODE" />
+    <PROPERTY Name="Other_Description" Type="string(1024)" ColumnName="OTHER_DESCRIPTION" CharSet="UNICODE" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="STANDARD_0002_MAP_PK" PrimaryKey="true">
+      <KEY Property="Ctl_Id" />
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="Source_Code" />
+      <KEY Property="EDW_Code" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="Standard_0002_Map_FK" LinkedDocument="Code_Set">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Code_Set.mtt [Unique Key] Code_set_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="DomainFk" LinkedDocument="Domain">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Domain.mtt [Unique Key] Domain_Pk-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="Domain_Id" To="Domain_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Standard_0003_Map.mtt-->
+  <DEFINE_DOCUMENT Name="Standard_0003_Map" TableName="IN_STANDARD_0003_MAP" TempTable="GT_STANDARD_0003_MAP" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Standard_0003_Map.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Standard_0003_Map.mtt-->
+    <PROPERTY Name="Source_Code" Type="string(100)" ColumnName="Source_Code" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Domain_Id" Type="int" ColumnName="Domain_Id" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="Source_Code_Value_Id" Type="string(100)" ColumnName="Source_Code_Value_Id" CharSet="UNICODE" />
+    <PROPERTY Name="Other_Description" Type="string(1024)" ColumnName="OTHER_DESCRIPTION" CharSet="UNICODE" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="STANDARD_0003_MAP_PK" PrimaryKey="true">
+      <KEY Property="Ctl_Id" />
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="Source_Code" />
+      <KEY Property="EDW_Code" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="Standard_0003_Map_FK" LinkedDocument="Code_Set">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Code_Set.mtt [Unique Key] Code_set_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="DomainFk" LinkedDocument="Domain">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Domain.mtt [Unique Key] Domain_Pk-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="Domain_Id" To="Domain_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Standard_0004_Map.mtt-->
+  <DEFINE_DOCUMENT Name="Standard_0004_Map" TableName="IN_STANDARD_0004_MAP" TempTable="GT_STANDARD_0004_MAP" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Standard_0004_Map.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Standard_0004_Map.mtt-->
+    <PROPERTY Name="Source_Code" Type="string(100)" ColumnName="Source_Code" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Domain_Id" Type="int" ColumnName="Domain_Id" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="Source_Code_Value_Id" Type="string(100)" ColumnName="Source_Code_Value_Id" CharSet="UNICODE" />
+    <PROPERTY Name="Other_Description" Type="string(1024)" ColumnName="OTHER_DESCRIPTION" CharSet="UNICODE" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="STANDARD_0004_MAP_PK" PrimaryKey="true">
+      <KEY Property="Ctl_Id" />
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="Source_Code" />
+      <KEY Property="EDW_Code" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="Standard_0004_Map_FK" LinkedDocument="Code_Set">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Code_Set.mtt [Unique Key] Code_set_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="DomainFk" LinkedDocument="Domain">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Domain.mtt [Unique Key] Domain_Pk-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="Domain_Id" To="Domain_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Standard_0005_Map.mtt-->
+  <DEFINE_DOCUMENT Name="Standard_0005_Map" TableName="IN_STANDARD_0005_MAP" TempTable="GT_STANDARD_0005_MAP" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Standard_0005_Map.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Standard_0005_Map.mtt-->
+    <PROPERTY Name="Source_Code" Type="string(100)" ColumnName="Source_Code" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Domain_Id" Type="int" ColumnName="Domain_Id" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="Source_Code_Value_Id" Type="string(100)" ColumnName="Source_Code_Value_Id" CharSet="UNICODE" />
+    <PROPERTY Name="Other_Description" Type="string(1024)" ColumnName="OTHER_DESCRIPTION" CharSet="UNICODE" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="STANDARD_0005_MAP_PK" PrimaryKey="true">
+      <KEY Property="Ctl_Id" />
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="Source_Code" />
+      <KEY Property="EDW_Code" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="Standard_0005_Map_FK" LinkedDocument="Code_Set">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Code_Set.mtt [Unique Key] Code_set_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="DomainFk" LinkedDocument="Domain">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Domain.mtt [Unique Key] Domain_Pk-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="Domain_Id" To="Domain_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Standard_0006_Map.mtt-->
+  <DEFINE_DOCUMENT Name="Standard_0006_Map" TableName="IN_STANDARD_0006_MAP" TempTable="GT_STANDARD_0006_MAP" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Standard_0006_Map.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Standard_0006_Map.mtt-->
+    <PROPERTY Name="Source_Code" Type="string(100)" ColumnName="Source_Code" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Domain_Id" Type="int" ColumnName="Domain_Id" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="Source_Code_Value_Id" Type="string(100)" ColumnName="Source_Code_Value_Id" CharSet="UNICODE" />
+    <PROPERTY Name="Other_Description" Type="string(1024)" ColumnName="OTHER_DESCRIPTION" CharSet="UNICODE" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="STANDARD_0006_MAP_PK" PrimaryKey="true">
+      <KEY Property="Ctl_Id" />
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="Source_Code" />
+      <KEY Property="EDW_Code" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="Standard_0006_Map_FK" LinkedDocument="Code_Set">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Code_Set.mtt [Unique Key] Code_set_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="DomainFk" LinkedDocument="Domain">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Domain.mtt [Unique Key] Domain_Pk-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="Domain_Id" To="Domain_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Standard_0007_Map.mtt-->
+  <DEFINE_DOCUMENT Name="Standard_0007_Map" TableName="IN_STANDARD_0007_MAP" TempTable="GT_STANDARD_0007_MAP" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Standard_0007_Map.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Standard_0007_Map.mtt-->
+    <PROPERTY Name="Source_Code" Type="string(100)" ColumnName="Source_Code" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Domain_Id" Type="int" ColumnName="Domain_Id" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="Source_Code_Value_Id" Type="string(100)" ColumnName="Source_Code_Value_Id" CharSet="UNICODE" />
+    <PROPERTY Name="Other_Description" Type="string(1024)" ColumnName="OTHER_DESCRIPTION" CharSet="UNICODE" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="STANDARD_0007_MAP_PK" PrimaryKey="true">
+      <KEY Property="Ctl_Id" />
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="Source_Code" />
+      <KEY Property="EDW_Code" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="Standard_0007_Map_FK" LinkedDocument="Code_Set">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Code_Set.mtt [Unique Key] Code_set_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="DomainFk" LinkedDocument="Domain">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Domain.mtt [Unique Key] Domain_Pk-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="Domain_Id" To="Domain_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Standard_0008_Map.mtt-->
+  <DEFINE_DOCUMENT Name="Standard_0008_Map" TableName="IN_STANDARD_0008_MAP" TempTable="GT_STANDARD_0008_MAP" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Standard_0008_Map.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Standard_0008_Map.mtt-->
+    <PROPERTY Name="Source_Code" Type="string(100)" ColumnName="Source_Code" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Domain_Id" Type="int" ColumnName="Domain_Id" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="Source_Code_Value_Id" Type="string(100)" ColumnName="Source_Code_Value_Id" CharSet="UNICODE" />
+    <PROPERTY Name="Other_Description" Type="string(1024)" ColumnName="OTHER_DESCRIPTION" CharSet="UNICODE" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="STANDARD_0008_MAP_PK" PrimaryKey="true">
+      <KEY Property="Ctl_Id" />
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="Source_Code" />
+      <KEY Property="EDW_Code" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="Standard_0008_Map_FK" LinkedDocument="Code_Set">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Code_Set.mtt [Unique Key] Code_set_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="DomainFk" LinkedDocument="Domain">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Domain.mtt [Unique Key] Domain_Pk-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="Domain_Id" To="Domain_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Standard_0009_Map.mtt-->
+  <DEFINE_DOCUMENT Name="Standard_0009_Map" TableName="IN_STANDARD_0009_MAP" TempTable="GT_STANDARD_0009_MAP" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Standard_0009_Map.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Standard_0009_Map.mtt-->
+    <PROPERTY Name="Source_Code" Type="string(100)" ColumnName="Source_Code" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Domain_Id" Type="int" ColumnName="Domain_Id" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="Source_Code_Value_Id" Type="string(100)" ColumnName="Source_Code_Value_Id" CharSet="UNICODE" />
+    <PROPERTY Name="Other_Description" Type="string(1024)" ColumnName="OTHER_DESCRIPTION" CharSet="UNICODE" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="STANDARD_0009_MAP_PK" PrimaryKey="true">
+      <KEY Property="Ctl_Id" />
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="Source_Code" />
+      <KEY Property="EDW_Code" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="Standard_0009_Map_FK" LinkedDocument="Code_Set">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Code_Set.mtt [Unique Key] Code_set_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="DomainFk" LinkedDocument="Domain">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Domain.mtt [Unique Key] Domain_Pk-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="Domain_Id" To="Domain_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Standard_Map.mtt-->
+  <DEFINE_DOCUMENT Name="Standard_Map" TableName="IN_STANDARD_MAP" TempTable="GT_STANDARD_MAP" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Standard_Map.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Standard_Map.mtt-->
+    <PROPERTY Name="Source_Code" Type="string(100)" ColumnName="Source_Code" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Domain_Id" Type="int" ColumnName="Domain_Id" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="Source_Code_Value_Id" Type="string(100)" ColumnName="Source_Code_Value_Id" CharSet="UNICODE" />
+    <PROPERTY Name="Other_Description" Type="string(1024)" ColumnName="OTHER_DESCRIPTION" CharSet="UNICODE" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="STANDARD_MAP_PK" PrimaryKey="true">
+      <KEY Property="Ctl_Id" />
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="Source_Code" />
+      <KEY Property="EDW_Code" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="Standard_Map_FK" LinkedDocument="Code_Set">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Code_Set.mtt [Unique Key] Code_set_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="DomainFk" LinkedDocument="Domain">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Domain.mtt [Unique Key] Domain_Pk-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="Domain_Id" To="Domain_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+  </DEFINE_DOCUMENT>
+  <!--[png]::models/Toolkit Models/LRDM/Valid_Language.mtt-->
+  <DEFINE_DOCUMENT Name="Valid_Language" TableName="IN_VALID_LANGUAGE" TempTable="GT_VALID_LANGUAGE" RLS_ENABLED="false" CLS_ENABLED="false" IsExtendable="true">
+    <!--[png]::models/Toolkit Models/LRDM/Valid_Language.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Valid_Language.mtt-->
+    <PROPERTY Name="Language_Id" Type="int" ColumnName="Language_Id" Required="true" />
+    <PROPERTY Name="Language_Name" Type="string(30)" ColumnName="LANGUAGE_NAME" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="VALID_LANGUAGE_PK" PrimaryKey="true">
+      <KEY Property="Language_Id" />
+    </UNIQUE>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="SYS_FILTER" ColumnName="SYS_FILTER" Type="string(60)" />
+    <PROPERTY Name="WORKFLOW_ID" ColumnName="SYS_WORKFLOW_ID" Type="string(100)" />
+    <!--reverse links-->
+    <DOCUMENTLINK Name="Language_ID_LINK" LinkedDocument="Reference_Description" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/LRDM/Reference_Description.mtt [Hard Link] _Reference_Desc_FK1-->
+      <MAP_PROPERTY From="Language_Id" To="Language_Id" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+</DOCUMENTS>
+

@@ -1,0 +1,33 @@
+/***********************************************************************************************************
+SCRIPT:               TSS_WINKEY_CLEANUP.BTEQ 
+DESCRIPTION:          THIS SCRIPT CLEANS UP FASTLOAD ERROR TABLES
+DEPENDENCY:           
+INPUT:                WINKEY_TRIGGER
+OUTPUT:               WINKEY_TRIGGER
+ERRORS:
+SPECIAL INSTRUCTIONS:
+
+CHANGE LOG:
+VERSION              DATE                 AUTHOR                          CHANGES
+1.00                 01/21/2011           TERADATA                        INITIAL VERSION
+***********************************************************************************************************/
+
+.RUN FILE \\10.36.32.4\Teradata\MDM\3.05.02\custom\pngrelease3\logon\LOGON.txt;
+.SET ERROROUT STDOUT;
+.SET SESSION CHARSET 'UTF8';
+
+DATABASE MDM;
+
+CALL MDM.FLDCLEANUP(0,'WINKEY_TRIGGER','MDM');
+
+.LABEL EXIT
+
+.IF ERRORLEVEL > 4 THEN .GOTO ERR ;
+.IF ERRORLEVEL <= 4 THEN .GOTO WARN;
+
+.LABEL ERR
+.QUIT 1
+
+.LABEL WARN
+.QUIT 0
+

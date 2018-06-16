@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="2" ShowInBreadCrumbs="true" Version="1.0" Name="OptOutFound" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="OptOutFound">
+    <variable Name="isOpen" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start0">
+      <actions/>
+      <next_nodes>
+        <next_node Name="Report_opt_out"/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Report_opt_out" ShowInBreadCrumbs="SHOW" Template="Report_opt_out.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <REQUEST Name="getMatchedDomainsUsrSpecific" ServiceName="BCM_MASTER" AssignToVar="domainValues">
+            <userId Value="{$userId}"/>
+          </REQUEST>
+          <!--REQUEST Name="getMatchedDomains" ServiceName="BCM_MASTER" AssignToVar="domainValues" /-->
+          <TO_DOCVAR AssignToVar="matchedDomainValues">
+            <TO_XML SelectList="$domainValues"/>
+          </TO_DOCVAR>
+          <SET Var="legalEntName" FromValue="{$thisParam/LEGAL_ENT_NAME/@Value}"/>
+          <EXECUTE_SQL_QUERY AssignToVar="legalEntNbr" Value="SEL legal_ent_nbr FROM legal_ent where legal_ent_name='{$legalEntName/@Value}';"/>
+          <SET Var="legalEnt" FromValue="{$legalEntNbr/SQL_RESULT/LEGAL_ENT_NBR/@Value}"/>
+          <SET Var="nextPage" FromValue="{$thisParam/BUTTON_ID/@Value}"/>
+          <IF_TEST Test="$userAction='LOAD_PROGRAM_LIST'or $userAction='Print' or $nextPage='SYS_RELOAD' or $thisParam/innerAction/@Value = 'Filter'">
+            <THEN>
+              <IF_TEST Test="$thisParam/topContainer_SELECTED_STEP/@Value='opt1' ">
+                <THEN>
+                  <SET Var="startRow1" FromValue="{$thisParam/START_COUNT/@Value}"/>
+                  <!-- commented for Rel 5.7 by Aishwarya
+              <EXECUTE_SQL_QUERY Value="SELECT OONF.PE_OPTOUT_ID,OONF.GVN_NAME AS GVN_NAME_OPT,OONF.MID_NAME AS MID_NAME_OPT,OONF.FAMLY_NAME AS FAMLY_NAME_OPT,OONF.FULL_PHONE_NUM AS FULL_PHONE_NUM_OPT,OONF.EMAIL_ADDR_TXT AS EMAIL_ADDR_TXT_OPT,coalesce(OONF.ADDR_LINE_1_TXT,'')||' '||coalesce(OONF.ADDR_LINE_2_TXT,'')||' '||coalesce(OONF.ADDR_LINE_3_TXT,'')||' '||coalesce(OONF.CITY_NAME,'')||' '||coalesce(OONF.TERR_NAME,'')||' '||coalesce(OONF.CNTRY_NAME,'')||' '||coalesce(OONF.POSTL_AREA_CODE,'') AS ADDRESS_OPT ,OONF.LEGAL_ENT_NBR ,OONF.MATCH_FLG FROM OPT_OUT_NOT_FOUND OONF WHERE MATCH_FLG='N' AND LEGAL_ENT_NBR={$legalEnt/@Value} ORDER BY OONF.PE_OPTOUT_ID;" AssignToVar="found" ReturnRowCount="yes" MaxRows="50" StartAtRow="{$startRow1}" /> -->
+                  <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+                    <FILTER_PE_OPTOUT_ID/>
+                    <FILTER_GVN_NAME_OPT/>
+                    <FILTER_MID_NAME_OPT/>
+                    <FILTER_FAMLY_NAME_OPT/>
+                    <FILTER_FULL_PHONE_NUM_OPT/>
+                    <FILTER_EMAIL_ADDR_TXT_OPT/>
+                    <FILTER_ADDRESS_OPT/>
+                    <FILTER_NATIONAL_ID_NBR/>
+                    <FILTER_LEGAL_ENT_NBR Value="{$legalEnt/@Value}" AddOn="true"/>
+                  </FORM_SEARCH_FILTER>
+                  <FOR_EACH SelectList="$filters/*/*" CurrentElement="currentSearchColumn">
+                    <SET_NAME DocVar="currentSearchColumn" FromValue="{substringAfter($currentSearchColumn/name(),'FILTER_')}"/>
+                  </FOR_EACH>
+                  <TO_DOCVAR AssignToVar="filterList">
+                    <FILTERLIST/>
+                  </TO_DOCVAR>
+                  <FOR_EACH SelectList="$filters/FILTER" CurrentElement="thisFilter">
+                    <APPEND_TO_XML SelectList="$filterList">
+                      <TO_XML SelectList="$thisFilter/*"/>
+                    </APPEND_TO_XML>
+                  </FOR_EACH>
+                  <GET_DOCUMENT Name="V_UNMATCHED_NOT_FND_OPT" AssignToVar="found" MaxRows="50" StartAtRow="{$startRow1}" ReturnRowCount="yes">
+                    <!--<GET_DOCUMENT Name="V_UNMATCHED_NOT_FND_OPT" AssignToVar="found">-->
+                    <TO_XML SelectList="$filterList/*"/>
+                    <SELECT>
+                      <PE_OPTOUT_ID/>
+                      <GVN_NAME_OPT/>
+                      <MID_NAME_OPT/>
+                      <FAMLY_NAME_OPT/>
+                      <FULL_PHONE_NUM_OPT/>
+                      <EMAIL_ADDR_TXT_OPT/>
+                      <ADDRESS_OPT/>
+                      <NATIONAL_ID_NBR/>
+                      <LEGAL_ENT_NBR/>
+                    </SELECT>
+                    <ORDER_BY>
+                      <PE_OPTOUT_ID Sort="Ascending"/>
+                    </ORDER_BY>
+                  </GET_DOCUMENT>
+                  <TO_DOCVAR AssignToVar="pglFormInput">
+                    <ROOT/>
+                  </TO_DOCVAR>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <LINES>
+                      <TO_XML SelectList="$found/*"/>
+                      <TO_XML SelectList="$matchedDomainValues/*"/>
+                      <TO_XML SelectList="$thisParam/*"/>
+                    </LINES>
+                    <isOpen Value="{$isOpen}"/>
+                    <tabName Value="{$tabName}"/>
+                    <RowCount Value="{$found/@TotalRowCount}"/>
+                  </APPEND_TO_XML>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/topContainer_SELECTED_STEP/@Value='opt2' ">
+                <THEN>
+                  <!--GET_DOCUMENT Name="OPT_OUT_NOT_FOUND_XREF" ServiceName="BCM_MASTER" AssignToVar="Notfound" ReturnRowCount="true" MaxRows="3">
+<SELECT>
+<PE_OPTOUT_ID/>
+<REGIS_PRSNA_ID/>
+</SELECT>
+</GET_DOCUMENT-->
+                  <SET Var="tabName" FromValue="{$thisParam/topContainer_SELECTED_STEP/@Value}"/>
+                  <SET Var="startRow2" FromValue="{$thisParam/START_COUNT/@Value}"/>
+                  <!-- commented for Rel 5.7 by Aishwarya
+                  <EXECUTE_SQL_QUERY Value="SELECT OONF.PE_OPTOUT_ID,OONF.GVN_NAME AS GVN_NAME_OPT,OONF.MID_NAME AS MID_NAME_OPT,OONF.FAMLY_NAME AS FAMLY_NAME_OPT,OONF.FULL_PHONE_NUM AS FULL_PHONE_NUM_OPT,OONF.EMAIL_ADDR_TXT AS EMAIL_ADDR_TXT_OPT,coalesce(OONF.ADDR_LINE_1_TXT,'')||' '||coalesce(OONF.ADDR_LINE_2_TXT,'')||' '||coalesce(OONF.ADDR_LINE_3_TXT,'')||' '||coalesce(OONF.CITY_NAME,'')||' '||coalesce(OONF.TERR_NAME,'')||' '||coalesce(OONF.CNTRY_NAME,'')||' '||coalesce(OONF.POSTL_AREA_CODE,'') AS ADDRESS_OPT,OONF.LEGAL_ENT_NBR ,OONF.MATCH_FLG FROM OPT_OUT_NOT_FOUND OONF JOIN OPT_OUT_NOT_FOUND_XREF XREF ON OONF.PE_OPTOUT_ID=XREF.PE_OPTOUT_ID JOIN REGIS_PRSNA RP ON RP.MKTNG_PGM_NBR IN (SELECT MKTNG_PGM_NBR FROM MKTNG_PGM  WHERE LEGAL_ENT_NBR=OONF.LEGAL_ENT_NBR ) AND RP.REGIS_PRSNA_ID=XREF.REGIS_PRSNA_ID ORDER BY XREF.PE_OPTOUT_ID;" AssignToVar="Notfound" ReturnRowCount="yes" MaxRows="50" StartAtRow="{$startRow2}" /> -->
+                  <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+                    <FILTER_PE_OPTOUT_ID/>
+                    <FILTER_REGIS_PRSNA_ID/>
+                    <FILTER_GVN_NAME_OPT/>
+                    <FILTER_FAMLY_NAME_OPT/>
+                    <FILTER_FULL_PHONE_NUM_OPT/>
+                    <FILTER_EMAIL_ADDR_TXT_OPT/>
+                    <FILTER_ADDRESS_OPT/>
+                    <FILTER_GVN_NAME_REG/>
+                    <FILTER_FAMLY_NAME_REG/>
+                    <FILTER_NATIONAL_ID_NBR/>
+                    <FILTER_LEGAL_ENT_NBR Value="{$legalEnt/@Value}" AddOn="true"/>
+                  </FORM_SEARCH_FILTER>
+                  <FOR_EACH SelectList="$filters/*/*" CurrentElement="currentSearchColumn">
+                    <SET_NAME DocVar="currentSearchColumn" FromValue="{substringAfter($currentSearchColumn/name(),'FILTER_')}"/>
+                  </FOR_EACH>
+                  <TO_DOCVAR AssignToVar="filterList">
+                    <FILTERLIST/>
+                  </TO_DOCVAR>
+                  <FOR_EACH SelectList="$filters/FILTER" CurrentElement="thisFilter">
+                    <APPEND_TO_XML SelectList="$filterList">
+                      <TO_XML SelectList="$thisFilter/*"/>
+                    </APPEND_TO_XML>
+                  </FOR_EACH>
+                  <GET_DOCUMENT Name="V_MATCHED_NOT_FND_OPT" AssignToVar="Notfound" MaxRows="50" StartAtRow="{$startRow2}" ReturnRowCount="yes">
+                    <TO_XML SelectList="$filterList/*"/>
+                    <SELECT>
+                      <PE_OPTOUT_ID/>
+                      <REGIS_PRSNA_ID/>
+                      <GVN_NAME_OPT/>
+                      <FAMLY_NAME_OPT/>
+                      <FULL_PHONE_NUM_OPT/>
+                      <EMAIL_ADDR_TXT_OPT/>
+                      <ADDRESS_OPT/>
+                      <GVN_NAME_REG/>
+                      <FAMLY_NAME_REG/>
+                      <NATIONAL_ID_NBR/>
+                    </SELECT>
+                    <ORDER_BY>
+                      <PE_OPTOUT_ID Sort="Ascending"/>
+                    </ORDER_BY>
+                  </GET_DOCUMENT>
+                  <TO_DOCVAR AssignToVar="pglFormInput">
+                    <root/>
+                  </TO_DOCVAR>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <LINES>
+                      <TO_XML SelectList="$Notfound/*"/>
+                      <TO_XML SelectList="$matchedDomainValues/*"/>
+                      <TO_XML SelectList="$thisParam/*"/>
+                    </LINES>
+                    <isOpen Value="{$isOpen}"/>
+                    <tabName Value="{$tabName}"/>
+                    <RowCount Value="{$Notfound/@TotalRowCount}"/>
+                  </APPEND_TO_XML>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+            <ELSE>
+              <THEN>
+                <TO_DOCVAR AssignToVar="pglFormInput">
+                  <ROOT/>
+                </TO_DOCVAR>
+                <APPEND_TO_XML DocVar="pglFormInput">
+                  <LINES>
+                    <TO_XML SelectList="$found/*"/>
+                    <TO_XML SelectList="$matchedDomainValues/*"/>
+                    <TO_XML SelectList="$thisParam/*"/>
+                  </LINES>
+                  <isOpen Value="{$isOpen}"/>
+                  <tabName Value="{$tabName}"/>
+                  <RowCount Value="{$found/@TotalRowCount}"/>
+                </APPEND_TO_XML>
+              </THEN>
+            </ELSE>
+          </IF_TEST>
+          <!-- 
+          <IF_TEST Test="$thisParam/topContainer_SELECTED_STEP/@Value='opt2' ">
+            <THEN> -->
+          <!--GET_DOCUMENT Name="OPT_OUT_NOT_FOUND_XREF" ServiceName="BCM_MASTER" AssignToVar="Notfound" ReturnRowCount="true" MaxRows="3">
+<SELECT>
+<PE_OPTOUT_ID/>
+<REGIS_PRSNA_ID/>
+</SELECT>
+</GET_DOCUMENT-->
+          <!--
+              <SET Var="tabName" FromValue="{$thisParam/topContainer_SELECTED_STEP/@Value}"/>
+              <SET Var="startRow2" FromValue="{$thisParam/START_COUNT/@Value}"/>
+              <EXECUTE_SQL_QUERY Value="SELECT OONF.PE_OPTOUT_ID,OONF.GVN_NAME AS GVN_NAME_OPT,OONF.MID_NAME AS MID_NAME_OPT,OONF.FAMLY_NAME AS FAMLY_NAME_OPT,OONF.FULL_PHONE_NUM AS FULL_PHONE_NUM_OPT,OONF.EMAIL_ADDR_TXT AS EMAIL_ADDR_TXT_OPT,coalesce(OONF.ADDR_LINE_1_TXT,'')||' '||coalesce(OONF.ADDR_LINE_2_TXT,'')||' '||coalesce(OONF.ADDR_LINE_3_TXT,'')||' '||coalesce(OONF.CITY_NAME,'')||' '||coalesce(OONF.TERR_NAME,'')||' '||coalesce(OONF.CNTRY_NAME,'')||' '||coalesce(OONF.POSTL_AREA_CODE,'') AS ADDRESS_OPT,OONF.LEGAL_ENT_NBR ,OONF.MATCH_FLG FROM OPT_OUT_NOT_FOUND OONF JOIN OPT_OUT_NOT_FOUND_XREF XREF ON OONF.PE_OPTOUT_ID=XREF.PE_OPTOUT_ID JOIN REGIS_PRSNA RP ON RP.MKTNG_PGM_NBR IN (SELECT MKTNG_PGM_NBR FROM MKTNG_PGM  WHERE LEGAL_ENT_NBR=OONF.LEGAL_ENT_NBR ) AND RP.REGIS_PRSNA_ID=XREF.REGIS_PRSNA_ID ORDER BY XREF.PE_OPTOUT_ID;" AssignToVar="Notfound" ReturnRowCount="yes" MaxRows="50" StartAtRow="{$startRow2}"/>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT/>
+              </TO_DOCVAR>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <LINES>
+                  <TO_XML SelectList="$Notfound/*"/>
+                </LINES>
+                <isOpen Value="{$isOpen}"/>
+                <tabName Value="{$tabName}"/>
+                <RowCount Value="{$Notfound/@TotalRowCount}"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST> -->
+          <SET Var="isOpen" FromValue=""/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction ='Print'">
+            <THEN>
+              <!--<PRINT_TO_FILE File="E:\Teradata\MDM\3.04.01.00\custom\pngrelease3\bin\index4.html" NewFile="yes" SameLine="yes" Value="{$thisParam/HTML_CODE/@Value}" Beautify="false"/>-->
+              <SET Var="replace" FromValue="nowrap=&quot;yes&quot;"/>
+              <SET Var="replaceWith" FromValue=""/>
+              <SET Var="HTML_CODE" FromValue="{strReplaceAll($thisParam/HTML_CODE/@Value,$replace,$replaceWith)}"/>
+              <NATIVE_FUNCTION ClassName="utf8write" MethodName="convertHtml" AssignToVar="responseClass">
+                <PARAM Value="{$HTML_CODE/@Value}"/>
+                <PARAM Value="E:\Teradata\MDM\3.04.01.00\custom\pngrelease3\bin\index4.html"/>
+              </NATIVE_FUNCTION>
+              <EXECUTE_SHELL_COMMAND Value="wkhtmltopdf E:\Teradata\MDM\3.04.01.00\custom\pngrelease3\bin\index4.html Unmatched.pdf" AssignToVar="PDFResults" Synchronous="true" HandleException="true"/>
+              <!--<NATIVE_FUNCTION ClassName="App4PdfConsumer" MethodName="convertHtmltoPDF" AssignToVar="responseClass">
+                <PARAM Value="index4.html"/>
+                <PARAM Value="Unmatched.pdf"/>
+              </NATIVE_FUNCTION>-->
+              <SET Var="isOpen" FromValue="true"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='search'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Print'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Report_opt_out" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_PROGRAM_LIST'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Report_opt_out" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <start0 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="472,181">
+        <iconProps iconfile="z1start.gif"/>
+      </start0>
+      <Report_opt_out font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="577,193" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </Report_opt_out>
+    </mgcnodes>
+    <mgcconnectors>
+      <start0>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="517,203" endpoint="577,215" ctrlRect1="560,201,4,4" ctrlRect2="530,213,4,4"/>
+      </start0>
+      <Report_opt_out>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="622,215" endpoint="622,215" ctrlRect1="695,213,4,4" ctrlRect2="695,213,4,4">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="599,238" endpoint="622,215" ctrlRect1="597,311,4,4" ctrlRect2="636,307,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+      </Report_opt_out>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+      <action/>
+    </pre_actions>
+    <post_actions>
+      <action/>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="324" ShowInBreadCrumbs="true" Version="1.0" Name="UI_Start_Workflows" Description="Start New Workflows" Type="" PrimaryDocument="" IsStartAllowed="No">
+  <variables>
+    <variable Name="GServiceName" Type="string" Comment=""/>
+    <variable Name="GStepId" Type="int" Comment=""/>
+    <variable Name="GTemplateName" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start">
+      <actions>
+        <action>
+          <SET Var="GStepId" FromValue="1"/>
+          <SET Var="GTemplateName" FromValue=""/>
+          <SET Var="host" FromValue="{substringBefore($GServer/@Value, ':')}"/>
+          <SET Var="port" FromValue="{substringAfter($GServer/@Value, ':')}"/>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Is Server Set" Description=""/>
+      </next_nodes>
+    </start>
+    <done Name="done">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+    <decision Name="Is Server Set">
+      <actions>
+        <action>
+          <GET_SESSION Var="GServerName" AssignToVar="GServer" HandleException="true"/>
+        </action>
+      </actions>
+      <condition Value="strlen($GServer/@Value) >=1"/>
+      <if_true>
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Start Workflow" Description=""/>
+        </next_nodes>
+      </if_true>
+      <if_false>
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Set Server" Description=""/>
+        </next_nodes>
+      </if_false>
+    </decision>
+    <sub_workflow Name="Set Server" InputVar="{inputXml,xml}" Workflow="SetServerUI">
+      <pre_actions>
+      </pre_actions>
+      <post_actions>
+      </post_actions>
+      <next_nodes OutputVar="{outputXml,xml}">
+        <next_node Name="Start Workflow" Description=""/>
+      </next_nodes>
+      <input>
+      </input>
+    </sub_workflow>
+    <ui_form2 Name="Message Page" InputVar="{nodeInputXml,xml}" OutputFormVar="pglFormOutput" InputFormVar="pglFormInput" ShowInBreadCrumbs="HIDE" Template="Message_Page.pgl">
+      <pre_actions>
+        <action>
+          <SET Var="id" FromValue="{$nodeInputXml/@WorkflowId}"/>
+          <SET Var="status" FromValue="{$nodeInputXml/@Status}"/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <root>
+              <TO_DOCVAR AssignToVar="docXml">
+                <MESSAGE>
+                  <ID Value="{$id/@Value}"/>
+                  <STATUSMSG Value="{$status/@Value}"/>
+                </MESSAGE>
+              </TO_DOCVAR>
+              <TO_XML DocVar="docXml"/>
+            </root>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done" Description=""/>
+        </next_nodes>
+      </if_cond>
+    </ui_form2>
+    <ui_form2 Name="Start Workflow" OutputFormVar="pglFormOutput" InputFormVar="pglFormInput" ShowInBreadCrumbs="SHOW" Template="Start_Workflows.pgl" InputVar="{searchResults,xml}">
+      <pre_actions>
+        <action>
+          <GET_SESSION Var="GServerName" AssignToVar="GServer" HandleException="true"/>
+          <NATIVE_FUNCTION ClassName="com.teradata.xcore.bpm.BPMUtil" MethodName="getServices" AssignToVar="serviceList">
+            <PARAM Var="thisContext"/>
+            <PARAM Value="{substringBefore($GServer/@Value, ':')}" Type="String"/>
+            <PARAM Value="{substringAfter($GServer/@Value, ':')}" Type="String"/>
+          </NATIVE_FUNCTION>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <root>
+              <SERVICELIST>
+                <FOR_EACH CurrentElement="currService" SelectList="$serviceList/ServiceName">
+                  <GET_TEXT FromValue="{$currService}" AssignToVar="currServiceName"/>
+                  <IF_TEST Test="$currServiceName = 'xserver'">
+                    <THEN>
+                    </THEN>
+                    <ELSE>
+                      <TO_DOCVAR AssignToVar="tempSvcXml">
+                        <LINE>
+                          <ID Value="{$currServiceName}"/>
+                        </LINE>
+                      </TO_DOCVAR>
+                      <TO_XML DocVar="tempSvcXml"/>
+                    </ELSE>
+                  </IF_TEST>
+                </FOR_EACH>
+              </SERVICELIST>
+            </root>
+          </TO_DOCVAR>
+          <!-- maintaining the step no of the wizard -->
+          <IF_TEST Test="$userAction='NEXT'">
+            <THEN>
+              <SET Var="GStepId" FromValue="{int($GStepId)+1}"/>
+              <SET Property="topContainer_STEP_ID" DocVar="thisParam" FromValue="{$GStepId}"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='BACK'">
+            <THEN>
+              <SET Var="GStepId" FromValue="{int($GStepId)-1}"/>
+              <SET Property="topContainer_STEP_ID" DocVar="thisParam" FromValue="{$GStepId}"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='DONE'">
+            <THEN>
+              <SET Var="GStepId" FromValue="1"/>
+              <SET Property="topContainer_STEP_ID" DocVar="thisParam" FromValue="{$GStepId}"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$searchResults != null">
+            <THEN>
+              <ADD_CHILDREN DocVar="pglFormInput" FromSelect="$searchResults/TEMPLATELIST"/>
+              <ADD_CHILDREN DocVar="pglFormInput" FromSelect="$searchResults/SEARCHCRITERIA"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <GET_SESSION Var="GServerName" AssignToVar="GServer" HandleException="true"/>
+          <!-- wizard step 2 -->
+          <IF_TEST Test="$GStepId=1">
+            <THEN>
+              <SET Var="svcName" FromValue="{$pglFormOutput/SEL_SVC_ID/@Value}"/>
+              <SET Var="GServiceName" FromValue="{$svcName/@Value}"/>
+            </THEN>
+          </IF_TEST>
+          <NATIVE_FUNCTION ClassName="com.teradata.xcore.bpm.BPMUtil" MethodName="getTemplates" AssignToVar="tmplList">
+            <PARAM Var="thisContext"/>
+            <PARAM Value="{$GServiceName}" Type="String"/>
+            <PARAM Value="tmplList" Type="String"/>
+            <PARAM Value="{substringBefore($GServer/@Value, ':')}" Type="String"/>
+            <PARAM Value="{substringAfter($GServer/@Value, ':')}" Type="String"/>
+          </NATIVE_FUNCTION>
+          <TO_DOCVAR AssignToVar="TemplateList">
+            <TEMPLATELIST>
+              <FOR_EACH CurrentElement="currTemplate" SelectList="$tmplList/Template">
+                <TO_DOCVAR AssignToVar="tempTemplateXml">
+                  <LINE>
+                    <ID Value="{$currTemplate/Name/@Value}"/>
+                    <Description Value="{$currTemplate/Description/@Value}"/>
+                    <Type Value="{$currTemplate/Type/@Value}"/>
+                    <PrimaryDocument Value="{$currTemplate/PrimaryDocument/@Value}"/>
+                  </LINE>
+                </TO_DOCVAR>
+                <TO_XML DocVar="tempTemplateXml"/>
+              </FOR_EACH>
+            </TEMPLATELIST>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="searchCriteria">
+            <SEARCHCRITERIA>
+              <svcName Value="{$svcName/@Value}"/>
+            </SEARCHCRITERIA>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="searchResults">
+            <SEARCH>
+              <TO_XML DocVar="TemplateList"/>
+              <TO_XML DocVar="searchCriteria"/>
+            </SEARCH>
+          </TO_DOCVAR>
+          <!-- wizard step 3 -->
+          <IF_TEST Test="$GStepId=2">
+            <THEN>
+              <SET Var="GTemplateName" FromValue="{$pglFormOutput/SEL_TMPL_ID/@Value}"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='DONE'">
+            <THEN>
+              <IF_TEST Test="strlen($pglFormOutput/SWXml/@Value) >=1 ">
+                <THEN>
+                  <NATIVE_FUNCTION ClassName="com.teradata.xcore.bpm.BPMUtil" MethodName="startWorkflows" AssignToVar="thisResult">
+                    <PARAM Var="thisContext"/>
+                    <PARAM Value="{$GServiceName}" Type="String"/>
+                    <PARAM Value="{$GTemplateName}" Type="String"/>
+                    <PARAM Value="{$pglFormOutput/IdPrefix/@Value}" Type="String"/>
+                    <PARAM Value="{$pglFormOutput/SWXml/@Value}" Type="String"/>
+                    <PARAM Value="{substringBefore($GServer/@Value, ':')}" Type="String"/>
+                    <PARAM Value="{substringAfter($GServer/@Value, ':')}" Type="String"/>
+                  </NATIVE_FUNCTION>
+                </THEN>
+                <ELSE>
+                  <NATIVE_FUNCTION ClassName="com.teradata.xcore.bpm.BPMUtil" MethodName="startWorkflows" AssignToVar="thisResult">
+                    <PARAM Var="thisContext"/>
+                    <PARAM Value="{$GServiceName}" Type="String"/>
+                    <PARAM Value="{$GTemplateName}" Type="String"/>
+                    <PARAM Value="{$pglFormOutput/IdPrefix/@Value}" Type="String"/>
+                    <PARAM Value="" Type="String"/>
+                    <PARAM Value="{substringBefore($GServer/@Value, ':')}" Type="String"/>
+                    <PARAM Value="{substringAfter($GServer/@Value, ':')}" Type="String"/>
+                  </NATIVE_FUNCTION>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction = 'NEXT'">
+        <next_nodes OutputVar="{searchResults,xml}">
+          <next_node Name="Start Workflow" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction='BACK'">
+        <next_nodes OutputVar="{searchResults,xml}">
+          <next_node Name="Start Workflow" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction='DONE'">
+        <next_nodes OutputVar="{thisResult,xml}">
+          <next_node Name="Message Page" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start location="106,120" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start" font="Times New Roman,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start>
+      <done location="636,327" font="Times New Roman,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done" font="Times New Roman,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done>
+      <mgcnode Name="Is Server Set" location="254,120" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Is Server Set" font="Times New Roman,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1decision.gif" location="0,0"/>
+      </mgcnode>
+      <mgcnode Name="Set Server" location="454,37" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Set Server" font="Times New Roman,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1sub_workflow.gif" location="0,0"/>
+      </mgcnode>
+      <mgcnode Name="Message Page" location="637,175" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Message Page" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <mgcnode Name="Start Workflow" location="455,220" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Start Workflow" font="Times New Roman,0,9" textColor="186,12,12"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+    </mgcnodes>
+    <mgcconnectors>
+      <start>
+        <nextNodeView font="Times New Roman,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="138,142" endpoint="254,142" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="223,140,4,4" ctrlRect2="165,140,4,4"/>
+      </start>
+      <mgcnode Name="Is Server Set">
+        <nextNodeView font="Times New Roman,0,9" connectorColor="0,178,0" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="286,142" endpoint="455,242" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="410,140,4,4" ctrlRect2="326,240,4,4" textRect="363,189,15,7">
+          <textProps text="Yes" font="Times New Roman,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Times New Roman,0,9" connectorColor="178,0,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="286,142" endpoint="454,59" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="410,140,4,4" ctrlRect2="326,57,4,4" textRect="364,97,13,7">
+          <textProps text="No" font="Times New Roman,0,9"/>
+        </nextNodeView>
+      </mgcnode>
+      <mgcnode Name="Set Server">
+        <nextNodeView font="Times New Roman,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="470,82" endpoint="471,220" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="468,183,4,4" ctrlRect2="469,114,4,4"/>
+      </mgcnode>
+      <mgcnode Name="Message Page">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="653,221" endpoint="652,327" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="651,298,4,4" ctrlRect2="650,245,4,4"/>
+      </mgcnode>
+      <mgcnode Name="Start Workflow">
+        <nextNodeView font="Times New Roman,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="455,242" endpoint="455,242" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="378,240,4,4" ctrlRect2="378,240,4,4" textRect="335,238,91,9">
+          <textProps text="[$userAction = 'NEXT']" font="Times New Roman,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Times New Roman,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="455,242" endpoint="455,242" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="378,240,4,4" ctrlRect2="378,240,4,4" textRect="336,238,89,9">
+          <textProps text="[$userAction='BACK']" font="Times New Roman,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="487,242" endpoint="637,198" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="597,240,4,4" ctrlRect2="522,196,4,4" textRect="504,216,114,9">
+          <textProps text="[$userAction='DONE']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Times New Roman,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="487,242" endpoint="636,349" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="596,240,4,4" ctrlRect2="522,347,4,4" textRect="318,237,27,9"/>
+      </mgcnode>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="10,10" font="Times New Roman,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="3" textAttrsKey0="GServiceName : string" textAttrsKey1="GStepId : int" textAttrsKey2="GTemplateName : string">
+      <textProps text="Pipeline" font="Times New Roman,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="GServiceName" Type="string" Comment=""/>
+        <variable Name="GStepId" Type="int" Comment=""/>
+        <variable Name="GTemplateName" Type="string" Comment=""/>
+      </variables>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

@@ -1,0 +1,1359 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="20" ShowInBreadCrumbs="true" Version="1.0" Name="WorkflowLoggingAdmin" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="WorkflowLoggingAdmin">
+    <variable Name="selectedServiceName" Type="string" Comment=""/>
+    <variable Name="selectedWorkflowName" Type="string" Comment=""/>
+    <variable Name="onLoadAction" Type="string" Comment=""/>
+    <variable Name="onBackPage" Type="string" Comment=""/>
+    <variable Name="successStatusMsg" Type="string" Comment=""/>
+    <variable Name="wfInstancesFilterParams" Type="xml" Comment=""/>
+    <variable Name="wfNodeLogFilterParams" Type="xml" Comment=""/>
+    <variable Name="selectedEntityName" Type="string" Comment=""/>
+    <variable Name="allEntities" Type="xml" Comment=""/>
+    <variable Name="errorStatusMsg" Type="string" Comment=""/>
+    <variable Name="drillDownSelId" Type="string" Comment=""/>
+    <variable Name="startOfDrillDown" Type="string" Comment=""/>
+    <variable Name="childWFDetailsVar" Type="string" Comment=""/>
+    <variable Name="childForkNodeDetailsVar" Type="xml" Comment=""/>
+    <variable Name="StartWFVar" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <ui_form2 Name="Monitor Workflows" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="SearchWorkflows.pgl">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="wfNodeLogFilterParams">
+            <FILTER_PARAMS/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='showParams'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <WF_PAGE_TYPE Value="ParamDetails"/>
+                  <WEB_APP_PATH Value="{$thisParam/WEB_APP_PATH/@Value}"/>
+                  <SELECTED_INSTANCE_ID Value="{$thisParam/SELECTED_INSTANCE_ID/@Value}"/>
+                  <PARAM_TYPE Value="{$thisParam/PARAM_TYPE/@Value}"/>
+                  <RESULTS/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+            <ELSE>
+              <TO_DOCVAR AssignToVar="filterXml">
+                <FILTERS/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="orderByXml">
+                <ORDER_BY/>
+              </TO_DOCVAR>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'search' ">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="wfInstancesFilterParams">
+                    <FILTER_PARAMS/>
+                  </TO_DOCVAR>
+                  <SET DocVar="thisParam" Property="START_COUNT" FromValue="0"/>
+                  <SET Var="search_by_user" FromValue="true"/>
+                  <SET Var="selectedServiceName" FromValue="{$thisParam/SelectService/@Value}"/>
+                  <SET Var="selectedWorkflowName" FromValue="{$thisParam/SelectWorkflow/@Value}"/>
+                  <SET Var="selectedEntityName" FromValue="{$thisParam/SelectEntity/@Value}"/>
+                  <!--IF_TEST Test="selectedEntityName != null and strlen($selectedEntityName) &gt; 0">
+                    <THEN>
+						<SET Var="selectedWorkflowName" FromValue="" />
+                        <SET Var="selectedServiceName" FromValue="BCM_MASTER" />
+                    </THEN>
+                  </IF_TEST-->
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SYS_RELOAD' or $thisParam/BUTTON_ID/@Value='createFavourite' ">
+                    <THEN>
+                      <!--Save the Input Filter Values -->
+                      <TO_DOCVAR AssignToVar="wfInstancesFilterParams">
+                        <FILTER_PARAMS/>
+                      </TO_DOCVAR>
+                      <IF_TEST Test="strlen($selectedWorkflowName) > 0">
+                        <THEN>
+                          <SET Property="ServiceName" DocVar="wfInstancesFilterParams" FromValue="{$selectedServiceName}"/>
+                          <SET Property="WFName" DocVar="wfInstancesFilterParams" FromValue="{$selectedWorkflowName}"/>
+                        </THEN>
+                      </IF_TEST>
+                      <FOR_EACH SelectList="$thisParam/*" CurrentElement="eachParam">
+                        <IF_TEST Test="starts-with($eachParam/name(),'FILTER_')">
+                          <THEN>
+                            <TO_DOCVAR AssignToVar="filterParamVar">
+                              <FILTER_NEW/>
+                            </TO_DOCVAR>
+                            <SET_NAME DocVar="filterParamVar" FromValue="{substringAfter($eachParam/name(),'FILTER_')}"/>
+                            <SET Attribute="Value" DocVar="filterParamVar" FromValue="{$eachParam/@Value}"/>
+                            <IF_TEST Test="strlen($filterParamVar/@Value) > 0 and $filterParamVar/name() != 'ID'">
+                              <THEN>
+                                <ADD_CHILDREN DocVar="wfInstancesFilterParams" FromDocVar="filterParamVar"/>
+                              </THEN>
+                            </IF_TEST>
+                          </THEN>
+                        </IF_TEST>
+                      </FOR_EACH>
+                    </THEN>
+                    <ELSE>
+                      <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'clear'">
+                        <THEN>
+                          <TO_DOCVAR AssignToVar="wfInstancesFilterParams">
+                            <FILTER_PARAMS/>
+                          </TO_DOCVAR>
+                          <SET Var="selectedServiceName" FromValue=""/>
+                          <SET Var="selectedWorkflowName" FromValue=""/>
+                          <SET Var="selectedEntityName" FromValue=""/>
+                          <SET DocVar="thisParam" Property="START_COUNT" FromValue="0"/>
+                        </THEN>
+                      </IF_TEST>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$search_by_user = 'true' or $onLoadAction='search'">
+                <THEN>
+                  <IF_TEST Test="strlen($selectedServiceName) > 0">
+                    <THEN>
+                      <SET Property="ServiceName" DocVar="wfInstancesFilterParams" FromValue="{$selectedServiceName}"/>
+                      <SET Property="WFName" DocVar="wfInstancesFilterParams" FromValue="{ifElse(strlen($selectedWorkflowName)>0,$selectedWorkflowName,null)}"/>
+                    </THEN>
+                  </IF_TEST>
+                </THEN>
+              </IF_TEST>
+              <SET Var="sortOrder" FromValue="{ifElse(($thisParam/SORT_ORDER/@Value = null) or (strlen($thisParam/SORT_ORDER/@Value) = 0), 'Descending', $thisParam/SORT_ORDER/@Value)}"/>
+              <SET Var="sortBy" FromValue="{ifElse(($thisParam/SORT_BY/@Value = null) or($thisParam/SORT_BY/@Value = 'ID') , 'StartTime', $thisParam/SORT_BY/@Value)}"/>
+              <!--SET Var="maxRow" FromValue="10" /-->
+              <SET Var="maxRow" FromValue="{int(ifElse($thisParam/MAX_ROWS/@Value = null, 10, $thisParam/MAX_ROWS/@Value))}"/>
+              <SET Var="paginateStart" FromValue="{int(ifElse($thisParam/START_COUNT/@Value = null, 0, $thisParam/START_COUNT/@Value))}"/>
+              <TO_DOCVAR AssignToVar="redirectFromWfProcessFilter"/>
+              <!-- when redirected from execute workflow process filter based on trigerredby user_id fo users who do not belong to super user group -->
+              <IF_TEST Test="$onBackPage!=null and $onBackPage!=''">
+                <THEN>
+                  <EXECUTE_SQL_QUERY AssignToVar="CheckForSuperUgp" Value="locking row for access select CASE WHEN count(*) = 0 then 'No' else 'Yes' END as IS_SUPER_USER from USER_UG_RELATION where user_id= '{$userId}' and USER_GRP_ID='SU_UGP' and status = 'ACTIVE'"/>
+                  <IF_TEST Test="$CheckForSuperUgp/SQL_RESULT/IS_SUPER_USER/@Value='No'">
+                    <THEN>
+                      <TO_DOCVAR AssignToVar="redirectFromWfProcessFilter">
+                        <SET Property="TriggeredBy" DocVar="wfInstancesFilterParams" FromValue="{$userId}"/>
+                      </TO_DOCVAR>
+                    </THEN>
+                  </IF_TEST>
+                </THEN>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="sortVarTemp">
+                <SORT_PROP>
+                  <PROPERTY/>
+                </SORT_PROP>
+              </TO_DOCVAR>
+              <SET Var="sortProp" FromValue="{$sortVarTemp/PROPERTY}"/>
+              <SET_NAME DocVar="sortProp" FromValue="{$sortBy}"/>
+              <SET Attribute="Sort" DocVar="sortProp" FromValue="{$sortOrder}"/>
+              <SET Var="doWFLogSearch" FromValue="true"/>
+              <IF_TEST Test="strlen($selectedEntityName) > 0">
+                <THEN>
+                  <SET Var="doWFLogSearch" FromValue="false"/>
+                  <IF_TEST Test="$selectedEntityName !=null or $selectedEntityName != '' or strlen($selectedEntityName) > 0">
+                    <THEN>
+                      <NATIVE_FUNCTION MethodName="getRelatedEnityNames" ClassName="com.teradata.xservice.userSecurity.BusinessEntityObjectUtil" AssignToVar="entityNameList">
+                        <PARAM Type="String" Value="{$selectedEntityName}"/>
+                        <PARAM Var="thisContext" Caption="thisContext"/>
+                      </NATIVE_FUNCTION>
+                      <TO_DOCVAR AssignToVar="entityFilter">
+                        <OR/>
+                      </TO_DOCVAR>
+                      <TO_DOCVAR AssignToVar="temp"/>
+                      <FOR_EACH SelectList="$entityNameList/SQL_RESULT/*" CurrentElement="currEntity">
+                        <SET_NAME DocVar="currEntity" FromValue="Process_Template"/>
+                        <ADD_CHILDREN DocVar="entityFilter" FromValue="{$currEntity}"/>
+                      </FOR_EACH>
+                    </THEN>
+                  </IF_TEST>
+                  <GET_DOCUMENT Name="Wf_Process" ServiceName="BCM_MASTER" AssignToVar="entityWFs" StartAtRow="0" MaxRows="1000" ReturnRowCount="yes" DirtyRead="true">
+                    <TO_XML DocVar="entityFilter"/>
+                    <Service Value="BCM_MASTER"/>
+                    <SELECT>
+                      <Process_Name/>
+                    </SELECT>
+                  </GET_DOCUMENT>
+                  <TO_DOCVAR AssignToVar="EntityWFNameListVar">
+                    count(
+                    <OR/>
+                  </TO_DOCVAR>
+                  <FOR_EACH SelectList="$entityWFs/*" CurrentElement="entityWF">
+                    <TO_DOCVAR AssignToVar="eachWFName">
+                      <WFName Value="{$entityWF/Process_Name/@Value}"/>
+                    </TO_DOCVAR>
+                    <ADD_CHILDREN DocVar="EntityWFNameListVar" FromDocVar="eachWFName"/>
+                  </FOR_EACH>
+                  <IF_TEST Test="count($EntityWFNameListVar/*) > 0">
+                    <THEN>
+                      <SET Var="doWFLogSearch" FromValue="true"/>
+                    </THEN>
+                  </IF_TEST>
+                  <ADD_CHILDREN DocVar="wfInstancesFilterParams" FromDocVar="EntityWFNameListVar"/>
+                </THEN>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="wfLogResults">
+                <RESPONSE/>
+              </TO_DOCVAR>
+              <IF_TEST Test="$doWFLogSearch ='true'">
+                <THEN>
+                  <GET_DOCUMENT Name="SYS_WKFLW_LOG" ServiceName="BPE_META" AssignToVar="wfLogResults" StartAtRow="{$paginateStart}" MaxRows="{$maxRow}" ReturnRowCount="yes" DirtyRead="true">
+                    <TO_XML SelectList="$wfInstancesFilterParams/*"/>
+                    <SELECT>
+                      <InstanceID/>
+                      <WFName/>
+                      <Description/>
+                      <ServiceName/>
+                      <TriggeredBy/>
+                      <StartTime/>
+                      <EndTime/>
+                      <Status/>
+                      <StatusColorCd/>
+                    </SELECT>
+                    <ORDER_BY>
+                      <TO_XML SelectList="$sortVarTemp/*"/>
+                    </ORDER_BY>
+                  </GET_DOCUMENT>
+                </THEN>
+              </IF_TEST>
+              <REQUEST Name="getCodeMasterValue" ServiceName="USER_SECURITY" AssignToVar="StatusColorCodes">
+                <TYPE_ID Value="Status Color Codes"/>
+              </REQUEST>
+              <FOR_EACH SelectList="$wfLogResults/SYS_WKFLW_LOG" CurrentElement="currNodeLog">
+                <SET Var="HexCode" FromValue="{$StatusColorCodes/CODE_MASTER_VALUE[VALUE_ID/@Value=$currNodeLog/StatusColorCd/@Value]/DESCRIPTION/@Value}"/>
+                <SET Property="HexColorCode" FromValue="{concat('#',$HexCode)}" DocVar="currNodeLog"/>
+              </FOR_EACH>
+              <REQUEST Name="getServices" ServiceName="BCM_MASTER" AssignToVar="allSrvcs"/>
+              <XML_SORT SortKey="@Value" SortOrder="Ascending" DataType="string" AssignToVar="allSrvcs">
+                <TO_XML SelectList="$allSrvcs/*"/>
+              </XML_SORT>
+              <TO_DOCVAR AssignToVar="servicesVar">
+                <SERVICES/>
+              </TO_DOCVAR>
+              <FOR_EACH SelectList="$allSrvcs/*" CurrentElement="srvcName">
+                <SET Var="srvcNameValue" FromValue="{$srvcName/@Value}"/>
+                <IF_TEST Test="$srvcNameValue = $selectedServiceName">
+                  <THEN>
+                    <TO_DOCVAR AssignToVar="each">
+                      <ROOT>
+                        <SERVICE Value="{$srvcName/@Value}" Id="{$srvcName/@Value}" Selected="true"/>
+                      </ROOT>
+                    </TO_DOCVAR>
+                  </THEN>
+                  <ELSE>
+                    <TO_DOCVAR AssignToVar="each">
+                      <ROOT>
+                        <SERVICE Value="{$srvcName/@Value}" Id="{$srvcName/@Value}"/>
+                      </ROOT>
+                    </TO_DOCVAR>
+                  </ELSE>
+                </IF_TEST>
+                <APPEND_CHILDREN DocVar="servicesVar" FromDocVar="each"/>
+              </FOR_EACH>
+              <IF_TEST Test="strlen($selectedServiceName) > 0 and ($selectedServiceName!='Xserver')">
+                <THEN>
+                  <GET_TEMPLATES ServiceName="{$selectedServiceName}" AssignToVar="wfTemplatesList" HandleException="true"/>
+                  <XML_SORT SortKey="Name/@Value" SortOrder="Ascending" DataType="string" AssignToVar="wfTemplatesList">
+                    <TO_XML SelectList="$wfTemplatesList/*"/>
+                  </XML_SORT>
+                  <TO_DOCVAR AssignToVar="wfListVar">
+                    <WF_TEMPLATES/>
+                  </TO_DOCVAR>
+                  <FOR_EACH SelectList="$wfTemplatesList/*" CurrentElement="wfTemplateVar">
+                    <SET Var="wfNameValue" FromValue="{$wfTemplateVar/Name/@Value}"/>
+                    <IF_TEST Test="$wfNameValue = $selectedWorkflowName">
+                      <THEN>
+                        <TO_DOCVAR AssignToVar="each">
+                          <ROOT>
+                            <WF_TEMPLATE Value="{$wfTemplateVar/Name/@Value}" Id="{$wfTemplateVar/Name/@Value}" Selected="true"/>
+                          </ROOT>
+                        </TO_DOCVAR>
+                      </THEN>
+                      <ELSE>
+                        <TO_DOCVAR AssignToVar="each">
+                          <ROOT>
+                            <WF_TEMPLATE Value="{$wfTemplateVar/Name/@Value}" Id="{$wfTemplateVar/Name/@Value}"/>
+                          </ROOT>
+                        </TO_DOCVAR>
+                      </ELSE>
+                    </IF_TEST>
+                    <APPEND_CHILDREN DocVar="wfListVar" FromDocVar="each"/>
+                  </FOR_EACH>
+                </THEN>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="entitiesVar">
+                <ENTITIES/>
+              </TO_DOCVAR>
+              <FOR_EACH SelectList="$allEntities/*" CurrentElement="eachEntity">
+                <SET Var="entityNameValue" FromValue="{$eachEntity/@Value}"/>
+                <IF_TEST Test="$entityNameValue = $selectedEntityName">
+                  <THEN>
+                    <TO_DOCVAR AssignToVar="each">
+                      <ROOT>
+                        <ENTITY Value="{$eachEntity/@Value}" Id="{$eachEntity/@Id}" Selected="true"/>
+                      </ROOT>
+                    </TO_DOCVAR>
+                  </THEN>
+                  <ELSE>
+                    <TO_DOCVAR AssignToVar="each">
+                      <ROOT>
+                        <ENTITY Value="{$eachEntity/@Value}" Id="{$eachEntity/@Id}"/>
+                      </ROOT>
+                    </TO_DOCVAR>
+                  </ELSE>
+                </IF_TEST>
+                <APPEND_CHILDREN DocVar="entitiesVar" FromDocVar="each"/>
+              </FOR_EACH>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <WF_PAGE_TYPE Value="WorkflowResults"/>
+                  <StartRowCount Value="{$paginateStart}"/>
+                  <TotalRowCount Value="{$wfLogResults/@TotalRowCount}"/>
+                  <WEB_APP_PATH Value="{$thisParam/WEB_APP_PATH/@Value}"/>
+                  <SELECTED_SERVICE_NAME Value="{$selectedServiceName}"/>
+                  <SELECTED_WORKFLOW_NAME Value="{$selectedWorkflowName}"/>
+                  <SELECTED_ENTITY_NAME Value="{$selectedEntityName}"/>
+                  <RESULTS/>
+                  <SERVICES/>
+                  <ENTITIES/>
+                  <WF_TEMPLATES/>
+                </ROOT>
+              </TO_DOCVAR>
+              <ADD_CHILDREN DocVar="{$pglFormInput/RESULTS}" FromSelectList="$wfLogResults/*"/>
+              <ADD_CHILDREN DocVar="{$pglFormInput/SERVICES}" FromSelectList="$servicesVar/*"/>
+              <ADD_CHILDREN DocVar="{$pglFormInput/WF_TEMPLATES}" FromSelectList="$wfListVar/*"/>
+              <ADD_CHILDREN DocVar="{$pglFormInput/ENTITIES}" FromSelectList="$entitiesVar/*"/>
+              <SET DocVar="pglFormInput" Property="SuccessMsg" FromValue="{$successStatusMsg}"/>
+              <SET DocVar="pglFormInput" Property="ErrorMsg" FromValue="{$errorStatusMsg}"/>
+              <SET Var="successStatusMsg" FromValue=""/>
+              <SET Var="errorStatusMsg" FromValue=""/>
+              <FOR_EACH SelectList="$wfInstancesFilterParams/*" CurrentElement="eachFilterParam">
+                <TO_DOCVAR AssignToVar="filterParamVarTemp">
+                  <FILTER_NEW/>
+                </TO_DOCVAR>
+                <SET_NAME DocVar="filterParamVarTemp" FromValue="{concat('FILTER_',$eachFilterParam/name())}"/>
+                <SET Attribute="Value" DocVar="filterParamVarTemp" FromValue="{$eachFilterParam/@Value}"/>
+                <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="filterParamVarTemp"/>
+              </FOR_EACH>
+            </ELSE>
+          </IF_TEST>
+          <SET DocVar="pglFormInput" Property="OnBackPage" FromValue="{ifElse($onBackPage!=null and $onBackPage!='',$onBackPage,'none')}"/>
+          <SET DocVar="pglFormInput" Property="popValue" FromValue="true"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SYS_REFRESH'">
+            <THEN>
+              <REMOVE_CHILDREN ChildName="SELECTED_INSTANCE_ID" DocVar="thisParam"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Delete'">
+            <THEN>
+              <FOR_EACH SelectList="$thisParam/SELECTED_INSTANCE_ID" CurrentElement="eachID">
+                <REQUEST Name="deleteWorkflowLogs" ServiceName="BPE_META">
+                  <SELECTED_INSTANCE_ID Value="{$eachID/@Value}"/>
+                </REQUEST>
+              </FOR_EACH>
+              <SET Var="successStatusMsg" FromValue="WF_LOG_MON_MSG_LOG_DELETED_SUCCESS"/>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Kill'">
+                <THEN>
+                  <REQUEST Name="validateForAbortOperation" ServiceName="BPE_META" AssignToVar="validateAbort">
+                    <TO_XML SelectList="$thisParam/*[name()='SELECTED_INSTANCE_ID']"/>
+                  </REQUEST>
+                  <IF_TEST Test="$validateAbort/ValidForAbort/@Value = 'false'">
+                    <THEN>
+                      <SET Var="errorStatusMsg" FromValue="WF_LOG_MON_MSG_ABORT_INVALID_SELECTION"/>
+                    </THEN>
+                    <ELSE>
+                      <TO_DOCVAR AssignToVar="paramVar">
+                        <ROOT/>
+                      </TO_DOCVAR>
+                      <FOR_EACH SelectList="$thisParam/SELECTED_INSTANCE_ID" CurrentElement="eachID">
+                        <TO_DOCVAR AssignToVar="temp">
+                          <SELECTED_INSTANCE_ID Value="{$eachID/@Value}"/>
+                        </TO_DOCVAR>
+                        <ADD_CHILDREN DocVar="paramVar" FromVar="temp"/>
+                      </FOR_EACH>
+                      <REQUEST Name="killSelectedWorkflows" ServiceName="BPE_META" Synchronous="false">
+                        <TO_XML SelectList="$paramVar/*"/>
+                      </REQUEST>
+                      <SET Var="successStatusMsg" FromValue="WF_LOG_MON_MSG_ABORT_REQUEST_SUBMITTED"/>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Details'">
+            <THEN>
+              <SET Property="SORT_ORDER" DocVar="thisParam" FromValue=""/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='SEARCH'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Done'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='clear'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Monitor Workflows" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='search'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Monitor Workflows" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Details'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="WorkflowNodeHistory" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='showParams'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Monitor Workflows" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Delete'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Monitor Workflows" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Kill'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Monitor Workflows" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='WhiteBoard'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Workflow Log Viewer" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="WorkflowNodeHistory" ShowInBreadCrumbs="HIDE" Template="WorkflowNodeHistory.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Details'">
+            <THEN>
+              <SET Var="StartWFVar" FromValue="true"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="strlen($childWFDetailsVar)!=0">
+            <THEN>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="SELECTED_INSTANCE_ID"/>
+              <SET DocVar="thisParam" Property="SELECTED_INSTANCE_ID" FromValue="{$childWFDetailsVar}"/>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="BUTTON_ID"/>
+              <SET Var="childWFDetailsVar" FromValue=""/>
+              <IF_TEST Test="$StartWFVar/@Value='true'">
+                <THEN>
+                  <SET DocVar="thisParam" Property="BUTTON_ID" FromValue="Details"/>
+                </THEN>
+                <ELSE>
+                  <SET DocVar="thisParam" Property="BUTTON_ID" FromValue="ChildWFDetails"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="wfNodeLogFilterParams">
+            <FILTER_PARAMS/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Terminate' or  $thisParam/BUTTON_ID/@Value='Restart'">
+            <THEN>
+              <SET Var="RestartVar" FromValue="{ifElse($thisParam/BUTTON_ID/@Value='Restart','Yes','No')}"/>
+              <RAISE_EVENT Name="WfProcessRestartEvent" ServiceName="BCM_MASTER" AssignToVar="testeventresp">
+                <WorkflowInstanceId Value="{$thisParam/SELECTED_INSTANCE_ID/@Value}"/>
+                <WF_MON_LOG_LEVEL Value="Node"/>
+                <_Restart Value="{$RestartVar}"/>
+              </RAISE_EVENT>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='showParams' or  $thisParam/BUTTON_ID/@Value='showWorkflowParams'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <WF_PAGE_TYPE Value="ParamDetails"/>
+                  <WEB_APP_PATH Value="{$webuiContextPath}"/>
+                  <SELECTED_INSTANCE_ID Value="{$thisParam/SELECTED_INSTANCE_ID/@Value}"/>
+                  <NodeId Value="{$thisParam/NodeId/@Value}"/>
+                  <PARAM_TYPE Value="{$thisParam/PARAM_TYPE/@Value}"/>
+                  <PREV_BUTTON_ID Value="{$thisParam/BUTTON_ID/@Value}"/>
+                  <RESULTS/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+            <ELSE>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <WF_PAGE_TYPE Value="WorkflowResults"/>
+                  <StartRowCount Value="0"/>
+                  <TotalRowCount Value="10"/>
+                  <SELECTED_INSTANCE_ID Value="{$thisParam/SELECTED_INSTANCE_ID/@Value}"/>
+                  <WEB_APP_PATH Value="{$webuiContextPath}"/>
+                  <RESULTS/>
+                  <SELECTED_WORKFLOW_DETAILS/>
+                </ROOT>
+              </TO_DOCVAR>
+              <GET_DOCUMENT Name="SYS_WKFLW_LOG" ServiceName="BPE_META" AssignToVar="selectedWFDetails" DirtyRead="true">
+                <InstanceID Value="{$pglFormInput/SELECTED_INSTANCE_ID/@Value}"/>
+                <SELECT>
+                  <InstanceID/>
+                  <WFName/>
+                  <Description/>
+                  <ServiceName/>
+                  <TriggeredBy/>
+                  <StartTime/>
+                  <EndTime/>
+                  <Status/>
+                  <StatusColorCd/>
+                  <InputParams/>
+                  <ParentWFInstanceID/>
+                </SELECT>
+              </GET_DOCUMENT>
+              <IF_TEST Test="strlen($selectedWFDetails/SYS_WKFLW_LOG/ParentWFInstanceID/@Value) > 0">
+                <THEN>
+                  <GET_DOCUMENT Name="SYS_WKFLW_LOG" ServiceName="BPE_META" AssignToVar="parentWFVar" DirtyRead="true">
+                    <InstanceID Value="{$selectedWFDetails/SYS_WKFLW_LOG/ParentWFInstanceID/@Value}"/>
+                    <SELECT>
+                      <WFName/>
+                    </SELECT>
+                  </GET_DOCUMENT>
+                  <SET Property="ParentWFName" DocVar="{$selectedWFDetails/SYS_WKFLW_LOG}" FromValue="{$parentWFVar/SYS_WKFLW_LOG/WFName/@Value}"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SYS_RELOAD'">
+                <THEN>
+                  <SET Var="sortOrder" FromValue="{ifElse($thisParam/SORT_ORDER/@Value = null, 'Ascending', $thisParam/SORT_ORDER/@Value)}"/>
+                  <SET Var="sortBy" FromValue="{ifElse(($thisParam/SORT_BY/@Value = null) or($thisParam/SORT_BY/@Value = 'ID') , 'StartTime', $thisParam/SORT_BY/@Value)}"/>
+                  <SET Var="paginateStart" FromValue="{int(ifElse($thisParam/START_COUNT/@Value = null, 0, $thisParam/START_COUNT/@Value))}"/>
+                  <!--SET Var="maxRow" FromValue="10" /-->
+                  <SET Var="maxRow" FromValue="{int(ifElse($thisParam/MAX_ROWS/@Value = null, 10, $thisParam/MAX_ROWS/@Value))}"/>
+                  <!--Save the Input Filter Values -->
+                  <FOR_EACH SelectList="$thisParam/*" CurrentElement="eachParam">
+                    <IF_TEST Test="starts-with($eachParam/name(),'FILTER_')">
+                      <THEN>
+                        <TO_DOCVAR AssignToVar="filterParamVar">
+                          <FILTER_NEW/>
+                        </TO_DOCVAR>
+                        <SET_NAME DocVar="filterParamVar" FromValue="{substringAfter($eachParam/name(),'FILTER_')}"/>
+                        <SET Attribute="Value" DocVar="filterParamVar" FromValue="{$eachParam/@Value}"/>
+                        <IF_TEST Test="strlen($filterParamVar/@Value) > 0 and $filterParamVar/name() != 'ID'">
+                          <THEN>
+                            <ADD_CHILDREN DocVar="wfNodeLogFilterParams" FromDocVar="filterParamVar"/>
+                          </THEN>
+                        </IF_TEST>
+                      </THEN>
+                    </IF_TEST>
+                  </FOR_EACH>
+                </THEN>
+                <ELSE>
+                  <SET Var="flag" FromValue="true"/>
+                  <SET Var="paginateStart" FromValue="0"/>
+                  <SET Var="maxRow" FromValue="10"/>
+                </ELSE>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="sortVarTemp">
+                <SORT_PROP>
+                  <PROPERTY/>
+                </SORT_PROP>
+              </TO_DOCVAR>
+              <IF_TEST Test="$flag='true'">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="sortVarTemp">
+                    <SORT_PROP>
+                      <StartTime Sort="Ascending"/>
+                      <EndTime Sort="Ascending"/>
+                    </SORT_PROP>
+                  </TO_DOCVAR>
+                </THEN>
+                <ELSE>
+                  <SET Var="sortProp" FromValue="{$sortVarTemp/PROPERTY}"/>
+                  <SET_NAME DocVar="sortProp" FromValue="{$sortBy}"/>
+                  <SET Attribute="Sort" DocVar="sortProp" FromValue="{$sortOrder}"/>
+                </ELSE>
+              </IF_TEST>
+              <GET_DOCUMENT Name="SYS_WKFLW_NODE_LOG" ServiceName="BPE_META" AssignToVar="wfNodeLogResults" ReturnRowCount="yes" DirtyRead="true">
+                <TO_XML SelectList="$wfNodeLogFilterParams/*"/>
+                <WFInstanceID Value="{$pglFormInput/SELECTED_INSTANCE_ID/@Value}"/>
+                <SELECT>
+                  <NodeId/>
+                  <NodeName/>
+                  <NodeType/>
+                  <StartTime/>
+                  <EndTime/>
+                  <Status/>
+                  <StatusColorCd/>
+                  <ChildWFInstanceID/>
+                </SELECT>
+                <ORDER_BY>
+                  <TO_XML SelectList="$sortVarTemp/*"/>
+                </ORDER_BY>
+              </GET_DOCUMENT>
+              <!--<GET_DOCUMENT Name="SYS_WKFLW_NODE_LOG" ServiceName="BPE_META" AssignToVar="wfNodeLogResults" StartAtRow="{$paginateStart}" MaxRows="{$maxRow}" ReturnRowCount="yes" DirtyRead="true">
+        <TO_XML SelectList="$wfNodeLogFilterParams/*"/>
+        <WFInstanceID Value="{$pglFormInput/SELECTED_INSTANCE_ID/@Value}"/>
+        <SELECT>
+          <NodeId/>
+          <NodeName/>
+          <NodeType/>
+          <StartTime/>
+          <EndTime/>
+          <Status/>
+          <StatusColorCd/>
+          <ChildWFInstanceID/>
+        </SELECT>
+        <ORDER_BY>
+          <TO_XML SelectList="$sortVarTemp/*"/>
+        </ORDER_BY>
+      </GET_DOCUMENT>-->
+              <REQUEST Name="getCodeMasterValue" ServiceName="USER_SECURITY" AssignToVar="StatusColorCodes">
+                <TYPE_ID Value="Status Color Codes"/>
+              </REQUEST>
+              <FOR_EACH SelectList="$wfNodeLogResults/SYS_WKFLW_NODE_LOG" CurrentElement="currNodeLog">
+                <SET Var="HexCode" FromValue="{$StatusColorCodes/CODE_MASTER_VALUE[VALUE_ID/@Value=$currNodeLog/StatusColorCd/@Value]/DESCRIPTION/@Value}"/>
+                <SET Property="HexColorCode" FromValue="{concat('#',$HexCode)}" DocVar="currNodeLog"/>
+              </FOR_EACH>
+              <!-- check for restartable node if any -->
+              <EXECUTE_SQL_QUERY AssignToVar="checkRestartNode" Value="locking row for access select CASE when count(*) > 0 THEN 'yes' ELSE 'no' end as RESTARTABLE from SYS_WKFLW_NODE_LOG where WFINSTANCEID = '{$pglFormInput/SELECTED_INSTANCE_ID/@Value}' and NODENAME like '_res_event_%' and STATUS='In Progress'"/>
+              <IF_TEST Test="$checkRestartNode/SQL_RESULT/RESTARTABLE/@Value='yes'">
+                <THEN>
+                  <SET DocVar="pglFormInput" Property="showRestartBtns" FromValue="{ifElse($onBackPage!=null and $onBackPage!='',$onBackPage,'none')}"/>
+                </THEN>
+              </IF_TEST>
+              <ADD_CHILDREN DocVar="{$pglFormInput/RESULTS}" FromSelectList="$wfNodeLogResults/*"/>
+              <ADD_CHILDREN DocVar="{$pglFormInput/SELECTED_WORKFLOW_DETAILS}" FromSelectList="$selectedWFDetails/*"/>
+              <SET DocVar="tempVar" FromSelect="$pglFormInput/StartRowCount"/>
+              <SET Attribute="Value" DocVar="tempVar" FromValue="{$paginateStart}"/>
+              <SET DocVar="tempVar" FromSelect="$pglFormInput/TotalRowCount"/>
+              <SET Attribute="Value" DocVar="tempVar" FromValue="{$wfNodeLogResults/@TotalRowCount}"/>
+              <SET DocVar="pglFormInput" Property="SORT_ORDER" FromValue="{$sortOrder}"/>
+              <SET DocVar="pglFormInput" Property="SORT_BY" FromValue="{$sortBy}"/>
+              <SET DocVar="pglFormInput" Property="popValue" FromValue="true"/>
+              <SET DocVar="pglFormInput" Property="BUTTON_ID" FromValue="{$thisParam/BUTTON_ID/@Value}"/>
+              <!--SET DocVar="pglFormInput" Property="START_COUNT" FromValue="{$paginateStart}"/>
+              <SET DocVar="pglFormInput" Property="MAX_ROWS" FromValue="{$maxRow}"/-->
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'ChildWFDetails' or $thisParam/BUTTON_ID/@Value = 'ForkNodeLogDetails' ">
+            <THEN>
+              <SET Var="childWFDetailsVar" FromValue="{$thisParam/SELECTED_INSTANCE_ID/@Value}"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Monitor Workflows" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Refresh'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="WorkflowNodeHistory" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='showParams'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="WorkflowNodeHistory" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='showWorkflowParams'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="WorkflowNodeHistory" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ShowParentWFDetails'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="WorkflowNodeHistory" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Terminate'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="WorkflowNodeHistory" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Restart'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="WorkflowNodeHistory" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ChildWFDetails'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="sub_workflow12" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='BackChild'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done10" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ForkNodeLogDetails'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="sub_workflow12" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="sub_workflow12" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="Workflow Log Viewer" ShowInBreadCrumbs="SHOW" Template="WorkflowPictView.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='WhiteBoard'">
+            <THEN>
+              <SET Var="startOfDrillDown" FromValue="true"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="strlen($drillDownSelId)!=0">
+            <THEN>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="SELECTED_INSTANCE_ID"/>
+              <SET DocVar="thisParam" Property="SELECTED_INSTANCE_ID" FromValue="{$drillDownSelId}"/>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="BUTTON_ID"/>
+              <IF_TEST Test="$startOfDrillDown != 'true'">
+                <THEN>
+                  <SET DocVar="thisParam" Property="BUTTON_ID" FromValue="drillDownViewer"/>
+                </THEN>
+                <ELSE>
+                  <SET DocVar="thisParam" Property="BUTTON_ID" FromValue="WhiteBoard"/>
+                </ELSE>
+              </IF_TEST>
+              <SET Var="drillDownSelId" FromValue=""/>
+            </THEN>
+          </IF_TEST>
+          <SET Var="processIdQuery" FromValue="LOCKING          ROW FOR ACCESS select  max(version_id)  as VERSION_ID  , PROCESS_ID from      wf_process_audit where   version_create_date &lt; ( sel         starttime from      sys_wkflw_log where   INSTANCEID= '{$thisParam/SELECTED_INSTANCE_ID/@Value}') and        process_name in ( sel         wfname from      sys_wkflw_log where   INSTANCEID='{$thisParam/SELECTED_INSTANCE_ID/@Value}'  ) group by 2"/>
+          <EXECUTE_SQL_QUERY AssignToVar="processId" Value="{$processIdQuery}"/>
+          <GET_DOCUMENT Name="SYS_WKFLW_NODE_LOG" ServiceName="BPE_META" AssignToVar="wfNodeLogResults" ReturnRowCount="yes" DirtyRead="true">
+            <TO_XML SelectList="$wfNodeLogFilterParams/*"/>
+            <WFInstanceID Value="{$thisParam/SELECTED_INSTANCE_ID/@Value}"/>
+            <SELECT>
+              <NodeId/>
+              <NodeName/>
+              <NodeType/>
+              <StartTime/>
+              <EndTime/>
+              <Status/>
+              <StatusColorCd/>
+              <PrevNodeName/>
+              <ChildWFInstanceID/>
+            </SELECT>
+            <ORDER_BY>
+              <StartTime Sort="Ascending"/>
+              <EndTime Sort="Ascending"/>
+            </ORDER_BY>
+          </GET_DOCUMENT>
+          <REQUEST Name="getCodeMasterValue" ServiceName="USER_SECURITY" AssignToVar="StatusColorCodes">
+            <TYPE_ID Value="Status Color Codes"/>
+          </REQUEST>
+          <FOR_EACH SelectList="$wfNodeLogResults/SYS_WKFLW_NODE_LOG" CurrentElement="currNodeLog">
+            <SET Var="HexCode" FromValue="{$StatusColorCodes/CODE_MASTER_VALUE[VALUE_ID/@Value=$currNodeLog/StatusColorCd/@Value]/DESCRIPTION/@Value}"/>
+            <SET Property="HexColorCode" FromValue="{concat('#',$HexCode)}" DocVar="currNodeLog"/>
+          </FOR_EACH>
+          <SET DocVar="thisParam" Property="PROCESS_ID" FromValue="{$processId/*/PROCESS_ID/@Value}"/>
+          <SET DocVar="wfNodeLogResults" Attribute="workflowInstanceId" FromValue="{$thisParam/SELECTED_INSTANCE_ID/@Value}"/>
+          <NATIVE_FUNCTION MethodName="createMonitoringObject" ClassName="com.teradata.xcore.util.bpmn.WorkflowProcessAPI" AssignToVar="nativeReturn">
+            <PARAM Var="thisContext" Caption="thisContext"/>
+            <PARAM Var="thisParam" Caption="thisParam"/>
+            <PARAM Var="wfNodeLogResults" Caption="workflowDetails"/>
+          </NATIVE_FUNCTION>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <GET_DOCUMENT Name="Wf_Process_Audit" AssignToVar="selectedProcessDetails" DirtyRead="true" ServiceName="BCM_MASTER">
+            <Process_Id Value="{$processId/*/PROCESS_ID/@Value}"/>
+            <Version_Id Value="{$processId/*/VERSION_ID/@Value}"/>
+            <SELECT>
+              <Process_Name/>
+              <Process_Template/>
+              <Process_Description/>
+              <Presentation_Data/>
+            </SELECT>
+          </GET_DOCUMENT>
+          <TO_DOCVAR AssignToVar="processDetails">
+            <PROCESS_DETAILS>
+              <Process_Id Value="{$processId/*/PROCESS_ID/@Value}"/>
+              <Version_Id Value="{$processId/*/VERSION_ID/@Value}"/>
+              <TO_XML SelectList="$selectedProcessDetails/Wf_Process_Audit/*"/>
+            </PROCESS_DETAILS>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="dynPgl">
+            <DYNAMIC_PGL>
+              <ui:script xmlns:ui="http://www.teradata.com/ui">var wfDetObj = new Object();
+			wfDetObj.Process_Name = '{$selectedProcessDetails/Wf_Process_Audit/Process_Name/@Value}';
+			wfDetObj.Process_Description = '{$selectedProcessDetails/Wf_Process_Audit/Process_Description/@Value}';
+			wfDetObj.Pr_Data = '{$selectedProcessDetails/Wf_Process_Audit/Presentation_Data/@Value}';</ui:script>
+            </DYNAMIC_PGL>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="dynPgl"/>
+          <SET DocVar="pglFormInput" Property="wfObject" FromValue="{$nativeReturn/@Value}"/>
+          <SET DocVar="pglFormInput" Property="SELECTED_INSTANCE_ID" FromValue="{$thisParam/SELECTED_INSTANCE_ID/@Value}"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="processDetails"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="WfUIContextVar"/>
+          <REQUEST Name="GetFavoriteWorkflows" ServiceName="BCM_MASTER" AssignToVar="favWorkflowsResp"/>
+          <SET DocVar="pglFormInput" Property="JsonFavWorkflow" FromValue="{$favWorkflowsResp/JsonFavWorkflow/@Value}"/>
+          <SET DocVar="pglFormInput" Property="BUTTON_ID" FromValue="{$thisParam/BUTTON_ID/@Value}"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'drillDownViewer'">
+            <THEN>
+              <SET Var="drillDownSelId" FromValue="{$thisParam/SELECTED_INSTANCE_ID/@Value}"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='SEARCH'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Done'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Monitor Workflows" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='redrawWF'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='drillDownViewer'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="sub_workflow8" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='BackD'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done10" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='wfDetails'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <sub_workflow Name="sub_workflow8" InputVar="{input,xml}" Workflow="WorkflowLoggingAdmin">
+      <pre_actions>
+        <action/>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <input>
+        <action>
+          <IF_TEST Test="strlen($thisParam/selForkNode/@Value)>0">
+            <THEN>
+              <EXECUTE_SQL_QUERY HandleException="true" AssignToVar="parallelJobId" Value="LOCKING ROW FOR ACCESS SELECT CHILDWFINSTANCEID FROM SYS_WKFLW_NODE_LOG WHERE WFINSTANCEID='{$thisParam/SELECTED_INSTANCE_ID/@Value}' AND NODENAME = '{$thisParam/selForkNode/@Value}';"/>
+              <EXECUTE_SQL_QUERY HandleException="true" AssignToVar="selId" Value="LOCKING ROW FOR ACCESS SELECT trim(SUBWORKFLOWID) as CHILDWFINSTANCEID FROM SYS_PARALLEL_EXEC_TASKS WHERE PARALLELJOBID = '{$parallelJobId/SQL_RESULT/CHILDWFINSTANCEID/@Value}' AND NODENAME ='{$thisParam/selNode/@Value}';"/>
+            </THEN>
+            <ELSE>
+              <EXECUTE_SQL_QUERY AssignToVar="selId" Value="LOCKING ROW FOR ACCESS sel         CHILDWFINSTANCEID  from      sys_wkflw_node_log  where   WFINSTANCEID='{$thisParam/SELECTED_INSTANCE_ID/@Value}' and NODENAME = '{$thisParam/selNode/@Value}'"/>
+            </ELSE>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="input">
+            <ROOT>
+              <BUTTON_ID Value="drillDownViewer"/>
+              <SELECTED_INSTANCE_ID Value="{$selId/SQL_RESULT/CHILDWFINSTANCEID/@Value}"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <TO_XML SelectList="$input/*"/>
+        </action>
+      </input>
+      <next_nodes>
+        <next_node Name="Workflow Log Viewer"/>
+      </next_nodes>
+    </sub_workflow>
+    <done Name="done10">
+      <actions/>
+      <next_nodes/>
+    </done>
+    <sub_workflow Name="sub_workflow12" InputVar="{input,xml}" Workflow="WorkflowLoggingAdmin">
+      <pre_actions>
+        <action/>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <input>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='ForkNodeLogDetails'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="input">
+                <ROOT>
+                  <BUTTON_ID Value="ForkNodeLogDetails"/>
+                  <SELECTED_FORK_NODE_NAME Value="{$thisParam/selNodeName/@Value}"/>
+                  <PARALLEL_JOB_ID Value="{$thisParam/selChildInsId/@Value}"/>
+                  <PARENT_WF_INSTANCE_ID Value="{$thisParam/SELECTED_INSTANCE_ID/@Value}"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <TO_XML SelectList="$input/*"/>
+            </THEN>
+            <ELSE>
+              <TO_DOCVAR AssignToVar="input">
+                <ROOT>
+                  <BUTTON_ID Value="ChildWFDetails"/>
+                  <SELECTED_INSTANCE_ID Value="{$thisParam/selChildInsId/@Value}"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <TO_XML SelectList="$input/*"/>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </input>
+      <next_nodes>
+        <next_node Name="WorkflowNodeHistory"/>
+      </next_nodes>
+    </sub_workflow>
+    <branch Name="BranchNode">
+      <actions>
+        <action/>
+      </actions>
+      <if_cond Value="$thisParam/BUTTON_ID/@Value='drillDownViewer'">
+        <next_nodes OutputVar="">
+          <next_node Name="Workflow Log Viewer" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$thisParam/BUTTON_ID/@Value='ChildWFDetails'">
+        <next_nodes OutputVar="">
+          <next_node Name="WorkflowNodeHistory" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$thisParam/BUTTON_ID/@Value='logNodeDetails'">
+        <next_nodes OutputVar="">
+          <next_node Name="logNodeDetails" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$thisParam/BUTTON_ID/@Value='ForkNodeLogDetails'">
+        <next_nodes OutputVar="">
+          <next_node Name="ForkNodeLogs" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$thisParam/BUTTON_ID/@Value!='drillDownViewer' and $thisParam/BUTTON_ID/@Value!='ChildWFDetails'">
+        <next_nodes OutputVar="">
+          <next_node Name="Monitor Workflows" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </branch>
+    <start Name="start">
+      <actions>
+        <action>
+          <SET Var="selectedServiceName" FromValue="{$thisParam/WF_SERVICE_NAME/@Value}"/>
+          <SET Var="selectedWorkflowName" FromValue="{$thisParam/WF_TEMPLATE_NAME/@Value}"/>
+          <SET Var="onLoadAction" FromValue="{$thisParam/ON_LOAD_ACTION/@Value}"/>
+          <SET Var="onBackPage" FromValue="{$thisParam/ON_BACK_PAGE/@Value}"/>
+          <TO_DOCVAR AssignToVar="wfInstancesFilterParams">
+            <FILTER_PARAMS/>
+          </TO_DOCVAR>
+          <REQUEST Name="getWfProcessTemplates" ServiceName="BCM_MASTER" AssignToVar="entityNamesResults"/>
+          <TO_DOCVAR AssignToVar="allEntities">
+            <TO_XML SelectList="$entityNamesResults/TYPE_CODES"/>
+          </TO_DOCVAR>
+          <!--XML_SORT SortKey="@Value" SortOrder="Ascending" DataType="string" AssignToVar="allEntities">
+<TO_XML SelectList="$entityNamesResults/TYPE_CODES/*" />
+</XML_SORT-->
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="BranchNode"/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="logNodeDetails" ShowInBreadCrumbs="HIDE" Template="logNodeDetails.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <WEB_APP_PATH Value="{$webuiContextPath}"/>
+              <SELECTED_WORKFLOW_DETAILS/>
+            </ROOT>
+          </TO_DOCVAR>
+          <GET_DOCUMENT Name="SYS_WKFLW_LOG" ServiceName="BPE_META" AssignToVar="selectedWFDetails" DirtyRead="true">
+            <InstanceID Value="{$thisParam/SELECTED_INSTANCE_ID/@Value}"/>
+            <SELECT>
+              <InstanceID/>
+              <WFName/>
+              <Description/>
+              <ServiceName/>
+              <TriggeredBy/>
+              <StartTime/>
+              <EndTime/>
+              <Status/>
+              <StatusColorCd/>
+              <InputParams/>
+              <ParentWFInstanceID/>
+            </SELECT>
+          </GET_DOCUMENT>
+          <IF_TEST Test="strlen($selectedWFDetails/SYS_WKFLW_LOG/ParentWFInstanceID/@Value) > 0">
+            <THEN>
+              <GET_DOCUMENT Name="SYS_WKFLW_LOG" ServiceName="BPE_META" AssignToVar="parentWFVar" DirtyRead="true">
+                <InstanceID Value="{$selectedWFDetails/SYS_WKFLW_LOG/ParentWFInstanceID/@Value}"/>
+                <SELECT>
+                  <WFName/>
+                </SELECT>
+              </GET_DOCUMENT>
+              <SET Property="ParentWFName" DocVar="{$selectedWFDetails/SYS_WKFLW_LOG}" FromValue="{$parentWFVar/SYS_WKFLW_LOG/WFName/@Value}"/>
+            </THEN>
+          </IF_TEST>
+          <ADD_CHILDREN DocVar="{$pglFormInput/SELECTED_WORKFLOW_DETAILS}" FromSelectList="$selectedWFDetails/*"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="ss" FromValue="sss"/>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='DONE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='showWorkflowParams'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="WorkflowNodeHistory" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="ForkNodeLogs" ShowInBreadCrumbs="HIDE" Template="ForkNodeLogDetails.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <IF_TEST Test="strlen($childForkNodeDetailsVar)!=0">
+            <THEN>
+              <APPEND_CHILDREN DocVar="thisParam" FromDocVar="childForkNodeDetailsVar"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='showParams' or  $thisParam/BUTTON_ID/@Value='showForkNodeParams'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <WF_PAGE_TYPE Value="ParamDetails"/>
+                  <WEB_APP_PATH Value="{$webuiContextPath}"/>
+                  <SELECTED_INSTANCE_ID Value="{$thisParam/SELECTED_INSTANCE_ID/@Value}"/>
+                  <NodeName Value="{$thisParam/NodeName/@Value}"/>
+                  <Fork_Node_Name Value="{$thisParam/Fork_Node_Name/@Value}"/>
+                  <PARAM_TYPE Value="{$thisParam/PARAM_TYPE/@Value}"/>
+                  <PREV_BUTTON_ID Value="{$thisParam/BUTTON_ID/@Value}"/>
+                  <RESULTS/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+            <ELSE>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <WF_PAGE_TYPE Value="NodeDetails"/>
+                  <WEB_APP_PATH Value="{$webuiContextPath}"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </ELSE>
+          </IF_TEST>
+          <GET_DOCUMENT Name="SYS_WKFLW_LOG" ServiceName="BPE_META" HandleException="true" DirtyRead="true" AssignToVar="workflowDetails">
+            <InstanceID Value="{$thisParam/PARENT_WF_INSTANCE_ID/@Value}"/>
+            <SELECT>
+              <WFName/>
+              <ServiceName/>
+              <TriggeredBy/>
+            </SELECT>
+          </GET_DOCUMENT>
+          <GET_DOCUMENT Name="SYS_WKFLW_NODE_LOG" ServiceName="BPE_META" HandleException="true" DirtyRead="true" AssignToVar="forkNodeDetails">
+            <WFInstanceID Value="{$thisParam/PARENT_WF_INSTANCE_ID/@Value}"/>
+            <NodeName Value="{$thisParam/SELECTED_FORK_NODE_NAME/@Value}"/>
+            <SELECT>
+              <NodeType/>
+              <StartTime/>
+              <EndTime/>
+              <Status/>
+            </SELECT>
+          </GET_DOCUMENT>
+          <GET_DOCUMENT Name="SYS_PARALLEL_EXEC_TASKS" ServiceName="BPE_META" HandleException="true" DirtyRead="true" AssignToVar="taskDetails">
+            <ParallelJobId Value="{$thisParam/PARALLEL_JOB_ID/@Value}"/>
+            <SELECT>
+              <NodeName/>
+              <TaskId/>
+              <TaskName/>
+              <StartTime/>
+              <EndTime/>
+              <Status/>
+              <StatusColorCd/>
+              <SubWorkflowId/>
+            </SELECT>
+            <ORDER_BY>
+              <StartTime Sort="Ascending"/>
+              <EndTime Sort="Ascending"/>
+            </ORDER_BY>
+          </GET_DOCUMENT>
+          <REQUEST Name="getCodeMasterValue" ServiceName="USER_SECURITY" AssignToVar="StatusColorCodes">
+            <TYPE_ID Value="Status Color Codes"/>
+          </REQUEST>
+          <FOR_EACH SelectList="$taskDetails/SYS_PARALLEL_EXEC_TASKS" CurrentElement="currNodeLog">
+            <SET Var="HexCode" FromValue="{$StatusColorCodes/CODE_MASTER_VALUE[VALUE_ID/@Value=$currNodeLog/StatusColorCd/@Value]/DESCRIPTION/@Value}"/>
+            <SET Property="HexColorCode" FromValue="{concat('#',$HexCode)}" DocVar="currNodeLog"/>
+          </FOR_EACH>
+          <SET_NAME DocVar="workflowDetails" FromValue="WF_DETAILS"/>
+          <SET_NAME DocVar="forkNodeDetails" FromValue="NODE_DETAILS"/>
+          <SET_NAME DocVar="taskDetails" FromValue="TASK_DETAILS"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="workflowDetails"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="forkNodeDetails"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="taskDetails"/>
+          <SET Property="PARENT_WF_INSTANCE_ID" DocVar="pglFormInput" FromValue="{$thisParam/PARENT_WF_INSTANCE_ID/@Value}"/>
+          <SET Property="SELECTED_FORK_NODE_NAME" DocVar="pglFormInput" FromValue="{$thisParam/SELECTED_FORK_NODE_NAME/@Value}"/>
+          <SET Property="PARALLEL_JOB_ID" DocVar="pglFormInput" FromValue="{$thisParam/PARALLEL_JOB_ID/@Value}"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value ='Back'">
+            <THEN>
+              <SET Property="BUTTON_ID" FromValue="Details" DocVar="thisParam"/>
+              <SET Property="SELECTED_INSTANCE_ID" FromValue="{$thisParam/PARENT_WF_INSTANCE_ID/@Value}" DocVar="thisParam"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'ChildWFDetails'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="childForkNodeDetailsVar">
+                <FORK_NODE_DETAILS>
+                  <SELECTED_FORK_NODE_NAME Value="{$thisParam/SELECTED_FORK_NODE_NAME/@Value}"/>
+                  <PARALLEL_JOB_ID Value="{$thisParam/PARALLEL_JOB_ID/@Value}"/>
+                  <PARENT_WF_INSTANCE_ID Value="{$thisParam/PARENT_WF_INSTANCE_ID/@Value}"/>
+                </FORK_NODE_DETAILS>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='DONE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done10" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='showForkNodeParams'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ForkNodeLogs" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='showParams'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ForkNodeLogs" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ChildWFDetails'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="sub_workflow19" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <sub_workflow Name="sub_workflow19" InputVar="{input,xml}" Workflow="WorkflowLoggingAdmin">
+      <pre_actions>
+        <action/>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <input>
+        <action>
+          <TO_DOCVAR AssignToVar="input">
+            <ROOT>
+              <BUTTON_ID Value="ChildWFDetails"/>
+              <SELECTED_INSTANCE_ID Value="{$thisParam/selChildInsId/@Value}"/>
+              <FromForkNode Value="true"/>
+              <ForkNodeName Value="{$thisParam/SELECTED_FORK_NODE_NAME/@Value}"/>
+              <PARENT_WF_INSTANCE_ID Value="{$thisParam/PARENT_WF_INSTANCE_ID/@Value}"/>
+              <PARALLEL_JOB_ID Value="{$thisParam/PARALLEL_JOB_ID/@Value}"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <TO_XML SelectList="$input/*"/>
+        </action>
+      </input>
+      <next_nodes>
+        <next_node Name="ForkNodeLogs"/>
+      </next_nodes>
+    </sub_workflow>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <mgcnode Name="Monitor Workflows" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="402,162" size="1920,1032">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <WorkflowNodeHistory font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="615,162" size="1920,1032">
+        <iconProps iconfile="x1age80.gif"/>
+      </WorkflowNodeHistory>
+      <mgcnode Name="Workflow Log Viewer" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="637,399" size="1920,1032">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <sub_workflow8 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="794,503" size="1938,1050">
+        <iconProps iconfile="z1sub_workflow.gif"/>
+      </sub_workflow8>
+      <done10 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="977,283" size="752,762">
+        <iconProps iconfile="z1end.gif"/>
+      </done10>
+      <sub_workflow12 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="890,26" size="1920,1032">
+        <iconProps iconfile="z1sub_workflow.gif"/>
+      </sub_workflow12>
+      <BranchNode font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="226,437" size="1920,1032">
+        <iconProps iconfile="z1branch.gif"/>
+      </BranchNode>
+      <start font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="43,439" size="752,762">
+        <iconProps iconfile="z1start.gif"/>
+      </start>
+      <logNodeDetails font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="294,599" size="1920,1040">
+        <iconProps iconfile="x1age80.gif"/>
+      </logNodeDetails>
+      <ForkNodeLogs font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="11,675" size="1920,1032">
+        <iconProps iconfile="x1age80.gif"/>
+      </ForkNodeLogs>
+      <sub_workflow19 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="480,697" size="752,892">
+        <iconProps iconfile="z1sub_workflow.gif"/>
+      </sub_workflow19>
+    </mgcnodes>
+    <mgcconnectors>
+      <mgcnode Name="Monitor Workflows">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="402,184" endpoint="402,184" ctrlRect1="325,182,4,4" ctrlRect2="334,119,4,4" ctrlRect2Dirty="true" textRect="323,148,17,8">
+          <textProps text="Clear"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="424,207" endpoint="424,207" ctrlRect1="422,280,4,4" ctrlRect2="343,265,4,4" ctrlRect2Dirty="true" textRect="379,270,11,8">
+          <textProps text="Search"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="447,184" endpoint="615,184" ctrlRect1="571,182,4,4" ctrlRect2="487,182,4,4" textRect="521,180,20,8">
+          <textProps text="WorkflowDetails"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="424,207" endpoint="424,207" ctrlRect1="422,280,4,4" ctrlRect2="467,261,4,4" ctrlRect2Dirty="true" textRect="439,268,15,8">
+          <textProps text="ShowParams"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="402,184" endpoint="402,184" ctrlRect1="325,182,4,4" ctrlRect2="232,284,4,4" ctrlRect2Dirty="true" textRect="275,231,11,8">
+          <textProps text="Delete"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="424,207" endpoint="424,207" ctrlRect1="422,280,4,4" ctrlRect2="499,291,4,4" ctrlRect2Dirty="true" textRect="453,283,18,8">
+          <textProps text="Kill Workflow"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="424,207" endpoint="637,421" ctrlRect1="422,365,4,4" ctrlRect2="475,419,4,4" textRect="443,390,15,8">
+          <textProps text="WhiteBoard"/>
+        </nextNodeView>
+      </mgcnode>
+      <WorkflowNodeHistory>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="615,184" endpoint="447,184" ctrlRect1="487,182,4,4" ctrlRect2="490,114,4,4" ctrlRect2Dirty="true" textRect="486,146,9,8">
+          <textProps text="Back"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="660,184" endpoint="660,184" ctrlRect1="733,182,4,4" ctrlRect2="726,128,4,4" ctrlRect2Dirty="true" textRect="725,153,12,8">
+          <textProps text="Refresh"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="637,207" endpoint="637,207" ctrlRect1="635,280,4,4" ctrlRect2="692,240,4,4" ctrlRect2Dirty="true" textRect="658,258,15,8">
+          <textProps text="ShowParams"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="637,207" endpoint="637,207" ctrlRect1="635,280,4,4" ctrlRect2="590,260,4,4" ctrlRect2Dirty="true" textRect="603,268,23,8">
+          <textProps text="ShowWorkflowParams"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="637,162" endpoint="637,162" ctrlRect1="615,151,4,4" ctrlRect2="564,29,4,4" ctrlRect2Dirty="true" ctrlRect1Dirty="true" textRect="579,88,24,8">
+          <textProps text="ShowParentWFDetails"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="637,162" endpoint="615,184" ctrlRect1="635,85,4,4" ctrlRect2="558,155,4,4" ctrlRect2Dirty="true" textRect="591,118,14,8">
+          <textProps text="Terminate"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="637,162" endpoint="637,162" ctrlRect1="635,85,4,4" ctrlRect2="664,122,4,4" ctrlRect2Dirty="true" textRect="645,101,12,8">
+          <textProps text="Restart"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="660,184" endpoint="890,48" ctrlRect1="1004,245,4,4" ctrlRect2="715,46,4,4" ctrlRect1Dirty="true" textRect="844,143,34,8">
+          <textProps text="$userAction ='ChildWFDetails'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="660,184" endpoint="977,305" ctrlRect1="895,182,4,4" ctrlRect2="737,303,4,4" textRect="804,240,29,8">
+          <textProps text="$userAction ='BackChild'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="660,184" endpoint="890,48" ctrlRect1="830,182,4,4" ctrlRect2="909,219,4,4" textRect="860,198,23,8" ctrlRect2Dirty="true">
+          <textProps text="ForkNodeLogDetails"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="660,184" endpoint="890,48" ctrlRect1="830,182,4,4" ctrlRect2="715,46,4,4">
+          <textProps/>
+        </nextNodeView>
+      </WorkflowNodeHistory>
+      <mgcnode Name="Workflow Log Viewer">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="659,399" endpoint="447,184" ctrlRect1="657,237,4,4" ctrlRect2="604,182,4,4" textRect="628,207,9,8">
+          <textProps text="Back"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="682,421" endpoint="816,503" ctrlRect1="780,419,4,4" ctrlRect2="814,439,4,4" textRect="782,427,35,8">
+          <textProps text="$userAction ='drillDownViewer'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="682,421" endpoint="977,305" ctrlRect1="900,419,4,4" ctrlRect2="753,303,4,4" textRect="816,359,25,8">
+          <textProps text="$userAction ='BackD'"/>
+        </nextNodeView>
+      </mgcnode>
+      <sub_workflow8>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="794,525" endpoint="682,421" ctrlRect1="708,523,4,4" ctrlRect2="764,419,4,4"/>
+      </sub_workflow8>
+      <sub_workflow12>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="890,48" endpoint="660,184" ctrlRect1="716,46,4,4" ctrlRect2="676,142,4,4" ctrlRect2Dirty="true"/>
+      </sub_workflow12>
+      <BranchNode>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="271,459" endpoint="637,421" ctrlRect1="506,469,4,4" ctrlRect2="495,464,4,4" textRect="492,464,20,8" ctrlRect1Dirty="true" ctrlRect2Dirty="true">
+          <textProps text="drillDownViewer"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="271,459" endpoint="615,184" ctrlRect1="821,407,4,4" ctrlRect2="419,35,4,4" textRect="613,219,19,8" ctrlRect1Dirty="true" ctrlRect2Dirty="true">
+          <textProps text="ChildWFDetails"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="248,482" endpoint="316,599" ctrlRect1="246,567,4,4" ctrlRect2="314,509,4,4" textRect="273,536,19,8">
+          <textProps text="logNodeDetails"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="226,459" endpoint="33,675" ctrlRect1="118,375,4,4" ctrlRect2="31,511,4,4" ctrlRect1Dirty="true" textRect="68,441,16,8">
+          <textProps text="NormalCase"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="248,482" endpoint="132,651" ctrlRect1="246,606,4,4" ctrlRect2="130,522,4,4">
+          <textProps/>
+        </nextNodeView>
+      </BranchNode>
+      <start>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="88,461" endpoint="226,459" ctrlRect1="143,457,4,4" ctrlRect2="120,457,4,4" ctrlRect1Dirty="true"/>
+      </start>
+      <logNodeDetails>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="316,599" endpoint="615,184" ctrlRect1="731,734,4,4" ctrlRect2="388,182,4,4" ctrlRect1Dirty="true" textRect="550,456,23,8">
+          <textProps text="showWorkflowParams"/>
+        </nextNodeView>
+      </logNodeDetails>
+      <ForkNodeLogs>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="56,697" endpoint="977,305" ctrlRect1="744,695,4,4" ctrlRect2="284,303,4,4">
+          <textProps text=""/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="56,697" endpoint="56,697" ctrlRect1="129,695,4,4" ctrlRect2="129,695,4,4">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="33,675" endpoint="33,675" ctrlRect1="31,598,4,4" ctrlRect2="172,467,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="56,697" endpoint="480,719" ctrlRect1="308,566,4,4" ctrlRect2="160,717,4,4" textRect="227,639,19,8" ctrlRect1Dirty="true">
+          <textProps text="ChildWFDetails"/>
+        </nextNodeView>
+      </ForkNodeLogs>
+      <sub_workflow19>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="480,719" endpoint="56,697" ctrlRect1="350,608,4,4" ctrlRect2="372,695,4,4" ctrlRect1Dirty="true"/>
+      </sub_workflow19>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+      <action/>
+    </pre_actions>
+    <post_actions>
+      <action/>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

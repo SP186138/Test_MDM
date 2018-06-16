@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+ 	 Copyright (c) 2009 by Teradata Corporation. 
+	 All Rights Reserved. 
+	 Teradata CONFIDENTIAL AND TRADE SECRET 
+ -->
+  <DEFINE_METHOD Name="TESTYES">
+    <RULE>
+      <ACTION>
+        <!--<SET Var="EDWPersist_Status" FromValue="No" Scope="Global"/>-->
+      <SET Var="TREMORMig_Status" FromValue="No" Scope="Global"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="TESTNO">
+    <RULE>
+      <ACTION>
+        <SET Var="var2" FromValue="NO"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="TESTPARAMETER">
+    <RULE>
+      <ACTION>
+        <SET Var="LOAD_ID" FromValue="100"/>
+        <EXECUTE_SHELL_COMMAND Value="TESTPARAM.BAT {$LOAD_ID}" AssignToVar="restest">
+        </EXECUTE_SHELL_COMMAND>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="TESTLOOP">
+    <RULE>
+      <ACTION>
+        <REQUEST Name="invokeTestTrilliumService" ServiceName="Trillium" AssignToVar="result" Synchronous="true" HandleException="true"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="TESTEMAIL">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="V_SRC_EMAIL_DETAIL" AssignToVar="resSrcEmail" DirtyRead="yes" ServiceName="BCM_MASTER">
+          <SELECT>
+            <SOURCE_ID/>
+            <REQ_MAIL_ID/>
+            <AGN_CON_MAIL_ID/>
+          </SELECT>
+          <GROUP_BY>
+            <SOURCE_ID/>
+            <REQ_MAIL_ID/>
+            <AGN_CON_MAIL_ID/>
+          </GROUP_BY>
+        </GET_DOCUMENT>
+        <TO_DOCVAR AssignToVar="srcdetails">
+          <ROOT>
+            <TO_XML SelectList="$resSrcEmail/*"/>
+          </ROOT>
+        </TO_DOCVAR>
+        <REQUEST Name="wrappersuccess" ServiceName="BCM_MASTER" AssignToVar="reswrapper" Synchronous="no">
+          <BatchId Value="{$concatenatedLoadIds}"/>
+          <TO_XML DocVar="srcdetails"/>
+        </REQUEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

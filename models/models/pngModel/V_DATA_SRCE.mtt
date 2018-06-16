@@ -1,0 +1,63 @@
+<document IsDocView="true">
+  <properties>
+    <property Name="REGIS_PRSNA_ID">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="REGIS_PRSNA_ID" />
+    </property>
+    <property Name="MKTNG_PGM_NBR">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="MKTNG_PGM_NBR" />
+    </property>
+    <property Name="LEGAL_ENT_NBR">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="LEGAL_ENT_NBR" />
+    </property>
+    <property Name="AGNCY_NBR">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="AGNCY_NBR" />
+    </property>
+    <property Name="AGNCY_NM" PhysicalName="AGNCY_NM">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="AGNCY_NM" />
+    </property>
+    <property Name="AGNCY_DESC" PhysicalName="AGNCY_DESC">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="AGNCY_DESC" />
+    </property>
+    <property Name="WEB_SITE_URL_TXT">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="WEB_SITE_URL_TXT" />
+    </property>
+  </properties>
+  <keys />
+  <links />
+  <docFacets>
+    <miscFacet Active="true" />
+    <mdmConfigFacet SchemaGen="false" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql OnMDMTables="true" IsSimpleView="true">REPLACE VIEW MDM.V_DATA_SRCE    &#xD;
+  AS LOCKING ROW FOR ACCESS   &#xD;
+SELECT   &#xD;
+   DS.AGNCY_NBR   &#xD;
+  ,DS.AGNCY_NM   &#xD;
+  ,DS.AGNCY_DESC   &#xD;
+  ,WS.WEB_SITE_URL_TXT   &#xD;
+  ,RP.REGIS_PRSNA_ID   &#xD;
+  ,RP.MKTNG_PGM_NBR   &#xD;
+  ,RP.LEGAL_ENT_NBR   &#xD;
+  ,NULL (INTEGER)   AS  SYS_TARGET_ID   &#xD;
+  ,NULL (VARCHAR(25))  AS SYS_AUTH_ID   &#xD;
+  ,NULL (VARCHAR(25))  AS SYS_SOURCE   &#xD;
+  ,NULL (VARCHAR(70))  AS SYS_CREATED_BY   &#xD;
+  ,NULL (TIMESTAMP(0))  AS SYS_CREATION_DATE   &#xD;
+  ,'ACTIVE'  (VARCHAR(25))  AS  SYS_ENT_STATE   &#xD;
+  ,NULL (VARCHAR(70))  AS SYS_LAST_MODIFIED_BY   &#xD;
+  ,NULL (TIMESTAMP(0))  AS SYS_LAST_MODIFIED_DATE   &#xD;
+  ,NULL (VARCHAR(25))  AS SYS_NC_TYPE   &#xD;
+  ,NULL (VARCHAR(10000))  AS SYS_ERR_CODE   &#xD;
+  ,NULL (VARCHAR(30))  AS SYS_ERR_SVRTY      &#xD;
+  FROM MDM.REGIS_PRSNA RP   &#xD;
+  INNER JOIN   &#xD;
+  MDM.AGNCY DS   &#xD;
+  ON   &#xD;
+  RP.SYS_TARGET_ID=DS.AGNCY_NBR  &#xD;
+  INNER JOIN   &#xD;
+  MDM.WEB_SITE WS   &#xD;
+  ON   &#xD;
+  DS.AGNCY_NBR= WS.AGNCY_NBR;</viewsql>
+</document>
+

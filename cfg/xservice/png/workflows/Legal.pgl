@@ -1,0 +1,372 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" name="studio.templates.simple_form" source="studio.controller:load" version="3">
+
+<ui:container id="topContainer" scrollable="true" type="Tabs">
+
+<ui:step displayText="CREATE LEGAL ENTITY" id="legal" scrollable="true" select="$root">
+
+<ui:field-group id="leftFields1" columns="3">
+
+<ui:image src="/bpi_check.gif" displayCondition="{string-length($root/AlertGreen/@Value) != 0}"/>
+
+<ui:display-field value="{$root/AlertGreen/@Value}" displayCondition="{string-length($root/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen"/>
+
+<ui:hidden-field id="ACTION_TYPE" name="ACTION_TYPE"/>
+
+</ui:field-group>
+
+<ui:field-group>
+
+<ui:display-field value="{$root/AlertRed/@Value}" displayCondition="{string-length($root/AlertRed/@Value) != 0}" name="error" class="requiredIndicator"/>
+
+</ui:field-group>
+
+<ui:field-group id="tableColumns1" columns="2" select="$this">
+  
+<ui:dropdown id="GEOC_REGN_CODE" name="GEOC_REGN_CODE" displayText="Geographic Region Code" optionSrc="$root/GEOC_REGN/GEOC_REGN_NAME" selectOne="true" onChange="javascript:loadProgramList();"/>
+
+<ui:dropdown id="GEOC_SUB_REGN_CODE" name="GEOC_SUB_REGN_CODE" displayText="Geographic Sub Region Code" optionSrc="$root/GEOC_SUB_REGN/OPTION" selectOne="true"/>
+
+<ui:entry-field id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR" displayText="Legal Entity Number" required="true" />
+
+<ui:entry-field id="LEGAL_ENT_NAME" name="LEGAL_ENT_NAME" displayText="Legal Entity Name" />
+
+<ui:entry-field id="LEGAL_ENT_SHORT_NAME" name="LEGAL_ENT_SHORT_NAME" displayText="Legal Entity Short Name" size="30"/>
+
+<ui:entry-field id="LEGAL_ENT_DESC" name="LEGAL_ENT_DESC" displayText="Legal Entity Description"/>
+
+<ui:dropdown id="ENTITY_STATE" name="ENTITY_STATE" displayText="Entity State">
+<ui:option id="ACTIVE" value="ACTIVE"/>
+<ui:option id="INACTIVE" value="INACTIVE"/>
+<ui:option id="NEW" value="NEW"/>
+<ui:option id="DELETED" value="DELETED"/>
+</ui:dropdown>
+
+</ui:field-group>
+
+<ui:buttons>
+
+<ui:button id="CANCEL" name="CANCEL" displayText="Return" onClick="javascript:onCancel();"/>
+
+<ui:divider/>
+
+<ui:button id="ADD" name="ADD" displayText="Save" emphasized="true"/>
+
+</ui:buttons>
+
+</ui:step>
+
+</ui:container>
+
+<ui:hr/>
+
+<ui:script>
+
+/*
+function onCancel(){
+
+var formchanged=isFormChanged();
+
+if(formchanged){
+
+var cancelMessage = &quot;Modified information will be discarded, Do you want to continue?&quot;;
+
+if (	core_confirm( cancelMessage ) == 'yes' ){
+
+form.BUTTON_ID.value = &quot;CANCEL&quot; ;
+
+form.submit();
+
+}else{
+
+return;
+
+}
+
+}else{
+
+form.BUTTON_ID.value = &quot;CANCEL&quot; ;
+
+form.submit();
+
+}
+
+    
+
+}
+*/
+
+
+function onCancel(){
+var formchanged=isFormChanged();
+if(formchanged){
+//var cancelMessage = &quot;Modified information will be discarded, Do you want to continue?&quot;;
+core_confirm_jquery('Modified information will be discarded, Do you want to continue?','onConfirmCancel');
+
+}else{
+form.BUTTON_ID.value = &quot;CANCEL&quot; ;
+form.submit();
+}
+}
+
+function onConfirmCancel(response)
+{
+if (response == 'yes' ){
+form.BUTTON_ID.value = &quot;CANCEL&quot; ;
+form.submit();
+}else{
+return;
+}
+}
+
+
+function loadProgramList(){
+
+document.form.BUTTON_ID.value = 'LOAD_PROGRAM_LIST';
+
+document.form.action = 'view.x2ps';
+
+document.form.submit();
+
+}
+
+function openINCTV()
+
+{
+
+
+
+//trapExcelPivotChanges();
+
+
+
+var isMKTNG_PGM_NBR=document.getElementById('MKTNG_PGM_NBR').options[document.getElementById('MKTNG_PGM_NBR').selectedIndex].value;
+
+ 
+
+/*var LEGAL_ENT_NBR=document.getElementById('LEGAL_ENT_NBR').options[document.getElementById('LEGAL_ENT_NBR').selectedIndex].value;*/
+
+
+
+if(isMKTNG_PGM_NBR=='')
+
+{core_alert('Please select Program Name ');
+
+return ;
+
+}
+
+else
+
+{
+
+document.form.BUTTON_ID.value = 'GET_INCTV_NBR';
+
+document.form.action = 'view.x2ps';
+
+document.form.submit();
+
+/*
+
+var url= 'start.x2ps?START_WORKFLOW=IncentiveMgmt&amp;SERVICE_NAME=BCM_MASTER&amp;SELECT_WF=SearchIncentive&amp;TYPE=Select&amp;MKTNG_PGM_NBR='+isMKTNG_PGM_NBR+'&amp;LEGAL_ENT_NBR='+LEGAL_ENT_NBR+'&amp;SOURCE=CNTNT_ELEM';
+
+disableButtons();
+
+window.open(url,null,'width=800,height=600');
+
+url=url+'BUTTON_ID=SYS_REFRESH';
+
+url=url+'PAGE=BCM_MASTER.IncentiveMgmt.SearchIncentive.pgl';
+
+    
+
+url=url+'&amp;MKTNG_PGM_NBR='+isMKTNG_PGM_NBR+'&amp;LEGAL_ENT_NBR='+LEGAL_ENT_NBR+'&amp;SOURCE=CNTNT_ELEM';
+
+disableButtons();
+
+alert(url);
+
+window.open(url,null,'width=800,height=600');
+
+*/
+
+}
+
+}
+
+
+
+function removeInctvNbr(){
+
+document.getElementById('INCTV_NBR').value='';
+
+}
+
+function isFormChanged() {
+
+var rtnVal = false;
+
+var frm = document.forms[0];
+
+var ele = frm.elements;
+
+for ( i=0; i &lt; ele.length; i++ ) {
+
+if ( ele[i].type.length > 0 ) {
+
+if ( isElementChanged( ele, i ) ) {
+
+rtnVal = true;
+
+break;
+
+}
+
+}
+
+}
+
+return rtnVal;
+
+}
+
+function isElementChanged( ele, i ) {
+
+var isEleChanged = false;
+
+switch ( ele[i].type ) {
+
+case &quot;text&quot; :
+
+if ( ele[i].value != ele[i].defaultValue ){
+
+return true;
+
+}
+
+break;
+
+
+
+case &quot;textarea&quot; :
+
+if ( ele[i].value != ele[i].defaultValue ) return true;
+
+break;
+
+
+
+case &quot;radio&quot; :
+
+val = &quot;&quot;;
+
+if ( ele[i].checked != ele[i].defaultChecked ) return true;
+
+break;
+
+
+
+case &quot;select-one&quot; :
+
+for ( var x =0 ; x &lt; ele[i].length; x++ ) {
+
+if(ele[i].name!='LEGAL_ENT_NBR'){
+
+if(ele[i].value!='' ){
+
+if ( ele[i].options[ x ].selected != ele[i].options[ x ].defaultSelected ){
+
+return true;
+
+}
+
+}
+
+}
+
+}
+
+break;
+
+
+
+case &quot;select-multiple&quot; :
+
+for ( var x =0 ; x &lt; ele[i].length; x++ ) {
+
+if ( ele[i].options[ x ].selected
+
+!= ele[i].options[ x ].defaultSelected )
+
+return true;
+
+}
+
+break;
+
+
+
+case &quot;checkbox&quot; :
+
+if ( ele[i].checked != ele[i].defaultChecked ) return true;
+
+  
+
+default:
+
+return false;
+
+break;
+
+}
+
+}
+
+function on_Save(){
+
+var bIsValid = true;
+
+document.form.SUBMIT_AS_XML.value = 'false';
+
+
+
+bIsValid = (isValid_country());
+
+	
+
+if( bIsValid == false )
+
+{
+
+validation_alert('country');
+
+}
+
+if ( bIsValid == true){
+
+var isFormValid = validateForm();
+
+if(isFormValid){
+
+document.form.BUTTON_ID.value = 'ADD';
+
+document.form.action = 'view.x2ps';
+
+document.form.submit();
+
+}
+
+else return;
+
+}
+
+return;
+
+}
+
+
+
+
+</ui:script>
+
+</ui:page-group>
+

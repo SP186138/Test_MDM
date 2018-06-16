@@ -1,0 +1,419 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="12" ShowInBreadCrumbs="true" Version="1.0" Name="Main_wf" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="Main_wf">
+    <variable Name="PROCESS_NAME" Type="string" Comment=""/>
+    <variable Name="PROCESS_START_TIME" Type="date" Comment=""/>
+    <variable Name="Error_Msg_Txt" Type="string" Comment=""/>
+    <variable Name="LOAD_ID" Type="string" Comment=""/>
+    <variable Name="BATCH_ID" Type="string" Comment=""/>
+    <variable Name="resLoad" Type="xml" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="Start">
+      <actions>
+        <action>
+          <SET Var="Success_Error_Message" FromValue="null" Scope="Global"/>
+          <SET Var="MainWf_Status" FromValue="Yes" Scope="Global"/>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Validations"/>
+      </next_nodes>
+    </start>
+    <task Name="Validations">
+      <actions>
+        <action>
+          <SET Var="PROCESS_NAME" FromValue="Validations"/>
+          <SET Var="PROCESS_START_TIME" FromValue="{date()}"/>
+          <PRINT Value="Variables set"/>
+          <REQUEST Name="getIDGeneratedBatch" AssignToVar="resBatchId" ServiceName="BCM_MASTER"/>
+          <SET Var="BATCH_ID" FromValue="{$resBatchId/BatchID/@Value}"/>
+          <REQUEST Name="Validation_Rule" AssignToVar="thisReturn"/>
+          <IF_TEST Test="$thisReturn/Message/@Value ='Validation Successful'">
+            <THEN>
+              <GET_DOC_SMART Name="PRSNA_STG" AssignToVar="resLoad" DirtyRead="true">
+                <SELECT>
+                  <LOAD_ID/>
+                  <SOURCE/>
+                  <SYS_TYPE/>
+                </SELECT>
+                <SYNC_STATUS Value="VALIDATED"/>
+                <GROUP_BY>
+                  <LOAD_ID/>
+                  <SOURCE/>
+                  <SYS_TYPE/>
+                </GROUP_BY>
+              </GET_DOC_SMART>
+            </THEN>
+            <ELSE/>
+          </IF_TEST>
+          <!--</REQUEST><TO_DOCVAR AssignToVar="thisReturn">
+    <SUCCESS>
+      <Message Value="Validation Successful"/>
+    </SUCCESS>
+  </TO_DOCVAR>-->
+        </action>
+      </actions>
+      <next_nodes OutputVar="{thisReturn,xml}">
+        <next_node Name="Validate_decision"/>
+      </next_nodes>
+    </task>
+    <decision Name="Validate_decision">
+      <actions>
+        <action>
+          <IF_TEST Test="$thisReturn/Message/@Value ='Validation Successful'">
+            <THEN>
+              <SET Var="Validation" FromValue="Success"/>
+            </THEN>
+            <ELSE>
+              <SET Var="Validation" FromValue="Failure"/>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </actions>
+      <condition Value="$Validation='Success'"/>
+      <if_true>
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Trillium_Rules" Description="$Validation='Success'"/>
+        </next_nodes>
+      </if_true>
+      <if_false>
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Failed_Validations" Description=""/>
+        </next_nodes>
+      </if_false>
+    </decision>
+    <task Name="Trillium_Rules">
+      <actions>
+        <action>
+          <FOR_EACH CurrentElement="currLoad" SelectList="$resLoad/*">
+            <ADD_DOC_SMART Name="LOAD_INFO">
+              <LOAD_ID Value="{$currLoad/LOAD_ID/@Value}"/>
+              <PROCESS_NAME Value="{$PROCESS_NAME/@Value}"/>
+              <PROCESS_START_TIME Value="{$PROCESS_START_TIME/@Value}"/>
+              <PROCESS_END_TIME Value="{date()}"/>
+              <NC_TYPE Value="{$currLoad/SYS_TYPE/@Value}"/>
+              <BATCH_ID Value="{$BATCH_ID}"/>
+              <!--<ERROR_MSG_TXT Value="{$thisParam/ERROR_MSG_TXT/@Value}"/>-->
+              <STATUS Value="Success"/>
+            </ADD_DOC_SMART>
+          </FOR_EACH>
+          <SET Var="PROCESS_NAME" FromValue="Trillium"/>
+          <SET Var="PROCESS_START_TIME" FromValue="{date()}"/>
+          <REQUEST Name="Trillium_Rule" AssignToVar="thisReturn"/>
+          <!--<TO_DOCVAR AssignToVar="thisReturn">
+    <SUCCESS>
+      <Message Value="Trillium Process Successful"/>
+    </SUCCESS>
+  </TO_DOCVAR>-->
+        </action>
+      </actions>
+      <next_nodes OutputVar="{thisReturn,xml}">
+        <next_node Name="Trillium_decision"/>
+      </next_nodes>
+    </task>
+    <decision Name="Trillium_decision">
+      <actions>
+        <action>
+          <IF_TEST Test="$thisReturn/Message/@Value ='Trillium Rule Successful'">
+            <THEN>
+              <SET Var="Trillium" FromValue="Success"/>
+            </THEN>
+            <ELSE>
+              <SET Var="Trillium" FromValue="Failure"/>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </actions>
+      <condition Value="$Trillium='Success'"/>
+      <if_true>
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Wrapper_Rules" Description="$Trillium='Success'"/>
+        </next_nodes>
+      </if_true>
+      <if_false>
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Failed_Trillium" Description=""/>
+        </next_nodes>
+      </if_false>
+    </decision>
+    <task Name="Wrapper_Rules">
+      <actions>
+        <action>
+          <FOR_EACH CurrentElement="currLoad" SelectList="$resLoad/*">
+            <ADD_DOC_SMART Name="LOAD_INFO">
+              <LOAD_ID Value="{$currLoad/LOAD_ID/@Value}"/>
+              <PROCESS_NAME Value="{$PROCESS_NAME/@Value}"/>
+              <PROCESS_START_TIME Value="{$PROCESS_START_TIME/@Value}"/>
+              <PROCESS_END_TIME Value="{date()}"/>
+              <NC_TYPE Value="{$currLoad/SYS_TYPE/@Value}"/>
+              <BATCH_ID Value="{$BATCH_ID}"/>
+              <!--<ERROR_MSG_TXT Value="{$thisParam/ERROR_MSG_TXT/@Value}"/>-->
+              <STATUS Value="Success"/>
+            </ADD_DOC_SMART>
+          </FOR_EACH>
+          <SET Var="PROCESS_NAME" FromValue="Wrapper"/>
+          <SET Var="PROCESS_START_TIME" FromValue="{date()}"/>
+          <REQUEST Name="Wrapper_rule" ServiceName="BCM_MASTER" AssignToVar="thisReturn">
+            <BatchId Value="{$BATCH_ID}"/>
+          </REQUEST>
+          <!--<SUCCESS>
+<Message Value="Wrapper Rule Successful"/>
+</SUCCESS>
+</TO_DOCVAR>
+<FAILURE>
+<Message Value="Wrapper Rule Failed"/>
+</FAILURE>-->
+        </action>
+      </actions>
+      <next_nodes OutputVar="{thisReturn,xml}">
+        <next_node Name="Wrapper_decision"/>
+      </next_nodes>
+    </task>
+    <decision Name="Wrapper_decision">
+      <actions>
+        <action>
+          <IF_TEST Test="$thisReturn/Message/@Value ='Wrapper Rule Successful'">
+            <THEN>
+              <SET Var="Wrapper" FromValue="Success"/>
+            </THEN>
+            <ELSE>
+              <SET Var="Wrapper" FromValue="Failure"/>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </actions>
+      <condition Value="$Wrapper='Success'"/>
+      <if_true>
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Done" Description="$Wrapper = 'Success'"/>
+        </next_nodes>
+      </if_true>
+      <if_false>
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Failed_Wrapper" Description=""/>
+        </next_nodes>
+      </if_false>
+    </decision>
+    <done Name="Done">
+      <actions>
+        <action>
+          <FOR_EACH CurrentElement="currLoad" SelectList="$resLoad/*">
+            <ADD_DOC_SMART Name="LOAD_INFO">
+              <LOAD_ID Value="{$currLoad/LOAD_ID/@Value}"/>
+              <PROCESS_NAME Value="{$PROCESS_NAME/@Value}"/>
+              <PROCESS_START_TIME Value="{$PROCESS_START_TIME/@Value}"/>
+              <PROCESS_END_TIME Value="{date()}"/>
+              <NC_TYPE Value="{$currLoad/SYS_TYPE/@Value}"/>
+              <BATCH_ID Value="{$BATCH_ID}"/>
+              <!--<ERROR_MSG_TXT Value="{$thisParam/ERROR_MSG_TXT/@Value}"/>-->
+              <STATUS Value="Success"/>
+            </ADD_DOC_SMART>
+          </FOR_EACH>
+          <!--<EXECUTE_SHELL_COMMAND Value="MDM_STATUS.BAT" AssignToVar="resMdmStatus"/>-->
+          <!--<EXECUTE_SQL_QUERY Value="UPDATE MDM.PRSNA_POSTL_ADDR_STG FROM(SELECT MKTNG_PGM_NBR,REGIS_CNSMR_ID_VAL,DR_ADDRESS,DR_ADDRESS2,DR_ADDRESS3,DR_STREET_NAME, DR_HOUSE_NUMBER2, DR_POBOX_NUMBER, DR_CITY_NAME, DR_REGION_NAME, DR_POSTAL_CODE,DR_COUNTRY_NAME,SYS_SOURCE,SYS_NC_TYPE FROM MDM.TRILLIUM_OUTPUT GROUP BY MKTNG_PGM_NBR, REGIS_CNSMR_ID_VAL, DR_ADDRESS, DR_ADDRESS2, DR_ADDRESS3, DR_STREET_NAME, DR_HOUSE_NUMBER2, DR_POBOX_NUMBER, DR_CITY_NAME, DR_REGION_NAME, DR_POSTAL_CODE, DR_COUNTRY_NAME,SYS_SOURCE,SYS_NC_TYPE ) A SET T_ADDR_LINE_1_TXT = A.DR_ADDRESS , T_ADDR_LINE_2_TXT = A.DR_ADDRESS2 , T_ADDR_LINE_3_TXT = A.DR_ADDRESS3, T_STRET_NAME = A.DR_STREET_NAME , T_APT_NUM = A.DR_HOUSE_NUMBER2 ,   T_PO_BOX_NUM = A.DR_POBOX_NUMBER ,  T_CITY_NAME = A.DR_CITY_NAME ,   T_TERR_NAME = A.DR_REGION_NAME ,    T_POSTL_AREA_NBR = A.DR_POSTAL_CODE,  T_CNTRY_NAME = A.DR_COUNTRY_NAME  WHERE MDM.PRSNA_POSTL_ADDR_STG.MKTNG_PGM_NBR= A.MKTNG_PGM_NBR   AND MDM.PRSNA_POSTL_ADDR_STG.REGIS_CNSMR_ID_VAL= A.REGIS_CNSMR_ID_VAL AND MDM.PRSNA_POSTL_ADDR_STG.SYS_SOURCE = A.SYS_SOURCE AND MDM.PRSNA_POSTL_ADDR_STG.SYS_NC_TYPE = A.SYS_NC_TYPE;" AssignToVar="result"/>-->
+          <!--<EXECUTE_SHELL_COMMAND Value="CNSMR_Error.BAT" AssignToVar="resCnsmrErr"/> -->
+          <REQUEST Name="rejectedLoadID">
+            <BatchId Value="{$BATCH_ID}"/>
+          </REQUEST>
+          <GET_DOCUMENT Name="V_SRC_EMAIL_DETAIL" AssignToVar="resSrcEmail" DirtyRead="yes" ServiceName="BCM_MASTER">
+            <SELECT>
+              <SOURCE_ID/>
+              <REQ_MAIL_ID/>
+            </SELECT>
+            <GROUP_BY>
+              <SOURCE_ID/>
+              <REQ_MAIL_ID/>
+            </GROUP_BY>
+          </GET_DOCUMENT>
+          <TO_DOCVAR AssignToVar="srcdetails">
+            <ROOT>
+              <TO_XML SelectList="$resSrcEmail/*"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <REQUEST Name="wrappersuccess" AssignToVar="reswrapper" ServiceName="BCM_MASTER" Synchronous="no">
+            <BatchId Value="{$BATCH_ID}"/>
+            <TO_XML DocVar="srcdetails"/>
+          </REQUEST>
+          <EXECUTE_SHELL_COMMAND Value="MDM_STATUS.BAT" AssignToVar="resMdmStatus"/>
+          <SET Var="MainWf_Status" FromValue="No" Scope="Global"/>
+        </action>
+      </actions>
+      <next_nodes/>
+    </done>
+    <task Name="Failed_Validations">
+      <actions>
+        <action>
+          <!--<FOR_EACH CurrentElement="currLoad" SelectList="$resLoad/*">-->
+          <MODIFY_DOC_SMART Name="LOAD_INFO">
+            <DOCUMENT_CONTEXT>
+              <BATCH_ID/>
+            </DOCUMENT_CONTEXT>
+            <UPDATE_PROPERTIES>
+              <BATCH_ID Value="{$BATCH_ID}"/>
+              <ERROR_MSG_TXT Value="{$thisReturn/Message/@Value}"/>
+            </UPDATE_PROPERTIES>
+          </MODIFY_DOC_SMART>
+          <EXECUTE_SHELL_COMMAND Value="MDM_STATUS.BAT" AssignToVar="resMdmStatus"/>
+          <GET_DOCUMENT Name="LOAD_INFO" AssignToVar="resLoad" DirtyRead="yes" ServiceName="BCM_MASTER">
+            <SELECT>
+              <LOAD_ID/>
+            </SELECT>
+            <BATCH_ID Value="{$BATCH_ID}"/>
+            <STATUS Value="Failure-BadFile"/>
+          </GET_DOCUMENT>
+          <IF_TEST Test="$resLoad/LOAD_INFO/LOAD_ID != null ">
+            <THEN>
+              <REQUEST Name="emailOnBadFile">
+                <BatchId Value="{$BATCH_ID}"/>
+                <Subject Value="Load Id Not Processed - BadFile"/>
+              </REQUEST>
+            </THEN>
+            <ELSE>
+              <REQUEST Name="emailOnErrorNode">
+                <BatchId Value="{$BATCH_ID}"/>
+                <Subject Value="Validation Failure"/>
+              </REQUEST>
+            </ELSE>
+          </IF_TEST>
+          <SET Var="MainWf_Status" FromValue="No" Scope="Global"/>
+        </action>
+      </actions>
+      <next_nodes/>
+    </task>
+    <task Name="Failed_Trillium">
+      <actions>
+        <action>
+          <FOR_EACH CurrentElement="currLoad" SelectList="$resLoad/*">
+            <ADD_DOC_SMART Name="LOAD_INFO">
+              <LOAD_ID Value="{$currLoad/LOAD_ID/@Value}"/>
+              <PROCESS_NAME Value="{$PROCESS_NAME/@Value}"/>
+              <PROCESS_START_TIME Value="{$PROCESS_START_TIME/@Value}"/>
+              <PROCESS_END_TIME Value="{date()}"/>
+              <NC_TYPE Value="{$currLoad/SYS_TYPE/@Value}"/>
+              <BATCH_ID Value="{$BATCH_ID}"/>
+              <ERROR_MSG_TXT Value="{$thisReturn/Message/@Value}"/>
+              <STATUS Value="Failed"/>
+            </ADD_DOC_SMART>
+          </FOR_EACH>
+          <EXECUTE_SHELL_COMMAND Value="MDM_STATUS.BAT" AssignToVar="resMdmStatus"/>
+          <REQUEST Name="emailOnErrorNode">
+            <BatchId Value="{$BATCH_ID}"/>
+            <Subject Value="Trillium Failure"/>
+          </REQUEST>
+          <SET Var="MainWf_Status" FromValue="No" Scope="Global"/>
+        </action>
+      </actions>
+      <next_nodes/>
+    </task>
+    <task Name="Failed_Wrapper">
+      <actions>
+        <action>
+          <FOR_EACH CurrentElement="currLoad" SelectList="$resLoad/*">
+            <ADD_DOC_SMART Name="LOAD_INFO">
+              <LOAD_ID Value="{$currLoad/LOAD_ID/@Value}"/>
+              <PROCESS_NAME Value="{$PROCESS_NAME/@Value}"/>
+              <PROCESS_START_TIME Value="{$PROCESS_START_TIME/@Value}"/>
+              <PROCESS_END_TIME Value="{date()}"/>
+              <NC_TYPE Value="{$currLoad/SYS_TYPE/@Value}"/>
+              <BATCH_ID Value="{$BATCH_ID}"/>
+              <ERROR_MSG_TXT Value="{$thisReturn/Message/@Value}"/>
+              <STATUS Value="Failed"/>
+            </ADD_DOC_SMART>
+          </FOR_EACH>
+          <EXECUTE_SHELL_COMMAND Value="MDM_STATUS.BAT" AssignToVar="resMdmStatus"/>
+          <REQUEST Name="emailOnErrorNode">
+            <BatchId Value="{$BATCH_ID}"/>
+            <Subject Value="Wrapper Failure"/>
+          </REQUEST>
+          <SET Var="MainWf_Status" FromValue="No" Scope="Global"/>
+        </action>
+      </actions>
+      <next_nodes/>
+    </task>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <Start font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="65,170" size="732,534">
+        <iconProps iconfile="z1start.gif"/>
+      </Start>
+      <Validations font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="178,169" size="732,560">
+        <iconProps iconfile="z1task.gif"/>
+      </Validations>
+      <Validate_decision font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="291,83" size="732,608">
+        <iconProps iconfile="z1decision.gif"/>
+      </Validate_decision>
+      <Trillium_Rules font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="461,82" size="732,560">
+        <iconProps iconfile="z1task.gif"/>
+      </Trillium_Rules>
+      <Trillium_decision font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="553,163" size="732,608">
+        <iconProps iconfile="z1decision.gif"/>
+      </Trillium_decision>
+      <Wrapper_Rules font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="439,272" size="732,560">
+        <iconProps iconfile="z1task.gif"/>
+      </Wrapper_Rules>
+      <Wrapper_decision font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="303,278" size="732,608">
+        <iconProps iconfile="z1decision.gif"/>
+      </Wrapper_decision>
+      <Done font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="130,274" size="1024,715">
+        <iconProps iconfile="z1end.gif"/>
+      </Done>
+      <Failed_Validations font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="397,25" size="732,622">
+        <iconProps iconfile="z1task.gif"/>
+      </Failed_Validations>
+      <Failed_Trillium font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="643,114" size="732,560">
+        <iconProps iconfile="z1task.gif"/>
+      </Failed_Trillium>
+      <Failed_Wrapper font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="315,384" size="732,560">
+        <iconProps iconfile="z1task.gif"/>
+      </Failed_Wrapper>
+    </mgcnodes>
+    <mgcconnectors>
+      <Start>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="110,192" endpoint="178,191" ctrlRect1="159,190,4,4" ctrlRect2="125,189,4,4"/>
+      </Start>
+      <Validations>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="200,169" endpoint="291,105" ctrlRect1="198,119,4,4" ctrlRect2="220,103,4,4"/>
+      </Validations>
+      <Validate_decision>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,0" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="336,105" endpoint="461,104" ctrlRect1="427,103,4,4" ctrlRect2="365,102,4,4">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="178,0,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="336,105" endpoint="397,47" ctrlRect1="379,103,4,4" ctrlRect2="349,45,4,4">
+          <textProps/>
+        </nextNodeView>
+      </Validate_decision>
+      <Trillium_Rules>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="506,104" endpoint="575,163" ctrlRect1="555,102,4,4" ctrlRect2="573,116,4,4"/>
+      </Trillium_Rules>
+      <Trillium_decision>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,0" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="575,208" endpoint="484,294" ctrlRect1="573,270,4,4" ctrlRect2="462,292,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="178,0,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="598,185" endpoint="643,136" ctrlRect1="629,183,4,4" ctrlRect2="607,134,4,4">
+          <textProps/>
+        </nextNodeView>
+      </Trillium_decision>
+      <Wrapper_Rules>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="439,294" endpoint="348,300" ctrlRect1="370,292,4,4" ctrlRect2="415,298,4,4"/>
+      </Wrapper_Rules>
+      <Wrapper_decision>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,0" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="303,300" endpoint="175,296" ctrlRect1="205,298,4,4" ctrlRect2="334,306,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="178,0,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="325,323" endpoint="337,384" ctrlRect1="323,366,4,4" ctrlRect2="335,336,4,4"/>
+      </Wrapper_decision>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+      <action/>
+    </pre_actions>
+    <post_actions>
+      <action/>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

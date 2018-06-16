@@ -1,0 +1,412 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="4" ShowInBreadCrumbs="true" Version="1.0" Name="CreatePredfndTrtWF" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="CreatePredfndTrtWF">
+    <variable Name="TRT_NBR_1" Type="string" Comment=""/>
+    <variable Name="TRT_NAME_1" Type="string" Comment=""/>
+    <variable Name="TRT_NAME_LOCAL_1" Type="string" Comment=""/>
+    <variable Name="LEGAL_ENT_NBR_1" Type="string" Comment=""/>
+    <variable Name="MKTNG_PGM_NBR_1" Type="string" Comment=""/>
+    <variable Name="PREDFND_TRT_VAL_NBR_1" Type="string" Comment=""/>
+    <variable Name="PREDFND_TRT_VAL_NAME_1" Type="string" Comment=""/>
+    <variable Name="PREDFND_TRT_TXT_1" Type="string" Comment=""/>
+    <variable Name="selected_PREDFND_TRT" Type="string" Comment=""/>
+    <variable Name="PRE_TRT_NBR" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start0">
+      <actions>
+        <action>
+          <SET Var="PREDFND_TRT_VAL_NBR_1" FromValue="{substringBefore($thisParam/selected_ID_1/@Value, '#')}"/>
+          <SET Var="PREDFND_TRT_VAL_NBR_1" FromValue="{substringAfter($PREDFND_TRT_VAL_NBR_1, '=')}"/>
+          <SET Var="selected_ID_2" FromValue="{substringAfter($thisParam/selected_ID_1/@Value, '#')}"/>
+          <SET Var="PREDFND_TRT_VAL_NAME_1" FromValue="{substringBefore($selected_ID_2/@Value, '#')}"/>
+          <SET Var="PREDFND_TRT_VAL_NAME_1" FromValue="{substringAfter($PREDFND_TRT_VAL_NAME_1, '=')}"/>
+          <SET Var="PREDFND_TRT_TXT_1" FromValue="{substringAfter($selected_ID_2/@Value, '#')}"/>
+          <SET Var="PREDFND_TRT_TXT_1" FromValue="{substringAfter($PREDFND_TRT_TXT_1, '=')}"/>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="ComparePredefinedTrait"/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="ComparePredefinedTrait" ShowInBreadCrumbs="HIDE" Template="ComparePredefinedTrait.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <root/>
+          </TO_DOCVAR>
+          <FOR_EACH SelectList="$thisParam/DocumentAttributes" CurrentElement="currElem">
+            <IF_TEST Test="$currElem/AttributeID/@Value= 'TRT_NBR'">
+              <THEN>
+                <SET Var="TRT_NBR_1" FromValue="{$currElem/AttributeValue/@Value}"/>
+              </THEN>
+              <ELSE>
+                <IF_TEST Test="$currElem/AttributeID/@Value ='TRT_NAME'">
+                  <THEN>
+                    <SET Var="TRT_NAME_1" FromValue="{$currElem/AttributeValue/@Value}"/>
+                  </THEN>
+                  <ELSE>
+                    <IF_TEST Test="$currElem/AttributeID/@Value ='LEGAL_ENT_NBR'">
+                      <THEN>
+                        <SET Var="LEGAL_ENT_NBR_1" FromValue="{$currElem/AttributeValue/@Value}"/>
+                      </THEN>
+                      <ELSE>
+                        <IF_TEST Test="$currElem/AttributeID/@Value ='MKTNG_PGM_NBR'">
+                          <THEN>
+                            <SET Var="MKTNG_PGM_NBR_1" FromValue="{$currElem/AttributeValue/@Value}"/>
+                          </THEN>
+                          <ELSE>
+                            <IF_TEST Test="$currElem/AttributeID/@Value ='TRT_NAME_LOCAL'">
+                              <THEN>
+                                <SET Var="TRT_NAME_LOCAL_1" FromValue="{$currElem/AttributeValue/@Value}"/>
+                              </THEN>
+                            </IF_TEST>
+                          </ELSE>
+                        </IF_TEST>
+                      </ELSE>
+                    </IF_TEST>
+                  </ELSE>
+                </IF_TEST>
+              </ELSE>
+            </IF_TEST>
+          </FOR_EACH>
+          <IF_TEST Test="$userAction='Search'">
+            <THEN>
+              <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+                <TRT_NBR/>
+                <TRT_NAME/>
+                <PREDFND_TRT_VAL_NBR/>
+                <PREDFND_TRT_VAL_NAME/>
+                <PREDFND_TRT_VAL_NAME_ENG/>
+              </FORM_SEARCH_FILTER>
+              <TO_DOCVAR AssignToVar="filterList">
+                <FILTERLIST/>
+              </TO_DOCVAR>
+              <FOR_EACH SelectList="$filters/FILTER" CurrentElement="thisFilter">
+                <APPEND_TO_XML SelectList="$filterList">
+                  <TO_XML SelectList="$thisFilter/*"/>
+                </APPEND_TO_XML>
+              </FOR_EACH>
+              <GET_DOC_SMART Name="PREDFND_TRT_VAL" AssignToVar="GET_PREDFND_TRT" ServiceName="BCM_MASTER" HandleException="true" MaxRows="50">
+                <TO_XML SelectList="$filterList/*"/>
+                <SELECT>
+                  <TRT_NBR/>
+                  <PREDFND_TRT_VAL_NBR/>
+                  <PREDFND_TRT_DATE/>
+                  <PREDFND_TRT_TXT/>
+                  <PREDFND_TRT_VAL_NAME/>
+                  <PREDFND_TRT_DESC/>
+                  <LANG_CODE/>
+                </SELECT>
+                <ORDER_BY>
+                  <PREDFND_TRT_VAL_NBR SORT="Descending"/>
+                </ORDER_BY>
+              </GET_DOC_SMART>
+            </THEN>
+            <ELSE>
+              <!--<GET_DOC_SMART Name="PREDFND_TRT_VAL" AssignToVar="GET_PREDFND_TRT" ServiceName="BCM_MASTER" HandleException="true">
+                <SELECT>
+                  <TRT_NBR/>
+                  <PREDFND_TRT_VAL_NBR/>
+                  <PREDFND_TRT_DATE/>
+                  <PREDFND_TRT_TXT/>
+                  <PREDFND_TRT_VAL_NAME/>
+                  <PREDFND_TRT_DESC/>
+                  <LANG_CODE/>
+                </SELECT>
+              </GET_DOC_SMART>-->
+              <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+                <FILTER_TRT_NBR Value="{$TRT_NBR_1/@Value}" AddOn="true"/>
+                <FILTER_PREDFND_TRT_VAL_NBR/>
+                <FILTER_PREDFND_TRT_DATE/>
+                <FILTER_PREDFND_TRT_TXT/>
+                <FILTER_PREDFND_TRT_VAL_NAME/>
+                <FILTER_PREDFND_TRT_DESC/>
+                <FILTER_LANG_CODE/>
+              </FORM_SEARCH_FILTER>
+              <FOR_EACH SelectList="$filters/*/*" CurrentElement="currentSearchColumn">
+                <SET_NAME DocVar="currentSearchColumn" FromValue="{substringAfter($currentSearchColumn/name(),'FILTER_')}"/>
+              </FOR_EACH>
+              <TO_DOCVAR AssignToVar="filterList">
+                <FILTERLIST/>
+              </TO_DOCVAR>
+              <FOR_EACH SelectList="$filters/FILTER" CurrentElement="thisFilter">
+                <APPEND_TO_XML SelectList="$filterList">
+                  <TO_XML SelectList="$thisFilter/*"/>
+                </APPEND_TO_XML>
+              </FOR_EACH>
+              <SET Var="startRow1" FromValue="{$thisParam/START_COUNT/@Value}"/>
+              <GET_DOC_SMART Name="PREDFND_TRT_VAL" AssignToVar="GET_PREDFND_TRT" ServiceName="BCM_MASTER" HandleException="true" MaxRows="50" ReturnRowCount="yes" StartAtRow="{$startRow1}">
+                <TO_XML SelectList="$filterList/*"/>
+                <SELECT>
+                  <TRT_NBR/>
+                  <PREDFND_TRT_VAL_NBR/>
+                  <PREDFND_TRT_DATE/>
+                  <PREDFND_TRT_TXT/>
+                  <PREDFND_TRT_VAL_NAME/>
+                  <PREDFND_TRT_DESC/>
+                  <LANG_CODE/>
+                </SELECT>
+                <ORDER_BY>
+                  <PREDFND_TRT_VAL_NBR SORT="Descending"/>
+                </ORDER_BY>
+              </GET_DOC_SMART>
+            </ELSE>
+          </IF_TEST>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <TO_XML SelectList="$GET_PREDFND_TRT/*"/>
+            <TRT_NBR Value="{$TRT_NBR_1/@Value}"/>
+            <TRT_NAME Value="{$TRT_NAME_1/@Value}"/>
+            <TRT_NAME_LOCAL Value="{$TRT_NAME_LOCAL_1/@Value}"/>
+            <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR_1/@Value}"/>
+            <MKTNG_PGM_NBR Value="{$MKTNG_PGM_NBR_1/@Value}"/>
+            <PREDFND_TRT_VAL_NBR Value="{$PREDFND_TRT_VAL_NBR_1/@Value}"/>
+            <PREDFND_TRT_VAL_NAME Value="{$PREDFND_TRT_VAL_NAME_1/@Value}"/>
+            <PREDFND_TRT_TXT Value="{$PREDFND_TRT_TXT_1/@Value}"/>
+            <RowCount Value="{$GET_PREDFND_TRT/@TotalRowCount}"/>
+          </APPEND_TO_XML>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="thisReturn">
+            <RESPONSES/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$userAction='SEL_N_RTRN_1'">
+            <THEN>
+              <!--<SET Var="selected_PREDFND_TRT" FromValue="{$thisParam/selected_PREDFND_TRT/@Value}"/>-->
+              <SET Var="selected_PREDFND_TRT_NBR" FromValue="{substringBefore($thisParam/selected_PREDFND_TRT/@Value, '#')}"/>
+              <SET Var="selected_PREDFND_TRT_NBR" FromValue="{substringAfter($selected_PREDFND_TRT_NBR, '=')}"/>
+              <SET Var="selected_PREDFND_TRT_1" FromValue="{substringAfter($thisParam/selected_PREDFND_TRT/@Value, '#')}"/>
+              <SET Var="selected_PREDFND_TRT_TXT" FromValue="{substringBefore($selected_PREDFND_TRT_1/@Value, '#')}"/>
+              <SET Var="selected_PREDFND_TRT_TXT" FromValue="{substringAfter($selected_PREDFND_TRT_TXT, '=')}"/>
+              <SET Var="selected_PREDFND_TRT_VAL_NAME" FromValue="{substringAfter($selected_PREDFND_TRT_1/@Value, '#')}"/>
+              <SET Var="selected_PREDFND_TRT_VAL_NAME" FromValue="{substringAfter($selected_PREDFND_TRT_VAL_NAME, '=')}"/>
+              <APPEND_TO_XML DocVar="thisReturn">
+                <selected_PREDFND_TRT_NBR Value="{$selected_PREDFND_TRT_NBR/@Value}"/>
+                <selected_PREDFND_TRT_TXT Value="{$selected_PREDFND_TRT_TXT/@Value}"/>
+                <selected_PREDFND_TRT_VAL_NAME Value="{$selected_PREDFND_TRT_VAL_NAME/@Value}"/>
+              </APPEND_TO_XML>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="FILTER_TRT_NBR"/>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="FILTER_TRT_NAME"/>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="FILTER_PREDFND_TRT_VAL_NBR"/>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="FILTER_PREDFND_TRT_VAL_NAME"/>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="FILTER_PREDFND_TRT_VAL_NAME_ENG"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='BACK'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done2" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='CREATE'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="CreatePredfndTrt" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SEL_N_RTRN_1'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done2" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done2" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <done Name="done2">
+      <actions/>
+      <next_nodes/>
+      PREDFND_TRT_VAL_IN_DUMMY      PREDFND_TRT_VAL_IN_DUMMY      PREDFND_TRT_VAL_IN_DUMMY    </done>
+    <ui_form2 Name="CreatePredfndTrt" ShowInBreadCrumbs="HIDE" Template="CreatePredfndTrt.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <root/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$userAction='SAVE'">
+            <THEN>
+              <SET Var="TRT_NBR" FromValue="{$thisParam/TRT_NBR/@Value}"/>
+              <SET Var="PREDFND_TRT_VAL_NBR" FromValue="{$thisParam/PREDFND_TRT_VAL_NBR/@Value}"/>
+              <SET Var="PREDFND_TRT_DATE" FromValue="{$thisParam/PREDFND_TRT_DATE/@Value}"/>
+              <SET Var="PREDFND_TRT_TXT" FromValue="{$thisParam/PREDFND_TRT_TXT/@Value}"/>
+              <SET Var="PREDFND_TRT_VAL_NAME" FromValue="{$thisParam/PREDFND_TRT_VAL_NAME/@Value}"/>
+              <SET Var="PREDFND_TRT_DESC" FromValue="{$thisParam/PREDFND_TRT_DESC/@Value}"/>
+              <SET Var="LANG_CODE" FromValue="{$thisParam/LANG_CODE/@Value}"/>
+              <!--<ADD_DOC_SMART Name="PREDFND_TRT_VAL" AssignToVar="PREDFND_TRT_INS" ServiceName="BCM_MASTER" HandleException="true">
+                <TRT_NBR Value="{$TRT_NBR}"/>
+                <PREDFND_TRT_VAL_NBR Value="{$PREDFND_TRT_VAL_NBR}"/>
+                <PREDFND_TRT_DATE Value="{$PREDFND_TRT_DATE}"/>
+                <PREDFND_TRT_TXT Value="{$PREDFND_TRT_TXT}"/>
+                <PREDFND_TRT_VAL_NAME Value="{$PREDFND_TRT_VAL_NAME}"/>
+                <PREDFND_TRT_DESC Value="{$PREDFND_TRT_DESC}"/>
+                <LANG_CODE Value="{$LANG_CODE}"/>
+              </ADD_DOC_SMART>-->
+              <IF_TEST Test="$PREDFND_TRT_DATE = null or $PREDFND_TRT_DATE = ''">
+                <THEN>
+                  <DO_DB_PERSIST Action="INSERT" DocumentName="PREDFND_TRT_VAL" AssignToVar="PREDFND_TRT_INS" ServiceName="BCM_MASTER" HandleException="true">
+                    <TRT_NBR Value="{$TRT_NBR}"/>
+                    <PREDFND_TRT_VAL_NBR Value="{$PREDFND_TRT_VAL_NBR}"/>
+                    <PREDFND_TRT_TXT Value="{$PREDFND_TRT_TXT}"/>
+                    <PREDFND_TRT_VAL_NAME Value="{$PREDFND_TRT_VAL_NAME}"/>
+                    <PREDFND_TRT_DESC Value="{$PREDFND_TRT_DESC}"/>
+                    <LANG_CODE Value="{$LANG_CODE}"/>
+                  </DO_DB_PERSIST>
+                  <IF_TEST Test="$PREDFND_TRT_INS/@Status='Success'">
+                    <THEN>
+                      <IF_TEST Test="$PREDFND_TRT_INS/VALIDATION_RESULT/@Value = 'ERROR'">
+                        <THEN>
+                          <SET Var="msg" FromValue="{$PREDFND_TRT_INS/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                        </THEN>
+                        <ELSE>
+                          <SET Var="msg" FromValue="Predefined Trait Created Successfully !!!!"/>
+                        </ELSE>
+                      </IF_TEST>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="msg" FromValue="{$PREDFND_TRT_INS/@Description}"/>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <DO_DB_PERSIST Action="INSERT" DocumentName="PREDFND_TRT_VAL" AssignToVar="PREDFND_TRT_INS" ServiceName="BCM_MASTER" HandleException="true">
+                    <TRT_NBR Value="{$TRT_NBR}"/>
+                    <PREDFND_TRT_VAL_NBR Value="{$PREDFND_TRT_VAL_NBR}"/>
+                    <PREDFND_TRT_DATE Value="{$PREDFND_TRT_DATE}"/>
+                    <PREDFND_TRT_TXT Value="{$PREDFND_TRT_TXT}"/>
+                    <PREDFND_TRT_VAL_NAME Value="{$PREDFND_TRT_VAL_NAME}"/>
+                    <PREDFND_TRT_DESC Value="{$PREDFND_TRT_DESC}"/>
+                    <LANG_CODE Value="{$LANG_CODE}"/>
+                  </DO_DB_PERSIST>
+                  <IF_TEST Test="$PREDFND_TRT_INS/@Status='Success'">
+                    <THEN>
+                      <IF_TEST Test="$PREDFND_TRT_INS/VALIDATION_RESULT/@Value = 'ERROR'">
+                        <THEN>
+                          <SET Var="msg" FromValue="{$PREDFND_TRT_INS/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                        </THEN>
+                        <ELSE>
+                          <SET Var="msg" FromValue="Predefined Trait Created Successfully !!!!"/>
+                        </ELSE>
+                      </IF_TEST>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="msg" FromValue="{$PREDFND_TRT_INS/@Description}"/>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+              <!--<DO_DB_PERSIST Action="INSERT" DocumentName="PREDFND_TRT_VAL" AssignToVar="PREDFND_TRT_INS" ServiceName="BCM_MASTER" HandleException="true">
+                <TRT_NBR Value="{$TRT_NBR}"/>
+                <PREDFND_TRT_VAL_NBR Value="{$PREDFND_TRT_VAL_NBR}"/>
+                <PREDFND_TRT_DATE Value="{$PREDFND_TRT_DATE}"/>
+                <PREDFND_TRT_TXT Value="{$PREDFND_TRT_TXT}"/>
+                <PREDFND_TRT_VAL_NAME Value="{$PREDFND_TRT_VAL_NAME}"/>
+                <PREDFND_TRT_DESC Value="{$PREDFND_TRT_DESC}"/>
+                <LANG_CODE Value="{$LANG_CODE}"/>
+              </DO_DB_PERSIST>
+              <IF_TEST Test="$PREDFND_TRT_INS/@Status='Success'">
+                <THEN>
+                  <SET Var="msg" FromValue="Predefined Trait Created Successfully !!!!"/>
+                </THEN>
+              </IF_TEST>-->
+            </THEN>
+            <ELSE>
+              <!--<CREATE_DOCUMENT_ID AssignToVar="PRE_TRT_NBR" Name="PREDFND_TRT_NBR"/>-->
+              <EXECUTE_SQL_QUERY AssignToVar="maxPRE_TRT_NBR" Value="SEL CASE WHEN (max (PREDFND_TRT_VAL_NBR) + 1) IS NULL THEN 1 ELSE (max (PREDFND_TRT_VAL_NBR) + 1) END AS MAX_PREDFND_TRT from PREDFND_TRT_VAL where TRT_NBR = {$TRT_NBR_1/@Value}"/>
+              <SET Var="PRE_TRT_NBR" FromValue="{$maxPRE_TRT_NBR/SQL_RESULT/MAX_PREDFND_TRT/@Value}"/>
+            </ELSE>
+          </IF_TEST>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <Message Value="{$msg/@Value}"/>
+            <TRT_NBR Value="{$TRT_NBR_1/@Value}"/>
+            <TRT_NAME Value="{$TRT_NAME_1/@Value}"/>
+            <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR_1/@Value}"/>
+            <MKTNG_PGM_NBR Value="{$MKTNG_PGM_NBR_1/@Value}"/>
+            <PREDFND_TRT_VAL_NBR Value="{$PRE_TRT_NBR/@Value}"/>
+            <PREDFND_TRT_VAL_NAME Value="{$PREDFND_TRT_VAL_NAME_1/@Value}"/>
+            <PREDFND_TRT_TXT Value="{$PREDFND_TRT_TXT_1/@Value}"/>
+            <PREDFND_TRT_DATE Value="{$thisParam/PREDFND_TRT_DATE/@Value}"/>
+            <PREDFND_TRT_DESC Value="{$thisParam/PREDFND_TRT_DESC/@Value}"/>
+            <LANG_CODE Value="{$thisParam/LANG_CODE/@Value}"/>
+          </APPEND_TO_XML>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <if_cond Value="$userAction ='SAVE'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="CreatePredfndTrt" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='BACK'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ComparePredefinedTrait" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <start0 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="102,257">
+        <iconProps iconfile="z1start.gif"/>
+      </start0>
+      <ComparePredefinedTrait font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="294,258" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </ComparePredefinedTrait>
+      <done2 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="494,258">
+        <iconProps iconfile="z1end.gif"/>
+      </done2>
+      <CreatePredfndTrt font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="482,158" size="1279,671">
+        <iconProps iconfile="x1age80.gif"/>
+      </CreatePredfndTrt>
+    </mgcnodes>
+    <mgcconnectors>
+      <start0>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="140,273" endpoint="299,273" ctrlRect1="256,271,4,4" ctrlRect2="177,271,4,4"/>
+      </start0>
+      <ComparePredefinedTrait>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="339,280" endpoint="494,280" ctrlRect1="452,278,4,4" ctrlRect2="450,373,4,4" ctrlRect2Dirty="true" textRect="441,323,24,8">
+          <textProps text="$userAction ='BACK'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="339,280" endpoint="482,180" ctrlRect1="443,278,4,4" ctrlRect2="372,178,4,4" textRect="396,226,26,8">
+          <textProps text="$userAction ='CREATE'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="339,280" endpoint="494,280" ctrlRect1="388,357,4,4" ctrlRect2="375,278,4,4" ctrlRect1Dirty="true" textRect="367,315,32,8">
+          <textProps text="$userAction ='SEL_N_RTRN_1'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="339,280" endpoint="494,280" ctrlRect1="452,278,4,4" ctrlRect2="375,278,4,4">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="339,280" endpoint="339,280" ctrlRect1="412,278,4,4" ctrlRect2="173,450,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+      </ComparePredefinedTrait>
+      <CreatePredfndTrt>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="504,158" endpoint="504,158" ctrlRect1="502,81,4,4" ctrlRect2="631,28,4,4" ctrlRect2Dirty="true" textRect="556,52,24,8">
+          <textProps text="$userAction ='SAVE'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="504,158" endpoint="316,258" ctrlRect1="474,180,4,4" ctrlRect2="334,137,4,4" ctrlRect2Dirty="true" textRect="394,156,24,8" ctrlRect1Dirty="true">
+          <textProps text="$userAction ='BACK'"/>
+        </nextNodeView>
+      </CreatePredfndTrt>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+      <action/>
+    </pre_actions>
+    <post_actions>
+      <action/>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

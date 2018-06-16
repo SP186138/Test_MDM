@@ -1,0 +1,98 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" Id="SUBSCRPTN_OPT_Create.pgl" version="3">
+  <ui:container id="topContainer" displayText="Subscription Option" collapsable="true">
+    <ui:step id="stStep1" name="stStep1">
+      <ui:field-group>
+        <ui:image src="/bpi_check.gif" displayCondition="{string-length($root/MSG/AlertGreen/@Value) != 0}" id="checkImg"/>
+        <ui:display-field id="success" value="{$root/MSG/AlertGreen/@Value}" displayCondition="{string-length($root/MSG/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen"/>
+        <ui:image src="/cancel.gif" displayCondition="{string-length($root/MSG/AlertRed/@Value) != 0}"/>
+        <ui:display-field value="{$root/MSG/AlertRed/@Value}" displayCondition="{string-length($root/MSG/AlertRed/@Value) != 0}" name="error" class="requiredIndicator"/>
+      </ui:field-group>
+      <ui:field-group columns="2" collapsable="true">
+        <ui:hidden-field id="SUBSCRPTN_OPT_START_DATE" name="SUBSCRPTN_OPT_START_DATE" displayText="Start Date"/>
+        <ui:hidden-field id="SUBSCRPTN_OPT_END_DATE" name="SUBSCRPTN_OPT_END_DATE" displayText="End Date"/>
+        <ui:display-field id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR" displayText="Marketing Program"/>
+        <ui:display-field id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR" displayText="Legal Entity"/>
+        <ui:display-field id="DATA_SRCE_NBR" name="DATA_SRCE_NBR" displayText="Source"/>
+        <ui:entry-field id="SUBSCRPTN_OPT_NBR" name="SUBSCRPTN_OPT_NBR" displayText="Subscription Opt Number" required="true"/>
+        <ui:entry-field id="SUBSCRPTN_OPT_NAME" name="SUBSCRPTN_OPT_NAME" displayText="Subscription Opt Name" required="true"/>
+        <ui:entry-field id="SUBSCRPTN_OPT_STMT_TXT" name="SUBSCRPTN_OPT_STMT_TXT" displayText="Subscription Statement Text"/>
+      </ui:field-group>
+      <ui:buttons>
+        <ui:button id="Create" name="Create" displayText="Create" emphasized="true" validate="true" onClick="javascript:functionDisableCreateOpt()"/>
+        <!--onClick="javascript:functionDisableCreateOpt()"-->
+        <ui:button id="CreateOptType" name="CreateOptType" displayText="Create Subscrptn Opt Type" onClick="javascript:functionEnableCreateOptType()" validate="true" displayCondition="{($root/optTypeEnable1/optTypeEnable/@Value)= 'TRUE' }"/>
+        <ui:button id="Back" name="Back" displayText="Back" emphasized="true" validate="false"/>
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:container id="Container2" displayText="Subs Opt Type">
+    <ui:step id="stStep2" name="stStep2" displayCondition="{$root/ContainerHide/@Value='false'}">
+      <ui:field-group>
+        <ui:image src="/bpi_check.gif" displayCondition="{string-length($root/MSG1/AlertGreen/@Value) != 0}" id="checkImg"/>
+        <ui:display-field id="success" value="{$root/MSG1/AlertGreen/@Value}" displayCondition="{string-length($root/MSG1/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen"/>
+        <ui:image src="/cancel.gif" displayCondition="{string-length($root/MSG1/AlertRed/@Value) != 0}"/>
+        <ui:display-field value="{$root/MSG1/AlertRed/@Value}" displayCondition="{string-length($root/MSG1/AlertRed/@Value) != 0}" name="error" class="requiredIndicator"/>
+      </ui:field-group>
+      <ui:field-group columns="2" collapsable="true">
+        <ui:display-field id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR" displayText="Marketing Program"/>
+        <ui:display-field id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR" displayText="Legal Entity"/>
+        <ui:display-field id="DATA_SRCE_NBR" name="DATA_SRCE_NBR" displayText="Source"/>
+        <ui:display-field id="SUBSCRPTN_OPT_NBR" name="SUBSCRPTN_OPT_NBR" displayText="Subscription Opt Number"/>
+        <ui:entry-field id="CNTCT_CHANL_TYPE_CODE" name="CNTCT_CHANL_TYPE_CODE" displayText="Contact Channel Type Code" required="true"/>
+        <ui:entry-field id="CNTCT_POINT_CATEG_CODE" name="CNTCT_POINT_CATEG_CODE" displayText="Contact Point Category Code" required="true"/>
+        <ui:entry-field id="SUBSCRPTN_OPT_FREQ_TXT" name="SUBSCRPTN_OPT_FREQ_TXT" displayText="Subscription Frequency Text"/>
+      </ui:field-group>
+      <ui:buttons>
+        <ui:button id="Submit" name="Submit" displayText="Create"/>
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+function functionDisableCreateOpt()
+{
+bIsValid = (isValid_stStep1());
+
+if( bIsValid == false )
+    {
+    //alert('bIsValid:  ' + bIsValid);
+validation_alert('stStep1');
+
+}
+if ( bIsValid == true)
+    {
+brToggleDisplayContainer('stStep2','hide');
+document.form.BUTTON_ID.value='Create';
+document.form.submit();
+grayout(true);
+    }
+}
+    function functionEnableCreateOptType()
+    {
+	brToggleDisplayContainer('stStep2','show');
+    document.form.BUTTON_ID.value='CreateOptType';
+    document.form.submit();
+    grayout(true);
+    }
+    
+function brToggleDisplayContainer(id,state)
+{
+    
+fieldCell  = document.getElementById(id);
+if(fieldCell === null)
+return;
+fieldRow = fieldCell;//.parentNode;
+toggleItemVisibility(fieldRow, state);
+if (state==='hide')
+{
+fieldCell.disabled = true;
+}
+else
+{
+fieldCell.disabled = false;
+fieldCell.enabled = true;
+}
+}
+
+
+</ui:script>
+</ui:page-group>

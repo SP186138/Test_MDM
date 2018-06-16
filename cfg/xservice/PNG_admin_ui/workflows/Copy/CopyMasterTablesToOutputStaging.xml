@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="573" ShowInBreadCrumbs="true" Version="1.0" Name="CopyMasterTablesToOutputStaging" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables>
+    <variable Name="alertRed" Type="string" Comment=""/>
+    <variable Name="alertGreen" Type="string" Comment=""/>
+    <variable Name="email" Type="string" Comment=""/>
+    <variable Name="message" Type="string" Comment=""/>
+    <variable Name="params" Type="xml" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="Start">
+      <actions>
+        <action>
+          <TO_DOCVAR AssignToVar="nodeOutputXml">
+            <TO_XML SelectList="$thisParam"/>
+          </TO_DOCVAR>
+        </action>
+      </actions>
+      <next_nodes OutputVar="{nodeOutputXml,}">
+        <!-- Issue MDM-1803 next_node changed from "Filter Master Tableson" Description=" to "Copy Master Data to Output Staging" by Ankur Goyal-->
+        <next_node Name="Manage Output Staging" Description=""/>
+      </next_nodes>
+    </start>
+    <!-- Issue MDM-1803 ShowInBreadCrumbs="HIDE" value chnaged to "SHOW" by Ankur Goyal-->
+    <ui_form2 Name="Select Master Tables" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="SelectMasterTables.pgl">
+      <pre_actions>
+        <action>
+          <SET Var="active" FromValue="{$thisParam/ACTIVE/@Value}"/>
+          <SET Var="class" FromValue="{$thisParam/CLASS/@Value}"/>
+          <SET Var="source" FromValue="{$thisParam/SOURCE/@Value}"/>
+          <EXECUTE_SQL_QUERY AssignToVar="results" Value="SELECT PHY_MST FROM SYS_TABLE_MAP WHERE TABLE_CLASS = '{$class}' AND SOURCE = '{$source}' AND ACTIVE = '{$active}' ORDER BY PHY_MST ASC;"/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <TO_XML DocVar="results"/>
+            </ROOT>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="email" FromValue="{$thisParam/EMAIL/@Value}"/>
+          <TO_DOCVAR AssignToVar="selected_items">
+            <ROOT>
+              <SELECTED_ITEMS/>
+            </ROOT>
+          </TO_DOCVAR>
+          <FOR_EACH CurrentElement="curr" SelectList="$pglFormOutput/SELECTED_ITEM">
+            <APPEND_TO_XML SelectList="$selected_items/SELECTED_ITEMS">
+              <SELECTED_ITEM Value="{$curr/@Value}"/>
+            </APPEND_TO_XML>
+          </FOR_EACH>
+          <SET DocVar="params" FromDocVar="selected_items"/>
+          <IF_TEST Test="$thisParam/SCHEDULE/@Value='true'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="action">
+                <Action Value="YES_TIMER"/>
+              </TO_DOCVAR>
+              <SET Var="Action" FromValue="YES_TIMER"/>
+            </THEN>
+            <ELSE>
+              <TO_DOCVAR AssignToVar="action">
+                <Action Value="NO_TIMER"/>
+              </TO_DOCVAR>
+              <SET Var="Action" FromValue="NO_TIMER"/>
+            </ELSE>
+          </IF_TEST>
+          <ADD_CHILDREN DocVar="thisParam" FromDocVar="action"/>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='BACK'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <!-- Issue MDM-1803 next_node changed from "Filter Master Tableson" Description=" to "Copy Master Data to Output Staging" by Ankur Goyal-->
+          <next_node Name="Manage Output Staging" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='COPY'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Decision Node" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <task Name="Copy Selected Master Tables">
+      <actions>
+        <action>
+          <PRINTLN Value="Copy Selected Master Tables"/>
+          <PRINTLN Value="Email {$thisParam/EMAIL/Address/@Value}"/>
+          <EXECUTE_SQL_QUERY AssignToVar="results" Value="SEL COALESCE(MAX(OUTPUT_ID),0)+1 OUTPUT_ID FROM SYS_OUTPUT_TABLE;"/>
+          <SET Var="taskID" FromValue="{$results/SQL_RESULT/OUTPUT_ID/@Value}"/>
+          <FOR_EACH CurrentElement="current" SelectList="$thisParam/SELECTED_ITEM">
+            <SET Var="item" FromValue="{$current/@Value}"/>
+            <EXECUTE_SQL_QUERY AssignToVar="result" Value="INSERT INTO SYS_OUTPUT_TABLE (OUTPUT_ID, OUTPUT_TABLE) VALUES({$taskID}, '{$item}');"/>
+            <PRINTLN Value="{$item}"/>
+          </FOR_EACH>
+          <PRINTLN Value="{$taskID}"/>
+          <REQUEST ServiceName="ADMIN_UI" Name="execute_snapshot" AssignToVar="results" HandleException="true">
+            <TASKID Value="{$taskID}"/>
+          </REQUEST>
+          <SET Var="message" FromValue="Success"/>
+          <!-- Modified code for Issue MDM-2260 by Kiran G-->
+          <IF_TEST Test="$results/@Status = 'Success'">
+            <THEN>
+              <SET Var="alertGreen" FromValue="Master data copied successfully."/>
+            </THEN>
+            <ELSE>
+              <SET Var="alertRed" FromValue="Error Copying Master Data"/>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </actions>
+      <next_nodes>
+        <!-- Issue MDM-1803 next_node changed from "Filter Master Tableson" Description=" to "Copy Master Data to Output Staging" by Ankur Goyal-->
+        <next_node Name="Manage Output Staging" Description=""/>
+      </next_nodes>
+    </task>
+    <!-- Issue MDM-1803 next_node changed from "Filter Master Tableson" Description=" to "Copy Master Data to Output Staging" by Ankur Goyal-->
+    <ui_form2 Name="Manage Output Staging" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="Filter.pgl">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ABC>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </ABC>
+          </TO_DOCVAR>
+          <!-- <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$alertz/*"/> -->
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <PRINT Value="Post Filter Master Tables"/>
+          <SET Var="alertGreen" FromValue=""/>
+          <SET Var="alertRed" FromValue=""/>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='MOVE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='COPY'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Select Master Tables" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <branch Name="Decision Node">
+      <actions>
+        <action>
+          <PRINTLN Value="Decision Node"/>
+          <PRINTLN Value="{$thisParam/Action/@Value}"/>
+        </action>
+      </actions>
+      <if_cond Value="$thisParam/Action/@Value = 'YES_TIMER'">
+        <next_nodes OutputVar="{thisParam,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$thisParam/Action/@Value = 'NO_TIMER'">
+        <next_nodes OutputVar="{thisParam,xml}">
+          <next_node Name="Copy Selected Master Tables" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </branch>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <Start location="72,138" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Start" font="Verdana,0,9" textColor="186,12,12"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </Start>
+      <mgcnode Name="Select Master Tables" location="395,138" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Select Master Tables" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <mgcnode Name="Copy Selected Master Tables" location="716,262" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Copy Selected Master Tables" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+      </mgcnode>
+      <!-- Issue MDM-1803 mgcnode and textProps values changed from "Filter Master Tableson" Description=" to "Copy Master Data to Output Staging" by Ankur Goyal-->
+      <mgcnode Name="Manage Output Staging" location="200,138" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Manage Output Staging" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <mgcnode Name="Decision Node" location="596,136" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Decision Node" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1branch.gif" location="0,0"/>
+      </mgcnode>
+    </mgcnodes>
+    <mgcconnectors>
+      <Start>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="104,160" endpoint="199,160" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="172,158,4,4" ctrlRect2="125,158,4,4"/>
+      </Start>
+      <mgcnode Name="Select Master Tables">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="411,138" endpoint="215,138" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="369,81,4,4" ctrlRect2="273,32,4,4" textRect="308,54,30,8">
+          <textProps text="BACK" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="427,160" endpoint="596,158" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="551,158,4,4" ctrlRect2="467,156,4,4" textRect="496,155,30,8">
+          <textProps text="COPY" font="Verdana,0,9"/>
+        </nextNodeView>
+      </mgcnode>
+      <mgcnode Name="Copy Selected Master Tables">
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="716,285" endpoint="215,183" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="339,283,4,4" ctrlRect2="385,360,4,4"/>
+      </mgcnode>
+      <!-- Issue MDM-1803 mgcnode values changed from "Filter Master Tableson" Description=" to "Copy Master Data to Output Staging" by Ankur Goyal-->
+      <mgcnode Name="Manage Output Staging">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="232,161" endpoint="395,160" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="351,159,4,4" ctrlRect2="270,158,4,4" textRect="297,156,30,8">
+          <textProps text="COPY" font="Verdana,0,9"/>
+        </nextNodeView>
+      </mgcnode>
+      <mgcnode Name="Decision Node">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="612,181" endpoint="732,262" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="610,239,4,4" ctrlRect2="730,199,4,4" textRect="643,217,58,9">
+          <textProps text="NO_TIMER" font="Verdana,0,9"/>
+        </nextNodeView>
+      </mgcnode>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="10,10" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="5" textAttrsKey0="alertGreen : string" textAttrsKey1="alertRed : string" textAttrsKey2="email : string" textAttrsKey3="message : string" textAttrsKey4="params : xml">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="alertRed" Type="string" Comment=""/>
+        <variable Name="alertGreen" Type="string" Comment=""/>
+        <variable Name="email" Type="string" Comment=""/>
+        <variable Name="message" Type="string" Comment=""/>
+        <variable Name="params" Type="xml" Comment=""/>
+      </variables>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

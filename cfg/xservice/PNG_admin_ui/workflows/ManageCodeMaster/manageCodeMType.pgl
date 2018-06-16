@@ -1,0 +1,35 @@
+<ui:page-group version="3" xmlns:ui="http://www.teradata.com/ui" Id="ManageCodeType.pgl" name="studio.templates.simple_entry" source="studio.controller:load">
+  <ui:container id="searchCont" displayText="Manage Code Master Type ">
+    <!--Line added for fix of issue MDM-1937 by Ankur Goyal-->
+    <ui:help displayPage="{$pages: manageCodeMasterTypeHelp}" />
+    <ui:step id="ItemStep">
+      <ui:field-group id="leftFields1" columns="3">
+        <ui:image src="/bpi_check.gif" displayCondition="{string-length($root/AlertGreen/@Value) != 0}" />
+        <ui:display-field value="{$root/AlertGreen/@Value}" displayCondition="{string-length($root/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen" />
+        </ui:field-group>
+      <ui:search displayText="Search Code Master Type" exportSearch="false" saveSearch="false">
+        <ui:field-group id="searchFldGroup">
+          <ui:entry-field displayText="Code Type Id" id="TYPE_ID" name="TYPE_ID" />
+          <ui:entry-field displayText="Description" name="Description" id="Description" maxlength="1024" />
+          <ui:dropdown displayText="Is Editable" id="IS_EDITABLE" name="IS_EDITABLE" selectOne="true">
+            <ui:option value="true" />
+            <ui:option value="false" />
+          </ui:dropdown>
+        </ui:field-group>
+      </ui:search>
+      <ui:table id="searchTable" displayText="Search Results" rowSrc="$root/ITEM_RESULTS/*" displayTextNoRecords="no Record Found" rowId="ID" postRowIdAs="ID" scrollable="true" totalRowCount="$root/TotalRowCount/@Value" startAtRow="$root/StartRowCount/@Value">
+        <ui:field-group>
+          <ui:display-field displayText="Type Id" name="TYPE_ID" id="TYPE_ID" sortable="true" />
+          <ui:display-field displayText="Description" id="DESCRIPTION" name="DESCRIPTION" sortable="true" />
+          <ui:display-field displayText="Is Editable" id="IS_EDITABLE" name="IS_EDITABLE" sortable="true" />
+        </ui:field-group>
+        <ui:buttons id="buttons1" name="buttons1">
+          <!--<ui:button id="back_code" name="back_code" displayText="Back" onClick="{concat($pages:editable_code_master,'&amp;Auth_Enabled=true')}"/>-->
+          <ui:button id="back_code" name="back_code" displayText="Back" onClick="{$pages:ManageCodeMaster}" />
+          <ui:button id="add_codetype" name="add_codetype" displayText="Add" />
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+</ui:page-group>
+

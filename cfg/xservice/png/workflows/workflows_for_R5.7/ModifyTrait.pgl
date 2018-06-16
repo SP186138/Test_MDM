@@ -1,0 +1,49 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_entry" source="studio.controller:load">
+<ui:container id="container1" name="container1">
+<ui:step id="Outer" name="Outer" displayText="MODIFY SCREEN">
+<ui:validation successMessage="{$root/Message/@Value}" anyFieldIsRequired="false"/>
+<ui:field-group id="createPredfndTrt" collapsable="true">
+<ui:field-group columns="2" id="fieldGroups" select="$this">
+<ui:dropdown id="LEGAL_ENT" name="LEGAL_ENT" displayText="Legal Entity" optionSrc="$root/LEGAL_ENT/LEGAL_ENT_NAME"  disabled="true" select="$root/legalEntNbr" displayCondition="{$root/dispLegalEnt/@Value='N'}" />
+<!-- onChange="javascript:loadTRT_LE();" -->
+<ui:entry-field id="LEGAL_ENT" name="LEGAL_ENT" displayText="Legal Entity" value="####" displayCondition="{$root/dispLegalEnt/@Value='Y'}" editable="false"/>
+<ui:dropdown id="MKTNG_PGM" name="MKTNG_PGM" displayText="Marketing Program" optionSrc="$root/MKTNG_PGM/MKTNG_PGM_NAME"  disabled="true" select="$root/mktngPgmNbr" displayCondition="{$root/dispMktngPgm/@Value='N'}"/>
+<!-- onChange="javascript:loadTRT_MP();" -->
+<ui:entry-field id="MKTNG_PGM" name="MKTNG_PGM" displayText="Marketing Program" value="####" displayCondition="{$root/dispMktngPgm/@Value='Y'}" editable="false"/>
+<ui:entry-field id="TRT_NBR" name="TRT_NBR" displayText="Trait Number" value="{$root/TRT_NBR/@Value}"/>
+<ui:entry-field id="TRT_NAME_LOCAL" name="TRT_NAME_LOCAL" displayText="Trait Text"  required="true" value="{$root/TRT_NAME_LOCAL/@Value}"/>
+<ui:entry-field id="TRT_NAME" name="TRT_NAME" displayText="Trait Text(English)" value="{$root/TRT_NAME/@Value}" />
+<ui:entry-field id="DISPLAY_TYPE" name="DISPLAY_TYPE" displayText="Display Type" value="{$root/displayType/@Value}" />
+</ui:field-group>
+</ui:field-group>
+<ui:buttons>
+<ui:button id="SAVE" name="SAVE" displayText="Save"/>
+<ui:button id="REQUEST" name="REQUEST" displayText="Request" />
+<ui:button id="ADD_PREDFND_TRT" name="ADD_PREDFND_TRT" displayText="Add Predefined Trait Value"/>
+<ui:button id="BACK_FRM_MOD_TRT" name="BACK_FRM_MOD_TRT" displayText="Back"/>
+</ui:buttons>
+</ui:step>
+</ui:container>
+<ui:script>
+function onTrtChange(){
+document.form.BUTTON_ID.value = 'TRT_Change';
+document.form.action = 'view.x2ps';
+document.form.submit();
+}
+function onChkPredfndTrt() {
+document.form.BUTTON_ID.value = 'Chk_PREDFND_TRT';
+document.form.action = 'view.x2ps';
+document.form.submit();
+}
+function loadTRT_LE() {
+document.form.BUTTON_ID.value = 'LOAD_TRT_LE';
+document.form.action = 'view.x2ps';
+document.form.submit();
+}
+function loadTRT_MP() {
+document.form.BUTTON_ID.value = 'LOAD_TRT_MP';
+document.form.action = 'view.x2ps';
+document.form.submit();
+}
+</ui:script>
+</ui:page-group>

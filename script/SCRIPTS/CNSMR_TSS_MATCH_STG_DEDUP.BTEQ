@@ -1,0 +1,1618 @@
+/***********************************************************************************************************
+SCRIPT:               CNSMR_TSS_MATCH_STG.BTEQ 
+DESCRIPTION:          THIS SCRIPT UPDATES THE HOUSEHOLD ID WHEN A CONSUMER HAS TWO EMAILS / PHONE NOS.
+DEPENDENCY:           CNSMR_TSS_MATCH_STG.FLD
+INPUT:                TRILLIUM OUTPUT
+OUTPUT:               TRILLIUM OUTPUT
+ERRORS:
+SPECIAL INSTRUCTIONS:
+
+CHANGE LOG:
+VERSION              DATE                 AUTHOR                          CHANGES
+1.00                 01/21/2011           TERADATA                        INITIAL VERSION
+***********************************************************************************************************/
+
+.RUN FILE $LOGON_FILE;
+.SET ERROROUT STDOUT;
+.SET SESSION CHARSET 'UTF8';
+
+DATABASE $DATABASENAME;
+
+COLLECT STATS ON $DATABASENAME.TRILLIUM_OUTPUT1
+COLUMN MKTNG_PGM_NBR;
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+COLLECT STATS ON $DATABASENAME.TRILLIUM_OUTPUT1
+COLUMN REGIS_CNSMR_ID_VAL;
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+COLLECT STATS ON $DATABASENAME.TRILLIUM_OUTPUT1
+COLUMN SYS_SOURCE;
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+COLLECT STATS ON $DATABASENAME.TRILLIUM_OUTPUT1
+COLUMN SYS_NC_TYPE;
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+COLLECT STATS ON $DATABASENAME.TRILLIUM_OUTPUT1
+COLUMN (MKTNG_PGM_NBR,REGIS_CNSMR_ID_VAL);
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+SELECT
+COUNT(*)
+FROM 
+TRILLIUM_OUTPUT1 A
+GROUP BY 
+COALESCE(MKTNG_PGM_NBR,''),
+COALESCE(CAST(REGIS_CNSMR_ID_VAL AS CHAR(20)),''),
+COALESCE(DR_FIRST_NAME,''),
+COALESCE(DR_MIDDLE_NAME,''),
+COALESCE(DR_LAST_NAME,''),
+COALESCE(DR_MRMRS,''),
+COALESCE(DR_NAME_SUFFIX,''),
+COALESCE(DR_COUNTRY_NAME,''),
+COALESCE(DR_REGION_NAME,''),
+COALESCE(DR_CITY_NAME,''),
+COALESCE(DR_POSTAL_CODE,''),
+COALESCE(DR_STREET_NAME,''),
+COALESCE(DR_HOUSE_NUMBER1,''),
+COALESCE(DR_HOUSE_NUMBER2,''),
+COALESCE(DR_POBOX_NUMBER,''),
+COALESCE(DR_ADDRESS,''),
+COALESCE(DR_ADDRESS2,''),
+COALESCE(DR_ADDRESS3,''),
+COALESCE(WINDOW_KEY_01,''),
+COALESCE(LEGAL_ENT_NBR,''),
+COALESCE(CAST(CAST(BRTH_DATE AS DATE FORMAT 'YYYY-MM-DD') AS VARCHAR(10)),''),
+COALESCE(LANG_CODE,''),
+COALESCE(CNSMR_USER_NAME,''),
+COALESCE(FULL_NAME,''),
+COALESCE(DPEND_NAME,''),
+COALESCE(PET_NAME,''),
+COALESCE(PR_NAME_FORM_01,''),
+COALESCE(DR_ALIAS_ACCOUNT,''),
+COALESCE(DR_BUSINESS_NAME,''),
+COALESCE(CAST(CAST(SYS_SOURCE AS INTEGER) AS CHAR(20)),''),
+COALESCE(SYS_NC_TYPE,''),
+COALESCE(CAST(CAST(SYS_CREATION_DATE AS TIMESTAMP(0)) AS VARCHAR(20)),''),
+COALESCE(EMAIL_IND,''),
+COALESCE(REGIS_DATE,'')
+HAVING COUNT(*) = 2
+;
+
+.IF ACTIVITYCOUNT = 0 THEN .GOTO PROCESS
+
+UPDATE A
+FROM TRILLIUM_OUTPUT1 A,
+(
+SELECT
+COALESCE(MKTNG_PGM_NBR,'')						 AS MKTNG_PGM_NBR                 ,
+COALESCE(CAST(REGIS_CNSMR_ID_VAL AS CHAR(20)),'')	 AS REGIS_CNSMR_ID_VAL            ,
+COALESCE(DR_FIRST_NAME,'')						 AS DR_FIRST_NAME                 ,
+COALESCE(DR_MIDDLE_NAME,'')						 AS DR_MIDDLE_NAME                ,
+COALESCE(DR_LAST_NAME,'')						 AS DR_LAST_NAME                  ,
+COALESCE(DR_MRMRS,'')							 AS DR_MRMRS                      ,
+COALESCE(DR_NAME_SUFFIX,'')						 AS DR_NAME_SUFFIX                ,
+COALESCE(DR_COUNTRY_NAME,'')						 AS DR_COUNTRY_NAME               ,
+COALESCE(DR_REGION_NAME,'')						 AS DR_REGION_NAME                ,
+COALESCE(DR_CITY_NAME,'')						 AS DR_CITY_NAME                  ,
+COALESCE(DR_POSTAL_CODE,'')						 AS DR_POSTAL_CODE                ,
+COALESCE(DR_STREET_NAME,'')						 AS DR_STREET_NAME                ,
+COALESCE(DR_HOUSE_NUMBER1,'')						 AS DR_HOUSE_NUMBER1              ,
+COALESCE(DR_HOUSE_NUMBER2,'')						 AS DR_HOUSE_NUMBER2              ,
+COALESCE(DR_POBOX_NUMBER,'')						 AS DR_POBOX_NUMBER               ,
+COALESCE(DR_ADDRESS,'')							 AS DR_ADDRESS                    ,
+COALESCE(DR_ADDRESS2,'')						 AS DR_ADDRESS2                   ,
+COALESCE(DR_ADDRESS3,'')						 AS DR_ADDRESS3                   ,
+COALESCE(WINDOW_KEY_01,'')						 AS WINDOW_KEY_01                 ,
+COALESCE(LEGAL_ENT_NBR,'')						 AS LEGAL_ENT_NBR                 ,
+COALESCE(CAST(CAST(BRTH_DATE AS DATE FORMAT 'YYYY-MM-DD') AS VARCHAR(10)),'')	   AS BRTH_DATE                     ,
+COALESCE(LANG_CODE,'')								   AS LANG_CODE                     ,
+COALESCE(CNSMR_USER_NAME,'')							   AS CNSMR_USER_NAME               ,
+COALESCE(FULL_NAME,'')								   AS FULL_NAME                     ,
+COALESCE(DPEND_NAME,'')								   AS DPEND_NAME                    ,
+COALESCE(PET_NAME,'')								   AS PET_NAME                      ,
+COALESCE(PR_NAME_FORM_01,'')							   AS PR_NAME_FORM_01               ,
+COALESCE(DR_ALIAS_ACCOUNT,'')							   AS DR_ALIAS_ACCOUNT              ,
+COALESCE(DR_BUSINESS_NAME,'')							   AS DR_BUSINESS_NAME              ,
+COALESCE(CAST(CAST(SYS_SOURCE AS INTEGER) AS CHAR(20)),'')			   AS SYS_SOURCE                    ,
+COALESCE(SYS_NC_TYPE,'')							   AS SYS_NC_TYPE                   ,
+COALESCE(CAST(CAST(SYS_CREATION_DATE AS TIMESTAMP(0)) AS VARCHAR(20)),'')	   AS SYS_CREATION_DATE             ,
+COALESCE(EMAIL_IND,'')								   AS EMAIL_IND                     ,
+COALESCE(REGIS_DATE,'')                                                            AS REGIS_DATE                    ,
+MIN(REFERENCE_HOUSEHOLD_ID) AS REFERENCE_HOUSEHOLD_ID,
+MIN(REFERENCE_LEGALENTITYKEY)						   AS REFERENCE_LEGALENTITYKEY      ,
+MIN(REFERENCE_REGISTRATIONKEY)						   AS REFERENCE_REGISTRATIONKEY     
+FROM 
+TRILLIUM_OUTPUT1 A
+GROUP BY 
+COALESCE(MKTNG_PGM_NBR,''),
+COALESCE(CAST(REGIS_CNSMR_ID_VAL AS CHAR(20)),''),
+COALESCE(DR_FIRST_NAME,''),
+COALESCE(DR_MIDDLE_NAME,''),
+COALESCE(DR_LAST_NAME,''),
+COALESCE(DR_MRMRS,''),
+COALESCE(DR_NAME_SUFFIX,''),
+COALESCE(DR_COUNTRY_NAME,''),
+COALESCE(DR_REGION_NAME,''),
+COALESCE(DR_CITY_NAME,''),
+COALESCE(DR_POSTAL_CODE,''),
+COALESCE(DR_STREET_NAME,''),
+COALESCE(DR_HOUSE_NUMBER1,''),
+COALESCE(DR_HOUSE_NUMBER2,''),
+COALESCE(DR_POBOX_NUMBER,''),
+COALESCE(DR_ADDRESS,''),
+COALESCE(DR_ADDRESS2,''),
+COALESCE(DR_ADDRESS3,''),
+COALESCE(WINDOW_KEY_01,''),
+COALESCE(LEGAL_ENT_NBR,''),
+COALESCE(CAST(CAST(BRTH_DATE AS DATE FORMAT 'YYYY-MM-DD') AS VARCHAR(10)),''),
+COALESCE(LANG_CODE,''),
+COALESCE(CNSMR_USER_NAME,''),
+COALESCE(FULL_NAME,''),
+COALESCE(DPEND_NAME,''),
+COALESCE(PET_NAME,''),
+COALESCE(PR_NAME_FORM_01,''),
+COALESCE(DR_ALIAS_ACCOUNT,''),
+COALESCE(DR_BUSINESS_NAME,''),
+COALESCE(CAST(CAST(SYS_SOURCE AS INTEGER) AS CHAR(20)),''),
+COALESCE(SYS_NC_TYPE,''),
+COALESCE(CAST(CAST(SYS_CREATION_DATE AS TIMESTAMP(0)) AS VARCHAR(20)),''),
+COALESCE(EMAIL_IND,''),
+COALESCE(REGIS_DATE,'')
+HAVING COUNT(*) = 2
+) B
+SET REFERENCE_HOUSEHOLD_ID = B.REFERENCE_HOUSEHOLD_ID
+,REFERENCE_LEGALENTITYKEY = B.REFERENCE_LEGALENTITYKEY
+,REFERENCE_REGISTRATIONKEY = B.REFERENCE_REGISTRATIONKEY
+ 
+WHERE COALESCE(A.MKTNG_PGM_NBR,'')							       =COALESCE(B.MKTNG_PGM_NBR,'')
+  AND COALESCE(CAST(A.REGIS_CNSMR_ID_VAL AS CHAR(20)),'')	       =COALESCE(CAST(B.REGIS_CNSMR_ID_VAL AS CHAR(20)),'')
+  AND COALESCE(A.DR_FIRST_NAME,'')						       =COALESCE(B.DR_FIRST_NAME,'')
+  AND COALESCE(A.DR_MIDDLE_NAME,'')						       =COALESCE(B.DR_MIDDLE_NAME,'')
+  AND COALESCE(A.DR_LAST_NAME,'')						       =COALESCE(B.DR_LAST_NAME,'')
+  AND COALESCE(A.DR_MRMRS,'')							       =COALESCE(B.DR_MRMRS,'')
+  AND COALESCE(A.DR_NAME_SUFFIX,'')						       =COALESCE(B.DR_NAME_SUFFIX,'')
+  AND COALESCE(A.DR_COUNTRY_NAME,'')						       =COALESCE(B.DR_COUNTRY_NAME,'')
+  AND COALESCE(A.DR_REGION_NAME,'')						       =COALESCE(B.DR_REGION_NAME,'')
+  AND COALESCE(A.DR_CITY_NAME,'')						       =COALESCE(B.DR_CITY_NAME,'')
+  AND COALESCE(A.DR_POSTAL_CODE,'')						       =COALESCE(B.DR_POSTAL_CODE,'')
+  AND COALESCE(A.DR_STREET_NAME,'')						       =COALESCE(B.DR_STREET_NAME,'')
+  AND COALESCE(A.DR_HOUSE_NUMBER1,'')						       =COALESCE(B.DR_HOUSE_NUMBER1,'')
+  AND COALESCE(A.DR_HOUSE_NUMBER2,'')						       =COALESCE(B.DR_HOUSE_NUMBER2,'')
+  AND COALESCE(A.DR_POBOX_NUMBER,'')						       =COALESCE(B.DR_POBOX_NUMBER,'')
+  AND COALESCE(A.DR_ADDRESS,'')							       =COALESCE(B.DR_ADDRESS,'')
+  AND COALESCE(A.DR_ADDRESS2,'')						       =COALESCE(B.DR_ADDRESS2,'')
+  AND COALESCE(A.DR_ADDRESS3,'')						       =COALESCE(B.DR_ADDRESS3,'')
+  AND COALESCE(A.WINDOW_KEY_01,'')						       =COALESCE(B.WINDOW_KEY_01,'')
+  AND COALESCE(A.LEGAL_ENT_NBR,'')						       =COALESCE(B.LEGAL_ENT_NBR,'')
+  AND COALESCE(CAST(CAST(A.BRTH_DATE AS DATE FORMAT 'YYYY-MM-DD') AS VARCHAR(10)),'')  =B.BRTH_DATE
+  AND COALESCE(A.LANG_CODE,'')							       =COALESCE(B.LANG_CODE,'')
+  AND COALESCE(A.CNSMR_USER_NAME,'')						       =COALESCE(B.CNSMR_USER_NAME,'')
+  AND COALESCE(A.FULL_NAME,'')							       =COALESCE(B.FULL_NAME,'')
+  AND COALESCE(A.DPEND_NAME,'')							       =COALESCE(B.DPEND_NAME,'')
+  AND COALESCE(A.PET_NAME,'')							       =COALESCE(B.PET_NAME,'')
+  AND COALESCE(A.PR_NAME_FORM_01,'')						       =COALESCE(B.PR_NAME_FORM_01,'')
+  AND COALESCE(A.DR_ALIAS_ACCOUNT,'')						       =COALESCE(B.DR_ALIAS_ACCOUNT,'')
+  AND COALESCE(A.DR_BUSINESS_NAME,'')						       =COALESCE(B.DR_BUSINESS_NAME,'')
+  AND COALESCE(CAST(CAST(A.SYS_SOURCE AS INTEGER) AS CHAR(20)),'')		       =B.SYS_SOURCE
+  AND COALESCE(A.SYS_NC_TYPE,'')						       =COALESCE(B.SYS_NC_TYPE,'')
+  AND COALESCE(CAST(CAST(A.SYS_CREATION_DATE AS TIMESTAMP(0)) AS VARCHAR(20)),'')      =B.SYS_CREATION_DATE
+  AND COALESCE(A.EMAIL_IND,'')							       =COALESCE(B.EMAIL_IND,'')
+  AND COALESCE(A.REGIS_DATE,'')                                                          =COALESCE(B.REGIS_DATE,'')
+;  
+
+.LABEL PROCESS
+
+UPDATE TRILLIUM_OUTPUT1 SET RECORD_IND='NNN'
+WHERE REFERENCE_HOUSEHOLD_ID LIKE 'HH%';
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+UPDATE TRILLIUM_OUTPUT1 SET RECORD_IND='NNY'
+WHERE REFERENCE_REGISTRATIONKEY LIKE 'RG%' AND
+REFERENCE_LEGALENTITYKEY LIKE 'LE%' AND REFERENCE_HOUSEHOLD_ID NOT LIKE 'HH%';
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+UPDATE TRILLIUM_OUTPUT1 SET RECORD_IND='NYY'
+WHERE REFERENCE_REGISTRATIONKEY LIKE 'RG%' AND
+REFERENCE_LEGALENTITYKEY NOT LIKE 'LE%' AND REFERENCE_HOUSEHOLD_ID NOT LIKE 'HH%';
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+UPDATE TRILLIUM_OUTPUT1 SET RECORD_IND='Y'
+WHERE REFERENCE_REGISTRATIONKEY NOT LIKE 'RG%' AND
+REFERENCE_LEGALENTITYKEY NOT LIKE 'LE%' AND REFERENCE_HOUSEHOLD_ID NOT LIKE 'HH%';
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+UPDATE TRILLIUM_OUTPUT1 SET RECORD_IND='Y'
+WHERE (LEGAL_ENT_NBR
+,MKTNG_PGM_NBR   
+,REGIS_CNSMR_ID_VAL)
+IN
+(SELECT
+LEGAL_ENT_NBR
+,MKTNG_PGM_NBR   
+,REGIS_CNSMR_ID_VAL
+FROM
+REGIS_PRSNA
+);
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+UPDATE TRILLIUM_OUTPUT1 
+FROM REGIS_PRSNA B
+SET RECORD_IND = NULL
+WHERE TRILLIUM_OUTPUT1.LEGAL_ENT_NBR=B.LEGAL_ENT_NBR
+AND TRILLIUM_OUTPUT1.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR
+AND TRILLIUM_OUTPUT1.REGIS_CNSMR_ID_VAL=B.REGIS_CNSMR_ID_VAL
+AND CAST(TRIM(SUBSTR(TRILLIUM_OUTPUT1.REGIS_DATE,1,10)) AS DATE FORMAT 'YYYY-MM-DD') < CAST(B.REGIS_DATE AS DATE FORMAT 'MM/DD/YYYY')
+AND B.PRSNA_STATUS_CODE = 'AC'
+;
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+UPDATE TRILLIUM_OUTPUT1
+FROM
+(
+SELECT * FROM
+(
+SELECT 
+ LEGAL_ENT_NBR
+,MKTNG_PGM_NBR   
+,REGIS_CNSMR_ID_VAL
+,REGIS_DATE
+,SYS_CREATION_DATE
+,SYS_NC_TYPE
+,RANK() OVER (PARTITION BY LEGAL_ENT_NBR
+,MKTNG_PGM_NBR   
+,REGIS_CNSMR_ID_VAL 
+ORDER BY LEGAL_ENT_NBR
+,MKTNG_PGM_NBR   
+,REGIS_CNSMR_ID_VAL
+,REGIS_DATE DESC 
+,SYS_CREATION_DATE DESC
+,SYS_NC_TYPE DESC
+) AS RNK
+GROUP BY LEGAL_ENT_NBR
+,MKTNG_PGM_NBR   
+,REGIS_CNSMR_ID_VAL
+,REGIS_DATE
+,SYS_CREATION_DATE
+,SYS_NC_TYPE
+FROM TRILLIUM_OUTPUT1
+) B
+WHERE RNK = 1
+) B
+
+SET RECENT_IND = 'Y'
+WHERE TRILLIUM_OUTPUT1.LEGAL_ENT_NBR=B.LEGAL_ENT_NBR
+AND TRILLIUM_OUTPUT1.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR
+AND TRILLIUM_OUTPUT1.REGIS_CNSMR_ID_VAL=B.REGIS_CNSMR_ID_VAL
+AND TRILLIUM_OUTPUT1.REGIS_DATE=B.REGIS_DATE
+AND TRILLIUM_OUTPUT1.SYS_CREATION_DATE=B.SYS_CREATION_DATE
+AND TRILLIUM_OUTPUT1.SYS_NC_TYPE=B.SYS_NC_TYPE
+;
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+DEL FROM TRILLIUM_MDM_REFERENCE ALL;
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+INSERT TRILLIUM_MDM_REFERENCE 
+(
+ LEGAL_ENT_NBR
+,MKTNG_PGM_NBR                 
+,REGIS_CNSMR_ID_VAL            
+,REFERENCE_HOUSEHOLD_ID        
+,REFERENCE_LEGALENTITYKEY      
+,NEW_HOUSEHOLD_ID              
+,NEW_LEGAL_ENTITY_KEY          
+,REFERENCE_REGISTRATIONKEY     
+,NEW_REGISTRATION_KEY          
+,SYS_CREATION_DATE             
+,SYS_ENT_STATE                 
+,SYS_NC_TYPE     
+,SYS_LAST_MODIFIED_BY
+)
+SELECT
+ LEGAL_ENT_NBR
+,MKTNG_PGM_NBR                  
+,REGIS_CNSMR_ID_VAL            
+,REFERENCE_HOUSEHOLD_ID        
+,REFERENCE_LEGALENTITYKEY      
+,CASE WHEN SUBSTR(TRIM(REFERENCE_HOUSEHOLD_ID),1,2)='HH'
+      THEN TRIM(D.HSHLD_PRSNA_ID + RANK() OVER (PARTITION BY 1 ORDER BY LEGAL_ENT_NBR,MKTNG_PGM_NBR,REGIS_CNSMR_ID_VAL))
+      ELSE REFERENCE_HOUSEHOLD_ID
+  END
+,CASE WHEN SUBSTR(TRIM(REFERENCE_LEGALENTITYKEY),1,2)='LE'
+      THEN TRIM(C.MATCHD_CNSMR_PRSNA_ID + RANK() OVER (PARTITION BY 1 ORDER BY LEGAL_ENT_NBR,MKTNG_PGM_NBR,REGIS_CNSMR_ID_VAL))
+      ELSE REFERENCE_LEGALENTITYKEY
+  END         
+,REFERENCE_REGISTRATIONKEY     
+,CASE WHEN SUBSTR(TRIM(REFERENCE_REGISTRATIONKEY),1,2)='RG'
+      THEN TRIM(B.REGIS_PRSNA_ID + RANK() OVER (PARTITION BY 1 ORDER BY LEGAL_ENT_NBR,MKTNG_PGM_NBR,REGIS_CNSMR_ID_VAL))
+      ELSE REFERENCE_REGISTRATIONKEY
+  END         
+,SYS_CREATION_DATE             
+,'ACTIVE'                 
+,SYS_NC_TYPE 
+,CASE WHEN SUBSTR(TRIM(REFERENCE_HOUSEHOLD_ID),1,2)='HH'
+        OR SUBSTR(TRIM(REFERENCE_LEGALENTITYKEY),1,2)='LE'
+        OR SUBSTR(TRIM(REFERENCE_REGISTRATIONKEY),1,2)='RG'
+      THEN 'TRILLIUM'
+  END AS SYS_LAST_MODIFIED_BY1
+FROM
+TRILLIUM_OUTPUT1 A
+INNER JOIN (SEL COALESCE(MAX(REGIS_PRSNA_ID),0) AS REGIS_PRSNA_ID
+FROM REGIS_PRSNA) B
+ON 1=1
+INNER JOIN (SEL COALESCE(MAX(MATCHD_CNSMR_PRSNA_ID),0) AS MATCHD_CNSMR_PRSNA_ID
+FROM MATCHD_CNSMR_PRSNA) C
+ON 1=1
+INNER JOIN (SEL COALESCE(MAX(HSHLD_PRSNA_ID),0) AS HSHLD_PRSNA_ID
+FROM HSHLD_PRSNA) D
+ON 1=1
+WHERE SYS_LAST_MODIFIED_BY1 = 'TRILLIUM'
+AND RECENT_IND = 'Y'
+;
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+COLLECT STATS ON $DATABASENAME.TRILLIUM_MDM_REFERENCE
+COLUMN MKTNG_PGM_NBR;
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+COLLECT STATS ON $DATABASENAME.TRILLIUM_MDM_REFERENCE
+COLUMN REGIS_CNSMR_ID_VAL;
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+COLLECT STATS ON $DATABASENAME.TRILLIUM_MDM_REFERENCE
+COLUMN (MKTNG_PGM_NBR,REGIS_CNSMR_ID_VAL);
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+
+UPDATE TRILLIUM_OUTPUT1
+FROM TRILLIUM_MDM_REFERENCE B
+SET REFERENCE_HOUSEHOLD_ID = B.NEW_HOUSEHOLD_ID
+,REFERENCE_LEGALENTITYKEY = B.NEW_LEGAL_ENTITY_KEY
+,REFERENCE_REGISTRATIONKEY = B.NEW_REGISTRATION_KEY
+WHERE TRILLIUM_OUTPUT1.MKTNG_PGM_NBR = B.MKTNG_PGM_NBR
+AND TRILLIUM_OUTPUT1.REGIS_CNSMR_ID_VAL = B.REGIS_CNSMR_ID_VAL
+AND TRILLIUM_OUTPUT1.LEGAL_ENT_NBR = B.LEGAL_ENT_NBR
+AND TRILLIUM_OUTPUT1.RECENT_IND = 'Y'
+;
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+
+INS TRILLIUM_OUTPUT_DUP
+(
+  MKTNG_PGM_NBR                                                                 
+ ,REGIS_CNSMR_ID_VAL                                                            
+ ,DR_ALIAS_CONTACT                                                              
+ ,DR_FIRST_NAME                                                                 
+ ,DR_MIDDLE_NAME                                                                
+ ,DR_LAST_NAME                                                                  
+ ,DR_MRMRS                                                                      
+ ,DR_NAME_GENER                                                                 
+ ,DR_NAME_SUFFIX                                                                
+ ,DR_NAME_GENDER                                                                
+ ,DR_COUNTRY_NAME                                                               
+ ,DR_REGION_NAME                                                                
+ ,DR_CITY_NAME                                                                  
+ ,DR_POSTAL_CODE                                                                
+ ,DR_STREET_NAME                                                                
+ ,DR_HOUSE_NUMBER1                                                              
+ ,DR_HOUSE_NUMBER2                                                              
+ ,DR_POBOX_NUMBER                                                               
+ ,DR_ADDRESS                                                                    
+ ,DR_ADDRESS2                                                                   
+ ,DR_ADDRESS3                                                                   
+ ,CLEANSED_PHONE_1                                                              
+ ,CLEANSED_EMAIL_1                                                              
+ ,PR_REV_GROUP                                                                  
+ ,GOUT_MATCH_LEVEL                                                              
+ ,WINDOW_KEY_01                                                                 
+ ,REFERENCE_HOUSEHOLD_ID                                                        
+ ,REFERENCE_LEGALENTITYKEY                                                      
+ ,REFERENCE_REGISTRATIONKEY                                                     
+ ,LEGAL_ENT_NBR                                                                 
+ ,BRTH_DATE                                                                     
+ ,LANG_CODE                                                                     
+ ,CNSMR_USER_NAME                                                               
+ ,STATUS                                                                        
+ ,FULL_NAME                                                                     
+ ,DPEND_NAME                                                                    
+ ,PET_NAME                                                                      
+ ,PR_NAME_FORM_01                                                               
+ ,DR_ALIAS_ACCOUNT                                                              
+ ,REFERENCE_MATCHED_LEV1_PATTERN                                                
+ ,REFERENCE_MATCHED_LEV2_PATTERN                                                
+ ,DR_BUSINESS_NAME                                                              
+ ,EMAIL_IND     
+ ,REGIS_DATE
+ ,RECORD_IND
+ ,RECENT_IND 
+ ,DUP_REGIS_PRSNA_ID
+ ,SYS_TARGET_ID                                                                 
+ ,SYS_AUTH_ID                                                                   
+ ,SYS_SOURCE                                                                    
+ ,SYS_CREATED_BY                                                                
+ ,SYS_CREATION_DATE                                                             
+ ,SYS_ENT_STATE                                                                 
+ ,SYS_LAST_MODIFIED_BY                                                          
+ ,SYS_LAST_MODIFIED_DATE                                                        
+ ,SYS_NC_TYPE                                                                   
+ ,SYS_ERR_CODE                                                                  
+ ,SYS_ERR_SVRTY
+) 
+SEL  DISTINCT
+  A.MKTNG_PGM_NBR                                                                 
+ ,A.REGIS_CNSMR_ID_VAL                                                            
+ ,DR_ALIAS_CONTACT                                                              
+ ,DR_FIRST_NAME                                                                 
+ ,DR_MIDDLE_NAME                                                                
+ ,DR_LAST_NAME                                                                  
+ ,DR_MRMRS                                                                      
+ ,DR_NAME_GENER                                                                 
+ ,DR_NAME_SUFFIX                                                                
+ ,DR_NAME_GENDER                                                                
+ ,DR_COUNTRY_NAME                                                               
+ ,DR_REGION_NAME                                                                
+ ,DR_CITY_NAME                                                                  
+ ,DR_POSTAL_CODE                                                                
+ ,DR_STREET_NAME                                                                
+ ,DR_HOUSE_NUMBER1                                                              
+ ,DR_HOUSE_NUMBER2                                                              
+ ,DR_POBOX_NUMBER                                                               
+ ,DR_ADDRESS                                                                    
+ ,DR_ADDRESS2                                                                   
+ ,DR_ADDRESS3                                                                   
+ ,CLEANSED_PHONE_1                                                              
+ ,CLEANSED_EMAIL_1                                                              
+ ,PR_REV_GROUP                                                                  
+ ,GOUT_MATCH_LEVEL                                                              
+ ,WINDOW_KEY_01                                                                 
+ ,REFERENCE_HOUSEHOLD_ID                                                        
+ ,REFERENCE_LEGALENTITYKEY                                                      
+ ,REFERENCE_REGISTRATIONKEY                                                     
+ ,A.LEGAL_ENT_NBR                                                                 
+ ,A.BRTH_DATE                                                                     
+ ,A.LANG_CODE                                                                     
+ ,A.CNSMR_USER_NAME                                                               
+ ,STATUS                                                                        
+ ,A.FULL_NAME                                                                     
+ ,DPEND_NAME                                                                    
+ ,PET_NAME                                                                      
+ ,PR_NAME_FORM_01                                                               
+ ,DR_ALIAS_ACCOUNT                                                              
+ ,REFERENCE_MATCHED_LEV1_PATTERN                                                
+ ,REFERENCE_MATCHED_LEV2_PATTERN                                                
+ ,DR_BUSINESS_NAME                                                              
+ ,EMAIL_IND     
+ ,A.REGIS_DATE
+ ,RECORD_IND
+ ,RECENT_IND 
+ ,TRIM(B.REGIS_PRSNA_ID)
+ ,A.SYS_TARGET_ID                                                                 
+ ,A.SYS_AUTH_ID                                                                   
+ ,A.SYS_SOURCE                                                                    
+ ,A.SYS_CREATED_BY                                                                
+ ,A.SYS_CREATION_DATE                                                             
+ ,A.SYS_ENT_STATE                                                                 
+ ,A.SYS_LAST_MODIFIED_BY                                                          
+ ,A.SYS_LAST_MODIFIED_DATE                                                        
+ ,A.SYS_NC_TYPE                                                                   
+ ,A.SYS_ERR_CODE                                                                  
+ ,A.SYS_ERR_SVRTY
+ FROM TRILLIUM_OUTPUT1 A
+ LEFT OUTER JOIN REGIS_PRSNA B
+ ON A.LEGAL_ENT_NBR=B.LEGAL_ENT_NBR
+AND A.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR
+AND A.REGIS_CNSMR_ID_VAL=B.REGIS_CNSMR_ID_VAL
+AND B.PRSNA_STATUS_CODE = 'AC'
+WHERE A.RECENT_IND = 'Y'
+AND A.REFERENCE_REGISTRATIONKEY <> B.REGIS_PRSNA_ID
+;
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+INS TRILLIUM_OUTPUT_DUP
+(
+  MKTNG_PGM_NBR                                                                 
+ ,REGIS_CNSMR_ID_VAL                                                            
+ ,DR_ALIAS_CONTACT                                                              
+ ,DR_FIRST_NAME                                                                 
+ ,DR_MIDDLE_NAME                                                                
+ ,DR_LAST_NAME                                                                  
+ ,DR_MRMRS                                                                      
+ ,DR_NAME_GENER                                                                 
+ ,DR_NAME_SUFFIX                                                                
+ ,DR_NAME_GENDER                                                                
+ ,DR_COUNTRY_NAME                                                               
+ ,DR_REGION_NAME                                                                
+ ,DR_CITY_NAME                                                                  
+ ,DR_POSTAL_CODE                                                                
+ ,DR_STREET_NAME                                                                
+ ,DR_HOUSE_NUMBER1                                                              
+ ,DR_HOUSE_NUMBER2                                                              
+ ,DR_POBOX_NUMBER                                                               
+ ,DR_ADDRESS                                                                    
+ ,DR_ADDRESS2                                                                   
+ ,DR_ADDRESS3                                                                   
+ ,CLEANSED_PHONE_1                                                              
+ ,CLEANSED_EMAIL_1                                                              
+ ,PR_REV_GROUP                                                                  
+ ,GOUT_MATCH_LEVEL                                                              
+ ,WINDOW_KEY_01                                                                 
+ ,REFERENCE_HOUSEHOLD_ID                                                        
+ ,REFERENCE_LEGALENTITYKEY                                                      
+ ,REFERENCE_REGISTRATIONKEY                                                     
+ ,LEGAL_ENT_NBR                                                                 
+ ,BRTH_DATE                                                                     
+ ,LANG_CODE                                                                     
+ ,CNSMR_USER_NAME                                                               
+ ,STATUS                                                                        
+ ,FULL_NAME                                                                     
+ ,DPEND_NAME                                                                    
+ ,PET_NAME                                                                      
+ ,PR_NAME_FORM_01                                                               
+ ,DR_ALIAS_ACCOUNT                                                              
+ ,REFERENCE_MATCHED_LEV1_PATTERN                                                
+ ,REFERENCE_MATCHED_LEV2_PATTERN                                                
+ ,DR_BUSINESS_NAME                                                              
+ ,EMAIL_IND     
+ ,REGIS_DATE
+ ,RECORD_IND
+ ,RECENT_IND 
+ ,SYS_TARGET_ID                                                                 
+ ,SYS_AUTH_ID                                                                   
+ ,SYS_SOURCE                                                                    
+ ,SYS_CREATED_BY                                                                
+ ,SYS_CREATION_DATE                                                             
+ ,SYS_ENT_STATE                                                                 
+ ,SYS_LAST_MODIFIED_BY                                                          
+ ,SYS_LAST_MODIFIED_DATE                                                        
+ ,SYS_NC_TYPE                                                                   
+ ,SYS_ERR_CODE                                                                  
+ ,SYS_ERR_SVRTY
+) 
+SEL  DISTINCT
+  A.MKTNG_PGM_NBR                                                                 
+ ,A.REGIS_CNSMR_ID_VAL                                                            
+ ,DR_ALIAS_CONTACT                                                              
+ ,DR_FIRST_NAME                                                                 
+ ,DR_MIDDLE_NAME                                                                
+ ,DR_LAST_NAME                                                                  
+ ,DR_MRMRS                                                                      
+ ,DR_NAME_GENER                                                                 
+ ,DR_NAME_SUFFIX                                                                
+ ,DR_NAME_GENDER                                                                
+ ,DR_COUNTRY_NAME                                                               
+ ,DR_REGION_NAME                                                                
+ ,DR_CITY_NAME                                                                  
+ ,DR_POSTAL_CODE                                                                
+ ,DR_STREET_NAME                                                                
+ ,DR_HOUSE_NUMBER1                                                              
+ ,DR_HOUSE_NUMBER2                                                              
+ ,DR_POBOX_NUMBER                                                               
+ ,DR_ADDRESS                                                                    
+ ,DR_ADDRESS2                                                                   
+ ,DR_ADDRESS3                                                                   
+ ,CLEANSED_PHONE_1                                                              
+ ,CLEANSED_EMAIL_1                                                              
+ ,PR_REV_GROUP                                                                  
+ ,GOUT_MATCH_LEVEL                                                              
+ ,WINDOW_KEY_01                                                                 
+ ,REFERENCE_HOUSEHOLD_ID                                                        
+ ,REFERENCE_LEGALENTITYKEY                                                      
+ ,REFERENCE_REGISTRATIONKEY                                                     
+ ,A.LEGAL_ENT_NBR                                                                 
+ ,A.BRTH_DATE                                                                     
+ ,A.LANG_CODE                                                                     
+ ,A.CNSMR_USER_NAME                                                               
+ ,STATUS                                                                        
+ ,A.FULL_NAME                                                                     
+ ,DPEND_NAME                                                                    
+ ,PET_NAME                                                                      
+ ,PR_NAME_FORM_01                                                               
+ ,DR_ALIAS_ACCOUNT                                                              
+ ,REFERENCE_MATCHED_LEV1_PATTERN                                                
+ ,REFERENCE_MATCHED_LEV2_PATTERN                                                
+ ,DR_BUSINESS_NAME                                                              
+ ,EMAIL_IND     
+ ,A.REGIS_DATE
+ ,RECORD_IND
+ ,RECENT_IND 
+ ,A.SYS_TARGET_ID                                                                 
+ ,A.SYS_AUTH_ID                                                                   
+ ,A.SYS_SOURCE                                                                    
+ ,A.SYS_CREATED_BY                                                                
+ ,A.SYS_CREATION_DATE                                                             
+ ,A.SYS_ENT_STATE                                                                 
+ ,A.SYS_LAST_MODIFIED_BY                                                          
+ ,A.SYS_LAST_MODIFIED_DATE                                                        
+ ,A.SYS_NC_TYPE                                                                   
+ ,A.SYS_ERR_CODE                                                                  
+ ,A.SYS_ERR_SVRTY
+ FROM TRILLIUM_OUTPUT1 A
+ LEFT OUTER JOIN REGIS_PRSNA B
+ ON A.LEGAL_ENT_NBR=B.LEGAL_ENT_NBR
+AND A.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR
+AND A.REFERENCE_REGISTRATIONKEY=B.REGIS_PRSNA_ID
+AND B.PRSNA_STATUS_CODE = 'AC'
+WHERE A.RECENT_IND = 'Y'
+AND A.REGIS_CNSMR_ID_VAL <> B.REGIS_CNSMR_ID_VAL
+;
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+INS TRILLIUM_OUTPUT_DUP
+(
+  MKTNG_PGM_NBR                                                                 
+ ,REGIS_CNSMR_ID_VAL                                                            
+ ,DR_ALIAS_CONTACT                                                              
+ ,DR_FIRST_NAME                                                                 
+ ,DR_MIDDLE_NAME                                                                
+ ,DR_LAST_NAME                                                                  
+ ,DR_MRMRS                                                                      
+ ,DR_NAME_GENER                                                                 
+ ,DR_NAME_SUFFIX                                                                
+ ,DR_NAME_GENDER                                                                
+ ,DR_COUNTRY_NAME                                                               
+ ,DR_REGION_NAME                                                                
+ ,DR_CITY_NAME                                                                  
+ ,DR_POSTAL_CODE                                                                
+ ,DR_STREET_NAME                                                                
+ ,DR_HOUSE_NUMBER1                                                              
+ ,DR_HOUSE_NUMBER2                                                              
+ ,DR_POBOX_NUMBER                                                               
+ ,DR_ADDRESS                                                                    
+ ,DR_ADDRESS2                                                                   
+ ,DR_ADDRESS3                                                                   
+ ,CLEANSED_PHONE_1                                                              
+ ,CLEANSED_EMAIL_1                                                              
+ ,PR_REV_GROUP                                                                  
+ ,GOUT_MATCH_LEVEL                                                              
+ ,WINDOW_KEY_01                                                                 
+ ,REFERENCE_HOUSEHOLD_ID                                                        
+ ,REFERENCE_LEGALENTITYKEY                                                      
+ ,REFERENCE_REGISTRATIONKEY                                                     
+ ,LEGAL_ENT_NBR                                                                 
+ ,BRTH_DATE                                                                     
+ ,LANG_CODE                                                                     
+ ,CNSMR_USER_NAME                                                               
+ ,STATUS                                                                        
+ ,FULL_NAME                                                                     
+ ,DPEND_NAME                                                                    
+ ,PET_NAME                                                                      
+ ,PR_NAME_FORM_01                                                               
+ ,DR_ALIAS_ACCOUNT                                                              
+ ,REFERENCE_MATCHED_LEV1_PATTERN                                                
+ ,REFERENCE_MATCHED_LEV2_PATTERN                                                
+ ,DR_BUSINESS_NAME                                                              
+ ,EMAIL_IND     
+ ,REGIS_DATE
+ ,RECORD_IND
+ ,RECENT_IND 
+ ,SYS_TARGET_ID                                                                 
+ ,SYS_AUTH_ID                                                                   
+ ,SYS_SOURCE                                                                    
+ ,SYS_CREATED_BY                                                                
+ ,SYS_CREATION_DATE                                                             
+ ,SYS_ENT_STATE                                                                 
+ ,SYS_LAST_MODIFIED_BY                                                          
+ ,SYS_LAST_MODIFIED_DATE                                                        
+ ,SYS_NC_TYPE                                                                   
+ ,SYS_ERR_CODE                                                                  
+ ,SYS_ERR_SVRTY
+) 
+SEL DISTINCT
+  A.MKTNG_PGM_NBR                                                                 
+ ,A.REGIS_CNSMR_ID_VAL                                                            
+ ,DR_ALIAS_CONTACT                                                              
+ ,DR_FIRST_NAME                                                                 
+ ,DR_MIDDLE_NAME                                                                
+ ,DR_LAST_NAME                                                                  
+ ,DR_MRMRS                                                                      
+ ,DR_NAME_GENER                                                                 
+ ,DR_NAME_SUFFIX                                                                
+ ,DR_NAME_GENDER                                                                
+ ,DR_COUNTRY_NAME                                                               
+ ,DR_REGION_NAME                                                                
+ ,DR_CITY_NAME                                                                  
+ ,DR_POSTAL_CODE                                                                
+ ,DR_STREET_NAME                                                                
+ ,DR_HOUSE_NUMBER1                                                              
+ ,DR_HOUSE_NUMBER2                                                              
+ ,DR_POBOX_NUMBER                                                               
+ ,DR_ADDRESS                                                                    
+ ,DR_ADDRESS2                                                                   
+ ,DR_ADDRESS3                                                                   
+ ,CLEANSED_PHONE_1                                                              
+ ,CLEANSED_EMAIL_1                                                              
+ ,PR_REV_GROUP                                                                  
+ ,GOUT_MATCH_LEVEL                                                              
+ ,WINDOW_KEY_01                                                                 
+ ,REFERENCE_HOUSEHOLD_ID                                                        
+ ,REFERENCE_LEGALENTITYKEY                                                      
+ ,REFERENCE_REGISTRATIONKEY                                                     
+ ,A.LEGAL_ENT_NBR                                                                 
+ ,A.BRTH_DATE                                                                     
+ ,A.LANG_CODE                                                                     
+ ,A.CNSMR_USER_NAME                                                               
+ ,STATUS                                                                        
+ ,A.FULL_NAME                                                                     
+ ,DPEND_NAME                                                                    
+ ,PET_NAME                                                                      
+ ,PR_NAME_FORM_01                                                               
+ ,DR_ALIAS_ACCOUNT                                                              
+ ,REFERENCE_MATCHED_LEV1_PATTERN                                                
+ ,REFERENCE_MATCHED_LEV2_PATTERN                                                
+ ,DR_BUSINESS_NAME                                                              
+ ,EMAIL_IND     
+ ,A.REGIS_DATE
+ ,RECORD_IND
+ ,RECENT_IND 
+ ,A.SYS_TARGET_ID                                                                 
+ ,A.SYS_AUTH_ID                                                                   
+ ,A.SYS_SOURCE                                                                    
+ ,A.SYS_CREATED_BY                                                                
+ ,A.SYS_CREATION_DATE                                                             
+ ,A.SYS_ENT_STATE                                                                 
+ ,A.SYS_LAST_MODIFIED_BY                                                          
+ ,A.SYS_LAST_MODIFIED_DATE                                                        
+ ,A.SYS_NC_TYPE                                                                   
+ ,A.SYS_ERR_CODE                                                                  
+ ,A.SYS_ERR_SVRTY
+ FROM TRILLIUM_OUTPUT1 A
+ WHERE A.RECENT_IND = 'Y'
+ QUALIFY RANK() OVER (PARTITION BY REFERENCE_REGISTRATIONKEY
+ ORDER BY A.LEGAL_ENT_NBR
+ ,A.MKTNG_PGM_NBR   
+ ,REFERENCE_REGISTRATIONKEY
+ ,A.REGIS_DATE DESC
+ ,A.REGIS_CNSMR_ID_VAL DESC
+ ,A.SYS_CREATION_DATE DESC
+ ,A.SYS_NC_TYPE DESC
+) <> 1
+;
+
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+COLLECT STATS ON $DATABASENAME.TRILLIUM_OUTPUT_DUP1
+COLUMN MKTNG_PGM_NBR;
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+COLLECT STATS ON $DATABASENAME.TRILLIUM_OUTPUT_DUP1
+COLUMN REGIS_CNSMR_ID_VAL;
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+COLLECT STATS ON $DATABASENAME.TRILLIUM_OUTPUT_DUP1
+COLUMN (MKTNG_PGM_NBR,REGIS_CNSMR_ID_VAL);
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+ 
+UPDATE TRILLIUM_OUTPUT1
+FROM 
+(
+SEL DISTINCT A.LEGAL_ENT_NBR
+,A.MKTNG_PGM_NBR
+,A.REGIS_DATE
+,A.REFERENCE_REGISTRATIONKEY
+,A.REGIS_CNSMR_ID_VAL
+,A.SYS_CREATION_DATE
+,A.SYS_NC_TYPE,TRIM(CASE WHEN D.REGIS_PRSNA_ID > C.REGIS_PRSNA_ID
+                  THEN D.REGIS_PRSNA_ID
+                  ELSE C.REGIS_PRSNA_ID
+              END + RANK() OVER (PARTITION BY 1 ORDER BY A.REFERENCE_REGISTRATIONKEY))
+AS REGIS_PRSNA_ID FROM
+TRILLIUM_OUTPUT_DUP A
+INNER JOIN TRILLIUM_OUTPUT1 B
+ ON A.LEGAL_ENT_NBR=B.LEGAL_ENT_NBR
+AND A.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR
+AND A.REGIS_CNSMR_ID_VAL=B.REGIS_CNSMR_ID_VAL
+AND B.RECENT_IND = 'Y'
+INNER JOIN (SEL COALESCE(MAX(CAST(REFERENCE_REGISTRATIONKEY AS INTEGER)),0
+) AS REGIS_PRSNA_ID
+FROM TRILLIUM_OUTPUT1
+WHERE RECENT_IND = 'Y') C
+ON 1=1
+INNER JOIN (SEL COALESCE(MAX(CAST(REGIS_PRSNA_ID AS INTEGER)),0) AS REGIS_PRSNA_ID
+FROM REGIS_PRSNA) D
+ON 1=1
+WHERE DUP_REGIS_PRSNA_ID IS NULL) B
+SET REGIS_PRSNA_ID = B.REGIS_PRSNA_ID
+WHERE TRILLIUM_OUTPUT1.LEGAL_ENT_NBR=B.LEGAL_ENT_NBR
+AND TRILLIUM_OUTPUT1.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR
+AND TRILLIUM_OUTPUT1.REGIS_DATE=B.REGIS_DATE
+AND TRILLIUM_OUTPUT1.REFERENCE_REGISTRATIONKEY=B.REFERENCE_REGISTRATIONKEY
+AND TRILLIUM_OUTPUT1.REGIS_CNSMR_ID_VAL=B.REGIS_CNSMR_ID_VAL
+AND TRILLIUM_OUTPUT1.SYS_CREATION_DATE=B.SYS_CREATION_DATE
+AND TRILLIUM_OUTPUT1.SYS_NC_TYPE=B.SYS_NC_TYPE
+;
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+UPDATE TRILLIUM_OUTPUT_DUP
+FROM 
+(
+SEL DISTINCT A.LEGAL_ENT_NBR
+,A.MKTNG_PGM_NBR
+,A.REGIS_DATE
+,A.REFERENCE_REGISTRATIONKEY
+,A.REGIS_CNSMR_ID_VAL
+,A.SYS_CREATION_DATE
+,A.SYS_NC_TYPE,B.REGIS_PRSNA_ID FROM
+TRILLIUM_OUTPUT_DUP A
+INNER JOIN TRILLIUM_OUTPUT1 B
+ ON A.LEGAL_ENT_NBR=B.LEGAL_ENT_NBR
+AND A.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR
+AND A.REGIS_CNSMR_ID_VAL=B.REGIS_CNSMR_ID_VAL
+AND B.RECENT_IND = 'Y'
+AND A.DUP_REGIS_PRSNA_ID IS NULL
+) B
+SET DUP_REGIS_PRSNA_ID = TRIM(B.REGIS_PRSNA_ID)
+WHERE TRILLIUM_OUTPUT_DUP.LEGAL_ENT_NBR=B.LEGAL_ENT_NBR
+AND TRILLIUM_OUTPUT_DUP.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR
+AND TRILLIUM_OUTPUT_DUP.REGIS_DATE=B.REGIS_DATE
+AND TRILLIUM_OUTPUT_DUP.REGIS_CNSMR_ID_VAL=B.REGIS_CNSMR_ID_VAL
+AND TRILLIUM_OUTPUT_DUP.SYS_CREATION_DATE=B.SYS_CREATION_DATE
+AND TRILLIUM_OUTPUT_DUP.SYS_NC_TYPE=B.SYS_NC_TYPE
+AND TRILLIUM_OUTPUT_DUP.DUP_REGIS_PRSNA_ID IS NULL
+;
+
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+DEL FROM TRILLIUM_OUTPUT1 
+WHERE RECENT_IND IS NULL
+;
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+INSERT INTO HSHLD_PRSNA  
+(HSHLD_PRSNA_ID
+,LEGAL_ENT_NBR
+,PRSNA_STATUS_CODE
+,SYS_SOURCE
+,SYS_TARGET_ID
+,SYS_AUTH_ID
+,SYS_CREATED_BY
+,SYS_CREATION_DATE
+,SYS_LAST_MODIFIED_DATE
+,SYS_ENT_STATE
+,SYS_LAST_MODIFIED_BY
+,SYS_NC_TYPE
+,SYS_ERR_CODE                                                                  
+,SYS_ERR_SVRTY) 
+SELECT DISTINCT *
+FROM
+(SELECT
+REFERENCE_HOUSEHOLD_ID
+,LEGAL_ENT_NBR
+,'ACTIVATED' PRSNA_STATUS_CODE
+,SYS_SOURCE
+,SYS_TARGET_ID
+,SYS_AUTH_ID
+,SYS_CREATED_BY
+,CAST(CAST(CURRENT_TIMESTAMP AS VARCHAR(19)) AS TIMESTAMP(0)) SYS_CREATION_DATE
+,CAST(CAST(CURRENT_TIMESTAMP AS VARCHAR(19)) AS TIMESTAMP(0)) SYS_LAST_MODIFIED_DATE
+,SYS_ENT_STATE
+,SYS_LAST_MODIFIED_BY
+,SYS_NC_TYPE
+,SYS_ERR_CODE                                                                  
+,SYS_ERR_SVRTY
+FROM
+TRILLIUM_OUTPUT1
+WHERE RECORD_IND='NNN'
+AND RECENT_IND = 'Y'
+AND REFERENCE_HOUSEHOLD_ID NOT IN (SELECT TRIM(HSHLD_PRSNA_ID)
+FROM HSHLD_PRSNA GROUP BY 1)
+QUALIFY RANK() OVER(PARTITION BY REFERENCE_HOUSEHOLD_ID
+ORDER BY LEGAL_ENT_NBR, MKTNG_PGM_NBR, REGIS_DATE DESC, REFERENCE_REGISTRATIONKEY DESC, REGIS_CNSMR_ID_VAL DESC, SYS_NC_TYPE DESC, SYS_SOURCE DESC  ) = 1
+) A
+;
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+INSERT INTO MATCHD_CNSMR_PRSNA  
+(MATCHD_CNSMR_PRSNA_ID
+,LEGAL_ENT_NBR
+,HSHLD_PRSNA_ID
+,HEAD_OF_HSHLD_IND
+,UNIVERSAL_OPT_OUT
+,NAME_PREFX_TXT
+,GVN_NAME
+,MID_NAME
+,FAMLY_NAME
+,NAME_SUFFX_TXT
+,FULL_NAME
+,GENDR_IND
+,BRTH_DATE
+,NOTE_TXT
+,LATST_ACTVY_DATE
+,PRSNA_STATUS_CODE
+,CNSMR_USER_NAME
+,LANG_CODE
+,REGIS_DATE
+,SYS_SOURCE
+,SYS_TARGET_ID
+,SYS_AUTH_ID
+,SYS_CREATED_BY
+,SYS_CREATION_DATE
+,SYS_LAST_MODIFIED_DATE
+,SYS_ENT_STATE
+,SYS_LAST_MODIFIED_BY
+,SYS_NC_TYPE
+,SYS_ERR_CODE                                                                  
+,SYS_ERR_SVRTY) 
+SELECT DISTINCT *
+FROM
+(SELECT
+TOUT.REFERENCE_LEGALENTITYKEY
+,TOUT.LEGAL_ENT_NBR
+,TOUT.REFERENCE_HOUSEHOLD_ID
+,CASE WHEN RANK() OVER (PARTITION BY REFERENCE_HOUSEHOLD_ID ORDER BY REFERENCE_HOUSEHOLD_ID,REFERENCE_LEGALENTITYKEY) = 1
+           AND A.HSHLD_PRSNA_ID IS NULL
+      THEN 'Y'
+      ELSE 'N'
+  END AS HEAD_OF_HSHLD_IND
+,'' AS UNIVERSAL_OPT_OUT
+,TOUT.DR_MRMRS
+,TOUT.DR_FIRST_NAME
+,TOUT.DR_MIDDLE_NAME
+,TOUT.DR_LAST_NAME
+,TOUT.DR_NAME_SUFFIX
+,TOUT.FULL_NAME
+,TOUT.DR_NAME_GENDER
+,TOUT.BRTH_DATE
+,'' AS NOTE_TXT
+,TOUT.REGIS_DATE LATST_ACTVY_DATE
+,'ACTIVATED' AS PRSNA_STATUS_CODE
+,TOUT.CNSMR_USER_NAME
+,TOUT.LANG_CODE
+,TOUT.REGIS_DATE
+,TOUT.SYS_SOURCE
+,TOUT.SYS_TARGET_ID
+,TOUT.SYS_AUTH_ID
+,TOUT.SYS_CREATED_BY
+,CAST(CAST(CURRENT_TIMESTAMP AS VARCHAR(19)) AS TIMESTAMP(0)) SYS_CREATION_DATE
+,CAST(CAST(CURRENT_TIMESTAMP AS VARCHAR(19)) AS TIMESTAMP(0)) SYS_LAST_MODIFIED_DATE
+,TOUT.SYS_ENT_STATE
+,TOUT.SYS_LAST_MODIFIED_BY
+,TOUT.SYS_NC_TYPE
+,TOUT.SYS_ERR_CODE                                                                  
+,TOUT.SYS_ERR_SVRTY
+FROM
+TRILLIUM_OUTPUT1 TOUT
+LEFT OUTER JOIN (SELECT TRIM(HSHLD_PRSNA_ID) AS HSHLD_PRSNA_ID
+FROM MATCHD_CNSMR_PRSNA GROUP BY 1) A
+ON TOUT.REFERENCE_HOUSEHOLD_ID = A.HSHLD_PRSNA_ID
+WHERE TOUT.RECORD_IND IN ('NNN','NNY')
+AND RECENT_IND = 'Y'
+AND (REFERENCE_HOUSEHOLD_ID,REFERENCE_LEGALENTITYKEY) NOT IN (SELECT TRIM(HSHLD_PRSNA_ID),TRIM(MATCHD_CNSMR_PRSNA_ID)
+FROM MATCHD_CNSMR_PRSNA GROUP BY 1,2)
+
+QUALIFY RANK() OVER(PARTITION BY REFERENCE_LEGALENTITYKEY, REFERENCE_HOUSEHOLD_ID 
+ORDER BY LEGAL_ENT_NBR, TOUT.REGIS_DATE DESC, REFERENCE_HOUSEHOLD_ID DESC, TOUT.SYS_NC_TYPE DESC, TOUT.SYS_SOURCE DESC  ) = 1
+) A;
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+INSERT INTO REGIS_PRSNA  
+(REGIS_PRSNA_ID
+,MKTNG_PGM_NBR
+,LEGAL_ENT_NBR
+,MATCHD_CNSMR_PRSNA_ID
+,REFERAL_MKTNG_PGM_NBR
+,TRM_LEAD_KEY
+,NAME_PREFX_TXT
+,GVN_NAME
+,MID_NAME
+,FAMLY_NAME
+,NAME_SUFFX_TXT
+,FULL_NAME
+,GENDR_IND
+,BRTH_DATE
+,LANG_CODE
+,CNTRY_CODE
+,EMAIL_SUPRSN_IND
+,PHONE_SUPRSN_IND
+,POSTL_SUPRSN_IND
+,SOCL_NETWK_SUPRSN_IND
+,LATST_ACTVY_DATE
+,REGIS_CNSMR_ID_VAL
+,CNSMR_USER_NAME
+,REGIS_DATE
+,PRSNA_STATUS_CODE
+,SYS_SOURCE
+,SYS_TARGET_ID
+,SYS_AUTH_ID
+,SYS_CREATED_BY
+,SYS_CREATION_DATE
+,SYS_LAST_MODIFIED_DATE
+,SYS_ENT_STATE
+,SYS_LAST_MODIFIED_BY
+,SYS_NC_TYPE
+,SYS_ERR_CODE                                                                  
+,SYS_ERR_SVRTY) 
+SELECT DISTINCT *
+FROM
+(SELECT
+COALESCE(TOUT.REGIS_PRSNA_ID,CAST(TOUT.REFERENCE_REGISTRATIONKEY AS INTEGER)) REFERENCE_REGISTRATIONKEY
+,TOUT.MKTNG_PGM_NBR
+,TOUT.LEGAL_ENT_NBR
+,TOUT.REFERENCE_LEGALENTITYKEY
+,'' REFERAL_MKTNG_PGM_NBR
+,'' TRM_LEAD_KEY
+,TOUT.DR_MRMRS
+,TOUT.DR_FIRST_NAME
+,TOUT.DR_MIDDLE_NAME
+,TOUT.DR_LAST_NAME
+,TOUT.DR_NAME_SUFFIX
+,TOUT.FULL_NAME
+,TOUT.DR_NAME_GENDER
+,TOUT.BRTH_DATE
+,TOUT.LANG_CODE
+,TOUT.DR_COUNTRY_NAME
+,'' EMAIL_SUPRSN_IND
+,'' PHONE_SUPRSN_IND
+,'' POSTL_SUPRSN_IND
+,'' SOCL_NETWK_SUPRSN_IND
+,TOUT.REGIS_DATE LATST_ACTVY_DATE
+,TOUT.REGIS_CNSMR_ID_VAL
+,TOUT.CNSMR_USER_NAME
+,TOUT.REGIS_DATE
+,'ACTIVATED' PRSNA_STATUS_CODE
+,TOUT.SYS_SOURCE
+,TOUT.SYS_TARGET_ID
+,TOUT.SYS_AUTH_ID
+,TOUT.SYS_CREATED_BY
+,CAST(CAST(CURRENT_TIMESTAMP AS VARCHAR(19)) AS TIMESTAMP(0)) SYS_CREATION_DATE
+,CAST(CAST(CURRENT_TIMESTAMP AS VARCHAR(19)) AS TIMESTAMP(0)) SYS_LAST_MODIFIED_DATE
+,TOUT.SYS_ENT_STATE
+,TOUT.SYS_LAST_MODIFIED_BY
+,TOUT.SYS_NC_TYPE
+,TOUT.SYS_ERR_CODE                                                                  
+,TOUT.SYS_ERR_SVRTY
+FROM
+TRILLIUM_OUTPUT1 TOUT
+WHERE TOUT.RECORD_IND IN ('NNN','NNY','NYY')
+AND RECENT_IND = 'Y'
+) A;
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+INSERT INTO MATCHD_CNSMR_POSTL_ADDR
+(MATCHD_CNSMR_PRSNA_ID
+,LEGAL_ENT_NBR
+,CNTCT_POINT_CATEG_CODE
+,VALID_CNTCT_POINT_IND
+,PREF_CNTCT_POINT_IND
+,ADDR_LINE_1_TXT
+,ADDR_LINE_2_TXT
+,ADDR_LINE_3_TXT
+,STRET_NUM
+,STRET_NAME
+,APT_NUM
+,PO_BOX_NUM
+,CITY_NAME
+,POSTL_AREA_CODE
+,LAT_MEAS
+,LONG_MEAS
+,TERR_CODE
+,CNTRY_CODE
+,SYS_SOURCE
+,SYS_TARGET_ID
+,SYS_AUTH_ID
+,SYS_CREATED_BY
+,SYS_CREATION_DATE
+,SYS_LAST_MODIFIED_DATE
+,SYS_ENT_STATE
+,SYS_LAST_MODIFIED_BY
+,SYS_NC_TYPE
+,SYS_ERR_CODE
+,SYS_ERR_SVRTY)
+SELECT DISTINCT *
+FROM
+(SELECT 
+TOUT.REFERENCE_LEGALENTITYKEY
+,TOUT.LEGAL_ENT_NBR
+,CNTCT_POINT_CATEG_CODE
+,CASE WHEN TOUT.PR_REV_GROUP > 0
+THEN 'N'
+ELSE ''
+END VALID_CNTCT_POINT_IND
+,PREF_CNTCT_POINT_IND
+,TOUT.DR_ADDRESS
+,TOUT.DR_ADDRESS2
+,TOUT.DR_ADDRESS3
+,TOUT.DR_HOUSE_NUMBER1
+,TOUT.DR_STREET_NAME
+,TOUT.DR_HOUSE_NUMBER2
+,TOUT.DR_POBOX_NUMBER
+,TOUT.DR_CITY_NAME
+,TOUT.DR_POSTAL_CODE
+,'' LAT_MEAS
+,'' LONG_MEAS
+,TOUT.DR_REGION_NAME
+,TOUT.DR_COUNTRY_NAME
+,TOUT.SYS_SOURCE
+,TOUT.SYS_TARGET_ID
+,TOUT.SYS_AUTH_ID
+,TOUT.SYS_CREATED_BY
+,CAST(CAST(CURRENT_TIMESTAMP AS VARCHAR(19)) AS TIMESTAMP(0)) SYS_CREATION_DATE
+,CAST(CAST(CURRENT_TIMESTAMP AS VARCHAR(19)) AS TIMESTAMP(0)) SYS_LAST_MODIFIED_DATE
+,TOUT.SYS_ENT_STATE
+,TOUT.SYS_LAST_MODIFIED_BY
+,TOUT.SYS_NC_TYPE
+,TOUT.SYS_ERR_CODE
+,TOUT.SYS_ERR_SVRTY
+FROM
+TRILLIUM_OUTPUT1 TOUT
+JOIN
+MATCHD_CNSMR_POSTL_ADDR STG
+ON
+CAST(TOUT.REFERENCE_LEGALENTITYKEY AS INTEGER) = STG.MATCHD_CNSMR_PRSNA_ID
+AND
+TOUT.LEGAL_ENT_NBR = STG.LEGAL_ENT_NBR
+WHERE TOUT.RECORD_IND IN ('NNN','NNY')
+AND RECENT_IND = 'Y'
+AND REFERENCE_LEGALENTITYKEY NOT IN (SELECT TRIM(MATCHD_CNSMR_PRSNA_ID)
+FROM MATCHD_CNSMR_POSTL_ADDR GROUP BY 1)
+QUALIFY RANK() OVER(PARTITION BY REFERENCE_LEGALENTITYKEY
+ORDER BY TOUT.LEGAL_ENT_NBR, TOUT.REGIS_DATE DESC, REFERENCE_HOUSEHOLD_ID DESC, TOUT.SYS_NC_TYPE DESC, TOUT.SYS_SOURCE DESC  ) = 1
+) A;
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+INSERT INTO REGIS_PRSNA_POSTL_ADDR
+(
+ CNTCT_POINT_CATEG_CODE
+,REGIS_PRSNA_ID
+,MKTNG_PGM_NBR
+,LEGAL_ENT_NBR
+,WIN_KEY
+,SUBSCRPTN_OPT_NBR
+,SUBSCRPTN_OPT_IND
+,CNSMR_CHCE_DATETM
+,PREF_CNTCT_POINT_IND
+,ADDR_LINE_1_TXT
+,ADDR_LINE_2_TXT
+,ADDR_LINE_3_TXT
+,STRET_NUM
+,STRET_NAME
+,APT_NUM
+,PO_BOX_NUM
+,CITY_NAME
+,POSTL_AREA_CODE
+,TERR_CODE
+,CNTRY_CODE
+,LAT_MEAS
+,LONG_MEAS
+,VALID_CNTCT_POINT_IND
+,GUARDN_NAME
+,GUARDN_EMAIL_ADDR_TXT
+,GUARDN_CNSNT_IND
+,ACNLGMT_DATE
+,SYS_SOURCE
+,SYS_TARGET_ID
+,SYS_AUTH_ID
+,SYS_CREATED_BY
+,SYS_CREATION_DATE
+,SYS_LAST_MODIFIED_DATE
+,SYS_ENT_STATE
+,SYS_LAST_MODIFIED_BY
+,SYS_NC_TYPE
+,SYS_ERR_CODE 
+,SYS_ERR_SVRTY)
+SELECT DISTINCT *
+FROM
+(SELECT
+STG.CNTCT_POINT_CATEG_CODE
+,COALESCE(TOUT.REGIS_PRSNA_ID,CAST(TOUT.REFERENCE_REGISTRATIONKEY AS INTEGER)) REFERENCE_REGISTRATIONKEY
+,TOUT.MKTNG_PGM_NBR
+,TOUT.LEGAL_ENT_NBR
+,TOUT.WINDOW_KEY_01
+,STG.SUBSCRPTN_OPT_NBR
+,STG.SUBSCRPTN_OPT_IND
+,STG.CNSMR_CHCE_DATETM
+,STG.PREF_CNTCT_POINT_IND
+,TOUT.DR_ADDRESS
+,TOUT.DR_ADDRESS2
+,TOUT.DR_ADDRESS3
+,TOUT.DR_HOUSE_NUMBER1
+,TOUT.DR_STREET_NAME
+,TOUT.DR_HOUSE_NUMBER2
+,TOUT.DR_POBOX_NUMBER
+,TOUT.DR_CITY_NAME
+,TOUT.DR_POSTAL_CODE
+,TOUT.DR_REGION_NAME
+,TOUT.DR_COUNTRY_NAME
+,'' LAT_MEAS
+,'' LONG_MEAS
+,CASE WHEN TOUT.PR_REV_GROUP > 0
+THEN 'N'
+ELSE ''
+END VALID_CNTCT_POINT_IND
+,STG.GUARDN_NAME
+,STG.GUARDN_EMAIL_ADDR_TXT
+,STG.GUARDN_CNSNT_IND
+,STG.ACNLGMT_DATE
+,TOUT.SYS_SOURCE
+,TOUT.SYS_TARGET_ID
+,TOUT.SYS_AUTH_ID
+,TOUT.SYS_CREATED_BY
+,CAST(CAST(CURRENT_TIMESTAMP AS VARCHAR(19)) AS TIMESTAMP(0)) SYS_CREATION_DATE
+,CAST(CAST(CURRENT_TIMESTAMP AS VARCHAR(19)) AS TIMESTAMP(0)) SYS_LAST_MODIFIED_DATE
+,TOUT.SYS_ENT_STATE
+,TOUT.SYS_LAST_MODIFIED_BY
+,TOUT.SYS_NC_TYPE
+,TOUT.SYS_ERR_CODE 
+,TOUT.SYS_ERR_SVRTY
+FROM
+TRILLIUM_OUTPUT1 TOUT
+JOIN
+REGIS_PRSNA_POSTL_ADDR STG
+ON
+COALESCE(TOUT.REGIS_PRSNA_ID,CAST(TOUT.REFERENCE_REGISTRATIONKEY AS INTEGER)) = STG.REGIS_PRSNA_ID
+AND
+TOUT.MKTNG_PGM_NBR = STG.MKTNG_PGM_NBR
+AND
+TOUT.LEGAL_ENT_NBR = STG.LEGAL_ENT_NBR
+AND (TOUT.RECORD_IND IN ('NNN','NNY','NYY')
+OR (RECORD_IND='Y' AND TOUT.REGIS_PRSNA_ID IS NOT NULL))
+AND RECENT_IND = 'Y'
+QUALIFY RANK() OVER (PARTITION BY TOUT.LEGAL_ENT_NBR
+,TOUT.MKTNG_PGM_NBR,TOUT.REGIS_CNSMR_ID_VAL  
+ORDER BY TOUT.LEGAL_ENT_NBR
+,TOUT.MKTNG_PGM_NBR   
+,TOUT.REGIS_CNSMR_ID_VAL
+,TOUT.SYS_NC_TYPE DESC
+,TOUT.SYS_SOURCE DESC
+,TOUT.SYS_CREATION_DATE DESC
+,TOUT.DR_ADDRESS DESC
+,STG.SUBSCRPTN_OPT_NBR DESC
+) = 1
+) A;
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+INS REGIS_PRSNA_PHONE 
+(
+CNTCT_POINT_CATEG_CODE        ,
+REGIS_PRSNA_ID                ,
+MKTNG_PGM_NBR                 ,
+LEGAL_ENT_NBR                 ,
+SUBSCRPTN_OPT_NBR             ,
+SUBSCRPTN_OPT_IND             ,
+CNSMR_CHCE_DATETM             ,
+PREF_CNTCT_POINT_IND          ,
+PHONE_CNTRY_NBR               ,
+PHONE_AREA_NBR                ,
+PHONE_EXCHG_NBR               ,
+PHONE_LINE_NBR                ,
+PHONE_EXTSN_NUM               ,
+FULL_PHONE_NUM                ,
+SMS_PREFR_IND                 ,
+SMS_AVAIL_START_TIME          ,
+SMS_AVAIL_END_TIME            ,
+VALID_CNTCT_POINT_IND         ,
+GUARDN_NAME                   ,
+GUARDN_EMAIL_ADDR_TXT         ,
+GUARDN_CNSNT_IND              ,
+ACNLGMT_DATE                  ,
+SYS_SOURCE                    ,
+SYS_TARGET_ID                 ,
+SYS_AUTH_ID                   ,
+SYS_CREATED_BY                ,
+SYS_CREATION_DATE             ,
+SYS_LAST_MODIFIED_DATE        ,
+SYS_ENT_STATE                 ,
+SYS_LAST_MODIFIED_BY          ,
+SYS_NC_TYPE                   ,
+SYS_ERR_CODE                  ,
+SYS_ERR_SVRTY                 
+)
+SELECT DISTINCT *
+FROM
+(SELECT
+A.CNTCT_POINT_CATEG_CODE        ,
+--B.REFERENCE_REGISTRATIONKEY                ,
+COALESCE(B.REGIS_PRSNA_ID,CAST(B.REFERENCE_REGISTRATIONKEY AS INTEGER)) REFERENCE_REGISTRATIONKEY,
+B.MKTNG_PGM_NBR                 ,
+B.LEGAL_ENT_NBR                 ,
+A.SUBSCRPTN_OPT_NBR             ,
+A.SUBSCRPTN_OPT_IND             ,
+CNSMR_CHCE_DATETM    ,
+A.PREF_CNTCT_POINT_IND          ,
+A.PHONE_CNTRY_NBR               ,
+A.PHONE_AREA_NBR                ,
+A.PHONE_EXCHG_NBR               ,
+A.PHONE_LINE_NBR                ,
+A.PHONE_EXTSN_NUM               ,
+B.CLEANSED_PHONE_1                ,
+A.SMS_PREFR_IND                 ,
+SMS_AVAIL_START_TIME     ,
+SMS_AVAIL_END_TIME    ,
+A.VALID_CNTCT_POINT_IND         ,
+A.GUARDN_NAME                   ,
+A.GUARDN_EMAIL_ADDR_TXT         ,
+A.GUARDN_CNSNT_IND              ,
+A.ACNLGMT_DATE                  ,
+A.SYS_SOURCE                    ,
+A.SYS_TARGET_ID                 ,
+A.SYS_AUTH_ID                   ,
+A.SYS_CREATED_BY                ,
+CAST(CAST(CURRENT_TIMESTAMP AS VARCHAR(19)) AS TIMESTAMP(0)) SYS_CREATION_DATE,
+CAST(CAST(CURRENT_TIMESTAMP AS VARCHAR(19)) AS TIMESTAMP(0)) SYS_LAST_MODIFIED_DATE,
+A.SYS_ENT_STATE                 ,
+A.SYS_LAST_MODIFIED_BY          ,
+A.SYS_NC_TYPE                   ,
+A.SYS_ERR_CODE                  ,
+A.SYS_ERR_SVRTY 
+FROM REGIS_PRSNA_PHONE A
+INNER JOIN TRILLIUM_OUTPUT1 B
+ON
+COALESCE(B.REGIS_PRSNA_ID,CAST(B.REFERENCE_REGISTRATIONKEY AS INTEGER)) = A.REGIS_PRSNA_ID
+AND
+B.MKTNG_PGM_NBR = A.MKTNG_PGM_NBR
+AND
+B.LEGAL_ENT_NBR = A.LEGAL_ENT_NBR
+WHERE B.RECORD_IND IN ('NNN','NNY','NYY')
+AND RECENT_IND = 'Y'
+QUALIFY RANK() OVER (PARTITION BY B.LEGAL_ENT_NBR
+,B.MKTNG_PGM_NBR,B.REGIS_CNSMR_ID_VAL  
+ORDER BY B.LEGAL_ENT_NBR
+,B.MKTNG_PGM_NBR   
+,B.REGIS_CNSMR_ID_VAL
+,A.SYS_NC_TYPE DESC
+,A.SYS_SOURCE DESC
+,A.SYS_CREATION_DATE DESC
+,A.FULL_PHONE_NUM DESC
+,A.SUBSCRPTN_OPT_NBR DESC
+) = 1
+) A
+;	
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+INS REGIS_PRSNA_EMAIL_ADDR 
+(
+CNTCT_POINT_CATEG_CODE        ,
+REGIS_PRSNA_ID                ,
+MKTNG_PGM_NBR                 ,
+LEGAL_ENT_NBR                 ,
+SUBSCRPTN_OPT_NBR             ,
+SUBSCRPTN_OPT_IND             ,
+CNSMR_CHCE_DATETM             ,
+PREF_CNTCT_POINT_IND          ,
+EMAIL_ADDR_TXT                ,
+EMAIL_FORMT_CODE              ,
+VALID_CNTCT_POINT_IND         ,
+GUARDN_NAME                   ,
+GUARDN_EMAIL_ADDR_TXT         ,
+GUARDN_CNSNT_IND              ,
+ACNLGMT_DATE                  ,
+SYS_SOURCE                    ,
+SYS_TARGET_ID                 ,
+SYS_AUTH_ID                   ,
+SYS_CREATED_BY                ,
+SYS_CREATION_DATE             ,
+SYS_LAST_MODIFIED_DATE        ,
+SYS_ENT_STATE                 ,
+SYS_LAST_MODIFIED_BY          ,
+SYS_NC_TYPE                   ,
+SYS_ERR_CODE                  ,
+SYS_ERR_SVRTY                 
+)
+SELECT DISTINCT *
+FROM
+(SELECT 
+A.CNTCT_POINT_CATEG_CODE        ,
+--B.REFERENCE_REGISTRATIONKEY                ,
+COALESCE(B.REGIS_PRSNA_ID,CAST(B.REFERENCE_REGISTRATIONKEY AS INTEGER)) REFERENCE_REGISTRATIONKEY,
+B.MKTNG_PGM_NBR                 ,
+B.LEGAL_ENT_NBR                 ,
+A.SUBSCRPTN_OPT_NBR             ,
+A.SUBSCRPTN_OPT_IND             ,
+CNSMR_CHCE_DATETM       ,
+A.PREF_CNTCT_POINT_IND          ,
+B.CLEANSED_EMAIL_1                ,
+A.EMAIL_FORMT_CODE              ,
+A.VALID_CNTCT_POINT_IND         ,
+A.GUARDN_NAME                   ,
+A.GUARDN_EMAIL_ADDR_TXT         ,
+A.GUARDN_CNSNT_IND              ,
+A.ACNLGMT_DATE                  ,
+A.SYS_SOURCE                    ,
+A.SYS_TARGET_ID                 ,
+A.SYS_AUTH_ID                   ,
+A.SYS_CREATED_BY                ,
+CAST(CAST(CURRENT_TIMESTAMP AS VARCHAR(19)) AS TIMESTAMP(0)) SYS_CREATION_DATE,
+CAST(CAST(CURRENT_TIMESTAMP AS VARCHAR(19)) AS TIMESTAMP(0)) SYS_LAST_MODIFIED_DATE,
+A.SYS_ENT_STATE                 ,
+A.SYS_LAST_MODIFIED_BY          ,
+A.SYS_NC_TYPE                   ,
+A.SYS_ERR_CODE                  ,
+A.SYS_ERR_SVRTY 
+FROM REGIS_PRSNA_EMAIL_ADDR A
+INNER JOIN TRILLIUM_OUTPUT1 B
+ON
+COALESCE(B.REGIS_PRSNA_ID,CAST(B.REFERENCE_REGISTRATIONKEY AS INTEGER)) = A.REGIS_PRSNA_ID
+AND
+B.MKTNG_PGM_NBR = A.MKTNG_PGM_NBR
+AND
+B.LEGAL_ENT_NBR = A.LEGAL_ENT_NBR
+WHERE B.RECORD_IND IN ('NNN','NNY','NYY')
+AND RECENT_IND = 'Y'
+QUALIFY RANK() OVER (PARTITION BY B.LEGAL_ENT_NBR
+,B.MKTNG_PGM_NBR,B.REGIS_CNSMR_ID_VAL  
+ORDER BY B.LEGAL_ENT_NBR
+,B.MKTNG_PGM_NBR   
+,B.REGIS_CNSMR_ID_VAL
+,A.SYS_NC_TYPE DESC
+,A.SYS_SOURCE DESC
+,A.SYS_CREATION_DATE DESC
+,A.EMAIL_ADDR_TXT DESC
+,A.SUBSCRPTN_OPT_NBR DESC
+) = 1
+) A
+;	
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+INS MDM.TRILLIUM_OUTPUT2
+SEL * FROM MDM.TRILLIUM_OUTPUT1;
+
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+UPDATE MATCHD_CNSMR_PRSNA  
+FROM
+(SELECT
+CAST(TOUT.REFERENCE_LEGALENTITYKEY AS INTEGER) REFERENCE_LEGALENTITYKEY,
+TOUT.LEGAL_ENT_NBR,
+TOUT.REFERENCE_HOUSEHOLD_ID
+TRILLIUM_OUTPUT1 TOUT
+WHERE TOUT.RECORD_IND IN ('Y','NYY')
+AND RECENT_IND = 'Y'
+GROUP BY 1,2,3
+) TOUT
+SET HSHLD_PRSNA_ID = TOUT.REFERENCE_HOUSEHOLD_ID
+,SYS_LAST_MODIFIED_DATE = CAST(CAST(CURRENT_TIMESTAMP AS VARCHAR(19)) AS TIMESTAMP(0))
+WHERE TOUT.LEGAL_ENT_NBR = MATCHD_CNSMR_PRSNA.LEGAL_ENT_NBR
+AND
+TOUT.REFERENCE_LEGALENTITYKEY = MATCHD_CNSMR_PRSNA.MATCHD_CNSMR_PRSNA_ID
+;
+
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+UPDATE REGIS_PRSNA  
+FROM
+TRILLIUM_OUTPUT1 TOUT
+SET MATCHD_CNSMR_PRSNA_ID = CAST(TOUT.REFERENCE_LEGALENTITYKEY AS INTEGER)
+,SYS_LAST_MODIFIED_DATE = CAST(CAST(CURRENT_TIMESTAMP AS VARCHAR(19)) AS TIMESTAMP(0))
+WHERE TOUT.LEGAL_ENT_NBR = REGIS_PRSNA.LEGAL_ENT_NBR
+AND TOUT.MKTNG_PGM_NBR = REGIS_PRSNA.MKTNG_PGM_NBR
+AND TOUT.REGIS_CNSMR_ID_VAL = REGIS_PRSNA.REGIS_CNSMR_ID_VAL
+AND TOUT.RECORD_IND = 'Y'
+AND RECENT_IND = 'Y'
+;
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+
+UPDATE MATCHD_CNSMR_POSTL_ADDR  
+FROM
+(SELECT
+CAST(TOUT.REFERENCE_LEGALENTITYKEY AS INTEGER) REFERENCE_LEGALENTITYKEY
+,TOUT.LEGAL_ENT_NBR
+,TOUT.DR_ADDRESS
+,TOUT.DR_ADDRESS2
+,TOUT.DR_ADDRESS3
+,TOUT.DR_HOUSE_NUMBER1
+,TOUT.DR_STREET_NAME
+,TOUT.DR_HOUSE_NUMBER2
+,TOUT.DR_POBOX_NUMBER
+,TOUT.DR_CITY_NAME
+,TOUT.DR_POSTAL_CODE
+,TOUT.DR_REGION_NAME
+,TOUT.DR_COUNTRY_NAME
+,CASE WHEN TOUT.PR_REV_GROUP > 0
+THEN 'N'
+ELSE ''
+END VALID_CNTCT_POINT_IND
+FROM
+TRILLIUM_OUTPUT1 TOUT
+WHERE TOUT.RECORD_IND IN ('Y','NYY')
+AND RECENT_IND = 'Y'
+GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14
+) TOUT
+SET ADDR_LINE_1_TXT = TOUT.DR_ADDRESS
+,ADDR_LINE_2_TXT = TOUT.DR_ADDRESS2
+,ADDR_LINE_3_TXT = TOUT.DR_ADDRESS3
+,STRET_NUM = TOUT.DR_HOUSE_NUMBER1
+,STRET_NAME = TOUT.DR_STREET_NAME
+,APT_NUM = TOUT.DR_HOUSE_NUMBER2
+,PO_BOX_NUM = TOUT.DR_POBOX_NUMBER
+,CITY_NAME = TOUT.DR_CITY_NAME
+,POSTL_AREA_CODE = TOUT.DR_POSTAL_CODE
+,TERR_CODE = TOUT.DR_REGION_NAME
+,CNTRY_CODE = TOUT.DR_COUNTRY_NAME
+,VALID_CNTCT_POINT_IND = TOUT.VALID_CNTCT_POINT_IND
+,SYS_LAST_MODIFIED_DATE = CAST(CAST(CURRENT_TIMESTAMP AS VARCHAR(19)) AS TIMESTAMP(0))
+WHERE TOUT.LEGAL_ENT_NBR = MATCHD_CNSMR_POSTL_ADDR.LEGAL_ENT_NBR
+AND
+TOUT.REFERENCE_LEGALENTITYKEY = MATCHD_CNSMR_POSTL_ADDR.MATCHD_CNSMR_PRSNA_ID
+;
+
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+UPDATE REGIS_PRSNA_POSTL_ADDR  
+FROM TRILLIUM_OUTPUT1 TOUT
+SET ADDR_LINE_1_TXT = TOUT.DR_ADDRESS
+,ADDR_LINE_2_TXT = TOUT.DR_ADDRESS2
+,ADDR_LINE_3_TXT = TOUT.DR_ADDRESS3
+,STRET_NUM = TOUT.DR_HOUSE_NUMBER1
+,STRET_NAME = TOUT.DR_STREET_NAME
+,APT_NUM = TOUT.DR_HOUSE_NUMBER2
+,PO_BOX_NUM = TOUT.DR_POBOX_NUMBER
+,CITY_NAME = TOUT.DR_CITY_NAME
+,POSTL_AREA_CODE = TOUT.DR_POSTAL_CODE
+,TERR_CODE = TOUT.DR_REGION_NAME
+,CNTRY_CODE = TOUT.DR_COUNTRY_NAME
+,VALID_CNTCT_POINT_IND = CASE WHEN TOUT.PR_REV_GROUP > 0
+THEN 'N'
+ELSE ''
+END 
+,SYS_LAST_MODIFIED_DATE = CAST(CAST(CURRENT_TIMESTAMP AS VARCHAR(19)) AS TIMESTAMP(0))
+,WIN_KEY = TOUT.WINDOW_KEY_01
+WHERE TOUT.LEGAL_ENT_NBR = REGIS_PRSNA.LEGAL_ENT_NBR
+AND TOUT.MKTNG_PGM_NBR = REGIS_PRSNA.MKTNG_PGM_NBR
+AND TOUT.REGIS_CNSMR_ID_VAL = REGIS_PRSNA.REGIS_CNSMR_ID_VAL
+AND TOUT.RECORD_IND = 'Y'
+AND RECENT_IND = 'Y'
+;
+
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+UPDATE	REGIS_PRSNA 
+FROM	(
+SELECT	* 
+FROM	(
+SELECT	A.LEGAL_ENT_NBR,A.MKTNG_PGM_NBR,COALESCE(B.REFERENCE_REGISTRATIONKEY,
+		CAST(TRIM(A.REGIS_PRSNA_ID) AS VARCHAR(20))) AS PRSNA,A.REGIS_PRSNA_ID,
+		A.REGIS_CNSMR_ID_VAL,A.REGIS_DATE,A.SYS_CREATION_DATE,A.SYS_NC_TYPE,
+		RANK() OVER (PARTITION BY PRSNA 
+ORDER	BY A.LEGAL_ENT_NBR,A.MKTNG_PGM_NBR,PRSNA,A.REGIS_DATE DESC,
+		A.REGIS_CNSMR_ID_VAL DESC,A.SYS_CREATION_DATE DESC,A.SYS_NC_TYPE DESC) AS RNK 
+FROM	REGIS_PRSNA A LEFT OUTER JOIN TRILLIUM_OUTPUT B 
+	ON	A.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR 
+	AND	A.REGIS_CNSMR_ID_VAL=B.REGIS_CNSMR_ID_VAL 
+	AND	A.LEGAL_ENT_NBR = B.LEGAL_ENT_NBR 
+	AND	B.RECENT_IND = 'Y') B 
+WHERE	RNK <> 1
+GROUP BY 1,2,3,4,5,6,7,8,9
+) B 
+SET	PRSNA_STATUS_CODE = 'IN' 
+WHERE	REGIS_PRSNA.LEGAL_ENT_NBR=B.LEGAL_ENT_NBR 
+	AND	REGIS_PRSNA.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR 
+	AND	REGIS_PRSNA.REGIS_PRSNA_ID=B.REGIS_PRSNA_ID 
+	AND	REGIS_PRSNA.REGIS_CNSMR_ID_VAL=B.REGIS_CNSMR_ID_VAL 
+	AND	REGIS_PRSNA.REGIS_DATE=B.REGIS_DATE 
+	AND	REGIS_PRSNA.SYS_CREATION_DATE=B.SYS_CREATION_DATE 
+	AND	REGIS_PRSNA.SYS_NC_TYPE=B.SYS_NC_TYPE
+	AND     REGIS_PRSNA.PRSNA_STATUS_CODE = 'AC';
+ 
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+UPDATE REGIS_PRSNA 
+FROM	(
+SELECT	* 
+FROM	(
+SELECT	LEGAL_ENT_NBR,MKTNG_PGM_NBR,REGIS_PRSNA_ID,REGIS_CNSMR_ID_VAL,
+		REGIS_DATE,SYS_CREATION_DATE,SYS_NC_TYPE,RANK() OVER (PARTITION BY LEGAL_ENT_NBR,
+		MKTNG_PGM_NBR,REGIS_CNSMR_ID_VAL 
+ORDER	BY LEGAL_ENT_NBR,MKTNG_PGM_NBR,REGIS_CNSMR_ID_VAL,REGIS_DATE DESC,
+		REGIS_PRSNA_ID DESC,SYS_CREATION_DATE DESC,SYS_NC_TYPE DESC) AS RNK 
+GROUP	BY LEGAL_ENT_NBR,MKTNG_PGM_NBR,REGIS_PRSNA_ID,REGIS_DATE,
+		REGIS_CNSMR_ID_VAL,SYS_CREATION_DATE,SYS_NC_TYPE 
+FROM	REGIS_PRSNA) B 
+WHERE	RNK <> 1
+GROUP BY 1,2,3,4,5,6,7,8
+) B 
+SET	PRSNA_STATUS_CODE = 'IN' 
+WHERE	REGIS_PRSNA.LEGAL_ENT_NBR=B.LEGAL_ENT_NBR 
+	AND	REGIS_PRSNA.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR 
+	AND	REGIS_PRSNA.REGIS_DATE=B.REGIS_DATE 
+	AND	REGIS_PRSNA.REGIS_PRSNA_ID=B.REGIS_PRSNA_ID 
+	AND	REGIS_PRSNA.REGIS_CNSMR_ID_VAL=B.REGIS_CNSMR_ID_VAL 
+	AND	REGIS_PRSNA.SYS_CREATION_DATE=B.SYS_CREATION_DATE 
+	AND	REGIS_PRSNA.SYS_NC_TYPE=B.SYS_NC_TYPE
+	AND     REGIS_PRSNA.PRSNA_STATUS_CODE = 'AC';
+
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+.LABEL EXIT
+
+.IF ERRORLEVEL > 4 THEN .GOTO ERR ;
+.IF ERRORLEVEL <= 4 THEN .GOTO WARN;
+
+.LABEL ERR
+.QUIT 1
+
+.LABEL WARN
+.QUIT 0

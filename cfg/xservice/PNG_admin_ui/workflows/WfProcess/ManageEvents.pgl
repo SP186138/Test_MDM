@@ -1,0 +1,290 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" Id="AddNewEvent.pgl">
+  <ui:container id="outerContainer" inner="false" displayText="Define Event" scrollable="true" showFavorite="true">
+    <ui:step id="outerStep" displayText="Manage Event Descriptors">
+      <ui:help displayPage="{$pages:WfManageEventsHelp}"/>
+      <ui:validation/>
+      <ui:field-group id="alertValuesDisplay" rows="1" width="10%" displayCondition="{$root/selWfEventTrue/@Value='true'}">
+        <ui:image src="/alert_yellow_static.gif" id="alertClickIcon"/>
+        <ui:display-field id="alertIconValue" value="SELECTED_MANAGE_EVENTS" style="font-weight:bold;"/>
+      </ui:field-group>
+      <ui:field-group id="hiddenFieldsGroup">
+        <ui:hidden-field id="selWfEventTrue" name="selWfEventTrue" value="{$root/selWfEventTrue/@Value}"/>
+        <ui:hidden-field id="status" value="{$root/status/@Value}" name="status"/>
+        <ui:hidden-field id="status_msg" value="{$root/status_msg/@Value}" name="status_msg"/>
+        <ui:hidden-field id="saveButtonAction" value="{$root/SaveBtn_DisplayText/@Value}" name="saveButtonAction"/>
+        <ui:hidden-field id="key_seq_count" name="key_seq_count" value="{$root/key_seq_count/@Value}"/>
+        <ui:hidden-field id="SaveBtn_Id" name="SaveBtn_Id" value="{$root/SaveBtn_DisplayText/@Value}"/>
+      </ui:field-group>
+      <ui:field-group columns="4" id="alertFieldGroup">
+        <ui:image src="/bpi_check.gif" id="AlertGreenIconAjax"/>
+        <ui:image src="/cancel.gif" id="AlertRedIconAjax"/>
+        <ui:display-field id="alertValue" value="{$root/status_msg/@Value}" name="alertValueDisp"/>
+      </ui:field-group>
+      <ui:container id="innderContainer" inner="true">
+        <ui:step id="innerStep">
+          <ui:field-group id="eventDetailsGrp">
+            <ui:entry-field id="event_name" name="event_name" displayText="Event Descriptor Name" required="true" title="Name of the event" value="{$root/EDIT_DETAILS/EventName/@Value}" editable="{$root/SaveBtn_DisplayText/@Value='Save'}" size="38"/>
+            <ui:textarea id="event_desc" name="event_desc" displayText="Event Description" title="Name of the event" value="{$root/EDIT_DETAILS/Description/@Value}" columns="40" maxlength="200" unFormat="true"/>
+            <!--ui:checkbox id="is_synchronized" name="is_synchronized" displayText="Is Synchronous" checkedValue="Y" defaultValue="N" value="{$root/EDIT_DETAILS/IsSynchronous/@Value}"/-->
+          </ui:field-group>
+          <ui:container inner="true" id="keysContainer">
+            <ui:step id="keysStep">
+              <ui:grid id="keysGrid">
+                <ui:row id="dispTextRow">
+                  <ui:cell id="keyCell" width="40%">
+                    <ui:field-group>
+                      <ui:display-field id="keydisp" name="keydisp" displayText="Enter Key" class="tabularDataContainerHeaderRowLeft" style="font-weight:bold"/>
+                    </ui:field-group>
+                  </ui:cell>
+                  <ui:cell id="keyBtnGrid" width="20%">
+                    <ui:field-group>
+                    </ui:field-group>
+                  </ui:cell>
+                  <ui:cell id="keysCell" width="40%">
+                    <ui:field-group>
+                      <ui:display-field id="keydisp" name="keydisp" displayText="Event Keys" class="tabularDataContainerHeaderRowLeft" style="font-weight:bold"/>
+                    </ui:field-group>
+                  </ui:cell>
+                </ui:row>
+                <ui:row id="keyGRows">
+                  <ui:cell id="keyCell" width="40%">
+                    <ui:field-group>
+                      <ui:entry-field id="event_key" name="event_key" title="Enter Event Keys" size="30"/>
+                    </ui:field-group>
+                  </ui:cell>
+                  <ui:cell id="keyBtnGrid" width="20%">
+                    <ui:field-group>
+                      <ui:button id="addEvenetKey" name="addEventKey" onClick="javascript:onAddKey();" displayText="Add Key"/>
+                      <ui:button id="deleteEvenetKey" name="deleteEvenetKey" onClick="javascript:onDeleteKey();" displayText="Delete Key"/>
+                    </ui:field-group>
+                  </ui:cell>
+                  <ui:cell id="keysCell" width="40%">
+                    <ui:field-group>
+                      <ui:dropdown id="event_keys" name="event_keys" size="4" optionSrc="$root/EDIT_KEYS/*" unFormat="true"/>
+                    </ui:field-group>
+                  </ui:cell>
+                </ui:row>
+              </ui:grid>
+            </ui:step>
+          </ui:container>
+          <ui:buttons id="btnGroup">
+            <ui:button id="from" name="from" displayText="Back" displayCondition="{$root/From/@Value='true'}" validate="false"/>
+            <ui:button id="Save" name="Save" displayText="{$root/SaveBtn_DisplayText/@Value}" emphasized="true"/>
+          </ui:buttons>
+        </ui:step>
+      </ui:container>
+      <ui:table id="wfParamsTbl" displayTextNoRecords="No event descriptor found" displayText="Event Descriptors" rowId="EventName" doPaging="false" exportable="true" collapsable="false" maxRows="-1" selectable="Single" postRowIdAs="SELECTED_EVENT_NAME" rowSrc="$root/EVENT_DESCRIPTORS/*" select="$root/EVENT_DESCRIPTORS/*" startAtRow="$root/StartRowCount/@Value" totalRowCount="$root/TotalRowCount/@Value" scrollable="true">
+        <ui:field-group id="tblFieldGrp">
+          <ui:display-field id="EventName" name="EventName" displayText="Event Name" unFormat="true"/>
+          <ui:display-field id="EventKeys" name="EventKeys" displayText="Event Keys" unFormat="true"/>
+          <ui:display-field id="Description" name="Description" displayText="Description" unFormat="true"/>
+          <!--ui:display-field id="IsSynchronous" name="IsSynchronous" displayText="Is Synchronous"/-->
+        </ui:field-group>
+        <ui:buttons id="btnGroup">
+          <ui:button id="EditEventDesc" name="EditEventDesc" displayText="Edit" enabledBySelections="true"/>
+          <ui:divider/>
+          <ui:button id="DeleteEventDesc" name="DeleteEventDesc" displayText="Delete" enabledBySelections="true" onClick="javascript:onDelete();"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:dynamic-pgl id="dyn1" select="$root/DYNAMIC_PGL/*"/>
+  <ui:script>
+    var keySeq = 0;
+    function onLoad()
+    {
+		var status = document.getElementById('status').value;
+		if(document.getElementById('key_seq_count').value)
+			keySeq = document.getElementById('key_seq_count').value;
+		if(status === 'Success'){
+			showSuccessAlertFields();
+			var timeout = 5000;
+		}
+		else if(status === 'Error'){
+			showFailureAlertFields();
+			var timeout = 10000;
+		}
+		else{
+			hideAlertFields();
+		}
+		setTimeout(hideAlertFields,timeout);
+		onResize();
+		onLoadSuper();
+    }
+    function onDelete()
+    {
+    	var temp= '';
+		jQuery.each($("input[name='SELECTED_EVENT_NAME']") , function(l, endPoint) {
+			if($(endPoint).prop('checked'))
+				temp = $(endPoint).val();
+		});
+    
+    	if($('#selWfEventTrue').val()=='true' || allPropsVar.indexOf(temp+'|')!=-1)
+		core_confirm_jquery('WF_EVENT_DEL_DEP','onDeleteCallback');    
+    	else
+		core_confirm_jquery('WF_DELET_EVENT_DESC','onDeleteCallback');
+		
+    }
+	function onDeleteCallback(response){
+	
+		if(response == 'yes'){
+			document.form.BUTTON_ID.value = 'DeleteEventDesc';
+			document.form.submit();
+			grayOut(true);
+		}
+	}
+    function on_Save()
+    {
+    	if(isValid_innerStep()){
+			if(document.getElementById('SaveBtn_Id').value==='Save')	
+		    	checkUniqueName();
+	    	else{
+				saveSubmit();
+	    	}
+    	}
+    }
+    function on_Back()
+    {
+		document.form.BUTTON_ID.value = 'Back';
+		document.form.submit();
+		grayOut(true);
+    }
+    function onAddKey()
+    {
+    	var key = document.getElementById('event_key').value;
+	    if(key){
+				if( /\s/g.test(key))
+				{
+					core_alert_jquery('KEY_NAME_SPACE')
+					return;
+				}
+				if(containsSpecialChars(key))
+				{
+					return;
+				}
+			var evenkKeysObj = document.getElementById('event_keys');
+			for(var l=0;l&lt;evenkKeysObj.options.length;l++)
+			{
+				if(evenkKeysObj.options[l].value===key)
+				{
+    				core_alert_jquery('EVENT_KEY_ADDED');
+					return;
+				}
+			}
+			var index=evenkKeysObj.options.length;
+			keySeq++;
+			evenkKeysObj.options[index]=new Option(key,key+'#'+keySeq,false);
+			document.getElementById('event_key').value='';
+    	}
+    }
+    function onDeleteKey()
+    {
+		var obj = document.getElementById('event_keys');
+		if(!(obj!=null &amp;&amp; obj.options!=null))
+			{return;}
+		var len=obj.options.length;
+		var index=len;
+		for(i=0;i&lt;len;i++)
+		{
+			index=len-i-1;
+			if(obj.options[index].value != '' &amp;&amp; obj.options[index].selected)
+			{
+				obj.remove(index);
+				keySeq--;
+			}
+		}
+    }
+    function saveSubmit()
+    {
+		selectAll(document.form.event_keys);
+		document.form.BUTTON_ID.value = 'Save';
+		document.form.submit();
+		grayOut(true);
+    }
+	function checkUniqueName()
+	{
+		var eventName = document.getElementById('event_name').value;
+		var childAttrbArray=[&quot;Document&quot;,&quot;ServiceName&quot;];
+		var childValueArray=[&quot;SYS_WFPROCESS_EVENT_DESC&quot;,&quot;BPE_META&quot;];
+		var requestDoc=createRequestXmlObjectTd('checkUniqueAttributeEntry','BCM_MASTER',childAttrbArray,childValueArray);
+		var attrbTagArray=[&quot;Name&quot;,&quot;Value&quot;];
+		requestDoc=addXmlTagAttrbTd(requestDoc,&quot;Unique_Attribute&quot;,attrbTagArray,[&quot;EventName&quot;,eventName]);
+		var request= serializeXmlTd(requestDoc);
+		var xpath = &quot;/RESPONSES/RESPONSE/IsUnique&quot;;
+		SendAjaxRequest('BCM_MASTER',request,'checkUniqueNameCallBack',xpath);
+	}
+	    
+	function checkUniqueNameCallBack(node)
+	{
+		var result = node[0].getAttribute('Value');
+		if(result=='no')
+		{
+			core_alert_jquery('WF_DUPLICATE_PROCESS_EVENT_NAME_ALERT');
+			return false;
+		}
+		else{
+			saveSubmit();
+		}
+	}
+	function selectAll(obj)
+	{
+		for (var i=obj.options.length-1; i>=0; i--)
+		{
+			if(obj.options[i].value != '')
+			obj.options[i].selected = true;
+		}
+	}
+    
+function containsSpecialChars(checkStr)
+{
+var status=false;
+var spChars = '!@#$`%^&amp;*()+=-[]\\\';,./{}|\':&lt;>?~';
+var strlength= checkStr.length;
+for (var i = 0; i &lt; checkStr.length; i++)
+{
+if (spChars.indexOf(checkStr.charAt(i)) != -1)
+{
+if(checkStr.charAt(i)=='+')
+core_alert_jquery ('Attribute Name should not contain special character %2B  ' +'.');
+else
+core_alert_jquery ('Attribute Name should not contain special character  ' + escape(checkStr.charAt(i))+'.');
+status=true;
+}
+}
+return status;
+}
+	
+function hideAlertFields()
+{
+toggleAlertField('AlertGreenIconAjax','hide');
+toggleAlertField('AlertRedIconAjax','hide');
+toggleAlertField('alertValue_td','hide');
+}
+function showSuccessAlertFields()
+{
+toggleAlertField('AlertGreenIconAjax','show');
+toggleAlertField('AlertRedIconAjax','hide');
+toggleAlertField('alertValue_td','show');
+}
+function showFailureAlertFields()
+{
+toggleAlertField('AlertGreenIconAjax','hide');
+toggleAlertField('AlertRedIconAjax','show');
+toggleAlertField('alertValue_td','show');
+}
+function toggleAlertField(id,state)
+{
+fieldCell  = document.getElementById(id);
+fieldRow = fieldCell.parentNode;
+toggleItemVisibility(fieldRow, state);
+var i = document.getElementById(id);
+if (state=='hide'){
+i.disabled = true;
+}
+else{
+i.disabled = false;
+i.enabled = true;
+}
+}
+  </ui:script>
+</ui:page-group>

@@ -1,0 +1,39 @@
+/***********************************************************************************************************
+SCRIPT:               MDM_STATUS.BTEQ 
+DESCRIPTION:          THIS SCRIPT UPDATES THE LOAD_CONTROL AND LOAD_INFO DURING THE RESTARTS
+DEPENDENCY:           MDM PROCESS
+INPUT:                
+OUTPUT:               LOAD_CONTROL, LOAD_INFO
+ERRORS:
+SPECIAL INSTRUCTIONS:
+
+CHANGE LOG:
+VERSION              DATE                 AUTHOR                          CHANGES
+1.00                 01/21/2011           TERADATA                        INITIAL VERSION
+***********************************************************************************************************/
+
+.RUN FILE $LOGON_FILE;
+.SET ERROROUT STDOUT;
+.SET SESSION CHARSET 'UTF8';
+
+DELETE FROM $MASTERDB.LOAD_CONTROL WHERE LOAD_ID IN ()
+AND LOAD_TYPE = 'MDM'
+;
+
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+DELETE FROM $DATABASENAME.LOAD_INFO WHERE LOAD_ID IN ()
+;
+
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+.LABEL EXIT
+
+.IF ERRORLEVEL > 4 THEN .GOTO ERR ;
+.IF ERRORLEVEL <= 4 THEN .GOTO WARN;
+
+.LABEL ERR
+.QUIT 1
+
+.LABEL WARN
+.QUIT 0

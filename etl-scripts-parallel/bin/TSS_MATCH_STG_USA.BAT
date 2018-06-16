@@ -1,0 +1,169 @@
+@echo off
+REM TSS Import
+
+REM SCRIPT:               CNSMR_TSS_MATCH_STG.FLD 
+REM DESCRIPTION:          This script loads the TRILLIUM OUTPUT table from the file that is given by Trillium
+REM DEPENDENCY:           TRILLIUM MATCH SCRIPT
+REM INPUT:                TRILLIUM OUTPUT FILE
+REM OUTPUT:               TRILLIUM OUTPUT
+REM ERRORS:
+REM SPECIAL INSTRUCTIONS:
+REM CHANGE LOG:
+REM VERSION              DATE                 AUTHOR                          CHANGES
+REM 1.00                 01/21/2011           TERADATA                        INITIAL VERSION
+REM 2.00                 10/31/2011           TERADATA                        CHANGES FOR ||ELISM
+REM 3.00                 05/16/2012           TERADATA                        R2O Phase 0
+
+
+echo Executing TSS Import
+
+:start
+set ERR=%ERRORLEVEL%
+set ERR1=%ERRORLEVEL%
+FOR /F "tokens=1-6 delims=/ " %%i in ('date/t') do set currentdate=%%i-%%j-%%k-%%l
+FOR /F "tokens=1-6 delims=: " %%i in ('time/t') do set currenttime=%%i-%%j-%%k
+call .\mdmcustomenv-parallel.bat 
+
+set TSSMATCHOUTPUT="/c:%TSS_MATCH_OUTPUT%"
+
+set LOGONFILE="/e:%LOGON_FILE%"
+
+set DATABASENAME="/f:%MASTER_DB%"
+
+set CNSMRTSSMATCHCLEANUPBTEQ="/d:%CNSMR_TSS_MATCH_CLEANUP_BTEQ%.BTEQ"
+
+set MSTDB="/g:%MST_DB%"
+
+set CNTRY="/h:USA"
+
+set COUNTRY="USA"
+
+set CNTRY1=USA
+
+cscript %MDM_CUSTOM_DIR%\etl-scripts-parallel\bin\CNSMR_TSS_MATCH_STG.vbs %TSSMATCHOUTPUT% %CNSMRTSSMATCHCLEANUPBTEQ% %LOGONFILE% %DATABASENAME% %MSTDB% %CNTRY% > %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG
+
+IF ERRORLEVEL 1 (
+echo Exiting due to error during TRILLIUM OUTPUT cleanup >> %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG
+set errorlevel=1
+ren %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG TSS_MATCH_OUTPUT_%CNTRY1%_%currentdate%_%currenttime%.LOG
+exit 1
+)
+
+set CNSMRTSSMATCHCLEANUPBTEQ="%CNSMR_TSS_MATCH_CLEANUP_BTEQ%.BTEQ%COUNTRY%"
+set FAILUREBTEQ="/d:%TSS_MATCH_STG_FAILURE_BTEQ%.BTEQ"
+set FAILUREBTEQ1="%TSS_MATCH_STG_FAILURE_BTEQ%.BTEQ%COUNTRY%"
+
+bteq < %CNSMRTSSMATCHCLEANUPBTEQ% >> %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG
+set ERR=%ERRORLEVEL%
+
+IF NOT %ERR% == 0  (
+echo Exiting due to error during TRILLIUM OUTPUT update >> %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG
+cscript %MDM_CUSTOM_DIR%\etl-scripts-parallel\bin\CNSMR_TSS_MATCH_STG.vbs %TSSMATCHOUTPUT% %FAILUREBTEQ% %LOGONFILE% %DATABASENAME% %MSTDB% %CNTRY% >> %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG
+IF ERRORLEVEL 1 (
+echo Exiting due to error during TRILLIUM OUTPUT update >> %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG
+set errorlevel=1
+ren %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG TSS_MATCH_OUTPUT_%CNTRY1%_%currentdate%_%currenttime%.LOG
+exit 1
+)
+
+bteq < %FAILUREBTEQ1% >> %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG
+set ERR1=%ERRORLEVEL%
+
+IF NOT %ERR1% == 0 (
+ren %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG TSS_MATCH_OUTPUT_%CNTRY1%_%currentdate%_%currenttime%.LOG
+exit %ERR1%
+)
+
+ren %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG TSS_MATCH_OUTPUT_%CNTRY1%_%currentdate%_%currenttime%.LOG
+exit %ERR%
+)
+
+set CNSMRTSSMATCHSTGMLD="/d:%CNSMR_TSS_MATCH_STG_MLD%.MLD"
+
+cscript %MDM_CUSTOM_DIR%\etl-scripts-parallel\bin\CNSMR_TSS_MATCH_STG.vbs %TSSMATCHOUTPUT% %CNSMRTSSMATCHSTGMLD% %LOGONFILE% %DATABASENAME% %MSTDB% %CNTRY% >> %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG
+
+IF ERRORLEVEL 1 (
+echo Exiting due to error during fast load >> %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG
+set errorlevel=1
+ren %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG TSS_MATCH_OUTPUT_%CNTRY1%_%currentdate%_%currenttime%.LOG
+exit 1
+)
+
+set CNSMRTSSMATCHSTGMLD="%CNSMR_TSS_MATCH_STG_MLD%.MLD%COUNTRY%"
+
+mload -c UTF8 < %CNSMRTSSMATCHSTGMLD% >> %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG
+REM tbuild -f %CNSMR_TSS_MATCH_STG_TPT% -u "TdpId='%TdpId%',UserName='%UserName%',UserPassword='%UserPassword%',MDM_DB='%MDM_DB%',ERR_DB='%ERR_DB%',LOG_DB='%LOG_DB%',WORK_DB='%WORK_DB%',DirectoryPath='%MDM_CUSTOM_DIR%\data',FileName = '%TSS_MATCH_OUTPUT%''"
+set ERR=%ERRORLEVEL%
+set FAILUREBTEQ="/d:%TSS_MATCH_STG_FAILURE_BTEQ%.BTEQ"
+set FAILUREBTEQ1="%TSS_MATCH_STG_FAILURE_BTEQ%.BTEQ%COUNTRY%"
+
+IF NOT %ERR% == 0  (
+echo Exiting due to error during TRILLIUM OUTPUT update >> %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG
+cscript %MDM_CUSTOM_DIR%\etl-scripts-parallel\bin\CNSMR_TSS_MATCH_STG.vbs %TSSMATCHOUTPUT% %FAILUREBTEQ% %LOGONFILE% %DATABASENAME% %MSTDB% %CNTRY% >> %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG
+IF ERRORLEVEL 1 (
+echo Exiting due to error during TRILLIUM OUTPUT update >> %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG
+set errorlevel=1
+ren %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG TSS_MATCH_OUTPUT_%CNTRY1%_%currentdate%_%currenttime%.LOG
+exit 1
+)
+
+bteq < %FAILUREBTEQ1% >> %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG
+set ERR1=%ERRORLEVEL%
+IF NOT %ERR1% == 0 (
+ren %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG TSS_MATCH_OUTPUT_%CNTRY1%_%currentdate%_%currenttime%.LOG
+exit %ERR1%
+)
+ren %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG TSS_MATCH_OUTPUT_%CNTRY1%_%currentdate%_%currenttime%.LOG
+exit %ERR%
+)
+
+set CNSMRTSSMATCHSTGBTEQ="/d:%CNSMR_TSS_MATCH_STG_BTEQ%.BTEQ"
+
+cscript %MDM_CUSTOM_DIR%\etl-scripts-parallel\bin\CNSMR_TSS_MATCH_STG.vbs %TSSMATCHOUTPUT% %CNSMRTSSMATCHSTGBTEQ% %LOGONFILE% %DATABASENAME% %CNTRY% >> %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG
+
+IF ERRORLEVEL 1 (
+echo Exiting due to error during TRILLIUM OUTPUT update >> %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG
+set errorlevel=1
+ren %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG TSS_MATCH_OUTPUT_%CNTRY1%_%currentdate%_%currenttime%.LOG
+exit 1
+)
+
+set CNSMRTSSMATCHSTGBTEQ="%CNSMR_TSS_MATCH_STG_BTEQ%.BTEQ%COUNTRY%"
+
+bteq < %CNSMRTSSMATCHSTGBTEQ% >> %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG
+set ERR=%ERRORLEVEL%
+set FAILUREBTEQ="/d:%TSS_MATCH_STG_FAILURE_BTEQ%.BTEQ"
+set FAILUREBTEQ1="%TSS_MATCH_STG_FAILURE_BTEQ%.BTEQ%COUNTRY%"
+
+IF NOT %ERR% == 0  (
+echo Exiting due to error during TRILLIUM OUTPUT update >> %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG
+cscript %MDM_CUSTOM_DIR%\etl-scripts-parallel\bin\CNSMR_TSS_MATCH_STG.vbs %TSSMATCHOUTPUT% %FAILUREBTEQ% %LOGONFILE% %DATABASENAME% %MSTDB% %CNTRY% >> %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG
+IF ERRORLEVEL 1 (
+echo Exiting due to error during TRILLIUM OUTPUT update >> %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG
+set errorlevel=1
+ren %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG TSS_MATCH_OUTPUT_%CNTRY1%_%currentdate%_%currenttime%.LOG
+exit 1
+)
+
+bteq < %FAILUREBTEQ1% >> %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG
+set ERR1=%ERRORLEVEL%
+IF NOT %ERR1% == 0 (
+ren %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG TSS_MATCH_OUTPUT_%CNTRY1%_%currentdate%_%currenttime%.LOG
+exit %ERR1%
+)
+
+ren %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG TSS_MATCH_OUTPUT_%CNTRY1%_%currentdate%_%currenttime%.LOG
+exit %ERR%
+)
+
+del %TSS_MATCH_OUTPUT%_%COUNTRY%.DAT
+IF ERRORLEVEL 1 (
+echo Exiting due to error during TRILLIUM OUTPUT update >> %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG
+set errorlevel=1
+ren %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG TSS_MATCH_OUTPUT_%CNTRY1%_%currentdate%_%currenttime%.LOG
+exit 1
+)
+
+ren %MDM_CUSTOM_DIR%\log\TSS_MATCH_OUTPUT_%CNTRY1%.LOG TSS_MATCH_OUTPUT_%CNTRY1%_%currentdate%_%currenttime%.LOG
+
+:end

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+
+Copyright (c) 2009 by Teradata Corporation.
+
+All Rights Reserved.
+
+Teradata CONFIDENTIAL AND TRADE SECRET
+
+-->
+  <DEFINE_METHOD Name="webServiceCall" Access="Public">
+    <API_DOC>
+      <INPUT>
+        <REQUEST Name="webServiceCall">
+          <REGIS_PRSNA_ID Value="140913970"/>
+          <MKTNG_PGM_NBR Value="45"/>
+        </REQUEST>
+      </INPUT>
+      <OUTPUT>
+        <ON_SUCCESS>
+          <RESPONSE Status="Success" DbgCmd_="GET_DOCUMENT" DbgNameAttr_="REGIS_PRSNA">
+            <REGIS_PRSNA ExistingDocument="yes">
+              <MKTNG_PGM_NBR Value="1"/>
+              <NAME_PREFX_TXT Value=""/>
+              <LEGAL_ENT_NBR Value="1"/>
+              <GVN_NAME Value=""/>
+              <MID_NAME Value=""/>
+              <FAMLY_NAME Value=""/>
+              <NAME_SUFFX_TXT Value=""/>
+              <FULL_NAME Value=""/>
+              <BRTH_DATE Value=""/>
+              <GENDR_IND Value=""/>
+              <MATCHD_CNSMR_PRSNA_ID Value="92181275"/>
+              <REFERAL_MKTNG_PGM_NBR Value=""/>
+              <REGIS_PRSNA_ID/>
+            </REGIS_PRSNA>
+          </RESPONSE>
+        </ON_SUCCESS>
+      </OUTPUT>
+    </API_DOC>
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="REGIS_PRSNA" ServiceName="BCM_MASTER" AssignToVar="thisReturn">
+          <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <SELECT>
+            <REGIS_PRSNA_ID/>
+            <NAME_PREFX_TXT/>
+            <GVN_NAME/>
+            <MID_NAME/>
+            <FAMLY_NAME/>
+            <NAME_SUFFX_TXT/>
+            <FULL_NAME/>
+            <BRTH_DATE/>
+            <GENDR_IND/>
+            <REFERAL_MKTNG_PGM_NBR/>
+            <MKTNG_PGM_NBR/>
+            <LEGAL_ENT_NBR/>
+            <MATCHD_CNSMR_PRSNA_ID/>
+          </SELECT>
+        </GET_DOCUMENT>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

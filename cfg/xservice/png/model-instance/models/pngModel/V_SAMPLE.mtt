@@ -1,0 +1,105 @@
+<document IsDocView="true">
+  <properties>
+    <property Name="MKTNG_PGM_NBR">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="MKTNG_PGM_NBR" />
+    </property>
+    <property Name="REGIS_PRSNA_ID">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="REGIS_PRSNA_ID" />
+    </property>
+    <property Name="CNSMR_ACTN_TYPE_CODE">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="CNSMR_ACTN_TYPE_CODE" />
+    </property>
+    <property Name="CNSMR_ACTN_NUM">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="CNSMR_ACTN_NUM" />
+    </property>
+    <property Name="LEGAL_ENT_NBR">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="LEGAL_ENT_NBR" />
+    </property>
+    <property Name="CNSMR_ACTN_ID">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="CNSMR_ACTN_ID" />
+    </property>
+    <property Name="INCTV_NBR">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="INCTV_NBR" />
+    </property>
+    <property Name="PROD_ITEM_NUM">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="PROD_ITEM_NUM" />
+    </property>
+    <property Name="ORDER_NUM" PhysicalName="ORDER_NUM" Active="true" Type="String_20" />
+    <property Name="ORDER_STATUS" PhysicalName="ORDER_STATUS" Active="true" Type="Char_2" />
+    <property Name="SHIPPED_DATE" PhysicalName="SHIPPED_DATE" Active="true" Type="Date" />
+    <property Name="COURIER_URL" PhysicalName="COURIER_URL" Active="true" Type="String_1000" />
+    <property Name="TRACKING_NBR" PhysicalName="TRACKING_NBR" Active="true" Type="Integer" />
+    <property Name="INCTV_NAME">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="INCTV_NAME" />
+    </property>
+  </properties>
+  <keys />
+  <links />
+  <docFacets>
+    <miscFacet Active="true" />
+    <mdmConfigFacet SchemaGen="false" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql OnMDMTables="true" IsSimpleView="true">show view v_sample&#xD;
+&#xD;
+REPLACE VIEW MDM.V_SAMPLE &#xD;
+ (MKTNG_PGM_NBR   &#xD;
+ ,REGIS_PRSNA_ID   &#xD;
+ ,CNSMR_ACTN_TYPE_CODE   &#xD;
+ ,CNSMR_ACTN_NUM   &#xD;
+ ,LEGAL_ENT_NBR   &#xD;
+ ,CNSMR_ACTN_ID   &#xD;
+ ,INCTV_NBR   &#xD;
+ ,PROD_ITEM_NUM   &#xD;
+ ,ORDER_NUM   &#xD;
+ ,ORDER_STATUS   &#xD;
+ ,SHIPPED_DATE   &#xD;
+ ,COURIER_URL   &#xD;
+ ,TRACKING_NBR   &#xD;
+ ,INCTV_NAME&#xD;
+  ,SYS_TARGET_ID,   &#xD;
+  SYS_AUTH_ID,   &#xD;
+  SYS_SOURCE,   &#xD;
+  SYS_CREATED_BY,   &#xD;
+  SYS_CREATION_DATE,   &#xD;
+  SYS_ENT_STATE,   &#xD;
+  SYS_LAST_MODIFIED_BY,   &#xD;
+  SYS_LAST_MODIFIED_DATE,   &#xD;
+  SYS_NC_TYPE,   &#xD;
+  SYS_ERR_CODE,   &#xD;
+  SYS_ERR_SVRTY   &#xD;
+ )AS LOCKING ROW FOR ACCESS   &#xD;
+ SELECT   &#xD;
+ CA.MKTNG_PGM_NBR   &#xD;
+ ,CA.REGIS_PRSNA_ID   &#xD;
+ ,CA.CNSMR_ACTN_TYPE_CODE   &#xD;
+ ,CA.CNSMR_ACTN_NUM   &#xD;
+ ,CA.LEGAL_ENT_NBR   &#xD;
+ ,RQI.CNSMR_ACTN_ID   &#xD;
+ ,RQI.INCTV_NBR   &#xD;
+ ,RQI.PROD_ITEM_UPC   &#xD;
+ ,RQI.ORDER_NUM   &#xD;
+ ,RQI.ORDER_STATUS   &#xD;
+ ,RQI.SHIPPED_DATE   &#xD;
+ ,RQI.COURIER_URL   &#xD;
+ ,RQI.TRACKING_NUM &#xD;
+ ,INC.INCTV_NAME&#xD;
+ ,NULL (INTEGER)   AS  SYS_TARGET_ID,   &#xD;
+ NULL (VARCHAR(25))  AS SYS_AUTH_ID,   &#xD;
+ NULL (VARCHAR(25))  AS SYS_SOURCE,   &#xD;
+ NULL (VARCHAR(70))  AS SYS_CREATED_BY,   &#xD;
+ NULL (TIMESTAMP(0))  AS SYS_CREATION_DATE,   &#xD;
+ 'ACTIVE'  (VARCHAR(25))  AS  SYS_ENT_STATE,   &#xD;
+ NULL (VARCHAR(70))  AS SYS_LAST_MODIFIED_BY,   &#xD;
+ NULL (TIMESTAMP(0))  AS SYS_LAST_MODIFIED_DATE,    &#xD;
+ NULL (VARCHAR(25))  AS SYS_NC_TYPE,   &#xD;
+ NULL (VARCHAR(10))  AS SYS_ERR_CODE,   &#xD;
+ NULL (VARCHAR(30))  AS SYS_ERR_SVRTY                                                              &#xD;
+ FROM REQSTD_INCTV RQI   &#xD;
+JOIN  CNSMR_ACTN CA   &#xD;
+ ON   RQI.CNSMR_ACTN_ID=CA.CNSMR_ACTN_ID&#xD;
+ LEFT JOIN MDM.INCTV INC&#xD;
+ ON RQI.INCTV_NBR=INC.INCTV_NBR&#xD;
+ WHERE CA.CNSMR_ACTN_TYPE_CODE IN ('RI','RC','RS');</viewsql>
+</document>
+

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<arrayList domain="1CP">
+  <Calendar id="[1CP]THURSDAYS" calendarDaysOfWeek="4" calendarType="BASE" description="Thursdays" domain="1CP" tags="1CP" />
+  <Calendar id="[1CP]TUE_GR8_LT14_OF_MONTH" calendarDates="2017-01-10,2017-02-14,2017-03-14,2017-04-11,2017-06-13,2017-07-11,2017-05-09,2017-08-08,2017-09-12,2017-10-10,2017-11-14,2017-12-12,2018-01-09,2018-02-13,2018-03-13,2018-04-10,2018-05-08,2018-06-12,2018-07-10,2018-08-14,2018-09-11,2018-10-09,2018-11-13,2018-12-11,2019-01-08,2019-02-12,2019-03-12,2019-04-09,2019-05-14,2019-06-11,2019-07-09,2019-08-13,2019-09-10,2019-10-08,2019-11-12,2019-12-10" calendarType="BASE" description="Second Tuesday of Month" domain="1CP" tags="1CP" />
+  <Semaphore id="[1CP]1CP_DQRM_STOCK" dateFormat="yyyy-MM-dd" description="DQRM Processing: 1 DQRM at a time" domain="1CP" semaphoreType="STOCK" tags="1CP,DQRM" totalPermits="1" />
+  <NotificationTemplate id="1CP_DQRM_MDM_P4" body="Priority:P4-Low&#10;File_Format: 25&#10;Migration Task : N&#10;Short Description: - 999 - &#10;Description: ${PROJECT_ID} ${FREQUENCY}&#10;Opened By(Requestor): DQRM Administrator &#10;Category: Data Delivery &#10;Sub Category: Data Accuracy/Quality&#10;&#10;Object causing issue: ${objectLink}" description="P4 notification for DQRM" title="${environmentType}: Low failure - ${name}" />
+  <ProcessingTemplate id="[1CP]1CP_DQRM_MDM_BATCH" description="DQRM Processing : Master Workflow to invoke DQRM rules" domain="1CP" forceChronology="false" onHold="false" owner="Ss186037" passBy="false" priority="0" processingType="WORKFLOW" tags="1CP,MDM,DQRM" turnOffDurationEstimation="false" workflowType="STANDARD" />
+  <SubProcessingTemplate id="[1CP]1CP_DQRM_MDM_BATCH|[1CP]1CP_ALL_MDM_SET_ENV" freeFloat="0" name="[1CP]1CP_ALL_MDM_SET_ENV" parent="[1CP]1CP_DQRM_MDM_BATCH" processingDateOffset="0" processingTemplate="[1CP]1CP_ALL_MDM_SET_ENV" processingType="TASK" sortOrder="2" taskType="SH" workflowType="STANDARD" />
+  <SubProcessingTemplate id="[1CP]1CP_DQRM_MDM_BATCH|[1CP]1CP_DQRM_MDM_INVOKE_BATCH" freeFloat="0" name="[1CP]1CP_DQRM_MDM_INVOKE_BATCH" parent="[1CP]1CP_DQRM_MDM_BATCH" processingDateOffset="0" processingTemplate="[1CP]1CP_DQRM_MDM_INVOKE_BATCH" processingType="TASK" sortOrder="3" taskType="SH" />
+  <SubProcessingTemplateMapping failureCase="false" predecessor="[1CP]1CP_DQRM_MDM_BATCH|[1CP]1CP_ALL_MDM_SET_ENV" processingTemplate="[1CP]1CP_DQRM_MDM_BATCH" successor="[1CP]1CP_DQRM_MDM_BATCH|[1CP]1CP_DQRM_MDM_INVOKE_BATCH" />
+  <SemaphoreConstraintTemplate binarySemaphoreWait="ON" parent="[1CP]1CP_DQRM_MDM_BATCH" permits="1" processingTemplateName="[1CP]1CP_DQRM_MDM_BATCH" semaphore="[1CP]1CP_DQRM_STOCK" semaphoreType="STOCK" variableOperator="EQ" />
+  <ProcessingTemplateAction attachLogFile="false" notificationChannel="EMAIL" notificationTemplate="1CP_DQRM_MDM_P4" parent="[1CP]1CP_DQRM_MDM_BATCH" processingActionTarget="SELF" processingActionType="NOTIFICATION" processingEventType="FAILED" restartCounter="1" restartDelay="60000" restartDuration="60000" restartMode="COUNTER" userGroup="1CP_BUILD_MDM_TEAM" />
+  <ProcessingTemplateAction attachLogFile="false" notificationChannel="EMAIL" notificationTemplate="1CP_DQRM_MDM_P4" parent="[1CP]1CP_DQRM_MDM_BATCH" processingActionTarget="SELF" processingActionType="NOTIFICATION" processingEventType="FAILED" restartCounter="1" restartDelay="60000" restartDuration="60000" restartMode="COUNTER" userGroup="1CP_OPS_TEAM" />
+  <ProcessingTemplateAction attachLogFile="false" notificationChannel="EMAIL" notificationTemplate="1CP_DQRM_MDM_P4" parent="[1CP]1CP_DQRM_MDM_BATCH" processingActionTarget="SELF" processingActionType="NOTIFICATION" processingEventType="FAILED" restartCounter="1" restartDelay="60000" restartDuration="60000" restartMode="COUNTER" userGroup="1CP_SERVICE_NOW" />
+  <ProcessingTemplate id="[1CP]1CP_DQRM_MDM_INVOKE_BATCH" description="DQRM Processing : Invoke DQRM Batch File on MDM Server" domain="1CP" forceChronology="false" node="[1CP]MDM_SERVER" onHold="false" owner="Ss186037" passBy="false" priority="0" processingType="TASK" successResult="0" tags="1CP,MDM,DQRM" taskCommand="E:&#10;&#10;cd ${BIN_PATH}&#10;&#10;echo &quot;Running DQRM MDM from ScheduleIn&quot; &gt; ${LOG_PATH}\ScheduleIn_DQRM_${PROJECT_ID}_${FREQUENCY}.log&#10;&#10;DQRM_Batch.bat &quot;${PROJECT_ID}&quot; &quot;${FREQUENCY}&quot;" taskType="SH" turnOffDurationEstimation="false" />
+  <Schedule id="[1CP]1CP_DQRM_DS_DAILY" description="DQRM Processing : Daily Schedule for DS Project" domain="1CP" onHold="false" passBy="false" tags="1CP,MDM,DQRM" />
+  <ScheduleVariable name="PROJECT_ID" schedule="[1CP]1CP_DQRM_DS_DAILY" value="1" />
+  <ScheduleVariable name="FREQUENCY" schedule="[1CP]1CP_DQRM_DS_DAILY" value="Daily" />
+  <ScheduleTimeTriggerDefinition endTime="86399999" onHold="false" passBy="false" repeatInterval="3600000" schedule="[1CP]1CP_DQRM_DS_DAILY" startTime="46800000" timeTriggerType="DAILY" timeZone="US/Eastern" />
+  <ScheduleItem onHold="false" passBy="false" priority="0" processingType="WORKFLOW" schedule="[1CP]1CP_DQRM_DS_DAILY" scheduleItemId="[1CP]1CP_DQRM_MDM_BATCH" scheduleItemType="PROCESSING" workflowType="STANDARD" />
+  <Schedule id="[1CP]1CP_DQRM_DS_WEEKLY" description="DQRM Processing : WEEKLY Schedule for DS Project" domain="1CP" onHold="false" passBy="false" tags="1CP,MDM,DQRM" />
+  <ScheduleVariable name="PROJECT_ID" schedule="[1CP]1CP_DQRM_DS_WEEKLY" value="1" />
+  <ScheduleVariable name="FREQUENCY" schedule="[1CP]1CP_DQRM_DS_WEEKLY" value="WEEKLY" />
+  <ScheduleTimeTriggerDefinition calendar="[1CP]TUESDAYS" endTime="86399999" onHold="false" passBy="false" repeatInterval="3600000" schedule="[1CP]1CP_DQRM_DS_WEEKLY" startTime="61200000" timeTriggerType="DAILY" timeZone="US/Eastern" />
+  <ScheduleItem onHold="false" passBy="false" priority="0" processingType="WORKFLOW" schedule="[1CP]1CP_DQRM_DS_WEEKLY" scheduleItemId="[1CP]1CP_DQRM_MDM_BATCH" scheduleItemType="PROCESSING" workflowType="STANDARD" />
+  <Schedule id="[1CP]1CP_DQRM_DS_MONTHLY" description="DQRM Processing : MONTHLY Schedule for DS Project" domain="1CP" onHold="false" passBy="false" tags="1CP,MDM,DQRM" />
+  <ScheduleVariable name="PROJECT_ID" schedule="[1CP]1CP_DQRM_DS_MONTHLY" value="1" />
+  <ScheduleVariable name="FREQUENCY" schedule="[1CP]1CP_DQRM_DS_MONTHLY" value="MONTHLY" />
+  <ScheduleTimeTriggerDefinition calendar="[1CP]TUE_GR8_LT14_OF_MONTH" endTime="86399999" onHold="false" passBy="false" repeatInterval="3600000" schedule="[1CP]1CP_DQRM_DS_MONTHLY" startTime="21600000" timeTriggerType="DAILY" timeZone="US/Eastern" />
+  <ScheduleItem onHold="false" passBy="false" priority="0" processingType="WORKFLOW" schedule="[1CP]1CP_DQRM_DS_MONTHLY" scheduleItemId="[1CP]1CP_DQRM_MDM_BATCH" scheduleItemType="PROCESSING" workflowType="STANDARD" />
+  <Schedule id="[1CP]1CP_DQRM_OPS_DAILY" description="DQRM Processing : Daily Schedule for DS Project" domain="1CP" onHold="false" passBy="false" tags="1CP,MDM,DQRM" />
+  <ScheduleVariable name="PROJECT_ID" schedule="[1CP]1CP_DQRM_OPS_DAILY" value="2" />
+  <ScheduleVariable name="FREQUENCY" schedule="[1CP]1CP_DQRM_OPS_DAILY" value="Daily" />
+  <ScheduleTimeTriggerDefinition endTime="86399999" onHold="false" passBy="false" repeatInterval="3600000" schedule="[1CP]1CP_DQRM_OPS_DAILY" startTime="79200000" timeTriggerType="DAILY" timeZone="US/Eastern" />
+  <ScheduleItem onHold="false" passBy="false" priority="0" processingType="WORKFLOW" schedule="[1CP]1CP_DQRM_OPS_DAILY" scheduleItemId="[1CP]1CP_DQRM_MDM_BATCH" scheduleItemType="PROCESSING" workflowType="STANDARD" />
+  <Schedule id="[1CP]1CP_DQRM_OPS_WEEKLY" description="DQRM Processing : WEEKLY Schedule for DS Project" domain="1CP" onHold="false" passBy="false" tags="1CP,MDM,DQRM" />
+  <ScheduleVariable name="FREQUENCY" schedule="[1CP]1CP_DQRM_OPS_WEEKLY" value="WEEKLY" />
+  <ScheduleVariable name="PROJECT_ID" schedule="[1CP]1CP_DQRM_OPS_WEEKLY" value="2" />
+  <ScheduleTimeTriggerDefinition calendar="[1CP]THURSDAYS" endTime="86399999" onHold="false" passBy="false" repeatInterval="3600000" schedule="[1CP]1CP_DQRM_OPS_WEEKLY" startTime="61200000" timeTriggerType="DAILY" timeZone="US/Eastern" />
+  <ScheduleItem onHold="false" passBy="false" priority="0" processingType="WORKFLOW" schedule="[1CP]1CP_DQRM_OPS_WEEKLY" scheduleItemId="[1CP]1CP_DQRM_MDM_BATCH" scheduleItemType="PROCESSING" workflowType="STANDARD" />
+  <Schedule id="[1CP]1CP_DQRM_OPS_MONTHLY" description="DQRM Processing : MONTHLY Schedule for DS Project" domain="1CP" onHold="false" passBy="false" tags="1CP,MDM,DQRM" />
+  <ScheduleVariable name="PROJECT_ID" schedule="[1CP]1CP_DQRM_OPS_MONTHLY" value="2" />
+  <ScheduleVariable name="FREQUENCY" schedule="[1CP]1CP_DQRM_OPS_MONTHLY" value="MONTHLY" />
+  <ScheduleTimeTriggerDefinition calendar="[1CP]FRI_GE8_LE14_OF_MONTH" endTime="86399999" onHold="false" passBy="false" repeatInterval="3600000" schedule="[1CP]1CP_DQRM_OPS_MONTHLY" startTime="21600000" timeTriggerType="DAILY" timeZone="US/Eastern" />
+  <ScheduleItem onHold="false" passBy="false" priority="0" processingType="WORKFLOW" schedule="[1CP]1CP_DQRM_OPS_MONTHLY" scheduleItemId="[1CP]1CP_DQRM_MDM_BATCH" scheduleItemType="PROCESSING" workflowType="STANDARD" />
+</arrayList>

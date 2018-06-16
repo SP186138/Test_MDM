@@ -1,0 +1,27 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" Id="InterfaceContact.pgl" version="3">
+  <ui:container id="topContainer">
+    <ui:step displayText="AGENCY INTERFACE CONTACT" id="AGENCY_INTRFC_CONTACT">
+      <ui:validation successMessage="{$root/SuccessMessage/@Value}"/>
+      <ui:field-group>
+        <ui:image src="/bpi_check.gif" displayCondition="{string-length($root/MSG/AlertGreen/@Value) != 0}" id="checkImg"/>
+        <ui:display-field id="success" value="{$root/MSG/AlertGreen/@Value}" displayCondition="{string-length($root/MSG/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen"/>
+        <ui:image src="/cancel.gif" displayCondition="{string-length($root/MSG/AlertRed/@Value) != 0}"/>
+        <ui:display-field value="{$root/MSG/AlertRed/@Value}" displayCondition="{string-length($root/MSG/AlertRed/@Value) != 0}" name="error" class="requiredIndicator"/>
+      </ui:field-group>
+      <ui:field-group id="left fields" columns="2">
+        <ui:display-field id="AGNCY_NBR" displayText="Agency Number" name="AGNCY_NBR"/>
+        <ui:entry-field id="INTRFC_NBR" displayText="Interface Number" name="INTRFC_NBR" required="true"/>
+        <ui:entry-field id="CNTCT_NBR" displayText="Contact Number" name="CNTCT_NBR" required="true"/>
+        <ui:dropdown id="PRMRY_CNTCT_IND" name="PRIMARY_CNTCT_IND" displayText="Primary Contact Indicator">
+          <ui:option id="Y" value="Y"/>
+          <ui:option id="N" value="N"/>
+        </ui:dropdown>
+      </ui:field-group>
+      <ui:buttons id="buttons">
+        <ui:button id="LinkToContact" displayText="Link To Contact" name="LinkToContact" emphasized="true" validate="false"/>
+        <ui:button id="Save_INTRFC_Contact" displayText="Save" name="Save_INTRFC_Contact" emphasized="true"/>
+        <ui:button id="SaveAndReturn_INTRFC_Contact" displayText="Save And Return" name="SaveAndReturn_INTRFC_Contact" emphasized="true"/>
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+</ui:page-group>

@@ -1,0 +1,570 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+Copyright (c) 2009 by Teradata Corporation.
+All Rights Reserved.
+Teradata CONFIDENTIAL AND TRADE SECRET
+-->
+  <DEFINE_METHOD Name="WS_IN_CNSMR_SCR_REF" Access="Public">
+    <API_DOC>
+      <INPUT>
+        <REQUEST Name="webServiceCall">
+          <CNSMR_SCR_REF>
+            <CNSMR_SCR_RECORD_IND Value="INSERT"/>
+            <CNSMR_SCORE_NBR Value="2900"/>
+            <CNSMR_SCORE_NAME Value="396"/>
+            <CNSMR_SCORE_DESC Value="REACT_CORP_NLD"/>
+            <IS_ACTIVE Value="Y"/>
+            <HIST_RETEN_DAYS Value="2"/>
+            <SCORE_RUN_FREQ_CODE Value=""/>
+            <WKLY_RTN_IND Value="05/30/17"/>
+            <WEBSITE_SGMNT_IND Value="05/30/17"/>
+            <COL_DSPL_TYPE_TXT Value="04/30/17 00:00:00"/>
+            <LEGAL_ENT_NBR Value="30"/>
+          </CNSMR_SCR_REF>
+        </REQUEST>
+      </INPUT>
+      <OUTPUT>
+        <ON_SUCCESS>
+          <RESPONSE Status="Success" DbgCmd_="GET_DOCUMENT" DbgNameAttr_="CNSMR_SCR_REF">
+            <createRESTResponse>
+              <STATUS Description="Success">
+                <MESSAGE Value="Consumer Score with Score number 123 created successfully."/>
+              </STATUS>
+            </createRESTResponse>
+          </RESPONSE>
+        </ON_SUCCESS>
+        <ON_EXCEPTION>
+          <RESPONSE Comment="Error in Webservice"/>
+        </ON_EXCEPTION>
+      </OUTPUT>
+    </API_DOC>
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="thisReturn">
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="errorStatus">
+          <ROOT/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="UsrGrpQry">
+          <root>
+LOCKING ROW FOR ACCESS SEL DISTINCT role_id FROM USR_GRP_ROLE_MAP WHERE usr_grp_id IN (SEL user_grp_id FROM USER_UG_RELATION WHERE user_id='{$UserId}')
+AND ROLE_ID='Segment_Api_Role'
+		</root>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY AssignToVar="roleDetail" Value="{$UsrGrpQry/@text}" ReturnRowCount="yes"/>
+        <IF_TEST Test="$roleDetail/SQL_RESULT/ROLE_ID/@Value ='Segment_Api_Role' ">
+          <THEN>
+            <SET Var="IsValid" FromValue="true"/>
+            <IF_TEST Test="($thisParam/CNSMR_SCR_REF/CNSMR_SCR_RECORD_IND/@Value = null) or ($thisParam/CNSMR_SCR_REF/CNSMR_SCR_RECORD_IND/@Value = '')">
+              <THEN>
+                <APPEND_TO_XML DocVar="thisReturn">
+                  <ERROR Value="MISSING_MANDATORY_FIELD">
+                    <Message Value="CNSMR_SCR_RECORD_IND is a required field. Please enter CNSMR_SCR_RECORD_IND As Either INSERT Or UPDATE"/>
+                  </ERROR>
+                </APPEND_TO_XML>
+                <APPEND_TO_XML DocVar="errorStatus">
+                  <Error_in_CNSMR_SCR_RECORD_IND Value="true"/>
+                </APPEND_TO_XML>
+              </THEN>
+              <ELSE>
+                <IF_TEST Test="(trim($thisParam/CNSMR_SCR_REF/CNSMR_SCR_RECORD_IND/@Value) != 'INSERT') and (trim($thisParam/CNSMR_SCR_REF/CNSMR_SCR_RECORD_IND/@Value) != 'UPDATE') and  (trim($thisParam/CNSMR_SCR_REF/CNSMR_SCR_RECORD_IND/@Value) != 'insert') and  (trim($thisParam/CNSMR_SCR_REF/CNSMR_SCR_RECORD_IND/@Value) != 'update')">
+                  <THEN>
+                    <APPEND_TO_XML DocVar="thisReturn">
+                      <ERROR Value="INVALID_VALUE FOR CNSMR_SCR_RECORD_IND">
+                        <Message Value="Invalid Value in CNSMR_SCR_RECORD_IND field . Please enter Value as INSERT or UPDATE"/>
+                      </ERROR>
+                    </APPEND_TO_XML>
+                    <APPEND_TO_XML DocVar="errorStatus">
+                      <Error_in_CNSMR_SCR_RECORD_IND Value="true"/>
+                    </APPEND_TO_XML>
+                  </THEN>
+                </IF_TEST>
+              </ELSE>
+            </IF_TEST>
+            <IF_TEST Test="($thisParam/CNSMR_SCR_REF/CNSMR_SCR_RECORD_IND/@Value = 'UPDATE') or ($thisParam/CNSMR_SCR_REF/CNSMR_SCR_RECORD_IND/@Value = 'update')">
+              <THEN>
+                <IF_TEST Test="(trim($thisParam/CNSMR_SCR_REF/CNSMR_SCORE_NBR/@Value) = null) or (trim($thisParam/CNSMR_SCR_REF/CNSMR_SCORE_NBR/@Value) = '')">
+                  <THEN>
+                    <APPEND_TO_XML DocVar="thisReturn">
+                      <ERROR Value="MISSING_MANDATORY_FIELD">
+                        <Message Value="CNSMR_SCORE_NBR is a required field. Please enter CNSMR_SCORE_NBR To update the Segment"/>
+                      </ERROR>
+                    </APPEND_TO_XML>
+                    <APPEND_TO_XML DocVar="errorStatus">
+                      <Error_in_CNSMR_SCORE_NBR Value="true"/>
+                    </APPEND_TO_XML>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="(trim($thisParam/CNSMR_SCR_REF/IS_ACTIVE/@Value)!= null) and (trim($thisParam/CNSMR_SCR_REF/IS_ACTIVE/@Value)!= '')">
+                  <THEN>
+                    <IF_TEST Test="(trim($thisParam/CNSMR_SCR_REF/IS_ACTIVE/@Value) != 'N') and (trim($thisParam/CNSMR_SCR_REF/IS_ACTIVE/@Value) != 'n') and (trim($thisParam/CNSMR_SCR_REF/IS_ACTIVE/@Value) != 'y') and (trim($thisParam/CNSMR_SCR_REF/IS_ACTIVE/@Value) != 'Y')">
+                      <THEN>
+                        <APPEND_TO_XML DocVar="thisReturn">
+                          <ERROR Value="INVALID_VALUE FOR IS_ACTIVE">
+                            <Message Value="Invalid Value in IS_ACTIVE field. Please enter Value as N or Y"/>
+                          </ERROR>
+                        </APPEND_TO_XML>
+                        <APPEND_TO_XML DocVar="errorStatus">
+                          <Error_in_IS_ACTIVE Value="true"/>
+                        </APPEND_TO_XML>
+                      </THEN>
+                    </IF_TEST>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="(trim($thisParam/CNSMR_SCR_REF/SCORE_RUN_FREQ_CODE/@Value)= null) or (trim($thisParam/CNSMR_SCR_REF/SCORE_RUN_FREQ_CODE/@Value)= '')">
+                  <THEN>
+                    <APPEND_TO_XML DocVar="thisReturn">
+                      <ERROR Value="MISSING_MANDATORY_FIELD">
+                        <Message Value="SCORE_RUN_FREQ_CODE is a required field. Please enter SCORE_RUN_FREQ_CODE Value as M or W"/>
+                      </ERROR>
+                    </APPEND_TO_XML>
+                    <APPEND_TO_XML DocVar="errorStatus">
+                      <Error_in_SCORE_RUN_FREQ_CODE Value="true"/>
+                    </APPEND_TO_XML>
+                  </THEN>
+                  <ELSE>
+                    <IF_TEST Test="(trim($thisParam/CNSMR_SCR_REF/SCORE_RUN_FREQ_CODE/@Value) != 'M') and (trim($thisParam/CNSMR_SCR_REF/SCORE_RUN_FREQ_CODE/@Value) != 'W')">
+                      <THEN>
+                        <APPEND_TO_XML DocVar="thisReturn">
+                          <ERROR Value="INVALID_VALUE FOR SCORE_RUN_FREQ_CODE">
+                            <Message Value="Invalid Value in SCORE_RUN_FREQ_CODE field . Please enter Value as M or W"/>
+                          </ERROR>
+                        </APPEND_TO_XML>
+                        <APPEND_TO_XML DocVar="errorStatus">
+                          <Error_in_SCORE_RUN_FREQ_CODE Value="true"/>
+                        </APPEND_TO_XML>
+                      </THEN>
+                    </IF_TEST>
+                  </ELSE>
+                </IF_TEST>
+                <!-- WEBSITE_SGMNT_IND validation -->
+                <IF_TEST Test="(trim($thisParam/CNSMR_SCR_REF/WEBSITE_SGMNT_IND/@Value)= null) or (trim($thisParam/CNSMR_SCR_REF/WEBSITE_SGMNT_IND/@Value)= '')">
+                  <THEN>
+                    <APPEND_TO_XML DocVar="thisReturn">
+                      <ERROR Value="MISSING_MANDATORY_FIELD">
+                        <Message Value="WEBSITE_SGMNT_IND is a required field. Please enter WEBSITE_SGMNT_IND Value as Y or N"/>
+                      </ERROR>
+                    </APPEND_TO_XML>
+                    <APPEND_TO_XML DocVar="errorStatus">
+                      <Error_in_WEBSITE_SGMNT_IND Value="true"/>
+                    </APPEND_TO_XML>
+                  </THEN>
+                  <ELSE>
+                    <IF_TEST Test="(trim($thisParam/CNSMR_SCR_REF/WEBSITE_SGMNT_IND/@Value) != 'Y') and (trim($thisParam/CNSMR_SCR_REF/WEBSITE_SGMNT_IND/@Value) != 'N')and (trim($thisParam/CNSMR_SCR_REF/WEBSITE_SGMNT_IND/@Value) != 'n') and (trim($thisParam/CNSMR_SCR_REF/WEBSITE_SGMNT_IND/@Value) != 'y')">
+                      <THEN>
+                        <APPEND_TO_XML DocVar="thisReturn">
+                          <ERROR Value="INVALID_VALUE FOR WEBSITE_SGMNT_IND">
+                            <Message Value="Invalid Value in WEBSITE_SGMNT_IND field . Please enter Value as Y or N"/>
+                          </ERROR>
+                        </APPEND_TO_XML>
+                        <APPEND_TO_XML DocVar="errorStatus">
+                          <Error_in_WEBSITE_SGMNT_IND Value="true"/>
+                        </APPEND_TO_XML>
+                      </THEN>
+                    </IF_TEST>
+                  </ELSE>
+                </IF_TEST>
+                <IF_TEST Test="trim($thisParam/CNSMR_SCR_REF/COL_DSPL_TYPE_TXT/@Value) !=null">
+                  <THEN>
+                    <IF_TEST Test="(trim($thisParam/CNSMR_SCR_REF/COL_DSPL_TYPE_TXT/@Value) != 'CNSMR_SCORE_VAL') and (trim($thisParam/CNSMR_SCR_REF/COL_DSPL_TYPE_TXT/@Value) != 'CNSMR_SCORE_AMT') and (trim($thisParam/CNSMR_SCR_REF/COL_DSPL_TYPE_TXT/@Value) != 'BOTH')">
+                      <THEN>
+                        <APPEND_TO_XML DocVar="thisReturn">
+                          <ERROR Value="INVALID_VALUE FOR COL_DSPL_TYPE_TXT">
+                            <Message Value="Invalid Value in COL_DSPL_TYPE_TXT field . Please enter Value as CNSMR_SCORE_VAL or CNSMR_SCORE_AMT  or BOTH"/>
+                          </ERROR>
+                        </APPEND_TO_XML>
+                        <APPEND_TO_XML DocVar="errorStatus">
+                          <Error_in_COL_DSPL_TYPE_TXT Value="true"/>
+                        </APPEND_TO_XML>
+                      </THEN>
+                    </IF_TEST>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="trim($thisParam/CNSMR_SCR_REF/LEGAL_ENT_NBR/@Value) = null or trim($thisParam/CNSMR_SCR_REF/LEGAL_ENT_NBR/@Value) =''">
+                  <THEN>
+                    <APPEND_TO_XML DocVar="thisReturn">
+                      <ERROR Value="MISSING_MANDATORY_FIELD">
+                        <Message Value="LEGAL_ENT_NBR is a required field. Please enter LEGAL_ENT_NBR"/>
+                      </ERROR>
+                    </APPEND_TO_XML>
+                    <APPEND_TO_XML DocVar="errorStatus">
+                      <Error_in_LEGAL_ENT_NBR Value="true"/>
+                    </APPEND_TO_XML>
+                  </THEN>
+                  <ELSE>
+                    <SET Var="varLegalEnt" FromValue="{$thisParam/CNSMR_SCR_REF/LEGAL_ENT_NBR/@Value}"/>
+                    <TO_DOCVAR AssignToVar="qry">
+                      <root>
+SEL LEGAL_ENT_NBR FROM  LEGAL_ENT where LEGAL_ENT_NBR='{$varLegalEnt}'
+</root>
+                    </TO_DOCVAR>
+                    <EXECUTE_SQL_QUERY AssignToVar="uniqueLegalEnt" Value="{$qry/@text}" ReturnRowCount="yes"/>
+                    <IF_TEST Test="$uniqueLegalEnt/@TotalRowCount = 0 or $uniqueLegalEnt/@TotalRowCount = '0' ">
+                      <THEN>
+                        <APPEND_TO_XML DocVar="thisReturn">
+                          <ERROR Value="INVALID VALUE FOR LEGAL_ENT_NBR">
+                            <Message Value="Value for field LEGAL_ENT_NBR is Invalid.Please enter the value form LEGAL_ENT table."/>
+                          </ERROR>
+                        </APPEND_TO_XML>
+                        <APPEND_TO_XML DocVar="errorStatus">
+                          <Error_in_LEGAL_ENT_NBR Value="true"/>
+                        </APPEND_TO_XML>
+                      </THEN>
+                    </IF_TEST>
+                  </ELSE>
+                </IF_TEST>
+                <IF_TEST Test="(trim($thisParam/CNSMR_SCR_REF/WKLY_RTN_IND/@Value)= null) or (trim($thisParam/CNSMR_SCR_REF/WKLY_RTN_IND/@Value)= '')">
+                  <THEN>
+                    <APPEND_TO_XML DocVar="thisReturn">
+                      <ERROR Value="MISSING_MANDATORY_FIELD">
+                        <Message Value="WKLY_RTN_IND is a required field. Please enter WKLY_RTN_IND Value as Y or N"/>
+                      </ERROR>
+                    </APPEND_TO_XML>
+                    <APPEND_TO_XML DocVar="errorStatus">
+                      <Error_in_WKLY_RTN_IND Value="true"/>
+                    </APPEND_TO_XML>
+                  </THEN>
+                  <ELSE>
+                    <IF_TEST Test="(trim($thisParam/CNSMR_SCR_REF/WKLY_RTN_IND/@Value) != 'Y') and (trim($thisParam/CNSMR_SCR_REF/WKLY_RTN_IND/@Value) != 'N')">
+                      <THEN>
+                        <APPEND_TO_XML DocVar="thisReturn">
+                          <ERROR Value="INVALID_VALUE FOR WKLY_RTN_IND">
+                            <Message Value="Invalid Value in WKLY_RTN_IND field . Please enter Value as Y or N"/>
+                          </ERROR>
+                        </APPEND_TO_XML>
+                        <APPEND_TO_XML DocVar="errorStatus">
+                          <Error_in_WKLY_RTN_IND Value="true"/>
+                        </APPEND_TO_XML>
+                      </THEN>
+                    </IF_TEST>
+                  </ELSE>
+                </IF_TEST>
+                <IF_TEST Test="$errorStatus/Error_in_CNSMR_SCR_RECORD_IND/@Value='true' or $errorStatus/Error_in_CNSMR_SCORE_NBR/@Value='true' or $errorStatus/Error_in_IS_ACTIVE/@Value='true' or $errorStatus/Error_in_SCORE_RUN_FREQ_CODE/@Value='true' or $errorStatus/Error_in_WEBSITE_SGMNT_IND/@Value='true' or $errorStatus/Error_in_COL_DSPL_TYPE_TXT/@Value='true' or $errorStatus/Error_in_LEGAL_ENT_NBR/@Value='true' or $errorStatus/Error_in_CNSMR_SCORE_NBR/@Value='true' or $errorStatus/Error_in_WKLY_RTN_IND/@Value='true' ">
+                  <THEN/>
+                  <ELSE>
+                    <DO_DB_PERSIST AssignToVar="varUpdateResponse" Action="UPDATE" DocumentName="CNSMR_SCORE_REF" ServiceName="BCM_MASTER" Source="EXTERNAL" HandleException="true">
+                      <TO_XML SelectList="$thisParam/CNSMR_SCR_REF/*"/>
+                    </DO_DB_PERSIST>
+                    <IF_TEST Test="$varUpdateResponse/VALIDATION_RESULT/@Value='Error' or $varUpdateResponse/VALIDATION_RESULT/@Value='ERROR'">
+                      <THEN>
+                        <APPEND_TO_XML DocVar="thisReturn">
+                          <ON_ERROR>
+                            <RESPONSE Comment="{$varUpdateResponse/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                          </ON_ERROR>
+                        </APPEND_TO_XML>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$varUpdateResponse/@Status='Error' or $varUpdateResponse/@Status='ERROR'">
+                      <THEN>
+                        <APPEND_TO_XML DocVar="thisReturn">
+                          <ON_ERROR>
+                            <RESPONSE Comment="{$varUpdateResponse/@Description}"/>
+                          </ON_ERROR>
+                        </APPEND_TO_XML>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$varUpdateResponse/@Status='Success' and $varUpdateResponse/VALIDATION_RESULT/@Value='SUCCESS' and $thisParam/CNSMR_SCR_REF/LEGAL_ENT_NBR/@Value != null and $thisParam/CNSMR_SCR_REF/LEGAL_ENT_NBR/@Value !=''">
+                      <THEN>
+                        <DO_DB_PERSIST AssignToVar="varUpdateMapResponse" Action="UPDATE" DocumentName="MTCHD_CNSMR_SCR_DMN_MAP" ServiceName="BCM_MASTER" Source="EXTERNAL" HandleException="true">
+                          <DOCUMENT_CONTEXT>
+                            <CNSMR_SCORE_NBR Value="{$thisParam/CNSMR_SCR_REF/CNSMR_SCORE_NBR/@Value}"/>
+                          </DOCUMENT_CONTEXT>
+                          <UPDATE_PROPERTIES>
+                            <LEGAL_ENT_NBR Value="{$thisParam/CNSMR_SCR_REF/LEGAL_ENT_NBR/@Value}"/>
+                          </UPDATE_PROPERTIES>
+                        </DO_DB_PERSIST>
+                        <IF_TEST Test="$varUpdateMapResponse/VALIDATION_RESULT/@Value='Error' or $varUpdateMapResponse/VALIDATION_RESULT/@Value='ERROR'">
+                          <THEN>
+                            <APPEND_TO_XML DocVar="thisReturn">
+                              <ON_ERROR>
+                                <RESPONSE Comment="{$varUpdateMapResponse/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                              </ON_ERROR>
+                            </APPEND_TO_XML>
+                          </THEN>
+                        </IF_TEST>
+                        <IF_TEST Test="$varUpdateMapResponse/@Status='Error' or $varUpdateMapResponse/@Status='ERROR'">
+                          <THEN>
+                            <APPEND_TO_XML DocVar="thisReturn">
+                              <ON_ERROR>
+                                <RESPONSE Comment="{$varUpdateMapResponse/@Description}"/>
+                              </ON_ERROR>
+                            </APPEND_TO_XML>
+                          </THEN>
+                        </IF_TEST>
+                        <IF_TEST Test="$varUpdateMapResponse/@Status='Success' and $varUpdateMapResponse/VALIDATION_RESULT/@Value='SUCCESS'">
+                          <THEN>
+                            <APPEND_TO_XML DocVar="thisReturn">
+                              <ON_SUCCESS>
+                                <RESPONSE Comment="Consumer Score with Score number {$thisParam/CNSMR_SCR_REF/CNSMR_SCORE_NBR/@Value} has been updated successfully"/>
+                              </ON_SUCCESS>
+                            </APPEND_TO_XML>
+                          </THEN>
+                        </IF_TEST>
+                      </THEN>
+                      <ELSE>
+                        <APPEND_TO_XML DocVar="thisReturn">
+                          <ON_SUCCESS>
+                            <RESPONSE Comment="Consumer Score with Score number {$thisParam/CNSMR_SCR_REF/CNSMR_SCORE_NBR/@Value} has been updated successfully"/>
+                          </ON_SUCCESS>
+                        </APPEND_TO_XML>
+                      </ELSE>
+                    </IF_TEST>
+                  </ELSE>
+                </IF_TEST>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="(trim($thisParam/CNSMR_SCR_REF/CNSMR_SCR_RECORD_IND/@Value) = 'INSERT') or (trim($thisParam/CNSMR_SCR_REF/CNSMR_SCR_RECORD_IND/@Value) = 'insert')">
+              <THEN>
+                <TO_DOCVAR AssignToVar="qryConsumerNo">
+                  <root>
+SEL MAX(CNSMR_SCORE_NBR) FROM  CNSMR_SCORE_REF;
+</root>
+                </TO_DOCVAR>
+                <EXECUTE_SQL_QUERY AssignToVar="varConsumerNo" Value="{$qryConsumerNo/@text}" ReturnRowCount="yes"/>
+                <SET Var="Consumer_Number_max" FromValue="{$varConsumerNo/SQL_RESULT/CNSMR_SCORE_NBR/@Value}"/>
+                <SET Var="Consumer_Number" FromValue="{int(($Consumer_Number_max) + 1) }"/>
+                <IF_TEST Test="(trim($thisParam/CNSMR_SCR_REF/IS_ACTIVE/@Value)!= null) and (trim($thisParam/CNSMR_SCR_REF/IS_ACTIVE/@Value)!= '')">
+                  <THEN>
+                    <IF_TEST Test="(trim($thisParam/CNSMR_SCR_REF/IS_ACTIVE/@Value) != 'N') and (trim($thisParam/CNSMR_SCR_REF/IS_ACTIVE/@Value) != 'n') and (trim($thisParam/CNSMR_SCR_REF/IS_ACTIVE/@Value) != 'y') and (trim($thisParam/CNSMR_SCR_REF/IS_ACTIVE/@Value) != 'Y')">
+                      <THEN>
+                        <APPEND_TO_XML DocVar="thisReturn">
+                          <ERROR Value="INVALID_VALUE FOR IS_ACTIVE">
+                            <Message Value="Invalid Value in IS_ACTIVE field. Please enter Value as N or Y"/>
+                          </ERROR>
+                        </APPEND_TO_XML>
+                        <APPEND_TO_XML DocVar="errorStatus">
+                          <Error_in_IS_ACTIVE Value="true"/>
+                        </APPEND_TO_XML>
+                      </THEN>
+                    </IF_TEST>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="(trim($thisParam/CNSMR_SCR_REF/CNSMR_SCORE_NBR/@Value) != null) and (trim($thisParam/CNSMR_SCR_REF/CNSMR_SCORE_NBR/@Value) != '')">
+                  <THEN>
+                    <APPEND_TO_XML DocVar="thisReturn">
+                      <ERROR Value="FIELD_NOT_REQUIRED">
+                        <Message Value="CNSMR_SCORE_NBR FIELD IS NOT A PART OF REQUEST.CNSMR_SCORE_NBR WILL BE AUTO-GENERATED. "/>
+                      </ERROR>
+                    </APPEND_TO_XML>
+                    <APPEND_TO_XML DocVar="errorStatus">
+                      <Error_in_CNSMR_SCORE_NBR Value="true"/>
+                    </APPEND_TO_XML>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="(trim($thisParam/CNSMR_SCR_REF/SCORE_RUN_FREQ_CODE/@Value)= null) or (trim($thisParam/CNSMR_SCR_REF/SCORE_RUN_FREQ_CODE/@Value)= '')">
+                  <THEN>
+                    <APPEND_TO_XML DocVar="thisReturn">
+                      <ERROR Value="MISSING_MANDATORY_FIELD">
+                        <Message Value="SCORE_RUN_FREQ_CODE is a required field. Please enter SCORE_RUN_FREQ_CODE Value as M or W"/>
+                      </ERROR>
+                    </APPEND_TO_XML>
+                    <APPEND_TO_XML DocVar="errorStatus">
+                      <Error_in_SCORE_RUN_FREQ_CODE Value="true"/>
+                    </APPEND_TO_XML>
+                  </THEN>
+                  <ELSE>
+                    <IF_TEST Test="(trim($thisParam/CNSMR_SCR_REF/SCORE_RUN_FREQ_CODE/@Value) != 'M') and (trim($thisParam/CNSMR_SCR_REF/SCORE_RUN_FREQ_CODE/@Value) != 'W') and (trim($thisParam/CNSMR_SCR_REF/SCORE_RUN_FREQ_CODE/@Value) != 'm') and (trim($thisParam/CNSMR_SCR_REF/SCORE_RUN_FREQ_CODE/@Value) != 'w')">
+                      <THEN>
+                        <APPEND_TO_XML DocVar="thisReturn">
+                          <ERROR Value="INVALID_VALUE FOR SCORE_RUN_FREQ_CODE">
+                            <Message Value="Invalid Value in SCORE_RUN_FREQ_CODE field . Please enter Value as M or W"/>
+                          </ERROR>
+                        </APPEND_TO_XML>
+                        <APPEND_TO_XML DocVar="errorStatus">
+                          <Error_in_SCORE_RUN_FREQ_CODE Value="true"/>
+                        </APPEND_TO_XML>
+                      </THEN>
+                    </IF_TEST>
+                  </ELSE>
+                </IF_TEST>
+                <!-- WEBSITE_SGMNT_IND validation -->
+                <IF_TEST Test="(trim($thisParam/CNSMR_SCR_REF/WEBSITE_SGMNT_IND/@Value)= null) or (trim($thisParam/CNSMR_SCR_REF/WEBSITE_SGMNT_IND/@Value)= '')">
+                  <THEN>
+                    <APPEND_TO_XML DocVar="thisReturn">
+                      <ERROR Value="MISSING_MANDATORY_FIELD">
+                        <Message Value="WEBSITE_SGMNT_IND is a required field. Please enter WEBSITE_SGMNT_IND Value as Y or N"/>
+                      </ERROR>
+                    </APPEND_TO_XML>
+                    <APPEND_TO_XML DocVar="errorStatus">
+                      <Error_in_WEBSITE_SGMNT_IND Value="true"/>
+                    </APPEND_TO_XML>
+                  </THEN>
+                  <ELSE>
+                    <IF_TEST Test="(trim($thisParam/CNSMR_SCR_REF/WEBSITE_SGMNT_IND/@Value) != 'Y') and (trim($thisParam/CNSMR_SCR_REF/WEBSITE_SGMNT_IND/@Value) != 'N') and (trim($thisParam/CNSMR_SCR_REF/WEBSITE_SGMNT_IND/@Value) != 'n') and (trim($thisParam/CNSMR_SCR_REF/WEBSITE_SGMNT_IND/@Value) != 'y')">
+                      <THEN>
+                        <APPEND_TO_XML DocVar="thisReturn">
+                          <ERROR Value="INVALID_VALUE FOR WEBSITE_SGMNT_IND">
+                            <Message Value="Invalid Value in WEBSITE_SGMNT_IND field . Please enter Value as Y or N"/>
+                          </ERROR>
+                        </APPEND_TO_XML>
+                        <APPEND_TO_XML DocVar="errorStatus">
+                          <Error_in_WEBSITE_SGMNT_IND Value="true"/>
+                        </APPEND_TO_XML>
+                      </THEN>
+                    </IF_TEST>
+                  </ELSE>
+                </IF_TEST>
+                <IF_TEST Test="trim($thisParam/CNSMR_SCR_REF/COL_DSPL_TYPE_TXT/@Value) !=null">
+                  <THEN>
+                    <IF_TEST Test="(trim($thisParam/CNSMR_SCR_REF/COL_DSPL_TYPE_TXT/@Value) != 'CNSMR_SCORE_VAL') and (trim($thisParam/CNSMR_SCR_REF/COL_DSPL_TYPE_TXT/@Value) != 'CNSMR_SCORE_AMT') and (trim($thisParam/CNSMR_SCR_REF/COL_DSPL_TYPE_TXT/@Value) != 'BOTH')">
+                      <THEN>
+                        <APPEND_TO_XML DocVar="thisReturn">
+                          <ERROR Value="INVALID_VALUE FOR COL_DSPL_TYPE_TXT">
+                            <Message Value="Invalid Value in COL_DSPL_TYPE_TXT field . Please enter Value as CNSMR_SCORE_VAL or CNSMR_SCORE_AMT or BOTH"/>
+                          </ERROR>
+                        </APPEND_TO_XML>
+                        <APPEND_TO_XML DocVar="errorStatus">
+                          <Error_in_COL_DSPL_TYPE_TXT Value="true"/>
+                        </APPEND_TO_XML>
+                      </THEN>
+                    </IF_TEST>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="(trim($thisParam/CNSMR_SCR_REF/WKLY_RTN_IND/@Value)= null) or (trim($thisParam/CNSMR_SCR_REF/WKLY_RTN_IND/@Value)= '')">
+                  <THEN>
+                    <APPEND_TO_XML DocVar="thisReturn">
+                      <ERROR Value="MISSING_MANDATORY_FIELD">
+                        <Message Value="WKLY_RTN_IND is a required field. Please enter WKLY_RTN_IND Value as Y or N"/>
+                      </ERROR>
+                    </APPEND_TO_XML>
+                    <APPEND_TO_XML DocVar="errorStatus">
+                      <Error_in_WKLY_RTN_IND Value="true"/>
+                    </APPEND_TO_XML>
+                  </THEN>
+                  <ELSE>
+                    <IF_TEST Test="(trim($thisParam/CNSMR_SCR_REF/WKLY_RTN_IND/@Value) != 'Y') and (trim($thisParam/CNSMR_SCR_REF/WKLY_RTN_IND/@Value) != 'N')">
+                      <THEN>
+                        <APPEND_TO_XML DocVar="thisReturn">
+                          <ERROR Value="INVALID_VALUE FOR WKLY_RTN_IND">
+                            <Message Value="Invalid Value in WKLY_RTN_IND field . Please enter Value as Y or N"/>
+                          </ERROR>
+                        </APPEND_TO_XML>
+                        <APPEND_TO_XML DocVar="errorStatus">
+                          <Error_in_WKLY_RTN_IND Value="true"/>
+                        </APPEND_TO_XML>
+                      </THEN>
+                    </IF_TEST>
+                  </ELSE>
+                </IF_TEST>
+                <IF_TEST Test="trim($thisParam/CNSMR_SCR_REF/LEGAL_ENT_NBR/@Value)=null or  trim($thisParam/CNSMR_SCR_REF/LEGAL_ENT_NBR/@Value) =''">
+                  <THEN>
+                    <APPEND_TO_XML DocVar="thisReturn">
+                      <ERROR Value="MISSING_MANDATORY_FIELD">
+                        <Message Value="LEGAL_ENT_NBR is a required field. Please enter LEGAL_ENT_NBR"/>
+                      </ERROR>
+                    </APPEND_TO_XML>
+                    <APPEND_TO_XML DocVar="errorStatus">
+                      <Error_in_LEGAL_ENT_NBR Value="true"/>
+                    </APPEND_TO_XML>
+                  </THEN>
+                  <ELSE>
+                    <SET Var="varLegalEnt" FromValue="{$thisParam/CNSMR_SCR_REF/LEGAL_ENT_NBR/@Value}"/>
+                    <TO_DOCVAR AssignToVar="qry">
+                      <root>
+SEL LEGAL_ENT_NBR FROM  LEGAL_ENT where LEGAL_ENT_NBR='{$varLegalEnt}'
+</root>
+                    </TO_DOCVAR>
+                    <EXECUTE_SQL_QUERY AssignToVar="uniqueLegalEnt" Value="{$qry/@text}" ReturnRowCount="yes"/>
+                    <IF_TEST Test="$uniqueLegalEnt/@TotalRowCount = 0 and $uniqueLegalEnt/@TotalRowCount = '0' ">
+                      <THEN>
+                        <APPEND_TO_XML DocVar="thisReturn">
+                          <ERROR Value="INVALID VALUE FOR LEGAL_ENT_NBR">
+                            <Message Value="Value for field LEGAL_ENT_NBR is Invalid.Please enter the value form LEGAL_ENT table."/>
+                          </ERROR>
+                        </APPEND_TO_XML>
+                        <APPEND_TO_XML DocVar="errorStatus">
+                          <Error_in_LEGAL_ENT_NBR Value="true"/>
+                        </APPEND_TO_XML>
+                      </THEN>
+                    </IF_TEST>
+                  </ELSE>
+                </IF_TEST>
+                <IF_TEST Test="$errorStatus/Error_in_CNSMR_SCR_RECORD_IND/@Value='true' or $errorStatus/Error_in_IS_ACTIVE/@Value='true' or $errorStatus/Error_in_SCORE_RUN_FREQ_CODE/@Value='true' or $errorStatus/Error_in_WEBSITE_SGMNT_IND/@Value='true' or $errorStatus/Error_in_COL_DSPL_TYPE_TXT/@Value='true' or $errorStatus/Error_in_LEGAL_ENT_NBR/@Value='true' or $errorStatus/Error_in_CNSMR_SCORE_NBR/@Value='true' or $errorStatus/Error_in_WKLY_RTN_IND/@Value='true'">
+                  <THEN/>
+                  <ELSE>
+                    <DO_DB_PERSIST AssignToVar="varInsertResponse" Action="INSERT" DocumentName="CNSMR_SCORE_REF" ServiceName="BCM_MASTER" Source="EXTERNAL" HandleException="true">
+                      <TO_XML SelectList="$thisParam/CNSMR_SCR_REF/*"/>
+                      <CNSMR_SCORE_NBR Value="{$Consumer_Number}"/>
+                    </DO_DB_PERSIST>
+                    <IF_TEST Test="$varInsertResponse/ERROR_DATA/@Value='Error' or $varInsertResponse/ERROR_DATA/@Value='ERROR'">
+                      <THEN>
+                        <APPEND_TO_XML DocVar="thisReturn">
+                          <ON_ERROR>
+                            <RESPONSE Comment="{$varInsertResponse/ERROR_DATA/CNSMR_SCORE_REF/@Description}"/>
+                          </ON_ERROR>
+                        </APPEND_TO_XML>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$varInsertResponse/VALIDATION_RESULT/@Value='Error' or $varInsertResponse/VALIDATION_RESULT/@Value='ERROR'">
+                      <THEN>
+                        <APPEND_TO_XML DocVar="thisReturn">
+                          <ON_ERROR>
+                            <RESPONSE Comment="{$varInsertResponse/VALIDATION_RESULT/*}"/>
+                          </ON_ERROR>
+                        </APPEND_TO_XML>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$varInsertResponse/@Status='Success' and $varInsertResponse/VALIDATION_RESULT/@Value='SUCCESS'">
+                      <THEN>
+                        <IF_TEST Test="$thisParam/CNSMR_SCR_REF/LEGAL_ENT_NBR/@Value !=null and $thisParam/CNSMR_SCR_REF/LEGAL_ENT_NBR/@Value!=''">
+                          <THEN>
+                            <DO_DB_PERSIST AssignToVar="varInsertMapResponse" Action="INSERT" DocumentName="MTCHD_CNSMR_SCR_DMN_MAP" ServiceName="BCM_MASTER" Source="EXTERNAL" HandleException="true">
+                              <CNSMR_SCORE_NBR Value="{$Consumer_Number}"/>
+                              <LEGAL_ENT_NBR Value="{$thisParam/CNSMR_SCR_REF/LEGAL_ENT_NBR/@Value}"/>
+                            </DO_DB_PERSIST>
+                            <IF_TEST Test="$varInsertMapResponse/ERROR_DATA/@Status='Error' or $varInsertMapResponse/ERROR_DATA/@Status='ERROR'">
+                              <THEN>
+                                <APPEND_TO_XML DocVar="thisReturn">
+                                  <ON_ERROR>
+                                    <RESPONSE Comment="{$varInsertMapResponse/ERROR_DATA/MTCHD_CNSMR_SCR_DMN_MAP/@Description}"/>
+                                  </ON_ERROR>
+                                </APPEND_TO_XML>
+                              </THEN>
+                            </IF_TEST>
+                            <!--IF_TEST Test="$varInsertMapResponse/@Status='Error' or $varInsertMapResponse/@Status='ERROR'">
+<THEN>
+<APPEND_TO_XML DocVar="thisReturn">
+<ON_ERROR>
+<RESPONSE Comment="{$varInsertMapResponse/ERROR_DATA/MTCHD_CNSMR_SCR_DMN_MAP/@Description}"/>
+</ON_ERROR>
+</APPEND_TO_XML>
+</THEN>
+</IF_TEST-->
+                            <IF_TEST Test="$varInsertMapResponse/@Status='Success' and $varInsertMapResponse/VALIDATION_RESULT/@Value='SUCCESS'">
+                              <THEN>
+                                <APPEND_TO_XML DocVar="thisReturn">
+                                  <ON_SUCCESS>
+                                    <RESPONSE Comment="Consumer Score with Score number {$Consumer_Number} has been Created successfully"/>
+                                  </ON_SUCCESS>
+                                </APPEND_TO_XML>
+                              </THEN>
+                            </IF_TEST>
+                          </THEN>
+                          <ELSE>
+                            <APPEND_TO_XML DocVar="thisReturn">
+                              <ON_SUCCESS>
+                                <RESPONSE Comment="Consumer Score with Score number {$Consumer_Number} has been Created successfully"/>
+                              </ON_SUCCESS>
+                            </APPEND_TO_XML>
+                          </ELSE>
+                        </IF_TEST>
+                      </THEN>
+                    </IF_TEST>
+                  </ELSE>
+                </IF_TEST>
+              </THEN>
+            </IF_TEST>
+          </THEN>
+          <ELSE>
+            <APPEND_TO_XML DocVar="thisReturn">
+              <ON_SUCCESS>
+                <RESPONSE Comment="USER Does NOT Have Access to the WebService "/>
+              </ON_SUCCESS>
+            </APPEND_TO_XML>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

@@ -1,0 +1,87 @@
+<ui:page-group version="3" xmlns:ui="http://www.teradata.com/ui" Id="Create.pgl">
+<ui:dynamic-pgl select="$root/PGL/*"/>
+<ui:script>
+var spChar='#';
+function checkSpecialChars(thisobj)
+{
+var obj=thisobj;
+var strobj = '';
+var f=0;
+for(var i=0;i&lt;obj.value.length;i++)
+{
+if(spChar.indexOf(obj.value.charAt(i)) !=-1)
+{
+f=1;
+break;
+}else{
+strobj = strobj + obj.value.charAt(i);
+} 
+}  
+if(f==1){
+thisobj.value = strobj;
+}  
+}
+  
+function checkFirstCharSpace(thisobj){
+var obj=thisobj;
+if(obj.value.charAt(0) ==' '){
+obj.value = obj.value.trim();
+}
+}
+  
+function onRefTableClick(refers,toProperty,linkName,joinMech,prefix,serviceName,tableRank)
+{
+document.getElementById('refers').value=refers;
+document.getElementById('toProperty').value=toProperty;
+document.getElementById('linkName').value=linkName;
+document.getElementById('joinMech').value=joinMech;
+document.getElementById('prefix').value=prefix;
+document.getElementById('serviceName').value=serviceName;
+document.getElementById('tableRank').value=tableRank;
+document.form.BUTTON_ID.value = 'tableNode';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+}
+function on_Create()
+{
+bIsValid = (isValid_step1());
+if( bIsValid == false )
+{
+validation_alert('OuterStep');
+return;
+}
+grayOut('true');
+var elements = document.form.elements;
+for(j=0;j &lt; elements.length ; j++)
+{
+try
+{
+if(elements[j].disabled==true &amp;&amp; document.getElementsByName(elements[j].name).length==1)
+elements[j].disabled=false;
+}
+catch(Err){}
+}
+inputElements = document.getElementsByTagName('input');
+for(var i=0; i&lt;inputElements.length; i++)
+{
+if(inputElements[i].type=='hidden' &amp;&amp; inputElements[i].value.indexOf('#dup#') != -1)
+{
+inputElements[i].value=inputElements[i].value.replace('#dup#','');
+try
+{
+inputElements[i].value=document.getElementsByName(inputElements[i].value)[0].value;
+}
+catch(Err)
+{
+inputElements[i].value='';
+}
+}
+}
+	document.form.BUTTON_ID.value = 'Create';
+	document.form.action = 'view.x2ps';
+	document.form.submit();
+	grayOut(true);
+}
+</ui:script>
+</ui:page-group>

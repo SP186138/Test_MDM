@@ -1,0 +1,280 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" name="studio.templates.simple_entry" source="studio.controller:load">
+  
+<ui:container id="outerContainer" scrollable="true">
+<ui:step id="outerStep" name="outerStep" displayText="Manage Users">
+<ui:field-group>
+<!--<ui:dropdown id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR" displayText="Legal Entity Number" optionSrc="$root/LINES/LEGAL_ENT/LEGAL_ENT_NAME" required="true" onChange="true"/>-->
+<ui:dropdown id="LEGAL_ENT_NAME" name="LEGAL_ENT_NAME" displayText="Matched Domain" optionSrc="$root/LINES/LEGAL_ENT/LEGAL_ENT_NAME" onChange="javascript:loadProgramList();" required="true" selectOne="true" value="{$root/LINES/LEGAL_ENT_NAME/@Value}"/>
+
+<!--ui:entry-field id="LEGAL_ENT_NAME" name="LEGAL_ENT_NAME" displayText="Matched Domain" readOnly="true" value="{$root/LINES/LEGAL_ENT/LEGAL_ENT_NAME/@Value}" displayCondition="{count($root/LINES/LEGAL_ENT)&lt;=0}" required="true" /-->
+</ui:field-group>
+</ui:step>
+</ui:container>
+
+<ui:container id="topContainer" >
+<ui:step id="opt1" displayText="Unmatched records from Not found OPT List">
+<ui:field-group>
+<ui:hidden-field name="HTML_CODE" id="HTML_CODE" value="" />
+</ui:field-group>
+<ui:table id="searchTable" name="searchTable" scrollable="true"  displayText="Search Results" displayTextNoRecords="No Results found" rowId="$PE_OPTOUT_ID" rowSrc="$root/LINES/V_UNMATCHED_NOT_FND_OPT"  maxRows="50" totalRowCount="$root/RowCount/@Value" doPaging="true" filter="true" >
+<!--<ui:table id="searchTable" name="searchTable" scrollable="true"  displayText="Search Results" displayTextNoRecords="No Results found" rowId="$PE_OPTOUT_ID" rowSrc="$root/LINES/V_UNMATCHED_NOT_FND_OPT"  maxRows="10" doPaging="true" filter="true" >-->
+<ui:field-group>
+<ui:display-field id="PE_OPTOUT_ID" name="PE_OPTOUT_ID" displayText="PE Opt Out Id" displayNoWrap="false"/>
+<ui:display-field id="GVN_NAME_OPT" name="GVN_NAME_OPT" displayText="First name" displayNoWrap="false"/>
+<ui:display-field id="MID_NAME_OPT" name="MID_NAME_OPT" displayText="Middle Name" displayNoWrap="false"/>
+<ui:display-field id="FAMLY_NAME_OPT" name="FAMLY_NAME_OPT" displayText="Last Name" displayNoWrap="false"/>
+<ui:display-field id="FULL_PHONE_NUM_OPT" name="FULL_PHONE_NUM_OPT" displayText="Phone Number" displayNoWrap="false"/>
+<ui:display-field id="EMAIL_ADDR_TXT_OPT" name="EMAIL_ADDR_TXT_OPT" displayText="Email Address" displayNoWrap="false"/>
+<ui:display-field id="ADDRESS_OPT" name="ADDRESS_OPT" displayText="Opt Out Address" displayNoWrap="false"/>
+<!--ui:display-field id="ADDR_LINE_2_TXT" name="ADDR_LINE_2_TXT" displayText="ADDR_LINE_2_TXT"/>
+<ui:display-field id="ADDR_LINE_3_TXT" name="ADDR_LINE_3_TXT" displayText="ADDR_LINE_3_TXT"/>
+<ui:display-field id="CITY_NAME" name="CITY_NAME" displayText="CITY_NAME"/>
+<ui:display-field id="TERR_NAME" name="TERR_NAME" displayText="TERR_NAME"/>
+<ui:display-field id="CNTRY_NAME" name="CNTRY_NAME" displayText="CNTRY_NAME"/>
+<ui:display-field id="POSTL_AREA_CODE" name="POSTL_AREA_CODE" displayText="POSTL_AREA_CODE"/-->
+<ui:display-field id="NATIONAL_ID_NBR" name="NATIONAL_ID_NBR" displayText="National ID Number" displayNoWrap="false"/>
+<ui:display-field id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR" displayText="Legal Entity Number" displayNoWrap="false"/>
+<!--ui:display-field id="MATCH_FLG" name="MATCH_FLG" displayText="MATCH_FLG"/-->
+</ui:field-group>
+        
+</ui:table>
+<ui:buttons>
+<ui:button id="Print" name="Print" displayText="Print"  onClick="javascript:onPrint1();" />
+</ui:buttons>
+<ui:field-group>
+<ui:hidden-field id="isOpen" name="isOpen"></ui:hidden-field>
+<ui:hidden-field id="tabName" name="tabName"></ui:hidden-field>
+</ui:field-group>
+</ui:step>
+<ui:step id="opt2" displayText="Matched records from Not found OPT List">
+<ui:field-group>
+<ui:hidden-field name="HTML_CODE" id="HTML_CODE" value="" />
+</ui:field-group>
+<ui:table id="searchTable" name="searchTable" displayText="Search Results" displayTextNoRecords="No Results found" rowId="$PE_OPTOUT_ID" rowSrc="$root/LINES/V_MATCHED_NOT_FND_OPT" doPaging="true" maxRows="50" totalRowCount="$root/RowCount/@Value" filter="true">
+<ui:field-group>
+<ui:display-field id="PE_OPTOUT_ID" name="PE_OPTOUT_ID" displayText="PE Opt Out Id"/>
+<ui:display-field id="REGIS_PRSNA_ID" name="REGIS_PRSNA_ID" displayText="Registration Id"/>
+<ui:display-field id="GVN_NAME_OPT" name="GVN_NAME_OPT" displayText="First Name"/>
+<ui:display-field id="FAMLY_NAME_OPT" name="FAMLY_NAME_OPT" displayText="Last Name"/>
+<ui:display-field id="FULL_PHONE_NUM_OPT" name="FULL_PHONE_NUM_OPT" displayText="Phone"/>
+<ui:display-field id="EMAIL_ADDR_TXT_OPT" name="EMAIL_ADDR_TXT_OPT" displayText="Email Address"/>
+<ui:display-field id="ADDRESS_OPT" name="ADDRESS_OPT" displayText="Address"/>
+<ui:display-field id="GVN_NAME_REG" name="GVN_NAME_REG" displayText="Registered First name"/>
+<ui:display-field id="FAMLY_NAME_REG" name="FAMLY_NAME_REG" displayText="Registered Last Name"/>
+<ui:display-field id="NATIONAL_ID_NBR" name="NATIONAL_ID_NBR" displayText="National ID Number" displayNoWrap="false"/>
+</ui:field-group>
+       
+</ui:table>
+<ui:buttons>
+<ui:button id="Print" name="Print" displayText="Print" onClick="javascript:onPrint1();" />
+</ui:buttons>
+    
+<ui:field-group>
+<ui:hidden-field id="isOpen" name="isOpen"></ui:hidden-field>
+<ui:hidden-field id="tabName" name="tabName"></ui:hidden-field>
+</ui:field-group>
+</ui:step>
+</ui:container>
+
+
+<ui:script>
+function loadProgramList(){
+document.form.BUTTON_ID.value = 'LOAD_PROGRAM_LIST';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+}
+function onLoad(){
+//hideNavigatationFrame();
+
+togglenav();
+onLoadSuper();
+if(document.getElementById('isOpen').value=="true")
+{
+window.location.href ='download.jsp?file_name=Unmatched.pdf';
+}
+
+
+onResize();
+
+}
+
+function onPrint1(){
+  
+
+//GET THE CONTENT IN HEAD ANd BODY TAG
+
+var htmlStart = "&lt;html&gt;";
+var htmlHeadStart = "&lt;head&gt;";
+var htmlStyle = "&lt;style&gt;body{font-family: 'Arial Unicode MS', FreeSans; font-size:20px;font-weight: normal;}  table,td {     table-layout: fixed; width: 100%; ;border: 1px solid black; border-collapse: collapse; word-wrap:break-word;}  .tabularDataContainerHeaderRowLeft{font-weight:bold;padding:5px}  .containerHeaderRowLeft{font-weight:bold;padding-left: 350px;}  &lt;/style&gt;";
+var htmlBodyStart = "&lt;body&gt;&lt;h4 style='font-family: Arial Unicode MS, FreeSans; font-size:16px; font-weight: normal;' &gt;";
+var htmlEnd = "&lt;/html&gt;";
+var htmlHeadEnd = "&lt;/link&gt;&lt;/link&gt;&lt;/link&gt;&lt;/link&gt;&lt;/link&gt;&lt;/link&gt;&lt;/link&gt;&lt;/link&gt;&lt;/link&gt;&lt;/link&gt;&lt;/link&gt;&lt;/link&gt;&lt;/meta&gt;&lt;/meta&gt;&lt;/head&gt;";
+var htmlBodyEnd = "&lt;/h4&gt;&lt;/body&gt;";
+    
+var htmlhead = document.getElementsByTagName('head')[0].innerHTML;
+var htmlbody = document.body.innerHTML;
+
+
+var re=/\/mdm\//g;
+htmlhead = htmlhead.replace(re, "/Teradata/MDM/3.04.01.00/web/mdmclient/");
+    
+
+  
+//REMOVE SCRIPTS TAGS FROM THE HTML HEAD TAG
+
+  
+var index1 = 0;
+var index2 = 0;
+//alert(document.getElementsByTagName('head')[0].getElementsByTagName('SCRIPT').length);
+for (var i = 0; i &lt; document.getElementsByTagName('head')[0].getElementsByTagName('script').length; i++) {
+  
+index1 = htmlhead.indexOf("&lt;script", index2);
+ 
+index2 = htmlhead.indexOf("/script&gt;",  index1);
+htmlhead = htmlhead.replace(htmlhead.substring(index1, index2 + 8),"");
+var index1 = 0;
+var index2 = 0;
+}
+
+var htmlheadFinal = htmlhead.trim();
+//main body
+  
+
+
+var elementCollection = new Array();
+
+var allElements = document.getElementsByTagName("*");
+
+
+
+for(i = 0; i &lt; allElements.length; i++)
+
+{
+
+if(allElements[i].id == 'result_form_container'){
+
+elementCollection.push(allElements[i]);
+
+}
+
+}
+
+var tablobj = document.getElementById('tab_topContainer');
+
+if(document.getElementById('tabName').value=='opt2'){
+var header = tablobj.getElementsByTagName('td')[5].getElementsByTagName('a')[0].innerHTML;
+}
+else{
+var header = tablobj.getElementsByTagName('td')[1].getElementsByTagName('a')[0].innerHTML;
+}
+//header ="&lt;tr&gt;&lt;td id='tabSelected' width='8%' class='tabText' nowrap='yes' align='center' &gt;"+ header+"&lt;/td&gt;&lt;/tr&gt;";
+ 
+//var mainTable = "&lt;table id='tabs_container'&gt;"+header+"&lt;tr&gt;&lt;td&gt;";
+
+var count=0;
+
+for(var j=0;j&lt;elementCollection.length;j++)
+{
+var innerbody = elementCollection[j].innerHTML;
+      
+
+//ADD THE END TAGS FOR INPUT TAGS
+  
+var index1 = 0;
+var index2 = 0;
+for (var i = 0; i &lt; elementCollection[j].getElementsByTagName('input').length; i++) {
+index1 = innerbody.indexOf("&lt;input", index2);
+index2 = innerbody.indexOf("&gt;",  index1);
+innerbody = innerbody.replace(innerbody.substring(index1, index2 + 1),"");
+var index1 = 0;
+var index2 = 0;
+}
+  
+var index1 = 0;
+var index2 = 0;
+for (var i = 0; i &lt; elementCollection[j].getElementsByTagName('div').length; i++) {
+index1 = innerbody.indexOf("&lt;div", index2);
+index2 = innerbody.indexOf("&gt;",  index1);
+innerbody = innerbody.replace(innerbody.substring(index1, index2 + 1),"");
+var index1 = 0;
+var index2 = 0;
+}
+  
+var re = /&lt;\/div&gt;/g;
+innerbody = innerbody.replace(re,"");
+
+     
+//ADD THE END TAGS FOR IMG TAGS
+
+
+var index1 = 0;
+var index2 = 0;
+for (var i = 0; i &lt; elementCollection[j].getElementsByTagName('img').length; i++) {
+index1 = innerbody.indexOf("&lt;img", index2);
+index2 = innerbody.indexOf("&gt;",  index1);
+innerbody = innerbody.replace(innerbody.substring(index1, index2 + 1),"");
+var index1 = 0;
+var index2 = 0;
+}
+        
+
+var re=/\/mdm\//g;
+innerbody = innerbody.replace(re, "/Teradata/MDM/3.04.01.00/web/mdmclient/");
+
+
+mainTable = mainTable + "&lt;table id='result_form_container'&gt;&lt;tr&gt;&lt;td&gt;"+ innerbody+ "&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;";
+
+}
+mainTable = mainTable+"&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;";
+
+
+var finalhtml = htmlStart + htmlHeadStart  + htmlheadFinal + htmlStyle + htmlHeadEnd + htmlBodyStart + mainTable + htmlBodyEnd + htmlEnd;
+
+
+document.form.HTML_CODE.value = finalhtml;
+
+document.form.BUTTON_ID.value = 'Print';
+
+document.form.action = 'view.x2ps';
+
+document.form.submit();
+grayOut(true);
+
+//return false;
+    
+
+
+}
+    
+    
+
+
+
+String.prototype.replaceAt=function(index, character) {
+
+return this.substr(0, index) + character + this.substr(index+character.length);
+
+}
+    
+
+
+function removeTag(htmlcode, tagStartindex, tagname){
+
+if(tagname == 'SCRIPT'){
+
+var tagCloseIndex = htmlcode.indexOf("SCRIPT&gt;", tagStartindex);
+
+//alert(htmlcode.substring(tagStartindex,tagCloseIndex+7));
+
+var htmlcodeReturn = htmlcode.replace(htmlcode.substring(tagStartindex,tagCloseIndex+7),"");
+
+//alert(htmlcodeReturn);
+
+return htmlcodeReturn;
+
+}
+
+}
+</ui:script>
+</ui:page-group>

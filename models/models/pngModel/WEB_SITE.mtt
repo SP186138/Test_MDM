@@ -1,0 +1,46 @@
+<document>
+  <properties>
+    <property Name="WEB_SITE_NBR" PhysicalName="WEB_SITE_NBR" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="WEB_SITE_NBR" />
+    </property>
+    <property Name="WEB_SITE_URL_TXT" PhysicalName="WEB_SITE_URL_TXT" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="WEB_SITE_URL_TXT" />
+    </property>
+    <property Name="IS_WEB_STORE_IND" PhysicalName="IS_WEB_STORE_IND" Required="false">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="IS_WEB_STORE_IND" />
+    </property>
+    <property Name="CNTRY_CODE" PhysicalName="CNTRY_CODE">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="CNTRY_CODE" />
+    </property>
+    <property Name="AGNCY_NBR">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="AGNCY_NBR" />
+    </property>
+  </properties>
+  <keys>
+    <key Active="true" Name="WEB_SITE_UPI" PhysicalName="WEB_SITE_UPI" Kind="PRIMARY">
+      <property Name="WEB_SITE_NBR" />
+    </key>
+  </keys>
+  <links>
+    <link Active="true" Name="Link1" PhysicalName="website_agncy_nbr_link">
+      <keymap ToPackage="models/pngModel" ToModelUnit="AGNCY.mtt" ToKey="AGNCY_UPI" ReverseLink="true" ReverseLinkName="website_agncy_nbr" DeleteRule="RESTRICT">
+        <mapping FromProperty="AGNCY_NBR" ToProperty="AGNCY_NBR" />
+      </keymap>
+    </link>
+    <link Active="true" Name="Link2" PhysicalName="Website_cntry_code_link">
+      <keymap ToPackage="models/pngModel" ToModelUnit="CNTRY.mtt" ToKey="CNTRY_UPI" ReverseLink="true" ReverseLinkName="Website_cntry_code" DeleteRule="RESTRICT">
+        <mapping FromProperty="CNTRY_CODE" ToProperty="CNTRY_CODE" />
+      </keymap>
+    </link>
+  </links>
+  <docFacets>
+    <mdmWebServiceFacet />
+    <mdmAuthorizationFacet />
+    <mdmSysTableMapFacet TableClass="MASTER" Source="MASTER" MasterTable="WEB_SITE" />
+    <miscFacet PhysicalName="WEB_SITE" Active="true" />
+    <mdmConfigFacet SchemaGen="true" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql />
+</document>
+

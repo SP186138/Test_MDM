@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+ 	 Copyright (c) 2009 by Teradata Corporation. 
+	 All Rights Reserved. 
+	 Teradata CONFIDENTIAL AND TRADE SECRET 
+ -->
+  <DEFINE_METHOD Name="pngStopTremorTimer">
+    <!--**********************************************************************************************************
+*   Module Name	: pngTremorMigration
+*		Created Date	: March 23, 2012
+*		Created By   	: Shamal D'souza
+*		Called Functions:
+*		Called By Functions:
+*		Short Desc	: Rule that stops Tremor timer.
+*  		Change Log 		:
+*		DATE							LC						OWNER		DESCRIPTION
+*
+**********************************************************************************************************-->
+    <RULE>
+      <ACTION>
+        <STOP_TIMER>
+          <IDENTIFIED_BY>
+            <NAME Value="TIMER_FOR_TREMOR"/>
+          </IDENTIFIED_BY>
+        </STOP_TIMER>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="pngStartTremorTimer">
+    <!--**********************************************************************************************************
+*   Module Name	: pngTremorMigration
+*		Created Date	: March 23, 2012
+*		Created By   	: Shamal D'souza
+*		Called Functions: Calls pngTREMORMigRule script that runs the bteqs to perform survivorship to EDW directly from Staging
+*		Called By Functions:
+*		Short Desc	: Rule that invokes timer for Tremor Migration
+*  		Change Log 		:
+*		DATE							LC						OWNER		DESCRIPTION
+*
+**********************************************************************************************************-->
+    <RULE>
+      <ACTION>
+        <START_TIMER>
+          <IDENTIFIED_BY>
+            <NAME Value="TIMER_FOR_TREMOR"/>
+          </IDENTIFIED_BY>
+          <CALLBACK_DATE Value="{incrDate(date(), duration(0, 0, 10, 0))}"/>
+          <CALLBACK_DURATION Value="{duration(0,0,10,0)}"/>
+          <CALLBACK_ACTIONS>
+            <REQUEST Name="pngTREMORMigRule" ServiceName="BCM_MASTER" AssignToVar="resTremorTimerRule"/>
+          </CALLBACK_ACTIONS>
+        </START_TIMER>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="pngTREMORMigRule">
+    <!--**********************************************************************************************************
+*   Module Name	: pngTremorMigration
+*		Created Date	: March 23, 2012
+*		Created By   	: Shamal D'souza
+*		Called Functions: Calls TREMOR_MIG.bat script that performs survivorship to EDW for Migration data
+*		Called By Functions:  pngTREMORTimer
+*		Short Desc	: Rule that performs survivorship to EDW directly from STG without Validation and Trillium processing
+*  		Change Log 		:
+*		DATE							LC						OWNER		DESCRIPTION
+*
+**********************************************************************************************************-->
+    <RULE>
+      <ACTION>
+        <IF_TEST Test="$EDWPersist_Status = 'Yes'">
+          <THEN>
+          </THEN>
+          <ELSE>
+            <IF_TEST Test="$previousTremorLoadStatus/@Value='Failed'">
+              <THEN>
+                <REQUEST Name="emailOnSerdownNPrevLoadInFailState" ServiceName="BCM_MASTER" AssignToVar="resPreviousLoad">
+                  <SUBJECT Value="Previous Tremor is still in Failed State"/>
+                  <DATA Value="Previous Load is still in Failed State and hence the Workflow wont be executed"/>
+                </REQUEST>
+              </THEN>
+              <ELSE>
+                <!-- identify if previous migration load is still in progress-->
+                <GET_DOCUMENT Name="LOAD_INFO" AssignToVar="respLoadInfo" ServiceName="BCM_MASTER">
+                  <PROCESS_NAME Value="Migration"/>
+                  <STATUS Value="In Progress"/>
+                </GET_DOCUMENT>
+                <IF_TEST Test="count($resLoadInfo/LOAD_INFO) > 0">
+                  <THEN>
+                    <TO_DOCVAR AssignToVar="thisReturn">
+                      <SUCCESS>
+                        <Message Value="Previous Load Running"/>
+                      </SUCCESS>
+                    </TO_DOCVAR>
+                  </THEN>
+                  <ELSE>
+                    <EXECUTE_SQL_QUERY Value="SEL lOAD_ID FROM MDM_LOAD_CONTROL_MIG A WHERE NOT EXISTS(SEL LOAD_ID FROM LOAD_INFO B WHERE PROCESS_NAME='Migration' AND A.LOAD_ID = B.LOAD_ID);" AssignToVar="tremorReadyLoadIds"/>
+                    <IF_TEST Test="count($tremorReadyLoadIds/SQL_RESULT) > 0">
+                      <THEN>
+                        <!-- Sets the Status variable so that Tremor Wf is not started when EDWPersist is Running-->
+                        <SET Var="TREMORMig_Status" FromValue="Yes" Scope="Global"/>
+                        <SET Var="count" FromValue="1"/>
+                        <FOR_EACH SelectList="$tremorReadyLoadIds/*" CurrentElement="currLoad">
+                          <IF_TEST Test="$count=1">
+                            <THEN>
+                              <SET Var="concatenatedLoadIds" FromValue="{$currLoad/LOAD_ID/@Value}"/>
+                            </THEN>
+                            <ELSE>
+                              <SET Var="concatenatedLoadIds" FromValue="{concat($concatenatedLoadIds/@Value,',',$currLoad/LOAD_ID/@Value)}"/>
+                            </ELSE>
+                          </IF_TEST>
+                          <SET Var="count" FromValue="{int(int($count)+1)}"/>
+                        </FOR_EACH>
+                        <EXECUTE_SHELL_COMMAND Value="TREMOR_MIG.BAT" AssignToVar="TremorResult"/>
+                        <IF_TEST Test="$TremorResult/@ShellReturnValue = 0">
+                          <THEN>
+                            <GET_DOCUMENT Name="V_SRC_EMAIL_DETAIL_MIG" AssignToVar="resSrcEmail" DirtyRead="yes" ServiceName="BCM_MASTER">
+                              <SELECT>
+                                <SOURCE_ID/>
+                                <REQ_MAIL_ID/>
+                                <AGN_CON_MAIL_ID/>
+                              </SELECT>
+                              <GROUP_BY>
+                                <SOURCE_ID/>
+                                <REQ_MAIL_ID/>
+                                <AGN_CON_MAIL_ID/>
+                              </GROUP_BY>
+                            </GET_DOCUMENT>
+                            <TO_DOCVAR AssignToVar="srcdetails">
+                              <ROOT>
+                                <TO_XML SelectList="$resSrcEmail/*"/>
+                              </ROOT>
+                            </TO_DOCVAR>
+                            <REQUEST Name="wrappersuccess" ServiceName="BCM_MASTER" AssignToVar="restremor" Synchronous="no">
+                              <BatchId Value="{$concatenatedLoadIds}"/>
+                              <TO_XML DocVar="srcdetails"/>
+                            </REQUEST>
+                            <!-- Call Status Update batch Script which does inserts into ETL_CTRL.LOAD_CONTROL -->
+                            <EXECUTE_SHELL_COMMAND Value="MDM_STATUS_MIG.BAT" AssignToVar="resMdmStatus"/>
+                            <TO_DOCVAR AssignToVar="thisReturn">
+                              <SUCCESS>
+                                <Message Value="Tremor Successful"/>
+                              </SUCCESS>
+                            </TO_DOCVAR>
+                            <!-- Sets back status to NO so that ORIG Wf is free to Run-->
+                            <SET Var="TREMORMig_Status" FromValue="No" Scope="Global"/>
+                            <SET Var="previousTremorLoadStatus" FromValue="Success" Scope="Global"/>
+                          </THEN>
+                          <ELSE>
+                            <!-- Call Status Update batch Script which does inserts into ETL_CTRL.LOAD_CONTROL -->
+                            <EXECUTE_SHELL_COMMAND Value="MDM_STATUS_MIG.BAT" AssignToVar="resMdmStatus"/>
+                            <!-- send the email with concatenated list of load ids that failed-->
+                            <REQUEST Name="emailOnErrorNode" ServiceName="BCM_MASTER">
+                              <LoadId Value="{$concatenatedLoadIds/@Value}"/>
+                              <Subject Value="Tremor Failure"/>
+                              <BatchIdORLoadId Value="LoadId"/>
+                            </REQUEST>
+                            <TO_DOCVAR AssignToVar="thisReturn">
+                              <FAILURE>
+                                <Message Value="{$result/STD_ERR/LINE[1]/@Value}"/>
+                              </FAILURE>
+                            </TO_DOCVAR>
+                            <SET Var="TREMORMig_Status" FromValue="No" Scope="Global"/>
+                            <SET Var="previousTremorLoadStatus" FromValue="Failed" Scope="Global"/>
+                          </ELSE>
+                        </IF_TEST>
+                      </THEN>
+                      <ELSE>
+                        <TO_DOCVAR AssignToVar="thisReturn">
+                          <SUCCESS>
+                            <Message Value="No Load Id to Process"/>
+                          </SUCCESS>
+                        </TO_DOCVAR>
+                      </ELSE>
+                    </IF_TEST>
+                  </ELSE>
+                </IF_TEST>
+              </ELSE>
+            </IF_TEST>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="pngSETPreviousTremorLoadStatus">
+    <RULE>
+      <ACTION>
+        <SET Var="previousTremorLoadStatus" FromValue="Success" Scope="Global"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="pngSETtestLoadStatus">
+    <RULE>
+      <ACTION>
+        <SET Var="EDWPersist_Status" FromValue="NO" Scope="Global"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

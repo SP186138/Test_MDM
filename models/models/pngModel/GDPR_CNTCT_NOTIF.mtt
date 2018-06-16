@@ -1,0 +1,46 @@
+<document>
+  <properties>
+    <property Name="GDPR_RQST_TYPE_CD" PhysicalName="GDPR_RQST_TYPE_CD" Required="true" CharSet="LATIN">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="GDPR_RQST_TYPE_CD" />
+    </property>
+    <property Name="CNTRY_CODE" PhysicalName="CNTRY_CODE" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="CNTRY_CODE" />
+    </property>
+    <property Name="CNTCT_NBR" PhysicalName="CNTCT_NBR" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="CNTCT_NBR" />
+    </property>
+  </properties>
+  <keys>
+    <key Active="true" Name="GDPR_CNTCT_NOTIF_UPI" PhysicalName="GDPR_CNTCT_NOTIF_UPI" Kind="PRIMARY">
+      <property Name="CNTCT_NBR" />
+      <property Name="CNTRY_CODE" />
+      <property Name="GDPR_RQST_TYPE_CD" />
+    </key>
+  </keys>
+  <links>
+    <link Active="true" Name="Link1" PhysicalName="CNTCT_NBR_GDPR_LINK">
+      <keymap ToPackage="models/pngModel" ToModelUnit="CNTCT.mtt" ToKey="CNTCT_UPI" ReverseLink="true" ReverseLinkName="CNTCT_NBR_GDPR" DeleteRule="RESTRICT">
+        <mapping FromProperty="CNTCT_NBR" ToProperty="CNTCT_NBR" />
+      </keymap>
+    </link>
+    <link Active="true" Name="Link2" PhysicalName="RQST_TYPE_UPI_LINK">
+      <keymap ToPackage="models/pngModel" ToModelUnit="GDPR_RQST_TYPE.mtt" ToKey="GDPR_RQST_TYPE_UPI" ReverseLink="true" ReverseLinkName="RQST_TYPE_UPI" DeleteRule="RESTRICT">
+        <mapping FromProperty="GDPR_RQST_TYPE_CD" ToProperty="GDPR_RQST_TYPE_CD" />
+      </keymap>
+    </link>
+    <link Active="true" Name="Link3" PhysicalName="CNTRY_CD_UPI_LINK">
+      <keymap ToPackage="models/pngModel" ToModelUnit="CNTRY.mtt" ToKey="CNTRY_UPI" ReverseLink="true" ReverseLinkName="CNTRY_CD_UPI" DeleteRule="RESTRICT">
+        <mapping FromProperty="CNTRY_CODE" ToProperty="CNTRY_CODE" />
+      </keymap>
+    </link>
+  </links>
+  <docFacets>
+    <mdmWebServiceFacet />
+    <mdmSysTableMapFacet TableClass="MASTER" Source="MASTER" MasterTable="GDPR_CNTCT_NOTIF" />
+    <miscFacet PhysicalName="GDPR_CNTCT_NOTIF" Active="true" />
+    <mdmConfigFacet SchemaGen="true" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql />
+</document>
+

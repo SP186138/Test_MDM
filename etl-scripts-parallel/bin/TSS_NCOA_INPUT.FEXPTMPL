@@ -1,0 +1,116 @@
+/***********************************************************************************************************
+SCRIPT:               TSS_NCOA_INPUT.FEXP
+DESCRIPTION:          This script generates the INPUT file for use by Trillium
+DEPENDENCY:           Staging Opt Out table
+INPUT:                
+OUTPUT:               TSS_NCOA_INPUT.DAT
+ERRORS:
+SPECIAL INSTRUCTIONS: In case of failure, log table to be dropped and script to restart from top.
+
+CHANGE LOG:
+VERSION              DATE                 AUTHOR                          CHANGES
+1.00                 10/12/2012           TERADATA                        INITIAL VERSION
+5.0                  12/18/2013           TERADATA                        INTEGRATION CHANGES TO USE I2 
+                                                                          TRILLIUM PROJECTS
+5.7                  02/29/2016           TERADATA                        Release 5.7 - Add address to postal repo
+                                                                          in case of external standardization
+***********************************************************************************************************/
+
+.LOGTABLE TSS_NCOA_INPUT_LOG;
+
+.BEGIN EXPORT;
+
+.EXPORT OUTFILE $TSS_NCOA_INPUT.DAT FORMAT TEXT MODE RECORD;
+
+SELECT 
+CAST(
+	       COALESCE(TRIM(CAST(A.MATCHD_CNSMR_PRSNA_ID AS INTEGER)),'')
+	||'|'||COALESCE(TRIM(CAST(CAST(A.MKTNG_PGM_NBR AS INTEGER) AS CHAR(20))),'')
+	||'|'||COALESCE(TRIM(CAST(A.REGIS_PRSNA_ID AS INTEGER)),'')
+	||'|'||COALESCE(TRIM(C.NAME_PREFX_TXT),'')
+	||'|'||COALESCE(TRIM(C.GVN_NAME),'AA')
+	||'|'||COALESCE(TRIM(C.MID_NAME),'')
+	||'|'||COALESCE(TRIM(C.FAMLY_NAME),'')
+	||'|'||COALESCE(TRIM(C.NAME_SUFFX_TXT),'')
+	||'|'||COALESCE(TRIM(C.FULL_NAME),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(D.ADDR_LINE_1_TXT),TRIM(A.NEW_ADDRESS1),'')
+	||'|'||COALESCE(TRIM(D.ADDR_LINE_2_TXT),TRIM(A.NEW_ADDRESS2),'')
+	||'|'||COALESCE(TRIM(D.ADDR_LINE_3_TXT),'')
+	||'|'||COALESCE(TRIM(D.STRET_NUM),'')
+	||'|'||COALESCE(TRIM(D.STRET_NAME),'')
+	||'|'||COALESCE(TRIM(D.APT_NUM),'')
+	||'|'||COALESCE(TRIM(D.PO_BOX_NUM),'')
+	||'|'||COALESCE(TRIM(D.CITY_NAME),TRIM(A.NEW_CITY),'')
+	||'|'||COALESCE(TRIM(D.POSTL_AREA_CODE),TRIM(A.NEW_ZIP),'')
+	||'|'||COALESCE(TRIM(D.TERR_NAME),TRIM(A.NEW_STATE),'')
+	||'|'||COALESCE(TRIM(D.CNTRY_CODE),TRIM(A.NEW_COUNTRY),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(CAST(CAST(A.LOAD_ID AS INTEGER) AS VARCHAR(20))),'')
+	||'|'||COALESCE(TRIM(D.POSTL_ADDR_ID),'')
+	||'|'||COALESCE(TRIM(CAST(CAST(A.LOAD_TS AS TIMESTAMP(0)) AS VARCHAR(20))),'')		
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'||||'||COALESCE(TRIM(''),'')
+    AS CHAR(750))
+  FROM $DATABASENAME.NCOA_ADDR_STG A
+  INNER JOIN LOAD_INFO B
+  ON A.LOAD_ID=B.LOAD_ID
+  AND B.PROCESS_NAME='NCOA Input'
+  AND B.STATUS = 'In Progress'
+  LEFT OUTER JOIN REGIS_PRSNA C
+  ON A.MKTNG_PGM_NBR = C.MKTNG_PGM_NBR
+  AND A.REGIS_PRSNA_ID = C.REGIS_PRSNA_ID
+  JOIN MKTNG_PGM MP
+  ON A.MKTNG_PGM_NBR=MP.MKTNG_PGM_NBR  
+  LEFT JOIN CNTRY_RECODE E
+ON TRIM(A.NEW_COUNTRY)=E.CNTRY
+LEFT JOIN POSTL_ADDR D
+ON COALESCE(TRIM(A.NEW_ADDRESS1),'')=D.ORIG_ADDR_LINE_1_TXT
+AND COALESCE(TRIM(A.NEW_ADDRESS2),'')=D.ORIG_ADDR_LINE_2_TXT
+AND ' '=D.ORIG_ADDR_LINE_3_TXT
+AND ' '=D.ORIG_STRET_NUM
+AND ' '=D.ORIG_STRET_NAME
+AND ' '=D.ORIG_APT_NUM
+AND ' '=D.ORIG_PO_BOX_NUM
+AND COALESCE(TRIM(A.NEW_CITY),'')=D.ORIG_CITY_NAME
+AND COALESCE(TRIM(A.NEW_STATE),'')=D.ORIG_TERR_NAME
+AND COALESCE(TRIM(A.NEW_ZIP),'')=D.ORIG_POSTL_AREA_CODE
+AND COALESCE(E.CNTRY_RECODE,TRIM(A.NEW_COUNTRY),
+SUBSTR(MP.MKTNG_PGM_NAME,INDEX(MP.MKTNG_PGM_NAME,'-')+1,3),'')=D.ORIG_CNTRY_INFO_TXT  
+  WHERE (NEW_ADDRESS1 IS NOT NULL
+  OR NEW_ADDRESS2 IS NOT NULL)  
+QUALIFY RANK() OVER (PARTITION BY A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID,A.MATCHD_CNSMR_PRSNA_ID
+ORDER BY D.POSTL_ADDR_ID)=1
+;
+
+.END EXPORT;
+
+.SET CREATERC TO 0;
+
+.IF &SYSRC > 4 THEN;
+.SET CREATERC TO 1;
+.ELSE;
+.IF &SYSRC <= 4 THEN;
+.SET CREATERC TO 0;
+.ENDIF;
+.ENDIF;
+
+.LOGOFF &CREATERC;

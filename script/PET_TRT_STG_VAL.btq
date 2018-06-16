@@ -1,0 +1,59 @@
+/***********************************************************************************************************
+SCRIPT:               PET_TRT_STG_VAL.BTEQ 
+DESCRIPTION:          This script validates the records received from ETL Staging.
+DEPENDENCY:           
+INPUT:                ETL Staging
+OUTPUT:               MST Staging
+ERRORS:
+SPECIAL INSTRUCTIONS:
+
+CHANGE LOG:
+VERSION              DATE                 AUTHOR                          CHANGES
+1.00                 01/21/2011           TERADATA                        INITIAL VERSION
+2.00                 08/22/2011           TERADATA                        Change OF Failure-BadFile
+3.00                 10/31/2011           TERADATA                        Removal of Deletes as  part of ||elism
+4.00                 03/26/2012		  TERADATA                        Made change in insert to LOAD_INFO to
+                                                                          manipulate LA data
+***********************************************************************************************************/
+
+.logon $TDPID/$TDUSER,$TDPWD
+ 
+.SET ERROROUT STDOUT;
+.SET SESSION CHARSET 'UTF8';
+.SET ERRORLEVEL 3624 SEVERITY 0
+
+
+
+INSERT INTO VALIDATION_ERR_$BTCH (
+MKTNG_PGM_NBR
+,REGIS_CNSMR_ID_VAL
+, LOAD_ID
+, SYS_ERR_CODE
+,RECORD_SOURCE)
+
+SELECT
+DER1.MKTNG_PGM_NBR,
+DER1.REGIS_CNSMR_ID_VAL,
+
+DER1.LOAD_ID,
+'DUPLICATE PET TRAIT INFORMATION ON SOURCE FILE' SYS_ERR_CODE,
+'PET_TRT_STG'
+FROM
+(
+SELECT 
+MKTNG_PGM_NBR,
+REGIS_CNSMR_ID_VAL,
+PET_TRT_SEQ_NBR,
+TRT_ID,
+PET_SEQ_NBR,
+STG.LOAD_ID,
+RECORD_IND
+FROM
+$ETL_DB.PET_TRT_STG STG
+WHERE LOAD_ID in (select load_id from VALIDATION_$BTCH)
+GROUP BY 1,2,3,4,5,6,7
+HAVING COUNT(*) >1
+)DER1;
+.IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE
+
+.EXIT

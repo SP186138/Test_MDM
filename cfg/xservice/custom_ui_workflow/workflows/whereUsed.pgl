@@ -1,0 +1,36 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_entry" source="studio.controller:load">
+  <ui:container id="container1" name="container1">
+    <ui:step id="Outer" name="Outer" displayText="{$root/Links_Page/@Value}">
+      <ui:field-group>
+        <ui:hidden-field id="selectedTabName" name="selectedTabName"/>
+      </ui:field-group>
+      <ui:table id="prorityTable" displayTextNoRecords="No Records found" collapsable="false" scrollable="true" select="$root/WHERE_USED" configurable="false" maxRows="-1">
+        <ui:field-group>
+          <ui:display-field displayText="Linked Document" id="Document_Name" name="Document_Name"/>
+          <ui:display-field displayText="From Property" id="From_Property" name="From_Property"/>
+          <ui:display-field displayText="To Property" id="To_Property" name="To_Property"/>
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button id="Cancel" displayText="Back"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+    function onLinkedDoc(tabName)
+    {
+	document.getElementById('selectedTabName').value=tabName;
+    document.form.BUTTON_ID.value='toPage';
+    document.form.submit();
+    }
+    
+$(function() {
+var table = document.getElementById(&quot;prorityTable_data&quot;);
+for (j = 0; j&lt;table.rows.length-1; j++)
+{
+var inner=table.rows[j].cells[0].innerHTML;
+table.rows[j].cells[0].innerHTML='&lt;a href=&quot;javascript:onLinkedDoc('+&quot;'&quot;+inner.trim()+&quot;')&quot;+'&quot; >'+inner.trim()+'&lt;/>';
+}
+});
+  </ui:script>
+</ui:page-group>

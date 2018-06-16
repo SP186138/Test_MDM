@@ -1,0 +1,27 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" Id="AgencyIP.pgl" version="3">
+  <ui:container id="topContainer">
+    <ui:step displayText="AGENCY IP" id="AGENCY_IP">
+      <ui:validation successMessage="{$root/SuccessMessage/@Value}"/>
+      <ui:field-group>
+        <ui:image src="/bpi_check.gif" displayCondition="{string-length($root/MSG/AlertGreen/@Value) != 0}" id="checkImg"/>
+        <ui:display-field id="success" value="{$root/MSG/AlertGreen/@Value}" displayCondition="{string-length($root/MSG/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen"/>
+        <ui:image src="/cancel.gif" displayCondition="{string-length($root/MSG/AlertRed/@Value) != 0}"/>
+        <ui:display-field value="{$root/MSG/AlertRed/@Value}" displayCondition="{string-length($root/MSG/AlertRed/@Value) != 0}" name="error" class="requiredIndicator"/>
+      </ui:field-group>
+      <ui:field-group id="Create">
+        <ui:field-group id="left fields" columns="2">
+          <ui:display-field id="AGNCY_NBR" displayText="Agency Number" name="AGNCY_NBR"/>
+          <ui:entry-field id="SR_NBR" displayText="SR Number" name="SR_NBR"/>
+          <ui:entry-field id="IP_ADDR" displayText="IP Address" name="IP_ADDR" required="true"/>
+          <ui:entry-field id="REQSTD_DT" displayText="Requested Date" name="REQSTD_DT" required="true" dataType="Date"/>
+        </ui:field-group>
+      </ui:field-group>
+      <ui:buttons id="buttons">
+        <ui:button id="Save_IP" displayText="Save" name="Save_IP" emphasized="true"/>
+        <ui:button id="Save_and_Return_IP" displayText="Save And Return" name="Save_and_Return_IP" emphasized="true"/>
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:container>
+  </ui:container>
+</ui:page-group>

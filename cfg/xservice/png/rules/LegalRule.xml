@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+Copyright (c) 2009 by Teradata Corporation.
+All Rights Reserved.
+Teradata CONFIDENTIAL AND TRADE SECRET
+-->
+ 
+  <DEFINE_METHOD Name="getLegalEntitySearchResults">
+    <RULE>
+      <ACTION>
+        <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+          <LEGAL_ENT_NBR/>
+          <LEGAL_ENT_NAME/>
+          <LEGAL_ENT_SHORT_NAME/>
+          <LEGAL_ENT_DESC/>
+          <GEOC_REGN_CODE/>
+          <GEOC_SUB_REGN_CODE/>
+        </FORM_SEARCH_FILTER>
+        <TO_DOCVAR AssignToVar="filterList">
+          <FILTERLIST/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$filters/FILTER" CurrentElement="thisFilter">
+          <APPEND_TO_XML SelectList="$filterList">
+            <TO_XML SelectList="$thisFilter/*"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'SEARCH'">
+          <THEN>
+            <SET Var="startCount" FromValue="0"/>
+          </THEN>
+          <ELSE>
+            <THEN>
+              <SET Var="startCount" FromValue="{$thisParam/START_COUNT/@Value}"/>
+            </THEN>
+          </ELSE>
+        </IF_TEST>
+        <!--<SET Var="LEGAL_ENT_NBR" FromSelect="$thisParam/LEGAL_ENT_NBR/@Value"/>-->
+        <SET Var="GEOC_REGN_CODE" FromSelect="$thisParam/GEOC_REGN_CODE/@Value"/>
+        <SET Var="GEOC_SUB_REGN_CODE" FromSelect="$thisParam/GEOC_SUB_REGN_CODE/@Value"/>
+        <GET_DOCUMENT StartAtRow="{$startCount}" Name="LEGAL_ENT" ServiceName="BCM_MASTER" DirtyRead="true" MaxRows="15" AssignToVar="searchResults" ReturnRowCount="yes">
+          <TO_XML SelectList="$filterList/*"/>
+          <SELECT>
+            <LEGAL_ENT_NBR/>
+            <LEGAL_ENT_NAME/>
+            <LEGAL_ENT_SHORT_NAME/>
+            <LEGAL_ENT_DESC/>
+            <GEOC_REGN_CODE/>
+            <GEOC_SUB_REGN_CODE/>
+          </SELECT>
+          <ORDER_BY>
+            <LEGAL_ENT_NBR Sort="Ascending"/>
+          </ORDER_BY>
+        </GET_DOCUMENT>
+        <REQUEST Name="getGeographicRegion" AssignToVar="Regn"/>
+        <REQUEST Name="getGeographicSubRegionALL" AssignToVar="SubRegn"/>
+        <SET Var="i" FromValue="1"/>
+        <FOR_EACH SelectList="$searchResults/LEGAL_ENT" CurrentElement="currentElement">
+          <SET Attribute="Index" DocVar="currentElement" FromValue="{int($i)}"/>
+          <SET Var="geocRegnCode" FromValue="{$currentElement/GEOC_REGN_CODE/@Value}"/>
+          <SET Var="geocRegnname" FromSelect="$Regn/GEOC_REGN[GEOC_REGN_CODE/@Value=$geocRegnCode]/GEOC_REGN_NAME/@Value"/>
+          <SET Var="geocSubRegnCode" FromValue="{$currentElement/GEOC_SUB_REGN_CODE/@Value}"/>
+          <SET Var="geocSubRegnCodename" FromSelect="$SubRegn/GEOC_SUB_REGN[GEOC_SUB_REGN_CODE/@Value=$geocSubRegnCode]/GEOC_SUB_REGN_NAME/@Value"/>
+          <APPEND_TO_XML SelectList="$searchResults/LEGAL_ENT[@Index=$i]">
+            <REGN Id="{$geocRegnCode}" Value="{$geocRegnname}"/>
+            <SUBREGN Id="{$geocSubRegnCode}" Value="{$geocSubRegnCodename}"/>
+          </APPEND_TO_XML>
+          <SET FromValue="{int($i+1)}" Var="i"/>
+        </FOR_EACH>
+        <CLONE_XML DocVar="searchResults" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="createLegalEntity">
+    <RULE>
+      <ACTION>
+        <ADD_DOC_SMART Name="LEGAL_ENT" ServiceName="BCM_MASTER" AssignToVar="createLegalEntityResult">
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <LEGAL_ENT_NAME Value="{$thisParam/LEGAL_ENT_NAME/@Value}"/>
+          <LEGAL_ENT_SHORT_NAME Value="{$thisParam/LEGAL_ENT_SHORT_NAME/@Value}"/>
+          <LEGAL_ENT_DESC Value="{$thisParam/LEGAL_ENT_DESC/@Value}"/>
+          <GEOC_REGN_CODE Value="{trim($thisParam/GEOC_REGN_CODE/@Value)}"/>
+          <GEOC_SUB_REGN_CODE Value="{$thisParam/GEOC_SUB_REGN_CODE/@Value}"/>
+          <ENTITY_STATE Value="{$thisParam/ENTITY_STATE/@Value}"/>
+        </ADD_DOC_SMART>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getLegalEntityDetails">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="LEGAL_ENT" ServiceName="BCM_MASTER" AssignToVar="legalEntityDetails" ReturnRowCount="true">
+          <SELECT>
+            <LEGAL_ENT_NBR/>
+            <LEGAL_ENT_NAME/>
+            <LEGAL_ENT_SHORT_NAME/>
+            <LEGAL_ENT_DESC/>
+            <GEOC_REGN_CODE/>
+            <GEOC_SUB_REGN_CODE/>
+          </SELECT>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <SET Var="GEOC_REGN_CODE" FromSelect="$thisParam/GEOC_REGN_CODE/@Value"/>
+          <SET Var="GEOC_SUB_REGN_CODE" FromSelect="$thisParam/GEOC_SUB_REGN_CODE/@Value"/>
+        </GET_DOCUMENT>
+        <CLONE_XML DocVar="legalEntityDetails" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="saveLegalEntity">
+    <RULE>
+      <ACTION>
+        <MODIFY_DOC_SMART Name="LEGAL_ENT" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+            <LEGAL_ENT_NAME Value="{$thisParam/LEGAL_ENT_NAME/@Value}"/>
+            <LEGAL_ENT_SHORT_NAME Value="{$thisParam/LEGAL_ENT_SHORT_NAME/@Value}"/>
+            <LEGAL_ENT_DESC Value="{$thisParam/LEGAL_ENT_DESC/@Value}"/>
+            <GEOC_REGN_CODE Value="{$thisParam/GEOC_REGN_CODE/@Value}"/>
+            <GEOC_SUB_REGN_CODE Value="{$thisParam/GEOC_SUB_REGN_CODE/@Value}"/>
+            <ENTITY_STATE Value="{$thisParam/ENTITY_STATE/@Value}"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOC_SMART>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getLegalEntityOptions">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="LegalEntityList">
+          <ROOT>
+            <LEGAL_ENT/>
+          </ROOT>
+        </TO_DOCVAR>
+        <GET_DOCUMENT Name="LEGAL_ENT" ServiceName="BCM_MASTER" DirtyRead="true" AssignToVar="allLegalEntity" ReturnRowCount="yes">
+          <SELECT>
+            <LEGAL_ENT_NBR/>
+            <LEGAL_ENT_NAME/>
+          </SELECT>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <!-- <GEOC_REGN_CODE Value="{$thisParam/GEOC_REGN_CODE/@Value}"/>
+          <GEOC_SUB_REGN_CODE Value="{$thisParam/GEOC_SUB_REGN_CODE/@Value}"/>-->
+        </GET_DOCUMENT>
+        <FOR_EACH SelectList="$allLegalEntity/LEGAL_ENT" CurrentElement="currentElement">
+          <SET FromValue="{$currentElement/LEGAL_ENT_NAME/@Value}" Var="legalName"/>
+          <SET FromValue="{$currentElement/LEGAL_ENT_NBR/@Value}" Var="legalNumber"/>
+          <APPEND_TO_XML SelectList="$LegalEntityList/LEGAL_ENT">
+            <OPTION Id="{$legalNumber}" Value="{$legalName}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="LegalEntityList" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

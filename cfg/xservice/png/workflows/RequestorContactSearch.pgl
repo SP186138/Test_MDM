@@ -1,0 +1,76 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" Id="RequestorContactSearch.pgl" version="3">
+  <ui:container id="CtSelectMtrlDesc" scrollable="true">
+    <ui:step id="CntctTbl" displayText="Contact Number LookUp">
+      <ui:table id="tableSelectCntct" rowSrc="$root/CNTCT" selectable="Single" collapsable="false" filter="true" postRowIdAs="Select_Cntct" rowId="CNTCT_NBR" doPaging="true" startAtRow="$root/START_COUNT/@Value" maxRows="$root/MaxRec/@Value" totalRowCount="$root/TotalRowCount/@Value">
+        <ui:field-group id="fgSelectCntct">
+          <ui:display-field id="CNTCT_NBR" name="CNTCT_NBR" displayText="Contact Number" dataType="Constant" sortable="true"/>
+          <ui:display-field id="FIRST_NM" name="FIRST_NM" displayText="First Name" dataType="Constant" sortable="true"/>
+          <ui:display-field id="LAST_NM" name="LAST_NM" displayText="Last Name" dataType="Constant" sortable="true"/>
+          <ui:display-field id="ADDR_LINE_1_TXT" name="ADDR_LINE_1_TXT" displayText="Address Line 1 Text" dataType="Constant" sortable="true"/>
+          <ui:display-field id="ADDR_LINE_2_TXT" name="ADDR_LINE_2_TXT" displayText="Address Line 2 Text" dataType="Constant" sortable="true"/>
+          <ui:display-field id="ADDR_LINE_3_TXT" name="ADDR_LINE_3_TXT" displayText="Address Line 3 Text" dataType="Constant" sortable="true"/>
+          <ui:display-field id="CITY_NAME" name="CITY_NAME" displayText="City Name" dataType="Constant" sortable="true"/>
+          <ui:display-field id="POSTL_AREA_CODE" name="POSTL_AREA_CODE" displayText="Postal Area Code" dataType="Constant" sortable="true"/>
+          <ui:display-field id="FULL_PHONE_NUM" name="FULL_PHONE_NUM" displayText="Full Phone Number" dataType="Constant" sortable="true"/>
+          <ui:display-field id="EMAIL_ADDR_TXT" name="EMAIL_ADDR_TXT" displayText="Email Address Text" dataType="Constant" sortable="true"/>
+          <ui:display-field id="TERR_NAME" name="TERR_NAME" displayText="Territory Name" dataType="Constant" sortable="true"/>
+          <ui:display-field id="CNTRY_CODE" name="CNTRY_CODE" displayText="Country Code" dataType="Constant" sortable="true"/>
+          <ui:display-field id="SR_NBR" name="SR_NBR" displayText="Serial Number" dataType="Constant" sortable="true"/>
+        </ui:field-group>
+        <ui:buttons>
+          <ui:divider/>
+          <ui:divider/>
+          <ui:button id="cancel" name="cancel" displayText="Cancel"/>
+          <ui:divider/>
+          <ui:divider/>
+          <ui:button id="select_and_return" name="select_and_return" displayText="Select &amp; Return" enabledBySelections="true" emphasized="true"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+
+
+
+  function on_view()
+
+  {
+
+  var bIsValid = true;
+
+  document.form.SUBMIT_AS_XML.value = 'false';
+
+  bIsValid = (isValid_tableSelectCntctNbr());
+
+  if( bIsValid == false )
+
+  {
+
+  validation_alert('tableSelectCntctNbr');
+
+  }
+
+  if ( bIsValid == true)
+
+  {
+
+  disableButtons();
+
+  trapExcelPivotChanges();
+
+  document.form.BUTTON_ID.value = 'view';
+
+  document.form.action = 'view.x2ps';
+
+  document.form.submit();
+
+  grayOut(true);
+
+  }
+
+  onResize();
+
+  return;
+
+  }
+
+</ui:page-group>

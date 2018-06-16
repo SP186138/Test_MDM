@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+ 	 Copyright (c) 2009 by Teradata Corporation. 
+	 All Rights Reserved. 
+	 Teradata CONFIDENTIAL AND TRADE SECRET 
+ -->
+  <DEFINE_METHOD Name="CustomUploadSearchResult">
+    <RULE>
+      <ACTION>
+        <EXECUTE_SQL_QUERY AssignToVar="respID" ReturnRowCount="yes" Value="SEL MAX(cast(id as integer))as ID FROM UPLD_PRGS_RPT WHERE TEMPLATE_NAME='EntityGDPR_SRCH_RSLTTemplate'"/>
+        <FOR_EACH CurrentElement="currRow" SelectList="$thisParam/GDPR_SRCH_RSLT">
+          <GET_DOCUMENT Name="GDPR_SRCH_RSLT" AssignToVar="resGDPRSearchRslt" DirtyRead="true" ReturnRowCount="yes">
+            <GDPR_CASE_ID Value="{$currRow/GDPR_CASE_ID/@Value}"/>
+            <MKTNG_PGM_NBR Value="{$currRow/MKTNG_PGM_NBR/@Value}"/>
+            <REGIS_PRSNA_ID Value="{$currRow/REGIS_PRSNA_ID/@Value}"/>
+          </GET_DOCUMENT>
+          <IF_TEST Test="$resGDPRSearchRslt/@TotalRowCount = 0">
+            <THEN>
+              <!--SET Var="actionValueGDPRSRCHRSLT" FromValue="UPDATE"/-->
+              <TO_DOCVAR AssignToVar="UpdateQry1">
+                <ROOT>INSERT INTO iCRM_TBL.GDPR_SRCH_RSLT (GDPR_CASE_ID,GDPR_SRCH_TYPE_CODE,
+REGIS_PRSNA_ID,MATCHD_CNSMR_PRSNA_ID,MKTNG_PGM_NBR,LEGAL_ENT_NBR,PROC_IND)
+values	('{$currRow/GDPR_CASE_ID/@Value}','MN',
+'{$currRow/REGIS_PRSNA_ID/@Value}','{$currRow/MATCHD_CNSMR_PRSNA_ID/@Value}', '{$currRow/MKTNG_PGM_NBR/@Value}',
+'{$currRow/LEGAL_ENT_NBR/@Value}','Y');</ROOT>
+              </TO_DOCVAR>
+              <EXECUTE_SQL_DML Value="{$UpdateQry1/@text}" AssignToVar="varUpdate1"/>
+            </THEN>
+            <!--ELSE>
+            
+              <TO_DOCVAR AssignToVar="UpdateQry2">
+                <ROOT>UPDATE iCRM_TBL.GDPR_SRCH_RSLT 
+  SET GDPR_SRCH_TYPE_CODE= 'MN', MATCHD_CNSMR_PRSNA_ID= '{$currRow/MATCHD_CNSMR_PRSNA_ID/@Value}',LEGAL_ENT_NBR= '{$currRow/LEGAL_ENT_NBR/@Value}', PROC_IND= 'Y' 
+  WHERE GDPR_CASE_ID= '{$currRow/GDPR_CASE_ID/@Value}' AND REGIS_PRSNA_ID= '{$currRow/REGIS_PRSNA_ID/@Value}' AND MKTNG_PGM_NBR= '{$currRow/MKTNG_PGM_NBR/@Value}' ;</ROOT>
+              </TO_DOCVAR>
+              <EXECUTE_SQL_DML Value="{$UpdateQry2/@text}" AssignToVar="varUpdate2"/>
+            </ELSE-->
+          </IF_TEST>
+          <!--DO_DB_PERSIST DocumentName="GDPR_SRCH_RSLT" Source="EXTERNAL" Action="{$actionValueGDPRSRCHRSLT}" ServiceName="BCM_MASTER" AssignToVar="SearchResultResponse" SysLoadId="{$respID/SQL_RESULT/ID/@Value}" SysWfId="XL_WF1234">
+            <GDPR_SRCH_RSLT>
+              <GDPR_CASE_ID Value="{$currRow/GDPR_CASE_ID/@Value}"/>
+              <GDPR_SRCH_TYPE_CODE Value="{$currRow/GDPR_SRCH_TYPE_CODE/@Value}"/>
+              <REGIS_PRSNA_ID Value="{$currRow/REGIS_PRSNA_ID/@Value}"/>
+              <MKTNG_PGM_NBR Value="{$currRow/MKTNG_PGM_NBR/@Value}"/>
+              <MATCHD_CNSMR_PRSNA_ID Value="{$currRow/MATCHD_CNSMR_PRSNA_ID/@Value}"/>
+              <LEGAL_ENT_NBR Value="{$currRow/LEGAL_ENT_NBR/@Value}"/>
+              <PROC_IND Value="{$currRow/PROC_IND/@Value}"/>
+            </GDPR_SRCH_RSLT>
+          </DO_DB_PERSIST-->
+          <!--IF_TEST Test="$SearchResultResponse/@Status='Success' and $SearchResultResponse/VALIDATION_RESULT/@Value='SUCCESS'">
+            <THEN-->
+          <TO_DOCVAR AssignToVar="updateSearchTypeCode">
+            <root>UPDATE MDM.GDPR_SRCH_RSLT SET GDPR_SRCH_TYPE_CODE='MN'
+WHERE GDPR_CASE_ID='{$currRow/GDPR_CASE_ID/@Value}' and GDPR_SRCH_TYPE_CODE ='{$currRow/GDPR_SRCH_TYPE_CODE/@Value}'
+and MKTNG_PGM_NBR ='{$currRow/MKTNG_PGM_NBR/@Value}' and REGIS_PRSNA_ID= '{$currRow/REGIS_PRSNA_ID/@Value}';</root>
+          </TO_DOCVAR>
+          <EXECUTE_SQL_QUERY Value="{$updateSearchTypeCode/@text}" AssignToVar="VarSearchTypeCode"/>
+          <TO_DOCVAR AssignToVar="updateRequestStatusCode">
+            <root>UPDATE MDM.GDPR_RQST SET GDPR_RQST_STATUS_CD='RR'
+WHERE GDPR_CASE_ID='{$currRow/GDPR_CASE_ID/@Value}';</root>
+          </TO_DOCVAR>
+          <EXECUTE_SQL_QUERY Value="{$updateRequestStatusCode/@text}" AssignToVar="VarRequestStatusCode"/>
+          <!--/THEN>
+          </IF_TEST-->
+        </FOR_EACH>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

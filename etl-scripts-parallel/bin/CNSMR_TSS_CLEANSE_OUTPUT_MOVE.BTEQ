@@ -1,0 +1,38 @@
+/***********************************************************************************************************
+SCRIPT:               CNSMR_TSS_CLEANSE_OUTPUT_MOVE.BTEQ
+DESCRIPTION:          This script copies data from TSS_CLEANSE_OUTPUT to TSS_CLEANSE_OUTPUT2
+DEPENDENCY:           
+INPUT:                TSS_CLEANSE_OUTPUT
+OUTPUT:               TSS_CLEANSE_OUTPUT2
+ERRORS:
+
+CHANGE LOG:
+VERSION              DATE                 AUTHOR                          CHANGES
+1.00                 02/21/2015           TERADATA                        INITIAL VERSION
+***********************************************************************************************************/
+
+.RUN FILE .\..\..\logon\LOGON.txt;
+.SET ERROROUT STDOUT;
+.SET SESSION CHARSET 'UTF8';
+
+DATABASE MDM;
+
+INSERT INTO TSS_CLEANSE_OUTPUT2 SELECT * FROM TSS_CLEANSE_OUTPUT;
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+INSERT INTO TSS_CLEANSE_OUTPUT_LE (LEGAL_ENT_NBR) SELECT DISTINCT LEGAL_ENT_NBR FROM TSS_CLEANSE_OUTPUT;
+
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+.LABEL EXIT
+
+.IF ERRORLEVEL > 4 THEN .GOTO ERR ;
+.IF ERRORLEVEL <= 4 THEN .GOTO WARN;
+
+.LABEL ERR
+
+.QUIT ERRORCODE
+
+.LABEL WARN
+.QUIT 0
+

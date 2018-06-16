@@ -1,0 +1,39 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_entry" source="studio.controller:load">
+  <ui:container id="container1" name="container1">
+    <ui:step displayText="Predefined Trait Screen" id="searchContainer">
+      <ui:field-group id="fieldGroups" columns="2">
+        <ui:entry-field id="LEGAL_ENT" name="LEGAL_ENT" displayText="Legal Entity" editable="false" value="{$root/LEGAL_ENT_NBR/@Value}"/>
+        <ui:entry-field id="MKTNG_PGM" name="MKTNG_PGM" displayText="Marketing Program" editable="false" value="{$root/MKTNG_PGM_NBR/@Value}"/>
+        <ui:entry-field id="TRT_NBR" name="TRT_NBR" displayText="Trait Number" value="{$root/TRT_NBR/@Value}" editable="false"/>
+        <ui:entry-field id="TRT_NAME_LOCAL" name="TRT_NAME_LOCAL" displayText="Trait Name" value="{$root/TRT_NAME_LOCAL/@Value}" editable="false"/>
+        <ui:entry-field id="TRT_NAME" name="TRT_NAME" displayText="Trait Name(English)" value="{$root/TRT_NAME/@Value}" editable="false"/>
+        <ui:entry-field id="PREDFND_TRT_VAL_NBR" name="PREDFND_TRT_VAL_NBR" displayText="Predefined Trait Value Number" value="{$root/PREDFND_TRT_VAL_NBR/@Value}" editable="false"/>
+        <ui:entry-field id="PREDFND_TRT_VAL_NAME" name="PREDFND_TRT_VAL_NAME" displayText="Predefined Trait Text(Local)" value="{$root/PREDFND_TRT_TXT/@Value}" editable="false"/>
+        <ui:entry-field id="PREDFND_TRT_VAL_NAME_ENG" name="PREDFND_TRT_VAL_NAME_ENG" displayText="Predefined Trait Text(English)" value="{$root/PREDFND_TRT_VAL_NAME/@Value}" editable="false"/>
+      </ui:field-group>
+      <ui:buttons id="searchButtons">
+<!-- <ui:button displayText="Search" id="Search" name="Search"/>-->
+        <ui:button id="BACK" name="BACK" displayText="Back"/>
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:container id="container2" name="container2">
+    <ui:step id="Inner" name="Inner" displayText="">
+      <ui:table id="bottomTable" displayText="Available Predefined Trait Results" displayTextNoRecords="No Record found" rowId="PREDFND_TRT_VAL_NBR#PREDFND_TRT_TXT#PREDFND_TRT_VAL_NAME" rowSrc="$root/PREDFND_TRT_VAL" scrollable="true" selectable="Single" collapsable="true" maxRows="50" postRowIdAs="selected_PREDFND_TRT" filter="true" totalRowCount="$root/RowCount/@Value">
+        <ui:field-group id="tableColumns">
+          <ui:display-field id="TRT_NBR" name="TRT_NBR" displayText="Trait Number"/>
+          <ui:display-field id="PREDFND_TRT_VAL_NBR" name="PREDFND_TRT_VAL_NBR" displayText="Predefined Trait Value Number"/>
+          <ui:display-field id="PREDFND_TRT_DATE" name="PREDFND_TRT_DATE" displayText="Predefined Trait Date"/>
+          <ui:display-field id="PREDFND_TRT_TXT" name="PREDFND_TRT_TXT" displayText="Predefined Trait Text"/>
+          <ui:display-field id="PREDFND_TRT_VAL_NAME" name="PREDFND_TRT_VAL_NAME" displayText="Predefined Trait Value Name"/>
+          <ui:display-field id="PREDFND_TRT_DESC" name="PREDFND_TRT_DESC" displayText="Predefined Trait Description"/>
+          <ui:display-field id="LANG_CODE" name="LANG_CODE" displayText="Language Code"/>
+        </ui:field-group>
+        <ui:buttons id="tableButtons">
+          <ui:button displayText="Create" id="CREATE" name="CREATE"/>
+          <ui:button displayText="Select and Return" id="SEL_N_RTRN_1" name="SEL_N_RTRN_1" enabledBySelections="true"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+</ui:page-group>

@@ -1,0 +1,767 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_entry" source="studio.controller:load">
+  <ui:container id="topContainer" inner="true" scrollable="true">
+    <ui:header>
+      <ui:link onClick="javascript:onSave()" displayCondition="true">
+        <ui:image src="/btn_saveas_1.gif" displayText="Save Dictionary Model"/>
+      </ui:link>
+    </ui:header>
+    <ui:step id="tableDetailsStep" displayText="DICTIONARY_DETAILS">
+      <ui:field-group columns="4">
+        <ui:image src="/bpi_check.gif" id="AlertGreenIconAjax" displayCondition="{string-length($root/ABC/AlertGreen/@Value)!=0}"/>
+        <ui:image src="/cancel.gif" id="AlertRedIconAjax" displayCondition="{string-length($root/ABC/AlertRed/@Value)!=0}"/>
+        <ui:display-field value="{$root/ABC/AlertGreen/@Value}" displayCondition="{string-length($root/ABC/AlertGreen/@Value) != 0}" id="success" name="success" class="requiredIndicatorGreen" style="color:green;"/>
+        <ui:display-field value="{$root/ABC/AlertRed/@Value}" displayCondition="{string-length($root/ABC/AlertRed/@Value) != 0}" id="error" name="error" class="requiredIndicator" style="color:red;"/>
+      </ui:field-group>
+      <ui:container id="dictionaryDetailsContainer">
+        <ui:step id="dictionaryInfo" displayText="DICTIONARY_INFO">
+          <ui:field-group columns="2" displayCondition="true">
+            <ui:hidden-field id="TabName" name="TabName" unFormat="true" value="DICT_STEP"/>
+          </ui:field-group>
+          <ui:field-group id="tableGrp" columns="1" width="100px">
+            <ui:hidden-field id="ERROR_TAB_NAME" name="ERROR_TAB_NAME" unFormat="true" value="{$root/ERROR_TAB_NAME/@Value}"/>
+            <ui:entry-field id="ModelUnit" name="ModelUnit" displayText="SC_DICTIONARY_NAME" title="SC_DICTIONARY_NAME" maxlength="26" size="25" required="true" unFormat="true" value="{$root/SELF_CONF_DICTIONARY/ModelUnit/@Value}" onKeyUp="javascript:checkSpecialChars(this);" onChange="javascript:existingLogicalName();" disabled="{$root/disableVar/@Value}"/>
+            <ui:entry-field id="DictDescription" name="DictDescription" maxlength="64" size="40" displayText="SC_DICTIONARY_DESCRIPTION" title="SC_DICTIONARY_DESCRIPTION" unFormat="true" value="{$root/SELF_CONF_DICTIONARY/Description/@Value}"/>
+            <ui:hidden-field name="disableVar" id="disableVar" value="{$root/disableVar/@Value}"/>
+          </ui:field-group>
+        </ui:step>
+      </ui:container>
+      <ui:buttons>
+        <ui:button id="back" name="back" displayText="Back" displayCondition="false"/>
+      </ui:buttons>
+    </ui:step>
+    <ui:step id="selfConfigDicPropertiesStep" displayText="DICTIONARY_PROPERTIES">
+      <ui:field-group id="tabNameGr" columns="4">
+        <ui:hidden-field id="URL_V" name="URL_V" value="{$root/URL_V/@Value}"/>
+        <ui:hidden-field id="URL_Extend" name="URL_Extend" value="{$root/URL_Extend/@Value}"/>
+        <ui:image src="/bpi_check.gif" id="AlertGreenIconAjax" displayCondition="{string-length($root/ABC/AlertGreen/@Value)!=0}"/>
+        <ui:image src="/cancel.gif" id="AlertRedIconAjax" displayCondition="{string-length($root/ABC/AlertRed/@Value)!=0}"/>
+        <ui:display-field value="{$root/ABC/AlertGreen/@Value}" displayCondition="{string-length($root/ABC/AlertGreen/@Value) != 0}" id="success" name="success" class="requiredIndicatorGreen" style="color:green;"/>
+        <ui:display-field value="{$root/ABC/AlertRed/@Value}" displayCondition="{string-length($root/ABC/AlertRed/@Value) != 0}" id="error" name="error" class="requiredIndicator" style="color:red;"/>
+        <ui:hidden-field id="TabName" name="TabName" unFormat="true" value="PROPERTIES"/>
+        <ui:hidden-field id="ERROR_TAB_NAME" name="ERROR_TAB_NAME" unFormat="true" value="{$root/ERROR_TAB_NAME/@Value}"/>
+        <ui:hidden-field name="disableVar" id="disableVar" value="{$root/disableVar/@Value}"/>
+      </ui:field-group>
+      <ui:table id="uiTableProperties" displayText="SEARCH_SELF_GEN_PROPERTIES" displayTextNoRecords="SEARCH_SELF_GEN_NO_PROPERTY_FOUND" collapsable="false" doPaging="false" selectable="All" select="$root/SELF_CONF_DICT_PROPTIES" startAtRow="$root/startAtRow/@Value" postRowIdAs="SELECTED_ID" configurable="false" maxRows="-1" filter="false" rowId="Name">
+        <ui:field-group>
+          <ui:entry-field id="Name" name="Name" displayText="DICT_COL_NAME" title="DICT_COL_NAME" unFormat="true" inlineEdit="true" required="true" onKeyUp="javascript:checkSpecialChars(this);" onChange="javascript:checkSameNameExist(this);"/>
+          <ui:dropdown id="DataType" name="DataType" displayText="DATA_TYPE" title="DATA_TYPE_HOV" defaultValue="String" onChange="disableLength(this)">
+            <ui:option id="Boolean" value="Boolean"/>
+            <ui:option id="BigInt" value="BigInt"/>
+            <ui:option id="Char" value="Char"/>
+            <ui:option id="Clob" value="Clob"/>
+            <ui:option id="Date" value="Date"/>
+            <ui:option id="Datetime" value="Datetime"/>
+            <ui:option id="Decimal" value="Decimal"/>
+            <ui:option id="Double" value="Double"/>
+            <ui:option id="EncryptedString" value="EncryptedString"/>
+            <ui:option id="File" value="File"/>
+            <ui:option id="Float" value="Float"/>
+            <ui:option id="Integer" value="Integer"/>
+            <ui:option id="PeriodDate" value="PeriodDate"/>
+            <ui:option id="PeriodTimestamp" value="PeriodTimestamp"/>
+            <ui:option id="String" value="String"/>
+            <ui:option id="st_geometry" value="ST_Geometry"/>
+            <ui:option id="Timestamp" value="Timestamp"/>
+            <ui:option id="VarByte" value="VarByte"/>
+            <ui:option id="Xml" value="Xml"/>
+          </ui:dropdown>
+          <ui:entry-field name="Length" id="Length" displayText="SC_PROP_LENGTH" title="SC_PROP_LENGTH_HOV" editable="true" unFormat="true" inlineEdit="true" onKeyUp="javascript:onlyIntergerUnderscore(this);" size="8" required="true"/>
+          <ui:link-field id="ExtendedNameLink" name="ExtendedNameLink" displayText="SC_EXTEND" title="SC_EXTEND" targetType="popup" targetName="lotDetailsPopUp" style="color: orange;text-decoration: underline;" class="linkColor1" onClick="javascript:onClickExtend(this,event);" value="EXTEND">
+          </ui:link-field>
+          <ui:hidden-field id="ExtendedId" name="ExtendedId"/>
+          <ui:hidden-field id="ExtendedName" name="ExtendedName"/>
+          <ui:checkbox class="unCheckedVal" id="Required" name="Required" displayText="SC_PROP_REQUIRED" title="SC_PROP_REQUIRED_HOV" checkedValue="true"/>
+          <ui:dropdown id="CharacterSet" name="CharacterSet" displayText="SC_CHARACTER_SET" title="SC_CHARACTER_SET_HOV" selectOne="true" editable="true" inlineEdit="true">
+            <ui:option id="LATIN" value="LATIN"/>
+            <ui:option id="UNICODE" value="UNICODE"/>
+          </ui:dropdown>
+          <ui:entry-field name="DefaultValue" id="DefaultValue" displayText="SC_PROP_DEFAULT" title="SC_PROP_DEFAULT_HOV" unFormat="true" editable="true" inlineEdit="true"/>
+          <ui:link-field id="ENUM_VALUE" name="ENUM_VALUE" displayText="SC_ENUM" title="SC_ENUM" targetType="popup" targetName="lotDetailsPopUp" value="EDIT" style="color: orange;text-decoration: underline;" class="linkColor" onClick="javascript:onClickLink(this,event);">
+          </ui:link-field>
+          <ui:hidden-field id="Enum" name="Enum" unFormat="true"/>
+          <ui:entry-field name="PhysicalName" id="PhysicalName" displayText="SC_PROP_PHYSICAL_NAME" title="SC_PROP_PHYSICAL_NAME_HOV" editable="true" unFormat="true" inlineEdit="true" onKeyUp="javascript:checkSpecialChars(this);"/>
+          <ui:textarea id="Description" name="Description" displayText="SC_DESCRIPTION" title="SC_DESCRIPTION_HOV" inlineEdit="true" rows="1"/>
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button id="delete" name="delete" displayText="DELETE_PROP" onClick="javascript:onDelete();" enabledBySelections="true"/>
+          <ui:button id="add" name="add" displayText="ADD_PROP" onClick="javascript:addRow();"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+
+var spChar='&amp;#&lt;>\\\&quot;!@$%^())*|}{:&quot;,.;/+=?.';
+var index;
+var  tableCount;
+var ready = false;
+var readyCounter =0;
+var  tabName;
+var linkSelectedIndex = 0;
+var tableId;
+    
+function onLoad()
+{
+onLoadSuper();
+onResize();
+}
+    
+function setEnumValue(enumVal){
+$($('[name=&quot;Enum&quot;]')[linkSelectedIndex]).val(enumVal);
+ if(enumVal.length &lt; 4)
+	$($('.linkColor')[linkSelectedIndex]).children().text(&quot;EDIT&quot;);
+  else
+	$($('.linkColor')[linkSelectedIndex]).children().text(&quot;DEFINED&quot;);
+}
+    
+function setExtendValue(extendVal){
+var exSplit=extendVal.split(&quot;#&quot;);
+var result1 = exSplit[exSplit.length - 1];
+var result2 = exSplit[exSplit.length - 2];
+var nametemp=result1.split(&quot;=&quot;);
+var name=nametemp[nametemp.length - 1];
+var idtemp=result2.split(&quot;=&quot;);
+var id=idtemp[idtemp.length - 1];
+$($('[name=&quot;ExtendedId&quot;]')[linkSelectedIndex]).val(id);
+$($('[name=&quot;ExtendedName&quot;]')[linkSelectedIndex]).val(name);
+$($('[name=&quot;ExtendedNameLink&quot;]')[linkSelectedIndex]).val(name);
+$($('.linkColor1')[linkSelectedIndex]).children().text(name);
+var request=&quot;&lt;REQUEST Name='getDictProperty' ServiceName='BPE_META' AssignToVar='getProps'>  &lt;dictId Value='&quot;+id+&quot;'/>&lt;dictDataType Value='&quot;+name+&quot;'/>&lt;/REQUEST>&quot;
+var xpath = &quot;/RESPONSES/RESPONSE/SELF_CONF_DICT_PROPTIES/SELF_CONF_DICT_PROPS&quot;;
+SendAjaxRequest(&quot;BPE_META&quot;,request,'getDataType',xpath);
+}
+    
+function getDataType(node)
+{
+if(node.length > 0){
+ var childCount=node[0].children.length;
+  for (i=0;i&lt;childCount;i++)
+  {
+   var DataType,Length,Required,CharacterSet,PhysicalName,Enum,DefaultValue;
+    if(node[0].children[i].nodeName=='Required')
+       Required=node[0].children[i].getAttribute('Value');
+    if(node[0].children[i].nodeName=='PhysicalName')
+       PhysicalName=node[0].children[i].getAttribute('Value');
+    if(node[0].children[i].nodeName=='CharacterSet')
+      CharacterSet=node[0].children[i].getAttribute('Value');
+    if(node[0].children[i].nodeName=='DataType')
+      DataType=node[0].children[i].getAttribute('Value');
+     if(node[0].children[i].nodeName=='Length')
+       Length=node[0].children[i].getAttribute('Value');
+    if(node[0].children[i].nodeName=='Enum')
+       Enum=node[0].children[i].getAttribute('Value');
+    if(node[0].children[i].nodeName=='DefaultValue')
+       DefaultValue=node[0].children[i].getAttribute('Value');
+  }
+$($('[name=&quot;DataType&quot;]')[linkSelectedIndex]).val(DataType).trigger('change');
+$($('[name=&quot;Length&quot;]')[linkSelectedIndex]).val(Length);
+$($('[name=&quot;Required&quot;]')[linkSelectedIndex]).val(Required);
+$($('[name=&quot;PhysicalName&quot;]')[linkSelectedIndex]).val(PhysicalName);
+$($('[name=&quot;CharacterSet&quot;]')[linkSelectedIndex]).val(CharacterSet).trigger('change');
+$($('[name=&quot;DefaultValue&quot;]')[linkSelectedIndex]).val(DefaultValue);
+$($('[name=&quot;Enum&quot;]')[linkSelectedIndex]).val(Enum);
+    if(typeof Enum!='undefined'){
+if(Enum.length &lt;1)
+$($('.linkColor')[linkSelectedIndex]).children().text(&quot;EDIT&quot;);
+else
+$($('.linkColor')[linkSelectedIndex]).children().text(&quot;DEFINED&quot;);
+ }
+}
+}      
+    
+function checkSameNameExist(thisObj){    
+    var inValue = thisObj.value;
+	var table = document.getElementById(tableId);
+	var  tableCount = table.rows.length;
+    var count = 0;
+	if(inValue != null &amp;&amp; inValue.length > 0){
+   		 for(var i =0;i &lt; tableCount;i++){
+				var currVa = 	$($('[name=&quot;Name&quot;]')[i]).val();
+    			if(inValue  === currVa){
+    			count++;
+    			if(count >1){
+					$($('[name=&quot;Name&quot;]')[i]).val('');
+    				core_alert_jquery(&quot;SAME_NAME_ALREADY_EXIST&quot;);
+    			}
+    		}
+    	}
+    }
+	onResize();
+ } 
+    
+function onClickLink(thisOb,event){
+var id = $(thisOb).prev().children().attr(&quot;id&quot;);
+var name = $(thisOb).prev().children().attr(&quot;name&quot;);
+linkSelectedIndex = id.substring(id.length,name.length);
+var nameId = 'Name' + linkSelectedIndex;
+var name = document.getElementById(nameId).value;
+if(name === null || name.length === 0){
+ core_alert_jquery(&quot;Name value is not defined.&quot;);
+ } 
+ else {
+ var url = $('#URL_V').val()+'&amp;ENUM_VALUE='+encodeURIComponent($($('[name=&quot;Enum&quot;]')[linkSelectedIndex]).val())
+ window.open(url,'_blank',&quot;height=410, width=800,channelmode=no,directories=no,fullscreen=no,location=no,menubar=no,width=580px; height= 320px;,scrollbars=yes,status=no,titlebar=no,toolbar=no&quot;);
+ }
+}
+    
+function markSelectedEnum(){    
+	var table = document.getElementById(tableId);
+	var  tableCount = table.rows.length;
+	for(var i =0;i &lt; tableCount;i++){
+		var currVa = 	$($('[name=&quot;Enum&quot;]')[i]).val();
+    	if(currVa != null &amp;&amp; currVa.length > 4)
+			$($('.linkColor')[i]).children().text(&quot;DEFINED&quot;);
+    }
+}
+    
+function markExtendedLink(){
+var table = document.getElementById(tableId);
+var  tableCount=table.rows.length;
+for(var i =0;i &lt; tableCount;i++){
+    if(typeof document.getElementsByName('ExtendedName')[i]!='undefined' &amp;&amp; document.getElementsByName('ExtendedName')[i].value !=''){
+    var extendname = 	document.getElementsByName('ExtendedName')[i].value;
+    $($('[name=&quot;ExtendedNameLink&quot;]')[i]).val(extendname);
+    $($('.linkColor1')[i]).children().text(extendname);
+    }
+  }
+}
+        
+function onClickExtend(thisOb,event){
+var id = $(thisOb).prev().children().attr(&quot;id&quot;);
+var name = $(thisOb).prev().children().attr(&quot;name&quot;);
+linkSelectedIndex = id.substring(id.length,name.length);
+var nameId = 'Name' + linkSelectedIndex;
+var name = document.getElementById(nameId).value;
+if(name === null || name.length === 0){
+ core_alert_jquery(&quot;Name value is not defined.&quot;);
+ }
+  else {
+  var url = $('#URL_Extend').val();
+  window.open(url,'_blank',&quot;height=410, width=800,channelmode=no,directories=no,fullscreen=no,location=no,menubar=no,width=680px; height= 650px;,scrollbars=yes,status=no,titlebar=no,toolbar=no&quot;);
+  }
+}
+    
+$(document).ready(function() {
+    ready = true;
+	readyCounter =0;
+	tabName= document.getElementById('TabName').value;
+	if(tabName != null &amp;&amp; typeof(tabName) != &quot;undefined&quot; &amp;&amp; tabName !='DICT_STEP' ){
+		if(tabName === 'PROPERTIES'){
+			tableId = &quot;uiTableProperties_data&quot;;
+    		markSelectedEnum();
+            markExtendedLink();
+    		disableRequiredIcon();
+    	}
+    	var table = document.getElementById(tableId);
+		var  tableCount = table.rows.length;
+		index = tableCount-1;
+	}
+});
+    
+function disableRequiredIcon(){
+	var skipValueArr = [&quot;String&quot;,&quot;EncryptedString&quot;,&quot;VarByte&quot;,&quot;Char&quot;,&quot;Decimal&quot;];
+	var table = document.getElementById(tableId);
+	var  tableCount = table.rows.length;
+	for(var i =0;i &lt; tableCount;i++){
+    	var lengthObj = $('[name=&quot;Length&quot;]');
+		var dataType = 	$($('[name=&quot;DataType&quot;]')[i]).val();
+		var typeInded = $.inArray(dataType, skipValueArr);
+		if(typeInded >= 0)
+    			continue;
+		var lengthValue  = 	$(lengthObj[i]).val();
+		if(typeof lengthValue === 'undefined' || lengthValue === null || lengthValue.length === 0){
+			$(lengthObj[i]).removeAttr(&quot;required&quot;);
+			$(lengthObj[i]).siblings().remove('font');
+			$(lengthObj[i]).attr(&quot;disabled&quot;,true)
+    	}
+	 }
+}    
+
+function disableLength(thisObj){
+var value = thisObj.value;
+var skipValueArr = [&quot;String&quot;,&quot;EncryptedString&quot;,&quot;VarByte&quot;,&quot;Char&quot;,&quot;Decimal&quot;];
+var typeInded = $.inArray(value, skipValueArr);
+var index = thisObj.id.substr(thisObj.name.length,thisObj.id.length);
+var fieldName = &quot;Length&quot;+index;
+if(typeInded &lt; 0){
+document.getElementById(fieldName).value='';
+document.getElementById(fieldName).setAttribute(&quot;disabled&quot;, &quot;true&quot;);
+$(&quot;#&quot;+fieldName).removeAttr(&quot;required&quot;);
+$(&quot;#&quot;+fieldName).siblings().remove('font');
+}else{
+if(typeof $(&quot;#&quot;+fieldName).attr(&quot;disabled&quot;) !='undefined' &amp;&amp; $(&quot;#&quot;+fieldName).attr(&quot;disabled&quot;) != null){
+$(&quot;#&quot;+fieldName).parent().append('&lt;font color=&quot;red&quot;>*&lt;/font>')
+}
+$(&quot;#&quot;+fieldName).removeAttr(&quot;disabled&quot;);
+    
+}
+}
+    
+function onlyIntergerUnderscore(thisobj){
+	var validCase ='1234567890_';
+	var obj=thisobj;
+	var strobj = '';
+	var f=0;
+	for(var i=0;i&lt;obj.value.length;i++)
+	{
+	if(obj.value.charAt(0) ==' ')
+		obj.value = obj.value.trim();
+		
+	if(validCase.indexOf(obj.value.charAt(i)) !=-1)
+	{
+		strobj = strobj + obj.value.charAt(i);
+	}else{
+		f=1;
+		break;
+	}
+	}
+	if(f==1){
+		thisobj.value = strobj;
+	}
+}
+    
+function checkSpecialCharsSpaceSlashAllowed(thisobj){
+var spChar='&amp;#&lt;>\\\&quot;!@$%^())*|}{:&quot;,.;+=?.';
+var obj=thisobj;
+var strobj = '';
+var f=0;
+for(var i=0;i&lt;obj.value.length;i++)
+{
+if(obj.value.charAt(0) ==' ')
+obj.value = obj.value.trim();		
+if(spChar.indexOf(obj.value.charAt(i)) !=-1)
+{
+f=1;
+break;
+}else{
+strobj = strobj + obj.value.charAt(i);
+}
+}
+if(f==1){
+thisobj.value = strobj;
+}
+}
+    
+function checkSpecialCharsSpaceAllowed(thisobj){
+
+	var obj=thisobj;
+	var strobj = '';
+	var f=0;
+	for(var i=0;i&lt;obj.value.length;i++)
+	{
+		if(obj.value.charAt(0) ==' ')
+		obj.value = obj.value.trim();
+		
+		if(spChar.indexOf(obj.value.charAt(i)) !=-1)
+		{
+			f=1;
+			break;
+		}else{
+			strobj = strobj + obj.value.charAt(i);
+		}
+	}
+	if(f==1){
+		thisobj.value = strobj;	
+	}
+}
+    
+function checkSpecialChars(thisobj)
+{
+	var obj=thisobj;
+	var strobj = '';
+	var f=0;
+	for(var i=0;i&lt;obj.value.length;i++)
+	{
+		if(obj.value.charAt(i) ==' '){
+            obj.value = obj.value.split(' ').join('');
+		}
+		if(spChar.indexOf(obj.value.charAt(i)) !=-1)
+		{
+			f=1;
+			break;
+			}else{
+			strobj = strobj + obj.value.charAt(i);
+		}
+	}
+	if(f==1){
+		thisobj.value = strobj;
+	}
+}
+
+function addNewRow(tableId){
+    
+/*Make searchable dropdowns to normal dropdowns*/
+allSelect2s.each(function(i,item){
+$(item).select2(&quot;destroy&quot;);
+});
+    
+var preObj = $('#'+tableId+' tr:last');
+var currClassName = preObj.prev().attr('class');
+var className;
+if(currClassName === &quot;tableRow1&quot;)
+className = &quot;tableRow0&quot;;
+else
+className = &quot;tableRow1&quot;;
+    
+$('#'+tableId+' tr:first').clone().find(&quot;input,select&quot;).each(function() {
+this.value = &quot;&quot;
+$(this).attr({
+'id': function(_, id) { return this.name + index},
+'name': function(_, name) { },
+'value': ''
+});
+var name = $(this).attr(&quot;name&quot;);
+if($(this).attr('type') === 'checkbox'){
+$(this).attr('checked',false);
+if(name === "Required")
+$(this).val(&quot;TRUE&quot;);
+				
+}
+if(name === 'DataType')
+$(this).val(&quot;String&quot;);
+    
+}).end().appendTo('#'+tableId);
+index++;
+var table = document.getElementById(tableId);
+tableCount = table.rows.length;
+table.rows[tableCount-1].children['Description_td'].children[0].value='';
+insertRowBefore(table.rows[tableCount-2],table.rows[tableCount-1]);
+var newRowId =$('#'+tableId+' tr:first').children(&quot;:first&quot;).children(&quot;:first&quot;).prop(&quot;id&quot;);
+var previousObject  = preObj.prev();
+previousObject.children(&quot;:first&quot;).children(&quot;:first&quot;).prop(&quot;id&quot;,newRowId);
+previousObject.removeClass(currClassName).addClass(className);
+		
+if(tabName === 'PROPERTIES'){
+var lengthObj = previousObject.find(&quot;#Length_td&quot;);
+if(typeof lengthObj.find(&quot;font&quot;).val() === &quot;undefined&quot;){
+lengthObj.children().attr(&quot;required&quot;,&quot;true&quot;);
+lengthObj.children().attr('disabled',false);
+lengthObj.append('&lt;font color=&quot;red&quot;>*&lt;/font>');
+previousObject.find('.linkColor').children().css('color','orange');
+}
+previousObject.find(&quot;#ENUM_VALUE_td&quot;).children().text(&quot;EDIT&quot;)
+previousObject.find(&quot;#ExtendedNameLink_td&quot;).children().text(&quot;EXTEND&quot;)
+}
+}
+    
+function addRow(){
+       
+ 	var  tabNameObj = document.getElementById('TabName');
+    if(tabNameObj != null){
+    	var tabName = tabNameObj.value;
+    	if(tabName === 'PROPERTIES'){
+			addNewRow(&quot;uiTableProperties_data&quot;);
+    	}
+			var ready = false;
+		    enableSelect2();
+			onLoadSuper();
+		onResize();
+$(uiTableProperties_scroller).css("overflow-x",'hidden');
+    }
+ }
+  
+function onDelete(){
+	core_confirm_jquery('SC_RT_DELETE_CONFIRM','onDeleteCallback');
+}
+    
+function deleteAllAddNewRow(tableId){
+
+  /*Make searchable dropdowns to normal dropdowns*/  
+	allSelect2s.each(function(i,item){
+			$(item).select2("destroy");
+	});    
+    
+    /* Create a Copy of first row and Append it at last in table */
+     $('#'+tableId+' tr:first').clone().find(&quot;input,select&quot;).each(function() {
+		this.value = &quot;&quot;
+		$(this).attr({
+		'id': function(_, id) { return this.name + "0"},
+		'name': function(_, name) { },
+		'value': ''
+	});   
+	var name = $(this).attr(&quot;name&quot;);
+	if($(this).attr('type') === 'checkbox'){
+		$(this).attr('checked',false);		
+	}
+	if(name === 'DataType'){
+		$(this).val(&quot;String&quot;);
+	}
+	}).end().appendTo('#'+tableId);
+    
+	index =1;    
+	var newRowId =$('#'+tableId+' tr:first').children(&quot;:first&quot;).children(&quot;:first&quot;).prop(&quot;id&quot;);
+  
+    /* Remove all the selected element */
+	$('input[name=&quot;SELECTED_ID&quot;]:checked').parent().parent().remove();
+    
+	var table = document.getElementById(tableId);
+	tableCount = table.rows.length;		
+	insertRowBefore(table.rows[tableCount-2],table.rows[tableCount-1]);	
+    
+    /* Get the new object and add class type,required icon and set linkColor */
+	var preObj = $('#'+tableId+' tr:first');
+	var currClassName =preObj.attr('class');
+	var className = &quot;tableRow1&quot;;
+	preObj.removeClass(currClassName).addClass(className);
+	var previousObject  = preObj;
+	previousObject.children(&quot;:first&quot;).children(&quot;:first&quot;).prop(&quot;id&quot;,newRowId);    
+	if(tabName === 'PROPERTIES'){
+		var lengthObj = previousObject.find("#LENGTH_td");
+		if(typeof lengthObj.find("font").val() === "undefined"){
+			lengthObj.children().attr("required","true");
+			lengthObj.children().attr('disabled',false);
+			lengthObj.append('&lt;font color=&quot;red&quot;>*&lt;/font>');
+			previousObject.find('.linkColor').children().css('color','orange');
+		}
+		previousObject.find("#ENUM_VALUE_td").children().text("EDIT")
+		previousObject.find("#ExtendedNameLink_td").children().text("EXTEND")
+	}
+  }
+        
+    
+function onDeleteCallback(response){
+	if( response === 'yes' ){
+    	if($('input[name="SELECTED_ID"]').length === $('input[name=&quot;SELECTED_ID&quot;]:checked').length){
+			deleteAllAddNewRow(&quot;uiTableProperties_data&quot;);    
+    	}else{
+			$('input[name=&quot;SELECTED_ID&quot;]:checked').parent().parent().remove();
+    	}
+enableSelect2();
+onLoadSuper();
+onResize();
+	}
+}
+
+function onTab( tabId, containerId )
+{
+var alertPrefix = &quot;onTab(): &quot;;
+var form = document.forms['form' ];
+if( form != null )
+{
+ var selectedStep = containerId + &quot;_SELECTED_STEP&quot;;
+ var selectedStepId = containerId + &quot;_STEP_ID&quot;;  
+ for( i=0; i &lt; form.elements.length; i++ )
+  {
+   var input = form.elements[i];  
+   if( input.name == selectedStep )
+    {
+     input.value = tabId;
+     }
+    else if( input.name == selectedStepId )
+    {
+     input.value = tabId;
+    }
+   else if( input.name == 'BUTTON_ID' )
+    {
+     input.value = 'SYS_TAB';
+    }
+   else if( input.name == 'START_COUNT' )
+   {
+   input.value = 0;
+    }
+    else if( input.name == 'SYS_ID' )
+    {
+     if( form.PAGE_SYS_ID != null )
+    {
+     input.value = form.PAGE_SYS_ID.value;
+    }
+ }
+}
+
+var funcName = getFunctionName();
+var resp  =funcName();
+var errorTabNameValue =document.getElementById(&quot;ERROR_TAB_NAME&quot;).value;
+       
+if(tabName === 'DICT_STEP'){
+		if(isValid_dictionaryInfo())
+				form.submit();
+}    
+else if(resp){
+    	if(errorTabNameValue.indexOf(tabName) >= 0){
+			document.getElementById(&quot;ERROR_TAB_NAME&quot;).value = errorTabNameValue.replace(tabName,&quot;&quot;);
+    	}
+		form.submit();
+	}
+else{   
+    		if(errorTabNameValue != null){
+    				var errorTabNameArr = errorTabNameValue.split(&quot;,&quot;);
+    					if(errorTabNameArr.indexOf(tabName) &lt; 0){
+							document.getElementById(&quot;ERROR_TAB_NAME&quot;).value = tabName +&quot;,&quot; + errorTabNameValue;   
+    					}
+    		}
+    		form.submit();
+		}
+ }
+else
+{
+alertPrefix + alert( 'no form!' );
+}
+}
+    
+function existingLogicalName(){
+var request='&lt;REQUEST Name=&quot;getAllDictName&quot;  ServiceName=&quot;BPE_META&quot;>' +'&lt;/REQUEST>';
+var xpath=&quot;/RESPONSES/RESPONSE/SELF_CONF_DICTIONARY&quot;;
+SendAjaxRequest('BPE_META',request,'callBackExistingTableName',xpath);
+ }  
+    
+function callBackExistingTableName(node){
+var dictName = document.getElementById(&quot;ModelUnit&quot;).value;
+if(node.length > 0){
+var childCount=node[0].children.length;
+for (i=0;i&lt;childCount;i++)
+{
+var exDict=node[0].children[i].getAttribute(&quot;Value&quot;);
+if(exDict===dictName){
+core_alert_jquery('Dictionary name already exist');
+document.getElementById(&quot;ModelUnit&quot;).value =&quot;&quot;;
+return false;
+}    	
+}
+}   
+}
+       
+function getFunctionName(){
+	var  tabName = document.getElementById('TabName').value;
+	var funcName;
+         
+	if(tabName === 'DICT_STEP'){
+		funcName = isValid_dictionaryInfo;
+	}	
+	else if(tabName === 'PROPERTIES'){
+      
+		funcName = isValid_selfConfigDicPropertiesStep;
+		$('.unCheckedVal').find('input').not(':checked').val(&quot;unChecked&quot;).prop(&quot;checked&quot;,true);
+    	var table = document.getElementById(tableId);
+		tableCount = table.rows.length;
+		for(var i =0;i &lt; tableCount;i++){
+			$($('[name=&quot;Length&quot;]')[i]).attr('disabled',false);
+		}
+	}
+	else{
+		funcName = &quot;TRUE&quot;;
+	}
+    return funcName;
+}
+
+    function onSave(){
+       
+		var funcName = getFunctionName();
+	    var resp =true;
+		if(funcName() != true){
+				resp =	false;  
+				core_alert_jquery(&quot;SC_PLEASE_ENTER_REQUIRED_FIELD&quot;);
+		 }
+    
+		var errorTabNameValue =document.getElementById(&quot;ERROR_TAB_NAME&quot;).value;
+		if(resp){
+			var errorTabArr = errorTabNameValue.split(&quot;,&quot;);
+			var counter=0;
+			for(var i=0;i&lt;errorTabArr.length;i++){
+				var tab = errorTabArr[i];
+				if(tab === tabName){
+					errorTabNameValue = errorTabNameValue.replace(tab,&quot;&quot;);
+					counter++;
+				}
+				else if(tab.trim().length === 0){
+					counter++;
+				}else{
+					break;
+				}
+			}
+			if(counter === errorTabArr.length){
+					errorTabNameValue =null;
+			}
+		}
+    	
+		if(errorTabNameValue != null &amp;&amp; errorTabNameValue.length > 0){
+					errorTabNameValue= errorTabNameValue.replace(&quot;KEYS&quot;,&quot;Keys&quot;);
+					errorTabNameValue= errorTabNameValue.replace(&quot;PROPERTIES&quot;,&quot;Columns&quot;);
+					var errorCheck = errorTabNameValue;
+    				if(errorCheck.replace(&quot;,&quot;,&quot;&quot;).trim().length === 0){
+						resp = true;
+    				}else{
+						errorTabNameValue = errorTabNameValue.substring(0,errorTabNameValue.length-1);
+						core_alert_jquery(&quot;Please define required field in  : &quot; + errorTabNameValue);
+    					resp = false;
+    				}
+    	}
+    		
+    if(resp){
+		grayOut(true);
+		document.form.BUTTON_ID.value = 'save';
+		document.form.submit();
+    }	
+ }  
+    
+function deleleExtendedValue(){
+var id = $($('[name=&quot;ExtendedId&quot;]')[linkSelectedIndex]).val();
+var name =	$($('[name=&quot;ExtendedName&quot;]')[linkSelectedIndex]).val();
+		
+var request=&quot;&lt;REQUEST Name='getDictProperty' ServiceName='BPE_META' AssignToVar='getProps'>  &lt;dictId Value='&quot;+id+&quot;'/>&lt;dictDataType Value='&quot;+name+&quot;'/>&lt;/REQUEST>&quot;
+var xpath = &quot;/RESPONSES/RESPONSE/SELF_CONF_DICT_PROPTIES/SELF_CONF_DICT_PROPS&quot;;
+SendAjaxRequest(&quot;BPE_META&quot;,request,'deleteExtendPropertiesValue',xpath);
+    
+$($('[name=&quot;ExtendedNameLink&quot;]')[linkSelectedIndex]).val(&quot;EXTEND&quot;);
+$($('.linkColor1')[linkSelectedIndex]).children().text('EXTEND');
+}
+    
+function deleteExtendPropertiesValue(node)
+{
+if(node.length > 0){
+var childCount=node[0].children.length;
+var dataType,datalength,required,characterSet,physicalName,enumValue,defaultValue,description;
+for (var i=0;i&lt;childCount;i++)
+{
+if(node[0].children[i].nodeName=='Required')
+required=node[0].children[i].getAttribute('Value');
+else if(node[0].children[i].nodeName=='PhysicalName')
+physicalName=node[0].children[i].getAttribute('Value');
+else if(node[0].children[i].nodeName=='CharacterSet')
+characterSet=node[0].children[i].getAttribute('Value');
+else if(node[0].children[i].nodeName=='DataType')
+dataType=node[0].children[i].getAttribute('Value');
+else if(node[0].children[i].nodeName=='Length')
+datalength=node[0].children[i].getAttribute('Value');
+else if(node[0].children[i].nodeName=='Enum')
+enumValue=node[0].children[i].getAttribute('Value');
+else if(node[0].children[i].nodeName=='DefaultValue')
+defaultValue=node[0].children[i].getAttribute('Value');
+}
+if($($('[name=&quot;DataType&quot;]')[linkSelectedIndex]).val() === dataType){
+dataType='String';
+$($('[name=&quot;DataType&quot;]')[linkSelectedIndex]).val(dataType).trigger('change');
+$($('[name=&quot;Length&quot;]')[linkSelectedIndex]).val('');
+}
+var physicalObj = $($('[name=&quot;PhysicalName&quot;]')[linkSelectedIndex]);
+if(physicalObj.val() === physicalName)
+physicalObj.val();
+    
+var requiredObj = $($('[name=&quot;Required&quot;]')[linkSelectedIndex]);
+requiredObj.prop(&quot;checked&quot;,false);
+	
+var charObj = $($('[name=&quot;CharacterSet&quot;]')[linkSelectedIndex]);
+if(charObj.val() ===characterSet){
+dataType='LATIN';
+charObj.val(dataType).trigger('change');
+}
+var defaultObj = $($('[name=&quot;DefaultValue&quot;]')[linkSelectedIndex]);
+if(defaultObj.val() ===defaultValue)
+defaultObj.val('');
+    
+if($($('.linkColor')[linkSelectedIndex]).children().text() === &quot;DEFINED&quot;){
+if(	$($('[name=&quot;Enum&quot;]')[linkSelectedIndex]).val() === enumValue){
+$($('[name=&quot;Enum&quot;]')[linkSelectedIndex]).val('');
+$($('.linkColor')[linkSelectedIndex]).children().text(&quot;EDIT&quot;);
+}
+}
+$($('[name=&quot;ExtendedId&quot;]')[linkSelectedIndex]).val('');
+$($('[name=&quot;ExtendedName&quot;]')[linkSelectedIndex]).val('');
+}
+onLoadSuper();
+onResize();
+}
+       
+   
+
+  </ui:script>
+</ui:page-group>

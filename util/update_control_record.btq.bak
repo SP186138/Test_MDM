@@ -1,0 +1,23 @@
+/***************************************
+Script Name: CREATE_CONTROL_RECORD.btq
+Description: create ETL control record
+
+Author            6/14/2012
+TERADATA
+
+****************************************/
+
+.logon $TDPID/$TDUSER,$TDPWD
+
+.set errorout stdout
+
+update $WORK_DB.ETL_CONTROL 
+set PROCESS_END_TIME = '$ENDTIME',
+status = '$SCRIPTSTAT' ,
+error_msg_txt='$RETURNCODE'
+where 
+PROCESS_NAME = '$SCRIPTNAME' 
+and status = 'Processing'
+and PROCESS_END_TIME is null
+and PROCESS_START_TIME = '$STARTTIME';
+.exit

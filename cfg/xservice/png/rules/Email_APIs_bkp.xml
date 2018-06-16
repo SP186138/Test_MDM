@@ -1,0 +1,449 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+Copyright (c) 2009 by Teradata Corporation.
+All Rights Reserved.
+Teradata CONFIDENTIAL AND TRADE SECRET
+-->
+  <DEFINE_METHOD Name="sendEmailNotification">
+    <RULE>
+      <ACTION>
+        <SET Var="isEmailEnabled" FromValue="true"/>
+        <REQUEST Name="sendEmail" AssignToVar="respsendEmail" ServiceName="OMS_MESSAGE_SERVICE">
+          <TO_XML SelectList="$thisParam/*"/>
+        </REQUEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="validateErrPrsnaStg">
+    <RULE>
+      <ACTION>
+        <GET_DOC_SMART Name="error_PRSNA_STG" AssignToVar="respErrPrsnaStg" DirtyRead="true" ReturnRowCount="true" ServiceName="BCM_MASTER">
+          <SELECT>
+            <LOAD_ID/>
+          </SELECT>
+          <GROUP_BY>
+            <LOAD_ID/>
+          </GROUP_BY>
+          <ORDER_BY>
+            <LOAD_ID Sort="Ascending"/>
+          </ORDER_BY>
+        </GET_DOC_SMART>
+        <SET Var="id" FromVar=""/>
+        <FOR_EACH SelectList="$respErrPrsnaStg/error_PRSNA_STG/LOAD_ID" CurrentElement="currentLoadId">
+          <IF_TEST Test="strlen($id/@Value)= 0">
+            <THEN>
+              <SET Var="id" FromValue="{$currentLoadId/@Value}"/>
+            </THEN>
+            <ELSE>
+              <SET Var="id" FromValue="{$id/@Value},{$currentLoadId/@Value}"/>
+            </ELSE>
+          </IF_TEST>
+        </FOR_EACH>
+        <GET_DOCUMENT Name="ATTRIBUTE_VALUES" AssignToVar="resAttValues" DirtyRead="yes" ServiceName="BCM_MASTER">
+          <QUERY_DOCUMENT_LINK Name="XIF1ATTRIBUTE_VALUES">
+            <OR>
+              <ATTRIBUTE_TYPE_ID Value="5"/>
+              <ATTRIBUTE_TYPE_ID Value="6"/>
+            </OR>
+          </QUERY_DOCUMENT_LINK>
+        </GET_DOCUMENT>
+        <GET_DOCUMENT Name="ATTRIBUTE_VALUES" AssignToVar="resErrPath" DirtyRead="yes" ServiceName="BCM_MASTER">
+          <QUERY_DOCUMENT_LINK Name="XIF1ATTRIBUTE_VALUES">
+            <ATTRIBUTE_TYPE_ID Value="7"/>
+          </QUERY_DOCUMENT_LINK>
+        </GET_DOCUMENT>
+        <SET Var="ErrFilePath" FromValue="{$resErrPath/ATTRIBUTE_VALUES/AV_DESCRIPTION/@Value}"/>
+        <TO_DOCVAR AssignToVar="emailRecipients">
+          <TO_ADDRS/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$resAttValues/*" CurrentElement="currRec">
+          <APPEND_TO_XML DocVar="emailRecipients">
+            <TO_ADDR Value="{$currRec/AV_DESCRIPTION/@Value}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <TO_DOCVAR AssignToVar="emailSubject">
+          <ROOT>
+            <SUBJECT Value="Records Failed due to Validation"/>
+          </ROOT>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="emailFormat">
+          <ROOT>
+            <FORMAT Value="TEXT/HTML"/>
+          </ROOT>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="emailMessage">
+          <ROOT>
+            <MESSAGE>
+              <DATA Value="Following load_id failed due to Business Error Validation and please find the file present on path :{$ErrFilePath} to validate.    Rejected  load_id : {$id}"/>
+            </MESSAGE>
+          </ROOT>
+        </TO_DOCVAR>
+        <REQUEST Name="sendEmailNotification" AssignToVar="respEmail" ServiceName="BCM_MASTER">
+          <TO_XML DocVar="emailRecipients"/>
+          <TO_XML SelectList="$emailSubject/*"/>
+          <TO_XML SelectList="$emailFormat/*"/>
+          <TO_XML SelectList="$emailMessage/*"/>
+        </REQUEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="emailOnErrorNode">
+    <RULE>
+      <ACTION>
+        <IF_TEST Test="$thisParam/BatchIdORLoadId/@Value='LoadId'">
+          <THEN>
+            <SET Var="id" FromValue="{$thisParam/LoadId/@Value}"/>
+          </THEN>
+          <ELSE>
+            <GET_DOC_SMART Name="LOAD_INFO" AssignToVar="respLoadInfo" DirtyRead="true" ReturnRowCount="true" ServiceName="BCM_MASTER">
+              <SELECT>
+                <LOAD_ID/>
+              </SELECT>
+              <BATCH_ID Value="{$thisParam/BatchId/@Value}"/>
+              <GROUP_BY>
+                <LOAD_ID/>
+              </GROUP_BY>
+            </GET_DOC_SMART>
+            <SET Var="id" FromVar=""/>
+            <FOR_EACH SelectList="$respLoadInfo/LOAD_INFO/LOAD_ID" CurrentElement="currentLoadId">
+              <IF_TEST Test="strlen($id/@Value)= 0">
+                <THEN>
+                  <SET Var="id" FromValue="{$currentLoadId/@Value}"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="id" FromValue="{$id/@Value},{$currentLoadId/@Value}"/>
+                </ELSE>
+              </IF_TEST>
+            </FOR_EACH>
+          </ELSE>
+        </IF_TEST>
+        <GET_DOCUMENT Name="ATTRIBUTE_VALUES" AssignToVar="resAttValues" DirtyRead="yes" ServiceName="BCM_MASTER">
+          <QUERY_DOCUMENT_LINK Name="XIF1ATTRIBUTE_VALUES">
+            <OR>
+              <ATTRIBUTE_TYPE_ID Value="5"/>
+              <ATTRIBUTE_TYPE_ID Value="6"/>
+            </OR>
+          </QUERY_DOCUMENT_LINK>
+        </GET_DOCUMENT>
+        <TO_DOCVAR AssignToVar="emailRecipients">
+          <TO_ADDRS/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$resAttValues/*" CurrentElement="currRec">
+          <APPEND_TO_XML DocVar="emailRecipients">
+            <TO_ADDR Value="{$currRec/AV_DESCRIPTION/@Value}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <TO_DOCVAR AssignToVar="emailSubject">
+          <ROOT>
+            <SUBJECT Value="{$thisParam/Subject/@Value}"/>
+          </ROOT>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="emailFormat">
+          <ROOT>
+            <FORMAT Value="TEXT/HTML"/>
+          </ROOT>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="emailMessage">
+          <ROOT>
+            <MESSAGE>
+              <DATA Value="Following load_id failed : {$id}"/>
+            </MESSAGE>
+          </ROOT>
+        </TO_DOCVAR>
+        <REQUEST Name="sendEmailNotification" AssignToVar="respEmail" ServiceName="BCM_MASTER">
+          <TO_XML DocVar="emailRecipients"/>
+          <TO_XML SelectList="$emailSubject/*"/>
+          <TO_XML SelectList="$emailFormat/*"/>
+          <TO_XML SelectList="$emailMessage/*"/>
+        </REQUEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="emailOnSerdownNPrevLoadInFailState">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="ATTRIBUTE_VALUES" AssignToVar="resAttValues" DirtyRead="yes" ServiceName="BCM_MASTER">
+          <QUERY_DOCUMENT_LINK Name="XIF1ATTRIBUTE_VALUES">
+            <OR>
+              <ATTRIBUTE_TYPE_ID Value="5"/>
+              <ATTRIBUTE_TYPE_ID Value="6"/>
+            </OR>
+          </QUERY_DOCUMENT_LINK>
+        </GET_DOCUMENT>
+        <TO_DOCVAR AssignToVar="emailRecipients">
+          <TO_ADDRS/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$resAttValues/*" CurrentElement="currRec">
+          <APPEND_TO_XML DocVar="emailRecipients">
+            <TO_ADDR Value="{$currRec/AV_DESCRIPTION/@Value}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <TO_DOCVAR AssignToVar="emailSubject">
+          <ROOT>
+            <!--<SUBJECT Value="Previous Load Still in Failed State"/>-->
+            <SUBJECT Value="{$thisParam/SUBJECT/@Value}"/>
+          </ROOT>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="emailFormat">
+          <ROOT>
+            <FORMAT Value="TEXT/HTML"/>
+          </ROOT>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="emailMessage">
+          <ROOT>
+            <MESSAGE>
+              <!--<DATA Value="Previous Load is still in Failed State and hence the Workflow wont be executed"/>-->
+              <DATA Value="{$thisParam/DATA/@Value}"/>
+            </MESSAGE>
+          </ROOT>
+        </TO_DOCVAR>
+        <REQUEST Name="sendEmailNotification" AssignToVar="respEmail" ServiceName="BCM_MASTER">
+          <TO_XML DocVar="emailRecipients"/>
+          <TO_XML SelectList="$emailSubject/*"/>
+          <TO_XML SelectList="$emailFormat/*"/>
+          <TO_XML SelectList="$emailMessage/*"/>
+        </REQUEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="rejectedLoadID">
+    <RULE>
+      <ACTION>
+        <SET Var="BATCH_ID" FromValue="{$thisParam/BatchId/@Value}"/>
+        <SET Var="sqlString" FromValue="{concat('SELECT LOAD_ID FROM ERR_PRSNA_STG WHERE LOAD_ID IN (SELECT LOAD_ID FROM LOAD_INFO WHERE BATCH_ID=',$BATCH_ID,')','GROUP BY LOAD_ID ORDER BY LOAD_ID')}"/>
+        <EXECUTE_SQL_QUERY Value="{$sqlString}" AssignToVar="resploadInfoErr" ReturnRowCount="yes"/>
+        <SET Var="id" FromVar=""/>
+        <IF_TEST Test="$resploadInfoErr/@TotalRowCount != 0">
+          <THEN>
+            <FOR_EACH SelectList="$resploadInfoErr/SQL_RESULT/LOAD_ID" CurrentElement="currentLoadId">
+              <IF_TEST Test="strlen($id/@Value)= 0">
+                <THEN>
+                  <SET Var="id" FromValue="{$currentLoadId/@Value}"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="id" FromValue="{$id/@Value},{$currentLoadId/@Value}"/>
+                </ELSE>
+              </IF_TEST>
+            </FOR_EACH>
+            <GET_DOCUMENT Name="ATTRIBUTE_VALUES" AssignToVar="resAttValues" DirtyRead="yes" ServiceName="BCM_MASTER">
+              <QUERY_DOCUMENT_LINK Name="XIF1ATTRIBUTE_VALUES">
+                <ATTRIBUTE_TYPE_ID Value="6"/>
+              </QUERY_DOCUMENT_LINK>
+            </GET_DOCUMENT>
+            <GET_DOCUMENT Name="ATTRIBUTE_VALUES" AssignToVar="resErrPath" DirtyRead="yes" ServiceName="BCM_MASTER">
+              <QUERY_DOCUMENT_LINK Name="XIF1ATTRIBUTE_VALUES">
+                <ATTRIBUTE_TYPE_ID Value="7"/>
+              </QUERY_DOCUMENT_LINK>
+            </GET_DOCUMENT>
+            <SET Var="ErrFilePath" FromValue="{$resErrPath/ATTRIBUTE_VALUES/AV_DESCRIPTION/@Value}"/>
+            <TO_DOCVAR AssignToVar="emailRecipients">
+              <TO_ADDRS/>
+            </TO_DOCVAR>
+            <FOR_EACH SelectList="$resAttValues/*" CurrentElement="currRec">
+              <APPEND_TO_XML DocVar="emailRecipients">
+                <TO_ADDR Value="{$currRec/AV_DESCRIPTION/@Value}"/>
+              </APPEND_TO_XML>
+            </FOR_EACH>
+            <TO_DOCVAR AssignToVar="emailSubject">
+              <ROOT>
+                <SUBJECT Value="Records Failed due to Validation"/>
+              </ROOT>
+            </TO_DOCVAR>
+            <TO_DOCVAR AssignToVar="emailFormat">
+              <ROOT>
+                <FORMAT Value="TEXT/HTML"/>
+              </ROOT>
+            </TO_DOCVAR>
+            <TO_DOCVAR AssignToVar="emailMessage">
+              <ROOT>
+                <MESSAGE>
+                  <DATA Value="Following load_id failed due to Business Error Validation and please find the file present on path : {$ErrFilePath} to validate.    Rejected  load_id : {$id}"/>
+                </MESSAGE>
+              </ROOT>
+            </TO_DOCVAR>
+            <REQUEST Name="sendEmailNotification" AssignToVar="respEmail" ServiceName="BCM_MASTER">
+              <TO_XML DocVar="emailRecipients"/>
+              <TO_XML SelectList="$emailSubject/*"/>
+              <TO_XML SelectList="$emailFormat/*"/>
+              <TO_XML SelectList="$emailMessage/*"/>
+            </REQUEST>
+          </THEN>
+          <ELSE>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="emailonwrappersuccess">
+    <RULE>
+      <ACTION>
+        <EXECUTE_SQL_QUERY Value="SELECT A.LOAD_ID,A.SOURCE_ID,A.DATA_SOURCE,A.MKTNG_PGM_NBR,A.MKTNG_PGM_NAME,A.LEGAL_ENT_NBR,A.LEGAL_ENT_NAME,A.STAGING_NBR,A.STG_REJECT_CNT,A.STG_REJECT_DESC,A.ACTIVE_NBR,A.DUPLICATE_NBR,A.ERROR_NBR AS TOTAL_ERROR_NBR,COALESCE(B.ERR_DESC,'No Record in Error') AS ERR_DESC,B.ERROR_CODE_NBR FROM V_RPT_LOAD_NBR A LEFT OUTER JOIN ERR_CODE_DETAILS_EMAIL B ON A.LOAD_ID = B.LOAD_ID AND A.MKTNG_PGM_NBR = B.MKTNG_PGM_NBR WHERE A.SOURCE_ID = {$thisParam/SOURCE_ID/@Value} AND A.LOAD_ID IN({$thisParam/BatchId/@Value})ORDER BY ERROR_CODE_NBR ASC;" AssignToVar="resLoadStats"/>
+        <TO_DOCVAR AssignToVar="emailSubject">
+          <ROOT>
+            <SUBJECT Value="Load Details for SOURCE_ID:{$thisParam/SOURCE_ID/@Value} Dated {date()}"/>
+          </ROOT>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="emailFormat">
+          <ROOT>
+            <FORMAT Value="text/html"/>
+          </ROOT>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="emailMessage">
+          <ROOT>
+            <MESSAGE>
+              <SET Var="WrapperEmailfilepath" FromValue="\custom\pngrelease3\STATS.xsl"/>
+              <XML_DATA XsltFileName="{concat($MDM_Install_Dir,$WrapperEmailfilepath)}">
+              <!--<XML_DATA XsltFileName="C:\Teradata\MDM\3.05.02\custom\pngrelease3\STATS.xsl">-->
+                <REPORT>
+                  <TO_XML SelectList="$resLoadStats/*"/>
+                </REPORT>
+              </XML_DATA>
+            </MESSAGE>
+          </ROOT>
+        </TO_DOCVAR>
+        <GET_DOCUMENT Name="ATTRIBUTE_VALUES" AssignToVar="resAttValues" DirtyRead="yes" ServiceName="BCM_MASTER">
+          <QUERY_DOCUMENT_LINK Name="XIF1ATTRIBUTE_VALUES">
+            <ATTRIBUTE_TYPE_ID Value="6"/>
+          </QUERY_DOCUMENT_LINK>
+        </GET_DOCUMENT>
+        <TO_DOCVAR AssignToVar="emailRecipients">
+          <TO_ADDRS/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$thisParam/ROOT/*" CurrentElement="currRec">
+          <APPEND_TO_XML DocVar="emailRecipients">
+            <TO_ADDR Value="{$currRec/TO_ADDRESS/@Value}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <!-- Include email group that belong to ATT ID 9 only when records have moved to ERR Tables-->
+        <IF_TEST Test="$resLoadStats/SQL_RESULT/ERROR_CODE_NBR/@Value != null">
+          <THEN>
+            <GET_DOCUMENT Name="ATTRIBUTE_VALUES" AssignToVar="resAttValues1" DirtyRead="yes" ServiceName="BCM_MASTER">
+              <QUERY_DOCUMENT_LINK Name="XIF1ATTRIBUTE_VALUES">
+                <ATTRIBUTE_TYPE_ID Value="9"/>
+              </QUERY_DOCUMENT_LINK>
+            </GET_DOCUMENT>
+            <FOR_EACH SelectList="$resAttValues1/*" CurrentElement="currRec">
+              <APPEND_TO_XML DocVar="emailRecipients">
+                <TO_ADDR Value="{$currRec/AV_DESCRIPTION/@Value}"/>
+              </APPEND_TO_XML>
+            </FOR_EACH>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+        <FOR_EACH SelectList="$resAttValues/*" CurrentElement="currRec">
+          <APPEND_TO_XML DocVar="emailRecipients">
+            <TO_ADDR Value="{$currRec/AV_DESCRIPTION/@Value}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <REQUEST Name="sendEmailNotification" AssignToVar="respEmail" ServiceName="BCM_MASTER">
+          <TO_XML DocVar="emailRecipients"/>
+          <TO_XML SelectList="$emailSubject/*"/>
+          <TO_XML SelectList="$emailFormat/*"/>
+          <TO_XML SelectList="$emailMessage/*"/>
+        </REQUEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="emailOnRestartNDelete">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="ATTRIBUTE_VALUES" AssignToVar="resAttValues" DirtyRead="yes" ServiceName="BCM_MASTER">
+          <QUERY_DOCUMENT_LINK Name="XIF1ATTRIBUTE_VALUES">
+            <OR>
+              <ATTRIBUTE_TYPE_ID Value="5"/>
+              <ATTRIBUTE_TYPE_ID Value="8"/>
+            </OR>
+          </QUERY_DOCUMENT_LINK>
+        </GET_DOCUMENT>
+        <TO_DOCVAR AssignToVar="emailRecipients">
+          <TO_ADDRS/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$resAttValues/*" CurrentElement="currRec">
+          <APPEND_TO_XML DocVar="emailRecipients">
+            <TO_ADDR Value="{$currRec/AV_DESCRIPTION/@Value}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <TO_DOCVAR AssignToVar="emailSubject">
+          <ROOT>
+            <SUBJECT Value="{$thisParam/SUBJECT/@Value}"/>
+          </ROOT>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="emailFormat">
+          <ROOT>
+            <FORMAT Value="TEXT/HTML"/>
+          </ROOT>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="emailMessage">
+          <ROOT>
+            <MESSAGE>
+              <DATA Value="{$thisParam/DATA/@Value}"/>
+            </MESSAGE>
+          </ROOT>
+        </TO_DOCVAR>
+        <REQUEST Name="sendEmailNotification" AssignToVar="respEmail" ServiceName="BCM_MASTER">
+          <TO_XML DocVar="emailRecipients"/>
+          <TO_XML SelectList="$emailSubject/*"/>
+          <TO_XML SelectList="$emailFormat/*"/>
+          <TO_XML SelectList="$emailMessage/*"/>
+        </REQUEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="emailonBadFile">
+    <RULE>
+      <ACTION>
+        <EXECUTE_SQL_QUERY Value="SELECT A.LOAD_ID,A.SOURCE_ID,A.DATA_SOURCE,A.MKTNG_PGM_NBR,A.MKTNG_PGM_NAME,A.LEGAL_ENT_NBR,A.LEGAL_ENT_NAME,A.STAGING_NBR,A.STG_REJECT_CNT,A.STG_REJECT_DESC,A.ACTIVE_NBR,A.DUPLICATE_NBR,A.ERROR_NBR AS TOTAL_ERROR_NBR,COALESCE(B.ERR_DESC,'No Record in Error') AS ERR_DESC,B.ERROR_CODE_NBR FROM V_RPT_LOAD_NBR A LEFT OUTER JOIN ERR_CODE_DETAILS_EMAIL B ON A.LOAD_ID = B.LOAD_ID AND A.MKTNG_PGM_NBR = B.MKTNG_PGM_NBR WHERE A.SOURCE_ID = {$thisParam/SOURCE_ID/@Value} AND A.LOAD_ID IN(SEL DISTINCT LOAD_ID FROM LOAD_INFO WHERE BATCH_ID={$thisParam/BatchId/@Value})ORDER BY ERROR_CODE_NBR ASC;" AssignToVar="resLoadStats"/>
+        <TO_DOCVAR AssignToVar="emailSubject">
+          <ROOT>
+            <SUBJECT Value="SIT Bad File Details for SOURCE_ID:{$thisParam/SOURCE_ID/@Value} Dated {date()}"/>
+          </ROOT>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="emailFormat">
+          <ROOT>
+            <FORMAT Value="text/html"/>
+          </ROOT>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="emailMessage">
+          <ROOT>
+            <MESSAGE>
+              <SET Var="BadfileEmailfilepath" FromValue="\custom\pngrelease3\BadFileSTATS.xsl"/>
+              <XML_DATA XsltFileName="{concat($MDM_Install_Dir,$BadfileEmailfilepath)}">
+                <REPORT>
+                  <TO_XML SelectList="$resLoadStats/*"/>
+                </REPORT>
+              </XML_DATA>
+            </MESSAGE>
+          </ROOT>
+        </TO_DOCVAR>
+        <GET_DOCUMENT Name="ATTRIBUTE_VALUES" AssignToVar="resAttValues" DirtyRead="yes" ServiceName="BCM_MASTER">
+          <QUERY_DOCUMENT_LINK Name="XIF1ATTRIBUTE_VALUES">
+            <OR>
+              <ATTRIBUTE_TYPE_ID Value="6"/>
+              <ATTRIBUTE_TYPE_ID Value="9"/>
+            </OR>
+          </QUERY_DOCUMENT_LINK>
+        </GET_DOCUMENT>
+        <TO_DOCVAR AssignToVar="emailRecipients">
+          <TO_ADDRS/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$thisParam/ROOT/*" CurrentElement="currRec">
+          <APPEND_TO_XML DocVar="emailRecipients">
+            <TO_ADDR Value="{$currRec/TO_ADDRESS/@Value}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <FOR_EACH SelectList="$resAttValues/*" CurrentElement="currRec">
+          <APPEND_TO_XML DocVar="emailRecipients">
+            <TO_ADDR Value="{$currRec/AV_DESCRIPTION/@Value}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <REQUEST Name="sendEmailNotification" AssignToVar="respEmail" ServiceName="BCM_MASTER">
+          <TO_XML DocVar="emailRecipients"/>
+          <TO_XML SelectList="$emailSubject/*"/>
+          <TO_XML SelectList="$emailFormat/*"/>
+          <TO_XML SelectList="$emailMessage/*"/>
+        </REQUEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

@@ -1,0 +1,37 @@
+<document IsDocView="true">
+  <properties>
+    <property Name="MIN_AGE" PhysicalName="MIN_AGE" Active="true" Type="String_100" />
+    <property Name="MAX_AGE" PhysicalName="MAX_AGE" Active="true" Type="String_100" />
+    <property Name="COUNTRY" PhysicalName="COUNTRY" Active="true" Type="String_100" />
+  </properties>
+  <keys />
+  <links />
+  <docFacets>
+    <miscFacet Active="true" />
+    <mdmConfigFacet SchemaGen="false" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql OnMDMTables="true" IsSimpleView="true">REPLACE VIEW MDM.AGE_MIN_MAX&#xD;
+AS&#xD;
+LOCKING ROW FOR ACCESS&#xD;
+SEL A.MINAGE MIN_AGE,B.MAXAGE MAX_AGE, A.COUNTRY FROM&#xD;
+(SELECT&#xD;
+CHI.AV_DESCRIPTION MINAGE, PAR.AV_SHORT_NAME COUNTRY, CHI.AV_CODE AGECODE&#xD;
+FROM&#xD;
+MDM.ATTRIBUTE_VALUES PAR, MDM.ATTRIBUTE_VALUES_HIERARCHY HI, MDM.ATTRIBUTE_VALUES CHI&#xD;
+WHERE&#xD;
+CHI.AV_CODE IN ('MIN') AND&#xD;
+PAR.AV_ID = HI.AV_ID_PARENT AND&#xD;
+HI.AV_ID_CHILD = CHI.AV_ID&#xD;
+) A,&#xD;
+(SELECT&#xD;
+CHI.AV_DESCRIPTION MAXAGE, PAR.AV_SHORT_NAME COUNTRY, CHI.AV_CODE AGECODE&#xD;
+FROM&#xD;
+MDM.ATTRIBUTE_VALUES PAR, MDM.ATTRIBUTE_VALUES_HIERARCHY HI, MDM.ATTRIBUTE_VALUES CHI&#xD;
+WHERE&#xD;
+CHI.AV_CODE IN ('MAX') AND&#xD;
+PAR.AV_ID = HI.AV_ID_PARENT AND&#xD;
+HI.AV_ID_CHILD = CHI.AV_ID&#xD;
+) B WHERE A.COUNTRY=B.COUNTRY;</viewsql>
+</document>
+

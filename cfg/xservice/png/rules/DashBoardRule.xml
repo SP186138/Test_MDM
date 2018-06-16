@@ -1,0 +1,406 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+Copyright (c) 2009 by Teradata Corporation.
+All Rights Reserved.
+Teradata CONFIDENTIAL AND TRADE SECRET
+-->
+  <DEFINE_METHOD Name="getMatchedDomainsOptions">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="matchedDomainsList">
+          <ROOT>
+            <LEGAL_ENT/>
+          </ROOT>
+        </TO_DOCVAR>
+        <GET_DOCUMENT Name="LEGAL_ENT" ServiceName="BCM_MASTER" AssignToVar="matchedDomains" DirtyRead="true">
+          <SELECT>
+            <LEGAL_ENT_NAME/>
+            <LEGAL_ENT_NBR/>
+          </SELECT>
+          <ORDER_BY>
+            <LEGAL_ENT_NAME Sort="Ascending"/>
+          </ORDER_BY>
+        </GET_DOCUMENT>
+        <!--APPEND_TO_XML SelectList="$matchedDomainsList/LEGAL_ENT">
+<OPTION Id="" Value="All"/>
+</APPEND_TO_XML-->
+        <FOR_EACH SelectList="$matchedDomains/LEGAL_ENT" CurrentElement="currentElement">
+          <SET Var="domainname" FromValue="{$currentElement/LEGAL_ENT_NAME/@Value}"/>
+          <SET Var="domainnbr" FromValue="{$currentElement/LEGAL_ENT_NBR/@Value}"/>
+          <APPEND_TO_XML SelectList="$matchedDomainsList/LEGAL_ENT">
+            <OPTION Id="{$domainnbr}" Value="{$domainname}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="matchedDomainsList" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getProgramIDOptions">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="programIdsList">
+          <ROOT>
+            <MKTNG_PGM/>
+          </ROOT>
+        </TO_DOCVAR>
+        <GET_DOCUMENT Name="MKTNG_PGM" ServiceName="BCM_MASTER" AssignToVar="allProgramIDs" DirtyRead="true" ReturnRowCount="yes">
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <SELECT>
+            <MKTNG_PGM_NBR/>
+            <MKTNG_PGM_NAME/>
+          </SELECT>
+        </GET_DOCUMENT>
+        <APPEND_TO_XML SelectList="$programIdsList/MKTNG_PGM">
+          <OPTION Id="" Value="All"/>
+        </APPEND_TO_XML>
+        <FOR_EACH SelectList="$allProgramIDs/MKTNG_PGM" CurrentElement="currentElement">
+          <SET Var="programname" FromValue="{$currentElement/MKTNG_PGM_NAME/@Value}"/>
+          <SET Var="programnbr" FromValue="{$currentElement/MKTNG_PGM_NBR/@Value}"/>
+          <APPEND_TO_XML SelectList="$programIdsList/MKTNG_PGM">
+            <OPTION Id="{$programnbr}" Value="{$programname}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="programIdsList" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getLoadSearchResults">
+    <RULE>
+      <ACTION>
+        <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+          <LOAD_ID/>
+          <LEGAL_ENT_NAME/>
+          <MKTNG_PGM_NBR/>
+          <!--START_DATE/>
+<END_DATE/-->
+        </FORM_SEARCH_FILTER>
+        <TO_DOCVAR AssignToVar="filterList">
+          <FILTERLIST/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$filters/FILTER" CurrentElement="thisFilter">
+          <APPEND_TO_XML SelectList="$filterList">
+            <TO_XML SelectList="$thisFilter/*"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <TO_DOCVAR AssignToVar="startDate">
+          <ROOT/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="endDate">
+          <ROOT/>
+        </TO_DOCVAR>
+        <IF_TEST Test="$thisParam/START_DATE/@Value!=''">
+          <THEN>
+            <APPEND_TO_XML SelectList="$startDate">
+              <START_DATE MatchBy="GREATER_EQUAL" Value="{$thisParam/START_DATE/@Value}"/>
+            </APPEND_TO_XML>
+          </THEN>
+        </IF_TEST>
+        <IF_TEST Test="$thisParam/END_DATE/@Value!=''">
+          <THEN>
+            <APPEND_TO_XML SelectList="$endDate">
+              <END_DATE MatchBy="LESS_EQUAL" Value="{$thisParam/END_DATE/@Value}"/>
+            </APPEND_TO_XML>
+          </THEN>
+        </IF_TEST>
+        <SET Var="startRow" FromValue="{$thisParam/START_COUNT/@Value}"/>
+        <IF_TEST Test="$thisParam/SORT_BY/@Value!=null and $thisParam/SORT_BY/@Value!='' and $thisParam/SORT_BY/@Value!='ID'">
+          <THEN>
+            <MAKE_INSTANCE_DOCUMENT Name="{$thisParam/SORT_BY/@Value}" AssignToVar="sortByTag"/>
+            <SET DocVar="sortByTag" Attribute="Sort" FromValue="{$thisParam/SORT_ORDER/@Value}"/>
+          </THEN>
+          <ELSE>
+            <MAKE_INSTANCE_DOCUMENT Name="START_DATE" AssignToVar="sortByTag"/>
+            <SET DocVar="sortByTag" Attribute="Sort" FromValue="Ascending"/>
+          </ELSE>
+        </IF_TEST>
+        <IF_TEST Test="$thisParam/ACTION_NAME/@Value != 'EXPORT'">
+          <THEN>
+            <GET_DOCUMENT Name="V_RPT_LOAD_NBR" ServiceName="BCM_MASTER" AssignToVar="searchResults" DirtyRead="true" MaxRows="10" ReturnRowCount="true" StartAtRow="{$startRow}">
+              <TO_XML SelectList="$filterList/*"/>
+              <TO_XML SelectList="$startDate/*"/>
+              <TO_XML SelectList="$endDate/*"/>
+              <SELECT>
+                <LOAD_ID/>
+                <START_DATE/>
+                <END_DATE/>
+                <MKTNG_PGM_NBR/>
+                <LEGAL_ENT_NBR/>
+                <STAGING_NBR/>
+                <ERROR_NBR/>
+                <ACTIVE_NBR/>
+                <DUPLICATE_NBR/>
+                <LOAD_SUCCESS/>
+                <MKTNG_PGM_NAME/>
+                <LEGAL_ENT_NAME/>
+              </SELECT>
+              <ORDER_BY>
+                <TO_XML DocVar="sortByTag"/>
+              </ORDER_BY>
+            </GET_DOCUMENT>
+          </THEN>
+          <ELSE>
+            <GET_DOCUMENT Name="V_RPT_LOAD_NBR" ServiceName="BCM_MASTER" AssignToVar="searchResults" DirtyRead="true" ReturnRowCount="true">
+              <TO_XML SelectList="$filterList/*"/>
+              <TO_XML SelectList="$startDate/*"/>
+              <TO_XML SelectList="$endDate/*"/>
+              <SELECT>
+                <LOAD_ID/>
+                <START_DATE/>
+                <END_DATE/>
+                <MKTNG_PGM_NBR/>
+                <LEGAL_ENT_NBR/>
+                <STAGING_NBR/>
+                <ERROR_NBR/>
+                <ACTIVE_NBR/>
+                <DUPLICATE_NBR/>
+                <LOAD_SUCCESS/>
+                <MKTNG_PGM_NAME/>
+                <LEGAL_ENT_NAME/>
+              </SELECT>
+            </GET_DOCUMENT>
+          </ELSE>
+        </IF_TEST>
+        <!--FOR_EACH SelectList="$searchResults/V_RPT_LOAD_NBR" CurrentElement="currentElement">
+<FOR_EACH SelectList="$thisParam/MKTNG_PGM/OPTION" CurrentElement="curElement">
+<IF_TEST Test="$curElement/@Value!='All'">
+<THEN>
+<IF_TEST Test="$currentElement/MKTNG_PGM_NBR/@Value=$curElement/@Id">
+<THEN>
+<SET DocVar="currentElement" Property="MKTNG_PGM_NAME" FromValue="{$curElement/@Value}"/>
+</THEN>
+</IF_TEST>
+</THEN>
+</IF_TEST>
+</FOR_EACH>
+</FOR_EACH>
+<FOR_EACH SelectList="$searchResults/V_RPT_LOAD_NBR" CurrentElement="currentElement">
+<FOR_EACH SelectList="$thisParam/LEGAL_ENT/OPTION" CurrentElement="curElement">
+<IF_TEST Test="$curElement/@Value!='All'">
+<THEN>
+<IF_TEST Test="$currentElement/LEGAL_ENT_NBR/@Value=$curElement/@Id">
+<THEN>
+<SET DocVar="currentElement" Property="LEGAL_ENT_NAME" FromValue="{$curElement/@Value}"/>
+</THEN>
+</IF_TEST>
+</THEN>
+</IF_TEST>
+</FOR_EACH>
+</FOR_EACH-->
+        <CLONE_XML DocVar="searchResults" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getConsmrDataSearchResults">
+    <RULE>
+      <ACTION>
+        <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+          <LEGAL_ENT_NAME/>
+          <MKTNG_PGM_NBR/>
+        </FORM_SEARCH_FILTER>
+        <TO_DOCVAR AssignToVar="filterList">
+          <FILTERLIST/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$filters/FILTER" CurrentElement="thisFilter">
+          <APPEND_TO_XML SelectList="$filterList">
+            <TO_XML SelectList="$thisFilter/*"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <SET Var="startRow" FromValue="{$thisParam/START_COUNT/@Value}"/>
+        <IF_TEST Test="$thisParam/SORT_BY/@Value!=null and $thisParam/SORT_BY/@Value!='' and $thisParam/SORT_BY/@Value!='ID'">
+          <THEN>
+            <MAKE_INSTANCE_DOCUMENT Name="{$thisParam/SORT_BY/@Value}" AssignToVar="sortByTag"/>
+            <SET DocVar="sortByTag" Attribute="Sort" FromValue="{$thisParam/SORT_ORDER/@Value}"/>
+          </THEN>
+          <ELSE>
+            <MAKE_INSTANCE_DOCUMENT Name="MKTNG_PGM_NAME" AssignToVar="sortByTag"/>
+            <SET DocVar="sortByTag" Attribute="Sort" FromValue="Ascending"/>
+          </ELSE>
+        </IF_TEST>
+        <IF_TEST Test="$thisParam/ACTION_NAME/@Value != 'EXPORT'">
+          <THEN>
+            <GET_DOCUMENT Name="V_RPT_DATA_NBR" ServiceName="BCM_MASTER" AssignToVar="searchResults" DirtyRead="true" MaxRows="10" ReturnRowCount="true" StartAtRow="{$startRow}">
+              <TO_XML SelectList="$filterList/*"/>
+              <SELECT>
+                <MKTNG_PGM_NBR/>
+                <LEGAL_ENT_NBR/>
+                <STAGING_NBR/>
+                <ERROR_NBR/>
+                <ACTIVE_NBR/>
+                <DUPLICATE_NBR/>
+                <MTCHD_CNSMR_NBR/>
+                <HSHLD_NBR/>
+                <PHONE_OPT_IN/>
+                <PHONE_OPT_OUT/>
+                <EMAIL_OPT_IN/>
+                <EMAIL_OPT_OUT/>
+                <POSTAL_OPT_IN/>
+                <POSTAL_OPT_OUT/>
+                <SOCIAL_OPT_IN/>
+                <SOCIAL_OPT_OUT/>
+                <MKTNG_PGM_NAME/>
+                <LEGAL_ENT_NAME/>
+              </SELECT>
+              <ORDER_BY>
+                <TO_XML DocVar="sortByTag"/>
+              </ORDER_BY>
+            </GET_DOCUMENT>
+          </THEN>
+          <ELSE>
+            <GET_DOCUMENT Name="V_RPT_DATA_NBR" ServiceName="BCM_MASTER" AssignToVar="searchResults" DirtyRead="true" ReturnRowCount="true">
+              <TO_XML SelectList="$filterList/*"/>
+              <SELECT>
+                <MKTNG_PGM_NBR/>
+                <LEGAL_ENT_NBR/>
+                <STAGING_NBR/>
+                <ERROR_NBR/>
+                <ACTIVE_NBR/>
+                <DUPLICATE_NBR/>
+                <MTCHD_CNSMR_NBR/>
+                <HSHLD_NBR/>
+                <PHONE_OPT_IN/>
+                <PHONE_OPT_OUT/>
+                <EMAIL_OPT_IN/>
+                <EMAIL_OPT_OUT/>
+                <POSTAL_OPT_IN/>
+                <POSTAL_OPT_OUT/>
+                <SOCIAL_OPT_IN/>
+                <SOCIAL_OPT_OUT/>
+                <MKTNG_PGM_NAME/>
+                <LEGAL_ENT_NAME/>
+              </SELECT>
+            </GET_DOCUMENT>
+          </ELSE>
+        </IF_TEST>
+        <!--FOR_EACH SelectList="$searchResults/V_RPT_DATA_NBR" CurrentElement="currentElement">
+<FOR_EACH SelectList="$thisParam/MKTNG_PGM/OPTION" CurrentElement="curElement">
+<IF_TEST Test="$curElement/@Value!='All'">
+<THEN>
+<IF_TEST Test="$currentElement/MKTNG_PGM_NBR/@Value=$curElement/@Id">
+<THEN>
+<SET DocVar="currentElement" Property="MKTNG_PGM_NAME" FromValue="{$curElement/@Value}"/>
+</THEN>
+</IF_TEST>
+</THEN>
+</IF_TEST>
+</FOR_EACH>
+</FOR_EACH>
+<FOR_EACH SelectList="$searchResults/V_RPT_DATA_NBR" CurrentElement="currentElement">
+<FOR_EACH SelectList="$thisParam/LEGAL_ENT/OPTION" CurrentElement="curElement">
+<IF_TEST Test="$curElement/@Value!='All'">
+<THEN>
+<IF_TEST Test="$currentElement/LEGAL_ENT_NBR/@Value=$curElement/@Id">
+<THEN>
+<SET DocVar="currentElement" Property="LEGAL_ENT_NAME" FromValue="{$curElement/@Value}"/>
+</THEN>
+</IF_TEST>
+</THEN>
+</IF_TEST>
+</FOR_EACH>
+</FOR_EACH-->
+        <CLONE_XML DocVar="searchResults" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getAddrQltySearchResults">
+    <RULE>
+      <ACTION>
+        <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+          <LEGAL_ENT_NAME/>
+          <MKTNG_PGM_NBR/>
+        </FORM_SEARCH_FILTER>
+        <TO_DOCVAR AssignToVar="filterList">
+          <FILTERLIST/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$filters/FILTER" CurrentElement="thisFilter">
+          <APPEND_TO_XML SelectList="$filterList">
+            <TO_XML SelectList="$thisFilter/*"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <SET Var="startRow" FromValue="{$thisParam/START_COUNT/@Value}"/>
+        <IF_TEST Test="$thisParam/SORT_BY/@Value!=null and $thisParam/SORT_BY/@Value!='' and $thisParam/SORT_BY/@Value!='ID'">
+          <THEN>
+            <MAKE_INSTANCE_DOCUMENT Name="{$thisParam/SORT_BY/@Value}" AssignToVar="sortByTag"/>
+            <SET DocVar="sortByTag" Attribute="Sort" FromValue="{$thisParam/SORT_ORDER/@Value}"/>
+          </THEN>
+          <ELSE>
+            <MAKE_INSTANCE_DOCUMENT Name="MKTNG_PGM_NAME" AssignToVar="sortByTag"/>
+            <SET DocVar="sortByTag" Attribute="Sort" FromValue="Ascending"/>
+          </ELSE>
+        </IF_TEST>
+        <IF_TEST Test="$thisParam/ACTION_NAME/@Value != 'EXPORT'">
+          <THEN>
+            <GET_DOCUMENT Name="V_RPT_ADDR_QLTY" ServiceName="BCM_MASTER" AssignToVar="searchResults" DirtyRead="true" MaxRows="10" ReturnRowCount="true" StartAtRow="{$startRow}">
+              <TO_XML SelectList="$filterList/*"/>
+              <SELECT>
+                <MKTNG_PGM_NBR/>
+                <LEGAL_ENT_NBR/>
+                <ACTV_RGSTRTN_CNT/>
+                <SUCCESS_PCT/>
+                <LCLTY_FAIL_PCT/>
+                <UNK_ADDR_PCT/>
+                <CITY_TERR_FAIL_PCT/>
+                <STREET_NAME_FAIL_PCT/>
+                <HOUSE_NO_FAIL_PCT/>
+                <STREET_COMPT_FAIL_PCT/>
+                <MULTIPLE_STREET_ADDR_PCT/>
+                <MKTNG_PGM_NAME/>
+                <LEGAL_ENT_NAME/>
+              </SELECT>
+              <ORDER_BY>
+                <TO_XML DocVar="sortByTag"/>
+              </ORDER_BY>
+            </GET_DOCUMENT>
+          </THEN>
+          <ELSE>
+            <GET_DOCUMENT Name="RPT_ADDR_QLTY" ServiceName="BCM_MASTER" AssignToVar="searchResults" DirtyRead="true" ReturnRowCount="true">
+              <TO_XML SelectList="$filterList/*"/>
+              <SELECT>
+                <MKTNG_PGM_NBR/>
+                <LEGAL_ENT_NBR/>
+                <ACTV_RGSTRTN_CNT/>
+                <SUCCESS_PCT/>
+                <LCLTY_FAIL_PCT/>
+                <UNK_ADDR_PCT/>
+                <CITY_TERR_FAIL_PCT/>
+                <STREET_NAME_FAIL_PCT/>
+                <HOUSE_NO_FAIL_PCT/>
+                <STREET_COMPT_FAIL_PCT/>
+                <MULTIPLE_STREET_ADDR_PCT/>
+                <MKTNG_PGM_NAME/>
+                <LEGAL_ENT_NAME/>
+              </SELECT>
+            </GET_DOCUMENT>
+          </ELSE>
+        </IF_TEST>
+        <!--FOR_EACH SelectList="$searchResults/RPT_ADDR_QLTY" CurrentElement="currentElement">
+<FOR_EACH SelectList="$thisParam/MKTNG_PGM/OPTION" CurrentElement="curElement">
+<IF_TEST Test="$curElement/@Value!='All'">
+<THEN>
+<IF_TEST Test="$currentElement/MKTNG_PGM_NBR/@Value=$curElement/@Id">
+<THEN>
+<SET DocVar="currentElement" Property="MKTNG_PGM_NAME" FromValue="{$curElement/@Value}"/>
+</THEN>
+</IF_TEST>
+</THEN>
+</IF_TEST>
+</FOR_EACH>
+</FOR_EACH>
+<FOR_EACH SelectList="$searchResults/RPT_ADDR_QLTY" CurrentElement="currentElement">
+<FOR_EACH SelectList="$thisParam/LEGAL_ENT/OPTION" CurrentElement="curElement">
+<IF_TEST Test="$curElement/@Value!='All'">
+<THEN>
+<IF_TEST Test="$currentElement/LEGAL_ENT_NBR/@Value=$curElement/@Id">
+<THEN>
+<SET DocVar="currentElement" Property="LEGAL_ENT_NAME" FromValue="{$curElement/@Value}"/>
+</THEN>
+</IF_TEST>
+</THEN>
+</IF_TEST>
+</FOR_EACH>
+</FOR_EACH-->
+        <CLONE_XML DocVar="searchResults" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

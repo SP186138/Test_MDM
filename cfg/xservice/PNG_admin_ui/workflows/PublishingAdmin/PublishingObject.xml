@@ -1,0 +1,728 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="895" ShowInBreadCrumbs="true" Version="1.0" Name="PublishingObject" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="PublishingObject">
+    <variable Name="METHOD" Type="string" Comment=""/>
+    <variable Name="alertGreen" Type="string" Comment=""/>
+    <variable Name="alertRed" Type="string" Comment=""/>
+    <variable Name="audit" Type="string" Comment=""/>
+    <variable Name="csvDelimiter" Type="string" Comment=""/>
+    <variable Name="delimiter" Type="string" Comment=""/>
+    <variable Name="description" Type="string" Comment=""/>
+    <variable Name="docItem" Type="xml" Comment=""/>
+    <variable Name="emailAddress" Type="string" Comment=""/>
+    <variable Name="jmsQueue" Type="string" Comment=""/>
+    <variable Name="keyId" Type="string" Comment=""/>
+    <variable Name="keyName" Type="string" Comment=""/>
+    <variable Name="message" Type="string" Comment=""/>
+    <variable Name="method" Type="string" Comment=""/>
+    <variable Name="name" Type="string" Comment=""/>
+    <variable Name="service" Type="string" Comment=""/>
+    <variable Name="user" Type="string" Comment=""/>
+    <variable Name="xdocName" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="Start">
+      <actions>
+        <action/>
+      </actions>
+      <next_nodes>
+        <next_node Name="Manage Publication Objects"/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Manage Publication Objects" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="PublishingObject.pgl">
+      <pre_actions>
+        <action>
+          <REQUEST ServiceName="BPE_META" Name="getServiceNames" AssignToVar="serviceList"/>
+          <PRINTLN Value="serviceList ....{$serviceList}"/>
+          <TO_DOCVAR AssignToVar="temp">
+            <SERVICELIST>
+              <FOR_EACH CurrentElement="currService" SelectList="$serviceList/*">
+                <SET Var="currServiceName" FromValue="{$currService/@Value}"/>
+                <IF_TEST Test="$currServiceName = 'xserver'">
+                  <THEN/>
+                  <ELSE>
+                    <TO_DOCVAR AssignToVar="tempSvcXml">
+                      <LINE>
+                        <ID Value="{$currServiceName}"/>
+                      </LINE>
+                    </TO_DOCVAR>
+                    <TO_XML DocVar="tempSvcXml"/>
+                  </ELSE>
+                </IF_TEST>
+              </FOR_EACH>
+            </SERVICELIST>
+          </TO_DOCVAR>
+          <PRINTLN Value="Get Publishing Object"/>
+          <EXECUTE_SQL_QUERY AssignToVar="results" Value="locking row for access SELECT KEY_ID, KEY_NAME, KEY_DESCRIPTION FROM SYS_PUB_KEY  ORDER BY KEY_NAME ASC;"/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <TO_XML DocVar="results"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="temp"/>
+          <TO_DOCVAR AssignToVar="alertz">
+            <ABC>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </ABC>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$alertz/*"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="service" FromValue="{$thisParam/DROPDOWN/@Value}"/>
+          <SET Var="description" FromValue="{$thisParam/DESCRIPTION/@Value}"/>
+          <SET Var="name" FromValue="{$pglFormOutput/NAME/@Value}"/>
+          <SET Var="keyName" FromValue="{$pglFormOutput/KEY_NAME/@Value}"/>
+          <EXECUTE_SQL_QUERY AssignToVar="results" Value="locking row for access SELECT KEY_ID FROM SYS_PUB_KEY WHERE KEY_NAME = '{$keyName}'"/>
+          <SET Var="keyId" FromValue="{$results/SQL_RESULT/KEY_ID/@Value}"/>
+          <SET Var="alertGreen" FromValue=""/>
+          <SET Var="alertRed" FromValue=""/>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='PUBLISH'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Publish Table" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='EDIT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Publishing Object Form" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='DELETE'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Delete Publishing Object" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ADD'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Add Publishing Object" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="Add Publishing Object" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="AddPublishingObject.pgl">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <SERVICE Value="{$service}"/>
+              <NAME Value="{$name}"/>
+              <DESCRIPTION Value="{$description}"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="temp">
+            <SERVICE Value="{$service}"/>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="thisParam" FromDocVar="temp"/>
+          <REQUEST ServiceName="BPE_META" Name="getDocumentNames" AssignToVar="documentList">
+            <SERVICE Value="{$service}"/>
+          </REQUEST>
+          <PRINTLN Value="{$documentList}"/>
+          <TO_DOCVAR AssignToVar="temp2">
+            <DOCLIST>
+              <FOR_EACH CurrentElement="currDoc" SelectList="$documentList/*">
+                <SET Var="currDocName" FromValue="{$currDoc/@Value}"/>
+                <IF_TEST Test="$currDocName = 'xserver'">
+                  <THEN/>
+                  <ELSE>
+                    <TO_DOCVAR AssignToVar="tempSvcXml">
+                      <LINE>
+                        <ID Value="{$currDocName}"/>
+                      </LINE>
+                    </TO_DOCVAR>
+                    <TO_XML DocVar="tempSvcXml"/>
+                  </ELSE>
+                </IF_TEST>
+              </FOR_EACH>
+            </DOCLIST>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="temp2"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <if_cond Value="$userAction ='ADD'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Add" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='BACK'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Publication Objects" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <task Name="Delete Publishing Object">
+      <actions>
+        <action>
+          <PRINTLN Value="Delete Publishing Objects"/>
+          <EXECUTE_SQL_DML AssignToVar="result" Value="DELETE FROM SYS_PUB_KEY WHERE KEY_ID = {$keyId}; "/>
+          <EXECUTE_SQL_DML AssignToVar="result" Value="DELETE FROM SYS_PUB_DOC WHERE KEY_ID = {$keyId};"/>
+          <EXECUTE_SQL_DML AssignToVar="result" Value="DELETE FROM SYS_PUB_DOC_PROPERTY WHERE KEY_ID= {$keyId};"/>
+          <SET Var="message" FromValue="{$result/@Status}"/>
+          <IF_TEST Test="$message = 'Success'">
+            <THEN>
+              <SET Var="alertGreen" FromValue="Publication Object deleted successfully."/>
+            </THEN>
+            <ELSE>
+              <SET Var="alertRed" FromValue="Error Deleteing  Publication Object"/>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Manage Publication Objects"/>
+      </next_nodes>
+    </task>
+    <ui_form2 Name="Edit Publishing Object Form" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="EditPublishingObject.pgl">
+      <pre_actions>
+        <action>
+          <EXECUTE_SQL_QUERY AssignToVar="results" Value="locking row for access SELECT * FROM SYS_PUB_KEY WHERE KEY_ID = {$keyId};"/>
+          <SET Var="service" FromValue="{$results/SQL_RESULT/SERVICE_NAME/@Value}"/>
+          <SET Var="keyName" FromValue="{$results/SQL_RESULT/KEY_NAME/@Value}"/>
+          <SET Var="description" FromValue="{$results/SQL_RESULT/KEY_DESCRIPTION/@Value}"/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <SERVICE Value="{$service}"/>
+              <NAME Value="{$keyName}"/>
+              <DESCRIPTION Value="{$description}"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <REQUEST ServiceName="BPE_META" Name="getDocumentNames" AssignToVar="documentList">
+            <SERVICE Value="{$service}"/>
+          </REQUEST>
+          <PRINTLN Value="{$documentList}"/>
+          <TO_DOCVAR AssignToVar="temp2">
+            <DOCLIST>
+              <FOR_EACH CurrentElement="currDoc" SelectList="$documentList/*">
+                <SET Var="currDocName" FromValue="{$currDoc/@Value}"/>
+                <IF_TEST Test="$currDocName = 'xserver'">
+                  <THEN/>
+                  <ELSE>
+                    <TO_DOCVAR AssignToVar="tempSvcXml">
+                      <LINE>
+                        <ID Value="{$currDocName}"/>
+                      </LINE>
+                    </TO_DOCVAR>
+                    <TO_XML DocVar="tempSvcXml"/>
+                  </ELSE>
+                </IF_TEST>
+              </FOR_EACH>
+            </DOCLIST>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="temp2"/>
+          <GET_DOCUMENT Name="SYS_PUB_DOC" ServiceName="ADMIN_UI" AssignToVar="resultKey" DirtyRead="true">
+            <KEY_ID Value="{$keyId/@Value}"/>
+          </GET_DOCUMENT>
+          <FOR_EACH SelectList="$resultKey/*" CurrentElement="curr">
+            <TO_DOCVAR AssignToVar="test">
+              <TEST>
+                <SELECTED_ID Value="{$curr/XDOCUMENT_NAME/@Value}"/>
+              </TEST>
+            </TO_DOCVAR>
+            <ADD_CHILDREN DocVar="thisParam" FromSelectList="$test/*"/>
+          </FOR_EACH>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="name" FromValue="{$pglFormOutput/NAME/@Value}"/>
+          <SET Var="description" FromValue="{$pglFormOutput/DESCRIPTION/@Value}"/>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='EDIT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='BACK'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Publication Objects" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="Publish Table" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="PublishTable.pgl">
+      <pre_actions>
+        <action>
+          <EXECUTE_SQL_QUERY AssignToVar="results" Value="locking row for access SELECT SERVICE_NAME FROM SYS_PUB_KEY WHERE KEY_ID = {$keyId};"/>
+          <SET Var="service" FromValue="{$results/SQL_RESULT/SERVICE_NAME/@Value}"/>
+          <PRINTLN Value="Database Mappings"/>
+          <EXECUTE_SQL_QUERY AssignToVar="result" Value="locking row for access SELECT XDOCUMENT_NAME FROM SYS_PUB_DOC WHERE KEY_ID ={$keyId} ORDER BY XDOCUMENT_NAME ASC ;"/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <TO_XML DocVar="result"/>
+              <PGL/>
+              <SERVICE Value="{$keyName/@Value}"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <PRINTLN Value="Get Documents"/>
+          <NATIVE_FUNCTION ClassName="com.teradata.xcore.util.LicenseValidator" MethodName="isValidLicense" AssignToVar="validLicense"/>
+          <SET DocVar="pglFormInput" Property="isValidLicense" FromVar="validLicense"/>
+          <IF_TEST Test="$validLicense = 'true'">
+            <THEN>
+              <APPEND_TO_XML SelectList="$pglFormInput/PGL">
+                <ui:container xmlns:ui="http://www.teradata.com/ui">
+                  <ui:help displayPage="{{$pages:PublicationTablesHelp}}"/>
+                  <ui:step displayText="Publish Table" id="basicControls">
+                    <ui:field-group>
+                      <ui:hidden-field id="isValidLicense" name="isValidLicense"/>
+                      <ui:display-field id="SERVICE_NAME" name="SERVICE_NAME" displayText="Publication Object" select="$root//SERVICE" title="PublicationObject"/>
+                      <ui:dropdown id="METHOD" name="METHOD" displayText="Publication Method" onChange="javascript:selectMethod();" defaultValue="0" title="PublicationObjectMethod">
+                        <ui:option id="0" value="Publication Database Tables"/>
+                        <ui:option id="1" value="JMS Queue"/>
+                        <ui:option id="5" value="Comma Separated Values"/>
+                        <ui:option id="6" value="Excel"/>
+                      </ui:dropdown>
+                      <ui:checkbox id="AUDIT" name="AUDIT" displayText="Maintain Audit Copy" title="PublicationObjectMaintainAuditCopy"/>
+                      <ui:entry-field id="JMS_QUEUE" name="JMS_QUEUE" displayText="JMS Provider Queue" title="PublicationObjectJMSProviderQueue"/>
+                      <ui:entry-field id="email" name="email" displayText="Email Address" title="PublicationObjectEmailAddress"/>
+                    </ui:field-group>
+                    <!--Code modified for fix of issue MDM-2235 by Kiran G-->
+                    <ui:container id="contDemiliter" displayText="Delimiter">
+                      <ui:step id="stepDelimiter">
+                        <ui:grid id="gridDemiliter" displayText="nitin">
+                          <ui:row id="rowDeleimiter">
+                            <ui:cell id="cell1" width="20%">
+                              <ui:field-group id="fgComma">
+                                <ui:radiobutton id="comma" name="comma" displayText="Comma" onClick="setComma();" title="PublicationObjectDelimiterComma"/>
+                              </ui:field-group>
+                            </ui:cell>
+                            <ui:cell id="cell2" width="20%">
+                              <ui:field-group id="fgSpace">
+                                <ui:radiobutton id="space" name="space" displayText="Space" onClick="setSpace();" title="PublicationObjectDelimiterSpace"/>
+                              </ui:field-group>
+                            </ui:cell>
+                            <ui:cell id="cell3" width="20%">
+                              <ui:field-group id="fgTab">
+                                <ui:radiobutton id="tab" name="tab" displayText="Tab" onClick="setTab();" title="PublicationObjectDelimiterTab"/>
+                              </ui:field-group>
+                            </ui:cell>
+                            <ui:cell id="cell4" width="20%">
+                              <ui:field-group id="fgSemiColon">
+                                <ui:radiobutton id="semi" name="semi" displayText="Semi Colon" onClick="setSemiColon();" title="PublicationObjectDelimiterSemiColon"/>
+                              </ui:field-group>
+                            </ui:cell>
+                            <ui:cell id="cell5" width="10%">
+                              <ui:field-group id="fgOther">
+                                <ui:radiobutton id="other" name="other" displayText="Other" onClick="setOther();" title="PublicationObjectDelimiterOther"/>
+                              </ui:field-group>
+                            </ui:cell>
+                            <ui:cell id="cell6">
+                              <ui:field-group id="fgOtherEntryField" width="10%">
+                                <ui:entry-field id="otherBox" name="otherBox" title="PublicationObjectDelimiterOther"/>
+                              </ui:field-group>
+                            </ui:cell>
+                          </ui:row>
+                        </ui:grid>
+                      </ui:step>
+                    </ui:container>
+                    <ui:container id="mapping">
+                      <ui:step id="mappings" displayText="Database Mappings">
+                        <ui:table id="tableServices" name="tableServices" displayText="Publication Objects" rowSrc="$root/RESPONSE/*" postRowIdAs="XDOCUMENT_NAME" rowId="XDOCUMENT_NAME" maxRows="-1" scrollable="true">
+                          <ui:field-group id="tableColumns">
+                            <ui:display-field name="XDOCUMENT_NAME" id="XDOCUMENT_NAME" displayText="Document Name" title="PublicationObjectDocumentName"/>
+                            <ui:entry-field name="sourceDatabase" id="sourceDatabase" displayText="Source Database" required="true" title="PublicationObjectSourceDatabase"/>
+                            <ui:entry-field name="sourceTableName" id="sourceTableName" displayText="Source Table Name" required="true" title="PublicationObjectSourceTableName"/>
+                            <ui:entry-field name="targetTableName" id="targetTableName" displayText="Target Table Name" title="PublicationObjectTargetTableName"/>
+                          </ui:field-group>
+                          <ui:buttons>
+                            <ui:button id="BACK" name="BACK" displayText="Back" validate="false" onClick="javascript:OnBack();"/>
+                            <ui:button id="PUBLISH" name="PUBLISH" displayText="Publish" onClick="javascript:OnPublish();"/>
+                          </ui:buttons>
+                        </ui:table>
+                      </ui:step>
+                    </ui:container>
+                  </ui:step>
+                </ui:container>
+              </APPEND_TO_XML>
+            </THEN>
+            <ELSE>
+              <APPEND_TO_XML SelectList="$pglFormInput/PGL">
+                <ui:container xmlns:ui="http://www.teradata.com/ui">
+                  <ui:step displayText="Publish Table" id="basicControls">
+                    <ui:field-group>
+                      <ui:hidden-field id="isValidLicense" name="isValidLicense"/>
+                      <ui:display-field id="SERVICE_NAME" name="SERVICE_NAME" displayText="Publication Object" select="$root/SERVICE"/>
+                      <ui:hidden-field name="METHOD" value="0"/>
+                      <ui:checkbox id="AUDIT" name="AUDIT" displayText="Maintain Audit Copy"/>
+                    </ui:field-group>
+                    <ui:container id="mapping">
+                      <ui:step id="mapping" displayText="Database Mappings">
+                        <ui:table id="tableServices" name="tableServices" displayText="Publication Objects" rowSrc="$root/RESPONSE/*" postRowIdAs="XDOCUMENT_NAME" rowId="XDOCUMENT_NAME" maxRows="-1" scrollable="true">
+                          <ui:field-group id="tableColumns">
+                            <ui:display-field name="XDOCUMENT_NAME" id="XDOCUMENT_NAME" displayText="Document Name"/>
+                            <ui:entry-field name="sourceDatabase" id="sourceDatabase" displayText="Source Database" required="true"/>
+                            <ui:entry-field name="sourceTableName" id="sourceTableName" displayText="Source Table Name" required="true"/>
+                            <ui:entry-field name="targetTableName" id="targetTableName" displayText="Target Table Name"/>
+                          </ui:field-group>
+                          <ui:buttons>
+                            <ui:button id="BACK" name="BACK" displayText="Back" validate="false" onClick="javascript:OnBack();"/>
+                            <ui:button id="PUBLISH" name="PUBLISH" displayText="Publish" onClick="javascript:OnPublish();"/>
+                          </ui:buttons>
+                        </ui:table>
+                      </ui:step>
+                    </ui:container>
+                  </ui:step>
+                </ui:container>
+              </APPEND_TO_XML>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$thisParam/comma/@Value = 'true'">
+            <THEN>
+              <SET Var="delimiter" FromValue=","/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/tab/@Value = 'true'">
+            <THEN>
+              <SET Var="delimiter" FromValue="\t"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/space/@Value = 'true'">
+            <THEN>
+              <SET Var="delimiter" FromValue=" "/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/semi/@Value = 'true'">
+            <THEN>
+              <SET Var="delimiter" FromValue=";"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/other/@Value = 'true'">
+            <THEN>
+              <SET Var="delimiter" FromValue="{$thisParam/otherBox/@Value}"/>
+            </THEN>
+          </IF_TEST>
+          <SET Var="audit" FromValue="{$thisParam/AUDIT/@Value}"/>
+          <SET Var="emailAddress" FromValue="{$thisParam/email/@Value}"/>
+          <SET Var="jmsQueue" FromValue="{$thisParam/JMS_QUEUE/@Value}"/>
+          <SET Var="method" FromValue="{$thisParam/METHOD/@Value}"/>
+          <EXECUTE_SQL_QUERY AssignToVar="results" Value="locking row for access SELECT XDOCUMENT_NAME FROM SYS_PUB_DOC WHERE KEY_ID = {$keyId};"/>
+          <SET Var="xdocName" FromValue="{$results/SQL_RESULT/XDOCUMENT_NAME/@Value}"/>
+          <TO_DOCVAR AssignToVar="docItem">
+            <Doc_List/>
+          </TO_DOCVAR>
+          <SET Var="masterCount" FromValue="0"/>
+          <EXECUTE_SQL_QUERY AssignToVar="response" Value="locking row for access SELECT XDOCUMENT_NAME FROM SYS_PUB_DOC WHERE KEY_ID ={$keyId} ORDER BY XDOCUMENT_NAME ASC ;"/>
+          <FOR_EACH CurrentElement="current" SelectList="$response/SQL_RESULT/XDOCUMENT_NAME">
+            <SET Var="masterCount" FromValue="{$masterCount + 1}"/>
+            <SET Var="DocumentName" FromValue="{$current/@Value}"/>
+            <SET Var="count" FromValue="0"/>
+            <FOR_EACH CurrentElement="currentSourceDatabase" SelectList="$thisParam/sourceDatabase">
+              <SET Var="count" FromValue="{$count + 1}"/>
+              <IF_TEST Test="$masterCount = $count">
+                <THEN>
+                  <SET Var="SourceDatabase" FromValue="{$currentSourceDatabase/@Value}"/>
+                  <BREAK/>
+                </THEN>
+              </IF_TEST>
+            </FOR_EACH>
+            <SET Var="count" FromValue="0"/>
+            <FOR_EACH CurrentElement="currentSourceTable" SelectList="$thisParam/sourceTableName">
+              <SET Var="count" FromValue="{$count + 1}"/>
+              <IF_TEST Test="$masterCount = $count">
+                <THEN>
+                  <SET Var="SourceTableName" FromValue="{$currentSourceTable/@Value}"/>
+                  <BREAK/>
+                </THEN>
+              </IF_TEST>
+            </FOR_EACH>
+            <SET Var="count" FromValue="0"/>
+            <FOR_EACH CurrentElement="currentTargetTable" SelectList="$thisParam/targetTableName">
+              <SET Var="count" FromValue="{$count + 1}"/>
+              <IF_TEST Test="$masterCount = $count">
+                <THEN>
+                  <SET Var="TargetTableName" FromValue="{$currentTargetTable/@Value}"/>
+                  <BREAK/>
+                </THEN>
+              </IF_TEST>
+            </FOR_EACH>
+            <APPEND_TO_XML DocVar="docItem">
+              <doc_item DocumentName="{$DocumentName}" SourceDatabase="{$SourceDatabase}" SourceTableName="{$SourceTableName}" TargetTableName="{$TargetTableName}"/>
+            </APPEND_TO_XML>
+          </FOR_EACH>
+          <PRINTLN Value="DONE"/>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='PUBLISH'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Publish" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='BACK'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Publication Objects" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <task Name="Publish">
+      <actions>
+        <action>
+          <REQUEST Name="publishRule" HandleException="yes" AssignToVar="publishResponse">
+            <EventName Value="PublishTables:publish"/>
+            <serviceName Value="{$service}"/>
+            <pubObject Value="{$keyName}"/>
+            <pubMethod Value="{$method}"/>
+            <auditvalue Value="{$audit}"/>
+            <cleanSrc Value="false"/>
+            <jmsQueue Value="{$jmsQueue}"/>
+            <userId Value="{$userId}"/>
+            <csvDelimiter Value="{$delimiter}"/>
+            <emailAddress Value="{$emailAddress}"/>
+            <TO_XML SelectList="$docItem"/>
+          </REQUEST>
+          <SET Var="message" FromValue="Success"/>
+          <IF_TEST Test="$publishResponse/@Status = 'Success'">
+            <THEN>
+              <SET Var="alertGreen" FromValue="Publish table submitted successfully."/>
+            </THEN>
+            <ELSE>
+              <SET Var="alertRed" FromValue="Failed to submit Publish table"/>
+              <GET_DOCUMENT AssignToVar="pubRequestReturn" Name="SYS_PUB_REQUEST" DirtyRead="true">
+                <EVENT_NAME Value="PublishTables:publish"/>
+                <PUBLISH_METHOD_CODE Value="{$method}"/>
+                <PUBLICATION_KEY Value="{$keyId}"/>
+              </GET_DOCUMENT>
+              <IF_TEST Test="count($pubRequestReturn/SYS_PUB_REQUEST) > 0">
+                <THEN>
+                  <REMOVE_DOCUMENT Name="SYS_PUB_REQUEST">
+                    <EVENT_NAME Value="PublishTables:publish"/>
+                    <PUBLISH_METHOD_CODE Value="{$method}"/>
+                    <PUBLICATION_KEY Value="{$keyId}"/>
+                  </REMOVE_DOCUMENT>
+                  <FOR_EACH CurrentElement="pubCurr" SelectList="$pubRequestReturn/*">
+                    <REMOVE_DOCUMENT Name="SYS_PUB_DOCUMENT_MAP">
+                      <REQUEST_ID Value="{$pubCurr/REQUEST_ID/@Value}"/>
+                      <XDOCUMENT_NAME Value="{$docItem/@DocumentName}"/>
+                      <SRC_DATABASE_NAME Value="{$docItem/@SourceDatabase}"/>
+                      <SRC_TABLE_NAME Value="{$docItem/@SourceTableName}"/>
+                      <PUB_TABLE_NAME Value="{$docItem/@TargetTableName}"/>
+                    </REMOVE_DOCUMENT>
+                  </FOR_EACH>
+                </THEN>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Manage Publication Objects"/>
+      </next_nodes>
+    </task>
+    <task Name="Add">
+      <actions>
+        <action>
+          <SET Var="primary" FromValue="1"/>
+          <PRINTLN Value="Primary Indicator {$primary/@Value}"/>
+          <!-- insert name, description and primary indicator into SYS_PUB_KEY table -->
+          <EXECUTE_SQL_DML AssignToVar="result" Value="INSERT INTO SYS_PUB_KEY( KEY_NAME, KEY_DESCRIPTION, SERVICE_NAME) VALUES( '{$name}', '{$description}', '{$service}');" HandleException="true"/>
+          <PRINTLN Value="Result {$result/Status/@Value}"/>
+          <!--  Get the Key_ID from SYS_PUB_KEY table-->
+          <IF_TEST Test="$result/@Status = 'Success'">
+            <THEN>
+              <EXECUTE_SQL_QUERY AssignToVar="response" Value="locking row for access SEL  KEY_ID   FROM SYS_PUB_KEY WHERE KEY_NAME= '{$name}';"/>
+              <SET Var="id" FromValue="{$response/SQL_RESULT/KEY_ID/@Value}"/>
+              <PRINTLN Value="ID {$id}"/>
+              <FOR_EACH CurrentElement="currentElem" SelectList="$thisParam/SELECTED_ID">
+                <!-- Insert key_id, document, primary indicator into SYS_PUB_DOC Table -->
+                <SET Var="document" FromValue="{$currentElem/@Value}"/>
+                <EXECUTE_SQL_DML AssignToVar="response" Value="INSERT INTO SYS_PUB_DOC(KEY_ID, XDOCUMENT_NAME, PRIMARY_INDICATOR) VALUES( {$id}, '{$document}', {$primary});"/>
+                <PRINTLN Value="Result {$response/Status/@Value}"/>
+                <PRINTLN Value="{$document}"/>
+                <!--REQUEST ServiceName="BPE_META" Name="getPropertyNames" AssignToVar="propertyList1">
+                  <SERVICE Value="{$service/@Value}"/>
+                  <DOCUMENT Value="{$document/@Value}"/>
+                  <SORTED Value="true"/>
+                </REQUEST-->
+                <GET_DOC_PROPERTIES TableName="{$document/@Value}" ServiceName="{$service/@Value}" AssignToVar="propertyList"/>
+                <FOR_EACH CurrentElement="currentProperty" SelectList="$propertyList/DOCUMENT/PROPERTY">
+                  <PRINTLN Value="{$currentProperty/@Name}"/>
+                  <SET Var="property" FromValue="{$currentProperty/@Name}"/>
+                  <EXECUTE_SQL_DML AssignToVar="response" Value="INSERT INTO SYS_PUB_DOC_PROPERTY(KEY_ID, XDOCUMENT_NAME, PROPERTY_NAME, PUBLISH) VALUES( {$id}, '{$document}', '{$property}', {$primary});"/>
+                </FOR_EACH>
+              </FOR_EACH>
+              <SET Var="alertGreen" FromValue="Publication Object added successfully."/>
+            </THEN>
+            <ELSE>
+              <SET Var="alertRed" FromValue="Publication object already exist.Please choose another name."/>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Manage Publication Objects"/>
+      </next_nodes>
+    </task>
+    <task Name="Edit">
+      <actions>
+        <action>
+          <!-- remove the pub doc and pub doc properties -->
+          <EXECUTE_SQL_DML AssignToVar="result" Value="DELETE FROM SYS_PUB_DOC WHERE KEY_ID = {$keyId};"/>
+          <EXECUTE_SQL_DML AssignToVar="result" Value="DELETE FROM SYS_PUB_DOC_PROPERTY WHERE KEY_ID= {$keyId};"/>
+          <SET Var="primary" FromValue="1"/>
+          <PRINTLN Value="Primary Indicator {$primary/@Value}"/>
+          <!-- insert name, description and primary indicator into SYS_PUB_KEY table -->
+          <EXECUTE_SQL_DML AssignToVar="result" Value="UPDATE SYS_PUB_KEY SET KEY_NAME = '{$name}', KEY_DESCRIPTION='{$description}' WHERE KEY_ID = {$keyId};"/>
+          <PRINTLN Value="Result {$result/Status/@Value}"/>
+          <!-- Get the Key_ID from SYS_PUB_KEY table >
+          <EXECUTE_SQL_QUERY AssignToVar="response" Value="SEL ZEROIFNULL(KEY_ID)  FROM   (SEL  MAX(KEY_ID)  FROM SYS_PUB_KEY) NAME (KEY_ID);"/>
+          <SET Var="id" FromValue="{$response/SQL_RESULT/KEY_ID/@Value}"/>
+          <PRINTLN Value="ID {$id}"/> -->
+          <FOR_EACH CurrentElement="currentElem" SelectList="$thisParam/SELECTED_ID">
+            <!-- Insert key_id, document, primary indicator into SYS_PUB_DOC Table -->
+            <SET Var="document" FromValue="{$currentElem/@Value}"/>
+            <EXECUTE_SQL_DML AssignToVar="response" Value="INSERT INTO SYS_PUB_DOC(KEY_ID, XDOCUMENT_NAME, PRIMARY_INDICATOR) VALUES( {$keyId}, '{$document}', {$primary});"/>
+            <PRINTLN Value="Result {$response/Status/@Value}"/>
+            <PRINTLN Value="{$document}"/>
+            <REQUEST ServiceName="BPE_META" Name="getPropertyNames" AssignToVar="propertyList">
+              <SERVICE Value="{$service/@Value}"/>
+              <DOCUMENT Value="{$document/@Value}"/>
+              <SORTED Value="true"/>
+            </REQUEST>
+            <FOR_EACH CurrentElement="currentProperty" SelectList="$propertyList/PROPERTY">
+              <PRINTLN Value="{$currentProperty/@Value}"/>
+              <SET Var="property" FromValue="{$currentProperty/@Value}"/>
+              <EXECUTE_SQL_DML AssignToVar="response" Value="INSERT INTO SYS_PUB_DOC_PROPERTY(KEY_ID, XDOCUMENT_NAME, PROPERTY_NAME, PUBLISH) VALUES( {$keyId}, '{$document}', '{$property}', {$primary});"/>
+              <SET Var="message" FromValue="{$response/@Status}"/>
+            </FOR_EACH>
+          </FOR_EACH>
+          <IF_TEST Test="$message = 'Success'">
+            <THEN>
+              <SET Var="alertGreen" FromValue="Publication Object edited successfully."/>
+            </THEN>
+            <ELSE>
+              <SET Var="alertRed" FromValue="Error Editing Publication Object"/>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Manage Publication Objects"/>
+      </next_nodes>
+    </task>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10" compId="MgcDashboard1" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="11" textAttrsKey0="METHOD : string" textAttrsKey1="alertGreen : string" textAttrsKey2="alertRed : string" textAttrsKey3="audit : string" textAttrsKey4="csvDelimiter : string" textAttrsKey5="delimiter : string" textAttrsKey6="description : string" textAttrsKey7="docItem : xml" textAttrsKey8="emailAddress : string" textAttrsKey9="jmsQueue : string" textAttrsKey10="... and 8 more">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="xdocName" Type="string"/>
+      </variables>
+    </mgcdashboard>
+    <mgcnodes>
+      <Start font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="54,367">
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+        <textProps text="Start" font="Verdana,0,9" textColor="80,80,80"/>
+      </Start>
+      <mgcnode Name="Publication Objects" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="417,367" size="732,800">
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+        <textProps text="Publication Objects" font="Verdana,0,9" textColor="80,80,80"/>
+      </mgcnode>
+      <mgcnode Name="Add Publishing Object" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="417,155">
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+        <textProps text="Add Publishing Object" font="Verdana,0,9" textColor="80,80,80"/>
+      </mgcnode>
+      <mgcnode Name="Delete Publishing Object" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="590,606">
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+        <textProps text="Delete Publishing Object" font="Verdana,0,9" textColor="80,80,80"/>
+      </mgcnode>
+      <mgcnode Name="Edit Publishing Object Form" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="795,366">
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+        <textProps text="Edit Publishing Object Form" font="Verdana,0,9" textColor="80,80,80"/>
+      </mgcnode>
+      <mgcnode Name="Publish Table" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="114,610" size="732,738">
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+        <textProps text="Publish Table" font="Verdana,0,9" textColor="80,80,80"/>
+      </mgcnode>
+      <Publish font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="417,610">
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+        <textProps text="Publish" font="Verdana,0,9" textColor="80,80,80"/>
+      </Publish>
+      <Add font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="590,156">
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+        <textProps text="Add" font="Verdana,0,9" textColor="80,80,80"/>
+      </Add>
+      <Edit font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="795,156">
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+        <textProps text="Edit" font="Verdana,0,9" textColor="186,12,12"/>
+      </Edit>
+    </mgcnodes>
+    <mgcconnectors>
+      <Start>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="70,81,173" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="86,389" endpoint="417,390" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="331,387,4,4" ctrlRect2="166,388,4,4"/>
+      </Start>
+      <mgcnode Name="Manage Publication Objects">
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="417,390" endpoint="130,610" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="270,463,4,4" ctrlRect2="109,486,4,4" textRect="168,472,46,8">
+          <textProps text="PUBLISH" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="449,390" endpoint="795,389" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="706,388,4,4" ctrlRect2="717,397,4,4" textRect="700,391,26,7">
+          <textProps text="EDIT" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="417,390" endpoint="606,606" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="359,418,4,4" ctrlRect2="562,505,4,4" textRect="442,460,41,7">
+          <textProps text="DELETE" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="433,367" endpoint="433,201" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="431,365,4,4" ctrlRect2="431,324,4,4" textRect="422,343,23,7">
+          <textProps text="ADD" font="Verdana,0,9"/>
+        </nextNodeView>
+      </mgcnode>
+      <mgcnode Name="Add Publishing Object">
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="449,178" endpoint="590,178" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="552,176,4,4" ctrlRect2="482,176,4,4" textRect="508,175,23,7">
+          <textProps text="ADD" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="433,201" endpoint="433,367" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="370,300,4,4" ctrlRect2="187,200,4,4" textRect="265,248,30,8">
+          <textProps text="BACK" font="Verdana,0,9"/>
+        </nextNodeView>
+      </mgcnode>
+      <mgcnode Name="Delete Publishing Object">
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="70,81,173" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="590,629" endpoint="433,413" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="566,596,4,4" ctrlRect2="408,526,4,4"/>
+      </mgcnode>
+      <mgcnode Name="Edit Publishing Object Form">
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="811,366" endpoint="811,201" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="809,241,4,4" ctrlRect2="809,323,4,4" textRect="379,231,112,9"/>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="811,412" endpoint="449,390" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="684,530,4,4" ctrlRect2="525,417,4,4" textRect="591,471,30,8">
+          <textProps text="BACK" font="Verdana,0,9"/>
+        </nextNodeView>
+      </mgcnode>
+      <mgcnode Name="Publish Table">
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="159,632" endpoint="417,632" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="350,630,4,4" ctrlRect2="221,630,4,4" textRect="264,628,46,8">
+          <textProps text="PUBLISH" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="146,632" endpoint="433,413" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="280,588,4,4" ctrlRect2="253,548,4,4" textRect="253,566,30,8">
+          <textProps text="BACK" font="Verdana,0,9"/>
+        </nextNodeView>
+      </mgcnode>
+      <Publish>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="70,81,173" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="433,610" endpoint="433,413" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="431,461,4,4" ctrlRect2="431,411,4,4"/>
+      </Publish>
+      <Add>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="70,81,173" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="606,201" endpoint="433,367" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="604,323,4,4" ctrlRect2="561,365,4,4"/>
+      </Add>
+      <Edit>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="70,81,173" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="795,178" endpoint="449,390" ctrlRect1Dirty="true" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="639,192,4,4" ctrlRect2="707,388,4,4"/>
+      </Edit>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions/>
+    <post_actions/>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

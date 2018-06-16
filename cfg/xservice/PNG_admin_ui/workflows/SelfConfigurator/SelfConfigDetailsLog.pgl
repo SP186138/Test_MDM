@@ -1,0 +1,31 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_entry" source="studio.controller:load">
+  <ui:container id="Outer" scrollable="true">
+    <ui:step id="OuterStep" displayText="SC_ISG_LOG_DETAILS" scrollable="true">
+	  <ui:help displayPage="../../bcm/help/Model_Builder_Detail_Log_help.htm"/>
+      <ui:field-group id="executionID" columns="1">
+        <ui:entry-field name="EXECUTION_ID" id="EXECUTION_ID" editable="false" displayText="SC_EXECUTION_ID" unFormat="true" value="{$root/RESPONSE/SQL_RESULT[1]/EXECUTION_ID/@Value}"/>
+      </ui:field-group>
+      <ui:table id="uiTable" displayText="Search :Isg Logs" scrollable="true" displayTextNoRecords="SC_NO_LOGS_FOUND" collapsable="false" select="$root/RESPONSE">
+        <ui:field-group>
+          <ui:display-field name="PARAMETER_NAME" id="PARAMETER_NAME" displayText="SC_PARAMETER_NAME" title="SELF_GEN_PARAMETER_NAME_HOV" unFormat="true"/>
+          <ui:display-field name="PARAMETER_TYPE" id="PARAMETER_TYPE" displayText="SC_PARAMETER_TYPE" sortable="true" title="SELF_GEN_PARAMETER_TYPE_HOV" unFormat="true"/>
+          <ui:display-field name="STATUS" id="STATUS" displayText="SC_EXECUTION_STATUS" defaultValue="NA" title="SELF_GEN_ISG_STATUS_HOV" unFormat="true"/>
+          <ui:display-field name="PRE_ISG_RECORD_COUNT" id="PRE_ISG_RECORD_COUNT" defaultValue="NA" displayText="SC_PRE_ISG_RECORD_COUNT" title="SELF_GEN_PRE_ISG_COUNT_HOV" unFormat="true"/>
+          <ui:display-field name="POST_ISG_RECORD_COUNT" id="POST_ISG_RECORD_COUNT" defaultValue="NA" displayText="SC_POST_ISG_RECORD_COUNT" title="SELF_GEN_PSOT_ISG_COUNT_HOV" unFormat="true"/>
+          <ui:display-field name="OPERATION_START_TIME" id="OPERATION_START_TIME" defaultValue="NA" displayText="SC_OPERATION_START_TIME" title="SELF_GEN_OP_START_TIME_HOV" unFormat="true"/>
+          <ui:display-field name="OPERATION_END_TIME" id="OPERATION_END_TIME" defaultValue="NA" displayText="SC_OPERATION_END_TIME" title="SELF_GEN_OP_END_TIME_HOV" unFormat="true"/>
+          <ui:display-field name="RESPONSE" id="RESPONSE" defaultValue="NA" displayText="SC_RESPONSE" title="SC_RESPONSE_HOV" unFormat="true"  columns="50" rows="2" maxlength="50"/>
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button id="back" name="back" displayText="Back" emphasized="false"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+function onLoad(){
+	onLoadSuper();
+	onResize();
+}
+  </ui:script>
+</ui:page-group>

@@ -1,0 +1,94 @@
+/***********************************************************************************************************
+SCRIPT:               TSS_OPTOUT_INPUT.FEXP
+DESCRIPTION:          This script generates the INPUT file for use by Trillium
+DEPENDENCY:           Staging Opt Out table
+INPUT:                
+OUTPUT:               TSS_OPTOUT_INPUT.DAT
+ERRORS:
+SPECIAL INSTRUCTIONS: In case of failure, log table to be dropped and script to restart from top.
+
+CHANGE LOG:
+VERSION              DATE                 AUTHOR                          CHANGES
+1.00                 03/26/2012           TERADATA                        INITIAL VERSION
+5.0                  12/18/2013           TERADATA                        INTEGRATION CHANGES TO USE I2 
+                                                                          TRILLIUM PROJECTS
+***********************************************************************************************************/
+
+.LOGTABLE TSS_OPTOUT_INPUT_LOG;
+
+.BEGIN EXPORT;
+
+.EXPORT OUTFILE $TSS_OPTOUT_INPUT.DAT FORMAT TEXT MODE RECORD;
+
+SELECT 
+CAST(
+	       COALESCE(TRIM(CAST(OPTOUT_ID AS INTEGER)),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(FNAME),'AA')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(LNAME),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(S_ADD1),'')
+	||'|'||COALESCE(TRIM(S_ADD2),'')
+	||'|'||COALESCE(TRIM(S_ADD3),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(S_CITY),'')
+	||'|'||COALESCE(TRIM(S_ZIP),'')
+	||'|'||COALESCE(TRIM(S_STATE),'')
+	||'|'||COALESCE(TRIM(S_COUNTRY),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(CAST(CAST(A.LOAD_ID AS INTEGER) AS VARCHAR(20))),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(CAST(CAST(LOAD_TS AS TIMESTAMP(0)) AS VARCHAR(20))),'')		
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'||||'||COALESCE(TRIM(''),'')
+    AS CHAR(750))
+  FROM $DATABASENAME.REG_OPT_OUT_STG A
+  INNER JOIN LOAD_INFO B
+  ON A.LOAD_ID=B.LOAD_ID
+  AND B.PROCESS_NAME='OPTOUT Input'
+  AND B.STATUS = 'In Progress'
+  WHERE (S_ADD1 IS NOT NULL
+  OR S_ADD2 IS NOT NULL
+  OR S_ADD3 IS NOT NULL)
+  
+;
+
+.END EXPORT;
+
+.SET CREATERC TO 0;
+
+.IF &SYSRC > 4 THEN;
+.SET CREATERC TO 1;
+.ELSE;
+.IF &SYSRC <= 4 THEN;
+.SET CREATERC TO 0;
+.ENDIF;
+.ENDIF;
+
+.LOGOFF &CREATERC;

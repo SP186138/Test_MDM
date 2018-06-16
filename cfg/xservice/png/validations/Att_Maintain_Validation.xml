@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<user_validations>
+  <user_validation Name="isCodeAllreadyExist" ServiceName="BCM_MASTER">
+    <error_codes>
+      <error_code Name="ENTERED_CODE_ALREADY_EXISTS" Severity="ERROR"/>
+      <error_code Name="ENTERED_DESCRIPTION_ALREADY_EXISTS" Severity="ERROR"/>
+      <error_code Name="ENTERED_SHORT_NAME_ALREADY_EXISTS" Severity="ERROR"/>
+    </error_codes>
+    <tags>
+      <tag Name="REQUEST">
+        <fields>
+          <field Name="AV_CODE">
+            <validations>
+              <validation Name="ValidationCodeExist" FilterName="All" Expression="request('ValidationCodeExist',$thisDoc/*)/_RESULT/@Value = 'SUCCESS'" IsActive="yes" Error="ENTERED_CODE_ALREADY_EXISTS"/>
+            </validations>
+          </field>
+          <field Name="AV_SHORT_NAME">
+            <validations>
+              <validation Name="ValidateShortName" FilterName="All" Expression="request('ValidateShortName',$thisDoc/*)/_RESULT/@Value = 'SUCCESS'" IsActive="yes" Error="ENTERED_DESCRIPTION_ALREADY_EXISTS"/>
+            </validations>
+          </field>
+          <field Name="AV_DESCRIPTION">
+            <validations>
+              <validation Name="ValidationDescExist" FilterName="All" Expression="request('ValidationDescExist',$thisDoc/*)/_RESULT/@Value = 'SUCCESS'" IsActive="yes" Error="ENTERED_SHORT_NAME_ALREADY_EXISTS"/>
+            </validations>
+          </field>
+        </fields>
+      </tag>
+    </tags>
+  </user_validation>
+</user_validations>

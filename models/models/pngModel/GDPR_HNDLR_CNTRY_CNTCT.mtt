@@ -1,0 +1,42 @@
+<document>
+  <properties>
+    <property Name="CNTCT_NBR" PhysicalName="CNTCT_NBR" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="CNTCT_NBR" />
+    </property>
+    <property Name="CNTRY_CODE" PhysicalName="CNTRY_CODE" Required="true" CharSet="LATIN">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="CNTRY_CODE" />
+    </property>
+    <property Name="HNDLR_ID" PhysicalName="HNDLR_ID" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="HNDLR_ID" />
+    </property>
+  </properties>
+  <keys>
+    <key Active="true" Name="GDPR_HNDLR_CNTRY_CNTCT_UPI" PhysicalName="GDPR_HNDLR_CNTRY_CNTCT_UPI" Kind="PRIMARY">
+      <property Name="CNTCT_NBR" />
+      <property Name="CNTRY_CODE" />
+      <property Name="HNDLR_ID" />
+    </key>
+  </keys>
+  <links>
+    <link Active="true" Name="Link1" PhysicalName="GDPR_CNTCT_NBR_LINK">
+      <keymap ToPackage="models/pngModel" ToModelUnit="CNTCT.mtt" ToKey="CNTCT_UPI" ReverseLink="true" ReverseLinkName="GDPR_CNTCT_NBR" DeleteRule="RESTRICT">
+        <mapping FromProperty="CNTCT_NBR" ToProperty="CNTCT_NBR" />
+      </keymap>
+    </link>
+    <link Active="true" Name="Link2" PhysicalName="GDPR_HNDLR_UPI_LINK">
+      <keymap ToPackage="models/pngModel" ToModelUnit="GDPR_HNDLR_CNTRY.mtt" ToKey="GDPR_HNDLR_CNTRY_UPI" ReverseLink="true" ReverseLinkName="GDPR_HNDLR_UPI" DeleteRule="RESTRICT">
+        <mapping FromProperty="CNTRY_CODE" ToProperty="CNTRY_CODE" />
+        <mapping FromProperty="HNDLR_ID" ToProperty="HNDLR_ID" />
+      </keymap>
+    </link>
+  </links>
+  <docFacets>
+    <mdmWebServiceFacet />
+    <mdmSysTableMapFacet TableClass="MASTER" Source="MASTER" MasterTable="GDPR_HNDLR_CNTRY_CNTCT" />
+    <miscFacet PhysicalName="GDPR_HNDLR_CNTRY_CNTCT" Active="true" />
+    <mdmConfigFacet SchemaGen="true" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql />
+</document>
+

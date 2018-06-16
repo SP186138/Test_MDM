@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+Copyright (c) 2009 by Teradata Corporation.
+All Rights Reserved.
+Teradata CONFIDENTIAL AND TRADE SECRET
+-->
+  <DEFINE_METHOD Name="TRTExcelUpload">
+    <RULE>
+      <ACTION>
+        <EXECUTE_SQL_QUERY AssignToVar="respID" ReturnRowCount="yes" Value="SEL MAX(id)as ID FROM UPLD_PRGS_RPT WHERE TEMPLATE_NAME='EntityTRTTemplate'"/>
+        <SET Var="actionValueTRT" FromValue="INSERT"/>
+        <SET Var="actionValueTRTValue" FromValue="INSERT"/>
+        <IF_TEST Test="$thisParam/OPERATION/@Value = 'ADD' or $thisParam/OPERATION/@Value = 'Add'">
+          <THEN>
+            <GET_DOCUMENT Name="TRT" AssignToVar="resTrt">
+              <SELECT>
+                <TRT_NAME/>
+              </SELECT>
+              <TRT_NBR Value="{$thisParam/TRT_NBR/@Value}"/>
+            </GET_DOCUMENT>
+            <GET_DOCUMENT Name="PREDFND_TRT_VAL" AssignToVar="resTrtValue">
+              <SELECT>
+                <PREDFND_TRT_VAL_NAME/>
+              </SELECT>
+              <TRT_NBR Value="{$thisParam/TRT_NBR/@Value}"/>
+              <PREDFND_TRT_VAL_NBR Value="{$thisParam/PREDFND_TRT_VAL_NBR/@Value}"/>
+            </GET_DOCUMENT>
+            <IF_TEST Test="strlen($resTrt/TRT/TRT_NAME/@Value)&gt; 0">
+              <THEN>
+                <SET Var="actionValueTRT" FromValue="UPDATE"/>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+            <IF_TEST Test="strlen(resTrtValue/PREDFND_TRT_VAL/PREDFND_TRT_VAL_NAME/@Value)&gt; 0">
+              <THEN>
+                <SET Var="actionValueTRTValue" FromValue="UPDATE"/>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+          </THEN>
+          <ELSE>
+            <IF_TEST Test="$thisParam/OPERATION/@Value = 'UPDATE' or $thisParam/OPERATION/@Value = 'Update'">
+              <THEN>
+                <SET Var="actionValueTRT" FromValue="UPDATE"/>
+                <SET Var="actionValueTRTValue" FromValue="UPDATE"/>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+          </ELSE>
+        </IF_TEST>
+        <DO_DB_PERSIST DocumentName="TRT" Source="EXTERNAL" Action="{$actionValueTRT}" ServiceName="BCM_MASTER" AssignToVar="TrtResponse" SysLoadId="{$respID/SQL_RESULT/ID/@Value}" SysWfId="XL_WF5678">
+          <TRT>
+            <TRT_NBR Value="{$thisParam/TRT_NBR/@Value}"/>
+            <TRT_ENT_TYPE_CODE Value="Y"/>
+            <TRT_NAME Value="{$thisParam/TRT_NAME/@Value}"/>
+            <TRT_DTTP_CODE Value="Y"/>
+          </TRT>
+        </DO_DB_PERSIST>
+        <IF_TEST Test="$TrtResponse/VALIDATION_RESULT/ERROR_SEVERITY/@Value='SEVERE_ERROR'">
+          <THEN/>
+          <ELSE>
+            <DO_DB_PERSIST DocumentName="PREDFND_TRT_VAL" Source="EXTERNAL" Action="{$actionValueTRTValue}" ServiceName="BCM_MASTER" AssignToVar="TrtValueResponse" SysLoadId="{$respID/SQL_RESULT/ID/@Value}" SysWfId="XL_WF5678">
+              <PREDFND_TRT_VAL>
+                <TRT_NBR Value="{$thisParam/TRT_NBR/@Value}"/>
+                <PREDFND_TRT_VAL_NBR Value="{$thisParam/PREDFND_TRT_VAL_NBR/@Value}"/>
+                <PREDFND_TRT_DATE Value="{$thisParam/PREDFND_TRT_DATE/@Value}"/>
+                <PREDFND_TRT_TXT Value="{$thisParam/PREDFND_TRT_TXT/@Value}"/>
+                <PREDFND_TRT_VAL_NAME Value="{$thisParam/PREDFND_TRT_VAL_NAME/@Value}"/>
+              </PREDFND_TRT_VAL>
+            </DO_DB_PERSIST>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

@@ -1,0 +1,33 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_form" source="studio.controller:load">
+  <ui:container inner="true">
+    <ui:step id="Inner1">
+      <ui:field-group columns="2">
+        <ui:hidden-field id="selChildInsId" name="selChildInsId"/>
+        <ui:display-field name="WorkflowName" displayText="Workflow Name" value="{$root/SELECTED_WORKFLOW_DETAILS/SYS_WKFLW_LOG/WFName/@Value}" unFormat="true"/>
+        <ui:display-field name="InstanceId" displayText="Instance ID" value="{$root/SELECTED_WORKFLOW_DETAILS/SYS_WKFLW_LOG/InstanceID/@Value}" unFormat="true"/>
+        <ui:display-field name="ServiceName" displayText="Service Name" value="{$root/SELECTED_WORKFLOW_DETAILS/SYS_WKFLW_LOG/ServiceName/@Value}"/>
+        <ui:display-field name="User" displayText="User" value="{$root/SELECTED_WORKFLOW_DETAILS/SYS_WKFLW_LOG/TriggeredBy/@Value}"/>
+        <ui:display-field name="StartTime" displayText="Start Time" value="{$root/SELECTED_WORKFLOW_DETAILS/SYS_WKFLW_LOG/StartTime/@Value}"/>
+        <ui:display-field name="EndTime" displayText="End Time" value="{$root/SELECTED_WORKFLOW_DETAILS/SYS_WKFLW_LOG/EndTime/@Value}"/>
+        <ui:display-field name="Status" displayText="Status" value="{$root/SELECTED_WORKFLOW_DETAILS/SYS_WKFLW_LOG/Status/@Value}"/>
+        <ui:link-field name="InputParams" displayText="Input Parameters" targetName="catalogPopup" targetType="popup" id="InputParams" value="Show">
+          <ui:url page="{concat($root/WEB_APP_PATH/@Value,'/view.x2ps')}">
+            <POPUP select="$root/popValue/@Value"/>
+            <BUTTON_ID select="'showWorkflowParams'"/>
+            <SELECTED_INSTANCE_ID select="$root/SELECTED_WORKFLOW_DETAILS/SYS_WKFLW_LOG/InstanceID/@Value"/>
+            <PARAM_TYPE select="'INPUT_PARAM'"/>
+          </ui:url>
+        </ui:link-field>
+        <ui:link-field name="OutputParams" displayText="Output Parameters" targetName="catalogPopup" targetType="popup" id="OutputParams" value="Show">
+          <ui:url page="{concat($root/WEB_APP_PATH/@Value,'/view.x2ps')}">
+            <POPUP select="$root/popValue/@Value"/>
+            <BUTTON_ID select="'showWorkflowParams'"/>
+            <SELECTED_INSTANCE_ID select="$root/SELECTED_WORKFLOW_DETAILS/SYS_WKFLW_LOG/InstanceID/@Value"/>
+            <PARAM_TYPE select="'OUTPUT_PARAM'"/>
+          </ui:url>
+        </ui:link-field>
+        <ui:hidden-field name="SELECTED_INSTANCE_ID" value="{$root/SELECTED_WORKFLOW_DETAILS/SYS_WKFLW_LOG/InstanceID/@Value}" id="SELECTED_INSTANCE_ID"/>
+      </ui:field-group>
+    </ui:step>
+  </ui:container>
+</ui:page-group>

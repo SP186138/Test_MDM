@@ -1,0 +1,52 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" Id="SearchIncentive.pgl" version="3">
+  <ui:container id="outerContainer1" name="outerContainer1" scrollable="true">
+    <ui:step id="outerStep1" name="outerStep1" scrollable="true">
+      <ui:container id="searchContainer">
+        <ui:step id="searchStep">
+          <ui:field-group id="searchFG" displayText="Search" collapsable="true">
+            <ui:field-group columns="2" id="fieldGroups" select="$this">
+              <!--ui:display-field id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR" displayText="Selected Authoring Program" displayCondition="{$root/SOURCE/@Value='CNTNT_SEARCH'}" colSpan="3"/-->
+              <ui:display-field  id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR" displayText="Matched Domain" optionSrc="{$root/LEGAL_ENT_NAME/@Value}" required="true" onChange="javascript:loadProgramList()" disabled="true"/>
+              <ui:dropdown id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR" displayText="Authoring Program" optionSrc="$root/MKTNG_PGM/OPTION" disabled="true"/>
+              <ui:hidden-field id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR"/>
+              <ui:hidden-field id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR"/>
+              <ui:entry-field id="INCTV_NAME" name="INCTV_NAME" displayText="Incentive Name"/>
+              <ui:entry-field id="INCTV_DESC" name="INCTV_DESC" displayText="Description"/>
+            </ui:field-group>
+          </ui:field-group>
+          <ui:buttons>
+            <ui:button id="SEARCH_INCENTIVES" displayText="Search Incentives" emphasized="true"/>
+          </ui:buttons>
+        </ui:step>
+      </ui:container>
+      <ui:table id="searchResultsTable" displayText="Incentives Search Results" rowId="INCTV_NBR" rowSrc="$root/RESPONSE/INCTV" scrollable="true" displayTextNoRecords="No Incentives Found" maxRows="-1" postRowIdAs="selectedIncentiveID" doPaging="false" totalRowCount="$root/RESPONSE/@TotalRowCount" selectable="single">
+        <ui:field-group id="tableColumns" select="$root/RESPONSE/*">
+          <ui:display-field id="INCTV_NBR" name="INCTV_NBR" displayText="Incentive Number"/>
+          <ui:display-field id="INCTV_NAME" name="INCTV_NAME" displayText="Incentive Name"/>
+          <ui:display-field id="INCTV_DESC" name="INCTV_DESC" displayText="Description"/>
+          <ui:display-field id="MKTNG_PGM_NAME" name="MKTNG_PGM_NBR" displayText="Program Name"/>
+          <ui:display-field id="INCTV_STATUS_NAME" name="INCTV_STATUS_NAME" displayText="Incentive Status"/>
+          <ui:display-field id="INCTV_TYPE_NAME" name="INCTV_TYPE_NAME" displayText="Incentive Type"/>
+        </ui:field-group>
+        <ui:buttons id="SELECT">
+          <ui:button id="SELECT_INCENTIVE" displayText="Select and Return" emphasized="true" enabledBySelections="true" onClick="javascript:selectInctv();"/>
+          <ui:button id="CANCEL" name="CANCEL" displayText="Cancel"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+function selectInctv(){
+/*for (index=0; index &lt; document.form.selectedIncentiveID.length; index++) {
+if (document.form.selectedIncentiveID[index].checked) {
+var radioValue = document.form.selectedIncentiveID[index].value;
+break;
+}
+}
+*/
+document.form.BUTTON_ID.value = 'SELECT_INCENTIVE';
+document.form.action = 'view.x2ps';
+document.form.submit();
+}
+</ui:script>
+</ui:page-group>

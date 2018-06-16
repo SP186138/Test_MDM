@@ -1,0 +1,986 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+
+
+
+Copyright (c) 2009 by Teradata Corporation.
+
+
+
+All Rights Reserved.
+
+
+
+Teradata CONFIDENTIAL AND TRADE SECRET
+
+
+
+-->
+  <DEFINE_METHOD Name="getIncentiveOptions">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="IncentiveList">
+          <ROOT>
+            <INCTV/>
+          </ROOT>
+        </TO_DOCVAR>
+        <GET_DOCUMENT ReturnRowCount="yes" ServiceName="BCM_MASTER" DirtyRead="true" Name="INCTV" AssignToVar="allInctvs">
+          <SELECT>
+            <INCTV_NBR/>
+            <INCTV_NAME/>
+          </SELECT>
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+        </GET_DOCUMENT>
+        <FOR_EACH SelectList="$allInctvs/INCTV" CurrentElement="currentElement">
+          <SET Var="inctvname" FromValue="{$currentElement/INCTV_NAME/@Value}"/>
+          <SET Var="inctvnbr" FromValue="{$currentElement/INCTV_NBR/@Value}"/>
+          <APPEND_TO_XML SelectList="$IncentiveList/INCTV">
+            <OPTION Id="{$inctvnbr}" Value="{$inctvname}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="IncentiveList" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getInctvSearchResults">
+    <RULE>
+      <ACTION>
+        <SET Var="startRow" FromValue="{$thisParam/START_AT_ROW/@Value}"/>
+        <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+          <MKTNG_PGM_NBR/>
+          <INCTV_NAME/>
+          <INCTV_DESC/>
+        </FORM_SEARCH_FILTER>
+        <TO_DOCVAR AssignToVar="filterList">
+          <FILTERLIST/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$filters/FILTER" CurrentElement="thisFilter">
+          <APPEND_TO_XML SelectList="$filterList">
+            <TO_XML SelectList="$thisFilter/*"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <IF_TEST Test="$thisParam/MKTNG_PGM_NBR/@Value=''">
+          <THEN>
+            <TO_DOCVAR AssignToVar="allMktngPrograms">
+              <ROOT>
+                <MKTNG_PGM/>
+              </ROOT>
+            </TO_DOCVAR>
+            <FOR_EACH SelectList="$thisParam/MKTNG_PGM/OPTION" CurrentElement="currElement">
+              <APPEND_TO_XML SelectList="$allMktngPrograms/MKTNG_PGM">
+                <MKTNG_PGM_NBR Value="{$currElement/@Id}"/>
+              </APPEND_TO_XML>
+            </FOR_EACH>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+        <GET_DOCUMENT ReturnRowCount="true" StartAtRow="{$startRow}" ServiceName="BCM_MASTER" DirtyRead="true" MaxRows="15" Name="INCTV" AssignToVar="searchResults">
+          <TO_XML SelectList="$filterList/*"/>
+          <OR>
+            <TO_XML SelectList="$allMktngPrograms/MKTNG_PGM/*"/>
+          </OR>
+          <SELECT>
+            <INCTV_NBR/>
+            <INCTV_NAME/>
+            <INCTV_DESC/>
+            <!--LEGAL_ENT_NBR/-->
+            <MKTNG_PGM_NBR/>
+            <INCTV_STATUS_CODE/>
+            <INCTV_TYPE_CODE/>
+          </SELECT>
+        </GET_DOCUMENT>
+        <FOR_EACH SelectList="$searchResults/INCTV" CurrentElement="currentElement">
+          <FOR_EACH SelectList="$thisParam/MKTNG_PGM/OPTION" CurrentElement="curElement">
+            <IF_TEST Test="$curElement/@Value!='All'">
+              <THEN>
+                <IF_TEST Test="$currentElement/MKTNG_PGM_NBR/@Value=$curElement/@Id">
+                  <THEN>
+                    <SET DocVar="currentElement" Property="MKTNG_PGM_NAME" FromValue="{$curElement/@Value}"/>
+                  </THEN>
+                  <ELSE/>
+                </IF_TEST>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+          </FOR_EACH>
+        </FOR_EACH>
+        <FOR_EACH SelectList="$searchResults/INCTV" CurrentElement="currentElement">
+          <FOR_EACH SelectList="$thisParam/INCTV_TYPE/OPTION" CurrentElement="curElement">
+            <IF_TEST Test="$currentElement/INCTV_TYPE_CODE/@Value=$curElement/@Id">
+              <THEN>
+                <SET DocVar="currentElement" Property="INCTV_TYPE_NAME" FromValue="{$curElement/@Value}"/>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+          </FOR_EACH>
+        </FOR_EACH>
+        <FOR_EACH SelectList="$searchResults/INCTV" CurrentElement="currentElement">
+          <FOR_EACH SelectList="$thisParam/INCTV_STATUS/OPTION" CurrentElement="curElement">
+            <IF_TEST Test="$currentElement/INCTV_STATUS_CODE/@Value=$curElement/@Id">
+              <THEN>
+                <SET DocVar="currentElement" Property="INCTV_STATUS_NAME" FromValue="{$curElement/@Value}"/>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+          </FOR_EACH>
+        </FOR_EACH>
+        <CLONE_XML DocVar="searchResults" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getProgramIDlist">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="programIdsList">
+          <ROOT>
+            <MKTNG_PGM/>
+          </ROOT>
+        </TO_DOCVAR>
+        <GET_DOCUMENT ReturnRowCount="yes" ServiceName="BCM_MASTER" DirtyRead="true" Name="MKTNG_PGM" AssignToVar="allProgramIDs">
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <SELECT>
+            <MKTNG_PGM_NBR/>
+            <MKTNG_PGM_NAME/>
+          </SELECT>
+        </GET_DOCUMENT>
+        <IF_TEST Test="$thisParam/SOURCE/@Value='SEARCH'">
+          <THEN>
+            <APPEND_TO_XML SelectList="$programIdsList/MKTNG_PGM">
+              <OPTION Id="" Value="All"/>
+            </APPEND_TO_XML>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+        <FOR_EACH SelectList="$allProgramIDs/MKTNG_PGM" CurrentElement="currentElement">
+          <SET Var="programname" FromValue="{$currentElement/MKTNG_PGM_NAME/@Value}"/>
+          <SET Var="programnbr" FromValue="{$currentElement/MKTNG_PGM_NBR/@Value}"/>
+          <APPEND_TO_XML SelectList="$programIdsList/MKTNG_PGM">
+            <OPTION Id="{$programnbr}" Value="{$programname}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="programIdsList" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getInctvlist">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="Inctvlist">
+          <ROOT>
+            <INCTV_TYPE/>
+          </ROOT>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY Value="SELECT INCTV_TYPE_CODE, INCTV_TYPE_NAME FROM INCTV_TYPE" AssignToVar="allInctvTypes"/>
+        <!--GET_DOCUMENT Name="INCTV_TYPE" ServiceName="BCM_MASTER" AssignToVar="allInctvTypes" DirtyRead="true" ReturnRowCount="yes">
+
+
+
+<SELECT>
+
+
+
+<INCTV_TYPE_CODE/>
+
+
+
+<INCTV_TYPE_NAME/>
+
+
+
+</SELECT>
+
+
+
+</GET_DOCUMENT-->
+        <FOR_EACH SelectList="$allInctvTypes/SQL_RESULT" CurrentElement="currentElement">
+          <SET Var="inctvname" FromValue="{$currentElement/INCTV_TYPE_NAME/@Value}"/>
+          <SET Var="inctvnbr" FromValue="{$currentElement/INCTV_TYPE_CODE/@Value}"/>
+          <APPEND_TO_XML SelectList="$Inctvlist/INCTV_TYPE">
+            <OPTION Id="{$inctvnbr}" Value="{$inctvname}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="Inctvlist" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getInctvStatuslist">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="InctvStatuslist">
+          <ROOT>
+            <INCTV_STATUS/>
+          </ROOT>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY Value="SELECT INCTV_STATUS_CODE, INCTV_STATUS_NAME FROM INCTV_STATUS" AssignToVar="allInctvStatusTypes"/>
+        <FOR_EACH SelectList="$allInctvStatusTypes/SQL_RESULT" CurrentElement="currentElement">
+          <SET Var="inctvname" FromValue="{$currentElement/INCTV_STATUS_NAME/@Value}"/>
+          <SET Var="inctvnbr" FromValue="{$currentElement/INCTV_STATUS_CODE/@Value}"/>
+          <APPEND_TO_XML SelectList="$InctvStatuslist/INCTV_STATUS">
+            <OPTION Id="{$inctvnbr}" Value="{$inctvname}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="InctvStatuslist" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getCouponlist">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="Couponlist">
+          <ROOT>
+            <COUPON_TYPE/>
+          </ROOT>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY Value="SELECT COUPN_TYPE_CODE, COUPN_TYPE_NAME FROM COUPN_TYPE" AssignToVar="allCouponTypes"/>
+        <!--GET_DOCUMENT Name="COUPON_TYPE" ServiceName="BCM_MASTER" AssignToVar="allCouponTypes" DirtyRead="true" ReturnRowCount="yes">
+
+
+
+<SELECT>
+
+
+
+<COUPN_TYPE_CODE/>
+
+
+
+<COUPN_TYPE_NAME/>
+
+
+
+</SELECT>
+
+
+
+</GET_DOCUMENT-->
+        <FOR_EACH SelectList="$allCouponTypes/SQL_RESULT" CurrentElement="currentElement">
+          <SET Var="couponname" FromValue="{$currentElement/COUPN_TYPE_NAME/@Value}"/>
+          <SET Var="couponnbr" FromValue="{$currentElement/COUPN_TYPE_CODE/@Value}"/>
+          <APPEND_TO_XML SelectList="$Couponlist/COUPON_TYPE">
+            <OPTION Id="{$couponnbr}" Value="{$couponname}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="Couponlist" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getSectorlist">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="Sectorlist">
+          <ROOT>
+            <SECTOR/>
+          </ROOT>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY Value="SELECT DISTINCT A.SECTOR_CODE, SECTOR_NAME FROM PROD_ITEM_HIER_ASSOC A JOIN SECTOR B on A.SECTOR_CODE=B.SECTOR_CODE ORDER BY 2 ASC" AssignToVar="allSectorTypes"/>
+        <FOR_EACH SelectList="$allSectorTypes/SQL_RESULT" CurrentElement="currentElement">
+          <SET Var="sectorname" FromValue="{$currentElement/SECTOR_NAME/@Value}"/>
+          <SET Var="sectornbr" FromValue="{$currentElement/SECTOR_CODE/@Value}"/>
+          <APPEND_TO_XML SelectList="$Sectorlist/SECTOR">
+            <OPTION Id="{$sectornbr}" Value="{$sectorname}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="Sectorlist" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getSubSectorList">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="SubSectorlist">
+          <ROOT>
+            <SUB_SECTOR/>
+          </ROOT>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY Value="SELECT DISTINCT A.SUB_SECTOR_CODE, SUB_SECTOR_NAME FROM PROD_ITEM_HIER_ASSOC A JOIN SUB_SECTOR B on A.SUB_SECTOR_CODE=B.SUB_SECTOR_CODE  WHERE SECTOR_CODE='{$thisParam/SECTOR_CODE/@Value}' ORDER BY 2 ASC" AssignToVar="allSubSectorTypes"/>
+        <FOR_EACH SelectList="$allSubSectorTypes/SQL_RESULT" CurrentElement="currentElement">
+          <SET Var="subsectorname" FromValue="{$currentElement/SUB_SECTOR_NAME/@Value}"/>
+          <SET Var="subsectornbr" FromValue="{$currentElement/SUB_SECTOR_CODE/@Value}"/>
+          <APPEND_TO_XML SelectList="$SubSectorlist/SUB_SECTOR">
+            <OPTION Id="{$subsectornbr}" Value="{$subsectorname}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="SubSectorlist" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getCategList">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="Categlist">
+          <ROOT>
+            <CATEG/>
+          </ROOT>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY Value="SELECT DISTINCT A.CATEG_CODE, CATEG_NAME FROM PROD_ITEM_HIER_ASSOC A JOIN CATEG B on A.CATEG_CODE=B.CATEG_CODE WHERE SUB_SECTOR_CODE='{$thisParam/SUB_SECTOR_CODE/@Value}' AND SECTOR_CODE='{$thisParam/SECTOR_CODE/@Value}' ORDER BY 2 ASC" AssignToVar="allCategTypes"/>
+        <FOR_EACH SelectList="$allCategTypes/SQL_RESULT" CurrentElement="currentElement">
+          <SET Var="categname" FromValue="{$currentElement/CATEG_NAME/@Value}"/>
+          <SET Var="categnbr" FromValue="{$currentElement/CATEG_CODE/@Value}"/>
+          <APPEND_TO_XML SelectList="$Categlist/CATEG">
+            <OPTION Id="{$categnbr}" Value="{$categname}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="Categlist" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getSegList">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="Categlist">
+          <ROOT>
+            <SEG/>
+          </ROOT>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY Value="SELECT DISTINCT A.SEG_CODE, SEG_NAME FROM PROD_ITEM_HIER_ASSOC A JOIN SEG B on A.SEG_CODE=B.SEG_CODE WHERE CATEG_CODE='{$thisParam/CATEG_CODE/@Value}' AND SUB_SECTOR_CODE='{$thisParam/SUB_SECTOR_CODE/@Value}' AND SECTOR_CODE='{$thisParam/SECTOR_CODE/@Value}' ORDER BY 2 ASC" AssignToVar="allCategTypes"/>
+        <FOR_EACH SelectList="$allCategTypes/SQL_RESULT" CurrentElement="currentElement">
+          <SET Var="categname" FromValue="{$currentElement/SEG_NAME/@Value}"/>
+          <SET Var="categnbr" FromValue="{$currentElement/SEG_CODE/@Value}"/>
+          <APPEND_TO_XML SelectList="$Categlist/SEG">
+            <OPTION Id="{$categnbr}" Value="{$categname}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="Categlist" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getBrandList">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="Brandlist">
+          <ROOT>
+            <BRAND/>
+          </ROOT>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY Value="SELECT DISTINCT A.BRAND_CODE, BRAND_NAME FROM PROD_ITEM_HIER_ASSOC A JOIN BRAND B on A.BRAND_CODE=B.BRAND_CODE WHERE SEG_CODE='{$thisParam/SEG_CODE/@Value}' AND CATEG_CODE='{$thisParam/CATEG_CODE/@Value}' AND SUB_SECTOR_CODE='{$thisParam/SUB_SECTOR_CODE/@Value}' AND SECTOR_CODE='{$thisParam/SECTOR_CODE/@Value}' ORDER BY 2 ASC" AssignToVar="allBrandTypes"/>
+        <FOR_EACH SelectList="$allBrandTypes/SQL_RESULT" CurrentElement="currentElement">
+          <SET Var="brandname" FromValue="{$currentElement/BRAND_NAME/@Value}"/>
+          <SET Var="brandnbr" FromValue="{$currentElement/BRAND_CODE/@Value}"/>
+          <APPEND_TO_XML SelectList="$Brandlist/BRAND">
+            <OPTION Id="{$brandnbr}" Value="{$brandname}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="Brandlist" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getSubBrandList">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="Categlist">
+          <ROOT>
+            <SUB_BRAND/>
+          </ROOT>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY Value="SELECT DISTINCT A.SUB_BRAND_CODE, SUB_BRAND_NAME FROM PROD_ITEM_HIER_ASSOC A JOIN SUB_BRAND B on A.SUB_BRAND_CODE=B.SUB_BRAND_CODE WHERE BRAND_CODE='{$thisParam/BRAND_CODE/@Value}' OR BRAND_FAMLY_ID= '{$thisParam/BRAND_FAMLY_ID/@Value}' AND SEG_CODE='{$thisParam/SEG_CODE/@Value}' AND CATEG_CODE='{$thisParam/CATEG_CODE/@Value}' AND SUB_SECTOR_CODE='{$thisParam/SUB_SECTOR_CODE/@Value}' AND SECTOR_CODE='{$thisParam/SECTOR_CODE/@Value}' ORDER BY 2 ASC" AssignToVar="allCategTypes"/>
+        <FOR_EACH SelectList="$allCategTypes/SQL_RESULT" CurrentElement="currentElement">
+          <SET Var="categname" FromValue="{$currentElement/SUB_BRAND_NAME/@Value}"/>
+          <SET Var="categnbr" FromValue="{$currentElement/SUB_BRAND_CODE/@Value}"/>
+          <APPEND_TO_XML SelectList="$Categlist/SUB_BRAND">
+            <OPTION Id="{$categnbr}" Value="{$categname}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="Categlist" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getItemVersList">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="Categlist">
+          <ROOT>
+            <ITEM_VERS/>
+          </ROOT>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY Value="SELECT DISTINCT A.ITEM_VERS_CODE, ITEM_VERS_NAME FROM PROD_ITEM_HIER_ASSOC A JOIN ITEM_VERS B on A.ITEM_VERS_CODE=B.ITEM_VERS_CODE WHERE SUB_BRAND_CODE='{$thisParam/SUB_BRAND_CODE/@Value}' AND BRAND_CODE='{$thisParam/BRAND_CODE/@Value}' OR BRAND_FAMLY_ID='{$thisParam/BRAND_FAMLY_ID/@Value}' AND SEG_CODE='{$thisParam/SEG_CODE/@Value}' AND CATEG_CODE='{$thisParam/CATEG_CODE/@Value}' AND SUB_SECTOR_CODE='{$thisParam/SUB_SECTOR_CODE/@Value}' AND SECTOR_CODE='{$thisParam/SECTOR_CODE/@Value}' ORDER BY 2 ASC" AssignToVar="allCategTypes"/>
+        <FOR_EACH SelectList="$allCategTypes/SQL_RESULT" CurrentElement="currentElement">
+          <SET Var="categname" FromValue="{$currentElement/ITEM_VERS_NAME/@Value}"/>
+          <SET Var="categnbr" FromValue="{$currentElement/ITEM_VERS_CODE/@Value}"/>
+          <APPEND_TO_XML SelectList="$Categlist/ITEM_VERS">
+            <OPTION Id="{$categnbr}" Value="{$categname}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="Categlist" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <!--DEFINE_METHOD Name="getProdItemUpcCode">
+
+<RULE>
+
+<ACTION>
+
+<TO_DOCVAR AssignToVar="ProdItemUpcList">
+
+<ROOT>
+
+<PROD_ITEM_UPC_CODE />
+
+</ROOT>
+
+</TO_DOCVAR>
+
+<EXECUTE_SQL_QUERY Value="SEL DISTINCT A.BRAND_FAMLY_ID  , A.CATEG_CODE, A.BRAND_CODE,C.BRAND_FAMLY_NAME FROM INCTV_ITEM A LEFT OUTER JOIN BRAND_FAMLY_ASSOC  B ON A.CATEG_CODE =B.CATEG_CODE AND A.BRAND_CODE=B.BRAND_CODE LEFT OUTER JOIN BRAND_FAMLY C ON A.BRAND_FAMLY_ID=C.BRAND_FAMLY_ID WHERE    A.CATEG_CODE ='{$thisParam/CATEG_CODE/@Value}' AND A.BRAND_CODE = '{$thisParam/BRAND_CODE/@Value}'" AssignToVar="allProdItemUPCTypes" />
+
+<FOR_EACH SelectList="$allProdItemUPCTypes/SQL_RESULT" CurrentElement="currentElement">
+
+<SET Var="BrandFamilyname" FromValue="{$currentElement/BRAND_FAMLY_NAME/@Value}" />
+
+<SET Var="ProdUpcCode" FromValue="{$currentElement/PROD_ITEM_UPC/@Value}" />
+
+<APPEND_TO_XML SelectList="$ProdFamilyUpcList/PROD_FAMILY_UPC_CODE">
+
+<OPTION Id="{$ProdUpcCode}" Value="{$ProdUpcCode}" />
+
+</APPEND_TO_XML>
+
+</FOR_EACH>
+
+<CLONE_XML DocVar="BrandFamilyList" AssignToVar="thisReturn" />
+
+</ACTION>
+
+</RULE>
+
+  </DEFINE_METHOD-->
+  <DEFINE_METHOD Name="getBrandCodeBrandFamilyList">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="BrandFamilyList">
+          <ROOT>
+            <BRAND_FAMILY/>
+          </ROOT>
+        </TO_DOCVAR>
+        <!--<EXECUTE_SQL_QUERY Value="SEL DISTINCT B.BRAND_FAMLY_ID FROM INCTV_ITEM A LEFT OUTER JOIN BRAND_FAMLY_ASSOC  B ON A.CATEG_CODE =B.CATEG_CODE AND A.BRAND_CODE=B.BRAND_CODE LEFT OUTER JOIN BRAND_FAMLY C ON A.BRAND_FAMLY_ID=C.BRAND_FAMLY_ID WHERE    A.CATEG_CODE ='{$thisParam/CATEG_CODE/@Value}' AND A.SEG_CODE ='{$thisParam/SEG_CODE/@Value}' " AssignToVar="allBrandFamilyCodeTypes"/>-->
+        <EXECUTE_SQL_QUERY Value="SEL DISTINCT BRAND_FAMLY_ID FROM BRAND_FAMLY_ASSOC WHERE    CATEG_CODE ='{$thisParam/CATEG_CODE/@Value}' AND BRAND_CODE ='{$thisParam/BRAND_CODE/@Value}'" AssignToVar="allBrandFamilyCodeTypes" HandleException="true"/>
+        <FOR_EACH SelectList="$allBrandFamilyCodeTypes/SQL_RESULT" CurrentElement="currentElement">
+          <SET Var="BrandNbr" FromValue="{$currentElement/BRAND_FAMLY_ID/@Value}"/>
+          <APPEND_TO_XML SelectList="$BrandFamilyList">
+            <BRAND_FAMLY_ID Value="{$BrandNbr}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <APPEND_TO_XML DocVar="thisReturn">
+          <TO_XML SelectList="$BrandFamilyList/*"/>
+        </APPEND_TO_XML>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getBrandFamilyList">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="BrandFamilyList">
+          <ROOT>
+            <BRAND_FAMILY/>
+          </ROOT>
+        </TO_DOCVAR>
+        <!--<EXECUTE_SQL_QUERY Value="SEL DISTINCT A.BRAND_FAMLY_ID  , A.CATEG_CODE, A.SEG_CODE, C.BRAND_FAMLY_NAME FROM INCTV_ITEM A LEFT OUTER JOIN BRAND_FAMLY_ASSOC  B ON A.CATEG_CODE =B.CATEG_CODE AND A.BRAND_CODE=B.BRAND_CODE LEFT OUTER JOIN BRAND_FAMLY C ON A.BRAND_FAMLY_ID=C.BRAND_FAMLY_ID WHERE    A.CATEG_CODE ='{$thisParam/CATEG_CODE/@Value}' AND A.SEG_CODE ='{$thisParam/SEG_CODE/@Value}' " AssignToVar="allBrandFamilyTypes"/>-->
+        <!--EXECUTE_SQL_QUERY Value="SEL DISTINCT BRAND_FAMLY_ID FROM BRAND_FAMLY_ASSOC WHERE    CATEG_CODE ='{$thisParam/CATEG_CODE/@Value}' AND BRAND_CODE ='{$thisParam/BRAND_CODE/@Value}'" AssignToVar="allBrandFamilyCodeTypes" HandleException="true"/-->
+        <EXECUTE_SQL_QUERY Value="SEL DISTINCT A.BRAND_FAMLY_ID  , A.CATEG_CODE, A.SEG_CODE, C.BRAND_FAMLY_NAME FROM INCTV_ITEM A LEFT OUTER JOIN BRAND_FAMLY_ASSOC  B ON A.CATEG_CODE =B.CATEG_CODE AND A.BRAND_CODE=B.BRAND_CODE LEFT OUTER JOIN BRAND_FAMLY C ON A.BRAND_FAMLY_ID=C.BRAND_FAMLY_ID WHERE    A.CATEG_CODE ='{$thisParam/CATEG_CODE/@Value}' AND A.SEG_CODE ='{$thisParam/SEG_CODE/@Value}'" AssignToVar="allBrandFamilyTypes" HandleException="true"/>
+        <FOR_EACH SelectList="$allBrandFamilyTypes/SQL_RESULT" CurrentElement="currentElement">
+          <SET Var="BrandFamilyname" FromValue="{$currentElement/BRAND_FAMLY_NAME/@Value}"/>
+          <SET Var="BrandNbr" FromValue="{$currentElement/BRAND_FAMLY_ID/@Value}"/>
+          <APPEND_TO_XML SelectList="$BrandFamilyList/BRAND_FAMILY">
+            <OPTION Id="{$BrandNbr}" Value="{$BrandFamilyname}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="BrandFamilyList" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getProdFamilyList">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="ProdFamilylist">
+          <ROOT/>
+        </TO_DOCVAR>
+        <!--<EXECUTE_SQL_QUERY Value="SEL DISTINCT A.PROD_FAMLY_ID ,  A.PROD_ITEM_UPC,C.PROD_FAMLY_NAME FROM PROD_ITEM_HIER_ASSOC A LEFT OUTER JOIN INCTV_ITEM  B ON A.PROD_ITEM_UPC=B.PROD_ITEM_UPC LEFT OUTER JOIN PROD_FAMLY C ON A.PROD_FAMLY_ID=C.PROD_FAMLY_ID WHERE    A.PROD_ITEM_UPC='{$thisParam/PROD_ITEM_UPC/@Value}'" AssignToVar="allProdFamilyTypes"/>-->
+        <EXECUTE_SQL_QUERY Value="sel distinct PROD_FAMLY_ID  from PROD_ITEM_HIER_ASSOC where PROD_ITEM_UPC='{$thisParam/PROD_ITEM_UPC/@Value}'" AssignToVar="allProdFamilyTypes"/>
+        <FOR_EACH SelectList="$allProdFamilyTypes/SQL_RESULT" CurrentElement="currentElement">
+          <SET Var="ProdFamnbr" FromValue="{$currentElement/PROD_FAMLY_ID/@Value}"/>
+          <APPEND_TO_XML SelectList="$ProdFamilylist">
+            <PROD_FAMLY_ID Value="{$ProdFamnbr}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <APPEND_TO_XML DocVar="thisReturn">
+          <TO_XML SelectList="$ProdFamilylist/*"/>
+        </APPEND_TO_XML>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getProdItemList">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="ProdItemlist">
+          <ROOT>
+            <PROD_ITEM/>
+          </ROOT>
+        </TO_DOCVAR>
+        <IF_TEST Test="$thisParam/ITEM_VERS_CODE/@Value='NO_VALUE'">
+          <THEN>
+            <SET Var="itemVersClause" FromValue=""/>
+          </THEN>
+          <ELSE>
+            <SET Var="itemVersClause" FromValue="ITEM_VERS_CODE = '{$thisParam/ITEM_VERS_CODE/@Value}' AND"/>
+          </ELSE>
+        </IF_TEST>
+        <IF_TEST Test="$thisParam/SUB_BRAND_CODE/@Value='NO_VALUE'">
+          <THEN>
+            <SET Var="subBrandClause" FromValue=""/>
+          </THEN>
+          <ELSE>
+            <SET Var="subBrandClause" FromValue="SUB_BRAND_CODE = '{$thisParam/SUB_BRAND_CODE/@Value}' AND"/>
+          </ELSE>
+        </IF_TEST>
+        <EXECUTE_SQL_QUERY AssignToVar="allProdItemTypes" Value="SELECT DISTINCT A.PROD_ITEM_UPC, PROD_ITEM_NAME FROM PROD_ITEM_HIER_ASSOC A JOIN PROD_ITEM B on A.PROD_ITEM_UPC=B.PROD_ITEM_UPC WHERE {$itemVersClause} {$subBrandClause} BRAND_CODE='{$thisParam/BRAND_CODE/@Value}' OR BRAND_FAMLY_ID = '{$thisParam/BRAND_FAMLY_ID/@Value}' AND SEG_CODE='{$thisParam/SEG_CODE/@Value}' AND CATEG_CODE='{$thisParam/CATEG_CODE/@Value}' AND SUB_SECTOR_CODE='{$thisParam/SUB_SECTOR_CODE/@Value}' AND SECTOR_CODE='{$thisParam/SECTOR_CODE/@Value}' ORDER BY 2 ASC"/>
+        <FOR_EACH SelectList="$allProdItemTypes/SQL_RESULT" CurrentElement="currentElement">
+          <SET Var="prodname" FromValue="{$currentElement/PROD_ITEM_NAME/@Value}"/>
+          <SET Var="prodnbr" FromValue="{$currentElement/PROD_ITEM_UPC/@Value}"/>
+          <APPEND_TO_XML SelectList="$ProdItemlist/PROD_ITEM">
+            <OPTION Id="{$prodnbr}" Value="{$prodname}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="ProdItemlist" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="saveInctv">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="startDate">
+          <ROOT/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="endDate">
+          <ROOT/>
+        </TO_DOCVAR>
+        <IF_TEST Test="$thisParam/INCTV_START_DATE/@Value!=''">
+          <THEN>
+            <APPEND_TO_XML SelectList="$startDate">
+              <INCTV_START_DATE Value="{$thisParam/INCTV_START_DATE/@Value}"/>
+            </APPEND_TO_XML>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+        <IF_TEST Test="$thisParam/INCTV_END_DATE/@Value!=''">
+          <THEN>
+            <APPEND_TO_XML SelectList="$endDate">
+              <INCTV_END_DATE Value="{$thisParam/INCTV_END_DATE/@Value}"/>
+            </APPEND_TO_XML>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+        <IF_TEST Test="strlen(trim($thisParam/COUPN_UNIQUE_IND/@Value)) = 0">
+          <THEN>
+            <MODIFY_DOC_SMART ServiceName="BCM_MASTER" Name="INCTV">
+              <DOCUMENT_CONTEXT>
+                <INCTV_NBR Value="{$thisParam/INCTV_NBR/@Value}"/>
+              </DOCUMENT_CONTEXT>
+              <UPDATE_PROPERTIES>
+                <INCTV_DESC Value="{$thisParam/INCTV_DESC/@Value}"/>
+                <INCTV_STATUS_CODE Value="{$thisParam/INCTV_STATUS_CODE/@Value}"/>
+                <!--OTHER_INCENTIVE_TXT Value="{$thisParam/OTHER_INCENTIVE_TXT/@Value}"/-->
+                <PREMARKET_OFFER_IND Value="{$thisParam/PREMARKET_OFFER_IND/@Value}"/>
+                <INCTV_EXPRN_DAY_CNT Value="{$thisParam/INCTV_EXPRN_DAY_CNT/@Value}"/>
+                <TGT_DST_QTY Value="{$thisParam/TGT_DST_QTY/@Value}"/>
+                <EXTRN_COUPN_DATA_SRCE_NBR Value="{$thisParam/EXTRN_COUPN_DATA_SRCE_NBR/@Value}"/>
+                <!--COUPN_UNIQUE_IND Value="{$thisParam/COUPN_UNIQUE_IND/@Value}"/-->
+                <TO_XML SelectList="$startDate/*"/>
+                <TO_XML SelectList="$endDate/*"/>
+              </UPDATE_PROPERTIES>
+            </MODIFY_DOC_SMART>
+          </THEN>
+          <ELSE>
+            <THEN>
+              <MODIFY_DOC_SMART ServiceName="BCM_MASTER" Name="INCTV">
+                <DOCUMENT_CONTEXT>
+                  <INCTV_NBR Value="{$thisParam/INCTV_NBR/@Value}"/>
+                </DOCUMENT_CONTEXT>
+                <UPDATE_PROPERTIES>
+                  <INCTV_DESC Value="{$thisParam/INCTV_DESC/@Value}"/>
+                  <INCTV_STATUS_CODE Value="{$thisParam/INCTV_STATUS_CODE/@Value}"/>
+                  <!--OTHER_INCENTIVE_TXT Value="{$thisParam/OTHER_INCENTIVE_TXT/@Value}"/-->
+                  <PREMARKET_OFFER_IND Value="{$thisParam/PREMARKET_OFFER_IND/@Value}"/>
+                  <INCTV_EXPRN_DAY_CNT Value="{$thisParam/INCTV_EXPRN_DAY_CNT/@Value}"/>
+                  <TGT_DST_QTY Value="{$thisParam/TGT_DST_QTY/@Value}"/>
+                  <EXTRN_COUPN_DATA_SRCE_NBR Value="{$thisParam/EXTRN_COUPN_DATA_SRCE_NBR/@Value}"/>
+                  <COUPN_UNIQUE_IND Value="{$thisParam/COUPN_UNIQUE_IND/@Value}"/>
+                  <TO_XML SelectList="$startDate/*"/>
+                  <TO_XML SelectList="$endDate/*"/>
+                </UPDATE_PROPERTIES>
+              </MODIFY_DOC_SMART>
+            </THEN>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="createInctv">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="startDate">
+          <ROOT/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="endDate">
+          <ROOT/>
+        </TO_DOCVAR>
+        <IF_TEST Test="$thisParam/INCTV_START_DATE/@Value!=''">
+          <THEN>
+            <APPEND_TO_XML SelectList="$startDate">
+              <INCTV_START_DATE Value="{$thisParam/INCTV_START_DATE/@Value}"/>
+            </APPEND_TO_XML>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+        <IF_TEST Test="$thisParam/INCTV_END_DATE/@Value!=''">
+          <THEN>
+            <APPEND_TO_XML SelectList="$endDate">
+              <INCTV_END_DATE Value="{$thisParam/INCTV_END_DATE/@Value}"/>
+            </APPEND_TO_XML>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+        <SET Var="inctvValAmt" FromValue="{$thisParam/INCTV_VAL_AMT/@Value}"/>
+        <IF_TEST Test="$inctvValAmt = null or $inctvValAmt ='' or strlen(trim($inctvValAmt)) = 0">
+          <THEN>
+            <SET Var="inctvValAmt1" FromValue="0"/>
+          </THEN>
+          <ELSE>
+            <THEN>
+              <SET Var="inctvValAmt1" FromValue="{$thisParam/INCTV_VAL_AMT/@Value}"/>
+            </THEN>
+          </ELSE>
+        </IF_TEST>
+        <SET Var="inctvValPct" FromValue="{$thisParam/INCTV_VAL_PCT/@Value}"/>
+        <IF_TEST Test="$inctvValPct = null or $inctvValPct ='' or strlen(trim($inctvValPct)) = 0">
+          <THEN>
+            <SET Var="inctvValPct1" FromValue="0"/>
+          </THEN>
+          <ELSE>
+            <THEN>
+              <SET Var="inctvValPct1" FromValue="{$thisParam/INCTV_VAL_PCT/@Value}"/>
+            </THEN>
+          </ELSE>
+        </IF_TEST>
+        <SET Var="inctvExprnDayCnt" FromValue="{$thisParam/INCTV_EXPRN_DAY_CNT/@Value}"/>
+        <IF_TEST Test="$inctvExprnDayCnt = null or $inctvExprnDayCnt ='' or strlen(trim($inctvExprnDayCnt)) = 0">
+          <THEN>
+            <SET Var="inctvExprnDayCnt1" FromValue="0"/>
+          </THEN>
+          <ELSE>
+            <THEN>
+              <SET Var="inctvExprnDayCnt1" FromValue="{$thisParam/INCTV_EXPRN_DAY_CNT/@Value}"/>
+            </THEN>
+          </ELSE>
+        </IF_TEST>
+        <SET Var="tgtDstQty" FromValue="{$thisParam/TGT_DST_QTY/@Value}"/>
+        <IF_TEST Test="$tgtDstQty = null or $tgtDstQty ='' or strlen(trim($tgtDstQty)) = 0">
+          <THEN>
+            <SET Var="tgtDstQty1" FromValue="0"/>
+          </THEN>
+          <ELSE>
+            <THEN>
+              <SET Var="tgtDstQty1" FromValue="{$thisParam/TGT_DST_QTY/@Value}"/>
+            </THEN>
+          </ELSE>
+        </IF_TEST>
+        <SET Var="extrCpnData" FromValue="{$thisParam/EXTRN_COUPN_DATA_SRCE_NBR/@Value}"/>
+        <IF_TEST Test="$extrCpnData = null or $extrCpnData ='' or strlen(trim($extrCpnData)) = 0">
+          <THEN>
+            <SET Var="extrCpnData1" FromValue="0"/>
+          </THEN>
+          <ELSE>
+            <THEN>
+              <SET Var="extrCpnData1" FromValue="{$thisParam/EXTRN_COUPN_DATA_SRCE_NBR/@Value}"/>
+            </THEN>
+          </ELSE>
+        </IF_TEST>
+        <IF_TEST Test="strlen(trim($thisParam/COUPN_UNIQUE_IND/@Value)) = 0">
+          <THEN>
+            <DO_DB_PERSIST Action="INSERT" SysLoadId="13261" SysWfId="XL_WF1234" Source="EXTERNAL" DocumentName="INCTV" AssignToVar="createInctvresult">
+              <INCTV>
+                <INCTV_NBR Value="{$thisParam/NEW_INCTV_NBR/@Value}"/>
+                <INCTV_NAME Value="{$thisParam/INCTV_NAME/@Value}"/>
+                <INCTV_DESC Value="{$thisParam/INCTV_DESC/@Value}"/>
+                <!--LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/-->
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                <INCTV_STATUS_CODE Value="{$thisParam/INCTV_STATUS_CODE/@Value}"/>
+                <INCTV_TYPE_CODE Value="{$thisParam/INCTV_TYPE_CODE/@Value}"/>
+                <INCTV_VAL_AMT Value="{$inctvValAmt1}"/>
+                <INCTV_VAL_PCT Value="{$inctvValPct1}"/>
+                <COUPN_TYPE_CODE Value="{$thisParam/COUPN_TYPE_CODE/@Value}"/>
+                <EXTRN_COUPN_DATA_SRCE_NBR Value="{$extrCpnData1}"/>
+                <!--<COUPN_UNIQUE_IND Value="{$thisParam/COUPN_UNIQUE_IND/@Value}"/>-->
+                <!--OTHER_INCENTIVE_TXT Value="{$thisParam/OTHER_INCENTIVE_TXT/@Value}"/-->
+                <BUNDLE_PACK_IND Value="{$thisParam/BUNDLE_PACK_IND/@Value}"/>
+                <!--CONTEST_NBR Value="{$thisParam/CONTEST_NBR/@Value}"/-->
+                <PREMARKET_OFFER_IND Value="{$thisParam/PREMARKET_OFFER_IND/@Value}"/>
+                <!--LYLTY_OFFER_NBR Value="{$thisParam/LYLTY_OFFER_NBR/@Value}"/-->
+                <INCTV_EXPRN_DAY_CNT Value="{$inctvExprnDayCnt1}"/>
+                <TO_XML SelectList="$startDate/*"/>
+                <TO_XML SelectList="$endDate/*"/>
+                <INCTV_CRTN_DATE Value="{date()}"/>
+                <ALT_SYS_INCTV_ID Value="{$thisParam/ALT_SYS_INCTV_ID/@Value}"/>
+                <BRAND_NAME Value="{$thisParam/BRAND_NAME/@Value}"/>
+                <EXT_INCTV_CD Value="{$thisParam/EXT_INCTV_CD/@Value}"/>
+                <COUPN_EXT_CD Value="{$thisParam/COUPN_EXT_CD/@Value}"/>
+                <TGT_DST_QTY Value="{$tgtDstQty1}"/>
+                <CLRNG_HS_CD Value="{$thisParam/CLRNG_HS_CD/@Value}"/>
+              </INCTV>
+            </DO_DB_PERSIST>
+          </THEN>
+          <ELSE>
+            <THEN>
+              <DO_DB_PERSIST Action="INSERT" SysLoadId="13261" SysWfId="XL_WF1234" Source="EXTERNAL" DocumentName="INCTV" AssignToVar="createInctvresult">
+                <INCTV>
+                  <INCTV_NBR Value="{$thisParam/NEW_INCTV_NBR/@Value}"/>
+                  <INCTV_NAME Value="{$thisParam/INCTV_NAME/@Value}"/>
+                  <INCTV_DESC Value="{$thisParam/INCTV_DESC/@Value}"/>
+                  <!--LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/-->
+                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                  <INCTV_STATUS_CODE Value="{$thisParam/INCTV_STATUS_CODE/@Value}"/>
+                  <INCTV_TYPE_CODE Value="{$thisParam/INCTV_TYPE_CODE/@Value}"/>
+                  <INCTV_VAL_AMT Value="{$inctvValAmt1}"/>
+                  <INCTV_VAL_PCT Value="{$inctvValPct1}"/>
+                  <COUPN_TYPE_CODE Value="{$thisParam/COUPN_TYPE_CODE/@Value}"/>
+                  <EXTRN_COUPN_DATA_SRCE_NBR Value="{$extrCpnData1}"/>
+                  <COUPN_UNIQUE_IND Value="{$thisParam/COUPN_UNIQUE_IND/@Value}"/>
+                  <!--OTHER_INCENTIVE_TXT Value="{$thisParam/OTHER_INCENTIVE_TXT/@Value}"/-->
+                  <BUNDLE_PACK_IND Value="{$thisParam/BUNDLE_PACK_IND/@Value}"/>
+                  <!--CONTEST_NBR Value="{$thisParam/CONTEST_NBR/@Value}"/-->
+                  <PREMARKET_OFFER_IND Value="{$thisParam/PREMARKET_OFFER_IND/@Value}"/>
+                  <!--LYLTY_OFFER_NBR Value="{$thisParam/LYLTY_OFFER_NBR/@Value}"/-->
+                  <INCTV_EXPRN_DAY_CNT Value="{$inctvExprnDayCnt1}"/>
+                  <TO_XML SelectList="$startDate/*"/>
+                  <TO_XML SelectList="$endDate/*"/>
+                  <INCTV_CRTN_DATE Value="{date()}"/>
+                  <ALT_SYS_INCTV_ID Value="{$thisParam/ALT_SYS_INCTV_ID/@Value}"/>
+                  <BRAND_NAME Value="{$thisParam/BRAND_NAME/@Value}"/>
+                  <EXT_INCTV_CD Value="{$thisParam/EXT_INCTV_CD/@Value}"/>
+                  <COUPN_EXT_CD Value="{$thisParam/COUPN_EXT_CD/@Value}"/>
+                  <TGT_DST_QTY Value="{$tgtDstQty1}"/>
+                  <CLRNG_HS_CD Value="{$thisParam/CLRNG_HS_CD/@Value}"/>
+                </INCTV>
+              </DO_DB_PERSIST>
+            </THEN>
+          </ELSE>
+        </IF_TEST>
+        <APPEND_TO_XML SelectList="$thisReturn">
+          <TO_XML DocVar="createInctvresult"/>
+        </APPEND_TO_XML>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="createInctvItem">
+    <RULE>
+      <ACTION>
+        <IF_TEST Test="$thisParam/ASSIGNED_ITEMS/ASSIGNED_ITEM = null or $thisParam/ASSIGNED_ITEMS/ASSIGNED_ITEM =''">
+          <THEN>
+            <SET Var="BrandFamilyID" FromValue=""/>
+            <SET Var="ProdFamilyID" FromValue=""/>
+            <CREATE_DOCUMENT_ID Name="INCTV_ITEM_ID" AssignToVar="inctvItemId1"/>
+            <SET Var="selectedIncentiveItemID1" FromValue="{$inctvItemId1}"/>
+            <EXECUTE_SQL_QUERY Value="SELECT brand_name FROM BRAND where brand_code='{$thisParam/BRAND_CODE/@Value}';" AssignToVar="brandItemName"/>
+            <SET Var="V_INCTV_ITEM_NAME" FromValue="{$brandItemName/SQL_RESULT/BRAND_NAME/@Value}"/>
+            <ADD_DOC_SMART ServiceName="BCM_MASTER" Name="INCTV_ITEM" AssignToVar="addInctvItem">
+              <INCTV_NBR Value="{$thisParam/INCTV_NBR/@Value}"/>
+              <INCTV_ITEM_NBR Value="{$selectedIncentiveItemID1}"/>
+              <SECTOR_CODE Value="{$thisParam/SECTOR_CODE/@Value}"/>
+              <SUB_SECTOR_CODE Value="{$thisParam/SUB_SECTOR_CODE/@Value}"/>
+              <CATEG_CODE Value="{$thisParam/CATEG_CODE/@Value}"/>
+              <SEG_CODE Value="{$thisParam/SEG_CODE/@Value}"/>
+              <BRAND_CODE Value="{$thisParam/BRAND_CODE/@Value}"/>
+              <SUB_BRAND_CODE Value="{$thisParam/SUB_BRAND_CODE/@Value}"/>
+              <ITEM_VERS_CODE Value="{$thisParam/ITEM_VERS_CODE/@Value}"/>
+              <GLOBAL_FORM_CODE Value="{$thisParam/GLOBAL_FORM_CODE/@Value}"/>
+              <BRAND_FAMLY_ID Value="{$thisParam/BRAND_FAMLY_ID/@Value}"/>
+              <PROD_FAMLY_ID Value="{$thisParam/PROD_FAMLY_ID/@Value}"/>
+              <INCTV_ITEM_QTY Value="1"/>
+              <INCTV_ITEM_NAME Value="{$V_INCTV_ITEM_NAME}"/>
+            </ADD_DOC_SMART>
+          </THEN>
+          <ELSE>
+            <FOR_EACH SelectList="$thisParam/ASSIGNED_ITEMS/ASSIGNED_ITEM" CurrentElement="currElement">
+              <CREATE_DOCUMENT_ID Name="INCTV_ITEM_ID" AssignToVar="inctvItemId1"/>
+              <SET Var="selectedIncentiveItemID1" FromValue="{$inctvItemId1}"/>
+              <EXECUTE_SQL_QUERY Value="SELECT PROD_ITEM_NAME FROM PROD_ITEM WHERE PROD_ITEM_UPC='{$currElement/@Value}';" AssignToVar="ProdItemName"/>
+              <EXECUTE_SQL_QUERY Value="SELECT brand_name FROM BRAND where brand_code='{$thisParam/BRAND_CODE/@Value}';" AssignToVar="brandItemName"/>
+              <IF_TEST Test="$ProdItemName/SQL_RESULT/PROD_ITEM_NAME/@Value =null and $brandItemName/SQL_RESULT/BRAND_NAME/@Value != ''">
+                <THEN>
+                  <SET Var="V_INCTV_ITEM_NAME" FromValue="{$brandItemName/SQL_RESULT/BRAND_NAME/@Value}"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="V_INCTV_ITEM_NAME" FromValue="{$ProdItemName/SQL_RESULT/PROD_ITEM_NAME/@Value}"/>
+                </ELSE>
+              </IF_TEST>
+              <EXECUTE_SQL_QUERY Value="SELECT brand_famly_name FROM BRAND_FAMLY where brand_famly_id='{$thisParam/BRAND_FAMLY_ID/@Value}';" AssignToVar="brandFamName"/>
+              <IF_TEST Test="$brandFamName/SQL_RESULT/BRAND_FAMLY_NAME/@Value !=null">
+                <THEN>
+                  <SET Var="V_INCTV_ITEM_NAME" FromValue="{$brandFamName/SQL_RESULT/BRAND_FAMLY_NAME/@Value}"/>
+                </THEN>
+              </IF_TEST>
+              <ADD_DOC_SMART ServiceName="BCM_MASTER" Name="INCTV_ITEM" AssignToVar="addInctvItem">
+                <INCTV_NBR Value="{$thisParam/INCTV_NBR/@Value}"/>
+                <INCTV_ITEM_NBR Value="{$selectedIncentiveItemID1}"/>
+                <SECTOR_CODE Value="{$thisParam/SECTOR_CODE/@Value}"/>
+                <SUB_SECTOR_CODE Value="{$thisParam/SUB_SECTOR_CODE/@Value}"/>
+                <CATEG_CODE Value="{$thisParam/CATEG_CODE/@Value}"/>
+                <SEG_CODE Value="{$thisParam/SEG_CODE/@Value}"/>
+                <BRAND_CODE Value="{$thisParam/BRAND_CODE/@Value}"/>
+                <SUB_BRAND_CODE Value="{$thisParam/SUB_BRAND_CODE/@Value}"/>
+                <ITEM_VERS_CODE Value="{$thisParam/ITEM_VERS_CODE/@Value}"/>
+                <GLOBAL_FORM_CODE Value="{$thisParam/GLOBAL_FORM_CODE/@Value}"/>
+                <BRAND_FAMLY_ID Value="{$thisParam/BRAND_FAMLY_ID/@Value}"/>
+                <PROD_FAMLY_ID Value="{$thisParam/PROD_FAMLY_ID/@Value}"/>
+                <INCTV_ITEM_QTY Value="1"/>
+                <INCTV_ITEM_NAME Value="{$V_INCTV_ITEM_NAME}"/>
+                <PROD_ITEM_UPC Value="{$currElement/@Value}"/>
+              </ADD_DOC_SMART>
+            </FOR_EACH>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getIncentiveItemDetails">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT ReturnRowCount="true" ServiceName="BCM_MASTER" Name="INCTV_ITEM" AssignToVar="inctvItmDetails">
+          <SELECT>
+            <INCTV_NBR/>
+            <!--MKTNG_PGM_NBR/-->
+            <INCTV_ITEM_NAME/>
+            <INCTV_ITEM_QTY/>
+            <!--INCTV_ITEM_SIZE/-->
+            <BRAND_CODE/>
+            <BRAND_FAMLY_ID/>
+            <PROD_FAMLY_ID/>
+            <INCTV_ITEM_DESC/>
+            <PROD_ITEM_UPC/>
+          </SELECT>
+          <INCTV_NBR Value="{$thisParam/INCTV_NBR/@Value}"/>
+        </GET_DOCUMENT>
+        <CLONE_XML DocVar="inctvItmDetails" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <!--DEFINE_METHOD Name="getInctvItemSectorDetails">
+
+
+
+<RULE>
+
+
+
+<ACTION>
+
+
+
+<EXECUTE_SQL_QUERY AssignToVar="inctvItmSectorDetails" Value="SELECT SECTOR_1.SECTOR_CODE, SECTOR_1.SECTOR_NAME, SUB_SECTOR_1.SUB_SECTOR_CODE, SUB_SECTOR_1.SUB_SECTOR_NAME, CATEG_1.CATEG_CODE, CATEG_1.CATEG_NAME, BRAND_1.BRAND_CODE, BRAND_1.BRAND_NAME, PROD_ITEM_1.PROD_ITEM_NUM, PROD_ITEM_1.PROD_ITEM_NAME FROM SECTOR SECTOR_1 LEFT OUTER JOIN SUB_SECTOR SUB_SECTOR_1 ON SECTOR_1.SECTOR_CODE=SUB_SECTOR_1.SECTOR_CODE LEFT OUTER JOIN CATEG CATEG_1 ON SUB_SECTOR_1.SUB_SECTOR_CODE=CATEG_1.SUB_SECTOR_CODE LEFT OUTER JOIN BRAND BRAND_1 ON CATEG_1.CATEG_CODE=BRAND_1.CATEG_CODE LEFT OUTER JOIN PROD_ITEM PROD_ITEM_1 ON BRAND_1.BRAND_CODE=PROD_ITEM_1.ITEM_VERSION_CODE WHERE PROD_ITEM_1.PROD_ITEM_NUM={$thisParam/PROD_ITEM_NUM/@Value}"/>
+
+
+
+<CLONE_XML DocVar="inctvItmSectorDetails" AssignToVar="thisReturn"/>
+
+
+
+</ACTION>
+
+
+
+</RULE>
+
+
+
+</DEFINE_METHOD-->
+  <DEFINE_METHOD Name="getGlobalFormList">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="Categlist">
+          <ROOT>
+            <GLOBAL_FORM/>
+          </ROOT>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY Value="SELECT DISTINCT A.GLOBAL_FORM_CODE, B.GLOBAL_FORM_NAME FROM PROD_ITEM_HIER_ASSOC A JOIN GLOBAL_FORM B on A.GLOBAL_FORM_CODE=B.GLOBAL_FORM_CODE WHERE SUB_BRAND_CODE='{$thisParam/SUB_BRAND_CODE/@Value}' AND BRAND_CODE='{$thisParam/BRAND_CODE/@Value}' OR BRAND_FAMLY_ID='{$thisParam/BRAND_FAMLY_ID/@Value}' AND SEG_CODE='{$thisParam/SEG_CODE/@Value}' AND CATEG_CODE='{$thisParam/CATEG_CODE/@Value}' AND SUB_SECTOR_CODE='{$thisParam/SUB_SECTOR_CODE/@Value}' AND SECTOR_CODE='{$thisParam/SECTOR_CODE/@Value}' ORDER BY 2 ASC" AssignToVar="allCategTypes"/>
+        <FOR_EACH SelectList="$allCategTypes/SQL_RESULT" CurrentElement="currentElement">
+          <SET Var="categname" FromValue="{$currentElement/GLOBAL_FORM_NAME/@Value}"/>
+          <SET Var="categnbr" FromValue="{$currentElement/GLOBAL_FORM_CODE/@Value}"/>
+          <APPEND_TO_XML SelectList="$Categlist/GLOBAL_FORM">
+            <OPTION Id="{$categnbr}" Value="{$categname}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="Categlist" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="createContentInc">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="startDate">
+          <ROOT/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="endDate">
+          <ROOT/>
+        </TO_DOCVAR>
+        <IF_TEST Test="$thisParam/INCTV_START_DATE/@Value!=''">
+          <THEN>
+            <APPEND_TO_XML SelectList="$startDate">
+              <CNTNT_ACTIVE_START_DATE Value="{$thisParam/INCTV_START_DATE/@Value}"/>
+            </APPEND_TO_XML>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+        <IF_TEST Test="$thisParam/INCTV_END_DATE/@Value!=''">
+          <THEN>
+            <APPEND_TO_XML SelectList="$endDate">
+              <CNTNT_ACTIVE_END_DATE Value="{$thisParam/INCTV_END_DATE/@Value}"/>
+            </APPEND_TO_XML>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+        <ADD_DOC_SMART ServiceName="BCM_MASTER" Name="CNTNT_ELEM" AssignToVar="createContentIncresult">
+          <CNTNT_ELEM_ID Value="{$thisParam/NEW_CNTNT_ELEM_ID/@Value}"/>
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <CNTNT_NAME Value="{$thisParam/INCTV_NAME/@Value}"/>
+          <INCTV_NBR Value="{$thisParam/NEW_INCTV_NBR/@Value}"/>
+          <CNTNT_ELEM_TYPE_CODE Value="CC"/>
+          <TO_XML SelectList="$startDate/*"/>
+          <TO_XML SelectList="$endDate/*"/>
+        </ADD_DOC_SMART>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getDataSrcNbrInctv">
+    <RULE>
+      <ACTION>
+        <GET_DOC_SMART Name="DATA_SRCE" AssignToVar="getDataSrceNbr">
+          <SELECT>
+            <DATA_SRCE_NAME/>
+          </SELECT>
+        </GET_DOC_SMART>
+        <CLONE_XML DocVar="getDataSrceNbr" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getExtrnlCpnDataSrce">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="allDataSrc">
+          <ROOT>
+            <EXTRNL_DATA_SRCE_TYPE/>
+          </ROOT>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY Value="SEL A.DATA_SRCE_NBR,DATA_SRCE_NAME FROM DATA_SRCE A INNER JOIN DATA_SRCE_MKTNG_PGM B ON A. DATA_SRCE_NBR=B.DATA_SRCE_NBR         WHERE MKTNG_PGM_NBR= {$thisParam/MKTNG_PGM_NBR/@Value} ORDER BY DATA_SRCE_NAME ASC;" AssignToVar="ExtrnDataSrcValues"/>
+        <FOR_EACH SelectList="$ExtrnDataSrcValues/SQL_RESULT" CurrentElement="currentElement">
+          <SET Var="extrName1" FromValue="{$currentElement/DATA_SRCE_NAME/@Value}"/>
+          <SET Var="extrNbr" FromValue="{$currentElement/DATA_SRCE_NBR/@Value}"/>
+          <SET Var="extrNbr1" FromValue="{concat($extrNbr,'~')}"/>
+          <SET Var="extrName" FromValue="{concat($extrNbr1,$extrName1)}"/>
+          <APPEND_TO_XML SelectList="$allDataSrc/EXTRNL_DATA_SRCE_TYPE">
+            <OPTION Id="{$extrNbr}" Value="{$extrName}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="allDataSrc" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

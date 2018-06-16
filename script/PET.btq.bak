@@ -1,0 +1,124 @@
+/***********************************************************************************************************
+SCRIPT:               PET.BTEQ 
+DESCRIPTION:          THIS SCRIPT LOADS EDW TABLES -- This scripts takes data friom trillium output tables 
+                                                      and loads PET
+DEPENDENCY:           
+INPUT:                TRILLIUM OUTPUT CNTRY TABLES
+OUTPUT:               EDW
+ERRORS:
+SPECIAL INSTRUCTIONS:
+
+CHANGE LOG:
+VERSION              DATE                 AUTHOR                          CHANGES
+1.00                 10/31/2011           TERADATA                        INITIAL VERSION
+4.00                 03/26/2012           TERADATA                        1. UPDATE NATIONAL ID INTO REGIS PRSNA 
+                                                                          FROM PRSNA TRT.
+                                                                          2. ADD STATE VALIDATION FOR US
+									  3. ADD OPT OUT MODULE
+R2O                  05/11/2012           TERADATA                        REMOVE ERROR PROCESSING
+4.1                  06/13/2012           TERADATA                        MODULARIZE AND TUNING
+***********************************************************************************************************/
+
+.logon $TDPID/$TDUSER,$TDPWD
+
+
+.SET ERROROUT STDOUT;
+.SET SESSION CHARSET 'UTF8';
+.SET ERRORLEVEL 3624 SEVERITY 0
+
+DATABASE $DATABASENAME;
+
+DELETE FROM PET WHERE
+(REGIS_PRSNA_ID,MKTNG_PGM_NBR)
+IN
+(
+SELECT 
+TOUT.REGIS_PRSNA_ID,MKTNG_PGM_NBR
+FROM
+TSS_PRSNA_IDS_$CNTRY TOUT);
+.IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE;
+
+INS PET
+(
+      REGIS_PRSNA_ID ,
+      PET_NAME ,
+      PET_GENDR_IND ,
+      PET_BRTH_DATE ,
+      MKTNG_PGM_NBR ,
+      LEGAL_ENT_NBR ,
+      PET_SEQ_NBR,
+      PET_AGE_NBR,
+--      DECEASED_IND,
+      SYS_SOURCE ,
+      SYS_TARGET_ID ,
+      SYS_AUTH_ID ,
+      SYS_CREATED_BY ,
+      SYS_CREATION_DATE ,
+      SYS_LAST_MODIFIED_DATE ,
+      SYS_ENT_STATE ,
+      SYS_LAST_MODIFIED_BY ,
+      SYS_NC_TYPE ,
+      SYS_ERR_CODE ,
+      SYS_ERR_SVRTY,
+      PET_BREED_CODE,
+      PET_TYPE_CODE
+)
+SELECT DISTINCT *
+FROM
+(
+SELECT
+      --B.REFERENCE_REGISTRATIONKEY,
+      B.REGIS_PRSNA_ID,
+      A.PET_NAME,
+      A.PET_GENDR_IND,
+      A.PET_BRTH_DATE,
+      B.MKTNG_PGM_NBR,
+      B.LEGAL_ENT_NBR,
+      A.PET_SEQ_NBR,
+      A.PET_AGE_NBR,
+--      A.DECEASED_IND,
+      A.SYS_SOURCE,
+      A.SYS_TARGET_ID,
+      A.SYS_AUTH_ID,
+      A.SYS_CREATED_BY ,
+      CAST(CAST(CURRENT_TIMESTAMP AS VARCHAR(19)) AS TIMESTAMP(0)) SYS_CREATION_DATE,
+      CAST(CAST(CURRENT_TIMESTAMP AS VARCHAR(19)) AS TIMESTAMP(0)) SYS_LAST_MODIFIED_DATE,
+      A.SYS_ENT_STATE,
+      A.SYS_LAST_MODIFIED_BY,
+      A.SYS_NC_TYPE,
+      A.SYS_ERR_CODE,
+      A.SYS_ERR_SVRTY,
+      PET_BREED_CODE,
+      COALESCE(D.PET_TYPE_CODE,F.PET_TYPE_CODE) AS PET_TYPE_CODE
+FROM PET_STG A
+INNER JOIN TSS_PRSNA_IDS_$CNTRY B
+	ON	A.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR   
+	AND	A.REGIS_CNSMR_ID_VAL=B.REGIS_CNSMR_ID_VAL
+	AND	A.SYS_SOURCE=B.SYS_SOURCE
+	
+LEFT OUTER JOIN PET_TRT_STG C	
+	ON	A.MKTNG_PGM_NBR=C.MKTNG_PGM_NBR   
+	AND	A.REGIS_CNSMR_ID_VAL=C.REGIS_CNSMR_ID_VAL
+	AND	A.SYS_SOURCE=C.SYS_SOURCE
+	AND	A.PET_SEQ_NBR=C.PET_SEQ_NBR
+	AND C.TRT_ID IN (32,486)
+	
+LEFT OUTER JOIN PET_BREED D
+ON C.PET_TRT_TXT = D.PET_BREED_NAME
+
+LEFT OUTER JOIN PET_TRT_STG E	
+	ON	A.MKTNG_PGM_NBR=E.MKTNG_PGM_NBR   
+	AND	A.REGIS_CNSMR_ID_VAL=E.REGIS_CNSMR_ID_VAL
+	AND	A.SYS_SOURCE=E.SYS_SOURCE
+	AND	A.PET_SEQ_NBR=E.PET_SEQ_NBR
+	AND E.TRT_ID IN (579)
+	
+LEFT OUTER JOIN PET_TYPE F
+ON E.PET_TRT_TXT = F.PET_TYPE_NAME	
+QUALIFY RANK() OVER (PARTITION BY B.REGIS_PRSNA_ID,A.PET_SEQ_NBR
+ORDER BY A.SYS_SOURCE DESC
+,A.SYS_NC_TYPE DESC
+) = 1
+) A
+;
+.IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE;

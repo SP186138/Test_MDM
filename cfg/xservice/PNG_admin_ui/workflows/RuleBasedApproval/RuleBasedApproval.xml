@@ -1,0 +1,1192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="8" ShowInBreadCrumbs="true" Version="1.0" Name="RuleBasedApproval" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="RuleBasedApproval">
+    <variable Name="columnNames" Type="xml" Comment=""/>
+    <variable Name="approvalDetails" Type="xml" Comment=""/>
+    <variable Name="tableNames" Type="xml" Comment=""/>
+    <variable Name="codeSets" Type="xml" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start0">
+      <actions/>
+      <next_nodes>
+        <next_node Name="decision6"/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Column Level Approval" ShowInBreadCrumbs="SHOW" Template="RelevantColumns.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="availableColumns">
+            <AVAILABLE_COLUMNS/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="selectedColumns">
+            <SELECTED_COLUMNS/>
+          </TO_DOCVAR>
+          <GET_DOC_SMART Name="ApprovalColumns" ServiceName="APPROVAL" DirtyRead="true" AssignToVar="selectedCols">
+            <ApprovalId Value="{$approvalDetails/ApprovalGroupId/@Value}"/>
+          </GET_DOC_SMART>
+          <FOR_EACH CurrentElement="currOption" SelectList="$selectedCols/*">
+            <TO_DOCVAR AssignToVar="currOptionVar">
+              <LOG_NAME Value="{$currOption/Column_Logical/@Value}" Id="{$currOption/Column_Physical/@Value}"/>
+            </TO_DOCVAR>
+            <ADD_CHILDREN DocVar="selectedColumns" FromDocVar="currOptionVar"/>
+          </FOR_EACH>
+          <CLONE_XML DocVar="columnNames" AssignToVar="availableColumns"/>
+          <SET_NAME DocVar="availableColumns" FromValue="AVAILABLE_COLUMNS"/>
+          <SET Var="remainingPks" FromValue="{$approvalDetails/pkCols/@Value}"/>
+          <WHILE Condition="$remainingPks != ''">
+            <FOR_EACH CurrentElement="currElem" SelectList="$availableColumns/*">
+              <IF_TEST Test="substringBefore($remainingPks,',') = $currElem/@Value">
+                <THEN>
+                  <REMOVE_CHILD DocVar="availableColumns" ChildDocVar="currElem"/>
+                  <SET Var="remainingPks" FromValue="{substringAfter($remainingPks,',')}"/>
+                </THEN>
+              </IF_TEST>
+            </FOR_EACH>
+          </WHILE>
+          <FOR_EACH SelectList="$availableColumns/*" CurrentElement="currElem">
+            <FOR_EACH SelectList="$selectedColumns/*" CurrentElement="currAssgndList">
+              <IF_TEST Test="$currElem/@Value = $currAssgndList/@Value">
+                <THEN>
+                  <REMOVE_CHILD DocVar="availableColumns" ChildDocVar="currElem"/>
+                </THEN>
+              </IF_TEST>
+            </FOR_EACH>
+          </FOR_EACH>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="availableColumns"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="selectedColumns"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="tableNames"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="approvalDetails"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="thisReturn">
+            <ALERT/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'Save' or $thisParam/BUTTON_ID/@Value = 'Save_Return'">
+            <THEN>
+              <REMOVE_DOCUMENT Name="ApprovalColumns" ServiceName="APPROVAL" HandleException="true" AssignToVar="ruleDeleted">
+                <ApprovalId Value="{$thisParam/ApprovalId/@Value}"/>
+              </REMOVE_DOCUMENT>
+              <SET Var="count" FromValue="0"/>
+              <SET Var="remainingColumns" FromValue="{$thisParam/selColumns/@Value}"/>
+              <FOR_EACH CurrentElement="currCol" SelectList="$thisParam/SelectedColumns">
+                <SET Var="currColLog" FromValue="{substringBefore($remainingColumns,',')}"/>
+                <SET Var="remainingColumns" FromValue="{substringAfter($remainingColumns,',')}"/>
+                <ADD_DOCUMENT Name="ApprovalColumns" ServiceName="APPROVAL" AssignToVar="columnResult" HandleException="true">
+                  <ApprovalId Value="{$thisParam/ApprovalId/@Value}"/>
+                  <Column_Logical Value="{$currColLog}"/>
+                  <Column_Physical Value="{$currCol/@Value}"/>
+                </ADD_DOCUMENT>
+                <IF_TEST Test="$columnResult/@Status = 'Success'">
+                  <THEN>
+                    <SET Var="count" FromValue="{int($count)+1}"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <GET_DOC_SMART Name="Approval_Rule_Table" ServiceName="APPROVAL" DirtyRead="true" ReturnRowCount="yes" AssignToVar="ruleCount" HandleException="true">
+                <ApprovalId Value="{$thisParam/ApprovalId/@Value}"/>
+                <Approval_Type Value="AA"/>
+              </GET_DOC_SMART>
+              <IF_TEST Test="$count = 0 and $ruleCount/@TotalRowCount = '0' and $approvalDetails/AutoApprovalEnabled/@Value = 'AUTO-APPROVAL'">
+                <THEN>
+                  <MODIFY_DOC_SMART Name="Approval_Groups" ServiceName="APPROVAL" HandleException="true" AssignToVar="updateApprovals">
+                    <DOCUMENT_CONTEXT>
+                      <SEQID Value="{$thisParam/ApprovalId/@Value}"/>
+                    </DOCUMENT_CONTEXT>
+                    <UPDATE_PROPERTIES>
+                      <AUTO_APPROVAL_FLAG Value=""/>
+                    </UPDATE_PROPERTIES>
+                  </MODIFY_DOC_SMART>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$count > 0">
+                    <THEN>
+                      <SET Property="alertGreen" FromValue="REL_COLUMN_SUCCESS" DocVar="thisReturn"/>
+                      <SET Property="message" FromValue="REL_COLUMN_SUCCESS." DocVar="thisReturn"/>
+                      <IF_TEST Test="$approvalDetails/AutoApprovalEnabled/@Value = null or $approvalDetails/AutoApprovalEnabled/@Value=''">
+                        <THEN>
+                          <MODIFY_DOC_SMART Name="Approval_Groups" ServiceName="APPROVAL" HandleException="true" AssignToVar="updateApprovals">
+                            <DOCUMENT_CONTEXT>
+                              <SEQID Value="{$thisParam/ApprovalId/@Value}"/>
+                            </DOCUMENT_CONTEXT>
+                            <UPDATE_PROPERTIES>
+                              <AUTO_APPROVAL_FLAG Value="AUTO-APPROVAL"/>
+                            </UPDATE_PROPERTIES>
+                          </MODIFY_DOC_SMART>
+                          <IF_TEST Test="$updateApprovals/@RowCount = '1'">
+                            <THEN>
+                              <SET Property="AutoApprovalEnabled" DocVar="approvalDetails" FromValue="AUTO-APPROVAL"/>
+                            </THEN>
+                          </IF_TEST>
+                        </THEN>
+                      </IF_TEST>
+                    </THEN>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+              <SET Property="RelevantColumnsCount" DocVar="approvalDetails" FromValue="{$count}"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Cancel'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="GoBackApprovals" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Save'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Create Approval Rules" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='DoubleLeft'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Left'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Right'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='DoubleRight'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Skip_forward'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Save_Return'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="GoBackApprovals" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Column Level Approval" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="Create Approval Rules" ShowInBreadCrumbs="SHOW" Template="RuleDesign.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="orderByXml">
+            <ORDER_BY/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="filterXml">
+            <FILTERS/>
+          </TO_DOCVAR>
+          <SET Property="maxRows" DocVar="pglFormInput" FromValue="{$tableDefaultRows}"/>
+          <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filterXml">
+            <FILTER_RuleId Operator="true"/>
+            <FILTER_Rule_String/>
+            <From_Date_Valid Range="true" IsFilter="true"/>
+            <To_Date_Valid Range="true" IsFilter="true"/>
+          </FORM_SEARCH_FILTER>
+          <FOR_EACH SelectList="$filterXml/*/*" CurrentElement="currentSearchColumn">
+            <SET_NAME DocVar="currentSearchColumn" FromValue="{substringAfter($currentSearchColumn/name(),'FILTER_')}"/>
+          </FOR_EACH>
+          <SET Var="sortOrder" FromValue="{ifElse($thisParam/SORT_ORDER/@Value = null, 'Descending', $thisParam/SORT_ORDER/@Value)}"/>
+          <SET Var="sortBy" FromValue="{ifElse(($thisParam/SORT_BY/@Value = null) or($thisParam/SORT_BY/@Value = 'ID') , 'RuleId', $thisParam/SORT_BY/@Value)}"/>
+          <SET Property="sortBy" FromValue="{$sortBy}" DocVar="pglFormInput"/>
+          <SET Property="sortOrder" FromValue="{$sortOrder}" DocVar="pglFormInput"/>
+          <TO_DOCVAR AssignToVar="sortByColumn">
+            <TEMP/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$sortBy = 'Approval_Type'">
+            <THEN>
+              <IF_TEST Test="$sortOrder = 'Descending'">
+                <THEN>
+                  <SET Var="sortOrder" FromValue="Ascending"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="sortOrder" FromValue="Descending"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <SET_NAME DocVar="sortByColumn" FromValue="{$sortBy}"/>
+          <SET Attribute="Sort" DocVar="sortByColumn" FromValue="{$sortOrder}"/>
+          <ADD_CHILDREN DocVar="orderByXml" FromDocVar="sortByColumn"/>
+          <GET_DOC_SMART Name="Approval_Rule_Table" ServiceName="APPROVAL" DirtyRead="true" MaxRows="{$tableDefaultRows}" AssignToVar="approvalRules" HandleException="true">
+            <ApprovalId Value="{$approvalDetails/ApprovalGroupId/@Value}"/>
+            <TO_XML SelectList="$filterXml/*/*"/>
+            <TO_XML SelectList="$orderByXml"/>
+          </GET_DOC_SMART>
+          <IF_TEST Test="$sortOrder = 'Descending'">
+            <THEN>
+              <SET Var="sortVar" FromValue="DESC"/>
+            </THEN>
+            <ELSE>
+              <SET Var="sortVar" FromValue="ASC"/>
+            </ELSE>
+          </IF_TEST>
+          <FOR_EACH CurrentElement="currElem" SelectList="$thisParam/*">
+            <IF_TEST Test="$currElem/name() = 'FILTER_Approval_Type' and $currElem/@Value!=''">
+              <THEN>
+                <SET Var="typeValue" FromValue="{strReplaceAll($currElem/@Value,'[*]','%')}"/>
+                <BREAK/>
+              </THEN>
+            </IF_TEST>
+          </FOR_EACH>
+          <IF_TEST Test="$typeValue != ''">
+            <THEN>
+              <SET Var="quot" FromValue="'"/>
+              <SET Var="query" FromValue="{concat('LOCKING ROW FOR ACCESS SELECT * FROM AW_APPROVAL_RULE_TABLE B, (SELECT CASE APPROVAL_TYPE WHEN ',$quot, 'AA',$quot,' THEN ',$quot,'Auto',$quot,' WHEN ',$quot,'CA',$quot,' THEN ',$quot,'Assignment',$quot,' else ',$quot,'None',$quot,' END AS APPROVAL_TYPE, RULEID FROM AW_APPROVAL_RULE_TABLE ) A WHERE A.RULEID=B.RULEID AND B.APPROVALID=',$quot,$approvalDetails/ApprovalGroupId/@Value,$quot,' AND A.APPROVAL_TYPE LIKE ',$quot,$typeValue,$quot,' ORDER BY B.',$sortBy,' ',$sortVar)}"/>
+              <EXECUTE_SQL_QUERY Value="{$query}" AssignToVar="approvalTypeFilter" HandleException="true"/>
+              <CLONE_XML AssignToVar="approvalTest" DocVar="approvalRules"/>
+              <IF_TEST Test="$approvalTypeFilter/* != null">
+                <THEN>
+                  <FOR_EACH CurrentElement="currGetDoc" SelectList="$approvalRules/*">
+                    <IF_TEST Test="$approvalTypeFilter/* = null ">
+                      <THEN>
+                        <REMOVE_CHILD ChildDocVar="currGetDoc" DocVar="approvalRules"/>
+                      </THEN>
+                    </IF_TEST>
+                    <FOR_EACH CurrentElement="currSql" SelectList="$approvalTypeFilter/*">
+                      <IF_TEST Test="$currGetDoc/RuleId/@Value != $approvalTypeFilter/*/RULEID/@Value">
+                        <THEN>
+                          <REMOVE_CHILD ChildDocVar="currGetDoc" DocVar="approvalRules"/>
+                        </THEN>
+                        <ELSE>
+                          <REMOVE_CHILD ChildDocVar="currSql" DocVar="approvalTypeFilter"/>
+                        </ELSE>
+                      </IF_TEST>
+                      <BREAK/>
+                    </FOR_EACH>
+                  </FOR_EACH>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisReturn/* != null">
+            <THEN>
+              <APPEND_CHILDREN DocVar="pglFormInput" FromDocVar="thisReturn"/>
+              <!--   <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'Add_Rule'">
+                <THEN>
+                  <SET Property="RuleEdit" FromValue="true" DocVar="pglFormInput" />
+                </THEN>
+              </IF_TEST>-->
+            </THEN>
+            <!--            <ELSE>
+              <SET Property="RuleEdit" FromValue="false" DocVar="pglFormInput"/>
+            </ELSE>-->
+          </IF_TEST>
+          <SET Var="count" FromValue=""/>
+          <FOR_EACH CurrentElement="currOption" SelectList="$approvalRules/*">
+            <IF_TEST Test="$currOption/Approval_Type/@Value = 'AA'">
+              <THEN>
+                <SET Property="Approval_Type" DocVar="currOption" FromValue="Auto Approval"/>
+                <SET Var="count" FromValue="1"/>
+              </THEN>
+              <ELSE>
+                <IF_TEST Test="$currOption/Approval_Type/@Value = 'CA'">
+                  <THEN>
+                    <SET Property="Approval_Type" DocVar="currOption" FromValue="Assignment Approval"/>
+                  </THEN>
+                  <ELSE>
+                    <SET Property="Approval_Type" DocVar="currOption" FromValue="None"/>
+                  </ELSE>
+                </IF_TEST>
+              </ELSE>
+            </IF_TEST>
+          </FOR_EACH>
+          <TO_DOCVAR AssignToVar="ApprovalRules"/>
+          <IF_TEST Test="$pglFormInput/RuleEdit/@Value = null">
+            <THEN>
+              <SET Property="RuleEdit" FromValue="true" DocVar="pglFormInput"/>
+              <SET Property="RuleEditNegative" FromValue="false" DocVar="pglFormInput"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$approvalDetails/ApprovalActionType/@Value != 'UPDATE' and $approvalDetails/ApprovalActionType/@Value != 'ALL'">
+            <THEN>
+              <SET Property="ActionBack" DocVar="pglFormInput" FromValue="false"/>
+            </THEN>
+            <ELSE>
+              <SET Property="ActionBack" DocVar="pglFormInput" FromValue="true"/>
+            </ELSE>
+          </IF_TEST>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="approvalRules"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="columnNames"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="tableNames"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="codeSets"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="approvalDetails"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="thisReturn">
+            <ROOT/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'Auto_Approval'">
+            <THEN>
+              <MODIFY_DOC_SMART Name="Approval_Rule_Table" ServiceName="APPROVAL" HandleException="true" AssignToVar="ruleAuto">
+                <DOCUMENT_CONTEXT>
+                  <RuleId Value="{$thisParam/SelectedRuleId/@Value}"/>
+                </DOCUMENT_CONTEXT>
+                <UPDATE_PROPERTIES>
+                  <Approval_Type Value="AA"/>
+                </UPDATE_PROPERTIES>
+              </MODIFY_DOC_SMART>
+              <IF_TEST Test="$approvalDetails/AutoApprovalEnabled/@Value = 'AUTO-APPROVAL'">
+                <THEN/>
+                <ELSE>
+                  <MODIFY_DOC_SMART Name="Approval_Groups" ServiceName="APPROVAL" HandleException="true" AssignToVar="ruleUpdate">
+                    <DOCUMENT_CONTEXT>
+                      <SEQID Value="{$thisParam/ApprovalId/@Value}"/>
+                    </DOCUMENT_CONTEXT>
+                    <UPDATE_PROPERTIES>
+                      <AUTO_APPROVAL_FLAG Value="AUTO-APPROVAL"/>
+                    </UPDATE_PROPERTIES>
+                  </MODIFY_DOC_SMART>
+                  <SET Property="AutoApprovalEnabled" DocVar="approvalDetails" FromValue="AUTO-APPROVAL"/>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$ruleAuto/@Status = 'Success' and $ruleAuto/@RowCount = '1'">
+                <THEN>
+                  <SET Property="successMessage" FromValue="AUTO_APPROVAL_SUCCESS" DocVar="thisReturn"/>
+                  <SET Property="successFlag" FromValue="true" DocVar="thisReturn"/>
+                </THEN>
+                <ELSE>
+                  <SET Property="failureMessage" FromValue="AUTO_APPROVAL_FAILURE" DocVar="thisReturn"/>
+                  <SET Property="failureFlag" FromValue="true" DocVar="thisReturn"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'Add_Rule'">
+            <THEN>
+              <IF_TEST Test="$thisParam/ActionType/@Value = 'UPDATE'">
+                <THEN>
+                  <EXECUTE_SQL_QUERY Value="{concat('EXPLAIN SELECT * FROM ',$thisParam/ApprovalEventPhyName/@Value,' T1, ',$thisParam/ApprovalEventPhyName/@Value,' T2 WHERE ',$thisParam/phyRuleExp/@Value)}" AssignToVar="validation" HandleException="true"/>
+                </THEN>
+                <ELSE>
+                  <EXECUTE_SQL_QUERY Value="{concat('EXPLAIN SELECT * FROM ',$thisParam/ApprovalEventPhyName/@Value,' T1 WHERE ',$thisParam/phyRuleExp/@Value)}" AssignToVar="validation" HandleException="true"/>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$validation/@Status = 'Error'">
+                <THEN>
+                  <SET Var="userAction" FromValue="incorrectQuery"/>
+                  <SET Property="invalidSyntax" FromValue="true" DocVar="thisReturn"/>
+                  <SET Property="RuleCondition" FromValue="{$thisParam/RuleCondition/@Value}" DocVar="thisReturn"/>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$thisParam/FROM_DateValid/@Value != ''">
+                    <THEN>
+                      <SET Var="fromDate" FromValue="{$thisParam/FROM_DateValid/@Value}"/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="fromDate" FromValue="01/01/2000"/>
+                    </ELSE>
+                  </IF_TEST>
+                  <IF_TEST Test="$thisParam/TO_DateValid/@Value != ''">
+                    <THEN>
+                      <SET Var="toDate" FromValue="{$thisParam/TO_DateValid/@Value}"/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="toDate" FromValue="12/31/9999"/>
+                    </ELSE>
+                  </IF_TEST>
+                  <CREATE_DOCUMENT_ID Name="APPROVAL_RULE_ID" AssignToVar="RuleId"/>
+                  <ADD_DOC_SMART Name="Approval_Rule_Table" ServiceName="APPROVAL" HandleException="true" AssignToVar="ruleInsert">
+                    <RuleId Value="{$RuleId}"/>
+                    <ApprovalId Value="{$thisParam/ApprovalId/@Value}"/>
+                    <ServiceName Value="BCM_MASTER"/>
+                    <Rule_String Value="{$thisParam/RuleCondition/@Value}"/>
+                    <Phy_Rule_String Value="{$thisParam/phyRuleExp/@Value}"/>
+                    <Phy_Columns Value="{$thisParam/PhyColumns/@Value}"/>
+                    <From_Date_Valid Value="{$fromDate}"/>
+                    <To_Date_Valid Value="{$toDate}"/>
+                  </ADD_DOC_SMART>
+                  <IF_TEST Test="$ruleInsert/@Status = 'Success'">
+                    <THEN>
+                      <SET Property="successMessage" FromValue="RULE_CREATE_SUCCESS" DocVar="thisReturn"/>
+                      <SET Property="successFlag" FromValue="true" DocVar="thisReturn"/>
+                    </THEN>
+                    <ELSE>
+                      <SET Property="failureMessage" FromValue="RULE_CREATE_FAILURE" DocVar="thisReturn"/>
+                      <SET Property="failureFlag" FromValue="true" DocVar="thisReturn"/>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'Update'">
+            <THEN>
+              <IF_TEST Test="$thisParam/ActionType/@Value = 'UPDATE'">
+                <THEN>
+                  <EXECUTE_SQL_QUERY Value="{concat('EXPLAIN SELECT * FROM ',$thisParam/ApprovalEventPhyName/@Value,' T1, ',$thisParam/ApprovalEventPhyName/@Value,' T2 WHERE ',$thisParam/phyRuleExp/@Value)}" AssignToVar="validation" HandleException="true"/>
+                </THEN>
+                <ELSE>
+                  <EXECUTE_SQL_QUERY Value="{concat('EXPLAIN SELECT * FROM ',$thisParam/ApprovalEventPhyName/@Value,' T1 WHERE ',$thisParam/phyRuleExp/@Value)}" AssignToVar="validation" HandleException="true"/>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$validation/@Status = 'Error'">
+                <THEN>
+                  <SET Var="userAction" FromValue="incorrectQuery"/>
+                  <SET Property="invalidSyntax" FromValue="true" DocVar="thisReturn"/>
+                  <SET Property="RuleCondition" FromValue="{$thisParam/RuleCondition/@Value}" DocVar="thisReturn"/>
+                  <SET Property="RuleEdit" FromValue="false" DocVar="thisReturn"/>
+                  <SET Property="RuleEditNegative" FromValue="true" DocVar="thisReturn"/>
+                </THEN>
+                <ELSE>
+                  <TO_DOCVAR AssignToVar="modifyDoc">
+                    <MODIFY>
+                      <Rule_String Value="{$thisParam/RuleCondition/@Value}"/>
+                      <Phy_Rule_String Value="{$thisParam/phyRuleExp/@Value}"/>
+                      <Phy_Columns Value="{$thisParam/PhyColumns/@Value}"/>
+                      <From_Date_Valid Value="{$thisParam/FROM_DateValid/@Value}"/>
+                      <To_Date_Valid Value="{$thisParam/TO_DateValid/@Value}"/>
+                    </MODIFY>
+                  </TO_DOCVAR>
+                  <IF_TEST Test="$thisParam/FROM_DateValid/@Value = ''">
+                    <THEN>
+                      <REMOVE_CHILDREN ChildName="From_Date_Valid" DocVar="modifyDoc"/>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="$thisParam/TO_DateValid/@Value = ''">
+                    <THEN>
+                      <REMOVE_CHILDREN ChildName="To_Date_Valid" DocVar="modifyDoc"/>
+                    </THEN>
+                  </IF_TEST>
+                  <MODIFY_DOC_SMART Name="Approval_Rule_Table" ServiceName="APPROVAL" HandleException="true" AssignToVar="ruleUpdate">
+                    <DOCUMENT_CONTEXT>
+                      <RuleId Value="{$thisParam/SelectedRuleId/@Value}"/>
+                    </DOCUMENT_CONTEXT>
+                    <UPDATE_PROPERTIES>
+                      <TO_XML SelectList="$modifyDoc/*"/>
+                    </UPDATE_PROPERTIES>
+                  </MODIFY_DOC_SMART>
+                  <SET Property="RuleEdit" FromValue="true" DocVar="thisReturn"/>
+                  <SET Property="RuleEditNegative" FromValue="false" DocVar="thisReturn"/>
+                  <IF_TEST Test="$ruleUpdate/@Status = 'Success' and $ruleUpdate/@RowCount='1'">
+                    <THEN>
+                      <SET Property="successMessage" FromValue="RULE_UPDATE_SUCCESS" DocVar="thisReturn"/>
+                      <SET Property="successFlag" FromValue="true" DocVar="thisReturn"/>
+                    </THEN>
+                    <ELSE>
+                      <SET Property="failureMessage" FromValue="RULE_UPDATE_FAILURE" DocVar="thisReturn"/>
+                      <SET Property="failureFlag" FromValue="true" DocVar="thisReturn"/>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'Delete'">
+            <THEN>
+              <GET_DOC_SMART Name="Approval_Rule_Table" ServiceName="APPROVAL" DirtyRead="true" HandleException="true" AssignToVar="approvalRules" ReturnRowCount="yes">
+                <ApprovalId Value="{$thisParam/ApprovalId/@Value}"/>
+                <Approval_Type Value="CA"/>
+                <ORDER_BY>
+                  <Priority/>
+                </ORDER_BY>
+              </GET_DOC_SMART>
+              <FOR_EACH SelectList="$approvalRules/*" CurrentElement="currElem">
+                <IF_TEST Test="$thisParam/SelectedRuleId/@Value = $currElem/RuleId/@Value">
+                  <THEN>
+                    <SET Var="priorityValue" FromValue="{$currElem/Priority/@Value}"/>
+                    <SET Var="assignApproval" FromValue="true"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$currElem/Priority/@Value > $priorityValue">
+                  <THEN>
+                    <MODIFY_DOC_SMART Name="Approval_Rule_Table" ServiceName="APPROVAL" HandleException="true" AssignToVar="priorityUpdate">
+                      <DOCUMENT_CONTEXT>
+                        <RuleId Value="{$currElem/RuleId/@Value}"/>
+                      </DOCUMENT_CONTEXT>
+                      <UPDATE_PROPERTIES>
+                        <Priority Value="{$priorityValue}"/>
+                      </UPDATE_PROPERTIES>
+                    </MODIFY_DOC_SMART>
+                    <SET Var="priorityValue" FromValue="{$currElem/Priority/@Value}"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <REMOVE_DOCUMENT Name="Approval_Rule_Table" ServiceName="APPROVAL" HandleException="true" AssignToVar="ruleDelete">
+                <RuleId Value="{$thisParam/SelectedRuleId/@Value}"/>
+              </REMOVE_DOCUMENT>
+              <IF_TEST Test="$thisParam/AssignApprovalEnabled/@Value = 'ASSIGN-APPROVAL' and $approvalRules/@TotalRowCount = '1' and $assignApproval='true'">
+                <THEN>
+                  <MODIFY_DOC_SMART Name="Approval_Groups" ServiceName="APPROVAL" HandleException="true" AssignToVar="stateUpdate">
+                    <DOCUMENT_CONTEXT>
+                      <SEQID Value="{$thisParam/ApprovalId/@Value}"/>
+                    </DOCUMENT_CONTEXT>
+                    <UPDATE_PROPERTIES>
+                      <ASSGNT_APPROVAL_FLAG Value=""/>
+                    </UPDATE_PROPERTIES>
+                  </MODIFY_DOC_SMART>
+                  <SET Property="AssignApprovalEnabled" DocVar="approvalDetails" FromValue=""/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/AutoApprovalEnabled/@Value = 'AUTO-APPROVAL' and $assignApproval!='true' and ($approvalDetails/RelevantColumnsCount/@Value = null or $approvalDetails/RelevantColumnsCount/@Value = '0')">
+                <THEN>
+                  <MODIFY_DOC_SMART Name="Approval_Groups" ServiceName="APPROVAL" HandleException="true" AssignToVar="stateUpdate">
+                    <DOCUMENT_CONTEXT>
+                      <SEQID Value="{$thisParam/ApprovalId/@Value}"/>
+                    </DOCUMENT_CONTEXT>
+                    <UPDATE_PROPERTIES>
+                      <AUTO_APPROVAL_FLAG Value=""/>
+                    </UPDATE_PROPERTIES>
+                  </MODIFY_DOC_SMART>
+                  <SET Property="AutoApprovalEnabled" DocVar="approvalDetails" FromValue=""/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$ruleDelete/@Status = 'Success' and $ruleDelete/@RowCount='1'">
+                <THEN>
+                  <SET Property="successMessage" FromValue="RULE_DELETE_SUCCESS" DocVar="thisReturn"/>
+                  <SET Property="successFlag" FromValue="true" DocVar="thisReturn"/>
+                </THEN>
+                <ELSE>
+                  <SET Property="failureMessage" FromValue="RULE_DELETE_FAILURE" DocVar="thisReturn"/>
+                  <SET Property="failureFlag" FromValue="true" DocVar="thisReturn"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <REMOVE_CHILDREN ChildName="SORT_BY" DocVar="thisParam"/>
+          <REMOVE_CHILDREN ChildName="SORT_ORDER" DocVar="thisParam"/>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Deactivate'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Activate'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Cancel'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="GoBackApprovals" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Done'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Assignment Approval Rules" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='opB'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='clB'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='AND'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='OR'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Add'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Edit'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Clear'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Add_Rule'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Create Approval Rules" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Delete'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Create Approval Rules" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Column Level Approval" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Auto_Approval'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Create Approval Rules" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Update'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Create Approval Rules" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='incorrectQuery'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Create Approval Rules" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Clear_Rule'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Save_Edit'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <sub_workflow Name="GoBackApprovals" Workflow="ManageApprovals">
+      <pre_actions>
+        <action/>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <input>
+        <action>
+          <TO_XML DocVar="thisReturn"/>
+        </action>
+      </input>
+      <next_nodes/>
+    </sub_workflow>
+    <decision Name="decision6">
+      <actions>
+        <action>
+          <action>
+            <TO_DOCVAR AssignToVar="columnNames">
+              <COLUMNS/>
+            </TO_DOCVAR>
+            <TO_DOCVAR AssignToVar="approvalDetails">
+              <APPROVALS/>
+            </TO_DOCVAR>
+            <TO_DOCVAR AssignToVar="tableNames">
+              <TABLES/>
+            </TO_DOCVAR>
+            <GET_DOC_SMART Name="Approval_Groups" ServiceName="APPROVAL" DirtyRead="true" AssignToVar="approvalId" HandleException="true">
+              <SEQID Value="{$thisParam/selectedRuleGrpId/@Value}"/>
+              <SELECT>
+                <EVENT_NAME/>
+                <ACTION_TYPE/>
+                <IS_ROLE/>
+                <AUTO_APPROVAL_FLAG/>
+                <ASSGNT_APPROVAL_FLAG/>
+              </SELECT>
+            </GET_DOC_SMART>
+            <SET Property="ApprovalGroupId" DocVar="approvalDetails" FromValue="{$thisParam/selectedRuleGrpId/@Value}"/>
+            <SET Property="ApprovalEventName" DocVar="approvalDetails" FromValue="{$approvalId/*/EVENT_NAME/@Value}"/>
+            <SET Property="AutoApprovalEnabled" DocVar="approvalDetails" FromValue="{$approvalId/*/AUTO_APPROVAL_FLAG/@Value}"/>
+            <SET Property="AssignApprovalEnabled" DocVar="approvalDetails" FromValue="{$approvalId/*/ASSGNT_APPROVAL_FLAG/@Value}"/>
+            <GET_DOC_PROPERTIES TableName="{$approvalId/*/EVENT_NAME/@Value}" AssignToVar="DocPropertiesVar" ServiceName="BCM_MASTER"/>
+            <SET Property="ApprovalEventPhyName" FromValue="{$DocPropertiesVar/*/@TableName}" DocVar="approvalDetails"/>
+            <SET Property="ApprovalUserRole" FromValue="{$approvalId/*/IS_ROLE/@Value}" DocVar="approvalDetails"/>
+            <SET Property="ApprovalActionType" FromValue="{$approvalId/*/ACTION_TYPE/@Value}" DocVar="approvalDetails"/>
+            <FOR_EACH CurrentElement="currElem" SelectList="$DocPropertiesVar/*/*">
+              <IF_TEST Test="starts-with($currElem/@ColumnName,'EXT_') != 'true' and $currElem/@Type != 'Clob' ">
+                <THEN>
+                  <IF_TEST Test="$currElem/@IsTemporal = 'true'">
+                    <THEN/>
+                    <ELSE>
+                      <TO_DOCVAR AssignToVar="currOptionVar">
+                        <LOG_NAME Value="{$currElem/@Name}" Id="{$currElem/@ColumnName}"/>
+                      </TO_DOCVAR>
+                      <IF_TEST Test="$currElem/@IsValidValue = 'true'">
+                        <THEN>
+                          <SET Var="propDataType" FromValue="{concat($propDataType,'lookUp','#')}"/>
+                        </THEN>
+                        <ELSE>
+                          <IF_TEST Test="$currElem/@Type = 'char'">
+                            <THEN>
+                              <SET Var="propDataType" FromValue="{concat($propDataType,$currElem/@Type,'-',$currElem/@MaxLength,'#')}"/>
+                            </THEN>
+                            <ELSE>
+                              <IF_TEST Test="$currElem/@Type = 'decimal'">
+                                <THEN>
+                                  <SET Var="propDataType" FromValue="{concat($propDataType,$currElem/@Type,'[',$currElem/@MaxLength,'-',$currElem/*/DECIMALS/@Value,']','#')}"/>
+                                </THEN>
+                                <ELSE>
+                                  <SET Var="propDataType" FromValue="{concat($propDataType,$currElem/@Type,'#')}"/>
+                                </ELSE>
+                              </IF_TEST>
+                            </ELSE>
+                          </IF_TEST>
+                        </ELSE>
+                      </IF_TEST>
+                    </ELSE>
+                  </IF_TEST>
+                  <IF_TEST Test="$currElem/@PrimaryKey = 'yes'">
+                    <THEN>
+                      <SET Var="pkCols" FromValue="{concat($pkCols,$currElem/@Name, ',')}"/>
+                    </THEN>
+                  </IF_TEST>
+                  <ADD_CHILDREN DocVar="columnNames" FromDocVar="currOptionVar"/>
+                </THEN>
+              </IF_TEST>
+            </FOR_EACH>
+            <SET Property="propertyTypes" FromValue="{$propDataType}" DocVar="approvalDetails"/>
+            <SET Property="pkCols" FromValue="{$pkCols}" DocVar="approvalDetails"/>
+            <GET_DOC_SMART Name="SYS_TABLE_MAP" DirtyRead="true" ServiceName="E2E" HandleException="true" AssignToVar="msttables">
+              <ORDER_BY>
+                <LOGICAL_NAME/>
+              </ORDER_BY>
+            </GET_DOC_SMART>
+            <FOR_EACH CurrentElement="currOption" SelectList="$msttables/*">
+              <TO_DOCVAR AssignToVar="currOptionVar">
+                <LogicalTableName Value="{$currOption/LOGICAL_NAME/@Value}" Id="{$currOption/PHYSICAL_MST/@Value}"/>
+              </TO_DOCVAR>
+              <ADD_CHILDREN DocVar="tableNames" FromDocVar="currOptionVar"/>
+            </FOR_EACH>
+            <REQUEST Name="getAllCodeSets" AssignToVar="tempCodeSet" HandleException="true" ServiceName="BCM_MASTER"/>
+            <TO_DOCVAR AssignToVar="codeSets">
+              <CODE_SETS>
+                <TO_XML SelectList="$tempCodeSet/*/*"/>
+              </CODE_SETS>
+            </TO_DOCVAR>
+            <REMOVE_CHILDREN ChildName="SORT_BY" DocVar="thisParam"/>
+            <REMOVE_CHILDREN ChildName="SORT_ORDER" DocVar="thisParam"/>
+            <IF_TEST Test="$approvalId/*/ACTION_TYPE/@Value='ALL' or $approvalId/*/ACTION_TYPE/@Value='UPDATE'">
+              <THEN>
+                <SET Var="sourceFlag" FromValue="Yes"/>
+              </THEN>
+              <ELSE>
+                <SET Var="sourceFlag" FromValue="No"/>
+              </ELSE>
+            </IF_TEST>
+          </action>
+        </action>
+      </actions>
+      <condition Value="$sourceFlag='Yes'"/>
+      <if_true>
+        <next_nodes>
+          <next_node Name="Column Level Approval" Description=""/>
+        </next_nodes>
+      </if_true>
+      <if_false>
+        <next_nodes>
+          <next_node Name="Create Approval Rules" Description=""/>
+        </next_nodes>
+      </if_false>
+    </decision>
+    <ui_form2 Name="Assignment Approval Rules" ShowInBreadCrumbs="SHOW" Template="ConditionalApproval.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="ApproverNames">
+            <APPROVER_NAMES/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="SelectedApprovers">
+            <SELECTED_APPROVERS/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="orderByXml">
+            <ORDER_BY/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="filterXml">
+            <FILTERS/>
+          </TO_DOCVAR>
+          <SET Property="maxRows" FromValue="{$tableDefaultRows}" DocVar="pglFormInput"/>
+          <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filterXml">
+            <FILTER_RuleId Operator="true"/>
+            <FILTER_Rule_String/>
+            <FILTER_User_Type/>
+            <FILTER_Approvers/>
+          </FORM_SEARCH_FILTER>
+          <FOR_EACH SelectList="$filterXml/*/*" CurrentElement="currentSearchColumn">
+            <SET_NAME DocVar="currentSearchColumn" FromValue="{substringAfter($currentSearchColumn/name(),'FILTER_')}"/>
+          </FOR_EACH>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'Set_Priority'">
+            <THEN>
+              <SET Var="sortOrder" FromValue="Ascending"/>
+              <SET Var="sortBy" FromValue="Priority"/>
+            </THEN>
+            <ELSE>
+              <SET Var="sortOrder" FromValue="{ifElse($thisParam/SORT_ORDER/@Value = null, 'Descending', $thisParam/SORT_ORDER/@Value)}"/>
+              <SET Var="sortBy" FromValue="{ifElse(($thisParam/SORT_BY/@Value = null) or($thisParam/SORT_BY/@Value = 'ID') , 'RuleId', $thisParam/SORT_BY/@Value)}"/>
+            </ELSE>
+          </IF_TEST>
+          <SET Property="sortBy" FromValue="{$sortBy}" DocVar="pglFormInput"/>
+          <SET Property="sortOrder" FromValue="{$sortOrder}" DocVar="pglFormInput"/>
+          <TO_DOCVAR AssignToVar="sortByColumn">
+            <TEMP/>
+          </TO_DOCVAR>
+          <SET_NAME DocVar="sortByColumn" FromValue="{$sortBy}"/>
+          <SET Attribute="Sort" DocVar="sortByColumn" FromValue="{$sortOrder}"/>
+          <ADD_CHILDREN DocVar="orderByXml" FromDocVar="sortByColumn"/>
+          <SET Property="SetPriority" FromValue="false" DocVar="pglFormInput"/>
+          <SET Property="SetNoPriority" FromValue="true" DocVar="pglFormInput"/>
+          <IF_TEST Test="$thisReturn/* !=null">
+            <THEN>
+              <APPEND_CHILDREN DocVar="pglFormInput" FromDocVar="thisReturn"/>
+            </THEN>
+          </IF_TEST>
+          <GET_DOC_SMART Name="Approval_Rule_Table" ServiceName="APPROVAL" DirtyRead="true" MaxRows="{$tableDefaultRows}" AssignToVar="approvalRules" HandleException="true" ReturnRowCount="yes">
+            <ApprovalId Value="{$approvalDetails/ApprovalGroupId/@Value}"/>
+            <OR>
+              <Approval_Type Value="AA" MatchBy="NOT_EQUAL"/>
+              <Approval_Type/>
+            </OR>
+            <TO_XML SelectList="$filterXml/*/*"/>
+            <TO_XML SelectList="$orderByXml"/>
+          </GET_DOC_SMART>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'Set_Priority' ">
+            <THEN>
+              <SET Property="SetPriority" FromValue="true" DocVar="pglFormInput"/>
+              <SET Property="SetNoPriority" FromValue="false" DocVar="pglFormInput"/>
+              <FOR_EACH SelectList="$approvalRules/*" CurrentElement="currRule">
+                <IF_TEST Test="$currRule/Priority/@Value = null">
+                  <THEN>
+                    <REMOVE_CHILD DocVar="approvalRules" ChildDocVar="currRule"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+          <SET Var="priorityVar" FromValue="0"/>
+          <FOR_EACH SelectList="$approvalRules/*" CurrentElement="currPriority">
+            <IF_TEST Test="$currPriority/Priority/@Value != null and $priorityVar &lt; $currPriority/Priority/@Value">
+              <THEN>
+                <SET Var="priorityVar" FromValue="{$currPriority/Priority/@Value}"/>
+              </THEN>
+            </IF_TEST>
+          </FOR_EACH>
+          <SET Var="priorityVar" FromValue="{int($priorityVar)+1}"/>
+          <SET Property="PriorityCount" FromValue="{substringBefore($priorityVar,'.')}" DocVar="pglFormInput"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'Conditional_Approval'">
+            <THEN>
+              <SET Property="UserStatus" FromValue="true" DocVar="pglFormInput"/>
+              <FOR_EACH CurrentElement="currElement" SelectList="$approvalRules/*">
+                <IF_TEST Test="$currElement/RuleId/@Value = $thisParam/SelectedConditionalId/@Value">
+                  <THEN>
+                    <TO_DOCVAR AssignToVar="ruleApprovers">
+                      <TO_XML DocVar="currElement"/>
+                    </TO_DOCVAR>
+                    <BREAK/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <IF_TEST Test="$ruleApprovers/Priority/@Value != null">
+                <THEN>
+                  <SET Property="PriorityCount" FromValue="{$ruleApprovers/Priority/@Value}" DocVar="pglFormInput"/>
+                </THEN>
+              </IF_TEST>
+              <SET Var="assignedApprovers" FromValue="{$ruleApprovers/Approvers/@Value}"/>
+              <SET Var="approver" FromValue="{substringBefore($assignedApprovers,',')}"/>
+              <SET Var="assignedApprovers" FromValue="{substringAfter($assignedApprovers,',')}"/>
+              <WHILE Condition="$assignedApprovers != $approver">
+                <APPEND_TO_XML Select="$SelectedApprovers">
+                  <OPTION Value="{$approver}"/>
+                </APPEND_TO_XML>
+                <SET Var="approver" FromValue="{substringBefore($assignedApprovers,',')}"/>
+                <SET Var="assignedApprovers" FromValue="{substringAfter($assignedApprovers,',')}"/>
+              </WHILE>
+              <IF_TEST Test="$assignedApprovers = $approver">
+                <THEN>
+                  <APPEND_TO_XML Select="$SelectedApprovers">
+                    <OPTION Value="{$approver}"/>
+                  </APPEND_TO_XML>
+                </THEN>
+              </IF_TEST>
+              <SET Var="flag" FromValue="false"/>
+              <IF_TEST Test="$ruleApprovers/User_Type/@Value = 'UserBased' or $ruleApprovers/User_Type/@Value = null">
+                <THEN>
+                  <SET Property="UserType" FromValue="UserBased" DocVar="pglFormInput"/>
+                  <GET_DOCUMENT AssignToVar="userProfiles" Name="USER_PROFILE" ServiceName="USER_SECURITY" Distinct="true" DirtyRead="true">
+                    <SELECT>
+                      <LOGIN_NAME/>
+                    </SELECT>
+                  </GET_DOCUMENT>
+                  <FOR_EACH SelectList="$userProfiles/USER_PROFILE" CurrentElement="currNameList">
+                    <FOR_EACH SelectList="$SelectedApprovers/*" CurrentElement="currApprover">
+                      <IF_TEST Test="$currNameList/LOGIN_NAME/@Value = $currApprover/@Value">
+                        <THEN>
+                          <SET Var="flag" FromValue="true"/>
+                        </THEN>
+                      </IF_TEST>
+                    </FOR_EACH>
+                    <IF_TEST Test="$flag = 'false'">
+                      <THEN>
+                        <APPEND_TO_XML Select="$ApproverNames">
+                          <OPTION Value="{$currNameList/LOGIN_NAME/@Value}"/>
+                        </APPEND_TO_XML>
+                      </THEN>
+                    </IF_TEST>
+                    <SET Var="flag" FromValue="false"/>
+                  </FOR_EACH>
+                </THEN>
+                <ELSE>
+                  <SET Property="UserType" FromValue="UserGroupBased" DocVar="pglFormInput"/>
+                  <GET_DOCUMENT Name="USER_GRP_PROFILE" ServiceName="USER_SECURITY" AssignToVar="userProfiles" DirtyRead="true">
+                    <SELECT>
+                      <GRP_NAME/>
+                    </SELECT>
+                  </GET_DOCUMENT>
+                  <FOR_EACH SelectList="$userProfiles/USER_GRP_PROFILE" CurrentElement="currNameList">
+                    <FOR_EACH SelectList="$SelectedApprovers/*" CurrentElement="currApprover">
+                      <IF_TEST Test="$currNameList/GRP_NAME/@Value = $currApprover/@Value">
+                        <THEN>
+                          <SET Var="flag" FromValue="true"/>
+                        </THEN>
+                      </IF_TEST>
+                    </FOR_EACH>
+                    <IF_TEST Test="$flag = 'false'">
+                      <THEN>
+                        <APPEND_TO_XML Select="$ApproverNames">
+                          <OPTION Value="{$currNameList/GRP_NAME/@Value}"/>
+                        </APPEND_TO_XML>
+                      </THEN>
+                    </IF_TEST>
+                    <SET Var="flag" FromValue="false"/>
+                  </FOR_EACH>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="priority"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="ApproverNames"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="SelectedApprovers"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="approvalRules"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="approvalDetails"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="thisReturn">
+            <ROOT/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'SaveUsers'">
+            <THEN>
+              <SET Var="approvers" FromValue=""/>
+              <FOR_EACH SelectList="$thisParam/AssignedApprovers" CurrentElement="currUser">
+                <IF_TEST Test="$approvers != ''">
+                  <THEN>
+                    <SET Var="approvers" FromValue="{concat($approvers, ',', $currUser/@Value)}"/>
+                  </THEN>
+                  <ELSE>
+                    <SET Var="approvers" FromValue="{$currUser/@Value}"/>
+                  </ELSE>
+                </IF_TEST>
+              </FOR_EACH>
+              <MODIFY_DOC_SMART Name="Approval_Rule_Table" ServiceName="APPROVAL" HandleException="true" AssignToVar="conditionalApproval">
+                <DOCUMENT_CONTEXT>
+                  <RuleId Value="{$thisParam/SelectedConditionalId/@Value}"/>
+                </DOCUMENT_CONTEXT>
+                <UPDATE_PROPERTIES>
+                  <Approval_Type Value="CA"/>
+                  <Priority Value="{$thisParam/Priority_Def/@Value}"/>
+                  <User_Type Value="{$thisParam/RoleType/@Value}"/>
+                  <Approvers Value="{$approvers}"/>
+                </UPDATE_PROPERTIES>
+              </MODIFY_DOC_SMART>
+              <IF_TEST Test="$approvalDetails/AssignApprovalEnabled/@Value = 'ASSIGN-APPROVAL'">
+                <THEN/>
+                <ELSE>
+                  <MODIFY_DOC_SMART Name="Approval_Groups" ServiceName="APPROVAL" HandleException="true" AssignToVar="conditionAppr">
+                    <DOCUMENT_CONTEXT>
+                      <SEQID Value="{$thisParam/ApprovalId/@Value}"/>
+                    </DOCUMENT_CONTEXT>
+                    <UPDATE_PROPERTIES>
+                      <ASSGNT_APPROVAL_FLAG Value="ASSIGN-APPROVAL"/>
+                    </UPDATE_PROPERTIES>
+                  </MODIFY_DOC_SMART>
+                  <SET Property="AssignApprovalEnabled" FromValue="ASSIGN-APPROVAL" DocVar="approvalDetails"/>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$conditionalApproval/@Status = 'Success' and $conditionalApproval/@RowCount = '1'">
+                <THEN>
+                  <SET Property="successMessage" FromValue="ASSIGN_APPROVAL_SUCCESS" DocVar="thisReturn"/>
+                  <SET Property="successFlag" FromValue="true" DocVar="thisReturn"/>
+                </THEN>
+                <ELSE>
+                  <SET Property="failureMessage" FromValue="ASSIGN_APPROVAL_FAILURE" DocVar="thisReturn"/>
+                  <SET Property="failureFlag" FromValue="true" DocVar="thisReturn"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <REMOVE_CHILDREN ChildName="SORT_ORDER" DocVar="thisParam"/>
+          <REMOVE_CHILDREN ChildName="SORT_BY" DocVar="thisParam"/>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Deactivate_Auto'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Activate_Auto'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Delete'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Auto_Approval'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Cancel'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Done'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="GoBackApprovals" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Conditional_Approval'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Assignment Approval Rules" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='DoubleLeft'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Left'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Right'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='DoubleRight'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Deactivate_Conditional'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Activate_Conditional'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SaveUsers'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Assignment Approval Rules" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Create Approval Rules" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Up'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Down'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='changeUserType'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Assignment Approval Rules" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Set_Priority'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Assignment Approval Rules" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Priority_Cancel'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Assignment Approval Rules" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Edit'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <start0 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="202,401">
+        <iconProps iconfile="z1start.gif"/>
+      </start0>
+      <mgcnode Name="Column Level Approval" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="283,170" size="1920,1040">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <mgcnode Name="Create Approval Rules" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="515,170" size="1920,1040">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <GoBackApprovals font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="760,50" size="744,709">
+        <iconProps iconfile="z1sub_workflow.gif"/>
+      </GoBackApprovals>
+      <decision6 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="400,403" size="1920,1040">
+        <iconProps iconfile="z1decision.gif"/>
+      </decision6>
+      <mgcnode Name="Assignment Approval Rules" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="760,170" size="1920,1040">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+    </mgcnodes>
+    <mgcconnectors>
+      <start0>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="247,423" endpoint="400,425" ctrlRect1="359,421,4,4" ctrlRect2="283,423,4,4"/>
+      </start0>
+      <mgcnode Name="Column Level Approval">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="328,192" endpoint="760,72" ctrlRect1="518,176,4,4" ctrlRect2="434,70,4,4" ctrlRect1Dirty="true" textRect="473,121,11,8">
+          <textProps text="Cancel"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="328,192" endpoint="515,192" ctrlRect1="465,190,4,4" ctrlRect2="372,190,4,4">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="328,192" endpoint="760,72" ctrlRect1="486,73,4,4" ctrlRect2="434,70,4,4" ctrlRect1Dirty="true" textRect="452,69,20,8">
+          <textProps text="Save and Return"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="328,192" endpoint="328,192" ctrlRect1="401,190,4,4" ctrlRect2="401,190,4,4"/>
+      </mgcnode>
+      <mgcnode Name="Create Approval Rules">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="560,192" endpoint="760,72" ctrlRect1="666,202,4,4" ctrlRect2="623,115,4,4" ctrlRect2Dirty="true" ctrlRect1Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="560,192" endpoint="760,192" ctrlRect1="574,189,4,4" ctrlRect2="604,189,4,4" ctrlRect1Dirty="true" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="537,215" endpoint="537,215" ctrlRect1="535,288,4,4" ctrlRect2="590,268,4,4" ctrlRect2Dirty="true" textRect="558,276,13,8">
+          <textProps text="Add Rule"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="560,192" endpoint="560,192" ctrlRect1="633,190,4,4" ctrlRect2="590,245,4,4" ctrlRect2Dirty="true" textRect="608,215,10,8">
+          <textProps text="Delete"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="515,192" endpoint="328,192" ctrlRect1="430,187,4,4" ctrlRect2="467,190,4,4" ctrlRect1Dirty="true" textRect="446,186,9,8">
+          <textProps text="Back"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="560,192" endpoint="560,192" ctrlRect1="633,190,4,4" ctrlRect2="599,191,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="560,192" endpoint="560,192" ctrlRect1="633,190,4,4" ctrlRect2="614,135,4,4" ctrlRect2Dirty="true" textRect="620,160,11,8">
+          <textProps text="Update"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="537,215" endpoint="537,215" ctrlRect1="535,288,4,4" ctrlRect2="496,274,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+      </mgcnode>
+      <decision6>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,0" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="422,403" endpoint="305,215" ctrlRect1="420,260,4,4" ctrlRect2="303,354,4,4" textRect="359,305,8,8">
+          <textProps text="yes"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="178,0,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="422,403" endpoint="537,215" ctrlRect1="420,260,4,4" ctrlRect2="546,351,4,4" ctrlRect2Dirty="true" textRect="482,303,7,8">
+          <textProps text="no"/>
+        </nextNodeView>
+      </decision6>
+      <mgcnode Name="Assignment Approval Rules">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="782,170" endpoint="782,95" ctrlRect1="780,113,4,4" ctrlRect2="783,167,4,4" ctrlRect2Dirty="true" textRect="779,138,9,8">
+          <textProps text="Done"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="805,192" endpoint="805,192" ctrlRect1="878,190,4,4" ctrlRect2="852,193,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="805,192" endpoint="805,192" ctrlRect1="878,190,4,4" ctrlRect2="850,192,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="760,192" endpoint="560,192" ctrlRect1="608,190,4,4" ctrlRect2="569,194,4,4" ctrlRect2Dirty="true" textRect="586,190,9,8">
+          <textProps text="Back"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="805,192" endpoint="805,192" ctrlRect1="878,190,4,4" ctrlRect2="852,191,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="805,192" endpoint="805,192" ctrlRect1="878,190,4,4" ctrlRect2="851,189,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="805,192" endpoint="805,192" ctrlRect1="878,190,4,4" ctrlRect2="840,235,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+      </mgcnode>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions/>
+    <post_actions/>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

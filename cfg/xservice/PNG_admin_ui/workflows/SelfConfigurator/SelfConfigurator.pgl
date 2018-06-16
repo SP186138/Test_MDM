@@ -1,0 +1,224 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_form" source="studio.controller:load">
+  <ui:container id="Outer" scrollable="true" showFavorite="true">
+    <ui:header>
+      <ui:link id="downloadTemplate" onClick="javascript:templateClick(event)">
+        <ui:image src="/default_template.gif" displayText="Download Template"/>
+      </ui:link>
+    </ui:header>
+    <ui:step id="OuterStep" displayText="SELF_CONFIGURATOR" scrollable="true">
+      <ui:help displayPage="../../bcm/help/Manage_Model_Builder_help.htm"/>
+      <ui:field-group columns="1">
+        <ui:hidden-field id="fileType" name="fileType" value="xlsx"/>
+      </ui:field-group>
+      <ui:field-group columns="3">
+        <ui:hidden-field id="modelStatus" name="modelStatus" value="{$root/modelStatus/@Value}"/>
+        <ui:image src="/bpi_check.gif" id="AlertGreenIconAjax" displayCondition="{string-length($root/ABC/AlertGreen/@Value)!=0}"/>
+        <ui:image src="/cancel.gif" id="AlertRedIconAjax" displayCondition="{string-length($root/ABC/AlertRed/@Value)!=0}"/>
+        <ui:display-field value="{$root/ABC/AlertGreen/@Value}" displayCondition="{string-length($root/ABC/AlertGreen/@Value) != 0}" id="success" name="success" class="requiredIndicatorGreen" style="color:green;"/>
+        <ui:display-field value="{$root/ABC/AlertRed/@Value}" displayCondition="{string-length($root/ABC/AlertRed/@Value) != 0}" id="error" name="error" class="requiredIndicator" style="color:red;"/>
+      </ui:field-group>
+      <ui:field-group columns="4">
+        <ui:field-group columns="1">
+          <ui:radiobutton id="draftModel" name="draftModel" unFormat="true" checkedValue="DRAFT" displayText="SC_DRAT_MODELS" value="{$root/modelStatus/@Value}" onClick="javascript:showdraftModels();"/>
+          <ui:radiobutton id="draftModel" name="pendingModel" unFormat="true" checkedValue="PENDING_APPROVAL" displayText="SC_PENDING_APPROVAL" value="{$root/modelStatus/@Value}" onClick="javascript:showPendingModels();"/>
+          <ui:radiobutton id="draftModel" name="activeModel" unFormat="true" checkedValue="VALIDATED" displayText="SC_ACTIVE_MODELS" value="{$root/modelStatus/@Value}" onClick="javascript:showActiveModels();"/>
+          <ui:radiobutton id="draftModel" name="completedModel" unFormat="true" checkedValue="GENERATED" displayText="SC_COMPLETED_MODELS" value="{$root/modelStatus/@Value}" onClick="javascript:showCompletedModels();"/>
+        </ui:field-group>
+        <ui:field-space/>
+        <ui:textarea id="validateModelsLog" name="validateModelsLog" displayText="SC_MODEL_VALIDATOR_LOGS" value="{$root/modelValidatorLog/@Value}" displayCondition="{string-length($root/modelValidatorLog/@Value)!=0}" maxlength="20000" columns="105" rows="5" displayNoWrap="false" editable="true" format="true" inFormat="true"/>
+      </ui:field-group>
+      <ui:table id="uiTable" displayText="SEARCH_SELF_GEN_MOLDELS" scrollable="true" displayTextNoRecords="SELF_GEN_NO_MODELS_FOUND" collapsable="false" doPaging="true" selectable="All" select="$root/MODELS" totalRowCount="$root/totalRowCount/@Value" startAtRow="$root/startAtRow/@Value" postRowIdAs="SELECTED_ID" maxRows="20" filter="true" rowId="TABLE_ID">
+        <ui:field-group>
+          <ui:hidden-field name="TABLE_ID" id="TABLE_ID" displayText="Table Id" sortable="true" unFormat="true"/>
+          <ui:display-field name="TABLE_NAME" id="TABLE_NAME" displayText="SELF_GEN_TABLE_NAME" sortable="true" title="SELF_GEN_TABLE_NAME_HOV" unFormat="true"/>
+          <ui:display-field name="STATUS" id="STATUS" displayText="SELF_GEN__MODEL_UI_STATUS" title="SELF_GEN__MODEL_UI_STATUS_HOV"/>
+          <ui:display-field name="FOLDER_NAME" id="FOLDER_NAME" displayText="SELF_GEN_CONFIG_FOLDER_NAME" sortable="true" title="SELF_GEN_CONFIG_FOLDER_NAME_HOV" unFormat="true"/>
+          <ui:display-field name="TABLE_DESCRIPTION" id="TABLE_DESCRIPTION" displayText="SELF_GEN_TABLE_DESCRIPTION" title="SELF_GEN_TABLE_DESCRIPTION_HOV"/>          
+          <ui:display-field name="CREATED_BY" id="CREATED_BY" displayText="SELF_GEN_CREATED_BY" sortable="true" title="SELF_GEN_CREATED_BY_HOV"/>
+          <ui:display-field name="CREATION_DATE" id="CREATION_DATE" displayText="SELF_GEN_CREATION_DATE" sortable="true" title="SELF_GEN_CREATION_DATE_HOV" dataType="DateTime"/>
+          <ui:display-field name="LAST_MODIFIED_BY" id="LAST_MODIFIED_BY" displayText="SELF_GEN_LAST_MODIFIED_BY" sortable="true" title="SELF_GEN_LAST_MODIFIED_BY_HOV"/>
+          <ui:display-field name="LAST_MODIFIED_DATE" id="LAST_MODIFIED_DATE" displayText="SELF_GEN_LAST_MODIFIED_DATE" sortable="true" title="SELF_GEN_LAST_MODIFIED_DATE_HOV" dataType="DateTime"/>
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button id="ManageDictionary" name="ManageDictionary" displayText="MANAGE_DICTIONARY" emphasized="false" displayCondition="{$root/modelStatus/@Value !='PENDING_APPROVAL'}"/>
+          <ui:divider/>
+          <ui:button id="isgLog" name="isgLog" displayText="SELF_GEN_VIEW_LOGS" emphasized="false"/>
+          <ui:divider/>
+          <ui:button id="ViewSql" name="ViewSql" displayText="SELF_CONF_VIEW_MODEL_DDL" emphasized="false" enabledBySelections="true" displayCondition="{$root/modelStatus/@Value ='VALIDATED' or $root/modelStatus/@Value ='PENDING_APPROVAL'}"/>
+          <ui:divider/>
+          <ui:button id="defaultTemplate" name="defaultTemplate" displayText="SC_DEFAULT_TEMPLATE" emphasized="false" displayCondition="{$root/modelStatus/@Value !='PENDING_APPROVAL'}"/>
+          <ui:divider/>
+          <ui:button id="UploadExcel" name="UploadExcel" displayText="SELF_GEN_UPLOAD_EXCEL" emphasized="false" displayCondition="{$root/modelStatus/@Value !='PENDING_APPROVAL'}"/>
+          <ui:divider/>
+          <ui:button id="Validate" name="Validate" displayText="SELF_GEN_MODEL_VALIDATOR" emphasized="false" enabledBySelections="true" displayCondition="{$root/modelStatus/@Value ='DRAFT'}"/>
+          <ui:divider/>
+          <ui:button id="RunIsg" name="RunIsg" displayText="SELF_GEN_RUN_ISG" emphasized="false" enabledBySelections="true" displayCondition="{$root/modelStatus/@Value ='VALIDATED'}"/>
+          <ui:divider/>
+          <ui:button id="Create" name="Create" displayText="SELF_GEN_CREATE" emphasized="false" displayCondition="{$root/modelStatus/@Value !='PENDING_APPROVAL'}"/>
+          <ui:divider/>
+          <ui:button id="Edit" name="Edit" displayText="SELF_GEN_EDIT" emphasized="false" enabledBySelections="true" onClick="javascript:onEdit();" displayCondition="{$root/modelStatus/@Value !='PENDING_APPROVAL'}"/>
+          <ui:divider/>
+          <ui:button id="Delete" name="Delete" displayText="SELF_GEN_DELETE" emphasized="false" enabledBySelections="true" onClick="javascript:onDelete();" displayCondition="{$root/modelStatus/@Value !='GENERATED' and $root/modelStatus/@Value !='PENDING_APPROVAL'}"/>
+        </ui:buttons>
+      </ui:table>
+      <ui:script>
+        
+function onEdit(){
+        
+    if(checkSelectedOne()){
+        var modelStatus = document.getElementById('modelStatus').value;
+        if(modelStatus === 'GENERATED' || modelStatus === 'VALIDATED'){
+			core_confirm_jquery('SC_CONFIG_MODELS_RT_EDIT_CONFIRM','onEditCallback');        	
+       	}
+        else{
+        	document.form.BUTTON_ID.value = 'Edit';
+			document.form.action = 'view.x2ps';
+			document.form.submit();
+			grayOut(true);
+        }
+     }
+}
+        
+function onEditCallback(response){
+if( response === 'yes' )
+{
+document.form.BUTTON_ID.value = 'Edit';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+}
+}
+                      
+function onDelete()
+{
+core_confirm_jquery('SC_CONFIG_MODELS_RT_DELETE_CONFIRM','onDeleteCallback');
+}
+
+function onDeleteCallback(response)
+{
+if( response === 'yes' )
+{
+document.form.BUTTON_ID.value = 'Delete';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+}
+}
+        
+        
+function templateClick(event)
+{
+var $img = $('img[src=&quot;'+omxContextPath+'/td/images/default_template.gif&quot;]');
+var offset = $img.offset();
+var pos = (offset.left - 160);
+var posTop = (offset.top);
+var div = document.createElement(&quot;div&quot;)
+div.setAttribute('id', 'tempMenu');
+div.setAttribute('class', 'sortMenu');
+if(typeof $img[0] != 'undefined'  &amp;&amp;  $img[0] !=  null ){
+div.setAttribute('style','position: fixed; visibility: visible; left:'+ pos+'px; top:'+posTop +'px; ')
+div.innerHTML  = '&lt;table border=&quot;1&quot; cellspacing=&quot;0&quot; cellpadding=&quot;0&quot;> &lt;tbody>&lt;tr class=&quot;menuUnhighlighted&quot;>&lt;td class=&quot;menuShadow&quot;> &lt;table border=&quot;0&quot; cellspacing=&quot;2&quot; cellpadding=&quot;0&quot;> &lt;tbody>&lt;tr class=&quot;menuUnhighlighted&quot;> &lt;td class=&quot;menuText&quot; nowrap=&quot;yes&quot; colspan=&quot;2&quot;> &lt;a href=&quot;javascript:templateSelected(1)&quot;>&amp;nbsp;&amp;nbsp;SimpleExcelTemplate&amp;nbsp;&amp;nbsp; &lt;/a> &lt;/td> &lt;/tr> &lt;tr class=&quot;menuUnhighlighted&quot;> &lt;td class=&quot;menuText&quot; nowrap=&quot;yes&quot; colspan=&quot;2&quot;> &lt;a href=&quot;javascript:templateSelected(2)&quot;>&amp;nbsp;&amp;nbsp;AdvanceExcelTemplate&amp;nbsp;&amp;nbsp; &lt;/a> &lt;/td> &lt;/tr> &lt;/tbody>&lt;/table> &lt;/td> &lt;/tr> &lt;/tbody>&lt;/table>'
+document.getElementById('OuterStep').parentNode.appendChild(div);
+}
+var templateMenu = document.getElementById('tempMenu');
+$('#tempMenu').show();
+if (event &amp;&amp; event.stopPropagation) {
+event.stopPropagation();
+}
+else if (window.event){
+window.event.cancelBubble = true;
+}
+        
+
+}
+        
+function templateSelected(val) {
+var template='advTemp';
+if(val==1)
+template='simpTemp';
+$("div[id='tempMenu']").remove();
+        
+var fileType = document.getElementById(&quot;fileType&quot;).value;
+if(fileType === 'xls' || fileType === 'xlsx')
+{
+var prevAction = document.form.action;
+var prevTarget = document.form.target;
+
+document.form.target = &quot;hiddenDownloader&quot;;
+document.form.action=omxContextPath + '/bcm/framework/selfConfigTemplateDownloader/downloadSelfConfigTemplate.jsp?' +'FORMAT_TYPE='+fileType +'&amp;TEMPLATE_TYPE='+template;
+
+document.form.submitWholePage();
+
+document.form.action= prevAction;
+document.form.target= prevTarget;        
+}
+        
+}
+
+function checkSelectedOne()
+{
+var selectedRowCount = 0;
+var checkboxElem = document.getElementsByName('SELECTED_ID');
+for(i = 0; i &lt; checkboxElem.length; i++)
+{
+if(checkboxElem[i].checked )
+selectedRowCount++;
+}
+if(selectedRowCount > 1)
+{
+core_alert_jquery(&quot;PLEASE_SELECT_ONLY_ONE_TRANSACTION&quot;);
+return false;
+}
+else  if(selectedRowCount ==0)
+{
+core_alert_jquery('PLZ_SELECT_ROW');
+return false;
+}
+else
+{
+return true;
+}
+}
+        
+function showdraftModels(){
+$('#START_COUNT').val('0');
+
+document.getElementsByName('activeModel')[0].value=false;
+document.getElementsByName('completedModel')[0].value=false;
+document.getElementById('modelStatus').value = &quot;DRAFT&quot;;
+document.form.BUTTON_ID.value = 'showModels';
+document.form.submit();
+grayOut(true);
+}
+function showActiveModels(){
+$('#START_COUNT').val('0');
+document.getElementsByName('draftModel')[0].value=false;
+document.getElementsByName('completedModel')[0].value=false;
+document.getElementById('modelStatus').value = &quot;VALIDATED&quot;;
+document.form.BUTTON_ID.value = 'showModels';
+document.form.submit();
+grayOut(true);
+}
+function showCompletedModels(){
+$('#START_COUNT').val('0');
+document.getElementsByName('activeModel')[0].value=false;
+document.getElementsByName('draftModel')[0].value=false;
+document.getElementById('modelStatus').value = &quot;GENERATED&quot;;
+document.form.BUTTON_ID.value = 'showModels';
+document.form.submit();
+grayOut(true);
+}
+function showPendingModels(){
+$('#START_COUNT').val('0');
+document.getElementsByName('activeModel')[0].value=false;
+document.getElementsByName('draftModel')[0].value=false;
+document.getElementById('modelStatus').value = &quot;PENDING_APPROVAL&quot;;
+document.form.BUTTON_ID.value = 'showModels';
+document.form.submit();
+grayOut(true);
+}
+
+      </ui:script>
+    </ui:step>
+  </ui:container>
+</ui:page-group>

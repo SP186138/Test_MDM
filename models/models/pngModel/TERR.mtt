@@ -1,0 +1,68 @@
+<document>
+  <documentation>A geographic region within a COUNTRY. Can be a State, Province, etc.&#xD;
+&#xD;
+Example: California, Quebec, Gauteng, etc.</documentation>
+  <properties>
+    <property Name="TERR_CODE" PhysicalName="TERR_CODE" Active="true" Required="true" CharSet="UNICODE" Type="Char_8">
+      <documentation>The code that P&amp;G uses to uniquely distinguish the TERRITORY from all others in the same COUNTRY.</documentation>
+      <extends />
+    </property>
+    <property Name="TERR_NAME" CharSet="UNICODE">
+      <documentation>The name of the TERRITORY.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="TERR_NAME" />
+    </property>
+    <property Name="CNTRY_CODE" PhysicalName="CNTRY_CODE" Active="true" Required="true" Type="Char_5">
+      <documentation>The code that P&amp;G uses to uniquely distinguish the COUNTRY from all others.</documentation>
+      <extends />
+    </property>
+    <property Name="LOG_SOURCE_ID">
+      <documentation>Application name that provided source data, could be "Agency 1", "Indian GH" etc.. Need to determine correct names</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="LOG_SOURCE_ID" />
+    </property>
+    <property Name="LOG_UPDATE_USER">
+      <documentation>Userid (batch or online user) that made the last change - for initial Insert, this would be the initial user name</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="LOG_UPDATE_USER" />
+    </property>
+    <property Name="LOG_LOAD_ID">
+      <documentation>Batch process (unique) that updated/inserted this row - format is XX#####, where XX is EL for ELT or MD for MDM , or ON for Online</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="LOG_LOAD_ID" />
+    </property>
+    <property Name="TERR_CODE_NTV" PhysicalName="TERR_CODE_NTV" Active="true" CharSet="UNICODE" Type="Char_8">
+      <extends />
+    </property>
+    <property Name="TERR_NAME_NTV" PhysicalName="TERR_NAME_NTV" Active="true" CharSet="UNICODE" Type="String_100">
+      <extends />
+    </property>
+    <property Name="TERR_SHORT_NAME" PhysicalName="TERR_SHORT_NAME" Active="true" CharSet="UNICODE" Type="String_20">
+      <extends />
+    </property>
+    <property Name="TERR_DESC" PhysicalName="TERR_DESC" Active="true" CharSet="UNICODE" Type="String_1000">
+      <extends />
+    </property>
+  </properties>
+  <keys>
+    <key Active="true" Name="TERR_IX" PhysicalName="TERR_IX" Kind="INDEX">
+      <property Name="CNTRY_CODE" />
+    </key>
+    <key Active="true" Name="TERR_UPI" PhysicalName="TERR_UPI" Kind="PRIMARY">
+      <property Name="TERR_CODE" />
+    </key>
+  </keys>
+  <links>
+    <link Active="true" Name="TERR_FK" PhysicalName="TERR_FK">
+      <keymap FromKey="TERR_IX" ToPackage="models/pngModel" ToModelUnit="CNTRY.mtt" ToKey="CNTRY_UPI" ReverseLink="true" ReverseLinkName="R_TERR" DeleteRule="RESTRICT">
+        <mapping FromProperty="CNTRY_CODE" ToProperty="CNTRY_CODE" />
+      </keymap>
+    </link>
+  </links>
+  <docFacets>
+    <mdmWebServiceFacet />
+    <mdmAuthorizationFacet />
+    <mdmSysTableMapFacet TableClass="MASTER" Source="MASTER" MasterTable="TERR" />
+    <miscFacet PhysicalName="TERR" Active="true" />
+    <mdmConfigFacet SchemaGen="true" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql />
+</document>
+

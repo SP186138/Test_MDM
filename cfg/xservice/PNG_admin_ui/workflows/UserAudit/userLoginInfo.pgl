@@ -1,0 +1,165 @@
+<ui:page-group version="3" xmlns:ui="http://www.teradata.com/ui" Id="userLoginInfo.pgl">
+  <ui:container showFavorite="true" scrollable="true">
+    <!-- Code added for fix of issue MDM-1937 by Ankur Goyal-->
+    <ui:help displayPage="{$pages:manageUserAuditHelp}" />
+    <!--MDM-1937 ends-->
+    <!--Code modified for fix of issue MDM-1803 by Ankur Goyal-->
+    <!--ui:step id="Outermost" displayText="MDM: Manage User Audit"-->
+    <ui:step id="Outermost" displayText="User Audit Report">
+      <ui:field-group>
+        <ui:display-field displayText="{$root/AlertGreen/@Value}" displayCondition="{string-length($root/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen" />
+      </ui:field-group>
+      <ui:field-group>
+        <ui:display-field displayText="{$root/AlertRed/@Value}" displayCondition="{string-length($root/AlertRed/@Value) != 0}" name="error" class="requiredIndicator" />
+      </ui:field-group>
+      <ui:container id="container1" name="container1" displayText="User Audit Log" scrollable="true">
+        <ui:step id="Outer" name="Outer" displayText="Audit Search">
+          <ui:field-group columns="2">
+            <ui:entry-field displayText="Login Name" id="LOGIN_NAME" name="LOGIN_NAME" title="UserAuditLoginName"/>
+            <ui:dropdown displayText="Operation" id="OPERATION" name="OPERATION" optionSrc="$root/OPER_SEARCH_TYPES/SEARCH_TYPE" title="UserAuditOperation"/>
+            <ui:dropdown displayText="Result" id="RESULT" name="RESULT" optionSrc="$root/RESULT_SEARCH_TYPES/SEARCH_TYPE" title="UserAuditResult"/>
+            <ui:entry-field displayText="Remote Address" id="REMOTE_ADDRESS" name="REMOTE_ADDRESS" title="UserAuditRemoteAddress"/>
+            <ui:entry-field displayText="From" id="StartDate" name="StartDate" dataType="Date" onChange="test_date_range('StartDate','EndDate','Date');" title="UserAuditFromDate"/>
+            <ui:entry-field displayText="To" id="EndDate" name="EndDate" dataType="Date" onChange="test_date_range('StartDate','EndDate','Date');" title="UserAuditToDate"/>
+            <ui:checkbox displayText="All Active Users" id="ActiveUsers" name="ActiveUsers" checkedValue="true" title="UserAuditActiveUsers"/>
+          </ui:field-group>
+          <ui:buttons>
+            <ui:button id="Clear" name="Clear" displayText="Clear" onClick="{$pages:UserLoginAudit}"/>
+            <ui:divider/>
+            <ui:button id="SEARCH" name="SEARCH" displayText="Search" />
+            <ui:divider />
+            <ui:button id="SHOWALL" name="SHOWALL" displayText="Show All" onClick="{$pages:UserLoginAudit}" />
+          </ui:buttons>
+        </ui:step>
+      </ui:container>
+      <ui:table id="results" displayText="{$root/login/@Value}" displayTextNoRecords="No records found" postRowIdAs="SELECTED_ID" rowId="ID" rowSrc="$root/DQ_RULE/*" selectable="All" scrollable="true" totalRowCount="$root/TotalRowCount/@Value" startAtRow="$root/StartRowCount/@Value" maxRows="$root/maxRows/@Value">
+        <ui:field-group>
+          <ui:hidden-field displayCondition="ID" id="ID" name="ID" />
+          <ui:display-field displayText="Time Stamp" id="TIME_STAMP" name="TIME_STAMP" title="UserAuditTimeStamp" dataType="DateTime"/>
+          <ui:display-field displayText="Login Name" name="LOGIN_NAME" id="LOGIN_NAME" title="UserAuditLoginName"/>
+          <ui:display-field displayText="Operation" id="OPERATION" name="OPERATION" title="UserAuditOperation"/>
+          <ui:display-field displayText="Result" id="RESULT" name="RESULT" title="UserAuditResult"/>
+          <ui:display-field displayText="Remote Address" id="REMOTE_ADDRESS" name="REMOTE_ADDRESS" title="UserAuditRemoteAddress"/>
+        </ui:field-group>
+        <ui:buttons id="buttons1" name="buttons1">
+          <ui:button displayText="Delete All" id="deleteAll" name="deleteAll" onClick="javascript:onDeleteAll();" />
+          <ui:button displayText="Delete Selected" id="delete" name="delete" enabledBySelections="true" onClick="javascript:onDelete();" />
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+    function onLoad()
+   {
+	var no_rows=document.form.NO_OF_ROWS.value;
+    if(no_rows == 0)
+    {
+	hideField1('deleteAll');
+    }
+	onLoadSuper();
+	onResize();
+	}    
+function hideField1(id)
+{
+toggleField1(id,'hide');
+}
+function toggleField1(id,state)
+{
+fieldCell  = document.getElementById(id);
+fieldRow = fieldCell.parentNode;
+toggleItemVisibility(fieldRow, state);
+var i = document.getElementById(id);
+if (state==&quot;hide&quot;)
+{
+i.disabled = true;
+}
+else
+{
+i.disabled = false;
+i.enabled = true;
+}
+}
+    
+    function onDelete()
+{
+core_confirm_jquery(&quot;DELETE_SELECTED_USER_ENTRY&quot;,'onDeleteCallback'); 
+  }
+  function onDeleteCallback(response) {
+  if(response =='yes'){
+				document.form.BUTTON_ID.value = 'delete';
+				document.form.action = 'view.x2ps';
+				document.form.submit();
+				grayOut(true);
+	}
+  }
+function onDeleteAll()
+{
+		
+core_confirm_jquery(&quot;DELETE_ALL_USER_AUDIT_ENTRIES&quot;,'onDeleteAllCallback'); 
+  }
+  function onDeleteAllCallback(response) {
+  if(response =='yes'){
+				document.form.BUTTON_ID.value = 'deleteAll';
+				document.form.action = 'view.x2ps';
+				document.form.submit();
+				grayOut(true);
+	}
+  }
+    <!--	
+function submitenter(myfield,e)
+{
+var keycode;
+if (window.event) keycode = window.event.keyCode;
+else if (e) keycode = e.which;
+else return true;
+
+if (keycode == 13)
+   {
+					document.form.BUTTON_ID.value = 'SEARCH';
+					document.form.action = 'view.x2ps';
+					document.form.submit();  
+					grayOut(true);
+					return false;
+   }
+else
+   return true;
+}-->
+    function IEEnterKey()
+      {
+  	    if( window.event.keyCode == 13)
+  	    {
+		document.form.BUTTON_ID.value = 'SEARCH'; 
+            	document.form.action = 'view.x2ps';
+            	document.form.submit();    
+                grayOut(true);				
+  	      	event.returnValue=false;
+  	    }		
+      }
+      browserName = navigator.appName;
+      function NetEnterKey(e)
+      {
+	  key = e.which;
+	  if(key == 13)
+	  { 
+		document.form.BUTTON_ID.value = 'SEARCH'; 
+		document.form.action = 'view.x2ps';
+		document.form.submit(); 
+		grayOut(true);
+		return false;
+	  }
+      }	
+     if (browserName == "Netscape")
+     {
+  	      document.captureEvents(Event.KEYPRESS);
+  	      document.onkeypress=NetEnterKey;
+     }
+     else
+     {
+  	  if (browserName.indexOf("Explorer") &gt;= 0)
+  	  {
+  	      document.onkeypress=IEEnterKey;
+  	  }
+     }
+  </ui:script>
+</ui:page-group>
+

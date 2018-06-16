@@ -1,0 +1,598 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="81" ShowInBreadCrumbs="true" Version="1.0" Name="ViewReports" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="ViewReports">
+    <variable Name="alertGreen" Type="string" Comment=""/>
+    <variable Name="alertRed" Type="string" Comment=""/>
+    <variable Name="search_by_user" Type="string" Comment=""/>
+    <variable Name="alertRedMsg" Type="string" Comment=""/>
+    <variable Name="alertGreenMsg" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start2">
+      <actions/>
+      <next_nodes>
+        <next_node Name="View Reports"/>
+      </next_nodes>
+    </start>
+    <done Name="done3">
+      <actions/>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="View Reports" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="ViewReports.pgl">
+      <pre_actions>
+        <action>
+          <EXECUTE_SQL_QUERY AssignToVar="templateNonMDM" Value="locking row for access sel distinct  TEMPLATE_NAME from upld_prgs_rpt where template_name not in (sel distinct NAME from upld_tmplt)"/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="filterXml">
+            <FILTERS/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="templateDetails">
+            <TEMPLATES/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="orderByXml">
+            <ORDER_BY/>
+          </TO_DOCVAR>
+          <IF_TEST Test="(strlen($thisParam/HIER_ID/@Value)!=0) and ($thisParam/HIER_ID/@Value !='null')">
+            <THEN>
+              <SET Var="hierId" FromValue="{strSplit($thisParam/HIER_ID/@Value,',')}"/>
+              <SET Var="HierId" FromValue="{substringAfter($hierId/TOKEN[1]/@Value,'[')}"/>
+              <IF_TEST Test="$HierId!=''">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="hierDetails">
+                    <HIER>
+                      <HIER_ID Value="{$HierId}"/>
+                      <STATUS Value="Selected"/>
+                      <SHOW Value="true"/>
+                    </HIER>
+                  </TO_DOCVAR>
+                </THEN>
+              </IF_TEST>
+              <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="hierDetails"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="($thisParam/BUTTON_ID/@Value='SYS_REFRESH') or ($thisParam/BUTTON_ID/@Value='Cancel') or ($thisParam/BUTTON_ID/@Value='Search') or ($thisParam/BUTTON_ID/@Value='Clear')">
+            <THEN>
+              <IF_TEST Test="(strlen($thisParam/HierId/@Value)!=0) and ($thisParam/HierId/@Value !='null')">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="hierDetails">
+                    <HIER>
+                      <HIER_ID Value="{$thisParam/HierId/@Value}"/>
+                      <STATUS Value="Selected"/>
+                      <SHOW Value="true"/>
+                    </HIER>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="hierDetails"/>
+                </THEN>
+              </IF_TEST>
+              <SET Var="alertGreen" FromValue=""/>
+              <SET Var="alertRed" FromValue=""/>
+              <SET Var="alertRedMsg" FromValue=""/>
+              <SET Var="alertGreenMsg" FromValue=""/>
+            </THEN>
+          </IF_TEST>
+          <EXECUTE_SQL_QUERY AssignToVar="roleResp" Value="LOCKING TABLE ROLE_TEMPLATE FOR ACCESS LOCKING TABLE USR_GRP_ROLE_MAP FOR ACCESS LOCKING TABLE USER_UG_RELATION FOR ACCESS LOCKING TABLE USR_GRP_PROFIL FOR ACCESS SELECT distinct A.ACTIVITY_ID AS DOC_ACTIVITY FROM ROLE_TEMPLATE A, USR_GRP_ROLE_MAP B, USER_UG_RELATION E, USR_GRP_PROFIL F WHERE E.USER_ID = '{$userId}' AND A.ACTIVITY_ID like 'BCM_MASTER%' AND E.USER_GRP_ID = B.USR_GRP_ID AND B.ROLE_ID = A.ROLE_ID AND F.ID = B.USR_GRP_ID AND F.STATUS = 'ACTIVE'"/>
+          <SET Var="sortOrder" FromValue="{ifElse($thisParam/SORT_ORDER/@Value = null, 'Descending', $thisParam/SORT_ORDER/@Value)}"/>
+          <SET Var="sortBy" FromValue="{ifElse($thisParam/SORT_BY/@Value = null, 'ID', $thisParam/SORT_BY/@Value)}"/>
+          <TO_DOCVAR AssignToVar="sortByColumn">
+            <TEMP/>
+          </TO_DOCVAR>
+          <SET_NAME DocVar="sortByColumn" FromValue="{$sortBy}"/>
+          <SET Attribute="Sort" DocVar="sortByColumn" FromValue="{$sortOrder}"/>
+          <ADD_CHILDREN DocVar="orderByXml" FromDocVar="sortByColumn"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Search' or $thisParam/BUTTON_ID/@Value='createFavourite' or $thisParam/OnBack/@Value='yes'">
+            <THEN>
+              <SET DocVar="thisParam" Property="START_COUNT" FromValue="0"/>
+              <SET Var="search_by_user" FromValue="true"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$search_by_user = 'true'">
+            <THEN>
+              <IF_TEST Test="strlen($thisParam/ID/@Value)!=0">
+                <THEN>
+                  <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+                    <ID MatchBy="CONTAINS"/>
+                  </FORM_SEARCH_FILTER>
+                  <TO_DOCVAR AssignToVar="test">
+                    <ID Value="{$thisParam/ID/@Value}"/>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="filterXml" FromSelectList="$filters/*"/>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="test"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($thisParam/TEMPLATE_NAME/@Value)!=0">
+                <THEN>
+                  <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+                    <TEMPLATE_NAME MatchBy="CONTAINS"/>
+                  </FORM_SEARCH_FILTER>
+                  <ADD_CHILDREN DocVar="filterXml" FromSelectList="$filters/*"/>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$filters/*/*"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($thisParam/StartDate/@Value)!=0 or strlen($thisParam/EndDate/@Value)!=0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="test">
+                    <FILTER Name="START_TIME"/>
+                  </TO_DOCVAR>
+                  <IF_TEST Test="strlen($thisParam/StartDate/@Value)!=0">
+                    <THEN>
+                      <TO_DOCVAR AssignToVar="dateStart">
+                        <START_TIME Value="{$thisParam/StartDate/@Value}" MatchBy="GREATER"/>
+                      </TO_DOCVAR>
+                      <ADD_CHILDREN DocVar="test" FromDocVar="dateStart"/>
+                      <TO_DOCVAR AssignToVar="startDate">
+                        <StartDate Value="{$thisParam/StartDate/@Value}"/>
+                      </TO_DOCVAR>
+                      <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="startDate"/>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="strlen($thisParam/EndDate/@Value)!=0">
+                    <THEN>
+                      <TO_DOCVAR AssignToVar="dateEnd">
+                        <START_TIME Value="{concat($thisParam/EndDate/@Value,' 23:59:59')}" MatchBy="LESS"/>
+                      </TO_DOCVAR>
+                      <ADD_CHILDREN DocVar="test" FromDocVar="dateEnd"/>
+                      <TO_DOCVAR AssignToVar="endDate">
+                        <EndDate Value="{$thisParam/EndDate/@Value}"/>
+                      </TO_DOCVAR>
+                      <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="endDate"/>
+                    </THEN>
+                  </IF_TEST>
+                  <ADD_CHILDREN DocVar="filterXml" FromDocVar="test"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($thisParam/PROGRESS_STATUS/@Value)!=0">
+                <THEN>
+                  <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+                    <PROGRESS_STATUS MatchBy="CONTAINS"/>
+                  </FORM_SEARCH_FILTER>
+                  <TO_DOCVAR AssignToVar="progressVar">
+                    <FILTER Name="PROGRESS">
+                      <PROGRESS Value="{$filters/*/PROGRESS_STATUS/@Value}" MatchBy="EQUAL"/>
+                    </FILTER>
+                  </TO_DOCVAR>
+                  <IF_TEST Test="$filters/*/PROGRESS_STATUS/@Value='All'">
+                    <ELSE>
+                      <ADD_CHILDREN DocVar="filterXml" FromDocVar="progressVar"/>
+                    </ELSE>
+                  </IF_TEST>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$filters/*/*"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($thisParam/UPLOADEDBY/@Value)!=0">
+                <THEN>
+                  <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+                    <UPLOADEDBY MatchBy="CONTAINS"/>
+                  </FORM_SEARCH_FILTER>
+                  <TO_DOCVAR AssignToVar="test">
+                    <UPLOADEDBY Value="{$thisParam/UPLOADEDBY/@Value}"/>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="filterXml" FromSelectList="$filters/*"/>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="test"/>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <REQUEST Name="getUserActivityTest" ServiceName="USER_SECURITY" AssignToVar="userActivityTest">
+            <userId Value="{$userId}"/>
+          </REQUEST>
+          <SET Var="testv1" FromValue="false"/>
+          <FOR_EACH CurrentElement="currElem" SelectList="$userActivityTest/SQL_RESULT">
+            <IF_TEST Test="$currElem/ACTIVITY_ID/@Value='ManageUploadReports'">
+              <THEN>
+                <SET Var="testv1" FromValue="true"/>
+              </THEN>
+            </IF_TEST>
+          </FOR_EACH>
+          <IF_TEST Test="$testv1/@Value='false'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="testUser">
+                <FILTER Name="UPLOADEDBY"/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="user_filter">
+                <UPLOADEDBY Value="{$userId}" MatchBy="EQUAL"/>
+              </TO_DOCVAR>
+              <ADD_CHILDREN DocVar="testUser" FromDocVar="user_filter"/>
+              <ADD_CHILDREN DocVar="filterXml" FromDocVar="testUser"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="count($roleResp/SQL_RESULT/DOC_ACTIVITY[@Value='BCM_MASTER:All']) > 0">
+            <THEN>
+              <REQUEST Name="getAllTemplates" ServiceName="DATAUPLOAD" AssignToVar="allTemplates"/>
+              <FOR_EACH SelectList="$allTemplates/TEMPLATE_TYPE" CurrentElement="currElem">
+                <IF_TEST Test="$currElem/TEMPLATE/@UserData = 'excelUpload'">
+                  <THEN>
+                    <TO_DOCVAR AssignToVar="temp">
+                      <OPTION Value="{$currElem/TEMPLATE/@Name}" Id="{$currElem/TEMPLATE/@Name}"/>
+                    </TO_DOCVAR>
+                    <ADD_CHILDREN DocVar="templateDetails" FromDocVar="temp"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+            </THEN>
+            <ELSE>
+              <REQUEST Name="getAllTemplates" ServiceName="DATAUPLOAD" AssignToVar="allTemplates"/>
+              <FOR_EACH SelectList="$allTemplates/TEMPLATE_TYPE" CurrentElement="currElem">
+                <SET Var="tempName" FromValue="{substringAfter($currElem/TEMPLATE/@DisplayName,'Error ')}"/>
+                <FOR_EACH SelectList="$roleResp/SQL_RESULT" CurrentElement="currentElem">
+                  <SET Var="docActivity" FromValue="{substringAfter($currentElem/DOC_ACTIVITY/@Value,'BCM_MASTER:')}"/>
+                  <IF_TEST Test="$currElem/TEMPLATE/@UserData = 'excelUpload'">
+                    <THEN>
+                      <IF_TEST Test="$docActivity=$tempName">
+                        <THEN>
+                          <TO_DOCVAR AssignToVar="temp">
+                            <OPTION Value="{$currElem/TEMPLATE/@Name}" Id="{$currElem/TEMPLATE/@Name}"/>
+                          </TO_DOCVAR>
+                          <ADD_CHILDREN DocVar="templateDetails" FromDocVar="temp"/>
+                        </THEN>
+                      </IF_TEST>
+                    </THEN>
+                  </IF_TEST>
+                </FOR_EACH>
+              </FOR_EACH>
+            </ELSE>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="uploadStatus">
+            <UPLOAD_STATUS_LIST>
+              <UPLOAD_STATUS ExistingDocument="yes">
+                <VALUE_ID Value="All"/>
+                <DESCRIPTION Value="All"/>
+              </UPLOAD_STATUS>
+              <UPLOAD_STATUS ExistingDocument="yes">
+                <VALUE_ID Value="Aborted"/>
+                <DESCRIPTION Value="Aborted"/>
+              </UPLOAD_STATUS>
+              <UPLOAD_STATUS ExistingDocument="yes">
+                <VALUE_ID Value="Completed"/>
+                <DESCRIPTION Value="Completed"/>
+              </UPLOAD_STATUS>
+              <UPLOAD_STATUS ExistingDocument="yes">
+                <VALUE_ID Value="Completed with gaps"/>
+                <DESCRIPTION Value="Completed with gaps"/>
+              </UPLOAD_STATUS>
+              <UPLOAD_STATUS ExistingDocument="yes">
+                <VALUE_ID Value="Completed : sent for approval"/>
+                <DESCRIPTION Value="Completed : sent for approval"/>
+              </UPLOAD_STATUS>
+              <UPLOAD_STATUS ExistingDocument="yes">
+                <VALUE_ID Value="Completed with gaps : sent for approval"/>
+                <DESCRIPTION Value="Completed with gaps : sent for approval"/>
+              </UPLOAD_STATUS>
+              <UPLOAD_STATUS ExistingDocument="yes">
+                <VALUE_ID Value="Initialized"/>
+                <DESCRIPTION Value="Initialized"/>
+              </UPLOAD_STATUS>
+              <UPLOAD_STATUS ExistingDocument="yes">
+                <VALUE_ID Value="Processing"/>
+                <DESCRIPTION Value="Processing"/>
+              </UPLOAD_STATUS>
+              <UPLOAD_STATUS ExistingDocument="yes">
+                <VALUE_ID Value="Processing with gaps"/>
+                <DESCRIPTION Value="Processing with gaps"/>
+              </UPLOAD_STATUS>
+              <UPLOAD_STATUS ExistingDocument="yes">
+                <VALUE_ID Value="Waiting for start signal"/>
+                <DESCRIPTION Value="Waiting for start signal"/>
+              </UPLOAD_STATUS>
+              <UPLOAD_STATUS ExistingDocument="yes">
+                <VALUE_ID Value="ReserveReportId"/>
+                <DESCRIPTION Value="Reserve Report"/>
+              </UPLOAD_STATUS>
+            </UPLOAD_STATUS_LIST>
+          </TO_DOCVAR>
+          <SET Var="paginateStart" FromValue="{int(ifElse($thisParam/START_COUNT/@Value = null, 0, $thisParam/START_COUNT/@Value))}"/>
+          <!-- form role based template condition -->
+          <TO_DOCVAR AssignToVar="templateFilter">
+            <OR/>
+          </TO_DOCVAR>
+          <FOR_EACH SelectList="$templateDetails/*" CurrentElement="currTempElement">
+            <TO_DOCVAR AssignToVar="tempFiltr">
+              <OR>
+                <TEMPLATE_NAME Value="{$currTempElement/@Id}"/>
+              </OR>
+            </TO_DOCVAR>
+            <ADD_CHILDREN DocVar="templateFilter" FromSelectList="$tempFiltr/*"/>
+          </FOR_EACH>
+          <FOR_EACH CurrentElement="curNonMDM" SelectList="$templateNonMDM/SQL_RESULT/TEMPLATE_NAME">
+            <ADD_CHILDREN DocVar="templateFilter" FromDocVar="curNonMDM"/>
+            <TO_DOCVAR AssignToVar="tempTemplateDetails">
+              <OPTION Value="{$curNonMDM/@Value}" Id="{$curNonMDM/@Value}"/>
+            </TO_DOCVAR>
+            <ADD_CHILDREN DocVar="templateDetails" FromDocVar="tempTemplateDetails"/>
+          </FOR_EACH>
+          <REQUEST Name="getUploadReports" ServiceName="DATAUPLOAD" AssignToVar="getAllReports" MaxRows="10" StartAtRow="{$paginateStart}" ReturnRowCount="true">
+            <TO_XML SelectList="$filterXml/*"/>
+            <FILTER>
+              <OR>
+                <TO_XML SelectList="$templateFilter/*"/>
+              </OR>
+            </FILTER>
+            <ORDER_BY>
+              <TO_XML SelectList="$orderByXml/*"/>
+            </ORDER_BY>
+          </REQUEST>
+          <IF_TEST Test="$getAllReports/REPORTS/UPLOAD_PROGRESS_REPORT/PROGRESS/@Value='Completed' and $getAllReports/REPORTS/UPLOAD_PROGRESS_REPORT/TEMPLATE_NAME/@Value='EntityMTCHD_CNSMR_SCR_DMN_MAPTemplate'">
+            <THEN>
+              <EXECUTE_SQL_QUERY AssignToVar="LE" Value="SEL DISTINCT LEGAL_ENT_NBR FROM MTCHD_CNSMR_SCR_DMN_MAP WHERE SYS_SOURCE='BackEnd' AND (CAST(SYS_CREATION_DATE AS DATE)=CURRENT_DATE OR CAST(SYS_LAST_MODIFIED_date AS DATE)=CURRENT_DATE)"/>
+              <FOR_EACH SelectList="$LE/SQL_RESULT" CurrentElement="currLE">
+                <SET Var="LE1" FromValue="{$currLE/LEGAL_ENT_NBR/@Value}"/>
+                <EXECUTE_SQL_QUERY AssignToVar="SP_result" Value="CALL MDM.SP_CNSMR_SCORE({$LE1});"/>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="reports">
+            <VIEW_REPORTS>
+              <TO_XML SelectList="$getAllReports/REPORTS/*"/>
+            </VIEW_REPORTS>
+          </TO_DOCVAR>
+          <!--<SET Var="paginateStart" FromValue="{int(ifElse($thisParam/START_COUNT/@Value = null, 0, $thisParam/START_COUNT/@Value))}"/>-->
+          <TO_DOCVAR AssignToVar="page">
+            <ABC>
+              <StartRowCount Value="{$paginateStart}"/>
+              <TotalRowCount Value="{$getAllReports/REPORTS/@TotalRowCount}"/>
+            </ABC>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="alertz">
+            <ABC>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+              <AlertRedMsg Value="{$alertRedMsg/@Value}"/>
+              <AlertGreenMsg Value="{$alertGreenMsg/@Value}"/>
+            </ABC>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="test">
+            <TEST>
+              <ID Value="{$thisParam/ID/@Value}" MatchBy="CONTAINS"/>
+              <TEMPLATE_NAME Value="{$thisParam/TEMPLATE_NAME/@Value}" MatchBy="CONTAINS"/>
+              <StartDate Value="{$thisParam/StartDate/@Value}" MatchBy="CONTAINS"/>
+              <EndDate Value="{$thisParam/EndDate/@Value}" MatchBy="CONTAINS"/>
+              <PROGRESS_STATUS Value="{$thisParam/PROGRESS_STATUS/@Value}" MatchBy="CONTAINS"/>
+            </TEST>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="reports"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="templateDetails"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="uploadStatus"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$alertz/*"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$page/*"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$test/*"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$thisParam/*"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction='Purge'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="selectedId">
+                <ID>
+                  <TO_XML SelectList="$pglFormOutput/SELECTED_ID"/>
+                </ID>
+              </TO_DOCVAR>
+              <FOR_EACH SelectList="$selectedId/SELECTED_ID" CurrentElement="currSelectedId">
+                <REQUEST Name="purge" ServiceName="DATAUPLOAD" AssignToVar="purgeResult">
+                  <FILTER>
+                    <ID Value="{$currSelectedId/@Value}"/>
+                  </FILTER>
+                </REQUEST>
+              </FOR_EACH>
+              <IF_TEST Test="strlen($purgeResult/_RESULT/_ERROR/@Value) > 0">
+                <THEN>
+                  <SET Var="alertRed" FromValue="{$purgeResult/_RESULT/_ERROR/@Value}"/>
+                  <SET Var="alertRedMsg" FromValue="RECORDS_NOT_PURGED"/>
+                  <SET Var="alertGreen" FromValue=""/>
+                  <SET Var="alertGreenMsg" FromValue=""/>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertGreen" FromValue="RECORD_PURGED_SUCCESSFULLY"/>
+                  <SET Var="alertRedMsg" FromValue=""/>
+                  <SET Var="alertRed" FromValue=""/>
+                  <SET Var="alertGreenMsg" FromValue=""/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='Reprocess'">
+            <THEN>
+              <REQUEST Name="reprocessTransaction" ServiceName="DATAUPLOAD" AssignToVar="reprocessResult">
+                <FILTER>
+                  <ID Value="{$pglFormOutput/SELECTED_ID/@Value}"/>
+                </FILTER>
+              </REQUEST>
+              <IF_TEST Test="$reprocessResult/PROCESS_STARTED/@Value='true'">
+                <THEN>
+                  <SET Var="alertGreen" FromValue="REPROCESS_STARTED"/>
+                  <SET Var="alertGreenMsg" FromValue="{$pglFormOutput/SELECTED_ID/@Value}"/>
+                  <SET Var="alertRed" FromValue=""/>
+                  <SET Var="alertRedMsg" FromValue=""/>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertRed" FromValue="REPROCESS_FAILED"/>
+                  <SET Var="alertRedMsg" FromValue="{$pglFormOutput/SELECTED_ID/@Value}"/>
+                  <SET Var="alertGreen" FromValue=""/>
+                  <SET Var="alertGreenMsg" FromValue=""/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='Abort'">
+            <THEN>
+              <REQUEST Name="abortReport" ServiceName="DATAUPLOAD" AssignToVar="abortResult">
+                <REPORT_ID>
+                  <ID Value="{$pglFormOutput/SELECTED_ID/@Value}"/>
+                </REPORT_ID>
+                <DeleteInprocess Value="{$thisParam/DeleteInprocess/@Value}"/>
+              </REQUEST>
+              <IF_TEST Test="$abortResult/ABORT_RESPONSE/@Value ='REPORT_ALREADY_DONE' ">
+                <THEN>
+                  <SET Var="alertRed" FromValue="{$abortResult/ABORT_RESPONSE/REPORT_ABORTED/@Value}"/>
+                  <SET Var="alertRedMsg" FromValue="UPLOAD_NOT_ABORTED"/>
+                  <SET Var="alertGreen" FromValue=""/>
+                  <SET Var="alertGreenMsg" FromValue=""/>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$abortResult/ABORT_RESPONSE/@Value='REPORT_ABORTED' ">
+                    <THEN>
+                      <SET Var="alertGreen" FromValue="UPLOAD_ABORTED_SUCCESSFULLY"/>
+                      <SET Var="alertGreenMsg" FromValue=""/>
+                      <SET Var="alertRed" FromValue=""/>
+                      <SET Var="alertRedMsg" FromValue=""/>
+                    </THEN>
+                    <ELSE>
+                      <IF_TEST Test="$abortResult/@Value='Permission_Denied' ">
+                        <THEN>
+                          <SET Var="alertRed" FromValue="Permission Denied"/>
+                          <SET Var="alertGreen" FromValue=""/>
+                          <SET Var="alertRedMsg" FromValue=""/>
+                          <SET Var="alertGreenMsg" FromValue=""/>
+                        </THEN>
+                      </IF_TEST>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+                <!--ELSE>
+<SET Var="alertRed" FromValue="{concat($abortResult/_RESULT/@Status,$abortResult/@Status,$abortResult/_RESULT/_ERROR/@Value,' - The System was unable to abort the selected reports,please check the log files on the server')}"/>
+</ELSE-->
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Search'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="View Reports" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Purge'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="View Reports" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Reprocess'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="View Reports" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Cancel'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Upload'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Clear'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Abort'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="View Reports" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='back'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Report Details" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <sub_workflow Name="Report Details" Workflow="ReportDetails">
+      <pre_actions/>
+      <post_actions/>
+      <input>
+        <TO_XML DocVar="thisParam"/>
+      </input>
+      <next_nodes/>
+    </sub_workflow>
+    <ui_form2 Name="Message" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="HIDE" Template="Message.pgl">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="temp">
+            <BUTTON_ID Value="{$thisParam/BUTTON_ID/@Value}"/>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="temp"/>
+          <TO_DOCVAR AssignToVar="alertz">
+            <ABC>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </ABC>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$alertz/*"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <if_cond Value="$userAction ='OK'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done3" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10" compId="MgcDashboard1" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="2" textAttrsKey0="alertGreen : string" textAttrsKey1="alertRed : string">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="alertRed" Type="string"/>
+      </variables>
+    </mgcdashboard>
+    <mgcnodes>
+      <start2 font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="129,145">
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+        <textProps text="start2" font="Verdana,0,9" textColor="80,80,80"/>
+      </start2>
+      <done3 font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="650,145">
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+        <textProps text="done3" font="Verdana,0,9" textColor="80,80,80"/>
+      </done3>
+      <mgcnode Name="View Reports" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="303,144" size="1920,1040">
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+        <textProps text="View Reports" font="Verdana,0,9" textColor="80,80,80"/>
+      </mgcnode>
+      <mgcnode Name="Report Details" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="303,255">
+        <iconProps iconfile="z1sub_workflow.gif" location="0,0"/>
+        <textProps text="Report Details" font="Verdana,0,9" textColor="80,80,80"/>
+      </mgcnode>
+      <Message font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="477,144" size="1936,1066">
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+        <textProps text="Message" font="Verdana,0,9" textColor="80,80,80"/>
+      </Message>
+    </mgcnodes>
+    <mgcconnectors>
+      <start2>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="70,81,173" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="174,167" endpoint="303,166" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="268,165,4,4" ctrlRect2="204,164,4,4"/>
+      </start2>
+      <mgcnode Name="View Reports">
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="325,144" endpoint="325,144" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="323,67,4,4" ctrlRect2="399,94,4,4" textRect="346,78,34,8">
+          <textProps text="Search" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="348,166" endpoint="348,166" ctrlRect1="421,164,4,4" ctrlRect2="421,112,4,4" ctrlRect2Dirty="true" textRect="418,136,10,8">
+          <textProps text="Purge"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="348,166" endpoint="348,166" ctrlRect1="421,164,4,4" ctrlRect2="392,199,4,4" textRect="401,179,14,8" ctrlRect2Dirty="true">
+          <textProps text="Reprocess"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="325,144" endpoint="325,144" ctrlRect1="323,67,4,4" ctrlRect2="289,114,4,4" ctrlRect2Dirty="true" textRect="303,88,10,8">
+          <textProps text="Abort"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="319,190" endpoint="319,255" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="317,236,4,4" ctrlRect2="317,204,4,4"/>
+      </mgcnode>
+      <Message>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="522,166" endpoint="650,167" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="616,164,4,4" ctrlRect2="552,165,4,4"/>
+      </Message>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions/>
+    <post_actions/>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

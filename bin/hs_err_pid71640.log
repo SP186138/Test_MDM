@@ -1,0 +1,198 @@
+#
+# There is insufficient memory for the Java Runtime Environment to continue.
+# Native memory allocation (malloc) failed to allocate 32744 bytes for ChunkPool::allocate
+# Possible reasons:
+#   The system is out of physical RAM or swap space
+#   In 32 bit mode, the process size limit was hit
+# Possible solutions:
+#   Reduce memory load on the system
+#   Increase physical memory or swap space
+#   Check if swap backing store is full
+#   Use 64 bit Java on a 64 bit OS
+#   Decrease Java heap size (-Xmx/-Xms)
+#   Decrease number of Java threads
+#   Decrease Java thread stack sizes (-Xss)
+#   Set larger code cache with -XX:ReservedCodeCacheSize=
+# This output file may be truncated or incomplete.
+#
+#  Out of Memory Error (allocation.cpp:211), pid=71640, tid=66880
+#
+# JRE version: Java(TM) SE Runtime Environment (7.0_71-b14) (build 1.7.0_71-b14)
+# Java VM: Java HotSpot(TM) 64-Bit Server VM (24.71-b01 mixed mode windows-amd64 compressed oops)
+# Core dump written. Default location: E:\Teradata\MDM\3.05.02\custom\pngrelease3\bin\hs_err_pid71640.mdmp
+#
+
+---------------  T H R E A D  ---------------
+
+Current thread (0x000000001136d000):  JavaThread "SocketCreator-0" daemon [_thread_in_vm, id=66880, stack(0x0000000011e10000,0x0000000011f10000)]
+
+Stack: [0x0000000011e10000,0x0000000011f10000]
+[error occurred during error reporting (printing stack bounds), id 0xc0000005]
+
+
+[error occurred during error reporting (printing native stack), id 0xc0000005]
+
+Java frames: (J=compiled Java code, j=interpreted, Vv=VM code)
+j  java.security.Security.<clinit>()V+26
+v  ~StubRoutines::call_stub
+j  sun.net.InetAddressCachePolicy$1.run()Ljava/lang/String;+2
+j  sun.net.InetAddressCachePolicy$1.run()Ljava/lang/Object;+1
+v  ~StubRoutines::call_stub
+j  java.security.AccessController.doPrivileged(Ljava/security/PrivilegedAction;)Ljava/lang/Object;+0
+j  sun.net.InetAddressCachePolicy.<clinit>()V+21
+v  ~StubRoutines::call_stub
+j  java.net.InetAddress$Cache.getPolicy()I+10
+j  java.net.InetAddress$Cache.put(Ljava/lang/String;[Ljava/net/InetAddress;)Ljava/net/InetAddress$Cache;+1
+j  java.net.InetAddress.cacheInitIfNeeded()V+67
+j  java.net.InetAddress.getCachedAddresses(Ljava/lang/String;)[Ljava/net/InetAddress;+11
+j  java.net.InetAddress.getAllByName0(Ljava/lang/String;Ljava/net/InetAddress;Z)[Ljava/net/InetAddress;+19
+j  java.net.InetAddress.getAllByName(Ljava/lang/String;Ljava/net/InetAddress;)[Ljava/net/InetAddress;+343
+j  java.net.InetAddress.getAllByName(Ljava/lang/String;)[Ljava/net/InetAddress;+2
+j  java.net.InetAddress.getByName(Ljava/lang/String;)Ljava/net/InetAddress;+1
+j  java.net.InetSocketAddress.<init>(Ljava/lang/String;I)V+15
+j  java.net.Socket.<init>(Ljava/lang/String;I)V+11
+j  com.teradata.xcore.net.util.SocketFactory$1.run()V+26
+j  com.teradata.xcore.net.util.PooledThread.run()V+11
+v  ~StubRoutines::call_stub
+
+---------------  P R O C E S S  ---------------
+
+Java Threads: ( => current thread )
+=>0x000000001136d000 JavaThread "SocketCreator-0" daemon [_thread_in_vm, id=66880, stack(0x0000000011e10000,0x0000000011f10000)]
+  0x000000000f1e7000 JavaThread "Service Thread" daemon [_thread_blocked, id=71296, stack(0x0000000010300000,0x0000000010400000)]
+  0x000000000f1e5800 JavaThread "C2 CompilerThread1" daemon [_thread_blocked, id=49444, stack(0x0000000010ea0000,0x0000000010fa0000)]
+  0x000000000f1d7800 JavaThread "C2 CompilerThread0" daemon [_thread_blocked, id=70004, stack(0x0000000010d70000,0x0000000010e70000)]
+  0x000000000f1d5800 JavaThread "Attach Listener" daemon [_thread_blocked, id=72744, stack(0x0000000010b60000,0x0000000010c60000)]
+  0x000000000f1ce800 JavaThread "Signal Dispatcher" daemon [_thread_blocked, id=71188, stack(0x0000000010a20000,0x0000000010b20000)]
+  0x000000000f174800 JavaThread "Finalizer" daemon [_thread_blocked, id=51532, stack(0x0000000010560000,0x0000000010660000)]
+  0x000000000f173000 JavaThread "Reference Handler" daemon [_thread_blocked, id=48572, stack(0x0000000010430000,0x0000000010530000)]
+  0x0000000001ddb000 JavaThread "main" [_thread_blocked, id=53452, stack(0x00000000021d0000,0x00000000022d0000)]
+
+Other Threads:
+  0x000000000f16d000 VMThread [stack: 0x0000000010200000,0x0000000010300000] [id=40444]
+  0x0000000010fea800 WatcherThread [stack: 0x0000000011450000,0x0000000011550000] [id=42604]
+
+VM state:not at safepoint (normal execution)
+
+VM Mutex/Monitor currently owned by a thread: None
+
+Heap
+ PSYoungGen      total 76800K, used 14534K [0x00000007aaa80000, 0x00000007b0000000, 0x0000000800000000)
+  eden space 66048K, 22% used [0x00000007aaa80000,0x00000007ab8b1ad0,0x00000007aeb00000)
+  from space 10752K, 0% used [0x00000007af580000,0x00000007af580000,0x00000007b0000000)
+  to   space 10752K, 0% used [0x00000007aeb00000,0x00000007aeb00000,0x00000007af580000)
+ ParOldGen       total 174592K, used 0K [0x0000000700000000, 0x000000070aa80000, 0x00000007aaa80000)
+  object space 174592K, 0% used [0x0000000700000000,0x0000000700000000,0x000000070aa80000)
+ PSPermGen       total 21504K, used 4164K [0x00000006fae00000, 0x00000006fc300000, 0x0000000700000000)
+  object space 21504K, 19% used [0x00000006fae00000,0x00000006fb211300,0x00000006fc300000)
+
+Card table byte_map: [0x00000000052d0000,0x0000000005b00000] byte_map_base: 0x0000000001af9000
+
+Polling page: 0x0000000000110000
+
+Code Cache  [0x00000000022d0000, 0x0000000002540000, 0x00000000052d0000)
+ total_blobs=230 nmethods=40 adapters=143 free_code_cache=48676Kb largest_free_block=49819136
+
+Compilation events (10 events):
+Event: 8.554 Thread 0x000000000f1d7800   36             java.net.URL::getProtocol (5 bytes)
+Event: 8.555 Thread 0x000000000f1e5800 nmethod 35 0x0000000002345390 code [0x00000000023454e0, 0x0000000002345758]
+Event: 8.555 Thread 0x000000000f1d7800 nmethod 36 0x000000000233a610 code [0x000000000233a740, 0x000000000233a7b8]
+Event: 8.605 Thread 0x000000000f1e5800   37             java.lang.String::indexOf (7 bytes)
+Event: 8.607 Thread 0x000000000f1e5800 nmethod 37 0x0000000002344f10 code [0x0000000002345060, 0x00000000023451e8]
+Event: 8.619 Thread 0x000000000f1d7800   38             java.lang.Character::toLowerCase (9 bytes)
+Event: 8.619 Thread 0x000000000f1e5800   39             java.lang.CharacterDataLatin1::toLowerCase (39 bytes)
+Event: 8.619 Thread 0x000000000f1e5800 nmethod 39 0x0000000002337450 code [0x0000000002337580, 0x0000000002337638]
+Event: 8.620 Thread 0x000000000f1d7800 nmethod 38 0x0000000002337010 code [0x0000000002337160, 0x0000000002337298]
+Event: 13.094 Thread 0x000000000f1e5800   40             java.util.Properties$LineReader::readLine (452 bytes)
+
+GC Heap History (0 events):
+No events
+
+Deoptimization events (1 events):
+Event: 8.596 Thread 0x0000000001ddb000 Uncommon trap: reason=unreached action=reinterpret pc=0x0000000002348664 method=java.net.URL.<init>(Ljava/net/URL;Ljava/lang/String;Ljava/net/URLStreamHandler;)V @ 228
+
+Internal exceptions (10 events):
+Event: 8.608 Thread 0x0000000001ddb000 Threw 0x00000007ab6ad410 at C:\re\jdk7u71\1605\hotspot\src\share\vm\prims\jvm.cpp:1281
+Event: 8.610 Thread 0x0000000001ddb000 Threw 0x00000007ab6b84e0 at C:\re\jdk7u71\1605\hotspot\src\share\vm\prims\jvm.cpp:1281
+Event: 8.611 Thread 0x0000000001ddb000 Threw 0x00000007ab6c18f0 at C:\re\jdk7u71\1605\hotspot\src\share\vm\prims\jvm.cpp:1281
+Event: 8.612 Thread 0x0000000001ddb000 Threw 0x00000007ab6cc7b8 at C:\re\jdk7u71\1605\hotspot\src\share\vm\prims\jvm.cpp:1281
+Event: 8.613 Thread 0x0000000001ddb000 Threw 0x00000007ab6d71d0 at C:\re\jdk7u71\1605\hotspot\src\share\vm\prims\jvm.cpp:1281
+Event: 8.614 Thread 0x0000000001ddb000 Threw 0x00000007ab6e1a00 at C:\re\jdk7u71\1605\hotspot\src\share\vm\prims\jvm.cpp:1281
+Event: 8.615 Thread 0x0000000001ddb000 Threw 0x00000007ab6ee588 at C:\re\jdk7u71\1605\hotspot\src\share\vm\prims\jvm.cpp:1281
+Event: 8.616 Thread 0x0000000001ddb000 Threw 0x00000007ab6f99f0 at C:\re\jdk7u71\1605\hotspot\src\share\vm\prims\jvm.cpp:1281
+Event: 8.617 Thread 0x0000000001ddb000 Threw 0x00000007ab704550 at C:\re\jdk7u71\1605\hotspot\src\share\vm\prims\jvm.cpp:1281
+Event: 8.618 Thread 0x0000000001ddb000 Threw 0x00000007ab70f5e0 at C:\re\jdk7u71\1605\hotspot\src\share\vm\prims\jvm.cpp:1281
+
+Events (10 events):
+Event: 13.092 loading class 0x00000000117b4660
+Event: 13.092 loading class 0x00000000117b4660 done
+Event: 13.092 loading class 0x00000000117b4d60
+Event: 13.092 loading class 0x00000000117b4d60 done
+Event: 13.092 loading class 0x00000000117b4e20
+Event: 13.092 loading class 0x00000000117b4e20 done
+Event: 13.092 loading class 0x00000000117b53d0
+Event: 13.092 loading class 0x00000000117b53d0 done
+Event: 13.093 loading class 0x0000000001e33860
+Event: 13.093 loading class 0x0000000001e33860 done
+
+
+Dynamic libraries:
+0x000000013fb50000 - 0x000000013fb83000 	C:\Program Files\Java\jdk1.7.0_71\bin\java.exe
+0x0000000077040000 - 0x00000000771eb000 	C:\Windows\SYSTEM32\ntdll.dll
+0x0000000076cc0000 - 0x0000000076ddf000 	C:\Windows\system32\kernel32.dll
+0x000007fefd5b0000 - 0x000007fefd61a000 	C:\Windows\system32\KERNELBASE.dll
+0x000007feff270000 - 0x000007feff34b000 	C:\Windows\system32\ADVAPI32.dll
+0x000007feff0f0000 - 0x000007feff18f000 	C:\Windows\system32\msvcrt.dll
+0x000007fefd920000 - 0x000007fefd93f000 	C:\Windows\SYSTEM32\sechost.dll
+0x000007fefeeb0000 - 0x000007fefefdd000 	C:\Windows\system32\RPCRT4.dll
+0x0000000076de0000 - 0x0000000076eda000 	C:\Windows\system32\USER32.dll
+0x000007fefdb20000 - 0x000007fefdb87000 	C:\Windows\system32\GDI32.dll
+0x000007fefebc0000 - 0x000007fefebce000 	C:\Windows\system32\LPK.dll
+0x000007fefdcc0000 - 0x000007fefdd8a000 	C:\Windows\system32\USP10.dll
+0x000007fefbed0000 - 0x000007fefc0c4000 	C:\Windows\WinSxS\amd64_microsoft.windows.common-controls_6595b64144ccf1df_6.0.7601.18837_none_fa3b1e3d17594757\COMCTL32.dll
+0x000007fefdbf0000 - 0x000007fefdc61000 	C:\Windows\system32\SHLWAPI.dll
+0x000007fefee00000 - 0x000007fefee2e000 	C:\Windows\system32\IMM32.DLL
+0x000007fefefe0000 - 0x000007feff0e9000 	C:\Windows\system32\MSCTF.dll
+0x000000006d670000 - 0x000000006d742000 	C:\Program Files\Java\jdk1.7.0_71\jre\bin\msvcr100.dll
+0x0000000068b00000 - 0x00000000692d3000 	C:\Program Files\Java\jdk1.7.0_71\jre\bin\server\jvm.dll
+0x000007fefabb0000 - 0x000007fefabb9000 	C:\Windows\system32\WSOCK32.dll
+0x000007fefdc70000 - 0x000007fefdcbd000 	C:\Windows\system32\WS2_32.dll
+0x000007fefd910000 - 0x000007fefd918000 	C:\Windows\system32\NSI.dll
+0x000007fef9770000 - 0x000007fef97ab000 	C:\Windows\system32\WINMM.dll
+0x0000000077210000 - 0x0000000077217000 	C:\Windows\system32\PSAPI.DLL
+0x0000000073670000 - 0x000000007367f000 	C:\Program Files\Java\jdk1.7.0_71\jre\bin\verify.dll
+0x000000006ecd0000 - 0x000000006ecf8000 	C:\Program Files\Java\jdk1.7.0_71\jre\bin\java.dll
+0x00000000733f0000 - 0x0000000073405000 	C:\Program Files\Java\jdk1.7.0_71\jre\bin\zip.dll
+0x000007fefdd90000 - 0x000007fefeb1a000 	C:\Windows\system32\SHELL32.dll
+0x000007fefebd0000 - 0x000007fefedd3000 	C:\Windows\system32\ole32.dll
+0x00000000735c0000 - 0x00000000735d9000 	C:\Program Files\Java\jdk1.7.0_71\jre\bin\net.dll
+0x000007fefccd0000 - 0x000007fefcd25000 	C:\Windows\system32\mswsock.dll
+0x000007fefccc0000 - 0x000007fefccc7000 	C:\Windows\System32\wship6.dll
+0x000007fef9030000 - 0x000007fef9155000 	C:\Windows\system32\DBGHELP.DLL
+
+VM Arguments:
+java_command: com.teradata.xcore.net.Poster xserver ../cfg/properties/xserver.xml BCM_MASTER ../bin/ScheduleIn_TrilliumWrapper_PRT.xml
+Launcher Type: SUN_STANDARD
+
+Environment Variables:
+JAVA_HOME="C:\Program Files\Java\jdk1.7.0_71"
+PATH="C:\Program Files\Java\jdk1.7.0_71"\bin;C:\Program Files (x86)\Teradata\Teradata Performance Monitor Object 15.00\;C:\Program Files\Teradata\client\15.00\Teradata Parallel Transporter\bin64;C:\Program Files\Teradata\client\15.00\Teradata Parallel Transporter\msg64;C:\Program Files (x86)\Teradata\client\15.00\Teradata Parallel Transporter\bin;C:\Program Files (x86)\Teradata\client\15.00\Teradata Parallel Transporter\msg;C:\Program Files\Teradata\Client\15.00\bin;C:\Program Files (x86)\Teradata\Client\15.00\bin;C:\Program Files\Teradata\Client\15.00\ODBC Driver for Teradata nt-x8664\Lib;C:\Program Files (x86)\Teradata\Client\15.00\ODBC Driver for Teradata\Lib;C:\Program Files\Teradata\Client\15.00\bin\;C:\Program Files (x86)\Teradata\Client\15.00\bin\;C:\Program Files (x86)\Teradata\Client\13.10\bin\;C:\Windows\system32;C:\Windows;C:\Windows\system32\wbem;C:\Windows\system32\windowspowershell\v1.0\;D:\SVVSTools;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Program Files (x86)\Java\jre1.6.0\bin;C:\usr\local\monitor\c\bin;C:\usr\local\monitor\perl\site\bin;C:\usr\local\monitor\perl\bin;C:\Program Files\McAfee\Solidcore\Tools\GatherInfo;C:\Program Files\McAfee\Solidcore\Tools\Scanalyzer;C:\Program Files\McAfee\Solidcore\;C:\Program Files\McAfee\Solidcore\Tools\ScGetCerts;E:\ScheduleIn\Agent\bin;
+USERNAME=VA1UCPPWAPTD10$
+OS=Windows_NT
+PROCESSOR_IDENTIFIER=Intel64 Family 6 Model 63 Stepping 2, GenuineIntel
+
+
+
+---------------  S Y S T E M  ---------------
+
+OS: Windows Server 2008 R2 , 64 bit Build 7601 Service Pack 1
+
+CPU:total 4 (1 cores per cpu, 1 threads per core) family 6 model 63 stepping 2, cmov, cx8, fxsr, mmx, sse, sse2, sse3, ssse3, sse4.1, sse4.2, popcnt, avx, aes, tsc, tscinvbit
+
+Memory: 4k page, physical 16776696k(7428264k free), swap 20969140k(4211636k free)
+
+vm_info: Java HotSpot(TM) 64-Bit Server VM (24.71-b01) for windows-amd64 JRE (1.7.0_71-b14), built on Sep 26 2014 16:16:12 by "java_re" with unknown MS VC++:1600
+
+time: Tue Aug 09 13:09:40 2016
+elapsed time: 17 seconds
+

@@ -1,0 +1,47 @@
+<document IsDocView="true">
+  <properties>
+    <property Name="MKTNG_PGM_DESC" PhysicalName="MKTNG_PGM_DESC" Active="true" Type="String_1000" />
+    <property Name="PROMOTION_EMAIL_ADDR_TXT" PhysicalName="PROMOTION_EMAIL_ADDR_TXT" Active="true" Type="String_1000" />
+    <property Name="CAMPAIGN_NAME" PhysicalName="CAMPAIGN_NAME" Active="true" Type="String_100" />
+    <property Name="CAMPAIGN_EXEC_DATE" PhysicalName="CAMPAIGN_EXEC_DATE" Active="true" Type="Date" />
+    <property Name="MKTNG_PGM_NBR" PhysicalName="MKTNG_PGM_NBR" Active="true" Type="Integer" />
+    <property Name="REGIS_PRSNA_ID" PhysicalName="REGIS_PRSNA_ID" Active="true" Type="Integer" />
+    <property Name="CAMPAIGN_ID">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="CAMPAIGN_ID" />
+    </property>
+  </properties>
+  <keys />
+  <links />
+  <docFacets>
+    <miscFacet Active="true" />
+    <mdmConfigFacet SchemaGen="false" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql OnMDMTables="true" IsSimpleView="true">REPLACE	VIEW MDM.V_CAMPAIGN&#xD;
+		AS&#xD;
+		LOCKING ROW FOR ACCESS&#xD;
+		SELECT&#xD;
+		A.REGIS_PRSNA_ID&#xD;
+		,A.CAMPAIGN_ID&#xD;
+		,A.PROMOTION_EMAIL_ADDR_TXT&#xD;
+		,A.MKTNG_PGM_NBR&#xD;
+		,C.MKTNG_PGM_DESC&#xD;
+		,B.CAMPAIGN_NAME&#xD;
+		,B.CAMPAIGN_CREATION_DT CAMPAIGN_EXEC_DATE&#xD;
+		,NULL (INTEGER)   AS  SYS_TARGET_ID&#xD;
+		 ,NULL (VARCHAR(25))  AS SYS_AUTH_ID&#xD;
+		 ,NULL (VARCHAR(25))  AS SYS_SOURCE&#xD;
+		 ,NULL (VARCHAR(70))  AS SYS_CREATED_BY&#xD;
+		 ,NULL (TIMESTAMP(0))  AS SYS_CREATION_DATE&#xD;
+		 ,'ACTIVE'  (VARCHAR(25))  AS  SYS_ENT_STATE&#xD;
+		 ,NULL (VARCHAR(70))  AS SYS_LAST_MODIFIED_BY&#xD;
+		 ,NULL (TIMESTAMP(0))  AS SYS_LAST_MODIFIED_DATE&#xD;
+		 ,NULL (VARCHAR(25))  AS SYS_NC_TYPE&#xD;
+		 ,NULL (VARCHAR(10000))  AS SYS_ERR_CODE&#xD;
+		 ,NULL (VARCHAR(30))  AS SYS_ERR_SVRTY   &#xD;
+			FROM CNSMR_PROMOTION A INNER JOIN CAMPAIGN B &#xD;
+		ON	TRIM(A.CAMPAIGN_ID) = B.CAMPAIGN_ID &#xD;
+		AND	A.MKTNG_PGM_NBR = B.MKTNG_PGM_NBR INNER JOIN MKTNG_PGM C &#xD;
+		ON	A.MKTNG_PGM_NBR = C.MKTNG_PGM_NBR;</viewsql>
+</document>
+

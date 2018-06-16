@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+ 	 Copyright (c) 2009 by Teradata Corporation. 
+	 All Rights Reserved. 
+	 Teradata CONFIDENTIAL AND TRADE SECRET 
+ -->
+  <DEFINE_METHOD Name="pngStopOptOutTimer">
+    <!--**********************************************************************************************************
+*   Module Name	: pngOptOutMigration
+*		Created Date	: March 23, 2012
+*		Created By   	: Shamal D'souza
+*		Called Functions:
+*		Called By Functions:
+*		Short Desc	: Rule that stops OptOut timer.
+*  		Change Log 		:
+*		DATE							LC						OWNER		DESCRIPTION
+*
+**********************************************************************************************************-->
+    <RULE>
+      <ACTION>
+        <STOP_TIMER>
+          <IDENTIFIED_BY>
+            <NAME Value="TIMER_FOR_OptOut"/>
+          </IDENTIFIED_BY>
+        </STOP_TIMER>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="pngStartOptOutTimer">
+    <!--**********************************************************************************************************
+*   Module Name	: pngOptOutMigration
+*		Created Date	: March 23, 2012
+*		Created By   	: Shamal D'souza
+*		Called Functions: Calls pngOptOutMigRule script 
+*		Called By Functions:
+*		Short Desc	: Rule that invokes timer for OptOut Migration
+*  		Change Log 		:
+*		DATE							LC						OWNER		DESCRIPTION
+*
+**********************************************************************************************************-->
+    <RULE>
+      <ACTION>
+        <START_TIMER>
+          <IDENTIFIED_BY>
+            <NAME Value="TIMER_FOR_OptOut"/>
+          </IDENTIFIED_BY>
+          <CALLBACK_DATE Value="{incrDate(date(), duration(0, 0, 10, 0))}"/>
+          <CALLBACK_DURATION Value="{duration(0,0,10,0)}"/>
+          <CALLBACK_ACTIONS>
+            <REQUEST Name="pngOptOutMigRule" ServiceName="BCM_MASTER" AssignToVar="resOptOutTimerRule"/>
+          </CALLBACK_ACTIONS>
+        </START_TIMER>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="pngOptOutMigRule">
+    <!--**********************************************************************************************************
+*   Module Name	: pngOptOutMigration
+*		Created Date	: March 23, 2012
+*		Created By   	: Shamal D'souza
+*		Called Functions: Calls OptOut_MIG.bat script 
+*		Called By Functions:  pngOptOutTimer
+*		Short Desc	: Rule that performs standardizes data
+*  		Change Log 		:
+*		DATE							LC						OWNER		DESCRIPTION
+*
+**********************************************************************************************************-->
+    <RULE>
+      <ACTION>
+        <IF_TEST Test="$previousOptOutLoadStatus/@Value='Failed'">
+          <THEN>
+            <REQUEST Name="emailOnSerdownNPrevLoadInFailState" ServiceName="BCM_MASTER" AssignToVar="resPreviousLoad">
+              <SUBJECT Value="Previous OptOut is still in Failed State"/>
+              <DATA Value="Previous OptOut is still in Failed State and hence the Workflow wont be executed"/>
+            </REQUEST>
+          </THEN>
+          <ELSE>
+            <!-- identify if previous migration load is still in progress-->
+            <GET_DOCUMENT Name="LOAD_INFO" AssignToVar="respLoadInfo" ServiceName="BCM_MASTER">
+              <OR>
+                <AND>
+                  <PROCESS_NAME Value="OPTOUT Input"/>
+                  <STATUS Value="In Progress"/>
+                </AND>
+                <AND>
+                  <PROCESS_NAME Value="OPTOUT Load"/>
+                  <STATUS Value="In Progress"/>
+                </AND>
+                <AND>
+                  <PROCESS_NAME Value="Staging OptOut Load"/>
+                  <STATUS Value="In Progress"/>
+                </AND>
+              </OR>
+            </GET_DOCUMENT>
+            <IF_TEST Test="count($resLoadInfo/LOAD_INFO) > 0">
+              <THEN>
+                <TO_DOCVAR AssignToVar="thisReturn">
+                  <SUCCESS>
+                    <Message Value="Previous Load Running"/>
+                  </SUCCESS>
+                </TO_DOCVAR>
+              </THEN>
+              <ELSE>
+              <EXECUTE_SHELL_COMMAND Value="del MDM_LOAD_CONTROL_OPTOUT.err" AssignToVar="errStatus"/>
+                <EXECUTE_SQL_QUERY Value="SEL lOAD_ID FROM MDM_LOAD_CONTROL_OPTOUT A WHERE NOT EXISTS(SEL LOAD_ID FROM LOAD_INFO B WHERE PROCESS_NAME LIKE '%OPTOUT%' AND A.LOAD_ID = B.LOAD_ID);" AssignToVar="OptOutReadyLoadIds"/>
+                <IF_TEST Test="count($OptOutReadyLoadIds/SQL_RESULT) > 0">
+                  <THEN>
+                    <!-- Sets the Status variable so that OptOut Wf is not started when EDWPersist is Running-->
+                    <SET Var="OptOutMig_Status" FromValue="Yes" Scope="Global"/>
+                    <SET Var="count" FromValue="1"/>
+                    <FOR_EACH SelectList="$OptOutReadyLoadIds/*" CurrentElement="currLoad">
+                      <IF_TEST Test="$count=1">
+                        <THEN>
+                          <SET Var="concatenatedLoadIds" FromValue="{$currLoad/LOAD_ID/@Value}"/>
+                        </THEN>
+                        <ELSE>
+                          <SET Var="concatenatedLoadIds" FromValue="{concat($concatenatedLoadIds/@Value,',',$currLoad/LOAD_ID/@Value)}"/>
+                        </ELSE>
+                      </IF_TEST>
+                      <SET Var="count" FromValue="{int(int($count)+1)}"/>
+                    </FOR_EACH>
+                    <EXECUTE_SHELL_COMMAND Value="TSS_OPTOUT_INPUT.BAT" AssignToVar="OptOutInputResult"/>
+                    <IF_TEST Test="$OptOutInputResult/@ShellReturnValue = 0">
+                      <THEN>
+                        <EXECUTE_SHELL_COMMAND Value="TSSEnvSet_OptOut.BAT" AssignToVar="OptOutEnvSetResult"/>
+<!--                        <REQUEST Name="invokeOptOut" ServiceName="Trillium" AssignToVar="result2" Synchronous="true">
+                          <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+                        </REQUEST>-->
+                        <GET_DOCUMENT Name="ENV_NM" ServiceName="BCM_MASTER" AssignToVar="Environment">
+                        </GET_DOCUMENT>
+                        <EXECUTE_SHELL_COMMAND Value="pngMDM_Trillium.bat OPT invokeOptOut {$Environment/ENV_NM/TRILLIUM_ASIA_NM/@Value} Trillium 0" AssignToVar="result2" Synchronous="true" HandleException="true"/>                        
+                        <IF_TEST Test="$result2/@ShellReturnValue = 0">
+                          <THEN>
+                            <EXECUTE_SHELL_COMMAND Value="TSS_OPTOUT_OUTPUT.BAT" AssignToVar="OptOutOutputResult"/>
+                            <IF_TEST Test="$OptOutOutputResult/@ShellReturnValue = 0">
+                              <THEN>
+                                <REQUEST Name="wrappersuccess" ServiceName="BCM_MASTER" AssignToVar="resOptOut" Synchronous="no">
+                                  <BatchId Value="{$concatenatedLoadIds}"/>
+                                  <TO_XML DocVar="srcdetails"/>
+                                </REQUEST>
+                                <!-- Call Status Update batch Script which does inserts into ETL_CTRL.LOAD_CONTROL -->
+                                <EXECUTE_SHELL_COMMAND Value="MDM_STATUS_OPTOUT.BAT" AssignToVar="resMdmStatus"/>
+                                <TO_DOCVAR AssignToVar="thisReturn">
+                                  <SUCCESS>
+                                    <Message Value="OptOut Successful"/>
+                                  </SUCCESS>
+                                </TO_DOCVAR>
+                                <!-- Sets back status to NO so that ORIG Wf is free to Run-->
+                                <SET Var="OptOutMig_Status" FromValue="No" Scope="Global"/>
+                                <SET Var="previousOptOutLoadStatus" FromValue="Success" Scope="Global"/>
+                              </THEN>
+                              <ELSE>
+                                <!-- Call Status Update batch Script which does inserts into ETL_CTRL.LOAD_CONTROL -->
+                                <EXECUTE_SHELL_COMMAND Value="MDM_STATUS_OPTOUT.BAT" AssignToVar="resMdmStatus"/>
+                                <EXECUTE_SHELL_COMMAND Value="echo Error > MDM_LOAD_CONTROL_OPTOUT.err" AssignToVar="errStatus"/>
+                                <!-- send the email with concatenated list of load ids that failed-->
+                                <SET Var="Description" FromValue="{$OptOutOutputResult/@ShellReturnValue}"/>
+                                <REQUEST Name="emailOnErrorNode" ServiceName="BCM_MASTER">
+                                  <LoadId Value="{$concatenatedLoadIds/@Value}"/>
+                                  <Subject Value="OptOut Failure"/>
+                                  <BatchIdORLoadId Value="LoadId"/>
+                                  <Short_Description Value="{$Description/@Value}"/>
+                                  <Description Value="Following Load Id failed :{$concatenatedLoadIds/@Value}"/>
+                                  <SubCategory Value="OptOut Error"/>
+                                </REQUEST>
+                                <TO_DOCVAR AssignToVar="thisReturn">
+                                  <FAILURE>
+                                    <Message Value="{$OptOutOutputResult/STD_ERR/LINE[1]/@Value}"/>
+                                  </FAILURE>
+                                </TO_DOCVAR>
+                                <SET Var="OptOutMig_Status" FromValue="No" Scope="Global"/>
+                                
+                              </ELSE>
+                            </IF_TEST>
+                          </THEN>
+                          <ELSE>
+                            <!-- Call Status Update batch Script which does inserts into ETL_CTRL.LOAD_CONTROL -->
+                            <DO_TRANSACTION>
+                              <MODIFY_DOC_SMART Name="LOAD_INFO" ServiceName="BCM_MASTER">
+                                <DOCUMENT_CONTEXT>
+                                  <PROCESS_NAME Value="OPTOUT Input"/>
+                                  <STATUS Value="In Progress"/>
+                                </DOCUMENT_CONTEXT>
+                                <UPDATE_PROPERTIES>
+                                  <STATUS Value="Failure"/>
+                                  <ERROR_MSG_TXT Value="{$result2/Message/@Value}"/>
+                                  <PROCESS_END_TIME Value="{date()}"/>
+                                </UPDATE_PROPERTIES>
+                              </MODIFY_DOC_SMART>
+                            </DO_TRANSACTION>
+                            <EXECUTE_SHELL_COMMAND Value="MDM_STATUS_OPTOUT.BAT" AssignToVar="resMdmStatus"/>
+                            <EXECUTE_SHELL_COMMAND Value="echo Error > MDM_LOAD_CONTROL_OPTOUT.err" AssignToVar="errStatus"/>
+                            <!-- send the email with concatenated list of load ids that failed-->
+                            <SET Var="Description" FromValue="{$result2/@ShellReturnValue}"/>
+                            <REQUEST Name="emailOnErrorNode" ServiceName="BCM_MASTER">
+                              <LoadId Value="{$concatenatedLoadIds/@Value}"/>
+                              <Subject Value="OptOut Failure"/>
+                              <BatchIdORLoadId Value="LoadId"/>
+                                  <Short_Description Value="{$Description/@Value}"/>
+                                  <Description Value="Following Load Id failed :{$concatenatedLoadIds/@Value}"/>
+                                  <SubCategory Value="OptOut Error"/>
+                            </REQUEST>
+                            <TO_DOCVAR AssignToVar="thisReturn">
+                              <FAILURE>
+                                <Message Value="{$result2/STD_ERR/LINE[1]/@Value}"/>
+                              </FAILURE>
+                            </TO_DOCVAR>
+                            <SET Var="OptOutMig_Status" FromValue="No" Scope="Global"/>
+                            
+                          </ELSE>
+                        </IF_TEST>
+                      </THEN>
+                      <ELSE>
+                        <!-- Call Status Update batch Script which does inserts into ETL_CTRL.LOAD_CONTROL -->
+                        <DO_TRANSACTION>
+                          <MODIFY_DOC_SMART Name="LOAD_INFO" ServiceName="BCM_MASTER">
+                            <DOCUMENT_CONTEXT>
+                              <PROCESS_NAME Value="OPTOUT Input"/>
+                              <STATUS Value="In Progress"/>
+                            </DOCUMENT_CONTEXT>
+                            <UPDATE_PROPERTIES>
+                              <STATUS Value="Failure"/>
+                              <ERROR_MSG_TXT Value="{$OptOutInputResult/Message/@Value}"/>
+                              <PROCESS_END_TIME Value="{date()}"/>
+                            </UPDATE_PROPERTIES>
+                          </MODIFY_DOC_SMART>
+                        </DO_TRANSACTION>
+                        <EXECUTE_SHELL_COMMAND Value="MDM_STATUS_OPTOUT.BAT" AssignToVar="resMdmStatus"/>
+                        <EXECUTE_SHELL_COMMAND Value="echo Error > MDM_LOAD_CONTROL_OPTOUT.err" AssignToVar="errStatus"/>
+                        <!-- send the email with concatenated list of load ids that failed-->                        
+                            <SET Var="Description" FromValue="{$OptOutInputResult/@ShellReturnValue}"/>
+                        <REQUEST Name="emailOnErrorNode" ServiceName="BCM_MASTER">
+                          <LoadId Value="{$concatenatedLoadIds/@Value}"/>
+                          <Subject Value="OptOut Failure"/>
+                          <BatchIdORLoadId Value="LoadId"/>
+                                  <Short_Description Value="{$Description/@Value}"/>
+                                  <Description Value="Following Load Id failed :{$concatenatedLoadIds/@Value}"/>
+                                  <SubCategory Value="OptOut Error"/>
+                        </REQUEST>
+                        <TO_DOCVAR AssignToVar="thisReturn">
+                          <FAILURE>
+                            <Message Value="{$OptOutInputResult/STD_ERR/LINE[1]/@Value}"/>
+                          </FAILURE>
+                        </TO_DOCVAR>
+                        <SET Var="OptOutMig_Status" FromValue="No" Scope="Global"/>
+                        
+                      </ELSE>
+                    </IF_TEST>
+                  </THEN>
+                  <ELSE>
+                    <TO_DOCVAR AssignToVar="thisReturn">
+                      <SUCCESS>
+                        <Message Value="No Load Id to Process"/>
+                      </SUCCESS>
+                    </TO_DOCVAR>
+                  </ELSE>
+                </IF_TEST>
+              </ELSE>
+            </IF_TEST>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="pngSETPreviousOptOutLoadStatus">
+    <RULE>
+      <ACTION>
+        <SET Var="previousOptOutLoadStatus" FromValue="Success" Scope="Global"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

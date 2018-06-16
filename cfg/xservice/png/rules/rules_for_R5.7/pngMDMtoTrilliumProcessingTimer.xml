@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+Copyright (c) 2009 by Teradata Corporation.
+All Rights Reserved.
+Teradata CONFIDENTIAL AND TRADE SECRET
+-->
+  <!--<DEFINE_METHOD Name="pngInvokeRequestOnServiceRestart">-->
+  <DEFINE_INIT Name="pngInvokeRequestOnServiceRestart">
+    <RULE>
+      <ACTION>
+        <REQUEST Name="pngSETPreviousValidationLoadStatus" AssignToVar="resValidationLoadStatus" ServiceName="BCM_MASTER"/>
+        <REQUEST Name="pngStopICRMtoMDMValidationTimer" AssignToVar="resStopValidationTimer" ServiceName="BCM_MASTER"/>
+        <REQUEST Name="pngStartICRMtoMDMValidationTimer" AssignToVar="resValidationTimer" ServiceName="BCM_MASTER"/>
+        <GET_DOCUMENT Name="TSS_CNTRY_TABLE_MAP" AssignToVar="resMetaDataCntryDetails" DirtyRead="yes" ServiceName="BCM_MASTER">
+        </GET_DOCUMENT>
+        <SET Var="resCntryDetails" FromValue="{$resMetaDataCntryDetails}" Scope="Global"/>
+        <FOR_EACH SelectList="$resCntryDetails/TSS_CNTRY_TABLE_MAP" CurrentElement="currCntry">
+          <REQUEST Name="pngStopTrilliumProcessTimer" ServiceName="BCM_MASTER">
+            <CNTRY_NAME Value="{$currCntry/CNTRY_NAME/@Value}"/>
+          </REQUEST>
+          <REQUEST Name="pngTrilliumProcessTimer" ServiceName="BCM_MASTER">
+            <CNTRY_NAME Value="{$currCntry/CNTRY_NAME/@Value}"/>
+            <CALL_BACK_DURATION Value="{$currCntry/CALL_BACK_DURATION/@Value}"/>
+          </REQUEST>
+          <REQUEST Name="pngSETPreviousLoadStatus" ServiceName="BCM_MASTER">
+            <CNTRY_NAME Value="{$currCntry/CNTRY_NAME/@Value}"/>
+          </REQUEST>
+        </FOR_EACH>
+        <REQUEST Name="pngSETPreviousWrapperLoadStatus" AssignToVar="resWrapperLoadStatus" ServiceName="BCM_MASTER"/>
+        <!--<REQUEST Name="pngStopWrapperTimer" AssignToVar="resStopWrapperTimer" ServiceName="BCM_MASTER"/>
+<REQUEST Name="pngStartWrapperTimer" AssignToVar="resWrapperTimer" ServiceName="BCM_MASTER"/>-->
+        <REQUEST Name="pngSETPreviousDeleteLoadStatus" AssignToVar="resDeleteLoadStatus" ServiceName="BCM_MASTER"/>
+        <REQUEST Name="pngStopSTGDeleteProcessTimer" AssignToVar="resStopDeleteTimer" ServiceName="BCM_MASTER"/>
+        <REQUEST Name="pngStartSTGDeleteProcessTimer" AssignToVar="resDeleteTimer" ServiceName="BCM_MASTER"/>
+        <REQUEST Name="pngSETCPUUtilCheck" AssignToVar="resCPUUtilCheck" ServiceName="BCM_MASTER"/>
+        <REQUEST Name="pngSETCPUProcessorTimeOnServiceStartup" AssignToVar="resCPUTime" ServiceName="BCM_MASTER"/>
+        <REQUEST Name="pngStopOptOutTimer" AssignToVar="resStopOptOutTimer" ServiceName="BCM_MASTER"/>
+        <REQUEST Name="pngStartOptOutTimer" AssignToVar="resStartOptOutTimer" ServiceName="BCM_MASTER"/>
+        <REQUEST Name="pngStopNCOATimer" AssignToVar="resStopNCOATimer" ServiceName="BCM_MASTER"/>
+        <REQUEST Name="pngStartNCOATimer" AssignToVar="resNCOATimer" ServiceName="BCM_MASTER"/>
+        <REQUEST Name="pngStopRETLRTimer" AssignToVar="resStopRETLRTimer" ServiceName="BCM_MASTER"/>
+        <REQUEST Name="pngStartRETLRTimer" AssignToVar="resRETLRTimer" ServiceName="BCM_MASTER"/>
+        <REQUEST Name="pngstopORIGTimer" AssignToVar="resStopORIGTimer" ServiceName="BCM_MASTER"/>
+        <REQUEST Name="pngstartORIGTimer" AssignToVar="resORIGTimer" ServiceName="BCM_MASTER"/>    
+        <REQUEST Name="pngStopExtrnStdrdTimer" AssignToVar="resStopExtrnStdrdTimer" ServiceName="BCM_MASTER"/>
+        <REQUEST Name="pngStartExtrnStdrdTimer" AssignToVar="resExtrnStdrdTimer" ServiceName="BCM_MASTER"/>            
+      </ACTION>
+    </RULE>
+  </DEFINE_INIT>
+  <DEFINE_METHOD Name="TrilliumTimerRule">
+    <RULE>
+      <ACTION>
+        <!-- Verify if MDM Service on Trillium Server is Running-->
+        <IF_TEST Test="$thisParam/CNTRY_NAME/@Value = 'HRV' or $thisParam/CNTRY_NAME/@Value = 'UKR' or $thisParam/CNTRY_NAME/@Value = 'CZE' or $thisParam/CNTRY_NAME/@Value = 'BGR' or $thisParam/CNTRY_NAME/@Value = 'ROU' or $thisParam/CNTRY_NAME/@Value = 'ISR' or $thisParam/CNTRY_NAME/@Value = 'EGY' or $thisParam/CNTRY_NAME/@Value = 'PAK' or $thisParam/CNTRY_NAME/@Value = 'AFR' or $thisParam/CNTRY_NAME/@Value = 'ARB' or $thisParam/CNTRY_NAME/@Value = 'AUT' or $thisParam/CNTRY_NAME/@Value = 'BEL' or $thisParam/CNTRY_NAME/@Value = 'CHE' or $thisParam/CNTRY_NAME/@Value = 'DEU' or $thisParam/CNTRY_NAME/@Value = 'DNK' or $thisParam/CNTRY_NAME/@Value = 'ESP' or $thisParam/CNTRY_NAME/@Value = 'FIN' or $thisParam/CNTRY_NAME/@Value = 'FRA' or $thisParam/CNTRY_NAME/@Value = 'GBR' or $thisParam/CNTRY_NAME/@Value = 'GRC' or $thisParam/CNTRY_NAME/@Value = 'HUN' or $thisParam/CNTRY_NAME/@Value = 'IRL' or $thisParam/CNTRY_NAME/@Value = 'ITA' or $thisParam/CNTRY_NAME/@Value = 'LUX' or $thisParam/CNTRY_NAME/@Value = 'NLD' or $thisParam/CNTRY_NAME/@Value = 'NOR' or $thisParam/CNTRY_NAME/@Value = 'POL' or $thisParam/CNTRY_NAME/@Value = 'PRT' or $thisParam/CNTRY_NAME/@Value = 'RUS' or $thisParam/CNTRY_NAME/@Value = 'SWE'">
+          <THEN>
+            <!--<REQUEST Name="invokeTestTrilliumService" ServiceName="Trillium_Europe" AssignToVar="result" Synchronous="true" HandleException="true"/>-->
+            <GET_DOCUMENT Name="ENV_NM" ServiceName="BCM_MASTER" AssignToVar="Environment">
+            </GET_DOCUMENT>
+            <EXECUTE_SHELL_COMMAND Value="pngMDM_Trillium.bat {$thisParam/CNTRY_NAME/@Value} invokeTestTrilliumService {$Environment/ENV_NM/TRILLIUM_EMEA_NM/@Value} Trillium_Europe 0" AssignToVar="result" Synchronous="true" HandleException="true"/>
+            <SET Var="trilliumcheck" FromValue="0"/>
+            <EXECUTE_SHELL_COMMAND Value="ping {$Environment/ENV_NM/TRILLIUM_EMEA_NM/@Value}" AssignToVar="ping" Synchronous="true"/>
+            <IF_TEST Test="subString($result/STD_ERR/LINE[1]/@Value,0,9)= 'Exception'">
+              <THEN>
+                <SET Var="trilliumcheck" FromValue="1"/>
+                <REQUEST Name="emailOnSerdownNPrevLoadInFailState" AssignToVar="resTrilliumdown" ServiceName="BCM_MASTER">
+                  <SUBJECT Value="MDM Service down on {$Environment/ENV_NM/ENV_NM/@Value} Trillium_Europe Server"/>
+                  <DATA Value="MDM Service down on Trillium_Europe Server and hence workflow wont be executed"/>
+                </REQUEST>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="$ping/STD_OUT/LINE[5]/@Value='Request timed out.'">
+              <THEN>
+                <SET Var="trilliumcheck" FromValue="2"/>
+                <REQUEST Name="emailOnSerdownNPrevLoadInFailState" AssignToVar="resTrilliumdown" ServiceName="BCM_MASTER">
+                  <SUBJECT Value="Connectivity down between MDM Server and Trillium_Europe Server on {$Environment/ENV_NM/ENV_NM/@Value}"/>
+                  <DATA Value="Connectivity down between MDM Server and Trillium_Europe Server and hence workflow wont be executed"/>
+                </REQUEST>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="$trilliumcheck='0'">
+              <THEN>
+                <REQUEST Name="pngMDMtoTrilliumPersistRules" ServiceName="BCM_MASTER">
+                  <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+                  <EmailSubject Value="{$thisParam/EmailSubject/@Value}"/>
+                </REQUEST>
+              </THEN>
+            </IF_TEST>
+          </THEN>
+        </IF_TEST>
+        <IF_TEST Test="$thisParam/CNTRY_NAME/@Value ='USA' or $thisParam/CNTRY_NAME/@Value = 'CAN' or $thisParam/CNTRY_NAME/@Value = 'LA' or $thisParam/CNTRY_NAME/@Value = 'BRA' or $thisParam/CNTRY_NAME/@Value = 'TUR'">
+          <!--IF_TEST Test="$thisParam/CNTRY_NAME/@Value ='USA' or $thisParam/CNTRY_NAME/@Value = 'CAN' or $thisParam/CNTRY_NAME/@Value = 'LA' or $thisParam/CNTRY_NAME/@Value = 'BRA' or $thisParam/CNTRY_NAME/@Value = 'TRK' or $thisParam/CNTRY_NAME/@Value = 'TUR'"-->
+          <THEN>
+            <!--<REQUEST Name="invokeTestTrilliumService" ServiceName="Trillium_Americas" AssignToVar="result" Synchronous="true" HandleException="true"/>-->
+            <GET_DOCUMENT Name="ENV_NM" ServiceName="BCM_MASTER" AssignToVar="Environment">
+            </GET_DOCUMENT>
+            <EXECUTE_SHELL_COMMAND Value="pngMDM_Trillium.bat {$thisParam/CNTRY_NAME/@Value} invokeTestTrilliumService {$Environment/ENV_NM/TRILLIUM_AMERICA_NM/@Value} Trillium_Americas 0" AssignToVar="result" Synchronous="true" HandleException="true"/>
+            <SET Var="trilliumcheck" FromValue="0"/>
+            <EXECUTE_SHELL_COMMAND Value="ping {$Environment/ENV_NM/TRILLIUM_AMERICA_NM/@Value}" AssignToVar="ping" Synchronous="true"/>
+            <IF_TEST Test="subString($result/STD_ERR/LINE[1]/@Value,0,9)= 'Exception'">
+              <THEN>
+                <SET Var="trilliumcheck" FromValue="1"/>
+                <REQUEST Name="emailOnSerdownNPrevLoadInFailState" AssignToVar="resTrilliumdown" ServiceName="BCM_MASTER">
+                  <SUBJECT Value="MDM Service down on {$Environment/ENV_NM/ENV_NM/@Value} Trillium_America Server"/>
+                  <DATA Value="MDM Service down on Trillium_America Server and hence workflow wont be executed"/>
+                </REQUEST>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="$ping/STD_OUT/LINE[5]/@Value='Request timed out.'">
+              <THEN>
+                <SET Var="trilliumcheck" FromValue="2"/>
+                <REQUEST Name="emailOnSerdownNPrevLoadInFailState" AssignToVar="resTrilliumdown" ServiceName="BCM_MASTER">
+                  <SUBJECT Value="Connectivity down between MDM Server and Trillium_America Server on {$Environment/ENV_NM/ENV_NM/@Value}"/>
+                  <DATA Value="Connectivity down between MDM Server and Trillium_America Server and hence workflow wont be executed"/>
+                </REQUEST>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="$trilliumcheck ='0'">
+              <THEN>
+                <REQUEST Name="pngMDMtoTrilliumPersistRules" ServiceName="BCM_MASTER">
+                  <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+                  <EmailSubject Value="{$thisParam/EmailSubject/@Value}"/>
+                </REQUEST>
+              </THEN>
+            </IF_TEST>
+          </THEN>
+        </IF_TEST>
+        <IF_TEST Test="$thisParam/CNTRY_NAME/@Value = 'AUS' or $thisParam/CNTRY_NAME/@Value = 'CHN' or $thisParam/CNTRY_NAME/@Value = 'HKG' or $thisParam/CNTRY_NAME/@Value = 'IND' or $thisParam/CNTRY_NAME/@Value = 'JPN' or $thisParam/CNTRY_NAME/@Value = 'KOR' or $thisParam/CNTRY_NAME/@Value = 'MYS' or $thisParam/CNTRY_NAME/@Value = 'SGP' or $thisParam/CNTRY_NAME/@Value = 'OTH' or $thisParam/CNTRY_NAME/@Value = 'PHL' or $thisParam/CNTRY_NAME/@Value = 'TWN' or $thisParam/CNTRY_NAME/@Value = 'NZL'">
+          <THEN>
+            <!--<REQUEST Name="invokeTestTrilliumService" ServiceName="Trillium" AssignToVar="result" Synchronous="true" HandleException="true"/>-->
+            <GET_DOCUMENT Name="ENV_NM" ServiceName="BCM_MASTER" AssignToVar="Environment">
+            </GET_DOCUMENT>
+            <EXECUTE_SHELL_COMMAND Value="pngMDM_Trillium.bat {$thisParam/CNTRY_NAME/@Value} invokeTestTrilliumService {$Environment/ENV_NM/TRILLIUM_ASIA_NM/@Value} Trillium 0" AssignToVar="result" Synchronous="true" HandleException="true"/>
+            <SET Var="trilliumcheck" FromValue="0"/>
+            <EXECUTE_SHELL_COMMAND Value="ping {$Environment/ENV_NM/TRILLIUM_ASIA_NM/@Value}" AssignToVar="ping" Synchronous="true"/>
+            <IF_TEST Test="subString($result/STD_ERR/LINE[1]/@Value,0,9)= 'Exception'">
+              <THEN>
+                <SET Var="trilliumcheck" FromValue="1"/>
+                <REQUEST Name="emailOnSerdownNPrevLoadInFailState" AssignToVar="resTrilliumdown" ServiceName="BCM_MASTER">
+                  <SUBJECT Value="MDM Service down on {$Environment/ENV_NM/ENV_NM/@Value} Trillium Asia Server"/>
+                  <DATA Value="MDM Service down on Trillium Asia Server and hence workflow wont be executed"/>
+                </REQUEST>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="$ping/STD_OUT/LINE[5]/@Value='Request timed out.'">
+              <THEN>
+                <SET Var="trilliumcheck" FromValue="2"/>
+                <REQUEST Name="emailOnSerdownNPrevLoadInFailState" AssignToVar="resTrilliumdown" ServiceName="BCM_MASTER">
+                  <SUBJECT Value="Connectivity down between MDM Server and Trillium Asia Server on {$Environment/ENV_NM/ENV_NM/@Value}"/>
+                  <DATA Value="Connectivity down between MDM Server and Trillium Asia Server and hence workflow wont be executed"/>
+                </REQUEST>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="$trilliumcheck ='0'">
+              <THEN>
+                <REQUEST Name="pngMDMtoTrilliumPersistRules" ServiceName="BCM_MASTER">
+                  <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+                  <EmailSubject Value="{$thisParam/EmailSubject/@Value}"/>
+                </REQUEST>
+              </THEN>
+            </IF_TEST>
+          </THEN>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="pngTrilliumProcessTimer">
+    <!--**********************************************************************************************************
+*   Module Name	: pngTrilliumProcessTimer
+*		Created Date	: Oct 27, 2011
+*		Created By   	: Kalyana Chakravarthy
+*		Called Functions:
+*		Called By Functions:  pngTrilliumProcessTimer bat files
+*		Short Desc	: This API starts the COuntry Specific Trillium Timer
+*  		Change Log 		:
+*		DATE							LC						OWNER		DESCRIPTION
+*
+**********************************************************************************************************-->
+    <RULE>
+      <ACTION>
+        <PRINTLN Value="Start Timer {$thisParam/CNTRY_NAME/@Value}"/>
+        <START_TIMER>
+          <IDENTIFIED_BY>
+            <NAME Value="{concat('TIMER_FOR_',$thisParam/CNTRY_NAME/@Value,'_Trillium')}"/>
+          </IDENTIFIED_BY>
+          <FOR_DOCUMENT>
+            <DOC_NAME>
+              <TO_XML DocVar="thisParam"/>
+            </DOC_NAME>
+          </FOR_DOCUMENT>
+          <CALLBACK_DATE Value="{incrDate(date(), duration(0, 0, 1, 0))}"/>
+          <CALLBACK_DURATION Value="{duration(0,0,$thisParam/CALL_BACK_DURATION/@Value,0)}"/>
+          <CALLBACK_ACTIONS>
+            <PRINTLN Value="Country Name = {$thisDoc/REQUEST/CNTRY_NAME/@Value}"/>
+            <PRINTLN Value="Indentified By = {$identifiedByDoc/NAME/@Value}"/>
+            <PRINTLN Value="Start of request TrilliumTimerRule {$thisParam/CNTRY_NAME/@Value}"/>
+            <REQUEST Name="TrilliumTimerRule" AssignToVar="resTrilliumTimerRule" ServiceName="BCM_MASTER" Synchronous="true">
+              <CNTRY_NAME Value="{$thisDoc/REQUEST/CNTRY_NAME/@Value}"/>
+            </REQUEST>
+            <PRINTLN Value="End of request TrilliumTimerRule {$thisParam/CNTRY_NAME/@Value}"/>
+          </CALLBACK_ACTIONS>
+        </START_TIMER>
+        <PRINTLN Value="End Timer {$thisParam/CNTRY_NAME/@Value}"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="pngStopTrilliumProcessTimer">
+    <!--**********************************************************************************************************
+*   Module Name	: pngStopTrilliumProcessTimer
+*		Created Date	: Oct 27, 2011
+*		Created By   	: Kalyana Chakravarthy
+*		Called Functions:
+*		Called By Functions:  pngStopTrilliumProcessTimer bat files
+*		Short Desc	: This API stops the COuntry Specific Trillium Timer
+*  		Change Log 		:
+*		DATE							LC						OWNER		DESCRIPTION
+*
+**********************************************************************************************************-->
+    <RULE>
+      <ACTION>
+        <STOP_TIMER>
+          <IDENTIFIED_BY>
+            <NAME Value="{concat('TIMER_FOR_',$thisParam/CNTRY_NAME/@Value,'_Trillium')}"/>
+          </IDENTIFIED_BY>
+        </STOP_TIMER>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

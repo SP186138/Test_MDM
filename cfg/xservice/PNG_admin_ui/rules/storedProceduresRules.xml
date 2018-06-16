@@ -1,0 +1,20 @@
+<DOCUMENTS>
+	<DEFINE_METHOD Name="execute_proc">
+		<RULE>
+			<ACTION>
+				<SET Var="procedureName" FromValue="{$thisParam/PROC_NAME/@Value}"/>
+			 <EXEC_PROC AssignToVar="results" Name="{$procedureName}"/>
+			</ACTION>
+		</RULE>
+	</DEFINE_METHOD>
+	<DEFINE_METHOD Name="execute_proc_param">
+		<RULE>
+			<ACTION>
+				<SET Var="procedureName" FromValue="{$thisParam/PROC_NAME/@Value}"/>
+				<SET Var="params" FromValue="{$thisParam/PARAMS/@Value}"/>
+				<EXECUTE_SQL_DML AssignToVar="results" Value="call {$procedureName}({$params});"/>
+			</ACTION>
+		</RULE>
+	</DEFINE_METHOD>
+</DOCUMENTS>
+

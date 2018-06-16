@@ -1,0 +1,74 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_form" source="studio.controller:load">
+  <ui:container id="topContainer">
+    <ui:step displayText="AGENCY" id="AGENCY">
+      <ui:validation successMessage="{$root/SuccessMessage/@Value}"/>
+      <ui:field-group>
+        <ui:image src="/bpi_check.gif" displayCondition="{string-length($root/MSG/AlertGreen/@Value) != 0}" id="checkImg"/>
+        <ui:display-field id="success" value="{$root/MSG/AlertGreen/@Value}" displayCondition="{string-length($root/MSG/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen"/>
+        <ui:image src="/cancel.gif" displayCondition="{string-length($root/MSG/AlertRed/@Value) != 0}"/>
+        <ui:display-field value="{$root/MSG/AlertRed/@Value}" displayCondition="{string-length($root/MSG/AlertRed/@Value) != 0}" name="error" class="requiredIndicator"/>
+      </ui:field-group>
+      <ui:field-group id="Create">
+        <ui:field-group id="left fields" columns="3">
+          <!-- <ui:entry-field id="AGNCY_NBR" displayText="Agency Number" name="AGNCY_NBR" required="true"/>-->
+          <ui:entry-field id="AGNCY_NM" displayText="Agency Name" name="AGNCY_NM" required="true"/>
+          <ui:entry-field id="AGNCY_DESC" displayText="Agency Description" name="AGNCY_DESC"/>
+          <ui:entry-field id="AGNCY_BUS_NM" displayText="Agency Business Name" name="AGNCY_BUS_NM" required="true"/>
+          <ui:entry-field id="ACTV_DT" displayText="Active Date" name="ACTV_DT" dataType="Date" required="true"/>
+          <ui:entry-field id="REQSTD_DT" displayText="Requested Date" name="REQSTD_DT" dataType="Date" required="true"/>
+          <ui:dropdown id="AGNCY_STATUS_CD" name="AGNCY_STATUS_CD" displayText="Agency Status" optionSrc="$root/AGNCY_STATUS/AGNCY_STATUS_NM"/>
+          <ui:entry-field id="SR_NBR" displayText="SR Number" name="SR_NBR"/>
+          <ui:dropdown id="DMG_IND" displayText="DMG Indicator" name="DMG_IND" required="true">
+            <ui:option id="Y" value="Y"/>
+            <ui:option id="N" value="N"/>
+          </ui:dropdown>
+          <ui:entry-field id="EXTRNL_AGNCY_ID" displayText="External Agency Identifier" name="EXTRNL_AGNCY_ID" required="false"/>
+          <ui:entry-field id="RQSTR_CNTCT_NBR" displayText="Requester Contact Number" name="RQSTR_CNTCT_NBR" required="true" readOnly="true">
+            <ui:links id="linksMatlGrp1">
+              <ui:link id="linksMatlGrp1" onClick="javascript:openLookupBox('select_RQSTR_CNTCT_NBR');">
+                <ui:image src="/pop_up_window.gif"/>
+              </ui:link>
+            </ui:links>
+          </ui:entry-field>
+          <ui:dropdown id="SPLR_IND" displayText="SPLR Indicator" name="SPLR_IND" required="true">
+            <ui:option id="Y" value="Y"/>
+            <ui:option id="N" value="N"/>
+          </ui:dropdown>
+          <ui:dropdown id="TRNS_IND" displayText="Trans Indicator" name="TRNS_IND" required="true">
+            <ui:option id="Y" value="Y"/>
+            <ui:option id="N" value="N"/>
+          </ui:dropdown>
+          <ui:dropdown id="GRS_IND" displayText="GRS Indicator" name="GRS_IND" required="true">
+            <ui:option id="Y" value="Y"/>
+            <ui:option id="N" value="N"/>
+          </ui:dropdown>
+          <ui:entry-field id="AGNCY_CNSMR_FCNG_NM" displayText="Agency Consumer Name" name="AGNCY_CNSMR_FCNG_NM"/>
+          <ui:entry-field id="BUSN_NOTES" displayText="Business Notes" name="BUSN_NOTES"/>
+        </ui:field-group>
+      </ui:field-group>
+      <ui:buttons id="buttons">
+        <ui:button id="Upload" displayText="Excel Upload" name="Upload" emphasized="true" validate="false"/>
+        <ui:button id="Save" displayText="Save" name="Save" emphasized="true"/>
+        <ui:button id="AGNCY_CNTNT_STP" displayText="Agency Contact Setup" name="AGNCY_CNTNT_STP" emphasized="true" displayCondition="{$root/AGNCY_CNTNT_STP/@Value='true'}" validate="false"/>
+        <ui:button id="Country_Setup" displayText="Country Setup" name="Country_Setup" emphasized="true" displayCondition="{$root/Country_Setup/@Value='true'}" validate="false"/>
+        <ui:button id="Add_Agency_IP" displayText="Agency IP Setup" name="Add_Agency_IP" emphasized="true" displayCondition="{$root/Add_Agency_IP/@Value='true'}" validate="false"/>
+        <ui:button id="MKTNG_PGM_STP" displayText="Marketing Program Setup" name="MKTNG_PGM_STP" emphasized="true" displayCondition="{$root/MKTNG_PGM_STP/@Value='true'}" validate="false"/>
+        <ui:button id="Interface_Setup" displayText="Interface Setup" name="Interface_Setup" emphasized="true" displayCondition="{$root/Interface_Setup/@Value='true'}" validate="false"/>
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+function openLookupBox(sLookupButton)
+{
+  
+disableButtons();
+trapExcelPivotChanges();
+
+document.form.BUTTON_ID.value =sLookupButton;
+
+document.form.action = 'view.x2ps';
+
+document.form.submit();
+}
+</ui:script>
+</ui:page-group>

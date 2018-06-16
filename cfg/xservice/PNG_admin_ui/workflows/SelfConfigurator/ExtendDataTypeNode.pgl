@@ -1,0 +1,45 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_form" source="studio.controller:load">
+  <ui:container id="Outer" scrollable="true">
+    <ui:header>
+    </ui:header>
+    <ui:step id="OuterStep" displayText="Dictionary Data Type">
+      <ui:help displayPage=""/>
+      <ui:field-group>
+        <ui:hidden-field id="response" name="response" value="{$root/result/@Value}"/>
+      </ui:field-group>
+      <ui:table id="uiTable" displayText="Dictionary Data Type" scrollable="true" displayTextNoRecords="No Records Found" collapsable="false" doPaging="true" selectable="single" select="$root/DICT_DATATYPE" totalRowCount="$root/totalRowCount/@Value" startAtRow="$root/startAtRow/@Value" postRowIdAs="SELECTED_ID" maxRows="20" filter="true" rowId="Id#Name">
+        <ui:field-group>
+          <ui:hidden-field name="Id" id="Id"/>
+          <ui:display-field name="Name" id="Name" displayText="Data Type" sortable="true" title="Data Type" unFormat="true"/>
+          <ui:display-field name="ModelUnit" id="ModelUnit" displayText="Dictionary Name" sortable="true" title="Dictionary Name" unFormat="true"/>
+          <ui:display-field name="FolderName" id="FolderName" displayText="Folder Name" title="Folder"/>
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button id="delete" displayText="SC_DELETE" onClick="javascript:onDelete()"/>
+          <ui:divider/>
+          <ui:button id="Select" name="Select" displayText="Select and Return" enabledBySelections="true"/>
+          <ui:divider/>
+        </ui:buttons>
+      </ui:table>
+      <ui:script>
+
+function  onLoad(){
+        
+onLoadSuper();
+onResize();
+var response = document.getElementById(&quot;response&quot;).value;
+if(response != &quot;&quot;)
+{
+window.opener.setExtendValue(response);
+window.close();
+}
+}
+function onDelete(){
+	window.opener.deleleExtendedValue();
+	window.close();
+}
+
+      </ui:script>
+    </ui:step>
+  </ui:container>
+</ui:page-group>

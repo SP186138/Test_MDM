@@ -1,0 +1,76 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" Id="Node1.pgl">
+  <ui:container id="CtSelectMtrlDesc" scrollable="true">
+    <ui:step id="MktngPgmTbl" displayText="Marketing Program, Legal Entity Lookup">
+      <ui:table id="tableSelectMktngPgm" rowSrc="$root/MKTNG_PGM" selectable="Single" collapsable="false" filter="true" postRowIdAs="Select_Legal_MKtng" rowId="MKTNG_PGM_NBR#LEGAL_ENT_NBR" doPaging="true" startAtRow="$root/START_COUNT/@Value" maxRows="$root/MaxRec/@Value" totalRowCount="$root/TotalRowCount/@Value">
+        <ui:field-group id="fgSelectFMLAcctCd">
+          <ui:display-field id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR" displayText="Legal Entity Number" dataType="Constant" sortable="true"/>
+          <ui:display-field id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR" displayText="Marketing Program Number" dataType="Constant" sortable="true"/>
+          <ui:display-field id="MKTNG_PGM_NAME" name="MKTNG_PGM_NAME" displayText="Marketing Program Name" dataType="Constant" sortable="true"/>
+          <ui:display-field id="MKTNG_PGM_DESC" name="MKTNG_PGM_DESC" displayText="Marketing Program Description" dataType="Constant" sortable="true"/>
+          <ui:display-field id="MKTNG_PGM_SHORT_NAME" name="MKTNG_PGM_SHORT_NAME" displayText="Marketing Program Short Name" dataType="Constant" sortable="true"/>
+          <ui:display-field id="MKTNG_PGM_STATUS" name="MKTNG_PGM_STATUS" displayText="Marketing Program Status" dataType="Constant" sortable="true"/>
+          <ui:display-field id="MKTNG_PGM_BUSN_NAME" name="MKTNG_PGM_BUSN_NAME" displayText="Marketing Program Business Name" dataType="Constant" sortable="true"/>
+        </ui:field-group>
+        <ui:buttons>
+          <ui:divider/>
+          <ui:divider/>
+          <ui:button id="cancel" name="cancel" displayText="Cancel"/>
+          <ui:divider/>
+          <ui:divider/>
+          <ui:button id="select_and_return" name="select_and_return" displayText="Select &amp; Return" enabledBySelections="true" emphasized="true"/>
+        </ui:buttons>
+      </ui:table>
+      <ui:script>
+
+
+
+
+
+
+
+function on_view()
+
+{
+
+var bIsValid = true;
+
+document.form.SUBMIT_AS_XML.value = 'false';
+
+bIsValid = (isValid_tableSelectMktngPgm());
+
+if( bIsValid == false )
+
+{
+
+validation_alert('tableSelectMktngPgm');
+
+}
+
+if ( bIsValid == true)
+
+{
+
+disableButtons();
+
+trapExcelPivotChanges();
+
+document.form.BUTTON_ID.value = 'view';
+
+document.form.action = 'view.x2ps';
+
+document.form.submit();
+
+grayOut(true);
+
+}
+
+onResize();
+
+return;
+
+}
+
+</ui:script>
+    </ui:step>
+  </ui:container>
+</ui:page-group>

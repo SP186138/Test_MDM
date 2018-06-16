@@ -1,0 +1,76 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_form" source="studio.controller:load">
+<ui:container id="topContainer">
+<ui:step displayText="Link Country to Handler " id="basicControls">
+<ui:field-group>
+<ui:image src="/bpi_check.gif" displayCondition="{string-length($root/AlertGreen/@Value) != 0}" id="checkImg"/>
+<ui:display-field value="{$root/AlertGreen/@Value}" displayCondition="{string-length($root/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen" align="left"/>
+<ui:image src="/cancel.gif" displayCondition="{string-length($root/AlertRed/@Value) != 0}"/>
+<ui:display-field value="{$root/AlertRed/@Value}" displayCondition="{string-length($root/AlertRed/@Value) != 0}" name="error" class="requiredIndicatorRed"/>
+</ui:field-group>
+<ui:field-group id="Create">
+<ui:field-group id="left fields">
+<ui:dropdown id="CNTRY_CODE" name="CNTRY_CODE" displayText="Country" optionSrc="$root/CNTRY_CODE/OPTION" required="true" onChange="javascript:profileChanged();"/>
+<ui:entry-field id="HNDLR_ID" displayText="Handler ID" name="HNDLR_ID" value="{$root/HNDLR_ID/@Value}" editable="false"/>
+</ui:field-group>
+</ui:field-group>
+<ui:buttons id="buttons">
+<ui:button id="SaveandReturn" displayText="Save and Return" name="SaveandReturn"/>
+<ui:button id="Save" displayText="Save" name="Save"/>
+<ui:button id="Back" displayText="Back" name="Back" validate="false"/>
+</ui:buttons>
+</ui:step>
+</ui:container>
+<ui:container>
+<ui:step id="basicControls">
+<ui:table id="CntryHandler" displayText="Linked Country to Handler" selectable="Single" rowId="CNTRY_NAME#HNDLR_ID" rowSrc="$root/SQL_RESULT" scrollable="true" displayTextNoRecords="No Records Linked" maxRows="10" postRowIdAs="CntryHandlerID" doPaging="true" totalRowCount="$root/RESPONSE/@TotalRowCount">
+<ui:field-group id="tableColumns" select="$root/RESPONSE/*">
+<ui:display-field id="HNDLR_ID" name="HNDLR_ID" displayText="Handler ID"/>
+<ui:display-field id="HNDLR_NM" name="HNDLR_NM" displayText="Handler Name"/>
+<ui:display-field id="CNTRY_NAME" name="CNTRY_NAME" displayText="Country Name"/>
+<ui:display-field id="GDPR_RQST_TYPE_NAME" name="GDPR_RQST_TYPE_NAME" displayText="Country Request Type"/>
+<ui:display-field id="EMAIL_ADDR_TXT" name="EMAIL_ADDR_TXT" displayText="Email Address"/>
+<ui:display-field id="CNTCT_NBR" name="CNTCT_NBR" displayText="Contact Number"/>
+</ui:field-group>
+<ui:buttons>
+<ui:button id="Addcontact" displayText="Add contact" name="Addcontact" enabledBySelections="true"/>
+<ui:button id="Add_request_authorization" displayText="Add request authorization" name="Add_request_authorization" enabledBySelections="true"/>
+</ui:buttons>
+</ui:table>
+</ui:step>
+</ui:container>
+<ui:script>
+function profileChanged(){
+
+
+
+var frm = document.forms[0];
+
+
+
+var ele = frm.elements;
+
+
+
+for ( i=0; i &lt; ele.length; i++ ) {
+
+
+
+if ( ele[i].name ==  'IS_PROFILE_CHANGED' ){
+
+
+
+ele[i].value='true';
+
+
+
+}
+
+
+
+}
+
+
+
+}
+</ui:script>
+</ui:page-group>

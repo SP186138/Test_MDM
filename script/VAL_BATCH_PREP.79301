@@ -1,0 +1,61 @@
+/***********************************************************************************************************
+SCRIPT:               VAL_BATCH_PREP.BTEQ 
+DESCRIPTION:          This script validates the records received from ETL Staging.
+DEPENDENCY:           
+INPUT:                ETL Staging
+OUTPUT:               MST Staging
+ERRORS:
+SPECIAL INSTRUCTIONS:
+
+CHANGE LOG:
+VERSION              DATE                 AUTHOR                          CHANGES
+1.00                 01/21/2011           TERADATA                        INITIAL VERSION
+2.00                 08/22/2011           TERADATA                        Change OF Failure-BadFile
+3.00                 10/31/2011           TERADATA                        Removal of Deletes as  part of ||elism
+4.00                 03/26/2012		  TERADATA                        Made change in insert to LOAD_INFO to
+                                                                          manipulate LA data
+***********************************************************************************************************/
+
+.logon $TDPID/$TDUSER,$TDPWD
+ 
+.SET ERROROUT STDOUT;
+.SET SESSION CHARSET 'UTF8';
+.SET ERRORLEVEL 3624 SEVERITY 0
+.SET ERRORLEVEL 3807 SEVERITY 0
+
+DROP TABLE VALIDATION_ERR_79301;
+.IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE
+DROP TABLE VALIDATION_79301;
+.IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE
+
+CREATE TABLE VALIDATION_ERR_79301 
+
+     (
+      MKTNG_PGM_NBR INTEGER NOT NULL,
+      REGIS_CNSMR_ID_VAL VARCHAR(1000) CHARACTER SET UNICODE NOT CASESPECIFIC NOT NULL,
+      LOAD_ID DECIMAL(18,0),
+      SYS_ERR_CODE VARCHAR(100) CHARACTER SET UNICODE NOT CASESPECIFIC,
+      RECORD_SOURCE VARCHAR(30))
+PRIMARY INDEX ( MKTNG_PGM_NBR ,REGIS_CNSMR_ID_VAL, LOAD_ID  );
+;
+.IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE
+
+CREATE SET TABLE VALIDATION_79301 
+     (
+      LOAD_ID DECIMAL(18,0),
+      LOAD_TS TIMESTAMP(0))
+PRIMARY INDEX ( LOAD_ID );
+.IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE
+
+INSERT VALIDATION_79301
+(LOAD_ID)
+SEL 
+LOAD_ID
+FROM 
+LOAD_INFO
+WHERE BATCH_ID=79301
+GROUP BY 1
+;
+.IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE
+
+.exit

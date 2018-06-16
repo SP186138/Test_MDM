@@ -1,0 +1,62 @@
+<document>
+  <properties>
+    <property Name="GDPR_SRCH_TYPE_CODE" PhysicalName="GDPR_SRCH_TYPE_CODE" Required="true" CharSet="LATIN">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="GD_GDPR_SRCH_TYPE_CODE" />
+    </property>
+    <property Name="NON_CORP_MIN">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="NON_CORP_MIN" />
+    </property>
+    <property Name="NON_CORP_MAX" PhysicalName="NON_CORP_MAX">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="NON_CORP_MAX" />
+    </property>
+    <property Name="CORP_MIN" PhysicalName="CORP_MIN">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="CORP_MIN" />
+    </property>
+    <property Name="CORP_MAX" PhysicalName="CORP_MAX">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="CORP_MAX" />
+    </property>
+    <property Name="GRADE" PhysicalName="GRADE" CharSet="LATIN">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="GRADE" />
+    </property>
+    <property Name="CNTRY_CODE" PhysicalName="CNTRY_CODE" CharSet="LATIN">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="CNTRY_CODE" />
+    </property>
+    <property Name="GDPR_RQST_TYPE_CD" PhysicalName="GDPR_RQST_TYPE_CD">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="GDPR_RQST_TYPE_CD" />
+    </property>
+  </properties>
+  <keys>
+    <key Active="true" Name="GDPR_AUTMTN_RULESET_UPI" PhysicalName="GDPR_AUTMTN_RULESET_UPI" Kind="PRIMARY">
+      <property Name="CNTRY_CODE" />
+      <property Name="GDPR_RQST_TYPE_CD" />
+      <property Name="GDPR_SRCH_TYPE_CODE" />
+      <property Name="GRADE" />
+    </key>
+  </keys>
+  <links>
+    <link Active="true" Name="Link1" PhysicalName="SRCH_TYPE_CD_LINK">
+      <keymap ToPackage="models/pngModel" ToModelUnit="GDPR_SRCH_TYPE.mtt" ToKey="GDPR_SRCH_TYPE_UPI" ReverseLink="true" ReverseLinkName="SRCH_TYPE_CD" DeleteRule="RESTRICT">
+        <mapping FromProperty="GDPR_SRCH_TYPE_CODE" ToProperty="GDPR_SRCH_TYPE_CODE" />
+      </keymap>
+    </link>
+    <link Active="true" Name="Link2" PhysicalName="Request_type_CD_LINK">
+      <keymap ToPackage="models/pngModel" ToModelUnit="GDPR_RQST_TYPE.mtt" ToKey="GDPR_RQST_TYPE_UPI" ReverseLink="true" ReverseLinkName="Request_type_CD" DeleteRule="RESTRICT">
+        <mapping FromProperty="GDPR_RQST_TYPE_CD" ToProperty="GDPR_RQST_TYPE_CD" />
+      </keymap>
+    </link>
+    <link Active="true" Name="Link3" PhysicalName="Country_code_link">
+      <keymap ToPackage="models/pngModel" ToModelUnit="CNTRY.mtt" ToKey="CNTRY_UPI" ReverseLink="true" ReverseLinkName="Country_code" DeleteRule="RESTRICT">
+        <mapping FromProperty="CNTRY_CODE" ToProperty="CNTRY_CODE" />
+      </keymap>
+    </link>
+  </links>
+  <docFacets>
+    <mdmWebServiceFacet />
+    <mdmSysTableMapFacet TableClass="MASTER" Source="MASTER" MasterTable="GDPR_AUTMTN_RULESET" />
+    <miscFacet PhysicalName="GDPR_AUTMTN_RULESET" Active="true" />
+    <mdmConfigFacet SchemaGen="true" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql />
+</document>
+

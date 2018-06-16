@@ -1,0 +1,1 @@
+wsh.echo DatePart("yyyy",Date) & Right("0" & DatePart("m",Date), 2) & Right("0" & DatePart("d",Date), 2) & "000000"

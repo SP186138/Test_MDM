@@ -1,0 +1,191 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" name="studio.templates.simple_form" source="studio.controller:load" version="3">
+  <ui:container id="outerContainer1" name="outerContainer1" scrollable="true">
+    <ui:step id="outerStep1" name="outerStep1" scrollable="true">
+      <ui:container id="topContainer" scrollable="true" type="Tabs">
+        <ui:step displayText="SEARCH CONTENT ELEMENT" id="cntnt" scrollable="true">
+          <ui:field-group id="tableColumns1" columns="2" select="$this">
+            <ui:hidden-field id="ACTION_TYPE" name="ACTION_TYPE"/>
+            <!--<ui:display-field id="COLLTRL_ID" name="COLLTRL_ID" displayText="Collateral ID" required="true" /> -->
+            <ui:dropdown id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR" displayText="Matched Domain" optionSrc="$root/LEGAL_ENT/LEGAL_ENT_NAME" onChange="javascript:loadProgramList()" selectOne="true" select="$root/LEGAL_ENT_NBR"/>
+            <!--ui:entry-field id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR" displayText="Matched Domain" readOnly="true" displayCondition="{$root/IND/@Value='Y'}" value="{$root/LEGAL_ENT1/LEGAL_ENT_NAME/@Value}"/-->
+            <ui:dropdown id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR" displayText="Program Name" optionSrc="$root/MKTNG_PGM/OPTION" selectOne="true"/>
+            <!--<ui:hidden-field id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR" displayText="Program Name" optionSrc="$root/MKTNG_PGM/OPTION" />-->
+            <ui:entry-field id="GBL_CNTNT_ELEM_ID" name="GBL_CNTNT_ELEM_ID" displayText="Global Content Element Id" dataType="Number" align="left" placeholder="number"/>
+            <!--<ui:dropdown id="BRAND_CODE" name="BRAND_CODE" displayText="Brand Code" optionSrc="$root/BRAND_CODE/OPTION" selectOne="true" required="true"/> -->
+            <!--<ui:entry-field id="ALT_SYS_COLLTRL_ID" name="ALT_SYS_COLLTRL_ID" displayText="ALT SYS Collateral Id" />-->
+            <ui:hidden-field id="user_action" name="user_action"/>
+            <ui:entry-field id="CNTNT_NAME" name="CNTNT_NAME" displayText="Content Name" select="$root/CNTNT_NAME" placeholder="string"/>
+            <ui:entry-field id="CNTNT_SHORT_NAME" name="CNTNT_SHORT_NAME" displayText="Content Short Name" select="$root/CNTNT_SHORT_NAME" placeholder="string"/>
+            <ui:entry-field id="CNTNT_DESC" name="CNTNT_DESC" displayText="Content Description" select="$root/CNTNT_DESC" placeholder="string"/>
+            <!--<ui:entry-field id="CNSMR_ACTN_TYPE_CODE" name="CNSMR_ACTN_TYPE_CODE" displayText="Consumer Action" />-->
+            <!--<ui:entry-field id="INCTV_TYPE_CODE" name="INCTV_TYPE_CODE" displayText="Incentive Type Code" />-->
+            <!--<ui:entry-field id="INCTV_NBR" name="INCTV_NBR" displayText="Incentive Number"/>-->
+            <!--<ui:entry-field id="TRGT_PATH_TYPE_CODE" name="TRGT_PATH_TYPE_CODE" displayText="Target Path type Code" />-->
+            <!-- <ui:entry-field id="TRGT_SUB_PATH_TYPE_CODE" name="TRGT_SUB_PATH_TYPE_CODE" displayText="Target Sub Path" />-->
+            <!--<ui:entry-field id="TRGT_CNSMR_SEG_CODE" name="TRGT_CNSMR_SEG_CODE" displayText="Target Consumer" />-->
+            <!--<ui:entry-field id="VIEW_WEB_SITE_URL_TXT" name="VIEW_WEB_SITE_URL_TXT" displayText="View Web Site" />-->
+          </ui:field-group>
+          <ui:buttons>
+            <ui:button id="RESET" name="RESET" displayText="Reset" onClick="javascript:on_RESET();"/>
+            <ui:divider/>
+            <ui:button id="SEARCH" name="SEARCH" displayText="Search Content" emphasized="true"/>
+          </ui:buttons>
+        </ui:step>
+      </ui:container>
+      <ui:table id="rtable" name="rtable" displayText="Search Results" displayTextNoRecords="No records found" rowId="CNTNT_ELEM_ID" rowSrc="$root/RESPONSE/CNTNT_ELEM" scrollable="true" selectable="Single" postRowIdAs="ContentID" startAtRow="$root/START_COUNT/@Value" maxRows="15" totalRowCount="$root/RESPONSE/@TotalRowCount" exportable="true" width="100%" doPaging="true">
+        <!--   <ui:table id="searchResultsTable" displayText="Search Results" rowId="COLLTRL_ID" rowSrc="$root/RESPONSE/COLLTRL" scrollable="true" displayTextNoRecords="No Records Found" maxRows="-1" postRowIdAs="CollateralID" doPaging="false" totalRowCount="$root/RESPONSE/@TotalRowCount">  -->
+        <!--      <ui:table id="searchResultTable" displayText="Search Result" displayTextNoRecords="No records found" rowSrc="$root/RESPONSE/COLLTRL" selectable="Single" postRowIdAs="COLLTRL_ID" rowId="COLLTRL_ID" maxRows="10" totalRowCount="$root/RESPONSE/@TotalRowCount" exportable="true" scrollable="true" doPaging="true">-->
+        <ui:field-group id="tableColumns">
+          <ui:display-field id="GBL_CNTNT_ELEM_ID" name="GBL_CNTNT_ELEM_ID" displayText="Global Content Elem Id"/>
+          <ui:display-field id="CNTNT_ELEM_ID" name="CNTNT_ELEM_ID" displayText="Content Id"/>
+          <ui:display-field id="CNTNT_NAME" name="CNTNT_NAME" displayText="Content Name"/>
+          <!--          <ui:display-field id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR" displayText="Legal entity"/>
+<ui:display-field id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR" displayText="Program Name"/>-->
+          <ui:display-field id="MKTNG_PGM_NAME" name="MKTNG_PGM_NAME" displayText="Program Name"/>
+          <ui:display-field id="CNTNT_SHORT_NAME" name="CNTNT_SHORT_NAME" displayText="Content short Name"/>
+          <ui:display-field id="CNTNT_DESC" name="CNTNT_DESC" displayText="Content Description"/>
+          <ui:display-field id="ALT_SYS_CNTNT_ID" name="ALT_SYS_CNTNT_ID" displayText="Alt Content Id"/>
+          <!--          <ui:display-field id="INCTV_NBR" name="INCTV_NBR" displayText="Incentive Number"/>-->
+          <ui:display-field id="CNSMR_ACTN_TYPE_NAME" name="CNSMR_ACTN_TYPE_NAME" displayText="Consumer Action"/>
+          <!--<ui:display-field id="INCTV_TYPE_CODE" name="INCTV_TYPE_CODE" displayText="Incentive Type Code"/>
+<ui:display-field id="TRGT_PATH_TYPE_CODE" name="TRGT_PATH_TYPE_CODE" displayText="Target Path"/>
+<ui:display-field id="TRGT_SUB_PATH_TYPE_CODE" name="TRGT_SUB_PATH_TYPE_CODE" displayText="Target Sub Path"/>
+<ui:display-field id="TRGT_CNSMR_SEG_CODE" name="TRGT_CNSMR_SEG_CODE" displayText="Target Consumer"/>
+<ui:display-field id="VIEW_WEB_SITE_URL_TXT" name="VIEW_WEB_SITE_URL_TXT" displayText="View Website"/>-->
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button id="CREATE" name="CREATE" displayText="Create Content"/>
+          <ui:divider/>
+          <ui:button id="EDIT" name="EDIT" displayText="Modify Content" enabledBySelections="true"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+/* function table_export(tableId,horizontal, where)
+{
+var returnMsg = &quot;Would you like to export all records retrieved for the search criteria provided? If yes, please click Yes. Else please click No to export just the records on the current page.&quot;;
+if (	core_confirm( returnMsg) == 'yes' )
+{
+document.form.user_action.value = 'EXPORT_ALL';
+exportTablePGL(tableId);
+}
+else
+{
+document.form.user_action.value = 'EXPORT_PAGE';
+exportTablePGL(tableId);
+return;
+}
+if (where == &quot;true&quot; || where == &quot;client&quot; || where == &quot;&quot;)
+{
+ui_extractTable(tableId, horizontal);
+}
+else if (where == &quot;ui&quot;)
+{
+exportTablePGL(tableId);
+}
+else if (where == &quot;server&quot;)
+{
+// not implemented in server yet.
+}
+}
+*/
+function table_export(tableId,horizontal, where)
+{
+//var returnMsg = &quot;Would you like to export all records retrieved for the search criteria provided? If yes, please click Yes. Else please click No to export just the records on the current page.&quot;;
+core_confirm_jquery('Would you like to export all records retrieved for the search criteria provided? If yes, please click Yes. Else please click No to export just the records on the current page.','onConfirmExport');
+/*if (where == &quot;true&quot; || where == &quot;client&quot; || where == &quot;&quot;)
+{
+
+ui_extractTable(tableId, horizontal);
+}
+else if (where == &quot;ui&quot;)
+{
+
+exportTablePGL(tableId);
+}
+else if (where == &quot;server&quot;)
+{
+
+// not implemented in server yet.
+}*/
+}
+function onConfirmExport(response)
+{
+if (response == 'yes' )
+{
+
+form.BUTTON_ID.value = 'EXPORT_ALL';
+
+exportTablePGL('rtable');
+}
+else
+{
+form.BUTTON_ID.value = 'EXPORT_PAGE';
+exportTablePGL('rtable');
+return;
+}
+}
+function IEEnterKey()
+{
+if( window.event.keyCode == 13)
+{
+var ele=document.form.LEGAL_ENT_NBR;
+for ( var x =0 ; x &lt; ele.length; x++ ) {
+if(ele.value!=''){
+if ( ele.options[ x ].selected != ele.options[ x ].defaultSelected ){
+return true;
+}
+}
+}
+onSearchClick();
+}
+}
+browserName = navigator.appName;
+function NetEnterKey(e)
+{
+key = e.which;
+if(key == 13)
+{
+onSearchClick();
+}
+}
+if (browserName == &quot;Netscape&quot;)
+{
+document.captureEvents(Event.KEYPRESS);
+document.onkeypress=NetEnterKey;
+}
+else
+{
+if (browserName.indexOf(&quot;Explorer&quot;) >= 0)
+{
+document.onkeypress=IEEnterKey;
+}
+}
+function onSearchClick()
+{
+document.form.BUTTON_ID.value = 'SEARCH';
+document.form.action = 'view.x2ps';
+document.form.submit();
+return false;
+}
+function loadProgramList(){
+document.form.BUTTON_ID.value = 'LOAD_PROGRAM_LIST';
+document.form.action = 'view.x2ps';
+document.form.submit();
+}
+function on_RESET(){
+document.getElementById('CNTNT_NAME').value='';
+document.getElementById('CNTNT_SHORT_NAME').value='';
+document.getElementById('CNTNT_DESC').value='';
+document.getElementById('MKTNG_PGM_NBR').value='';
+//document.getElementById('LEGAL_ENT_NBR').value='';
+return;
+}
+if(document.getElementById('ACTION_TYPE').value=='CREATE'){
+document.form.BUTTON_ID.value = 'CREATE';
+document.form.action = 'view.x2ps';
+document.form.submit();
+}
+</ui:script>
+</ui:page-group>

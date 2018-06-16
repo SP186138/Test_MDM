@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="3" ShowInBreadCrumbs="true" Version="1.0" Name="DisplayMonitoringLogs" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="DisplayMonitoringLogs"/>
+  <nodes>
+    <start Name="Start">
+      <actions>
+        <action/>
+      </actions>
+      <next_nodes>
+        <next_node Name="Display Logs"/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Display Logs" ShowInBreadCrumbs="HIDE" Template="DisplayLogs.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <IF_TEST Test="strlen($thisParam/FORK_NODE_ID/@Value)>0">
+            <THEN>
+              <GET_DOCUMENT AssignToVar="parallelJobId" Name="SYS_WKFLW_NODE_LOG" ServiceName="BPE_META" HandleException="true" DirtyRead="true">
+                <WFInstanceID Value="{$thisParam/SELECTED_INSTANCE_ID/@Value}"/>
+                <NodeName Value="{$thisParam/FORK_NODE_ID/@Value}"/>
+                <SELECT>
+                  <ChildWFInstanceID/>
+                </SELECT>
+              </GET_DOCUMENT>
+              <EXECUTE_SQL_QUERY AssignToVar="wfDetails" ReturnRowCount="yes" Value="locking row for access sel taskid as NODEID from sys_parallel_exec_tasks where NodeName='{$thisParam/Node_Name/@Value}' and PARALLELJOBID = '{$parallelJobId/SYS_WKFLW_NODE_LOG/ChildWFInstanceID/@Value}'" HandleException="true"/>
+            </THEN>
+            <ELSE>
+              <EXECUTE_SQL_QUERY AssignToVar="wfDetails" ReturnRowCount="yes" Value="locking row for access sel NODEID from sys_wkflw_node_log where nodename='{$thisParam/Node_Name/@Value}' and wfinstanceid = '{$thisParam/SELECTED_INSTANCE_ID/@Value}'"/>
+            </ELSE>
+          </IF_TEST>
+          <SET Var="count" FromValue="1"/>
+          <TO_DOCVAR AssignToVar="dynPgl">
+            <DYN_PGL/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="uifield">
+            <ui:field-group xmlns:ui="http://www.teradata.com/ui"/>
+          </TO_DOCVAR>
+          <FOR_EACH CurrentElement="curAttr" SelectList="$wfDetails/*">
+            <TO_DOCVAR AssignToVar="temp">
+              <ROOT>
+                <ui:display-field xmlns:ui="http://www.teradata.com/ui" id="temp_{$count}" displayText="Execution No: {$count} " style="font-weight:bold;"/>
+                <ui:div xmlns:ui="http://www.teradata.com/ui" id="pglXML{$count}"/>
+              </ROOT>
+            </TO_DOCVAR>
+            <APPEND_CHILDREN DocVar="uifield" FromDocVar="temp"/>
+            <SET Var="count" FromValue="{int($count+1)}"/>
+          </FOR_EACH>
+          <ADD_CHILDREN DocVar="dynPgl" FromDocVar="uifield"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="dynPgl"/>
+          <SET DocVar="pglFormInput" FromValue="{$thisParam/SELECTED_INSTANCE_ID/@Value}" Property="SELECTED_INSTANCE_ID"/>
+          <SET DocVar="pglFormInput" FromValue="{$thisParam/PARAM_TYPE/@Value}" Property="PARAM_TYPE"/>
+          <SET DocVar="pglFormInput" FromValue="{$thisParam/Node_Name/@Value}" Property="Node_Name"/>
+          <SET DocVar="pglFormInput" FromValue="{$thisParam/FORK_NODE_ID/@Value}" Property="Fork_Node_Name"/>
+          <SET DocVar="pglFormInput" FromValue="nodeParams" Property="PREV_BUTTON_ID"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <if_cond Value="$userAction ='SEARCH'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Done'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Done" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <done Name="Done">
+      <actions>
+        <action/>
+      </actions>
+      <next_nodes/>
+    </done>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <Start font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="483,198" size="744,599">
+        <iconProps iconfile="z1start.gif"/>
+      </Start>
+      <mgcnode Name="Display Logs" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="592,286" size="1920,1040">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <Done font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="690,372" size="744,599">
+        <iconProps iconfile="z1end.gif"/>
+      </Done>
+    </mgcnodes>
+    <mgcconnectors>
+      <Start>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="505,243" endpoint="592,308" ctrlRect1="503,289,4,4" ctrlRect2="524,306,4,4"/>
+      </Start>
+      <mgcnode Name="Display Logs">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="614,331" endpoint="690,394" ctrlRect1="612,375,4,4" ctrlRect2="631,392,4,4"/>
+      </mgcnode>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions/>
+    <post_actions/>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

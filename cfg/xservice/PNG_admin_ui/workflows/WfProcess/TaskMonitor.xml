@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="5" ShowInBreadCrumbs="true" Version="1.0" Name="TaskMonitor" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="TaskMonitor">
+    <variable Name="SelectedTaskDetails" Type="xml" Comment="Task details"/>
+    <variable Name="Selectedwftask" Type="string" Comment=""/>
+    <variable Name="TaskStatusFilter" Type="string" Comment=""/>
+    <variable Name="execstatus" Type="string" Comment=""/>
+    <variable Name="alert_status" Type="string" Comment=""/>
+    <variable Name="alert_msg" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start">
+      <actions>
+        <action/>
+      </actions>
+      <next_nodes>
+        <next_node Name="Monitor Tasks"/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Monitor Tasks" ShowInBreadCrumbs="SHOW" Template="MonitorTask.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" Description="Monitor Tasks">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="Tasks">
+            <TASKS/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Back'">
+            <THEN/>
+            <ELSE>
+              <SET Var="TaskStatusFilter" FromValue="{ifElse($thisParam/TaskStatusFilter/@Value='Completed','Completed','In Progress')}"/>
+            </ELSE>
+          </IF_TEST>
+          <SET Var="sortOrder" FromValue="{ifElse($thisParam/SORT_ORDER/@Value='Ascending',Ascending,'Descending')}"/>
+          <REQUEST Name="getUserTasks" AssignToVar="allTasks" ServiceName="BCM_MASTER">
+            <UserId Value="All"/>
+            <TaskStatusFilter Value="{$TaskStatusFilter}"/>
+          </REQUEST>
+          <FOR_EACH SelectList="$allTasks/SQL_RESULT" CurrentElement="currRes">
+            <ADD_CHILDREN DocVar="Tasks" FromDocVar="currRes"/>
+          </FOR_EACH>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="Tasks"/>
+          <SET Property="Task_Status" FromValue="{$TaskStatusFilter}" DocVar="pglFormInput"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="Selectedwftask" FromValue="{$thisParam/SELECTED_PROCESS_ID/@Value}"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Delete'">
+            <THEN>
+              <SET Var="ProcessId" FromValue="{substringBefore($Selectedwftask,'#')}"/>
+              <SET Var="ProcessId" FromValue="{substringAfter($ProcessId,'=')}"/>
+              <SET Var="TaskId" FromValue="{substringAfter($Selectedwftask,'#')}"/>
+              <SET Var="TaskId" FromValue="{substringAfter($TaskId,'=')}"/>
+              <REMOVE_DOCUMENT Name="Wf_Process_Tasks" ServiceName="BCM_MASTER" AssignToVar="deleteResponse">
+                <Process_Id Value="{$ProcessId}"/>
+                <Task_Id Value="{$TaskId}"/>
+              </REMOVE_DOCUMENT>
+              <REMOVE_DOCUMENT Name="Wf_Process_Instance" ServiceName="BCM_MASTER" AssignToVar="deleteResponse">
+                <Process_Id Value="{$ProcessId}"/>
+                <WfInstance_Id Value="{$TaskId}"/>
+              </REMOVE_DOCUMENT>
+              <REMOVE_DOCUMENT Name="Wf_Task_Audit" ServiceName="BCM_MASTER" AssignToVar="deleteResponse">
+                <Task_Id Value="{$Task_Id}"/>
+              </REMOVE_DOCUMENT>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Details'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Task Audit Details" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='TaskFilterChange'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Monitor Tasks" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Delete'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Monitor Tasks" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="Task Audit Details" ShowInBreadCrumbs="SHOW" Template="TaskMonitorDetails.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <SET Var="ProcessId" FromValue="{substringBefore($Selectedwftask,'#')}"/>
+          <SET Var="ProcessId" FromValue="{substringAfter($ProcessId,'=')}"/>
+          <SET Var="TaskId" FromValue="{substringAfter($Selectedwftask,'#')}"/>
+          <SET Var="TaskId" FromValue="{substringAfter($TaskId,'=')}"/>
+          <GET_DOC_SMART Name="Wf_Task_Audit" ServiceName="BCM_MASTER" AssignToVar="auditDetails" DirtyRead="true">
+            <Task_Id Value="{$TaskId}"/>
+            <!--Task_Node Value="TaskInboxNode" /-->
+            <ORDER_BY>
+              <Task_Node/>
+              <Task_Sequence Sort="Ascending"/>
+            </ORDER_BY>
+          </GET_DOC_SMART>
+          <SET_NAME DocVar="auditDetails" FromValue="AUDIT_DATA"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="auditDetails"/>
+          <SET Var="lockedByUser" FromValue=""/>
+          <FOR_EACH SelectList="$auditDetails/*" CurrentElement="currRes">
+            <SET Var="lockedByUser" FromValue="{$currRes/Reassigned_To/@Value}"/>
+          </FOR_EACH>
+          <TO_DOCVAR AssignToVar="SelectedTaskDetails">
+            <TASK_DETAILS>
+              <ProcessId Value="{$ProcessId}"/>
+              <TaskWfId Value="{$TaskId}"/>
+              <TaskNode Value="{$auditDetails/Wf_Task_Audit/Task_Node/@Value}"/>
+              <LockedBy Value="{ifElse($lockedByUser!=null and $lockedByUser!='',$lockedByUser,'None')}"/>
+            </TASK_DETAILS>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="SelectedTaskDetails"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Refresh'">
+            <THEN>
+              <SET Property="alert_status" DocVar="pglFormInput" FromValue="{$alert_status}"/>
+              <SET Property="alert_msg" DocVar="pglFormInput" FromValue="{$alert_msg}"/>
+            </THEN>
+            <ELSE>
+              <SET Var="alert_msg" FromValue=""/>
+              <SET Var="alert_status" FromValue=""/>
+            </ELSE>
+          </IF_TEST>
+          <SET Property="Task_Status" FromValue="{$TaskStatusFilter}" DocVar="pglFormInput"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Reassign'">
+            <THEN>
+              <REQUEST Name="validateTaskStatus" ServiceName="BCM_MASTER" AssignToVar="taskStatusResp">
+                <ProcessId Value="{$SelectedTaskDetails/ProcessId/@Value}"/>
+                <TaskId Value="{$SelectedTaskDetails/TaskWfId/@Value}"/>
+                <TaskNode Value="{$SelectedTaskDetails/TaskNode/@Value}"/>
+              </REQUEST>
+              <IF_TEST Test="$taskStatusResp/Task_Status/@Value!='Pending'">
+                <THEN>
+                  <SET Var="alert_msg" FromValue="Task is already marked as completed."/>
+                  <SET Var="alert_status" FromValue="Failure"/>
+                  <SET Var="userAction" FromValue="Refresh"/>
+                  <SET Property="BUTTON_ID" FromValue="Refresh" DocVar="thisParam"/>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Monitor Tasks" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Reassign'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Rassign Task" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Refresh'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Task Audit Details" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="Rassign Task" Description="Rassign Task" ShowInBreadCrumbs="SHOW" Template="RassignWhileMonitorTask.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="SelectedTaskDetails"/>
+          <GET_DOCUMENT Name="Wf_Process_Tasks" DirtyRead="true" AssignToVar="wfTaskDetail" Distinct="true" ServiceName="BCM_MASTER">
+            <Process_Id Value="{$SelectedTaskDetails/ProcessId/@Value}"/>
+            <Task_Id Value="{$SelectedTaskDetails/TaskWfId/@Value}"/>
+          </GET_DOCUMENT>
+          <SET Var="TaskUserGroup" FromValue="{$wfTaskDetail/Wf_Process_Tasks/Assigned_To/@Value}"/>
+          <REQUEST Name="getActiveUsersForGroup" AssignToVar="mdmusers" ServiceName="BCM_MASTER">
+            <USER_GROUP_ID Value="{$TaskUserGroup}"/>
+            <LOCKEDBY_USER_ID Value="{$SelectedTaskDetails/LockedBy/@Value}"/>
+            <REASSIGNED_BY_ID Value="None"/>
+          </REQUEST>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelect="$mdmusers/*"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value!='ReassignTask'">
+            <THEN>
+              <SET Var="execstatus" FromValue=""/>
+              <SET Property="exec_status" DocVar="pglFormInput" FromValue="{$execstatus}"/>
+            </THEN>
+            <ELSE>
+              <SET Property="exec_status" DocVar="pglFormInput" FromValue="{$execstatus}"/>
+              <SET Property="reassigned_to" DocVar="pglFormInput" FromValue="{$thisParam/ReassignUser/@Value}"/>
+              <SET Property="reassign_comment" DocVar="pglFormInput" FromValue="{$thisParam/ReassignComment/@Value}"/>
+              <SET Property="notify_user" DocVar="pglFormInput" FromValue="{$thisParam/NotifyUser/@Value}"/>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='ReassignTask'">
+            <THEN>
+              <REQUEST Name="lockWfProcessTask" AssignToVar="lockTaskResp" ServiceName="BCM_MASTER">
+                <ProcessId Value="{$SelectedTaskDetails/ProcessId/@Value}"/>
+                <TaskId Value="{$SelectedTaskDetails/TaskWfId/@Value}"/>
+                <TaskNode Value="{$SelectedTaskDetails/TaskNode/@Value}"/>
+                <LockedBy Value="{$thisParam/ReassignUser/@Value}"/>
+                <ReassignComment Value="{$thisParam/ReassignComment/@Value}"/>
+                <Operation Value="Reassign"/>
+                <ReassignedBy Value="{$userId}"/>
+                <NotifyUser Value="{ifElse($thisParam/NotifyUser/@Value='Y','Y','N')}"/>
+              </REQUEST>
+              <SET Property="LockedBy" DocVar="SelectedTaskDetails" FromValue="{ifElse($thisParam/ReassignUser/@Value!=null and $thisParam/ReassignUser/@Value !='',$thisParam/ReassignUser/@Value,'None')}"/>
+              <SET Var="execstatus" FromValue="{ifElse($lockTaskResp/@Status='Success','Success','Failure')}"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Task Audit Details" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='ReassignTask'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Rassign Task" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="12,10"/>
+    <mgcnodes>
+      <start font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="177,206" size="744,599">
+        <iconProps iconfile="z1start.gif"/>
+      </start>
+      <mgcnode Name="Monitor Tasks" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="363,206" size="1920,1050">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <mgcnode Name="Task Audit Details" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="477,315" size="1920,1050">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <mgcnode Name="Rassign Task" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="586,206" size="1920,1050">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+    </mgcnodes>
+    <mgcconnectors>
+      <start>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="222,228" endpoint="363,228" ctrlRect1="325,226,4,4" ctrlRect2="255,226,4,4"/>
+      </start>
+      <mgcnode Name="Monitor Tasks">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="385,251" endpoint="477,337" ctrlRect1="383,313,4,4" ctrlRect2="380,339,4,4" ctrlRect2Dirty="true" textRect="377,324,12,8">
+          <textProps text="Details"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="385,206" endpoint="385,206" ctrlRect1="383,129,4,4" ctrlRect2="360,183,4,4" ctrlRect2Dirty="true" textRect="363,154,21,8">
+          <textProps text="TaskFilterChange"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="408,228" endpoint="408,228" ctrlRect1="481,226,4,4" ctrlRect2="481,226,4,4" textRect="478,224,11,8">
+          <textProps text="Delete"/>
+        </nextNodeView>
+      </mgcnode>
+      <mgcnode Name="Task Audit Details">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="499,315" endpoint="408,228" ctrlRect1="497,249,4,4" ctrlRect2="475,226,4,4" textRect="484,235,9,8">
+          <textProps text="Back"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="499,315" endpoint="586,228" ctrlRect1="497,249,4,4" ctrlRect2="518,226,4,4" textRect="501,235,17,8">
+          <textProps text="Reassign"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="515,347" endpoint="515,347" ctrlRect1="588,345,4,4" ctrlRect2="588,345,4,4"/>
+      </mgcnode>
+      <mgcnode Name="Rassign Task">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="608,251" endpoint="522,337" ctrlRect1="614,312,4,4" ctrlRect2="585,335,4,4" ctrlRect1Dirty="true" textRect="597,321,9,8">
+          <textProps text="Back"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="631,228" endpoint="631,228" ctrlRect1="704,226,4,4" ctrlRect2="704,226,4,4" textRect="698,224,16,8">
+          <textProps text="RassignTask"/>
+        </nextNodeView>
+      </mgcnode>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions/>
+    <post_actions/>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

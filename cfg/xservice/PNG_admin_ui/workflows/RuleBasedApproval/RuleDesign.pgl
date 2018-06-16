@@ -1,0 +1,907 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" Id="Node6.pgl">
+<ui:container id="TopContainer" inner="true" scrollable="true" style="display:inline-block;">
+<ui:step id="TopStep">
+<ui:container id="container1">
+<ui:help displayPage="../../bcm/help/Create_Approval_Rules_help.htm"/>
+<ui:step id="Outermost" displayText="Create Approval Rules">
+<ui:validation displayCondition="{(string-length($root/AlertGreen/@Value) = 0) and (string-length($root/AlertRed/@Value) = 0)}"/>
+<ui:hr displayCondition="{(string-length($root/AlertGreen/@Value) != 0) or (string-length($root/AlertRed/@Value) != 0)}"/>
+<ui:field-group id="messages" columns="2" width="10%">
+<ui:image src="/bpi_check.gif" displayCondition="{string-length($root/successFlag/@Value) != 0}"/>
+<ui:display-field id="success" name="success" value="{$root/successMessage/@Value}" displayCondition="{string-length($root/successFlag/@Value) != 0}"/>
+<ui:image src="/cancel.gif" displayCondition="{string-length($root/failureFlag/@Value) != 0}"/>
+<ui:display-field id="error" name="error" value="{$root/failureMessage/@Value}" displayCondition="{string-length($root/failureFlag/@Value) != 0}"/>
+<ui:image src="/cancel.gif" displayCondition="{string-length($root/invalidSyntax/@Value) != 0}"/>
+<ui:display-field id="error" name="error" value="INCORRECT_SYNTAX" displayCondition="{string-length($root/invalidSyntax/@Value) != 0}"/>
+</ui:field-group>
+<ui:grid >
+<ui:row>
+<ui:cell width="50%">
+<ui:container inner="true" scrollable="true">
+<ui:step id="InnerStep1">
+<ui:field-group>
+<ui:hidden-field id="ApprovalId" name="ApprovalId" displayText="Approval ID" value="{$root/APPROVALS/ApprovalGroupId/@Value}"/>
+<ui:hidden-field id="ApprovalTable_Hidden" name="ApprovalTable_Hidden" displayText="Approval Table Hidden" value="{$root/APPROVALS/ApprovalEventName/@Value}"/>
+<ui:hidden-field id="ApprovalColumnsList" name="ApprovalColumnsList" displayText="ApprovalColumnsList" value=""/>
+<ui:hidden-field id="AutoApprovalEnabled" name="AutoApprovalEnabled" displayText="Auto Approval Enabled" value="{$root/APPROVALS/AutoApprovalEnabled/@Value}"/>
+<ui:hidden-field id="AssignApprovalEnabled" name="AssignApprovalEnabled" displayText="Assign Approval Enabled" value="{$root/APPROVALS/AssignApprovalEnabled/@Value}"/>
+<ui:hidden-field id="AutoApprovalRuleEnabled" name="AutoApprovalRuleEnabled" displayText="Auto Approval Enabled" />
+<ui:hidden-field id="ApprovalEventPhyName" name="ApprovalEventPhyName" displayText="Approval Table Physical Name" value="{$root/APPROVALS/ApprovalEventPhyName/@Value}"/>
+<ui:display-field id="ApprovalTable" name="ApprovalTable" displayText="Approval Table" value="{$root/APPROVALS/ApprovalEventName/@Value}" style="font-weight:bold;"/>
+<ui:dropdown id="Property_Name" name="Property_Name" displayText="Property Name" unFormat="true" optionSrc="$root/COLUMNS/LOG_NAME" onChange="javascript:convertValue();"/>
+<ui:hidden-field displayText="Data Type" name="propDataType" id="propDataType" value="{$root/APPROVALS/propertyTypes/@Value}"/>
+<ui:hidden-field displayText="propertyType" id="propertyType" name="propertyType" value="{$root/propertyDataType/@Value}"/>
+<ui:hidden-field displayText="Physical Columns" id="PhyColumns" name="PhyColumns"/>
+<ui:hidden-field displayText="Action Type" id="ActionType" name="ActionType"/>
+<ui:dropdown displayText="Operation" name="Comp_Operator" id="Comp_Operator" unFormat="true" onChange="javascript:disableProperty();">
+<ui:option value="="/>
+<ui:option value="&lt;"/>
+<ui:option value=">"/>
+<ui:option value="&lt;="/>
+<ui:option value=">="/>
+<ui:option value="&lt;&gt;"/>
+<ui:option value="is null" />
+<ui:option value="is not null" />
+</ui:dropdown>
+<ui:compound-field id="Reference" name="Reference" displayText="Select ">
+<ui:radiobutton id="PropValue" name="PropValue" defaultValue="true" displayText="Value" onClick="javascript:onValueOrRef('Value');" value="{$root/PropValue/@Value}"/>
+<ui:radiobutton id="RefValue" name="RefValue" displayText="Reference" onClick="javascript:onValueOrRef('Reference');" value="{$root/RefValue/@Value}"/>
+<ui:radiobutton id="CodeValue" name="CodeValue" displayText="Code Set" onClick="javascript:onValueOrRef('CodeSet');" value="{$root/CodeValue/@Value}"/>
+</ui:compound-field>
+<ui:checkbox id="OldValue" name="OldValue" defaultValue="false" displayText="Compare with Old Value" onClick="javascript:convertValue();"></ui:checkbox>
+<ui:entry-field displayText="Property Value" size="30" name="Property_Value" id="Property_Value"/>
+<ui:entry-field displayText="Property Value" size="30" name="Property_Value_Date" id="Property_Value_Date" dataType="Date" />
+<ui:entry-field displayText="Property Value" size="30" name="Property_Value_DateTime" id="Property_Value_DateTime" dataType="DateTime" />
+<ui:dropdown displayText="Property Value" name="Property_Value_LookUp" id="Property_Value_LookUp" selectOne="true" />
+<ui:hidden-field id="Reference_Table_Name" name="Reference_Table_Name" displayText="Referenced Table Name" value=""/>
+<ui:dropdown displayText="Reference Table" name="Reference_Table" id="Reference_Table" optionSrc="$root/TABLES/LogicalTableName" selectOne="true" onChange="javascript:changeRefTable('addCols');"/>
+<ui:dropdown displayText="Reference Column" name="Reference_Column" id="Reference_Column" optionSrc="$root/REF_COLUMNS/OPTION" selectOne="true"/>
+<ui:dropdown displayText="Key Column" name="Key_Column" id="Key_Column" optionSrc="$root/REF_COLUMNS/OPTION" selectOne="true"/>
+<ui:entry-field displayText="Key Column Value" name="Key_Value" id="Key_Value"/>
+<ui:dropdown displayText="Code Set" name="Sel_Code_Set" id="Sel_Code_Set" optionSrc="$root/CODE_SETS/Code_Name" selectOne="true" onChange="javascript:onCodeSet();"/>
+<ui:dropdown displayText="Code Set Value" name="Code_Set_Value" id="Code_Set_Value" optionSrc="$root/CODE_VALS/OPTION" selectOne="true"/>
+<ui:date-range displayText="Rule Valid" id="DateValid" name="DateValid" fromDate="" toDate=""/>
+</ui:field-group>
+<ui:field-group rows="1" collapsable="true" width="19%">
+<ui:display-field id="Actions" name="Actions" displayText="Actions"/>
+<ui:button id="opB" name="opB" displayText="(" onClick="javascript:onGroupOperation('(');"/>
+<ui:button id="clB" name="clB" displayText=")" onClick="javascript:onGroupOperation(')');"/>
+<ui:button id="AND" name="AND" displayText="AND&amp;nbsp;" onClick="javascript:addLogicalOperator('AND');"/>
+<ui:button id="OR" name="OR" displayText="OR&amp;nbsp;" onClick="javascript:addLogicalOperator('OR');"/>
+<ui:field-space></ui:field-space>
+<ui:field-space></ui:field-space>
+<ui:field-space></ui:field-space>
+<ui:field-space></ui:field-space>
+<ui:button id="Add" name="Add" displayText="Add Condition" onClick="javascript:onAddCondition();" />
+</ui:field-group>
+</ui:step>
+</ui:container>
+</ui:cell>
+<ui:cell width="46%">
+<ui:container id="container3" width="350" displayText="Expression Editor" scrollable="true">
+<ui:step id="step3">
+<ui:field-group>
+<ui:textarea id="RuleCondition" name="RuleCondition" rows="8" columns="60" readOnly="{$root/RuleEdit/@Value}" value="{$root/RuleCondition/@Value}"/>
+<ui:hidden-field name="phyRuleExp" id="phyRuleExp"/>
+<ui:hidden-field name="phyRulePart" id="phyRulePart"/>
+</ui:field-group>
+<ui:field-group rows="1" collapsable="true" width="19%">
+<ui:button id="Clear" name="Clear" displayText="Clear Rule" onClick="javascript:onClearCondition();"/>
+<ui:button id="Update" name="Update" displayText="Update Rule" onClick="javascript:onUpdate();" disabled="{$root/RuleEdit/@Value}" />
+<ui:button displayText="Save Rule" id="Add_Rule" name="Add_Rule" disabled="{$root/RuleEditNegative/@Value}"/>
+</ui:field-group>
+</ui:step>
+</ui:container>
+</ui:cell>
+</ui:row>
+</ui:grid>
+<ui:table postRowIdAs="SelectedRuleId" id="Approval_Rule_Table" displayTextNoRecords="No Rules found" collapsable="false" displayText="Approval Rules" rowId="RuleId" select="$root/RESPONSE" startAtRow="$root/StartRowCount/@Value" totalRowCount="$root/TotalRowCount/@Value" maxRows="$root/maxRows/@Value" doPaging="true" selectable="Single" filter="true" scrollable="true">
+<ui:field-group>
+<ui:hidden-field id="RuleString_hidden" name="Rule_String" displayText="Rule String" />
+<ui:hidden-field id="From_Date_Valid_hidden" name="From_Date_Valid" displayText="From_Date_Valid" />
+<ui:hidden-field id="To_Date_Valid_hidden" name="To_Date_Valid" displayText="To_Date_Valid" />
+<ui:hidden-field id="ApprovalType_hidden" name="Approval_Type" displayText="Approval Type" />
+<ui:display-field id="RuleId" name="RuleId" displayText="Rule Id" sortable="true" dataType="Number"/>
+<ui:display-field id="Rule_String" name="Rule_String" displayText="Expression" sortable="true" maxlength="40" onClick="javascript:onShow(this);" />
+<ui:display-field id="Approval_Type" name="Approval_Type" displayText="Approval Type" sortable="true" />
+<ui:display-field id="From_Date_Valid" name="From_Date_Valid" displayText="Date Valid From" dataType="Date" sortable="true"  />
+<ui:display-field id="To_Date_Valid" name="To_Date_Valid" displayText="Date Valid Till" dataType="Date" sortable="true"  />
+</ui:field-group>
+<ui:buttons>
+<ui:button displayText="Back" id="Back" name="Back" displayCondition="{$root/ActionBack/@Value}"/>
+<ui:button displayText="Delete" id="Delete" name="Delete" enabledBySelections="true" onClick="javascript:onDelete();"/>
+<ui:button displayText="Edit" id="Edit" name="Edit" onClick="javascript:onEditCondition();" enabledBySelections="true"/>
+<ui:button displayText="Set Auto Approval" id="Auto_Approval" name="Auto_Approval" enabledBySelections="true" onClick="javascript:onAutoApproval();"/>
+<ui:button displayText="Cancel" id="Cancel" name="Cancel"/>
+<ui:button displayText="Next" id="Done" name="Done"/>
+</ui:buttons>
+</ui:table>
+<!--/ui:cell-->
+</ui:step>
+</ui:container>
+</ui:step>
+</ui:container>
+<ui:script>
+
+var updateFlag  =false;
+   
+$(document.getElementsByName('SelectedRuleId')).click(function() {
+  var assgnFlag = false;
+  var selObj = document.getElementsByName('SelectedRuleId');
+  for(i=0;i&lt;selObj.length;i++){
+  	if(selObj[i].checked){
+		if( document.getElementsByName('Approval_Type')[i].value == 'Assignment Approval' || document.getElementsByName('Rule_String')[i].value.indexOf('#OldValue') &gt; -1){
+			assgnFlag = true;
+			break;
+		}
+  	 }
+   } 
+  if(assgnFlag == true){
+	tduiToggleButtonState('Auto_Approval','disabled','');
+  }
+});
+
+  
+function onLoad(){
+
+document.getElementById('Update').getElementsByTagName('a')[0].setAttribute('style','white-space:nowrap');
+document.getElementById('Add_Rule').getElementsByTagName('a')[0].setAttribute('style','white-space:nowrap');
+if(document.getElementsByName('RefValue')[0].checked != false || document.getElementsByName('RefValue')[0].value == true)
+onValueOrRef('Reference');
+else
+if(document.getElementsByName('CodeValue')[0].checked != false || document.getElementsByName('CodeValue')[0].value == true)
+onValueOrRef('CodeSet');
+else
+onValueOrRef('Value');  
+onLoadSuper();
+onResize();
+var assgnFlag = false;
+var selObj = document.getElementsByName('SelectedRuleId');
+for(i=0;i&lt;selObj.length;i++)
+{
+if(selObj[i].checked){
+if( document.getElementsByName('Approval_Type')[i].value == 'Assignment Approval' || document.getElementsByName('Rule_String')[i].value.indexOf('#OldValue') &gt; -1)
+{
+assgnFlag = true;
+break;
+}
+}
+}
+if(assgnFlag == true){
+tduiToggleButtonState('Auto_Approval','disabled','');
+}
+}
+  
+function onAddCondition()
+{
+var phyColsArray=[];
+var propIndex = document.getElementById('Property_Name').selectedIndex;
+var propName = document.getElementById('Property_Name').options[propIndex].text;
+var ruleFormed=document.getElementById('RuleCondition').value;
+var phyRuleFormed=document.getElementById('phyRuleExp').value;
+var phyCols = document.getElementById('PhyColumns').value;
+if(document.getElementsByName('RefValue')[0].checked == true){
+  
+var tableIndex = document.getElementById('Reference_Table').selectedIndex;
+var tableName = document.getElementById('Reference_Table').options[tableIndex].text;
+var refColIndex = document.getElementById('Reference_Column').selectedIndex;
+var refColName = document.getElementById('Reference_Column').options[refColIndex].text;
+var keyColIndex = document.getElementById('Key_Column').selectedIndex;
+var keyColName = document.getElementById('Key_Column').options[keyColIndex].text;
+var keyValue = document.getElementById('Key_Value').value;
+var ruleFormed=document.getElementById('RuleCondition').value;
+var phyRuleFormed=document.getElementById('phyRuleExp').value;
+if(ruleFormed.trim().match(&quot;AND$&quot;) || ruleFormed.trim().length == 0 || ruleFormed.trim().match(&quot;OR$&quot;) || ruleFormed.trim().lastIndexOf('(')==ruleFormed.trim().length-1) {
+//if(ruleFormed.lastIndexOf(&quot;AND&quot;) == (ruleFormed.trim().length-3) || ruleFormed.trim().length == 0 &amp;&amp; ruleFormed.lastIndexOf(&quot;AND&quot;) == -1 || ruleFormed.lastIndexOf(&quot;OR&quot;) == (ruleFormed.trim().length-2) || ruleFormed.trim().length == 0 &amp;&amp; ruleFormed.lastIndexOf(&quot;OR&quot;) == -1 )
+ruleFormed = ruleFormed + document.getElementById('ApprovalTable_Hidden').value + '.' + propName	+ &quot; &quot; + document.getElementById('Comp_Operator').value +"("+ tableName+&quot;.&quot;+refColName+&quot; WHERE &quot;+tableName+&quot;.&quot;+keyColName +&quot;= '&quot; + keyValue+ &quot;' )&quot;+' ';
+phyRuleFormed = phyRuleFormed +'T1.' + document.getElementById('Property_Name').value + &quot; &quot; + document.getElementById('Comp_Operator').value + '( SELECT DISTINCT '+document.getElementById('Reference_Column').value+' FROM '+document.getElementById('Reference_Table').value+' WHERE '+document.getElementById('Key_Column').value + &quot; = '&quot; +keyValue + &quot;' )&quot;+' ';
+}
+else{
+core_alert_jquery('ENTER_LOGICAL_OP');
+}
+}
+ else if(document.getElementsByName('CodeValue')[0].checked == true){ 
+var message = validatePropValue();
+if(message.substring(0,10) != 'Valid case')
+{	core_alert_jquery(message);
+return;
+}
+  else {
+if(ruleFormed.trim().match(&quot;AND$&quot;) || ruleFormed.trim().length == 0 || ruleFormed.trim().match(&quot;OR$&quot;) || ruleFormed.trim().lastIndexOf('(')==ruleFormed.trim().length-1) {
+
+var propValue = document.getElementById('Code_Set_Value').value;
+var ruleFormed=document.getElementById('RuleCondition').value;
+var phyRuleFormed=document.getElementById('phyRuleExp').value;
+ruleFormed = ruleFormed + document.getElementById('ApprovalTable_Hidden').value + '.' + propName	+ &quot; &quot; + document.getElementById('Comp_Operator').value + &quot; '&quot; + propValue+ &quot;' &quot;;
+phyRuleFormed = phyRuleFormed + 'T1.' + document.getElementById('Property_Name').value + &quot; &quot; + document.getElementById('Comp_Operator').value + &quot; '&quot; + propValue + &quot;' &quot;;
+  }
+  else{
+core_alert_jquery('ENTER_LOGICAL_OP');
+  }
+  }
+  }
+else{
+var message = validatePropValue();
+if(message.substring(0,10) != 'Valid case')
+{	core_alert_jquery(message);
+return;
+}
+else
+{
+var propValue =  message.substring(message.indexOf('#')+1,message.length);
+if(ruleFormed.trim().match(&quot;AND$&quot;) || ruleFormed.trim().length == 0 || ruleFormed.trim().match(&quot;OR$&quot;) || ruleFormed.trim().lastIndexOf('(')==ruleFormed.trim().length-1) {
+if(propValue == '#OldValue')
+{
+selectedProperty = document.getElementById('Property_Name').value;
+ruleFormed = ruleFormed + document.getElementById('ApprovalTable_Hidden').value + '.' + propName	+ &quot; &quot; + document.getElementById('Comp_Operator').value + ' '+propValue+' ';
+if(document.getElementById('Comp_Operator').value == '=')
+	phyRuleFormed = phyRuleFormed + '(T1.' + selectedProperty + &quot; &quot; + document.getElementById('Comp_Operator').value + ' '+'T2.'+selectedProperty+' OR (T1.'+selectedProperty+' IS NULL AND T2.'+selectedProperty+' IS NULL)) ';
+else
+  	phyRuleFormed = phyRuleFormed + '(T1.' + selectedProperty + &quot; &quot; + document.getElementById('Comp_Operator').value + ' '+'T2.'+selectedProperty+' OR (T1.'+selectedProperty+' IS NOT NULL AND T2.'+selectedProperty+' IS NULL) OR (T1.'+selectedProperty+' IS NULL AND T2.'+selectedProperty+' IS NOT NULL)) ';
+  document.getElementById('ActionType').value = 'UPDATE';
+}
+  else{
+  if(document.getElementById('Comp_Operator').value == 'is null'){
+  
+ruleFormed = ruleFormed + document.getElementById('ApprovalTable_Hidden').value+'.'+propName+' '+document.getElementById('Comp_Operator').value+' ';
+phyRuleFormed = phyRuleFormed + 'T1.'+document.getElementById('Property_Name').value+'  IS NULL ';
+  }
+else
+if(document.getElementById('Comp_Operator').value == 'is not null'){
+  
+ruleFormed = ruleFormed + document.getElementById('ApprovalTable_Hidden').value+'.'+propName+' '+document.getElementById('Comp_Operator').value+' ';
+phyRuleFormed = phyRuleFormed + 'T1.'+document.getElementById('Property_Name').value+'  IS NOT NULL ';
+  }
+  else{
+//if(ruleFormed.lastIndexOf(&quot;AND&quot;) == (ruleFormed.trim().length-3) || ruleFormed.trim().length == 0 &amp;&amp; ruleFormed.lastIndexOf(&quot;AND&quot;) == -1 || ruleFormed.lastIndexOf(&quot;OR&quot;) == (ruleFormed.trim().length-2) || ruleFormed.trim().length == 0 &amp;&amp; ruleFormed.lastIndexOf(&quot;OR&quot;) == -1 )
+ruleFormed = ruleFormed + document.getElementById('ApprovalTable_Hidden').value + '.' + propName	+ &quot; &quot; + document.getElementById('Comp_Operator').value + &quot; '&quot; + propValue+ &quot;' &quot;;
+phyRuleFormed = phyRuleFormed + 'T1.' + document.getElementById('Property_Name').value + &quot; &quot; + document.getElementById('Comp_Operator').value + &quot; '&quot; + propValue + &quot;' &quot;;
+}
+  }
+  }
+else
+{
+core_alert_jquery('ENTER_LOGICAL_OP');
+}
+}
+}
+
+var phyColsArray = document.getElementById('PhyColumns').value.slice(',');
+if(phyColsArray.length == 0)
+phyCols = document.getElementById('Property_Name').value;
+else
+if(phyColsArray.indexOf(document.getElementById('Property_Name').value) == -1)
+phyCols =  phyCols +','+document.getElementById('Property_Name').value;
+document.getElementById('RuleCondition').value = ruleFormed;
+document.getElementById('phyRuleExp').value = phyRuleFormed;
+document.getElementById('PhyColumns').value = phyCols;
+//}
+}
+  	
+function addLogicalOperator(val){
+	
+var ruleFormed=document.getElementById('RuleCondition').value;
+var phyRuleFormed=document.getElementById('phyRuleExp').value;
+if(ruleFormed.trim().match("AND$") || ruleFormed.trim().length == 0 || ruleFormed.trim().match("OR$")||ruleFormed.trim().lastIndexOf('(')==ruleFormed.trim().length-1){
+core_alert_jquery('ENTER_RULE_EXP');
+return;
+}
+else{
+ruleFormed = ruleFormed + val + " ";
+phyRuleFormed = phyRuleFormed + val + " ";
+document.getElementById('RuleCondition').value = ruleFormed;
+document.getElementById('phyRuleExp').value = phyRuleFormed;
+  }
+	
+}
+	
+function onGroupOperation(val){
+	
+var ruleFormed=document.getElementById('RuleCondition').value;
+var phyRuleFormed=document.getElementById('phyRuleExp').value;
+if( val == ')' &amp;&amp; (ruleFormed.trim().match('AND$') || ruleFormed.trim().match('OR$') || ruleFormed.trim().lastIndexOf('(')==ruleFormed.trim().length-1)){
+core_alert_jquery('ENTER_RULE_EXP');
+return;
+}
+else{
+ruleFormed = ruleFormed + val+" ";
+phyRuleFormed = phyRuleFormed + val+" ";
+document.getElementById('RuleCondition').value = ruleFormed;
+document.getElementById('phyRuleExp').value = phyRuleFormed;
+  }
+	
+}
+  
+function isNumber(n) {
+return !isNaN(parseFloat(n)) &amp;&amp; isFinite(n);
+}
+  
+function onClearCondition()
+{
+document.getElementById('RuleCondition').value=&quot;&quot;;
+document.getElementById('phyRuleExp').value=&quot;&quot;;
+}
+
+  function clearValues(){
+  
+document.getElementById('Property_Value').value = '';
+document.getElementById('Property_Value_Date').value = '';
+document.getElementById('Property_Value_DateTime').value = '';   
+  }
+  
+  function convertValue(){
+  
+  clearValues();
+$("#Property_Value").removeAttr("maxlength");
+$('#Property_Value').off();
+if(document.getElementsByName('RefValue')[0].checked == false &amp;&amp; document.getElementsByName('CodeValue')[0].checked == false)
+{
+propertyTypes = document.getElementById('propDataType').value.split('#');
+for(i=0;i&lt;document.getElementById('Property_Name').length;i++)
+{
+if(document.getElementById('Property_Name').value == document.getElementById('Property_Name').options[i].value)
+{document.getElementById('propertyType').value = propertyTypes[i];
+break;}
+}
+  var propType = document.getElementById('propertyType').value;
+  if(document.getElementById('propertyType').value == 'date'){
+hideField('Property_Value');
+  showField('Property_Value_Date');
+hideField('Property_Value_DateTime');
+  hideField('Property_Value_LookUp');
+  }
+  else if(document.getElementById('propertyType').value == 'datetime' || document.getElementById('propertyType').value == 'timestamp' ){
+hideField('Property_Value');
+  hideField('Property_Value_Date');
+showField('Property_Value_DateTime');
+hideField('Property_Value_LookUp');
+}
+else if(document.getElementById('propertyType').value == 'lookUp' || document.getElementById('propertyType').value == 'boolean'){
+var propName = document.getElementById('Property_Name').options[i].text;
+var attrbs = ['TableName','ColumnName','DataType'];
+var attrbsValues = [document.getElementById('ApprovalTable_Hidden').value,propName,document.getElementById('propertyType').value];
+var requestDoc = createRequestXmlObjectTd('validValuesForLookUp','ADMIN_UI',attrbs,attrbsValues);
+var request= serializeXmlTd(requestDoc);
+var xpath = "/RESPONSES/RESPONSE/Valid_Value";
+SendAjaxRequest("ADMIN_UI",request,'getLookUpCallBack',xpath);
+}
+  else if(propType.substring(0,propType.indexOf('[')) == 'decimal'){
+showField('Property_Value');
+hideField('Property_Value_Date');
+hideField('Property_Value_DateTime');
+hideField('Property_Value_LookUp');
+  var maxLen = propType.substring(propType.indexOf('[')+1,propType.indexOf(']'));
+  maxLen = maxLen.replace('-','#');
+$("#Property_Value").attr("maxlength",maxLen);
+$('#Property_Value').on( "keyup", function() {
+onlyDecimal(document.getElementById('Property_Value'));
+});
+  }
+  else {
+hideField('Property_Value_Date');
+hideField('Property_Value_DateTime');
+showField('Property_Value');
+hideField('Property_Value_LookUp');
+  }
+  }
+	disableProperty();
+  
+}
+  
+  function getLookUpCallBack(node)
+  {
+var count = 0;
+document.form.Property_Value_LookUp.options.length = 0;
+var validValue=null;
+if(node.length!=0)
+{
+document.form.Property_Value_LookUp.options[0]=new Option('Select...','Select...', true, false);
+for (i=0;i&lt;node.length;i++)
+{
+validValue = node[i].getAttribute('Value');
+validId = node[i].getAttribute('Id');
+if(validValue !=null )
+{
+  if(validId != null)
+{
+document.form.Property_Value_LookUp.options[count+1]=new Option(validValue, validId, true, false);
+validId=null;
+}
+ else
+  {
+document.form.Property_Value_LookUp.options[count+1]=new Option(validValue, validValue, true, false);
+  } 
+  validValue=null;
+count++;
+}
+}
+} 
+hideField('Property_Value');
+hideField('Property_Value_Date');
+hideField('Property_Value_DateTime');
+showField('Property_Value_LookUp');
+disableProperty();
+
+}
+  
+  
+function validatePropValue()
+{
+var flagType = false;
+  if(document.getElementsByName('OldValue')[0].checked){
+  	flagType =true;
+	attrValue = '#OldValue';
+}
+  else{  
+propertyTypes = document.getElementById('propDataType').value.split('#');
+for(i=0;i&lt;document.getElementById('Property_Name').length;i++)
+{
+if(document.getElementById('Property_Name').value == document.getElementById('Property_Name').options[i].value)
+{document.getElementById('propertyType').value = propertyTypes[i];
+break;}
+}
+attrType = document.getElementById('propertyType').value;
+if(document.getElementsByName('CodeValue')[0].checked){
+attrValue = document.getElementById('Code_Set_Value').value;
+}
+  else{
+  if(attrType == 'date')
+	attrValue = document.getElementById('Property_Value_Date').value;
+  else if(attrType == 'datetime' || attrType == 'timestamp')
+  	attrValue = document.getElementById('Property_Value_DateTime').value;
+else if(attrType == 'lookUp' || attrType == 'boolean')
+attrValue = document.getElementById('Property_Value_LookUp').value;
+  else
+  	attrValue = document.getElementById('Property_Value').value;
+  }
+if(document.getElementById('Comp_Operator').value == 'is null' || document.getElementById('Comp_Operator').value == 'is not null')
+{
+attrValue = '';
+flagType = true;
+}
+else if(attrValue == '' ){
+
+message = "ENTER_PROP_VALUE";
+return message;
+}
+else{
+numeric = isNumber(attrValue);
+if(attrType == 'int')
+{
+if(numeric == true &amp;&amp; attrValue%1 === 0 &amp;&amp; attrValue.indexOf('.') == -1  )
+flagType = true;
+}
+if(attrType == 'float')
+{
+if(numeric == true &amp;&amp; attrValue.indexOf('.') > -1 &amp;&amp; (attrValue.length - attrValue.indexOf('.') > 1) )
+flagType = true;
+}
+if(attrType.substring(0,attrType.indexOf('-')) == 'char')
+{
+if(attrValue.length &lt;= parseInt(attrType.substring(attrType.indexOf('-')+1,attrType.length) ))
+flagType = true;
+}
+if(attrType == 'date')
+{
+if(isDate(attrValue, page_dateFormat) ){
+	flagType = true;
+ 	attrValue = dateConversion(attrValue,attrType);
+  }
+}
+if(attrType == 'datetime' || attrType == 'timestamp')
+{
+if (isDate(attrValue,page_dateTimeFormat) ){
+	flagType = true;
+	attrValue = dateConversion(attrValue,attrType);
+  }
+}
+if(attrType == 'string')
+{
+  flagType = true;
+}
+if(attrType.substring(0,attrType.indexOf('[')) == 'decimal')
+{
+flagType = true;
+}
+if(attrType == 'lookUp' || attrType == 'boolean')
+{
+if(attrValue != 'Select...')
+  flagType=true;
+ else
+  {
+  core_alert_jquery('SELECT_LOOKUP');
+  return;
+  }
+} 
+  }
+  }
+if(flagType == false)
+message = "Enter value of type "+attrType;
+
+if(flagType == true)
+message = "Valid case#"+attrValue;
+return message;
+}
+
+ function onEditCondition()
+  {
+document.getElementById('RuleCondition').readOnly = false;
+var selObj = document.getElementsByName('SelectedRuleId');
+  for(i=0;i&lt;selObj.length;i++)
+  {
+  if(selObj[i].checked)
+  {
+document.getElementById('RuleCondition').value = document.getElementsByName('Rule_String')[i].value;
+  from_Date = document.getElementsByName('From_Date_Valid')[i].value;
+fromDate = dateConvert(from_Date.split(' ')[0],'MM/dd/yyyy',page_dateFormat);
+  document.getElementById('FROM_DateValid').value = fromDate;
+to_Date = document.getElementsByName('To_Date_Valid')[i].value;
+toDate = dateConvert(to_Date.split(' ')[0],'MM/dd/yyyy',page_dateFormat);
+document.getElementById('TO_DateValid').value = toDate;
+tduiToggleButtonState('Add_Rule','disabled','');
+tduiToggleButtonState('Update','enabled','');
+document.getElementById('Update').getElementsByTagName('a')[0].setAttribute('style','white-space:nowrap');
+document.getElementById('Add_Rule').getElementsByTagName('a')[0].setAttribute('style','white-space:nowrap');
+  break;
+  }
+  }
+  } 
+  
+  function dateConversion(dateVal,date){
+	var dateObj = new Date(dateVal);
+ if(date == 'date')
+   var dateReturn = parseDate(dateVal, page_dateFormat,'xs:date','');
+ else if(date == 'datetime' || date == 'timestamp' ){  
+   var dateReturn = parseDate(dateVal, page_dateTimeFormat,'xs:dateTime','');
+   dateReturn = dateReturn.replace('T',' ');
+  }
+return dateReturn;
+  }
+  
+function onUpdate() {
+
+if(updateFlag == false){
+var flag=0;
+var selObj = document.getElementsByName('SelectedRuleId');
+for(i=0;i&lt;selObj.length;i++)
+{
+if(selObj[i].checked){
+	flag = 1;
+  break;
+  }
+  }
+  if(flag != 1){
+  	core_alert_jquery("SELECT_RULE");
+  	return;
+  }
+var ruleString=document.getElementById('RuleCondition').value;
+var phyString;
+  var phyCols;
+var tableValue = document.getElementById('ApprovalTable_Hidden').value+'\\.';
+var re = new RegExp(tableValue, 'g');
+phyString = ruleString.replace(re,'T1.');
+var propCols = document.getElementById('Property_Name').options;
+for(i=0;i&lt;propCols.length;i++)
+{
+var propName = 'T1\\.'+document.getElementById('Property_Name').options[i].text+'\\b';
+var reNew = new RegExp(propName, 'g');
+  tempString = phyString;
+  if(tempString.match(reNew)){
+  
+var oldValue = propName+'( )(&gt;|&lt;|&gt;=|&lt;=|&lt;&gt;)( #OldValue)';
+  var oldReg = new RegExp(oldValue,'g');
+  if(tempString.match(oldReg))
+  {
+  selectedProperty = document.getElementById('Property_Name').options[i].value;
+  
+  newString = tempString.match(oldReg);
+  newPhy = newString[0].replace('#OldValue', 'T2.'+document.getElementById('Property_Name').options[i].value+' OR (T1.'+selectedProperty+' IS NOT NULL AND T2.'+selectedProperty+' IS NULL) OR (T1.'+selectedProperty+' IS NULL AND T2.'+selectedProperty+' IS NOT NULL)');
+  phyString = tempString.replace(oldReg,'('+newPhy+')');  
+  tempString = phyString;
+  }
+var oldValue = propName+'( )(=)( #OldValue)';
+var oldReg = new RegExp(oldValue,'g');
+if(tempString.match(oldReg))
+{
+selectedProperty = document.getElementById('Property_Name').options[i].value;
+  
+newString = tempString.match(oldReg);
+newPhy = newString[0].replace('#OldValue', 'T2.'+document.getElementById('Property_Name').options[i].value+' OR (T1.'+selectedProperty+' IS NULL AND T2.'+selectedProperty+' IS NULL) ');
+phyString = tempString.replace(oldReg,'('+newPhy+')');
+tempString = phyString;
+}
+var nullValue = propName+' is null';
+var nullReg = new RegExp(nullValue,'g');
+selectedProperty = document.getElementById('Property_Name').options[i].value;
+  if(tempString.match(nullReg)){
+	phyString = tempString.replace(nullReg,'T1.'+selectedProperty+' IS NULL ');
+    tempString = phyString;
+  }
+var notNull = propName+' is not null';
+var notNullReg = new RegExp(notNull,'g');
+selectedProperty = document.getElementById('Property_Name').options[i].value;
+if(tempString.match(notNullReg)){
+phyString = tempString.replace(notNullReg,'T1.'+selectedProperty+' IS NOT NULL ');
+tempString = phyString;
+}
+	phyString = tempString.replace(reNew, 'T1.'+document.getElementById('Property_Name').options[i].value);
+  if(phyCols == null &amp;&amp; phyString != tempString)	
+  	phyCols =  document.getElementById('Property_Name').options[i].value;
+  else if(phyCols &amp;&amp; phyString != tempString)
+	phyCols = phyCols + ',' + document.getElementById('Property_Name').options[i].value;
+}
+  }
+document.getElementById('phyRuleExp').value = phyString;
+document.getElementById('PhyColumns').value = phyCols;
+}
+
+var refReg = "[=][(][a-zA-z_\.]* WHERE [0-9a-zA-z_\. =\' ]*[)]";
+var phyString = document.getElementById('phyRuleExp').value;
+var reRef = new RegExp(refReg, 'g');
+var refSubString = reRef.exec(phyString);
+if(refSubString != null){
+var propCols = document.getElementById('Reference_Table').options;
+for(i=0;i&lt;propCols.length;i++)
+{
+var refTableName = document.getElementById('Reference_Table').options[i].text+'\\.';
+var reNew1 = new RegExp(refTableName, 'g');
+refTable = reNew1.exec(refSubString[0]);
+if(refTable!= null){
+refTable[0] = refTable[0].substring(0,refTable[0].length-1);
+document.getElementById('phyRulePart').value = refSubString[0];
+break;}
+}
+if(refTable!= null){
+changeRefTable(refTable[0]);
+}
+else
+{
+updateFlag = false;
+}
+}
+else
+{
+updateFlag = false;
+  if(document.getElementById('phyRuleExp').value.indexOf('T2.') > -1)
+	if( document.getElementById('AutoApprovalRuleEnabled').value == 'Auto Approval')
+	{
+		core_alert_jquery('COLUMN_AUTO');
+		return;
+	}
+	else
+	document.getElementById('ActionType').value = 'UPDATE';
+  else
+	document.getElementById('ActionType').value = '';  
+document.form.BUTTON_ID.value = 'Update';
+document.form.submit();
+}
+}
+  
+function onAutoApproval()
+{
+var autoFlag = false;
+var selObj = document.getElementsByName('SelectedRuleId');
+for(i=0;i&lt;selObj.length;i++)
+{
+if( document.getElementsByName('Approval_Type')[i].value == 'Auto Approval')
+{
+autoFlag = true;
+break;
+}
+}
+if(autoFlag == true)
+{
+core_alert_jquery('AUTO_APPROVAL_ENABLED');
+return;
+}
+document.form.BUTTON_ID.value = 'Auto_Approval';
+document.form.submit();
+}
+  
+function onDelete()
+{
+core_confirm_jquery('DELETE_RULE','onDeleteCallback');
+}
+    
+function onDeleteCallback(response)
+{
+if(response == 'yes')
+{
+document.form.BUTTON_ID.value = 'Delete';
+document.form.submit();
+}
+}
+  
+function onValueOrRef(val){
+if(val == 'Reference'){
+  
+hideField('Property_Value');
+hideField('Property_Value_Date');
+hideField('Property_Value_DateTime');
+hideField('Property_Value_LookUp');
+hideField('Sel_Code_Set');
+hideField('Code_Set_Value');
+showField('Reference_Table');
+showField('Reference_Column');
+showField('Key_Column');
+showField('Key_Value');
+document.getElementsByName('PropValue')[0].checked = false;
+document.getElementsByName('CodeValue')[0].checked = false;
+}
+else if(val == 'CodeSet')
+  {
+hideField('Property_Value');
+hideField('Property_Value_Date');
+hideField('Property_Value_DateTime');
+hideField('Property_Value_LookUp');
+hideField('Reference_Table');
+hideField('Reference_Column');
+hideField('Key_Column');
+hideField('Key_Value');
+showField('Sel_Code_Set');
+showField('Code_Set_Value'); 
+document.getElementsByName('PropValue')[0].checked = false;
+document.getElementsByName('RefValue')[0].checked = false;
+  }
+  else
+{
+hideField('Reference_Table');
+hideField('Reference_Column');
+hideField('Key_Column');
+hideField('Key_Value');
+hideField('Sel_Code_Set');
+hideField('Code_Set_Value');
+document.getElementsByName('CodeValue')[0].checked = false;
+document.getElementsByName('RefValue')[0].checked = false;
+convertValue();
+}
+}
+  
+function changeRefTable(tabName){
+if(tabName=='addCols'){
+var tabIndex = document.getElementById('Reference_Table').selectedIndex;
+var tabName = document.getElementById('Reference_Table').options[tabIndex].text;
+document.getElementById('Reference_Table_Name').value = tabName;
+var request=&quot;&lt;GET_DOC_PROPERTIES TableName='&quot;+tabName+&quot;' ServiceName='BCM_MASTER' &gt;&lt;/GET_DOC_PROPERTIES&gt;&quot;;
+var xpath = &quot;/RESPONSES/RESPONSE/DOCUMENT/PROPERTY&quot;;
+SendAjaxRequest(&quot;BCM_MASTER&quot;,request,'getColsCallback',xpath);}
+else
+{
+var request=&quot;&lt;GET_DOC_PROPERTIES TableName='&quot;+tabName+&quot;' ServiceName='BCM_MASTER' &gt;&lt;/GET_DOC_PROPERTIES&gt;&quot;;
+var xpath = &quot;/RESPONSES/RESPONSE/DOCUMENT&quot;;
+SendAjaxRequest(&quot;BCM_MASTER&quot;,request,'getNewColsCallback',xpath);
+}
+}
+    
+function getNewColsCallback(node){
+  
+var refSubString = document.getElementById('phyRulePart').value;
+var phyRuleString = document.getElementById('phyRuleExp').value;
+refCol = refSubString;
+if(node.length != 0){
+tableName = node[0].getAttribute('TableName');
+tableNameLog = node[0].getAttribute('Name');
+for (i=0;i&lt;node[0].getElementsByTagName('PROPERTY').length;i++)
+{
+name = node[0].getElementsByTagName('PROPERTY')[i].getAttribute('Name')
+id = node[0].getElementsByTagName('PROPERTY')[i].getAttribute('ColumnName')
+var propName = '\\.'+name+'\\b';
+var reNew = new RegExp(propName, 'g');
+if(refCol.match(reNew)){
+refCol  = refCol.replace(reNew, '.'+id);
+}
+}
+}
+var tabName = tableNameLog+'\\.';
+var reNew2 = new RegExp(tabName, 'g');
+if(refCol.match(reNew2)){
+refCol  = refCol.replace(reNew2, '');
+}
+phyString = '(SELECT DISTINCT '+(refCol.substring(refCol.indexOf('(')+1,refCol.indexOf('WHERE'))).trim()+' FROM '+tableName+" "+(refCol.substring(refCol.indexOf('WHERE'),refCol.indexOf(')')+1));
+refCol = '='+phyString;
+phyRuleString = phyRuleString.replace(refSubString,refCol);
+document.getElementById('phyRuleExp').value = phyRuleString;
+updateFlag = true;
+onUpdate();
+}
+  
+function getColsCallback(node){
+  
+var count = 0;
+document.form.Reference_Column.options.length = 0;
+var name=null;
+var  id=null;
+if(node.length!=0)
+{
+document.form.Reference_Column.options[0]=new Option('Select...','Select...', true, false);
+document.form.Key_Column.options[0]=new Option('Select...','Select...', true, false);
+for (i=0;i&lt;node.length;i++)
+{
+name = node[i].getAttribute('Name');
+id = node[i].getAttribute('ColumnName');
+if(name !=null )
+{
+if(id!=null)
+{
+document.form.Reference_Column.options[count+1]=new Option(name, id, true, false);
+document.form.Key_Column.options[count+1]=new Option(name, id, true, false);
+name=null;
+id=null;
+count++;
+}
+}
+}
+}
+}
+  
+  
+  function disableProperty(){
+
+ var elements = document.form.elements;
+ if(document.getElementsByName('OldValue')[0].checked || document.getElementById('Comp_Operator').value == 'is null' || document.getElementById('Comp_Operator').value == 'is not null'){
+ for(i=0;i&lt;elements.length;i++)
+	if(elements[i].id.indexOf('Property_Value') > -1){
+  		if(document.getElementById(elements[i].id).enabled == true)
+			document.getElementById(elements[i].id).disabled = true;
+		if(elements[i].id.indexOf('Property_Value_Date') > -1 || elements[i].id.indexOf('Property_Value_DateTime') > -1){
+			$('#'+elements[i].id+'_Cal').hide();
+  		}
+   }
+ }
+ else
+ {
+	for(i=0;i&lt;elements.length;i++)
+		if(elements[i].id.indexOf('Property_Value') > -1){
+			if(document.getElementById(elements[i].id).enabled == true)
+				document.getElementById(elements[i].id).disabled = false;
+			if(elements[i].id.indexOf('Property_Value_Date') > -1 || elements[i].id.indexOf('Property_Value_DateTime') > -1){
+				$('#'+elements[i].id+'_Cal').show();
+			}
+  		}
+ }
+} 
+  
+  function onCodeSet(){
+  
+  var codeName = document.getElementById('Sel_Code_Set').value;
+var attrbs = ['CODENAME'];
+var attrbsValues = [codeName];
+var requestDoc = createRequestXmlObjectTd('getCodeValue','UI_WORKFLOW',attrbs,attrbsValues);
+var request= serializeXmlTd(requestDoc);
+var xpath = "/RESPONSES/RESPONSE/AVAIL_CODEVALUE/VALUE_ID";
+SendAjaxRequest("UI_WORKFLOW",request,'getCodeValuesCallBack',xpath);
+  }
+  
+  function getCodeValuesCallBack(node){
+ 
+var count = 0;
+document.form.Code_Set_Value.options.length = 0;
+var codeVal=null;
+if(node.length!=0)
+{
+document.form.Code_Set_Value.options[0]=new Option('Select...','Select...', true, false);
+for (i=0;i&lt;node.length;i++)
+{
+//node[0].getElementsByTagName('VALUE_ID')[i].attributes[0].value
+codeVal = node[i].attributes[0].value;
+if(name !=null )
+{
+document.form.Code_Set_Value.options[count+1]=new Option(codeVal, codeVal, true, false);
+codeVal=null;
+count++;
+}
+}
+}
+  }
+  
+function onShow(value){
+  
+var node = value;
+var ruleString = node.getElementsByTagName('a')[0].title;
+ruleString = ruleString.replace('&quot;','\'');
+showClob(ruleString);
+  
+}
+  
+</ui:script>
+</ui:page-group>

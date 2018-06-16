@@ -1,0 +1,345 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" Id="ui_form221.pgl">
+  <ui:container id="Outer" displayText="View Reports" showFavorite="true" scrollable="true">
+    <ui:step id="OuterStep">
+      <ui:help displayPage="{$pages:upload_view_reports_help}"/>
+      <ui:field-group columns="6">
+        <ui:image id="AlertGreenIcon" src="/bpi_check.gif" displayCondition="{string-length($root/AlertGreen/@Value) != 0 or string-length($root/AlertGreenMsg/@Value) != 0}"/>
+        <ui:compound-field displayCondition="{string-length($root/AlertGreen/@Value) != 0 or string-length($root/AlertGreenMsg/@Value) != 0}">
+          <ui:display-field value="{$root/AlertGreen/@Value}" name="success" class="requiredIndicatorGreen"/>
+          <ui:display-field value="{$root/AlertGreenMsg/@Value}" name="success" class="requiredIndicatorGreen"/>
+        </ui:compound-field>
+        <ui:image id="AlertRedIcon" src="/cancel.gif" displayCondition="{string-length($root/AlertRed/@Value) != 0 or string-length($root/AlertRedMsg/@Value) != 0}"/>
+        <ui:compound-field displayCondition="{string-length($root/AlertRed/@Value) != 0 or string-length($root/AlertRedMsg/@Value) != 0}" class="requiredIndicator">
+          <ui:display-field value="{$root/AlertRed/@Value}" name="error" class="requiredFieldIndicator"/>
+          <ui:display-field value="{$root/AlertRedMsg/@Value}" name="error" class="requiredFieldIndicator"/>
+        </ui:compound-field>
+      </ui:field-group>
+      <ui:container id="Inner1" inner="true">
+        <ui:step id="InnerStep1">
+          <ui:field-group columns="2">
+            <ui:hidden-field name="HierId" id="HierId" value="{$root/HIER/HIER_ID/@Value}"/>
+            <ui:hidden-field name="status" id="status" value="{$root/HIER/STATUS/@Value}"/>
+            <ui:hidden-field id="DeleteInprocess" name="DeleteInprocess" defaultValue="false"/>
+            <ui:entry-field id="ID" name="ID" displayText="Report ID" title="ViewReportsReportId"/>
+            <ui:dropdown id="TEMPLATE_NAME" name="TEMPLATE_NAME" displayText="Template" selectAll="true" optionSrc="$root/TEMPLATES/OPTION" title="ViewReportsTemplate" sort="true"/>
+            <ui:entry-field displayText="From" id="StartDate" name="StartDate" dataType="Date" onChange="test_date_range('StartDate','EndDate','Date');" title="ViewReportsStartDate"/>
+            <ui:entry-field displayText="To" id="EndDate" name="EndDate" dataType="Date" onChange="test_date_range('StartDate','EndDate','Date');" title="ViewReportsEndDate"/>
+            <ui:dropdown id="PROGRESS_STATUS" name="PROGRESS_STATUS" displayText="Upload Status" optionSrc="$root/UPLOAD_STATUS_LIST/UPLOAD_STATUS" title="ViewReportsStatus"/>
+            <ui:entry-field id="UPLOADEDBY" name="UPLOADEDBY" displayText="Uploaded By" title="ViewUploadedBy"/>
+          </ui:field-group>
+          <ui:buttons>
+            <ui:button id="Clear" name="Clear" displayText="Clear" onClick="{$pages:ViewReports}"/>
+            <ui:divider/>
+            <ui:button id="Search" name="Search" displayText="Search" emphasized="true"/>
+          </ui:buttons>
+        </ui:step>
+      </ui:container>
+      <ui:table id="results" displayText="Reports" displayTextNoRecords="No reports found." postRowIdAs="SELECTED_ID" rowId="ID" rowSrc="$root/VIEW_REPORTS/UPLOAD_PROGRESS_REPORT" selectable="all" scrollable="true" totalRowCount="$root/TotalRowCount/@Value" startAtRow="$root/StartRowCount/@Value">
+        <ui:field-group>
+          <!--ui:link-field id="ID" name="ID" displayText="Report ID"  title="ViewReportsReportId" sortable="true">
+<ui:url page="{$pages:ReportDetails}">
+<ID select="ID/@Value"/>
+</ui:url>
+</ui:link-field-->
+          <ui:display-field id="ID" name="ID" displayText="Report ID" title="ViewReportsReportId" sortable="true" onClick="javascript:loadReportDetails(this.innerHTML);" style="cursor:pointer;color:blue" unFormat="true"/>
+          <!--<ui:display-field id="ID" name="ID" displayText="Report Id"/>-->
+          <ui:display-field id="TEMPLATE_NAME" name="TEMPLATE_NAME" displayText="Template Name" sortable="true" title="ViewReportsTemplate"/>
+          <ui:display-field id="START_TIME" name="START_TIME" displayText="Report Time" sortable="true" title="ViewReportsReportTime" dataType="DateTime"/>
+          <ui:display-field id="PROGRESS" name="PROGRESS" displayText="Progress" sortable="true" title="ViewReportsProgress"/>
+          <ui:display-field id="TOTAL_RECORDS" name="TOTAL_RECORDS" displayText="Total Records" title="ViewReportsTotalRecords"/>
+          <ui:display-field id="TOTAL_ERROR_RECORDS" name="TOTAL_ERROR_RECORDS" displayText="Errors / Rejected" title="ViewReportsErrors"/>
+          <ui:display-field id="TOTAL_APPROVAL_RECORDS" name="TOTAL_APPROVAL_RECORDS" displayText="Pending Approval" title="ViewReportsApproval"/>
+          <ui:display-field id="UPLOADEDBY" name="UPLOADEDBY" displayText="Uploaded By" title="ViewUploadedBy" sortable="true"/>
+          <ui:display-field id="MESSAGE" name="ABORT_MSG" displayText="Abort Message" title="Abort message when a process gets aborted" sortable="true"/>
+          <!--<ui:display-field id=""  name="" displayText="Purged"  title="ViewReportsPurged" sortable="true"/>-->
+          <ui:hidden-field id="PROGRESS" name="PROGRESS"/>
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button id="back" name="back" displayText="Back" displayCondition="{$root/HIER/SHOW/@Value}" onClick="javascript:onBack();"/>
+          <ui:button id="Abort" name="Abort" displayText="Abort" enabledBySelections="true" onClick="javascript:onAbort();"/>
+          <ui:divider/>
+          <ui:button id="Purge" name="Purge" displayText="Purge" enabledBySelections="true" onClick="javascript:onPurge();"/>
+          <ui:divider/>
+          <ui:button id="Reprocess" emphasized="true" name="Reprocess" displayText="Reprocess" enabledBySelections="true" onClick="javascript:onReprocess();"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+    
+$(function() {
+ var url = $("a[href='/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM']").prop("href");
+ url += '&amp;SORT_BY='+$('#SORT_BY').val()+'&amp;SORT_ORDER='+$('#SORT_ORDER').val();
+$("a[href='/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM']").prop("href",url);
+});
+    
+ function loadReportDetails(selectedId)
+   {
+    	if(!selectedId)
+     		return;
+		var searchId = document.getElementById('ID').value;
+    	var templateName = document.getElementById('TEMPLATE_NAME').value;
+		var to= document.getElementById('EndDate').value;
+		var from= document.getElementById('StartDate').value;
+		var progress = document.getElementById('PROGRESS').value;
+var uplodedby = document.getElementById('UPLOADEDBY').value;
+var hierId=document.getElementById('HierId').value;
+        //document.location = omxContextPath + '/start.x2ps?START_WORKFLOW=ReportDetails&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;ID='+selectedId+'&amp;S_ID='+searchId+'&amp;S_TMPLT='+templateName+'&amp;S_FROM='+from+'&amp;S_TO='+to+'&amp;S_PROGRESS='+progress+'&amp;S_UPLOADEDBY='+uplodedby;
+		loadMainContentPanel(omxContextPath + '/start.x2ps?START_WORKFLOW=ReportDetails&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;ID='+selectedId+'&amp;S_ID='+searchId+'&amp;HIER_ID='+hierId+'&amp;S_TMPLT='+templateName+'&amp;S_FROM='+from+'&amp;S_TO='+to+'&amp;S_PROGRESS='+progress+'&amp;S_UPLOADEDBY='+uplodedby,'appFrame');
+	}
+     
+function  pglToggleButton(buttonId,hasNoSelections){
+    if(hasNoSelections == true)
+	{
+		tduiToggleButtonState(buttonId, 'disabled');
+	}
+	else
+	{
+		var type = btnTypes[buttonId];
+		var elementsLen = document.form.elements.length;
+		var count;
+		for(count = 0;count  &lt; elementsLen ; count++)
+		{
+			obj = document.form.elements[count];
+			if(obj.name==&quot;SELECTED_ID&quot;)
+			{
+				if(obj.checked &amp;&amp; (document.form.elements[count+1].name == 'PROGRESS'))
+				{
+					var progressStatus = document.form.elements[count+1].value;
+					if( (progressStatus === 'Completed with gaps') )
+					{
+						if(buttonId == 'Abort')
+						{
+							tduiToggleButtonState(buttonId, 'disabled');
+						}
+						else
+						{
+							tduiToggleButtonState(buttonId, 'enabled',type);
+						}
+					}
+					else if( (progressStatus === 'Completed') || (progressStatus === 'Aborted') )
+					{
+						if(buttonId == 'Reprocess' || buttonId == 'Abort')
+						{
+							tduiToggleButtonState(buttonId, 'disabled');
+						}
+						else
+						{
+							tduiToggleButtonState(buttonId, 'enabled',type);
+						}
+					}
+					else if( (progressStatus === 'Processing with gaps') || (progressStatus === 'Processing') || (progressStatus === 'Waiting for start signal') || (progressStatus === 'ReserveReportId') )
+					{
+						if(buttonId == 'Purge' || buttonId == 'Reprocess')
+						{
+							tduiToggleButtonState(buttonId, 'disabled');
+						}
+						else
+						{
+							tduiToggleButtonState(buttonId, 'enabled',type);
+						}
+					}
+					else
+					{
+						//handles Completed : sent for approval, Completed with gaps : sent for approval - progress
+						tduiToggleButtonState(buttonId, 'disabled');
+					}
+										
+				}
+		}
+	}
+}
+}
+
+function checkSelectedProgress()
+    {
+			var elementsLen = document.form.elements.length;
+			var count;
+			var progressCheck = 'none';
+			for(count = 0;count  &lt; elementsLen ; count++)
+			{
+				obj = document.form.elements[count];
+				if(obj.name==&quot;SELECTED_ID&quot;)
+				{
+					if(obj.checked &amp;&amp; (document.form.elements[count+1].name == 'PROGRESS'))
+					{
+						var progressStatus = document.form.elements[count+1].value;
+						if( (progressStatus != progressCheck &amp;&amp; progressCheck!='none') )
+    					{
+    						core_alert_jquery('PLZ_SELECT_REPORTS_WITH_SAME_PROGRESS_STATUS_TO_PERFORM_BULK_PURGE');
+						    return false;
+    					}
+						progressCheck = progressStatus;
+				    }
+    			}
+    		}
+			return true;
+   	}
+    
+function onPurge()
+    {
+		if(checkSelectedProgress())
+		{
+			core_confirm_jquery(&quot;PURGE_REMOVE_SELECTED_UPLOAD_REPORT_SURE_WANT_DELETE_UPLOAD_RECORDS&quot;,'onPurgeCallback');
+		}
+	}
+
+function onPurgeCallback(response) {
+	if(response == 'yes') {
+		document.form.BUTTON_ID.value = 'Purge';
+		document.form.action = 'view.x2ps';
+		document.form.submit();
+		grayOut(true);
+	}
+}
+    
+function onReprocess()
+    {
+			if(checkSelectedOne())
+		    {
+				var elementsLen = document.form.elements.length;
+				var count;
+				for(count = 0;count  &lt; elementsLen ; count++)
+				{
+					obj = document.form.elements[count];
+					if(obj.name ==&quot;SELECTED_ID&quot;)
+					{
+						if(obj.checked)
+						{
+							//	alert(document.form.elements[count+1].name + ' ' + document.form.elements[count+1].value);
+							if((document.form.elements[count+1].name == 'PROGRESS') &amp;&amp; (document.form.elements[count+1].value != 'Completed'))
+							{
+								document.form.BUTTON_ID.value = 'Reprocess';
+								document.form.action = 'view.x2ps';
+								document.form.submit();
+								grayOut(true);
+    						}
+							else
+							{
+								core_alert_jquery(&quot;REPROCESS_CANNOT_BE_INITIATED_FOR_COMPLETETED_REPORTS&quot;);
+								return;
+							}
+						}
+					}
+				}
+			}
+    }
+function onAbort(){
+		if(checkSelectedOne())
+	    {
+			var elementsLen = document.form.elements.length;
+			var count;
+			var hiddenFieldVar = document.getElementById('DeleteInprocess');
+				    
+    
+			for(count = 0;count  &lt; elementsLen ; count++)
+			{
+				obj = document.form.elements[count];
+				if(obj.name==&quot;SELECTED_ID&quot;)
+				{
+					if(obj.checked)
+					{
+						//alert(document.form.elements[count+1].name + ' ' + document.form.elements[count+1].value);
+						//if((document.form.elements[count+1].name == 'PROGRESS')) &amp;&amp; (document.form.elements[count+1].value != 'Completed'))
+						if((document.form.elements[count+1].name == 'PROGRESS') &amp;&amp;( (document.form.elements[count+1].value == 'Processing with gaps') || (document.form.elements[count+1].value == 'Processing')))
+						{
+							core_confirm_jquery(&quot;ARE_YOY_SURE_WANT_TO_ABORT_SLECTED_UPLOAD_PROCESS&quot;,'onAbortCallback');
+							/*if(core_confirm(&quot;ARE_YOY_SURE_WANT_TO_ABORT_SLECTED_UPLOAD_PROCESS&quot;) == 'yes')
+							{
+								document.form.BUTTON_ID.value = 'Abort';
+								//hiddenFieldVar.value=&quot;Sonaal&quot;;
+								//alert(hiddenFieldVar.value);
+								//if ( core_confirm( &quot;Do you want to abort the report with deleting the cache xls file? If you select 'No', only the report displayed will be aborted .&quot;) == 'yes' )
+								hiddenFieldVar.value=&quot;true&quot;;
+								document.form.action = 'view.x2ps';
+								document.form.submit();
+								grayOut(true);
+    						}*/
+						}
+						else
+						{
+							core_alert_jquery(&quot;ABORT_CANNOT_BE_INITIATED_FOR_UPLOAD_PROCESS_STATUS_COMPLETED_COMPLETED_WITH_GAPS_ABORTED&quot;);
+							return;
+						}
+					}
+				}
+			}
+		}
+    }
+
+	function onAbortCallback(response) {
+		if(response == 'yes') {
+			document.form.BUTTON_ID.value = 'Abort';
+			var hiddenFieldVar = document.getElementById('DeleteInprocess');
+			//hiddenFieldVar.value=&quot;Sonaal&quot;;
+			//alert(hiddenFieldVar.value);
+			//if ( core_confirm( &quot;Do you want to abort the report with deleting the cache xls file? If you select 'No', only the report displayed will be aborted .&quot;) == 'yes' )
+			hiddenFieldVar.value=&quot;true&quot;;
+			document.form.action = 'view.x2ps';
+			document.form.submit();
+			grayOut(true);
+		}
+	}
+function IEEnterKey()
+{
+if( window.event.keyCode == 13)
+{
+document.form.BUTTON_ID.value = 'Search';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+event.returnValue=false;
+}
+}
+browserName = navigator.appName;
+function NetEnterKey(e)
+{
+key = e.which;
+if(key == 13)
+{
+document.form.BUTTON_ID.value = 'Search';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+return false;
+}
+}
+if (browserName == &quot;Netscape&quot;)
+{
+document.captureEvents(Event.KEYPRESS);
+document.onkeypress=NetEnterKey;
+}
+else
+{
+if (browserName.indexOf(&quot;Explorer&quot;) >= 0)
+{
+document.onkeypress=IEEnterKey;
+}
+}
+function checkSelectedOne()
+{
+var selectedRowCount = 0;
+for(i = 0; i &lt; document.form.elements.length; i++)
+{
+if(document.form.elements[i].name == 'SELECTED_ID' &amp;&amp; document.form.elements[i].checked )
+selectedRowCount++;
+}
+if(selectedRowCount > 1)
+{
+core_alert_jquery(&quot;PLEASE_SELECT_SINGLE_RECORD&quot;);
+return false;
+}
+else
+{
+return true;
+}
+}
+    function onBack()
+    {    
+    var hierId=document.getElementById('HierId').value;
+var status=document.getElementById('status').value;
+loadMainContentPanel(omxContextPath + '/start.x2ps?START_WORKFLOW=HierarchyImport&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;HIER_ID='+hierId+'&amp;STATUS='+status,'appFrame');
+    
+    }
+</ui:script>
+</ui:page-group>

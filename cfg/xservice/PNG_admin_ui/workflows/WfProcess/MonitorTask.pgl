@@ -1,0 +1,63 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" Id="MonitorTask.pgl">
+  <ui:container id="taskContainer" inner="false" scrollable="true" showFavorite="true">
+    <ui:help displayPage="{$pages:WfTaskMonitorHelp}"/>
+    <ui:step id="taskInnerStep" displayText="WF_PAGE_MONITOR_TASKS">
+      <ui:container inner="true">
+        <ui:step id="filterTaskStep">
+          <ui:field-group>
+            <ui:hidden-field id="table_text" name="table_text" value="{$root/Task_Status/@Value}"/>
+            <ui:field-space/>
+            <ui:dropdown id="TaskStatusFilter" name="TaskStatusFilter" displayText="Task Status" defaultValue="In Progress" title="Task Status" onChange="javascript:onTaskFilterChange(this.value);" value="{$root/Task_Status/@Value}">
+              <ui:option id="In Progress" value="In Progress"/>
+              <ui:option id="Completed" value="Completed"/>
+            </ui:dropdown>
+            <ui:field-space/>
+          </ui:field-group>
+        </ui:step>
+      </ui:container>
+      <ui:table id="processTasks" rowId="LOAD_ID#WF_ID" postRowIdAs="SELECTED_PROCESS_ID" selectable="Single" select="$root/TASKS" displayText="{concat($root/Task_Status/@Value,' Tasks ')}" displayTextNoRecords="No Task Found" maxRows="-1" collapsable="false" title="User Task Inbox" scrollable="true">
+        <ui:field-group>
+          <ui:display-field id="Process_Id" name="LOAD_ID" displayText="Workflow Id"/>
+          <ui:display-field id="Process_Name" name="PROCESS_NAME" displayText="Workflow Name" unFormat="true"/>
+          <ui:display-field id="Task_Id" name="WF_ID" displayText="Instance Id"/>
+          <ui:display-field id="Status" name="STATUS" displayText="Status" title="Task Status"/>
+          <ui:display-field id="CreatedBy" name="SYS_CREATED_BY" displayText="Created By"/>
+          <ui:display-field id="StartDate" name="WF_START_DATE" displayText="Started On" dataType="DateTime"/>
+          <ui:display-field id="EndDate" name="WF_END_DATE" displayText="Completed On" dataType="DateTime"/>
+          <ui:display-field id="Description" name="DESCRIPTION" displayText="Description" unFormat="true"/>
+          <ui:hidden-field id="Status_hidden" name="Status_hidden"/>
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button id="Delete" name="Delete" displayText="Delete" enabledBySelections="true" displayCondition="{$root/Task_Status/@Value='Completed'}" onClick="javascript:onDelete();"/>
+          <ui:divider displayCondition="{$root/Task_Status/@Value='Completed'}"/>
+          <ui:button id="Details" name="Details" displayText="Details" enabledBySelections="true"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+function onTaskFilterChange(taskstatus)
+{
+document.form.BUTTON_ID.value = 'TaskFilterChange';
+document.form.submit();
+grayOut(true);
+}
+function onDelete()
+{
+    core_confirm_jquery('WF_DELETE_INSTANCE_AUDIT','OnDeleteCallback');
+	/*if(core_confirm('Do you want to delete instance and audit data for the selected task?')=='yes'){
+		document.form.BUTTON_ID.value = 'Delete';
+		document.form.submit();
+		grayOut(true);
+    }*/
+}
+function onDeleteCallback(response)
+{
+	if(response == 'yes'){
+		document.form.BUTTON_ID.value = 'Delete';
+		document.form.submit();
+		grayOut(true);
+	}
+}
+</ui:script>
+</ui:page-group>

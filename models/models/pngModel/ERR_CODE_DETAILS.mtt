@@ -1,0 +1,34 @@
+<document IsDocView="true">
+  <properties>
+    <property Name="LOAD_ID" PhysicalName="LOAD_ID">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="LOAD_ID" />
+    </property>
+    <property Name="MKTNG_PGM_NBR" PhysicalName="MKTNG_PGM_NBR">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="MKTNG_PGM_NBR" />
+    </property>
+    <property Name="ERR_DESC" PhysicalName="ERR_DESC">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="ERR_DESC" />
+    </property>
+    <property Name="ERROR_CODE_NBR" PhysicalName="ERROR_CODE_NBR">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="ERROR_CODE_NBR" />
+    </property>
+  </properties>
+  <keys />
+  <links />
+  <docFacets>
+    <mdmWebServiceFacet />
+    <miscFacet Active="true" />
+    <mdmConfigFacet SchemaGen="false" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql OnMDMTables="true" IsSimpleView="true">REPLACE VIEW MDM.ERR_CODE_DETAILS&#xD;
+AS&#xD;
+LOCKING ROW FOR ACCESS&#xD;
+SELECT LOAD_ID,&#xD;
+MKTNG_PGM_NBR,&#xD;
+SYS_ERR_CODE AS ERR_DESC,&#xD;
+COUNT(DISTINCT REGIS_CNSMR_ID_VAL) ERROR_CODE_NBR&#xD;
+FROM MDM.ERR_PRSNA_STG&#xD;
+GROUP BY 1,2,3;</viewsql>
+</document>
+

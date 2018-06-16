@@ -1,0 +1,494 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="118" ShowInBreadCrumbs="true" Version="1.0" Name="userLogin" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="userLogin">
+    <variable Name="alertGreen" Type="string" Comment=""/>
+    <variable Name="alertRed" Type="string" Comment=""/>
+    <variable Name="search_by_user" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start2">
+      <actions/>
+      <next_nodes>
+        <next_node Name="User Audit Report"/>
+      </next_nodes>
+    </start>
+    <done Name="done3">
+      <actions/>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="User Audit Report" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="userLoginInfo.pgl">
+      <pre_actions>
+        <action>
+          <SET Var="paginateStart" FromValue="{int(ifElse($thisParam/START_COUNT/@Value = null, 0, $thisParam/START_COUNT/@Value))}"/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ABC/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="filterXml">
+            <FILTERS/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="timeXml">
+            <TIME/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'SEARCH' or $thisParam/BUTTON_ID/@Value='createFavourite'">
+            <THEN>
+              <SET DocVar="thisParam" Property="START_COUNT" FromValue="0"/>
+              <SET Var="search_by_user" FromValue="true"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$search_by_user = 'true'">
+            <!--<IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'SEARCH'">-->
+            <THEN>
+              <SET Var="paginateStart" FromValue="{int(ifElse($thisParam/START_COUNT/@Value = null, 0, $thisParam/START_COUNT/@Value))}"/>
+              <IF_TEST Test="strlen($thisParam/LOGIN_NAME/@Value)!=0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="test">
+                    <TEST>
+                      <LOGIN_NAME Value="{trim($thisParam/LOGIN_NAME/@Value)}" MatchBy="CONTAINS"/>
+                    </TEST>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="filterXml" FromSelectList="$test/*"/>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$test/*"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/OPERATION/@Value='LOGIN_OPERATION'">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="login">
+                    <ABC>
+                      <login Value="User Login Information"/>
+                    </ABC>
+                  </TO_DOCVAR>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/OPERATION/@Value='LOGOUT_OPERATION'">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="login">
+                    <ABC>
+                      <login Value="User Logout Information"/>
+                    </ABC>
+                  </TO_DOCVAR>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/OPERATION/@Value=''">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="login">
+                    <ABC>
+                      <login Value="Search Results"/>
+                    </ABC>
+                  </TO_DOCVAR>
+                </THEN>
+              </IF_TEST>
+              <!--IF_TEST Test="$thisParam/BUTTON_ID/@Value='SEARCH'">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="login">
+                    <ABC>
+                      <login Value="" />
+                    </ABC>
+                  </TO_DOCVAR>
+                </THEN>
+              </IF_TEST-->
+              <IF_TEST Test="$thisParam/ActiveUsers/@Value='true'">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="test">
+                    <TEST>
+                      <ActiveUsers Value="{$thisParam/ActiveUsers/@Value='true'}" MatchBy="CONTAINS"/>
+                    </TEST>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="filterXml" FromSelectList="$test/*"/>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$test/*"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($thisParam/OPERATION/@Value)!=0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="test">
+                    <TEST>
+                      <OPERATION Value="{trim($thisParam/OPERATION/@Value)}" MatchBy="CONTAINS"/>
+                    </TEST>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="filterXml" FromSelectList="$test/*"/>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$test/*"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($thisParam/RESULT/@Value)!=0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="test">
+                    <TEST>
+                      <RESULT Value="{trim($thisParam/RESULT/@Value)}" MatchBy="EQUAL"/>
+                    </TEST>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="filterXml" FromSelectList="$test/*"/>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$test/*"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($thisParam/REMOTE_ADDRESS/@Value)!=0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="test">
+                    <TEST>
+                      <REMOTE_ADDRESS Value="{trim($thisParam/REMOTE_ADDRESS/@Value)}" MatchBy="CONTAINS"/>
+                    </TEST>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="filterXml" FromSelectList="$test/*"/>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$test/*"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($thisParam/StartDate/@Value)!=0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="test">
+                    <TEST>
+                      <TIME_STAMP Value="{trim($thisParam/StartDate/@Value)}" MatchBy="GREATER_EQUAL"/>
+                    </TEST>
+                  </TO_DOCVAR>
+                  <TO_DOCVAR AssignToVar="page_display_var">
+                    <TEST>
+                      <StartDate Value="{$thisParam/StartDate/@Value}"/>
+                    </TEST>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="timeXml" FromSelectList="$test/*"/>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$page_display_var/*"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($thisParam/EndDate/@Value)!=0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="test">
+                    <TEST>
+                      <TIME_STAMP Value="{concat($thisParam/EndDate/@Value,' 23:59:59:000')}" MatchBy="LESS_EQUAL"/>
+                    </TEST>
+                  </TO_DOCVAR>
+                  <TO_DOCVAR AssignToVar="page_display_var">
+                    <TEST>
+                      <EndDate Value="{$thisParam/EndDate/@Value}"/>
+                    </TEST>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="timeXml" FromSelectList="$test/*"/>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$page_display_var/*"/>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/ActiveUsers/@Value='true' ">
+            <THEN>
+              <SET Var="query" FromValue="select ID,LOGIN_NAME,REMOTE_ADDRESS,OPERATION,AUDIT_RESULT as &quot;RESULT&quot;,TIME_STAMP from usr_security_audit sa where time_stamp >= ( select   max(audit.TIME_STAMP) from  usr_security_audit  audit where  sa.LOGIN_NAME = audit .LOGIN_NAME) and operation = 'LOGIN_OPERATION' and audit_result='SUCCESSFUL_LOGIN' "/>
+              <IF_TEST Test="strlen($thisParam/LOGIN_NAME/@Value)!=0">
+                <THEN>
+                  <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+                    <LOGIN_NAME/>
+                  </FORM_SEARCH_FILTER>
+                  <IF_TEST Test="$filters/FILTER/LOGIN_NAME/@MatchBy = 'EQUAL'">
+                    <THEN>
+                      <SET Var="loginname" FromValue=" and login_name =  '{$filters/FILTER/LOGIN_NAME/@Value}' "/>
+                      <SET Var="query" FromValue="{concat($query, $loginname)}"/>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="$filters/FILTER/LOGIN_NAME/@MatchBy = 'STARTS_WITH'">
+                    <THEN>
+                      <SET Var="loginname" FromValue=" and login_name LIKE  '{concat($filters/FILTER/LOGIN_NAME/@Value ,'%')}' "/>
+                      <SET Var="query" FromValue="{concat($query, $loginname)}"/>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="$filters/FILTER/LOGIN_NAME/@MatchBy = 'ENDS_WITH'">
+                    <THEN>
+                      <SET Var="loginname" FromValue=" and login_name LIKE  '{concat('%', $filters/FILTER/LOGIN_NAME/@Value)}' "/>
+                      <SET Var="query" FromValue="{concat($query, $loginname)}"/>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="$filters/FILTER/LOGIN_NAME/@MatchBy = 'CONTAINS'">
+                    <THEN>
+                      <SET Var="loginname" FromValue=" and login_name LIKE  '{concat('%', $filters/FILTER/LOGIN_NAME/@Value ,'%')}' "/>
+                      <SET Var="query" FromValue="{concat($query, $loginname)}"/>
+                    </THEN>
+                  </IF_TEST>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($thisParam/OPERATION/@Value)!=0">
+                <THEN>
+                  <SET Var="operation" FromValue=" and operation = '{$thisParam/OPERATION/@Value}' "/>
+                  <SET Var="query" FromValue="{concat($query, $operation)}"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($thisParam/RESULT/@Value)!=0">
+                <THEN>
+                  <SET Var="result" FromValue=" and audit_result = '{$thisParam/RESULT/@Value}' "/>
+                  <SET Var="query" FromValue="{concat($query, $result)}"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($thisParam/REMOTE_ADDRESS/@Value)!=0">
+                <THEN>
+                  <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+                    <REMOTE_ADDRESS/>
+                  </FORM_SEARCH_FILTER>
+                  <IF_TEST Test="$filters/FILTER/REMOTE_ADDRESS/@MatchBy = 'EQUAL'">
+                    <THEN>
+                      <SET Var="remoteaddress" FromValue=" and remote_address =  '{$filters/FILTER/REMOTE_ADDRESS/@Value}' "/>
+                      <SET Var="query" FromValue="{concat($query, $remoteaddress)}"/>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="$filters/FILTER/REMOTE_ADDRESS/@MatchBy = 'STARTS_WITH'">
+                    <THEN>
+                      <SET Var="remoteaddress" FromValue=" and remote_address LIKE  '{concat($filters/FILTER/REMOTE_ADDRESS/@Value ,'%')}' "/>
+                      <SET Var="query" FromValue="{concat($query, $remoteaddress)}"/>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="$filters/FILTER/REMOTE_ADDRESS/@MatchBy = 'ENDS_WITH'">
+                    <THEN>
+                      <SET Var="remoteaddress" FromValue=" and remote_address LIKE  '{concat('%', $filters/FILTER/REMOTE_ADDRESS/@Value)}' "/>
+                      <SET Var="query" FromValue="{concat($query, $remoteaddress)}"/>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="$filters/FILTER/REMOTE_ADDRESS/@MatchBy = 'CONTAINS'">
+                    <THEN>
+                      <SET Var="remoteaddress" FromValue=" and remote_address LIKE  '{concat('%', $filters/FILTER/REMOTE_ADDRESS/@Value ,'%')}' "/>
+                      <SET Var="query" FromValue="{concat($query, $remoteaddress)}"/>
+                    </THEN>
+                  </IF_TEST>
+                  <!--<SET Var="remoteaddress" FromValue=" and remote_address = '{$thisParam/REMOTE_ADDRESS/@Value}' "/>
+          <SET Var="query" FromValue="{concat($query, $remoteaddress)}"/>-->
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($thisParam/StartDate/@Value)!=0">
+                <THEN>
+                  <REQUEST ServiceName="ADMIN_UI" Name="convertLocalDateToWWREFormat" AssignToVar="mydate" HandleException="true">
+                    <Input Value="{$thisParam/StartDate/@Value}"/>
+                  </REQUEST>
+                  <SET Var="startdate" FromValue=" and time_stamp(date)  >= date'{$mydate/Output/@Value}' "/>
+                  <SET Var="query" FromValue="{concat($query, $startdate)}"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($thisParam/EndDate/@Value)!=0">
+                <THEN>
+                  <REQUEST ServiceName="ADMIN_UI" Name="convertLocalDateToWWREFormat" AssignToVar="mydate" HandleException="true">
+                    <Input Value="{$thisParam/EndDate/@Value}"/>
+                  </REQUEST>
+                  <SET Var="enddate" FromValue=" and time_stamp(date)  &lt;= date'{$mydate/Output/@Value}' "/>
+                  <SET Var="query" FromValue="{concat($query, $enddate)}"/>
+                </THEN>
+              </IF_TEST>
+              <!-- Added by Ankit for MDM-5216 -->
+              <EXECUTE_SQL_QUERY Value="{$query}" AssignToVar="usrAudit" StartAtRow="{string($paginateStart)}" ReturnRowCount="yes" MaxRows="{$tableDefaultRows}"/>
+            </THEN>
+            <ELSE>
+              <!-- Code added for fix of issue MDM-1922 by Ankur Goyal-->
+              <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+                <TO_XML SelectList="$filterXml/*"/>
+              </FORM_SEARCH_FILTER>
+              <TO_DOCVAR AssignToVar="tt">
+                <A/>
+              </TO_DOCVAR>
+              <FOR_EACH SelectList="$filters/FILTER" CurrentElement="thisFilter">
+                <APPEND_TO_XML SelectList="$tt">
+                  <TO_XML SelectList="$thisFilter/*"/>
+                </APPEND_TO_XML>
+              </FOR_EACH>
+              <!--MDM-1922 ends/-->
+              <GET_DOCUMENT Name="USR_SECURITY_AUDIT" AssignToVar="usrAudit" ServiceName="USER_SECURITY" MaxRows="{$tableDefaultRows}" StartAtRow="{$paginateStart}" ReturnRowCount="true" DirtyRead="true">
+                <!--Code removed for fix of issue MDM-1922 by Ankur Goyal
+ <TO_XML SelectList="$filterXml/*"/>-->
+                <TO_XML SelectList="$tt/*"/>
+                <TO_XML SelectList="$timeXml/*"/>
+                <!--Code added for fix fix of issue MDM-1922 -->
+                <ORDER_BY>
+                  <TIME_STAMP Sort="Descending"/>
+                </ORDER_BY>
+              </GET_DOCUMENT>
+            </ELSE>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="OperSearchType">
+            <ABC>
+              <OPER_SEARCH_TYPES>
+                <SEARCH_TYPE>
+                  <TYPE_ID Value="TYPE_NAME"/>
+                  <VALUE_ID Value=""/>
+                  <DESCRIPTION Value="All"/>
+                </SEARCH_TYPE>
+                <SEARCH_TYPE>
+                  <TYPE_ID Value="TYPE_NAME"/>
+                  <VALUE_ID Value="LOGIN_OPERATION"/>
+                  <DESCRIPTION Value="LOGIN_OPERATION"/>
+                </SEARCH_TYPE>
+                <SEARCH_TYPE>
+                  <TYPE_ID Value="TYPE_NAME"/>
+                  <VALUE_ID Value="LOGOUT_OPERATION"/>
+                  <DESCRIPTION Value="LOGOUT_OPERATION"/>
+                </SEARCH_TYPE>
+              </OPER_SEARCH_TYPES>
+            </ABC>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="ResultSearchType">
+            <ABC>
+              <RESULT_SEARCH_TYPES>
+                <SEARCH_TYPE>
+                  <TYPE_ID Value="TYPE_NAME"/>
+                  <VALUE_ID Value=""/>
+                  <DESCRIPTION Value="All"/>
+                </SEARCH_TYPE>
+                <SEARCH_TYPE>
+                  <TYPE_ID Value="TYPE_NAME"/>
+                  <VALUE_ID Value="SUCCESSFUL_LOGIN"/>
+                  <DESCRIPTION Value="SUCCESSFUL_LOGIN"/>
+                </SEARCH_TYPE>
+                <SEARCH_TYPE>
+                  <TYPE_ID Value="TYPE_NAME"/>
+                  <VALUE_ID Value="SUCCESSFUL_LOGOUT"/>
+                  <DESCRIPTION Value="SUCCESSFUL_LOGOUT"/>
+                </SEARCH_TYPE>
+                <!--SEARCH_TYPE>
+                  <TYPE_ID Value="TYPE_NAME"/>
+                  <VALUE_ID Value="SESSION_EXPIRED"/>
+                  <DESCRIPTION Value="SESSION_EXPIRED"/>
+                </SEARCH_TYPE-->
+                <SEARCH_TYPE>
+                  <TYPE_ID Value="TYPE_NAME"/>
+                  <VALUE_ID Value="INVALID_LOGIN_NAME"/>
+                  <DESCRIPTION Value="INVALID_LOGIN_NAME"/>
+                </SEARCH_TYPE>
+                <SEARCH_TYPE>
+                  <TYPE_ID Value="TYPE_NAME"/>
+                  <VALUE_ID Value="INVALID_PASSWORD"/>
+                  <DESCRIPTION Value="INVALID_PASSWORD"/>
+                </SEARCH_TYPE>
+                <SEARCH_TYPE>
+                  <TYPE_ID Value="TYPE_NAME"/>
+                  <VALUE_ID Value="PASSWORD_EXPIRED"/>
+                  <DESCRIPTION Value="PASSWORD_EXPIRED"/>
+                </SEARCH_TYPE>
+                <SEARCH_TYPE>
+                  <TYPE_ID Value="TYPE_NAME"/>
+                  <VALUE_ID Value="LOCKED_USER"/>
+                  <DESCRIPTION Value="This user account has been locked."/>
+                </SEARCH_TYPE>
+              </RESULT_SEARCH_TYPES>
+            </ABC>
+          </TO_DOCVAR>
+          <!-- </OPER_SEARCH_TYPES>-->
+          <TO_DOCVAR AssignToVar="rulz">
+            <ABC>
+              <DQ_RULE>
+                <TO_XML SelectList="$usrAudit/*"/>
+              </DQ_RULE>
+            </ABC>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="alertz">
+            <ABC>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </ABC>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="page">
+            <ABC>
+              <StartRowCount Value="{$paginateStart}"/>
+              <TotalRowCount Value="{$usrAudit/@TotalRowCount}"/>
+              <maxRows Value="{$tableDefaultRows}"/>
+            </ABC>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$page/*"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$OperSearchType/*"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$ResultSearchType/*"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$alertz/*"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$login/*"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$rulz/*"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$thisParam/*"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="alertRed" FromValue=""/>
+          <SET Var="alertGreen" FromValue=""/>
+          <IF_TEST Test="$userAction='delete'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="selectedId">
+                <ID>
+                  <TO_XML SelectList="$pglFormOutput/SELECTED_ID"/>
+                </ID>
+              </TO_DOCVAR>
+              <FOR_EACH SelectList="$selectedId/SELECTED_ID" CurrentElement="currSelectedId">
+                <REMOVE_DOCUMENT Name="USR_SECURITY_AUDIT" ServiceName="USER_SECURITY">
+                  <ID Value="{$currSelectedId/@Value}"/>
+                </REMOVE_DOCUMENT>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='deleteAll'">
+            <THEN>
+              <REMOVE_DOCUMENT Name="USR_SECURITY_AUDIT" ServiceName="USER_SECURITY"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='SEARCH'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="User Audit Report" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='SHOWALL'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='delete'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="User Audit Report" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='deleteAll'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="User Audit Report" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='search_button'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+	  <else_if_cond Value="$userAction ='Clear'">
+        <next_nodes OutputVar="{outputXml,xml}" />
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done3" Description=""/>
+          <next_node Name="User Audit Report" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10" compId="MgcDashboard1" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="3" textAttrsKey0="alertGreen : string" textAttrsKey1="alertRed : string" textAttrsKey2="search_by_user : string">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="search_by_user" Type="string"/>
+      </variables>
+    </mgcdashboard>
+    <mgcnodes>
+      <start2 font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="75,153">
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+        <textProps text="start2" font="Verdana,0,9" textColor="80,80,80"/>
+      </start2>
+      <done3 font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="384,153">
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+        <textProps text="done3" font="Verdana,0,9" textColor="80,80,80"/>
+      </done3>
+      <mgcnode Name="User Audit" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="228,152" size="732,891">
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+        <textProps text="User Audit" font="Verdana,0,9" textColor="186,12,12"/>
+      </mgcnode>
+    </mgcnodes>
+    <mgcconnectors>
+      <start2>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="70,81,173" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="107,175" endpoint="228,174" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="195,173,4,4" ctrlRect2="135,172,4,4"/>
+      </start2>
+      <mgcnode Name="User Audit Report">
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="244,152" endpoint="244,152" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="true" ctrlRect1="242,75,4,4" ctrlRect2="338,90,4,4" textRect="271,80,43,8">
+          <textProps text="SEARCH" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="244,152" endpoint="244,152" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="true" ctrlRect1="242,75,4,4" ctrlRect2="153,88,4,4" textRect="184,79,30,8">
+          <textProps text="delete" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="244,152" endpoint="244,152" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="true" ctrlRect1="242,75,4,4" ctrlRect2="243,11,4,4" textRect="222,41,44,8">
+          <textProps text="deleteAll" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="273,174" endpoint="384,175" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="353,172,4,4" ctrlRect2="298,173,4,4"/>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="244,152" endpoint="244,152" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="242,75,4,4" ctrlRect2="242,75,4,4"/>
+      </mgcnode>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions/>
+    <post_actions/>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

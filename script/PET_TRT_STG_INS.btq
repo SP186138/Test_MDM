@@ -1,0 +1,73 @@
+/***********************************************************************************************************
+SCRIPT:               PET_TRT_STG_INS.BTEQ 
+DESCRIPTION:          This script validates the records received from ETL Staging.
+DEPENDENCY:           
+INPUT:                ETL Staging
+OUTPUT:               MST Staging
+ERRORS:
+SPECIAL INSTRUCTIONS:
+
+CHANGE LOG:
+VERSION              DATE                 AUTHOR                          CHANGES
+1.00                 01/21/2011           TERADATA                        INITIAL VERSION
+2.00                 08/22/2011           TERADATA                        Change OF Failure-BadFile
+3.00                 10/31/2011           TERADATA                        Removal of Deletes as  part of ||elism
+4.00                 03/26/2012		  TERADATA                        Made change in insert to LOAD_INFO to
+                                                                          manipulate LA data
+4.5.3                02/03/2014           TERADATA                        Modified code handle orphan traits
+***********************************************************************************************************/
+
+.logon $TDPID/$TDUSER,$TDPWD
+
+ 
+.SET ERROROUT STDOUT;
+.SET SESSION CHARSET 'UTF8';
+.SET ERRORLEVEL 3624 SEVERITY 0
+
+
+INSERT INTO PET_TRT_STG
+(MKTNG_PGM_NBR, 
+REGIS_CNSMR_ID_VAL, 
+PET_SEQ_NBR, 
+TRT_ID, 
+PET_TRT_DATE, 
+PET_TRT_INTEGRE, 
+PET_TRT_TXT, 
+PET_TRT_SEQ_NBR, 
+RECORD_IND,
+SYNC_STATUS,
+SYS_TARGET_ID,
+SYS_SOURCE
+)
+SELECT 
+STG.MKTNG_PGM_NBR, 
+STG.REGIS_CNSMR_ID_VAL, 
+STG.PET_SEQ_NBR, 
+STG.TRT_ID, 
+STG.PET_TRT_DATE, 
+STG.PET_TRT_INTEGRE, 
+STG.PET_TRT_TXT, 
+STG.PET_TRT_SEQ_NBR, 
+STG.RECORD_IND,
+'VALIDATED',
+b.SOURCE_id,
+TRIM(CAST(STG.LOAD_ID AS INTEGER))
+FROM $ETL_DB.PET_TRT_STG STG
+JOIN
+LOAD_CONTROL B
+ON
+STG.LOAD_ID = B.LOAD_ID
+AND B.LOAD_TYPE='ETL'
+
+WHERE
+(STG.MKTNG_PGM_NBR ,STG.REGIS_CNSMR_ID_VAL ,STG.LOAD_ID) IN (SEL MKTNG_PGM_NBR,REGIS_CNSMR_ID_VAL,LOAD_ID FROM $ETL_DB.PET_STG ) AND --Release 4.5.3
+(STG.MKTNG_PGM_NBR ,STG.REGIS_CNSMR_ID_VAL ,STG.LOAD_ID)
+NOT IN
+(SEL MKTNG_PGM_NBR ,REGIS_CNSMR_ID_VAL ,LOAD_ID FROM VALIDATION_ERR_$BTCH GROUP BY 1,2,3)
+and stg.LOAD_ID IN (SEL LOAD_ID FROM VALIDATION_$BTCH)
+QUALIFY RANK() OVER(PARTITION BY STG.MKTNG_PGM_NBR,STG.REGIS_CNSMR_ID_VAL,b.SOURCE_ID
+ORDER BY STG.LOAD_ID DESC) = 1;
+
+.IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE
+
+.exit

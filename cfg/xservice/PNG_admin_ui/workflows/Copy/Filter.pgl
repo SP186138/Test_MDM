@@ -1,0 +1,41 @@
+<ui:page-group version="3" xmlns:ui="http://www.teradata.com/ui" name="studio.templates.simple_form" source="studio.controller:load">
+ <ui:container id="topMostContainter" showFavorite="true"  displayText="Manage Output Staging">
+<ui:help displayPage="{$pages:CopyMasterToOutputHelp}" />
+   <ui:step id="topMostStep">
+   <ui:container id="topContainer" >
+<!--Line added for issue MDM-1937 by Ankur Goyal-->
+      <ui:step id="success" >
+          <ui:field-group id="leftFields1" columns="3">
+        <ui:image src="/alert_green_static.gif" displayCondition="{string-length($root/AlertGreen/@Value) != 0}" />
+        <ui:display-field value="{$root/AlertGreen/@Value}" displayCondition="{string-length($root/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen" />
+      </ui:field-group>
+      <ui:field-group id="leftFields1" columns="3">
+        <ui:image src="/alert_green_static.gif" displayCondition="{string-length($root/AlertRed/@Value) != 0}" />
+        <ui:display-field value="{$root/AlertRed/@Value}" displayCondition="{string-length($root/AlertRed/@Value) != 0}" name="error" class="requiredIndicator" src="/alert_ani.gif" />
+      </ui:field-group>
+      <ui:container id="filterControls">
+        <ui:step displayText="Filters" id="main">
+          <ui:field-group columns="2">
+            <ui:dropdown id="SOURCE" name="SOURCE" displayText="Source" value="MASTER" title="CopyMasterDataSource">
+              <ui:option id="MASTER" value="MASTER" />
+              <ui:option id="BACKEND" value="BACKEND" />
+              <ui:option id="BOTh" value="BOTH" />
+            </ui:dropdown>
+            <ui:dropdown id="CLASS" name="CLASS" displayText="TableClass" value="MASTER" title="CopyMasterDataTableClass">
+              <ui:option id="MASTER" value="MASTER" />
+              <ui:option id="TRANSACTION" value="TRANSACTION" />
+              <ui:option id="PLAN" value="PLAN" />
+            </ui:dropdown>
+            <ui:checkbox id="ACTIVE" name="ACTIVE" displayText="Active" value="true" title="CopyMasterDataActive"/>
+          </ui:field-group>
+        </ui:step>
+      </ui:container>
+      <ui:buttons>
+        <ui:button id="COPY" name="COPY" displayText="Copy" />
+      </ui:buttons>
+    </ui:step>
+  </ui:container>     
+   </ui:step>
+ </ui:container>
+</ui:page-group>
+

@@ -1,0 +1,1013 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="3" ShowInBreadCrumbs="true" Version="1.0" Name="manageoptout" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="manageoptout">
+    <variable Name="selectedMatchCnsmrId" Type="string" Comment=""/>
+    <variable Name="selectedHshldId" Type="string" Comment=""/>
+    <variable Name="selectedLegalEnt" Type="string" Comment=""/>
+    <variable Name="msg" Type="string" Comment=""/>
+    <variable Name="recMktngPgm" Type="xml" Comment=""/>
+    <variable Name="recSubscrptnOpt" Type="xml" Comment=""/>
+    <variable Name="recRegisPrsna" Type="xml" Comment=""/>
+    <variable Name="mktngPgmDetails" Type="xml" Comment=""/>
+    <variable Name="subscrptnDetails" Type="xml" Comment=""/>
+    <variable Name="matchdCnsmrDetails" Type="xml" Comment=""/>
+    <variable Name="regisCnsmrDetails" Type="xml" Comment=""/>
+    <variable Name="searchResultOpt" Type="xml" Comment=""/>
+    <variable Name="rec" Type="xml" Comment=""/>
+    <variable Name="var1" Type="string" Comment=""/>
+    <variable Name="varMC" Type="string" Comment=""/>
+    <variable Name="varRG" Type="string" Comment=""/>
+    <variable Name="prsnaIdsFinal2" Type="string" Comment=""/>
+    <variable Name="mktngIdsFinal2" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start0">
+      <actions>
+        <action>
+          <SET Var="selectedMatchCnsmrId" FromValue="{$thisParam/Match_Consumer_Id/@Value}"/>
+          <SET Var="selectedHshldId" FromValue="{$thisParam/HouseHoldId/@Value}"/>
+          <SET Var="selectedLegalEnt" FromValue="{$thisParam/LegalNbr/@Value}"/>
+          <!--<EXECUTE_SQL_QUERY Value="{concat('LOCK ROW FOR ACCESS SELECT DISTINCT MKTNG_PGM_NBR,MKTNG_PGM_NAME FROM  V_MATCHD_CNSMR_PRSNA WHERE HSHLD_PRSNA_ID=', $selectedHshldId,' ORDER BY MKTNG_PGM_NAME')}" AssignToVar="recMktngPgm" ReturnRowCount="yes" MaxRows="5000"/>-->
+          <EXECUTE_SQL_QUERY Value="{concat('LOCK ROW FOR ACCESS SEL MKTNG_PGM_1.MKTNG_PGM_NBR,MKTNG_PGM_NAME FROM MATCHD_CNSMR_PRSNA MATCHD_CNSMR_PRSNA_1 JOIN REGIS_PRSNA REGIS_PRSNA_1 ON REGIS_PRSNA_1.MATCHD_CNSMR_PRSNA_ID=MATCHD_CNSMR_PRSNA_1.MATCHD_CNSMR_PRSNA_ID AND REGIS_PRSNA_1.LEGAL_ENT_NBR=MATCHD_CNSMR_PRSNA_1.LEGAL_ENT_NBR JOIN MKTNG_PGM MKTNG_PGM_1 ON REGIS_PRSNA_1.MKTNG_PGM_NBR = MKTNG_PGM_1.MKTNG_PGM_NBR AND MKTNG_PGM_1.LEGAL_ENT_NBR=MATCHD_CNSMR_PRSNA_1.LEGAL_ENT_NBR WHERE MATCHD_CNSMR_PRSNA_1.MATCHD_CNSMR_PRSNA_ID=', $selectedMatchCnsmrId,' AND MATCHD_CNSMR_PRSNA_1.LEGAL_ENT_NBR=', $selectedLegalEnt,' GROUP BY MKTNG_PGM_1.MKTNG_PGM_NBR,MKTNG_PGM_NAME ORDER BY MKTNG_PGM_NAME')}" AssignToVar="recMktngPgm" ReturnRowCount="yes" MaxRows="5000"/>
+          <TO_DOCVAR AssignToVar="mktngPgmDetails">
+            <mktngDetails>
+              <TO_XML SelectList="$recMktngPgm/*"/>
+            </mktngDetails>
+          </TO_DOCVAR>
+          <EXECUTE_SQL_QUERY Value="{concat('LOCK ROW FOR ACCESS SEL MKTNG_PGM_1.MKTNG_PGM_NBR,REGIS_PRSNA_1.REGIS_PRSNA_ID FROM MATCHD_CNSMR_PRSNA MATCHD_CNSMR_PRSNA_1 JOIN REGIS_PRSNA REGIS_PRSNA_1 ON REGIS_PRSNA_1.MATCHD_CNSMR_PRSNA_ID=MATCHD_CNSMR_PRSNA_1.MATCHD_CNSMR_PRSNA_ID AND REGIS_PRSNA_1.LEGAL_ENT_NBR=MATCHD_CNSMR_PRSNA_1.LEGAL_ENT_NBR JOIN MKTNG_PGM MKTNG_PGM_1 ON REGIS_PRSNA_1.MKTNG_PGM_NBR = MKTNG_PGM_1.MKTNG_PGM_NBR AND MKTNG_PGM_1.LEGAL_ENT_NBR=MATCHD_CNSMR_PRSNA_1.LEGAL_ENT_NBR WHERE MATCHD_CNSMR_PRSNA_1.MATCHD_CNSMR_PRSNA_ID=', $selectedMatchCnsmrId,' AND MATCHD_CNSMR_PRSNA_1.LEGAL_ENT_NBR=', $selectedLegalEnt,' GROUP BY MKTNG_PGM_1.MKTNG_PGM_NBR,REGIS_PRSNA_1.REGIS_PRSNA_ID ORDER BY REGIS_PRSNA_ID')}" AssignToVar="recRegisPrsna" ReturnRowCount="yes" MaxRows="5000"/>
+          <!--<EXECUTE_SQL_QUERY Value="{concat('LOCK ROW FOR ACCESS SELECT DISTINCT SUBSCRPTN_OPT_NBR,SUBSCRPTN_OPT_NAME FROM  V_MATCHD_CNSMR_PRSNA WHERE HSHLD_PRSNA_ID=', $selectedHshldId,' ORDER BY SUBSCRPTN_OPT_NAME ')}" AssignToVar="recSubscrptnOpt" ReturnRowCount="yes" MaxRows="5000"/>-->
+          <FOR_EACH SelectList="$recRegisPrsna/SQL_RESULT" CurrentElement="regisDetails">
+            <SET Var="prsnaIds" FromValue="{concat($regisDetails/REGIS_PRSNA_ID/@Value,',')}"/>
+            <SET Var="prsnaIdsFinal1" FromValue="{concat($prsnaIdsFinal1,$prsnaIds)}"/>
+            <SET Var="mktngIds" FromValue="{concat($regisDetails/MKTNG_PGM_NBR/@Value,',')}"/>
+            <SET Var="mktngIdsFinal1" FromValue="{concat($mktngIdsFinal1,$mktngIds)}"/>
+          </FOR_EACH>
+          <SET Var="prsnaIdsFinal2" FromValue="{subString($prsnaIdsFinal1,0,strlen($prsnaIdsFinal1)-1)}"/>
+          <SET Var="mktngIdsFinal2" FromValue="{subString($mktngIdsFinal1,0,strlen($mktngIdsFinal1)-1)}"/>
+          <!--GET_DOCUMENT Name="V_MATCHD_CNSMR_PRSNA" AssignToVar="recSubscrptnOpt" DirtyRead="true" MaxRows="5000" HandleException="true" ReturnRowCount="yes">
+            <OR>
+              <TO_XML SelectList="$recRegisPrsna/SQL_RESULT/REGIS_PRSNA_ID" />
+            </OR>
+            <OR>
+              <TO_XML SelectList="$recRegisPrsna/SQL_RESULT/MKTNG_PGM_NBR" />
+            </OR>
+            <SELECT>
+              <SUBSCRPTN_OPT_NBR />
+              <SUBSCRPTN_OPT_NAME />
+            </SELECT>
+            <ORDER_BY>
+              <SUBSCRPTN_OPT_NBR Sort="Ascending" />
+            </ORDER_BY>
+          </GET_DOCUMENT-->
+          <!--EXECUTE_SQL_QUERY Value="{concat('LOCK ROW FOR ACCESS SELECT DISTINCT SUBSCRPTN_OPT_NBR,SUBSCRPTN_OPT_NAME  FROM  V_MATCHD_CNSMR_PRSNA WHERE REGIS_PRSNA_ID IN (',$prsnaIdsFinal2,') AND MKTNG_PGM_NBR IN (',$mktngIdsFinal2,') ORDER BY SUBSCRPTN_OPT_NBR')}" AssignToVar="recSubscrptnOpt" ReturnRowCount="yes" MaxRows="5000"/-->
+          <EXECUTE_SQL_QUERY Value="{concat('LOCKING ROW FOR ACCESS SELECT  REGIS_PRSNA_1.SUBSCRPTN_OPT_NBR AS SUBSCRPTN_OPT_NBR ,SUBSCRPTN_OPT_1.SUBSCRPTN_OPT_NAME FROM REGIS_PRSNA_POSTL_ADDR REGIS_PRSNA_1 JOIN SUBSCRPTN_OPT SUBSCRPTN_OPT_1 ON REGIS_PRSNA_1.SUBSCRPTN_OPT_NBR=SUBSCRPTN_OPT_1.SUBSCRPTN_OPT_NBR AND REGIS_PRSNA_1.MKTNG_PGM_NBR = SUBSCRPTN_OPT_1.MKTNG_PGM_NBR WHERE REGIS_PRSNA_1.REGIS_PRSNA_ID IN (',$prsnaIdsFinal2,') AND REGIS_PRSNA_1.MKTNG_PGM_NBR IN (',$mktngIdsFinal2,') UNION SELECT  REGIS_PRSNA_1.SUBSCRPTN_OPT_NBR AS SUBSCRPTN_OPT_NBR ,SUBSCRPTN_OPT_1.SUBSCRPTN_OPT_NAME FROM REGIS_PRSNA_PHONE REGIS_PRSNA_1 JOIN SUBSCRPTN_OPT SUBSCRPTN_OPT_1 ON REGIS_PRSNA_1.SUBSCRPTN_OPT_NBR=SUBSCRPTN_OPT_1.SUBSCRPTN_OPT_NBR AND REGIS_PRSNA_1.MKTNG_PGM_NBR = SUBSCRPTN_OPT_1.MKTNG_PGM_NBR WHERE REGIS_PRSNA_1.REGIS_PRSNA_ID IN (',$prsnaIdsFinal2,') AND REGIS_PRSNA_1.MKTNG_PGM_NBR IN (',$mktngIdsFinal2,') UNION SELECT  REGIS_PRSNA_1.SUBSCRPTN_OPT_NBR AS SUBSCRPTN_OPT_NBR ,SUBSCRPTN_OPT_1.SUBSCRPTN_OPT_NAME FROM REGIS_PRSNA_EMAIL_ADDR REGIS_PRSNA_1 JOIN SUBSCRPTN_OPT SUBSCRPTN_OPT_1 ON REGIS_PRSNA_1.SUBSCRPTN_OPT_NBR=SUBSCRPTN_OPT_1.SUBSCRPTN_OPT_NBR AND REGIS_PRSNA_1.MKTNG_PGM_NBR = SUBSCRPTN_OPT_1.MKTNG_PGM_NBR WHERE REGIS_PRSNA_1.REGIS_PRSNA_ID IN (',$prsnaIdsFinal2,') AND REGIS_PRSNA_1.MKTNG_PGM_NBR IN (',$mktngIdsFinal2,')')}" AssignToVar="recSubscrptnOpt" ReturnRowCount="yes" MaxRows="5000"/>
+          <TO_DOCVAR AssignToVar="subscrptnDetails">
+            <subDetails>
+              <TO_XML SelectList="$recSubscrptnOpt/*"/>
+            </subDetails>
+          </TO_DOCVAR>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Manage Opt"/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Manage Opt" ShowInBreadCrumbs="HIDE" Template="manageoptout.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <SET Var="startRow" FromValue="{$thisParam/START_COUNT/@Value}"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value ='LOAD_DETAILS_INDIVIDUAL' or $thisParam/BUTTON_ID/@Value ='SEARCH'">
+            <THEN/>
+            <ELSE>
+              <EXECUTE_SQL_QUERY Value="{concat('LOCK ROW FOR ACCESS SELECT HSHLD_PRSNA_ID,MATCHD_CNSMR_PRSNA_ID,REGIS_PRSNA_ID,GVN_NAME,FAMLY_NAME,NATIONAL_ID_NBR,MKTNG_PGM_NBR,MKTNG_PGM_NAME,EMAIL_ADDR_TXT_1,FULL_PHONE_NUM_1,FULL_ADDRESS,SUBSCRPTN_OPT_NBR,SUBSCRPTN_OPT_NAME,SUBSCRPTN_OPT_IND,CNSMR_CHCE_DATETM,CNTCT_POINT_TYPE_CODE,CNTCT_POINT_CATEG_CODE,CNTCT_POINT_TYPE,CNTCT_POINT_CATEG_NAME FROM  V_MATCHD_CNSMR_PRSNA WHERE REGIS_PRSNA_ID IN (',$prsnaIdsFinal2,') AND MKTNG_PGM_NBR IN (',$mktngIdsFinal2,') ORDER BY REGIS_PRSNA_ID')}" AssignToVar="rec" ReturnRowCount="yes" MaxRows="5000"/>
+              <SET Var="var1" FromValue="no"/>
+              <SET Var="varMC" FromValue="Y"/>
+              <SET Var="varRG" FromValue="Y"/>
+            </ELSE>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <root>
+              <TO_XML SelectList="$rec/*"/>
+              <TO_XML SelectList="$mktngPgmDetails"/>
+              <TO_XML SelectList="$subscrptnDetails"/>
+              <TO_XML SelectList="$matchdCnsmrDetails"/>
+              <TO_XML SelectList="$regisCnsmrDetails"/>
+              <TO_XML SelectList="$searchResultOpt"/>
+              <TotalRowCount Value="{$rec/@TotalRowCount}"/>
+              <START_COUNT Value="{$startRow}"/>
+              <Message Value="{$msg}"/>
+              <DIS_TYPE Value="{$var1}"/>
+              <House_hold Value="{$selectedHshldId}"/>
+              <varMC1 Value="{$varMC}"/>
+              <varRG1 Value="{$varRG}"/>
+            </root>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <ACTION>
+          <IF_TEST Test="$userAction='OPTOUT'">
+            <THEN>
+              <SET Var="phoneOptOutCnt" FromValue="0"/>
+              <SET Var="emailOptOutCnt" FromValue="0"/>
+              <SET Var="addressOptOutCnt" FromValue="0"/>
+              <SET Var="PrevselectedREGIS_PRSNA_ID" FromValue="0"/>
+              <SET Var="PrevselectedMKTNG_PGM_NBR" FromValue="0"/>
+              <FOR_EACH SelectList="$thisParam/SELECTED_ITEM" CurrentElement="currElement">
+                <SET Var="temp" FromValue="{$currElement/@Value}"/>
+                <SET Var="selectedCNTCT_POINT_TYPE_CODE" FromValue="{substringBefore($temp, '#')}"/>
+                <SET Var="selectedCNTCT_POINT_TYPE_CODE" FromValue="{substringAfter($selectedCNTCT_POINT_TYPE_CODE, '=')}"/>
+                <SET Var="temp" FromValue="{substringAfter($temp, '#')}"/>
+                <SET Var="selectedMKTNG_PGM_NBR" FromValue="{substringBefore($temp, '#')}"/>
+                <SET Var="selectedMKTNG_PGM_NBR" FromValue="{substringAfter($selectedMKTNG_PGM_NBR, '=')}"/>
+                <SET Var="temp" FromValue="{substringAfter($temp, '#')}"/>
+                <SET Var="selectedREGIS_PRSNA_ID" FromValue="{substringBefore($temp, '#')}"/>
+                <SET Var="selectedREGIS_PRSNA_ID" FromValue="{substringAfter($selectedREGIS_PRSNA_ID, '=')}"/>
+                <SET Var="temp" FromValue="{substringAfter($temp, '#')}"/>
+                <SET Var="selectedSUBSCRPTN_OPT_NBR" FromValue="{substringBefore($temp, '#')}"/>
+                <SET Var="selectedSUBSCRPTN_OPT_NBR" FromValue="{substringAfter($selectedSUBSCRPTN_OPT_NBR, '=')}"/>
+                <SET Var="temp" FromValue="{substringAfter($temp, '#')}"/>
+                <SET Var="selectedCNTCT_POINT_CATEG_CODE" FromValue="{substringBefore($temp, '#')}"/>
+                <SET Var="selectedCNTCT_POINT_CATEG_CODE" FromValue="{substringAfter($selectedCNTCT_POINT_CATEG_CODE, '=')}"/>
+                <TO_DOCVAR AssignToVar="WHERE_CLAUSE">
+                  <WHERE_CLAUSE>
+                    <REGIS_PRSNA_ID Value="{$selectedREGIS_PRSNA_ID}"/>
+                    <MKTNG_PGM_NBR Value="{$selectedMKTNG_PGM_NBR}"/>
+                    <SUBSCRPTN_OPT_NBR Value="{$selectedSUBSCRPTN_OPT_NBR}"/>
+                    <CNTCT_POINT_CATEG_CODE Value="{$selectedCNTCT_POINT_CATEG_CODE}"/>
+                  </WHERE_CLAUSE>
+                </TO_DOCVAR>
+                <PRINTLN Value="{$WHERE_CLAUSE}"/>
+                <!--EXECUTE_SQL_QUERY Value="LOCK ROW FOR ACCESS SELECT * FROM V_MATCHD_CNSMR_PRSNA WHERE REGIS_PRSNA_ID='{$selectedREGIS_PRSNA_ID}' AND MKTNG_PGM_NBR= '{$selectedMKTNG_PGM_NBR}' AND CNTCT_POINT_CATEG_CODE='{$selectedCNTCT_POINT_CATEG_CODE}' AND SUBSCRPTN_OPT_NBR=COALESCE('{$selectedSUBSCRPTN_OPT_NBR}',0)" AssignToVar="respQuery" ReturnRowCount="yes"/-->
+                <IF_TEST Test="$selectedCNTCT_POINT_TYPE_CODE='E'">
+                  <THEN>
+                    <PRINTLN Value="Inside Email"/>
+                    <EXECUTE_SQL_QUERY Value="LOCK ROW FOR ACCESS SELECT RP.REGIS_PRSNA_ID,RP.MKTNG_PGM_NBR,RP.LEGAL_ENT_NBR,DATA_ORIGIN_SRCE_NBR,SUBSCRPTN_OPT_NBR,GVN_NAME,FAMLY_NAME,EMAIL_ADDR_TXT,NATIONAL_ID_NBR FROM REGIS_PRSNA RP JOIN REGIS_PRSNA_EMAIL_ADDR EMAIL ON RP.MKTNG_PGM_NBR=EMAIL.MKTNG_PGM_NBR AND RP.REGIS_PRSNA_ID=EMAIL.REGIS_PRSNA_ID WHERE RP.REGIS_PRSNA_ID='{$selectedREGIS_PRSNA_ID}' AND RP.MKTNG_PGM_NBR= '{$selectedMKTNG_PGM_NBR}' AND CNTCT_POINT_CATEG_CODE='{$selectedCNTCT_POINT_CATEG_CODE}' AND SUBSCRPTN_OPT_NBR=COALESCE('{$selectedSUBSCRPTN_OPT_NBR}',0)" AssignToVar="respQuery" ReturnRowCount="yes"/>
+                    <!--<MODIFY_DOC_SMART Name="REGIS_PRSNA_EMAIL_ADDR" ServiceName="BCM_MASTER" AssignToVar="respEmail">
+                      <DOCUMENT_CONTEXT>
+                        <TO_XML SelectList="$WHERE_CLAUSE/*"/>
+                      </DOCUMENT_CONTEXT>
+                      <UPDATE_PROPERTIES>
+                        <SUBSCRPTN_OPT_IND Value="O"/>
+                        <CNSMR_CHCE_DATETM Value="{date()}"/>
+                      </UPDATE_PROPERTIES>
+                    </MODIFY_DOC_SMART>-->
+                    <SET Var="emailOptOutCnt" FromValue="{$emailOptOutCnt+1}"/>
+                    <IF_TEST Test="$respQuery/@TotalRowCount!=0">
+                      <THEN>
+                        <!--<ADD_DOCUMENT Name="REGIS_PRSNA_OPT_HIST" ServiceName="BCM_MASTER" AssignToVar="respADD">
+                          <REGIS_PRSNA_ID Value="-{$respQuery/SQL_RESULT/REGIS_PRSNA_ID/@Value}"/>
+                          <MKTNG_PGM_NBR Value="{$respQuery/SQL_RESULT/MKTNG_PGM_NBR/@Value}"/>
+                          <LEGAL_ENT_NBR Value="{$respQuery/SQL_RESULT/LEGAL_ENT_NBR/@Value}"/>
+                          <DATA_SRCE_NBR Value="{$respQuery/SQL_RESULT/DATA_ORIGIN_SRCE_NBR/@Value}"/>
+                          <SUBSCRIPTION_NBR Value="{$respQuery/SQL_RESULT/SUBSCRPTN_OPT_NBR/@Value}"/>
+                          <FIRST_NAME Value="{$respQuery/SQL_RESULT/GVN_NAME/@Value}"/>
+                          <LAST_NAME Value="{$respQuery/SQL_RESULT/FAMLY_NAME/@Value}"/>
+                          <EMAIL_ADDR_TEXT Value="{$respQuery/SQL_RESULT/EMAIL_ADDR_TXT/@Value}"/>
+                          <OPT_IND Value="O"/>
+                          <LOG_SOURCE_ID Value="-999999"/>
+                          <LOG_UPDATE_USER Value="{$userId}"/>
+                          <NATIONAL_ID_NBR Value="{$respQuery/SQL_RESULT/NATIONAL_ID_NBR/@Value}"/>
+                          <CHANNEL_IND Value="E"/>
+                          <OPT_LEVEL_IND Value="R"/>
+                          <OPT_TIME Value="{date()}"/>
+                          <LAST_ACTIVITY_TM Value="{date()}"/>
+                        </ADD_DOCUMENT>-->
+                        <CREATE_DOCUMENT_ID Name="OPT_OUT_NOT_FOUND" AssignToVar="PE_OPTOUT_ID"/>
+                        <ADD_DOC_SMART Name="V_PE_OPT_OUT" ServiceName="BCM_MASTER" AssignToVar="respADD">
+                          <PE_OPTOUT_ID Value="{$PE_OPTOUT_ID/@Value}"/>
+                          <STATUS_FLG Value="Submitted"/>
+                          <REGIS_PRSNA_ID Value="{$respQuery/SQL_RESULT/REGIS_PRSNA_ID/@Value}"/>
+                          <MKTNG_PGM_NBR Value="{$respQuery/SQL_RESULT/MKTNG_PGM_NBR/@Value}"/>
+                          <LEGAL_ENT_NBR Value="{$respQuery/SQL_RESULT/LEGAL_ENT_NBR/@Value}"/>
+                          <DATA_SRCE_NBR Value="{$respQuery/SQL_RESULT/DATA_ORIGIN_SRCE_NBR/@Value}"/>
+                          <SUBSCRPTN_OPT_NBR Value="{$respQuery/SQL_RESULT/SUBSCRPTN_OPT_NBR/@Value}"/>
+                          <GVN_NAME Value="{$respQuery/SQL_RESULT/GVN_NAME/@Value}"/>
+                          <FAMLY_NAME Value="{$respQuery/SQL_RESULT/FAMLY_NAME/@Value}"/>
+                          <EMAIL_ADDR_TEXT Value="{$respQuery/SQL_RESULT/EMAIL_ADDR_TXT/@Value}"/>
+                          <OPT_IND Value="O"/>
+                          <LOG_SOURCE_ID Value="-999999"/>
+                          <LOG_UPDATE_USER Value="{$userId}"/>
+                          <NATIONAL_ID_NBR Value="{$respQuery/SQL_RESULT/NATIONAL_ID_NBR/@Value}"/>
+                          <CHANNEL_IND Value="E"/>
+                          <OPT_LEVEL_IND Value="R"/>
+                          <OPT_TIME Value="{date()}"/>
+                          <LAST_ACTIVITY_TM Value="{date()}"/>
+                        </ADD_DOC_SMART>
+                      </THEN>
+                    </IF_TEST>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$selectedCNTCT_POINT_TYPE_CODE='P'">
+                  <THEN>
+                    <PRINTLN Value="Inside Phone"/>
+                    <EXECUTE_SQL_QUERY Value="LOCK ROW FOR ACCESS SELECT RP.REGIS_PRSNA_ID,RP.MKTNG_PGM_NBR,RP.LEGAL_ENT_NBR,DATA_ORIGIN_SRCE_NBR,SUBSCRPTN_OPT_NBR,GVN_NAME,FAMLY_NAME,FULL_PHONE_NUM,NATIONAL_ID_NBR FROM REGIS_PRSNA RP JOIN REGIS_PRSNA_PHONE PH ON RP.MKTNG_PGM_NBR=PH.MKTNG_PGM_NBR AND RP.REGIS_PRSNA_ID=PH.REGIS_PRSNA_ID WHERE RP.REGIS_PRSNA_ID='{$selectedREGIS_PRSNA_ID}' AND RP.MKTNG_PGM_NBR= '{$selectedMKTNG_PGM_NBR}' AND CNTCT_POINT_CATEG_CODE='{$selectedCNTCT_POINT_CATEG_CODE}' AND SUBSCRPTN_OPT_NBR=COALESCE('{$selectedSUBSCRPTN_OPT_NBR}',0)" AssignToVar="respQuery" ReturnRowCount="yes"/>
+                    <!--<MODIFY_DOC_SMART Name="REGIS_PRSNA_PHONE" ServiceName="BCM_MASTER" AssignToVar="respPhone">
+                      <DOCUMENT_CONTEXT>
+                        <TO_XML SelectList="$WHERE_CLAUSE/*"/>
+                      </DOCUMENT_CONTEXT>
+                      <UPDATE_PROPERTIES>
+                        <SUBSCRPTN_OPT_IND Value="O"/>
+                        <CNSMR_CHCE_DATETM Value="{date()}"/>
+                      </UPDATE_PROPERTIES>
+                    </MODIFY_DOC_SMART>-->
+                    <SET Var="phoneOptOutCnt" FromValue="{$phoneOptOutCnt+1}"/>
+                    <IF_TEST Test="$respQuery/@TotalRowCount!=0">
+                      <THEN>
+                        <!--<ADD_DOCUMENT Name="REGIS_PRSNA_OPT_HIST" ServiceName="BCM_MASTER" AssignToVar="respADD">
+                          <REGIS_PRSNA_ID Value="-{$respQuery/SQL_RESULT/REGIS_PRSNA_ID/@Value}"/>
+                          <MKTNG_PGM_NBR Value="{$respQuery/SQL_RESULT/MKTNG_PGM_NBR/@Value}"/>
+                          <LEGAL_ENT_NBR Value="{$respQuery/SQL_RESULT/LEGAL_ENT_NBR/@Value}"/>
+                          <DATA_SRCE_NBR Value="{$respQuery/SQL_RESULT/DATA_ORIGIN_SRCE_NBR/@Value}"/>
+                          <SUBSCRIPTION_NBR Value="{$respQuery/SQL_RESULT/SUBSCRPTN_OPT_NBR/@Value}"/>
+                          <FIRST_NAME Value="{$respQuery/SQL_RESULT/GVN_NAME/@Value}"/>
+                          <LAST_NAME Value="{$respQuery/SQL_RESULT/FAMLY_NAME/@Value}"/>
+                          <CONTACT_PHONE_NBR Value="{$respQuery/SQL_RESULT/FULL_PHONE_NUM/@Value}"/>
+                          <OPT_IND Value="O"/>
+                          <LOG_SOURCE_ID Value="-999999"/>
+                          <LOG_UPDATE_USER Value="{$userId}"/>
+                          <NATIONAL_ID_NBR Value="{$respQuery/SQL_RESULT/NATIONAL_ID_NBR/@Value}"/>
+                          <CHANNEL_IND Value="P"/>
+                          <OPT_LEVEL_IND Value="R"/>
+                          <OPT_TIME Value="{date()}"/>
+                          <LAST_ACTIVITY_TM Value="{date()}"/>
+                        </ADD_DOCUMENT>-->
+                        <CREATE_DOCUMENT_ID Name="OPT_OUT_NOT_FOUND" AssignToVar="PE_OPTOUT_ID"/>
+                        <ADD_DOC_SMART Name="V_PE_OPT_OUT" ServiceName="BCM_MASTER" AssignToVar="respADD">
+                          <PE_OPTOUT_ID Value="{$PE_OPTOUT_ID/@Value}"/>
+                          <STATUS_FLG Value="Submitted"/>
+                          <REGIS_PRSNA_ID Value="{$respQuery/SQL_RESULT/REGIS_PRSNA_ID/@Value}"/>
+                          <MKTNG_PGM_NBR Value="{$respQuery/SQL_RESULT/MKTNG_PGM_NBR/@Value}"/>
+                          <LEGAL_ENT_NBR Value="{$respQuery/SQL_RESULT/LEGAL_ENT_NBR/@Value}"/>
+                          <DATA_SRCE_NBR Value="{$respQuery/SQL_RESULT/DATA_ORIGIN_SRCE_NBR/@Value}"/>
+                          <SUBSCRPTN_OPT_NBR Value="{$respQuery/SQL_RESULT/SUBSCRPTN_OPT_NBR/@Value}"/>
+                          <GVN_NAME Value="{$respQuery/SQL_RESULT/GVN_NAME/@Value}"/>
+                          <FAMLY_NAME Value="{$respQuery/SQL_RESULT/FAMLY_NAME/@Value}"/>
+                          <FULL_PHONE_NUM Value="{$respQuery/SQL_RESULT/FULL_PHONE_NUM/@Value}"/>
+                          <OPT_IND Value="O"/>
+                          <LOG_SOURCE_ID Value="-999999"/>
+                          <LOG_UPDATE_USER Value="{$userId}"/>
+                          <NATIONAL_ID_NBR Value="{$respQuery/SQL_RESULT/NATIONAL_ID_NBR/@Value}"/>
+                          <CHANNEL_IND Value="P"/>
+                          <OPT_LEVEL_IND Value="R"/>
+                          <OPT_TIME Value="{date()}"/>
+                          <LAST_ACTIVITY_TM Value="{date()}"/>
+                        </ADD_DOC_SMART>
+                      </THEN>
+                    </IF_TEST>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$selectedCNTCT_POINT_TYPE_CODE='A'">
+                  <THEN>
+                    <PRINTLN Value="Inside Postal"/>
+                    <EXECUTE_SQL_QUERY Value="LOCK ROW FOR ACCESS SELECT RP.REGIS_PRSNA_ID,RP.MKTNG_PGM_NBR,RP.LEGAL_ENT_NBR,DATA_ORIGIN_SRCE_NBR,SUBSCRPTN_OPT_NBR,GVN_NAME,FAMLY_NAME,ADDR_LINE_1_TXT,ADDR_LINE_2_TXT,ADDR_LINE_3_TXT,CITY_NAME,TERR_NAME,POSTL_AREA_CODE,POST.CNTRY_CODE,NATIONAL_ID_NBR FROM REGIS_PRSNA RP JOIN REGIS_PRSNA_POSTL_ADDR POST ON RP.MKTNG_PGM_NBR=POST.MKTNG_PGM_NBR AND RP.REGIS_PRSNA_ID=POST.REGIS_PRSNA_ID WHERE RP.REGIS_PRSNA_ID='{$selectedREGIS_PRSNA_ID}' AND RP.MKTNG_PGM_NBR= '{$selectedMKTNG_PGM_NBR}' AND CNTCT_POINT_CATEG_CODE='{$selectedCNTCT_POINT_CATEG_CODE}' AND SUBSCRPTN_OPT_NBR=COALESCE('{$selectedSUBSCRPTN_OPT_NBR}',0)" AssignToVar="respQuery" ReturnRowCount="yes"/>
+                    <!--<MODIFY_DOC_SMART Name="REGIS_PRSNA_POSTL_ADDR" ServiceName="BCM_MASTER" AssignToVar="respPostal">
+                      <DOCUMENT_CONTEXT>
+                        <TO_XML SelectList="$WHERE_CLAUSE/*"/>
+                      </DOCUMENT_CONTEXT>
+                      <UPDATE_PROPERTIES>
+                        <SUBSCRPTN_OPT_IND Value="O"/>
+                        <CNSMR_CHCE_DATETM Value="{date()}"/>
+                      </UPDATE_PROPERTIES>
+                    </MODIFY_DOC_SMART>-->
+                    <SET Var="addressOptOutCnt" FromValue="{$addressOptOutCnt+1}"/>
+                    <IF_TEST Test="$respQuery/@TotalRowCount!=0">
+                      <THEN>
+                        <!--<ADD_DOCUMENT Name="REGIS_PRSNA_OPT_HIST" ServiceName="BCM_MASTER" AssignToVar="respADD">
+                          <REGIS_PRSNA_ID Value="-{$respQuery/SQL_RESULT/REGIS_PRSNA_ID/@Value}"/>
+                          <MKTNG_PGM_NBR Value="{$respQuery/SQL_RESULT/MKTNG_PGM_NBR/@Value}"/>
+                          <LEGAL_ENT_NBR Value="{$respQuery/SQL_RESULT/LEGAL_ENT_NBR/@Value}"/>
+                          <DATA_SRCE_NBR Value="{$respQuery/SQL_RESULT/DATA_ORIGIN_SRCE_NBR/@Value}"/>
+                          <SUBSCRIPTION_NBR Value="{$respQuery/SQL_RESULT/SUBSCRPTN_OPT_NBR/@Value}"/>
+                          <FIRST_NAME Value="{$respQuery/SQL_RESULT/GVN_NAME/@Value}"/>
+                          <LAST_NAME Value="{$respQuery/SQL_RESULT/FAMLY_NAME/@Value}"/>
+                          <ADDR_LINE_1_TXT Value="{$respQuery/SQL_RESULT/ADDR_LINE_1_TXT/@Value}"/>
+                          <ADDR_LINE_2_TXT Value="{$respQuery/SQL_RESULT/ADDR_LINE_2_TXT/@Value}"/>
+                          <ADDR_LINE_3_TXT Value="{$respQuery/SQL_RESULT/ADDR_LINE_3_TXT/@Value}"/>
+                          <CITY_NAME Value="{$respQuery/SQL_RESULT/CITY_NAME/@Value}"/>
+                          <TERR_NAME Value="{$respQuery/SQL_RESULT/TERR_NAME/@Value}"/>
+                          <POSTL_AREA_CODE Value="{$respQuery/SQL_RESULT/POSTL_AREA_CODE/@Value}"/>
+                          <CNTRY_NAME Value="{$respQuery/SQL_RESULT/CNTRY_CODE/@Value}"/>
+                          <OPT_IND Value="O"/>
+                          <LOG_SOURCE_ID Value="-999999"/>
+                          <LOG_UPDATE_USER Value="{$userId}"/>
+                          <NATIONAL_ID_NBR Value="{$respQuery/SQL_RESULT/NATIONAL_ID_NBR/@Value}"/>
+                          <CHANNEL_IND Value="A"/>
+                          <OPT_LEVEL_IND Value="R"/>
+                          <OPT_TIME Value="{date()}"/>
+                          <LAST_ACTIVITY_TM Value="{date()}"/>
+                        </ADD_DOCUMENT>-->
+                        <CREATE_DOCUMENT_ID Name="OPT_OUT_NOT_FOUND" AssignToVar="PE_OPTOUT_ID"/>
+                        <ADD_DOC_SMART Name="V_PE_OPT_OUT" ServiceName="BCM_MASTER" AssignToVar="respADD">
+                          <PE_OPTOUT_ID Value="{$PE_OPTOUT_ID/@Value}"/>
+                          <STATUS_FLG Value="Submitted"/>
+                          <REGIS_PRSNA_ID Value="{$respQuery/SQL_RESULT/REGIS_PRSNA_ID/@Value}"/>
+                          <MKTNG_PGM_NBR Value="{$respQuery/SQL_RESULT/MKTNG_PGM_NBR/@Value}"/>
+                          <LEGAL_ENT_NBR Value="{$respQuery/SQL_RESULT/LEGAL_ENT_NBR/@Value}"/>
+                          <DATA_SRCE_NBR Value="{$respQuery/SQL_RESULT/DATA_ORIGIN_SRCE_NBR/@Value}"/>
+                          <SUBSCRPTN_OPT_NBR Value="{$respQuery/SQL_RESULT/SUBSCRPTN_OPT_NBR/@Value}"/>
+                          <GVN_NAME Value="{$respQuery/SQL_RESULT/GVN_NAME/@Value}"/>
+                          <FAMLY_NAME Value="{$respQuery/SQL_RESULT/FAMLY_NAME/@Value}"/>
+                          <SRC_ADDR_LINE_1_TXT Value="{$respQuery/SQL_RESULT/ADDR_LINE_1_TXT/@Value}"/>
+                          <SRC_ADDR_LINE_2_TXT Value="{$respQuery/SQL_RESULT/ADDR_LINE_2_TXT/@Value}"/>
+                          <SRC_ADDR_LINE_3_TXT Value="{$respQuery/SQL_RESULT/ADDR_LINE_3_TXT/@Value}"/>
+                          <SRC_CITY_NAME Value="{$respQuery/SQL_RESULT/CITY_NAME/@Value}"/>
+                          <SRC_TERR_NAME Value="{$respQuery/SQL_RESULT/TERR_NAME/@Value}"/>
+                          <SRC_POSTAL_AREA_CODE Value="{$respQuery/SQL_RESULT/POSTL_AREA_CODE/@Value}"/>
+                          <SRC_CNTRY_NAME Value="{$respQuery/SQL_RESULT/CNTRY_CODE/@Value}"/>
+                          <OPT_IND Value="O"/>
+                          <LOG_SOURCE_ID Value="-999999"/>
+                          <LOG_UPDATE_USER Value="{$userId}"/>
+                          <NATIONAL_ID_NBR Value="{$respQuery/SQL_RESULT/NATIONAL_ID_NBR/@Value}"/>
+                          <CHANNEL_IND Value="A"/>
+                          <OPT_LEVEL_IND Value="R"/>
+                          <OPT_TIME Value="{date()}"/>
+                          <LAST_ACTIVITY_TM Value="{date()}"/>
+                        </ADD_DOC_SMART>
+                      </THEN>
+                    </IF_TEST>
+                  </THEN>
+                </IF_TEST>
+                <!--<IF_TEST Test="$PrevselectedREGIS_PRSNA_ID != $selectedREGIS_PRSNA_ID">
+                  <THEN>
+                    <MODIFY_DOC_SMART Name="REGIS_PRSNA" ServiceName="BCM_MASTER">
+                      <DOCUMENT_CONTEXT>
+                        <REGIS_PRSNA_ID Value="{$selectedREGIS_PRSNA_ID}"/>
+                        <MKTNG_PGM_NBR Value="{$selectedMKTNG_PGM_NBR}"/>
+                      </DOCUMENT_CONTEXT>
+                      <UPDATE_PROPERTIES>
+                        <SYS_LAST_MODIFIED_DATE Value="{date()}"/>
+                        <LATST_ACTVY_DATE Value="{date()}"/>
+                      </UPDATE_PROPERTIES>
+                    </MODIFY_DOC_SMART>
+                  </THEN>
+                </IF_TEST>-->
+                <SET Var="PrevselectedREGIS_PRSNA_ID" FromValue="{$selectedREGIS_PRSNA_ID}"/>
+                <SET Var="PrevselectedMKTNG_PGM_NBR" FromValue="{$selectedMKTNG_PGM_NBR}"/>
+              </FOR_EACH>
+              <SET Var="msg" FromValue="No. of Postal opt out count: {substringBefore($addressOptOutCnt,'.')},No. of Email opt out count: {substringBefore($emailOptOutCnt,'.')}, No. of Phone opt out count: {substringBefore($phoneOptOutCnt,'.')} :: Opt Outs submitted successfully. Opt Outs would be processed within 6 hours. To verify the status of the submitted Opt Outs, please use the Profile Editor Opt Out Report link"/>
+              <REMOVE_CHILDREN ChildName="SELECTED_ITEM" DocVar="thisParam"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='SEARCH'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="searchParameter">
+                <ABC>
+                  <TO_XML SelectList="$thisParam/MKTNG_PGM_NAME"/>
+                  <TO_XML SelectList="$thisParam/SUBSCRPTN_OPT_NAME"/>
+                  <TO_XML SelectList="$thisParam/CNTCT_POINT_TYPE_CODE"/>
+                  <TO_XML SelectList="$thisParam/MATCHD_CNSMR_PRSNA_ID"/>
+                  <TO_XML SelectList="$thisParam/REGIS_PRSNA_ID"/>
+                  <HSHLD_PRSNA_ID Value="{$selectedHshldId}"/>
+                </ABC>
+              </TO_DOCVAR>
+              <IF_TEST Test="$searchParameter/MATCHD_CNSMR_PRSNA_ID/@Value='' or $searchParameter/REGIS_PRSNA_ID/@Value=''">
+                <THEN>
+                  <IF_TEST Test="$searchParameter/MATCHD_CNSMR_PRSNA_ID/@Value='' and $searchParameter/REGIS_PRSNA_ID/@Value=''">
+                    <THEN>
+                      <REMOVE_CHILDREN ChildName="MATCHD_CNSMR_PRSNA_ID" DocVar="searchParameter"/>
+                      <REMOVE_CHILDREN ChildName="REGIS_PRSNA_ID" DocVar="searchParameter"/>
+                    </THEN>
+                    <ELSE>
+                      <THEN>
+                        <IF_TEST Test="$searchParameter/MATCHD_CNSMR_PRSNA_ID/@Value=''">
+                          <THEN>
+                            <REMOVE_CHILDREN ChildName="MATCHD_CNSMR_PRSNA_ID" DocVar="searchParameter"/>
+                          </THEN>
+                          <ELSE>
+                            <THEN>
+                              <REMOVE_CHILDREN ChildName="REGIS_PRSNA_ID" DocVar="searchParameter"/>
+                            </THEN>
+                          </ELSE>
+                        </IF_TEST>
+                      </THEN>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$searchParameter/MKTNG_PGM_NAME/@Value=''">
+                <THEN>
+                  <REMOVE_CHILDREN ChildName="MKTNG_PGM_NAME" DocVar="searchParameter"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$searchParameter/SUBSCRPTN_OPT_NAME/@Value=''">
+                <THEN>
+                  <REMOVE_CHILDREN ChildName="SUBSCRPTN_OPT_NAME" DocVar="searchParameter"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$searchParameter/CNTCT_POINT_TYPE_CODE/@Value=''">
+                <THEN>
+                  <REMOVE_CHILDREN ChildName="CNTCT_POINT_TYPE_CODE" DocVar="searchParameter"/>
+                </THEN>
+              </IF_TEST>
+              <GET_DOCUMENT Name="V_MATCHD_CNSMR_PRSNA" AssignToVar="searchResultOpt" DirtyRead="true" MaxRows="5000" HandleException="true" ReturnRowCount="yes">
+                <TO_XML SelectList="$searchParameter/*"/>
+                <SELECT>
+                  <HSHLD_PRSNA_ID/>
+                  <MATCHD_CNSMR_PRSNA_ID/>
+                  <REGIS_PRSNA_ID/>
+                  <GVN_NAME/>
+                  <FAMLY_NAME/>
+                  <NATIONAL_ID_NBR/>
+                  <MKTNG_PGM_NBR/>
+                  <MKTNG_PGM_NAME/>
+                  <EMAIL_ADDR_TXT_1/>
+                  <FULL_PHONE_NUM_1/>
+                  <FULL_ADDRESS/>
+                  <SUBSCRPTN_OPT_NBR/>
+                  <SUBSCRPTN_OPT_NAME/>
+                  <SUBSCRPTN_OPT_IND/>
+                  <CNSMR_CHCE_DATETM/>
+                  <CNTCT_POINT_TYPE_CODE/>
+                  <CNTCT_POINT_CATEG_CODE/>
+                  <CNTCT_POINT_TYPE/>
+                  <CNTCT_POINT_CATEG_NAME/>
+                </SELECT>
+                <ORDER_BY>
+                  <REGIS_PRSNA_ID Sort="Ascending"/>
+                </ORDER_BY>
+              </GET_DOCUMENT>
+              <SET Var="var1" FromValue="yes"/>
+              <SET DocVar="rec" FromDocVar=""/>
+              <!--REMOVE_CHILDREN DocVar="rec" /-->
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_DETAILS_INDIVIDUAL'">
+            <THEN>
+              <IF_TEST Test="$thisParam/LEVEL/@Value='HH'">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="matchdCnsmrDetails">
+                    <mtchdDetails/>
+                  </TO_DOCVAR>
+                  <TO_DOCVAR AssignToVar="regisCnsmrDetails">
+                    <regisDetails/>
+                  </TO_DOCVAR>
+                  <SET Var="varMC" FromValue="N"/>
+                  <SET Var="varRG" FromValue="N"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/LEVEL/@Value='MC'">
+                <THEN>
+                  <EXECUTE_SQL_QUERY Value="{concat('LOCK ROW FOR ACCESS SELECT DISTINCT MATCHD_CNSMR_PRSNA_ID FROM  MATCHD_CNSMR_PRSNA WHERE HSHLD_PRSNA_ID=', $selectedHshldId,' AND LEGAL_ENT_NBR=', $selectedLegalEnt,' ORDER BY MATCHD_CNSMR_PRSNA_ID')}" AssignToVar="recMatchdCnsmr" ReturnRowCount="yes" MaxRows="5000"/>
+                  <TO_DOCVAR AssignToVar="matchdCnsmrDetails">
+                    <mtchdDetails>
+                      <TO_XML SelectList="$recMatchdCnsmr/*"/>
+                    </mtchdDetails>
+                  </TO_DOCVAR>
+                  <SET Var="varRG" FromValue="N"/>
+                  <SET Var="varMC" FromValue="Y"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/LEVEL/@Value='RG'">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="regisCnsmrDetails">
+                    <regisDetails>
+                      <!--   <TO_XML SelectList="$recRegisCnsmr/*" />-->
+                      <TO_XML SelectList="$recRegisPrsna/SQL_RESULT/REGIS_PRSNA_ID"/>
+                    </regisDetails>
+                  </TO_DOCVAR>
+                  <SET Var="varMC" FromValue="N"/>
+                  <SET Var="varRG" FromValue="Y"/>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='OPTOUTALL'">
+            <THEN>
+              <SET Var="recCnt" FromValue="{$rec/@TotalRowCount}"/>
+              <SET Var="searchCnt" FromValue="{$searchResultOpt/@TotalRowCount}"/>
+              <IF_TEST Test="$recCnt > 0">
+                <THEN>
+                  <SET Var="phoneOptOutCnt" FromValue="0"/>
+                  <SET Var="emailOptOutCnt" FromValue="0"/>
+                  <SET Var="addressOptOutCnt" FromValue="0"/>
+                  <SET Var="PrevselectedREGIS_PRSNA_ID" FromValue="0"/>
+                  <SET Var="PrevselectedMKTNG_PGM_NBR" FromValue="0"/>
+                  <!--<FOR_EACH SelectList="$rec/V_MATCHD_CNSMR_PRSNA" CurrentElement="currElement">-->
+                  <FOR_EACH SelectList="$rec/SQL_RESULT" CurrentElement="currElement">
+                    <SET Var="selectedCNTCT_POINT_TYPE_CODE" FromValue="{$currElement/CNTCT_POINT_TYPE_CODE/@Value}"/>
+                    <SET Var="selectedMKTNG_PGM_NBR" FromValue="{$currElement/MKTNG_PGM_NBR/@Value}"/>
+                    <SET Var="selectedREGIS_PRSNA_ID" FromValue="{$currElement/REGIS_PRSNA_ID/@Value}"/>
+                    <SET Var="selectedSUBSCRPTN_OPT_NBR" FromValue="{$currElement/SUBSCRPTN_OPT_NBR/@Value}"/>
+                    <SET Var="selectedCNTCT_POINT_CATEG_CODE" FromValue="{$currElement/CNTCT_POINT_CATEG_CODE/@Value}"/>
+                    <TO_DOCVAR AssignToVar="WHERE_CLAUSE">
+                      <WHERE_CLAUSE>
+                        <REGIS_PRSNA_ID Value="{$selectedREGIS_PRSNA_ID}"/>
+                        <MKTNG_PGM_NBR Value="{$selectedMKTNG_PGM_NBR}"/>
+                        <SUBSCRPTN_OPT_NBR Value="{$selectedSUBSCRPTN_OPT_NBR}"/>
+                        <CNTCT_POINT_CATEG_CODE Value="{$selectedCNTCT_POINT_CATEG_CODE}"/>
+                      </WHERE_CLAUSE>
+                    </TO_DOCVAR>
+                    <PRINTLN Value="{$WHERE_CLAUSE}"/>
+                    <!--EXECUTE_SQL_QUERY Value="LOCK ROW FOR ACCESS SELECT * FROM V_MATCHD_CNSMR_PRSNA WHERE REGIS_PRSNA_ID='{$selectedREGIS_PRSNA_ID}' AND MKTNG_PGM_NBR= '{$selectedMKTNG_PGM_NBR}' AND CNTCT_POINT_CATEG_CODE='{$selectedCNTCT_POINT_CATEG_CODE}' AND SUBSCRPTN_OPT_NBR=COALESCE('{$selectedSUBSCRPTN_OPT_NBR}',0)" AssignToVar="respQuery" ReturnRowCount="yes"/-->
+                    <IF_TEST Test="$selectedCNTCT_POINT_TYPE_CODE='E'">
+                      <THEN>
+                        <PRINTLN Value="Inside Email"/>
+                        <EXECUTE_SQL_QUERY Value="LOCK ROW FOR ACCESS SELECT RP.REGIS_PRSNA_ID,RP.MKTNG_PGM_NBR,RP.LEGAL_ENT_NBR,DATA_ORIGIN_SRCE_NBR,SUBSCRPTN_OPT_NBR,GVN_NAME,FAMLY_NAME,EMAIL_ADDR_TXT,NATIONAL_ID_NBR FROM REGIS_PRSNA RP JOIN REGIS_PRSNA_EMAIL_ADDR EMAIL ON RP.MKTNG_PGM_NBR=EMAIL.MKTNG_PGM_NBR AND RP.REGIS_PRSNA_ID=EMAIL.REGIS_PRSNA_ID WHERE RP.REGIS_PRSNA_ID='{$selectedREGIS_PRSNA_ID}' AND RP.MKTNG_PGM_NBR= '{$selectedMKTNG_PGM_NBR}' AND CNTCT_POINT_CATEG_CODE='{$selectedCNTCT_POINT_CATEG_CODE}' AND SUBSCRPTN_OPT_NBR=COALESCE('{$selectedSUBSCRPTN_OPT_NBR}',0)" AssignToVar="respQuery" ReturnRowCount="yes"/>
+                        <!--<MODIFY_DOC_SMART Name="REGIS_PRSNA_EMAIL_ADDR" ServiceName="BCM_MASTER" AssignToVar="respEmail">
+                          <DOCUMENT_CONTEXT>
+                            <TO_XML SelectList="$WHERE_CLAUSE/*"/>
+                          </DOCUMENT_CONTEXT>
+                          <UPDATE_PROPERTIES>
+                            <SUBSCRPTN_OPT_IND Value="O"/>
+                            <CNSMR_CHCE_DATETM Value="{date()}"/>
+                          </UPDATE_PROPERTIES>
+                        </MODIFY_DOC_SMART>-->
+                        <SET Var="emailOptOutCnt" FromValue="{$emailOptOutCnt+1}"/>
+                        <IF_TEST Test="$respQuery/@TotalRowCount!=0">
+                          <THEN>
+                            <!--<ADD_DOCUMENT Name="REGIS_PRSNA_OPT_HIST" ServiceName="BCM_MASTER" AssignToVar="respADD">
+                              <REGIS_PRSNA_ID Value="-{$respQuery/SQL_RESULT/REGIS_PRSNA_ID/@Value}"/>
+                              <MKTNG_PGM_NBR Value="{$respQuery/SQL_RESULT/MKTNG_PGM_NBR/@Value}"/>
+                              <LEGAL_ENT_NBR Value="{$respQuery/SQL_RESULT/LEGAL_ENT_NBR/@Value}"/>
+                              <DATA_SRCE_NBR Value="{$respQuery/SQL_RESULT/DATA_ORIGIN_SRCE_NBR/@Value}"/>
+                              <SUBSCRIPTION_NBR Value="{$respQuery/SQL_RESULT/SUBSCRPTN_OPT_NBR/@Value}"/>
+                              <FIRST_NAME Value="{$respQuery/SQL_RESULT/GVN_NAME/@Value}"/>
+                              <LAST_NAME Value="{$respQuery/SQL_RESULT/FAMLY_NAME/@Value}"/>
+                              <EMAIL_ADDR_TEXT Value="{$respQuery/SQL_RESULT/EMAIL_ADDR_TXT/@Value}"/>
+                              <OPT_IND Value="O"/>
+                              <LOG_SOURCE_ID Value="-999999"/>
+                              <LOG_UPDATE_USER Value="{$userId}"/>
+                              <NATIONAL_ID_NBR Value="{$respQuery/SQL_RESULT/NATIONAL_ID_NBR/@Value}"/>
+                              <CHANNEL_IND Value="E"/>
+                              <OPT_LEVEL_IND Value="R"/>
+                              <OPT_TIME Value="{date()}"/>
+                              <LAST_ACTIVITY_TM Value="{date()}"/>
+                            </ADD_DOCUMENT>-->
+                            <CREATE_DOCUMENT_ID Name="OPT_OUT_NOT_FOUND" AssignToVar="PE_OPTOUT_ID"/>
+                            <ADD_DOC_SMART Name="V_PE_OPT_OUT" ServiceName="BCM_MASTER" AssignToVar="respADD">
+                              <PE_OPTOUT_ID Value="{$PE_OPTOUT_ID/@Value}"/>
+                              <STATUS_FLG Value="Submitted"/>
+                              <REGIS_PRSNA_ID Value="{$respQuery/SQL_RESULT/REGIS_PRSNA_ID/@Value}"/>
+                              <MKTNG_PGM_NBR Value="{$respQuery/SQL_RESULT/MKTNG_PGM_NBR/@Value}"/>
+                              <LEGAL_ENT_NBR Value="{$respQuery/SQL_RESULT/LEGAL_ENT_NBR/@Value}"/>
+                              <DATA_SRCE_NBR Value="{$respQuery/SQL_RESULT/DATA_ORIGIN_SRCE_NBR/@Value}"/>
+                              <SUBSCRPTN_OPT_NBR Value="{$respQuery/SQL_RESULT/SUBSCRPTN_OPT_NBR/@Value}"/>
+                              <GVN_NAME Value="{$respQuery/SQL_RESULT/GVN_NAME/@Value}"/>
+                              <FAMLY_NAME Value="{$respQuery/SQL_RESULT/FAMLY_NAME/@Value}"/>
+                              <EMAIL_ADDR_TEXT Value="{$respQuery/SQL_RESULT/EMAIL_ADDR_TXT/@Value}"/>
+                              <OPT_IND Value="O"/>
+                              <LOG_SOURCE_ID Value="-999999"/>
+                              <LOG_UPDATE_USER Value="{$userId}"/>
+                              <NATIONAL_ID_NBR Value="{$respQuery/SQL_RESULT/NATIONAL_ID_NBR/@Value}"/>
+                              <CHANNEL_IND Value="E"/>
+                              <OPT_LEVEL_IND Value="R"/>
+                              <OPT_TIME Value="{date()}"/>
+                              <LAST_ACTIVITY_TM Value="{date()}"/>
+                            </ADD_DOC_SMART>
+                          </THEN>
+                        </IF_TEST>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$selectedCNTCT_POINT_TYPE_CODE='P'">
+                      <THEN>
+                        <PRINTLN Value="Inside Phone"/>
+                        <EXECUTE_SQL_QUERY Value="LOCK ROW FOR ACCESS SELECT RP.REGIS_PRSNA_ID,RP.MKTNG_PGM_NBR,RP.LEGAL_ENT_NBR,DATA_ORIGIN_SRCE_NBR,SUBSCRPTN_OPT_NBR,GVN_NAME,FAMLY_NAME,FULL_PHONE_NUM,NATIONAL_ID_NBR FROM REGIS_PRSNA RP JOIN REGIS_PRSNA_PHONE PH ON RP.MKTNG_PGM_NBR=PH.MKTNG_PGM_NBR AND RP.REGIS_PRSNA_ID=PH.REGIS_PRSNA_ID WHERE RP.REGIS_PRSNA_ID='{$selectedREGIS_PRSNA_ID}' AND RP.MKTNG_PGM_NBR= '{$selectedMKTNG_PGM_NBR}' AND CNTCT_POINT_CATEG_CODE='{$selectedCNTCT_POINT_CATEG_CODE}' AND SUBSCRPTN_OPT_NBR=COALESCE('{$selectedSUBSCRPTN_OPT_NBR}',0)" AssignToVar="respQuery" ReturnRowCount="yes"/>
+                        <!--<MODIFY_DOC_SMART Name="REGIS_PRSNA_PHONE" ServiceName="BCM_MASTER" AssignToVar="respPhone">
+                          <DOCUMENT_CONTEXT>
+                            <TO_XML SelectList="$WHERE_CLAUSE/*"/>
+                          </DOCUMENT_CONTEXT>
+                          <UPDATE_PROPERTIES>
+                            <SUBSCRPTN_OPT_IND Value="O"/>
+                            <CNSMR_CHCE_DATETM Value="{date()}"/>
+                          </UPDATE_PROPERTIES>
+                        </MODIFY_DOC_SMART>-->
+                        <SET Var="phoneOptOutCnt" FromValue="{$phoneOptOutCnt+1}"/>
+                        <IF_TEST Test="$respQuery/@TotalRowCount!=0">
+                          <THEN>
+                            <!--<ADD_DOCUMENT Name="REGIS_PRSNA_OPT_HIST" ServiceName="BCM_MASTER" AssignToVar="respADD">
+                              <REGIS_PRSNA_ID Value="-{$respQuery/SQL_RESULT/REGIS_PRSNA_ID/@Value}"/>
+                              <MKTNG_PGM_NBR Value="{$respQuery/SQL_RESULT/MKTNG_PGM_NBR/@Value}"/>
+                              <LEGAL_ENT_NBR Value="{$respQuery/SQL_RESULT/LEGAL_ENT_NBR/@Value}"/>
+                              <DATA_SRCE_NBR Value="{$respQuery/SQL_RESULT/DATA_ORIGIN_SRCE_NBR/@Value}"/>
+                              <SUBSCRIPTION_NBR Value="{$respQuery/SQL_RESULT/SUBSCRPTN_OPT_NBR/@Value}"/>
+                              <FIRST_NAME Value="{$respQuery/SQL_RESULT/GVN_NAME/@Value}"/>
+                              <LAST_NAME Value="{$respQuery/SQL_RESULT/FAMLY_NAME/@Value}"/>
+                              <CONTACT_PHONE_NBR Value="{$respQuery/SQL_RESULT/FULL_PHONE_NUM/@Value}"/>
+                              <OPT_IND Value="O"/>
+                              <LOG_SOURCE_ID Value="-999999"/>
+                              <LOG_UPDATE_USER Value="{$userId}"/>
+                              <NATIONAL_ID_NBR Value="{$respQuery/SQL_RESULT/NATIONAL_ID_NBR/@Value}"/>
+                              <CHANNEL_IND Value="P"/>
+                              <OPT_LEVEL_IND Value="R"/>
+                              <OPT_TIME Value="{date()}"/>
+                              <LAST_ACTIVITY_TM Value="{date()}"/>
+                            </ADD_DOCUMENT>-->
+                            <CREATE_DOCUMENT_ID Name="OPT_OUT_NOT_FOUND" AssignToVar="PE_OPTOUT_ID"/>
+                            <ADD_DOC_SMART Name="V_PE_OPT_OUT" ServiceName="BCM_MASTER" AssignToVar="respADD">
+                              <PE_OPTOUT_ID Value="{$PE_OPTOUT_ID/@Value}"/>
+                              <STATUS_FLG Value="Submitted"/>
+                              <REGIS_PRSNA_ID Value="{$respQuery/SQL_RESULT/REGIS_PRSNA_ID/@Value}"/>
+                              <MKTNG_PGM_NBR Value="{$respQuery/SQL_RESULT/MKTNG_PGM_NBR/@Value}"/>
+                              <LEGAL_ENT_NBR Value="{$respQuery/SQL_RESULT/LEGAL_ENT_NBR/@Value}"/>
+                              <DATA_SRCE_NBR Value="{$respQuery/SQL_RESULT/DATA_ORIGIN_SRCE_NBR/@Value}"/>
+                              <SUBSCRPTN_OPT_NBR Value="{$respQuery/SQL_RESULT/SUBSCRPTN_OPT_NBR/@Value}"/>
+                              <GVN_NAME Value="{$respQuery/SQL_RESULT/GVN_NAME/@Value}"/>
+                              <FAMLY_NAME Value="{$respQuery/SQL_RESULT/FAMLY_NAME/@Value}"/>
+                              <FULL_PHONE_NUM Value="{$respQuery/SQL_RESULT/FULL_PHONE_NUM/@Value}"/>
+                              <OPT_IND Value="O"/>
+                              <LOG_SOURCE_ID Value="-999999"/>
+                              <LOG_UPDATE_USER Value="{$userId}"/>
+                              <NATIONAL_ID_NBR Value="{$respQuery/SQL_RESULT/NATIONAL_ID_NBR/@Value}"/>
+                              <CHANNEL_IND Value="P"/>
+                              <OPT_LEVEL_IND Value="R"/>
+                              <OPT_TIME Value="{date()}"/>
+                              <LAST_ACTIVITY_TM Value="{date()}"/>
+                            </ADD_DOC_SMART>
+                          </THEN>
+                        </IF_TEST>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$selectedCNTCT_POINT_TYPE_CODE='A'">
+                      <THEN>
+                        <PRINTLN Value="Inside Postal"/>
+                        <EXECUTE_SQL_QUERY Value="LOCK ROW FOR ACCESS SELECT RP.REGIS_PRSNA_ID,RP.MKTNG_PGM_NBR,RP.LEGAL_ENT_NBR,DATA_ORIGIN_SRCE_NBR,SUBSCRPTN_OPT_NBR,GVN_NAME,FAMLY_NAME,ADDR_LINE_1_TXT,ADDR_LINE_2_TXT,ADDR_LINE_3_TXT,CITY_NAME,TERR_NAME,POSTL_AREA_CODE,POST.CNTRY_CODE,NATIONAL_ID_NBR FROM REGIS_PRSNA RP JOIN REGIS_PRSNA_POSTL_ADDR POST ON RP.MKTNG_PGM_NBR=POST.MKTNG_PGM_NBR AND RP.REGIS_PRSNA_ID=POST.REGIS_PRSNA_ID WHERE RP.REGIS_PRSNA_ID='{$selectedREGIS_PRSNA_ID}' AND RP.MKTNG_PGM_NBR= '{$selectedMKTNG_PGM_NBR}' AND CNTCT_POINT_CATEG_CODE='{$selectedCNTCT_POINT_CATEG_CODE}' AND SUBSCRPTN_OPT_NBR=COALESCE('{$selectedSUBSCRPTN_OPT_NBR}',0)" AssignToVar="respQuery" ReturnRowCount="yes"/>
+                        <!--<MODIFY_DOC_SMART Name="REGIS_PRSNA_POSTL_ADDR" ServiceName="BCM_MASTER" AssignToVar="respPostal">
+                          <DOCUMENT_CONTEXT>
+                            <TO_XML SelectList="$WHERE_CLAUSE/*"/>
+                          </DOCUMENT_CONTEXT>
+                          <UPDATE_PROPERTIES>
+                            <SUBSCRPTN_OPT_IND Value="O"/>
+                            <CNSMR_CHCE_DATETM Value="{date()}"/>
+                          </UPDATE_PROPERTIES>
+                        </MODIFY_DOC_SMART>-->
+                        <SET Var="addressOptOutCnt" FromValue="{$addressOptOutCnt+1}"/>
+                        <IF_TEST Test="$respQuery/@TotalRowCount!=0">
+                          <THEN>
+                            <!--<ADD_DOCUMENT Name="REGIS_PRSNA_OPT_HIST" ServiceName="BCM_MASTER" AssignToVar="respADD">
+                              <REGIS_PRSNA_ID Value="-{$respQuery/SQL_RESULT/REGIS_PRSNA_ID/@Value}"/>
+                              <MKTNG_PGM_NBR Value="{$respQuery/SQL_RESULT/MKTNG_PGM_NBR/@Value}"/>
+                              <LEGAL_ENT_NBR Value="{$respQuery/SQL_RESULT/LEGAL_ENT_NBR/@Value}"/>
+                              <DATA_SRCE_NBR Value="{$respQuery/SQL_RESULT/DATA_ORIGIN_SRCE_NBR/@Value}"/>
+                              <SUBSCRIPTION_NBR Value="{$respQuery/SQL_RESULT/SUBSCRPTN_OPT_NBR/@Value}"/>
+                              <FIRST_NAME Value="{$respQuery/SQL_RESULT/GVN_NAME/@Value}"/>
+                              <LAST_NAME Value="{$respQuery/SQL_RESULT/FAMLY_NAME/@Value}"/>
+                              <ADDR_LINE_1_TXT Value="{$respQuery/SQL_RESULT/ADDR_LINE_1_TXT/@Value}"/>
+                              <ADDR_LINE_2_TXT Value="{$respQuery/SQL_RESULT/ADDR_LINE_2_TXT/@Value}"/>
+                              <ADDR_LINE_3_TXT Value="{$respQuery/SQL_RESULT/ADDR_LINE_3_TXT/@Value}"/>
+                              <CITY_NAME Value="{$respQuery/SQL_RESULT/CITY_NAME/@Value}"/>
+                              <TERR_NAME Value="{$respQuery/SQL_RESULT/TERR_NAME/@Value}"/>
+                              <POSTL_AREA_CODE Value="{$respQuery/SQL_RESULT/POSTL_AREA_CODE/@Value}"/>
+                              <CNTRY_NAME Value="{$respQuery/SQL_RESULT/CNTRY_CODE/@Value}"/>
+                              <OPT_IND Value="O"/>
+                              <LOG_SOURCE_ID Value="-999999"/>
+                              <LOG_UPDATE_USER Value="{$userId}"/>
+                              <NATIONAL_ID_NBR Value="{$respQuery/SQL_RESULT/NATIONAL_ID_NBR/@Value}"/>
+                              <CHANNEL_IND Value="A"/>
+                              <OPT_LEVEL_IND Value="R"/>
+                              <OPT_TIME Value="{date()}"/>
+                              <LAST_ACTIVITY_TM Value="{date()}"/>
+                            </ADD_DOCUMENT>-->
+                            <CREATE_DOCUMENT_ID Name="OPT_OUT_NOT_FOUND" AssignToVar="PE_OPTOUT_ID"/>
+                            <ADD_DOC_SMART Name="V_PE_OPT_OUT" ServiceName="BCM_MASTER" AssignToVar="respADD">
+                              <PE_OPTOUT_ID Value="{$PE_OPTOUT_ID/@Value}"/>
+                              <STATUS_FLG Value="Submitted"/>
+                              <REGIS_PRSNA_ID Value="{$respQuery/SQL_RESULT/REGIS_PRSNA_ID/@Value}"/>
+                              <MKTNG_PGM_NBR Value="{$respQuery/SQL_RESULT/MKTNG_PGM_NBR/@Value}"/>
+                              <LEGAL_ENT_NBR Value="{$respQuery/SQL_RESULT/LEGAL_ENT_NBR/@Value}"/>
+                              <DATA_SRCE_NBR Value="{$respQuery/SQL_RESULT/DATA_ORIGIN_SRCE_NBR/@Value}"/>
+                              <SUBSCRPTN_OPT_NBR Value="{$respQuery/SQL_RESULT/SUBSCRPTN_OPT_NBR/@Value}"/>
+                              <GVN_NAME Value="{$respQuery/SQL_RESULT/GVN_NAME/@Value}"/>
+                              <FAMLY_NAME Value="{$respQuery/SQL_RESULT/FAMLY_NAME/@Value}"/>
+                              <SRC_ADDR_LINE_1_TXT Value="{$respQuery/SQL_RESULT/ADDR_LINE_1_TXT/@Value}"/>
+                              <SRC_ADDR_LINE_2_TXT Value="{$respQuery/SQL_RESULT/ADDR_LINE_2_TXT/@Value}"/>
+                              <SRC_ADDR_LINE_3_TXT Value="{$respQuery/SQL_RESULT/ADDR_LINE_3_TXT/@Value}"/>
+                              <SRC_CITY_NAME Value="{$respQuery/SQL_RESULT/CITY_NAME/@Value}"/>
+                              <SRC_TERR_NAME Value="{$respQuery/SQL_RESULT/TERR_NAME/@Value}"/>
+                              <SRC_POSTAL_AREA_CODE Value="{$respQuery/SQL_RESULT/POSTL_AREA_CODE/@Value}"/>
+                              <SRC_CNTRY_NAME Value="{$respQuery/SQL_RESULT/CNTRY_CODE/@Value}"/>
+                              <OPT_IND Value="O"/>
+                              <LOG_SOURCE_ID Value="-999999"/>
+                              <LOG_UPDATE_USER Value="{$userId}"/>
+                              <NATIONAL_ID_NBR Value="{$respQuery/SQL_RESULT/NATIONAL_ID_NBR/@Value}"/>
+                              <CHANNEL_IND Value="A"/>
+                              <OPT_LEVEL_IND Value="R"/>
+                              <OPT_TIME Value="{date()}"/>
+                              <LAST_ACTIVITY_TM Value="{date()}"/>
+                            </ADD_DOC_SMART>
+                          </THEN>
+                        </IF_TEST>
+                      </THEN>
+                    </IF_TEST>
+                    <!--<IF_TEST Test="$PrevselectedREGIS_PRSNA_ID != $selectedREGIS_PRSNA_ID">
+                      <THEN>
+                        <MODIFY_DOC_SMART Name="REGIS_PRSNA" ServiceName="BCM_MASTER">
+                          <DOCUMENT_CONTEXT>
+                            <REGIS_PRSNA_ID Value="{$selectedREGIS_PRSNA_ID}"/>
+                            <MKTNG_PGM_NBR Value="{$selectedMKTNG_PGM_NBR}"/>
+                          </DOCUMENT_CONTEXT>
+                          <UPDATE_PROPERTIES>
+                            <SYS_LAST_MODIFIED_DATE Value="{date()}"/>
+                            <LATST_ACTVY_DATE Value="{date()}"/>
+                          </UPDATE_PROPERTIES>
+                        </MODIFY_DOC_SMART>
+                      </THEN>
+                    </IF_TEST>-->
+                    <SET Var="PrevselectedREGIS_PRSNA_ID" FromValue="{$selectedREGIS_PRSNA_ID}"/>
+                    <SET Var="PrevselectedMKTNG_PGM_NBR" FromValue="{$selectedMKTNG_PGM_NBR}"/>
+                  </FOR_EACH>
+                  <SET Var="msg" FromValue="No. of Postal opt out count: {substringBefore($addressOptOutCnt,'.')},No. of Email opt out count: {substringBefore($emailOptOutCnt,'.')}, No. of Phone opt out count: {substringBefore($phoneOptOutCnt,'.')} :: Opt Outs submitted successfully. Opt Outs would be processed within 6 hours. To verify the status of the submitted Opt Outs, please use the Profile Editor Opt Out Report link"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$searchCnt > 0">
+                <THEN>
+                  <SET Var="phoneOptOutCnt" FromValue="0"/>
+                  <SET Var="emailOptOutCnt" FromValue="0"/>
+                  <SET Var="addressOptOutCnt" FromValue="0"/>
+                  <SET Var="PrevselectedREGIS_PRSNA_ID" FromValue="0"/>
+                  <SET Var="PrevselectedMKTNG_PGM_NBR" FromValue="0"/>
+                  <FOR_EACH SelectList="$searchResultOpt/V_MATCHD_CNSMR_PRSNA" CurrentElement="currElement">
+                    <SET Var="selectedCNTCT_POINT_TYPE_CODE" FromValue="{$currElement/CNTCT_POINT_TYPE_CODE/@Value}"/>
+                    <SET Var="selectedMKTNG_PGM_NBR" FromValue="{$currElement/MKTNG_PGM_NBR/@Value}"/>
+                    <SET Var="selectedREGIS_PRSNA_ID" FromValue="{$currElement/REGIS_PRSNA_ID/@Value}"/>
+                    <SET Var="selectedSUBSCRPTN_OPT_NBR" FromValue="{$currElement/SUBSCRPTN_OPT_NBR/@Value}"/>
+                    <SET Var="selectedCNTCT_POINT_CATEG_CODE" FromValue="{$currElement/CNTCT_POINT_CATEG_CODE/@Value}"/>
+                    <TO_DOCVAR AssignToVar="WHERE_CLAUSE">
+                      <WHERE_CLAUSE>
+                        <REGIS_PRSNA_ID Value="{$selectedREGIS_PRSNA_ID}"/>
+                        <MKTNG_PGM_NBR Value="{$selectedMKTNG_PGM_NBR}"/>
+                        <SUBSCRPTN_OPT_NBR Value="{$selectedSUBSCRPTN_OPT_NBR}"/>
+                        <CNTCT_POINT_CATEG_CODE Value="{$selectedCNTCT_POINT_CATEG_CODE}"/>
+                      </WHERE_CLAUSE>
+                    </TO_DOCVAR>
+                    <PRINTLN Value="{$WHERE_CLAUSE}"/>
+                    <!--EXECUTE_SQL_QUERY Value="LOCK ROW FOR ACCESS SELECT * FROM V_MATCHD_CNSMR_PRSNA WHERE REGIS_PRSNA_ID='{$selectedREGIS_PRSNA_ID}' AND MKTNG_PGM_NBR= '{$selectedMKTNG_PGM_NBR}' AND CNTCT_POINT_CATEG_CODE='{$selectedCNTCT_POINT_CATEG_CODE}' AND SUBSCRPTN_OPT_NBR=COALESCE('{$selectedSUBSCRPTN_OPT_NBR}',0)" AssignToVar="respQuery" ReturnRowCount="yes"/-->
+                    <IF_TEST Test="$selectedCNTCT_POINT_TYPE_CODE='E'">
+                      <THEN>
+                        <PRINTLN Value="Inside Email"/>
+                        <EXECUTE_SQL_QUERY Value="LOCK ROW FOR ACCESS SELECT RP.REGIS_PRSNA_ID,RP.MKTNG_PGM_NBR,RP.LEGAL_ENT_NBR,DATA_ORIGIN_SRCE_NBR,SUBSCRPTN_OPT_NBR,GVN_NAME,FAMLY_NAME,EMAIL_ADDR_TXT,NATIONAL_ID_NBR FROM REGIS_PRSNA RP JOIN REGIS_PRSNA_EMAIL_ADDR EMAIL ON RP.MKTNG_PGM_NBR=EMAIL.MKTNG_PGM_NBR AND RP.REGIS_PRSNA_ID=EMAIL.REGIS_PRSNA_ID WHERE RP.REGIS_PRSNA_ID='{$selectedREGIS_PRSNA_ID}' AND RP.MKTNG_PGM_NBR= '{$selectedMKTNG_PGM_NBR}' AND CNTCT_POINT_CATEG_CODE='{$selectedCNTCT_POINT_CATEG_CODE}' AND SUBSCRPTN_OPT_NBR=COALESCE('{$selectedSUBSCRPTN_OPT_NBR}',0)" AssignToVar="respQuery" ReturnRowCount="yes"/>
+                        <!--<MODIFY_DOC_SMART Name="REGIS_PRSNA_EMAIL_ADDR" ServiceName="BCM_MASTER" AssignToVar="respEmail">
+                          <DOCUMENT_CONTEXT>
+                            <TO_XML SelectList="$WHERE_CLAUSE/*"/>
+                          </DOCUMENT_CONTEXT>
+                          <UPDATE_PROPERTIES>
+                            <SUBSCRPTN_OPT_IND Value="O"/>
+                            <CNSMR_CHCE_DATETM Value="{date()}"/>
+                          </UPDATE_PROPERTIES>
+                        </MODIFY_DOC_SMART>-->
+                        <SET Var="emailOptOutCnt" FromValue="{$emailOptOutCnt+1}"/>
+                        <IF_TEST Test="$respQuery/@TotalRowCount!=0">
+                          <THEN>
+                            <!--<ADD_DOCUMENT Name="REGIS_PRSNA_OPT_HIST" ServiceName="BCM_MASTER" AssignToVar="respADD">
+                              <REGIS_PRSNA_ID Value="-{$respQuery/SQL_RESULT/REGIS_PRSNA_ID/@Value}"/>
+                              <MKTNG_PGM_NBR Value="{$respQuery/SQL_RESULT/MKTNG_PGM_NBR/@Value}"/>
+                              <LEGAL_ENT_NBR Value="{$respQuery/SQL_RESULT/LEGAL_ENT_NBR/@Value}"/>
+                              <DATA_SRCE_NBR Value="{$respQuery/SQL_RESULT/DATA_ORIGIN_SRCE_NBR/@Value}"/>
+                              <SUBSCRIPTION_NBR Value="{$respQuery/SQL_RESULT/SUBSCRPTN_OPT_NBR/@Value}"/>
+                              <FIRST_NAME Value="{$respQuery/SQL_RESULT/GVN_NAME/@Value}"/>
+                              <LAST_NAME Value="{$respQuery/SQL_RESULT/FAMLY_NAME/@Value}"/>
+                              <EMAIL_ADDR_TEXT Value="{$respQuery/SQL_RESULT/EMAIL_ADDR_TXT/@Value}"/>
+                              <OPT_IND Value="O"/>
+                              <LOG_SOURCE_ID Value="-999999"/>
+                              <LOG_UPDATE_USER Value="{$userId}"/>
+                              <NATIONAL_ID_NBR Value="{$respQuery/SQL_RESULT/NATIONAL_ID_NBR/@Value}"/>
+                              <CHANNEL_IND Value="E"/>
+                              <OPT_LEVEL_IND Value="R"/>
+                              <OPT_TIME Value="{date()}"/>
+                              <LAST_ACTIVITY_TM Value="{date()}"/>
+                            </ADD_DOCUMENT>-->
+                            <CREATE_DOCUMENT_ID Name="OPT_OUT_NOT_FOUND" AssignToVar="PE_OPTOUT_ID"/>
+                            <ADD_DOC_SMART Name="V_PE_OPT_OUT" ServiceName="BCM_MASTER" AssignToVar="respADD">
+                              <PE_OPTOUT_ID Value="{$PE_OPTOUT_ID/@Value}"/>
+                              <STATUS_FLG Value="Submitted"/>
+                              <REGIS_PRSNA_ID Value="{$respQuery/SQL_RESULT/REGIS_PRSNA_ID/@Value}"/>
+                              <MKTNG_PGM_NBR Value="{$respQuery/SQL_RESULT/MKTNG_PGM_NBR/@Value}"/>
+                              <LEGAL_ENT_NBR Value="{$respQuery/SQL_RESULT/LEGAL_ENT_NBR/@Value}"/>
+                              <DATA_SRCE_NBR Value="{$respQuery/SQL_RESULT/DATA_ORIGIN_SRCE_NBR/@Value}"/>
+                              <SUBSCRPTN_OPT_NBR Value="{$respQuery/SQL_RESULT/SUBSCRPTN_OPT_NBR/@Value}"/>
+                              <GVN_NAME Value="{$respQuery/SQL_RESULT/GVN_NAME/@Value}"/>
+                              <FAMLY_NAME Value="{$respQuery/SQL_RESULT/FAMLY_NAME/@Value}"/>
+                              <EMAIL_ADDR_TEXT Value="{$respQuery/SQL_RESULT/EMAIL_ADDR_TXT/@Value}"/>
+                              <OPT_IND Value="O"/>
+                              <LOG_SOURCE_ID Value="-999999"/>
+                              <LOG_UPDATE_USER Value="{$userId}"/>
+                              <NATIONAL_ID_NBR Value="{$respQuery/SQL_RESULT/NATIONAL_ID_NBR/@Value}"/>
+                              <CHANNEL_IND Value="E"/>
+                              <OPT_LEVEL_IND Value="R"/>
+                              <OPT_TIME Value="{date()}"/>
+                              <LAST_ACTIVITY_TM Value="{date()}"/>
+                            </ADD_DOC_SMART>
+                          </THEN>
+                        </IF_TEST>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$selectedCNTCT_POINT_TYPE_CODE='P'">
+                      <THEN>
+                        <PRINTLN Value="Inside Phone"/>
+                        <EXECUTE_SQL_QUERY Value="LOCK ROW FOR ACCESS SELECT RP.REGIS_PRSNA_ID,RP.MKTNG_PGM_NBR,RP.LEGAL_ENT_NBR,DATA_ORIGIN_SRCE_NBR,SUBSCRPTN_OPT_NBR,GVN_NAME,FAMLY_NAME,FULL_PHONE_NUM,NATIONAL_ID_NBR FROM REGIS_PRSNA RP JOIN REGIS_PRSNA_PHONE PH ON RP.MKTNG_PGM_NBR=PH.MKTNG_PGM_NBR AND RP.REGIS_PRSNA_ID=PH.REGIS_PRSNA_ID WHERE RP.REGIS_PRSNA_ID='{$selectedREGIS_PRSNA_ID}' AND RP.MKTNG_PGM_NBR= '{$selectedMKTNG_PGM_NBR}' AND CNTCT_POINT_CATEG_CODE='{$selectedCNTCT_POINT_CATEG_CODE}' AND SUBSCRPTN_OPT_NBR=COALESCE('{$selectedSUBSCRPTN_OPT_NBR}',0)" AssignToVar="respQuery" ReturnRowCount="yes"/>
+                        <!--<MODIFY_DOC_SMART Name="REGIS_PRSNA_PHONE" ServiceName="BCM_MASTER" AssignToVar="respPhone">
+                          <DOCUMENT_CONTEXT>
+                            <TO_XML SelectList="$WHERE_CLAUSE/*"/>
+                          </DOCUMENT_CONTEXT>
+                          <UPDATE_PROPERTIES>
+                            <SUBSCRPTN_OPT_IND Value="O"/>
+                            <CNSMR_CHCE_DATETM Value="{date()}"/>
+                          </UPDATE_PROPERTIES>
+                        </MODIFY_DOC_SMART>-->
+                        <SET Var="phoneOptOutCnt" FromValue="{$phoneOptOutCnt+1}"/>
+                        <IF_TEST Test="$respQuery/@TotalRowCount!=0">
+                          <THEN>
+                            <!--<ADD_DOCUMENT Name="REGIS_PRSNA_OPT_HIST" ServiceName="BCM_MASTER" AssignToVar="respADD">
+                              <REGIS_PRSNA_ID Value="-{$respQuery/SQL_RESULT/REGIS_PRSNA_ID/@Value}"/>
+                              <MKTNG_PGM_NBR Value="{$respQuery/SQL_RESULT/MKTNG_PGM_NBR/@Value}"/>
+                              <LEGAL_ENT_NBR Value="{$respQuery/SQL_RESULT/LEGAL_ENT_NBR/@Value}"/>
+                              <DATA_SRCE_NBR Value="{$respQuery/SQL_RESULT/DATA_ORIGIN_SRCE_NBR/@Value}"/>
+                              <SUBSCRIPTION_NBR Value="{$respQuery/SQL_RESULT/SUBSCRPTN_OPT_NBR/@Value}"/>
+                              <FIRST_NAME Value="{$respQuery/SQL_RESULT/GVN_NAME/@Value}"/>
+                              <LAST_NAME Value="{$respQuery/SQL_RESULT/FAMLY_NAME/@Value}"/>
+                              <CONTACT_PHONE_NBR Value="{$respQuery/SQL_RESULT/FULL_PHONE_NUM/@Value}"/>
+                              <OPT_IND Value="O"/>
+                              <LOG_SOURCE_ID Value="-999999"/>
+                              <LOG_UPDATE_USER Value="{$userId}"/>
+                              <NATIONAL_ID_NBR Value="{$respQuery/SQL_RESULT/NATIONAL_ID_NBR/@Value}"/>
+                              <CHANNEL_IND Value="P"/>
+                              <OPT_LEVEL_IND Value="R"/>
+                              <OPT_TIME Value="{date()}"/>
+                              <LAST_ACTIVITY_TM Value="{date()}"/>
+                            </ADD_DOCUMENT>-->
+                            <CREATE_DOCUMENT_ID Name="OPT_OUT_NOT_FOUND" AssignToVar="PE_OPTOUT_ID"/>
+                            <ADD_DOC_SMART Name="V_PE_OPT_OUT" ServiceName="BCM_MASTER" AssignToVar="respADD">
+                              <PE_OPTOUT_ID Value="{$PE_OPTOUT_ID/@Value}"/>
+                              <STATUS_FLG Value="Submitted"/>
+                              <REGIS_PRSNA_ID Value="{$respQuery/SQL_RESULT/REGIS_PRSNA_ID/@Value}"/>
+                              <MKTNG_PGM_NBR Value="{$respQuery/SQL_RESULT/MKTNG_PGM_NBR/@Value}"/>
+                              <LEGAL_ENT_NBR Value="{$respQuery/SQL_RESULT/LEGAL_ENT_NBR/@Value}"/>
+                              <DATA_SRCE_NBR Value="{$respQuery/SQL_RESULT/DATA_ORIGIN_SRCE_NBR/@Value}"/>
+                              <SUBSCRPTN_OPT_NBR Value="{$respQuery/SQL_RESULT/SUBSCRPTN_OPT_NBR/@Value}"/>
+                              <GVN_NAME Value="{$respQuery/SQL_RESULT/GVN_NAME/@Value}"/>
+                              <FAMLY_NAME Value="{$respQuery/SQL_RESULT/FAMLY_NAME/@Value}"/>
+                              <FULL_PHONE_NUM Value="{$respQuery/SQL_RESULT/FULL_PHONE_NUM/@Value}"/>
+                              <OPT_IND Value="O"/>
+                              <LOG_SOURCE_ID Value="-999999"/>
+                              <LOG_UPDATE_USER Value="{$userId}"/>
+                              <NATIONAL_ID_NBR Value="{$respQuery/SQL_RESULT/NATIONAL_ID_NBR/@Value}"/>
+                              <CHANNEL_IND Value="P"/>
+                              <OPT_LEVEL_IND Value="R"/>
+                              <OPT_TIME Value="{date()}"/>
+                              <LAST_ACTIVITY_TM Value="{date()}"/>
+                            </ADD_DOC_SMART>
+                          </THEN>
+                        </IF_TEST>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$selectedCNTCT_POINT_TYPE_CODE='A'">
+                      <THEN>
+                        <PRINTLN Value="Inside Postal"/>
+                        <EXECUTE_SQL_QUERY Value="LOCK ROW FOR ACCESS SELECT RP.REGIS_PRSNA_ID,RP.MKTNG_PGM_NBR,RP.LEGAL_ENT_NBR,DATA_ORIGIN_SRCE_NBR,SUBSCRPTN_OPT_NBR,GVN_NAME,FAMLY_NAME,ADDR_LINE_1_TXT,ADDR_LINE_2_TXT,ADDR_LINE_3_TXT,CITY_NAME,TERR_NAME,POSTL_AREA_CODE,POST.CNTRY_CODE,NATIONAL_ID_NBR FROM REGIS_PRSNA RP JOIN REGIS_PRSNA_POSTL_ADDR POST ON RP.MKTNG_PGM_NBR=POST.MKTNG_PGM_NBR AND RP.REGIS_PRSNA_ID=POST.REGIS_PRSNA_ID WHERE RP.REGIS_PRSNA_ID='{$selectedREGIS_PRSNA_ID}' AND RP.MKTNG_PGM_NBR= '{$selectedMKTNG_PGM_NBR}' AND CNTCT_POINT_CATEG_CODE='{$selectedCNTCT_POINT_CATEG_CODE}' AND SUBSCRPTN_OPT_NBR=COALESCE('{$selectedSUBSCRPTN_OPT_NBR}',0)" AssignToVar="respQuery" ReturnRowCount="yes"/>
+                        <!--<MODIFY_DOC_SMART Name="REGIS_PRSNA_POSTL_ADDR" ServiceName="BCM_MASTER" AssignToVar="respPostal">
+                          <DOCUMENT_CONTEXT>
+                            <TO_XML SelectList="$WHERE_CLAUSE/*"/>
+                          </DOCUMENT_CONTEXT>
+                          <UPDATE_PROPERTIES>
+                            <SUBSCRPTN_OPT_IND Value="O"/>
+                            <CNSMR_CHCE_DATETM Value="{date()}"/>
+                          </UPDATE_PROPERTIES>
+                        </MODIFY_DOC_SMART>-->
+                        <SET Var="addressOptOutCnt" FromValue="{$addressOptOutCnt+1}"/>
+                        <IF_TEST Test="$respQuery/@TotalRowCount!=0">
+                          <THEN>
+                            <!--<ADD_DOCUMENT Name="REGIS_PRSNA_OPT_HIST" ServiceName="BCM_MASTER" AssignToVar="respADD">
+                              <REGIS_PRSNA_ID Value="-{$respQuery/SQL_RESULT/REGIS_PRSNA_ID/@Value}"/>
+                              <MKTNG_PGM_NBR Value="{$respQuery/SQL_RESULT/MKTNG_PGM_NBR/@Value}"/>
+                              <LEGAL_ENT_NBR Value="{$respQuery/SQL_RESULT/LEGAL_ENT_NBR/@Value}"/>
+                              <DATA_SRCE_NBR Value="{$respQuery/SQL_RESULT/DATA_ORIGIN_SRCE_NBR/@Value}"/>
+                              <SUBSCRIPTION_NBR Value="{$respQuery/SQL_RESULT/SUBSCRPTN_OPT_NBR/@Value}"/>
+                              <FIRST_NAME Value="{$respQuery/SQL_RESULT/GVN_NAME/@Value}"/>
+                              <LAST_NAME Value="{$respQuery/SQL_RESULT/FAMLY_NAME/@Value}"/>
+                              <ADDR_LINE_1_TXT Value="{$respQuery/SQL_RESULT/ADDR_LINE_1_TXT/@Value}"/>
+                              <ADDR_LINE_2_TXT Value="{$respQuery/SQL_RESULT/ADDR_LINE_2_TXT/@Value}"/>
+                              <ADDR_LINE_3_TXT Value="{$respQuery/SQL_RESULT/ADDR_LINE_3_TXT/@Value}"/>
+                              <CITY_NAME Value="{$respQuery/SQL_RESULT/CITY_NAME/@Value}"/>
+                              <TERR_NAME Value="{$respQuery/SQL_RESULT/TERR_NAME/@Value}"/>
+                              <POSTL_AREA_CODE Value="{$respQuery/SQL_RESULT/POSTL_AREA_CODE/@Value}"/>
+                              <CNTRY_NAME Value="{$respQuery/SQL_RESULT/CNTRY_CODE/@Value}"/>
+                              <OPT_IND Value="O"/>
+                              <LOG_SOURCE_ID Value="-999999"/>
+                              <LOG_UPDATE_USER Value="{$userId}"/>
+                              <NATIONAL_ID_NBR Value="{$respQuery/SQL_RESULT/NATIONAL_ID_NBR/@Value}"/>
+                              <CHANNEL_IND Value="A"/>
+                              <OPT_LEVEL_IND Value="R"/>
+                              <OPT_TIME Value="{date()}"/>
+                              <LAST_ACTIVITY_TM Value="{date()}"/>
+                            </ADD_DOCUMENT>-->
+                            <CREATE_DOCUMENT_ID Name="OPT_OUT_NOT_FOUND" AssignToVar="PE_OPTOUT_ID"/>
+                            <ADD_DOC_SMART Name="V_PE_OPT_OUT" ServiceName="BCM_MASTER" AssignToVar="respADD">
+                              <PE_OPTOUT_ID Value="{$PE_OPTOUT_ID/@Value}"/>
+                              <STATUS_FLG Value="Submitted"/>
+                              <REGIS_PRSNA_ID Value="{$respQuery/SQL_RESULT/REGIS_PRSNA_ID/@Value}"/>
+                              <MKTNG_PGM_NBR Value="{$respQuery/SQL_RESULT/MKTNG_PGM_NBR/@Value}"/>
+                              <LEGAL_ENT_NBR Value="{$respQuery/SQL_RESULT/LEGAL_ENT_NBR/@Value}"/>
+                              <DATA_SRCE_NBR Value="{$respQuery/SQL_RESULT/DATA_ORIGIN_SRCE_NBR/@Value}"/>
+                              <SUBSCRPTN_OPT_NBR Value="{$respQuery/SQL_RESULT/SUBSCRPTN_OPT_NBR/@Value}"/>
+                              <GVN_NAME Value="{$respQuery/SQL_RESULT/GVN_NAME/@Value}"/>
+                              <FAMLY_NAME Value="{$respQuery/SQL_RESULT/FAMLY_NAME/@Value}"/>
+                              <SRC_ADDR_LINE_1_TXT Value="{$respQuery/SQL_RESULT/ADDR_LINE_1_TXT/@Value}"/>
+                              <SRC_ADDR_LINE_2_TXT Value="{$respQuery/SQL_RESULT/ADDR_LINE_2_TXT/@Value}"/>
+                              <SRC_ADDR_LINE_3_TXT Value="{$respQuery/SQL_RESULT/ADDR_LINE_3_TXT/@Value}"/>
+                              <SRC_CITY_NAME Value="{$respQuery/SQL_RESULT/CITY_NAME/@Value}"/>
+                              <SRC_TERR_NAME Value="{$respQuery/SQL_RESULT/TERR_NAME/@Value}"/>
+                              <SRC_POSTAL_AREA_CODE Value="{$respQuery/SQL_RESULT/POSTL_AREA_CODE/@Value}"/>
+                              <SRC_CNTRY_NAME Value="{$respQuery/SQL_RESULT/CNTRY_CODE/@Value}"/>
+                              <OPT_IND Value="O"/>
+                              <LOG_SOURCE_ID Value="-999999"/>
+                              <LOG_UPDATE_USER Value="{$userId}"/>
+                              <NATIONAL_ID_NBR Value="{$respQuery/SQL_RESULT/NATIONAL_ID_NBR/@Value}"/>
+                              <CHANNEL_IND Value="A"/>
+                              <OPT_LEVEL_IND Value="R"/>
+                              <OPT_TIME Value="{date()}"/>
+                              <LAST_ACTIVITY_TM Value="{date()}"/>
+                            </ADD_DOC_SMART>
+                          </THEN>
+                        </IF_TEST>
+                      </THEN>
+                    </IF_TEST>
+                    <!--<IF_TEST Test="$PrevselectedREGIS_PRSNA_ID != $selectedREGIS_PRSNA_ID">
+                      <THEN>
+                        <MODIFY_DOC_SMART Name="REGIS_PRSNA" ServiceName="BCM_MASTER">
+                          <DOCUMENT_CONTEXT>
+                            <REGIS_PRSNA_ID Value="{$selectedREGIS_PRSNA_ID}"/>
+                            <MKTNG_PGM_NBR Value="{$selectedMKTNG_PGM_NBR}"/>
+                          </DOCUMENT_CONTEXT>
+                          <UPDATE_PROPERTIES>
+                            <SYS_LAST_MODIFIED_DATE Value="{date()}"/>
+                            <LATST_ACTVY_DATE Value="{date()}"/>
+                          </UPDATE_PROPERTIES>
+                        </MODIFY_DOC_SMART>
+                      </THEN>
+                    </IF_TEST>-->
+                    <SET Var="PrevselectedREGIS_PRSNA_ID" FromValue="{$selectedREGIS_PRSNA_ID}"/>
+                    <SET Var="PrevselectedMKTNG_PGM_NBR" FromValue="{$selectedMKTNG_PGM_NBR}"/>
+                  </FOR_EACH>
+                  <SET Var="msg" FromValue="No. of Postal opt out count: {substringBefore($addressOptOutCnt,'.')},No. of Email opt out count: {substringBefore($emailOptOutCnt,'.')}, No. of Phone opt out count: {substringBefore($phoneOptOutCnt,'.')} :: Opt Outs submitted successfully. Opt Outs would be processed within 6 hours. To verify the status of the submitted Opt Outs, please use the Profile Editor Opt Out Report link"/>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+        </ACTION>
+      </post_actions>
+      <if_cond Value="$userAction ='OPTOUT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Opt" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='SEARCH'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Opt" Description="Search Opt Out"/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_DETAILS_INDIVIDUAL'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Opt" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='OPTOUTALL'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Opt" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <start0 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="135,298" size="732,526">
+        <iconProps iconfile="z1start.gif"/>
+      </start0>
+      <mgcnode Name="Manage Opt" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="269,280" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+    </mgcnodes>
+    <mgcconnectors>
+      <start0>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="180,320" endpoint="269,302" ctrlRect1="244,318,4,4" ctrlRect2="200,300,4,4"/>
+      </start0>
+      <mgcnode Name="Manage Opt">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="291,280" endpoint="291,280" ctrlRect1="289,203,4,4" ctrlRect2="353,204,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="314,302" endpoint="314,302" ctrlRect1="387,300,4,4" ctrlRect2="359,356,4,4" ctrlRect2Dirty="true" textRect="362,326,26,8">
+          <textProps text="$userAction ='SEARCH'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="314,302" endpoint="314,302" ctrlRect1="387,300,4,4" ctrlRect2="279,404,4,4" ctrlRect2Dirty="true" textRect="314,350,43,8">
+          <textProps text="$userAction ='LOAD_DETAILS_INDIVIDUAL'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="291,280" endpoint="269,302" ctrlRect1="289,203,4,4" ctrlRect2="210,249,4,4" textRect="237,224,29,8" ctrlRect2Dirty="true">
+          <textProps text="$userAction ='OPTOUTALL'"/>
+        </nextNodeView>
+      </mgcnode>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+      <action/>
+    </pre_actions>
+    <post_actions>
+      <action/>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

@@ -1,0 +1,26 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_form" source="studio.controller:load">
+  <ui:container id="topContainer">
+    <ui:step displayText="GDPR Handler" id="basicControls">
+      <ui:field-group>
+        <ui:image src="/bpi_check.gif" displayCondition="{string-length($root/AlertGreen/@Value) != 0}" id="checkImg"/>
+        <ui:display-field value="{$root/AlertGreen/@Value}" displayCondition="{string-length($root/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen" align="left"/>
+        <ui:image src="/cancel.gif" displayCondition="{string-length($root/AlertRed/@Value) != 0}"/>
+        <ui:display-field value="{$root/AlertRed/@Value}" displayCondition="{string-length($root/AlertRed/@Value) != 0}" name="error" class="requiredIndicatorRed"/>
+      </ui:field-group>
+      <ui:field-group id="Create">
+        <ui:field-group id="left fields">
+          <ui:entry-field id="HNDLR_NM" displayText="Handler Name" name="HNDLR_NM" required="true"/>
+          <ui:dropdown id="BUS_IND" name="BUS_IND" displayText="External Supplier Indicator">
+            <ui:option id="Y" value="Y"/>
+            <ui:option id="N" value="N"/>
+          </ui:dropdown>
+          <ui:entry-field id="BUS_SFTP_DIR" displayText="SFTP Directory" name="BUS_SFTP_DIR"/>
+        </ui:field-group>
+      </ui:field-group>
+      <ui:buttons id="buttons">
+        <ui:button id="Save" displayText="Save" name="Save" emphasized="true"/>
+        <ui:button id="Link_HNDLR_CNTRY" displayText="Link Handler to Country" name="Link_HNDLR_CNTRY" emphasized="true" displayCondition="{$root/Link_HNDLR_CNTRY/@Value='true'}"/>
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+</ui:page-group>

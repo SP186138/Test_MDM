@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="4" ShowInBreadCrumbs="true" Version="1.0" Name="OUTBOUND_CNSMR_DELETE_DEV" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="OUTBOUND_CNSMR_DELETE_DEV"/>
+  <nodes>
+    <start Name="start0">
+      <actions/>
+      <next_nodes>
+        <next_node Name="rest_node3"/>
+      </next_nodes>
+    </start>
+    <done Name="done1">
+      <actions/>
+      <next_nodes/>
+    </done>
+    <rest_node Name="rest_node3">
+      <parameters>
+        <Method_Type Value="POST"/>
+        <End_Point Value="{$thisParam/ENDPOINT/@Value}"/>
+        <Resource Value="{$thisParam/RESOURCE_URL/@Value}"/>
+        <Mime_Type Value="application/xml"/>
+        <XMLHttpJSON Value="&lt;ROOT ServiceName=&quot;BCM_MASTER&quot; TableName=&quot;WS_CNSMR_DEL&quot;> &lt;MKTNG_PGM_NBR Value=&quot;{$thisParam/MKTNG_PGM_NBR/@Value}&quot; /> &lt;REGIS_CNSMR_ID_VAL Value=&quot;{$thisParam/REGIS_CNSMR_ID_VAL/@Value}&quot; /> &lt;SOURCE_ID Value=&quot;{$thisParam/SOURCE_ID/@Value}&quot; />   &lt;/ROOT>"/>
+        <Headers>
+          <Host Value="10.138.18.14:8080"/>
+          <Connection Value="Keep-Alive"/>
+          <accept-encoding Value="gzip,deflate"/>
+          <accept-language Value="en-US,en;q=0.8"/>
+          <user-agent Value="Apache-HttpClient/4.1.1 (java 1.5)"/>
+          <Content-Type Value="text/xml;charset=utf-8"/>
+        </Headers>
+        <http_params>
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+          <SOURCE_ID Value="{$thisParam/SOURCE_ID/@Value}"/>
+        </http_params>
+        <security_params>
+          <User_Name Value="admin123"/>
+          <Password Value="admin"/>
+          <Encrypted Value="true"/>
+        </security_params>
+      </parameters>
+      <pre_actions>
+        <action/>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <APPEND_TO_XML DocVar="thisReturn">
+            <Response Value="{$RestParametersOut}"/>
+          </APPEND_TO_XML>
+        </action>
+      </post_actions>
+      <next_nodes>
+        <next_node Name="done1"/>
+      </next_nodes>
+    </rest_node>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <start0 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="95,172">
+        <iconProps iconfile="z1start.gif"/>
+      </start0>
+      <done1 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="443,191">
+        <iconProps iconfile="z1end.gif"/>
+      </done1>
+      <rest_node3 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="266,180" size="732,652">
+        <iconProps iconfile="x1age95.gif"/>
+      </rest_node3>
+    </mgcnodes>
+    <mgcconnectors>
+      <start0>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="133,188" endpoint="271,192" ctrlRect1="234,186,4,4" ctrlRect2="165,190,4,4"/>
+      </start0>
+      <rest_node3>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="304,194" endpoint="448,205" ctrlRect1="410,192,4,4" ctrlRect2="338,203,4,4"/>
+      </rest_node3>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions/>
+    <post_actions/>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

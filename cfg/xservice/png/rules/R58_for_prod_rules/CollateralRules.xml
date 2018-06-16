@@ -1,0 +1,795 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <DEFINE_METHOD Name="getSearchList">
+    <RULE>
+      <ACTION>
+        <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+          <CNTNT_ELEM_ID/>
+          <MKTNG_PGM_NBR/>
+          <CNTNT_NAME/>
+          <CNTNT_SHORT_NAME/>
+          <CNTNT_DESC/>
+          <GBL_CNTNT_ELEM_ID/>
+        </FORM_SEARCH_FILTER>
+        <TO_DOCVAR AssignToVar="filterList">
+          <FILTERLIST/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$filters/FILTER" CurrentElement="thisFilter">
+          <APPEND_TO_XML SelectList="$filterList">
+            <TO_XML SelectList="$thisFilter/*"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <IF_TEST Test="$thisParam/MKTNG_PGM_NBR/@Value='' and $thisParam/GBL_CNTNT_ELEM_ID/@Value ='' and $thisParam/LEGAL_ENT_NBR/@Value!=''">
+          <THEN>
+            <TO_DOCVAR AssignToVar="allMktngPrograms">
+              <ROOT>
+                <MKTNG_PGM/>
+              </ROOT>
+            </TO_DOCVAR>
+            <FOR_EACH SelectList="$thisParam/MKTNG_PGM/OPTION" CurrentElement="currElement">
+              <APPEND_TO_XML SelectList="$allMktngPrograms/MKTNG_PGM">
+                <MKTNG_PGM_NBR Value="{$currElement/@Id}"/>
+              </APPEND_TO_XML>
+            </FOR_EACH>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+        <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'SEARCH'">
+          <THEN>
+            <SET Var="startCount" FromValue="0"/>
+          </THEN>
+          <ELSE>
+            <THEN>
+              <SET Var="startCount" FromValue="{$thisParam/START_COUNT/@Value}"/>
+            </THEN>
+          </ELSE>
+        </IF_TEST>
+        <GET_DOCUMENT StartAtRow="{$startCount}" Name="CNTNT_ELEM" ServiceName="BCM_MASTER" DirtyRead="true" MaxRows="15" AssignToVar="searchResults" ReturnRowCount="yes">
+          <TO_XML SelectList="$filterList/*"/>
+          <OR>
+            <TO_XML SelectList="$allMktngPrograms/MKTNG_PGM/*"/>
+          </OR>
+          <SELECT>
+            <GBL_CNTNT_ELEM_ID/>
+            <CNTNT_ELEM_ID/>
+            <MKTNG_PGM_NBR/>
+            <ALT_SYS_CNTNT_ID/>
+            <CNTNT_NAME/>
+            <CNTNT_SHORT_NAME/>
+            <CNTNT_DESC/>
+            <CNSMR_ACTN_TYPE_CODE/>
+            <INCTV_NBR/>
+            <TRGT_PATH_TYPE_CODE/>
+            <TRGT_SUB_PATH_TYPE_CODE/>
+            <TRGT_CNSMR_SEG_CODE/>
+            <VIEW_WEB_SITE_URL_TXT/>
+            <CNTNT_OWNER_NAME/>
+            <CNTNT_PHYS_LOCATION/>
+            <CNTNT_ACTIVE_START_DATE/>
+            <CNTNT_ACTIVE_END_DATE/>
+          </SELECT>
+          <ORDER_BY>
+            <CNTNT_ELEM_ID Sort="Descending"/>
+          </ORDER_BY>
+        </GET_DOCUMENT>
+        <IF_TEST Test="$thisParam/MKTNG_PGM_NBR/@Value ='' and $thisParam/LEGAL_ENT_NBR/@Value =''">
+          <THEN>
+            <TO_DOCVAR AssignToVar="getMktngPgmNames">
+              <ROOT/>
+            </TO_DOCVAR>
+            <FOR_EACH SelectList="$searchResults/CNTNT_ELEM" CurrentElement="currEle1">
+              <IF_TEST Test="$currEle1/MKTNG_PGM_NBR/@Value != null">
+                <THEN>
+                  <EXECUTE_SQL_QUERY AssignToVar="MPN" Value="SEL MKTNG_PGM_NAME FROM MKTNG_PGM WHERE MKTNG_PGM_NBR='{$currEle1/MKTNG_PGM_NBR/@Value}'" HandleException="true"/>
+                  <!--<APPEND_TO_XML DocVar="getMktngPgmNames">
+                    <TO_XML DocVar="MPN"/>
+                  </APPEND_TO_XML>-->
+                  <SET FromValue="{$MPN/SQL_RESULT/MKTNG_PGM_NAME/@Value}" DocVar="currEle1" Property="MKTNG_PGM_NAME"/>
+                </THEN>
+              </IF_TEST>
+            </FOR_EACH>
+          </THEN>
+          <ELSE>
+            <FOR_EACH SelectList="$searchResults/CNTNT_ELEM" CurrentElement="currentElement">
+              <FOR_EACH SelectList="$thisParam/MKTNG_PGM/OPTION" CurrentElement="curElement">
+                <IF_TEST Test="$curElement/@Value!='All'">
+                  <THEN>
+                    <IF_TEST Test="$currentElement/MKTNG_PGM_NBR/@Value=$curElement/@Id">
+                      <THEN>
+                        <SET FromValue="{$curElement/@Value}" DocVar="currentElement" Property="MKTNG_PGM_NAME"/>
+                      </THEN>
+                      <ELSE/>
+                    </IF_TEST>
+                  </THEN>
+                  <ELSE/>
+                </IF_TEST>
+              </FOR_EACH>
+            </FOR_EACH>
+          </ELSE>
+        </IF_TEST>
+        <FOR_EACH SelectList="$searchResults/CNTNT_ELEM" CurrentElement="currentElement">
+          <FOR_EACH SelectList="$thisParam/CNSMR_ACTN_TYPE/OPTION" CurrentElement="curElement">
+            <IF_TEST Test="$currentElement/CNSMR_ACTN_TYPE_CODE/@Value=$curElement/@Id">
+              <THEN>
+                <SET FromValue="{$curElement/@Value}" DocVar="currentElement" Property="CNSMR_ACTN_TYPE_NAME"/>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+          </FOR_EACH>
+        </FOR_EACH>
+        <!--  <FOR_EACH SelectList="$searchResults/INCTV" CurrentElement="currentElement">
+<FOR_EACH SelectList="$thisParam/INCTV_STATUS/OPTION" CurrentElement="curElement">
+<IF_TEST Test="$currentElement/INCTV_STATUS_CODE/@Value=$curElement/@Id">
+<THEN>
+<SET DocVar="currentElement" Property="INCTV_STATUS_NAME" FromValue="{$curElement/@Value}"/>
+</THEN>
+</IF_TEST>
+</FOR_EACH>
+</FOR_EACH>-->
+        <CLONE_XML DocVar="searchResults" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getSearchListFullExport">
+    <RULE>
+      <ACTION>
+        <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+          <CNTNT_ELEM_ID/>
+          <MKTNG_PGM_NBR/>
+          <CNTNT_NAME/>
+          <CNTNT_SHORT_NAME/>
+          <CNTNT_DESC/>
+        </FORM_SEARCH_FILTER>
+        <TO_DOCVAR AssignToVar="filterList">
+          <FILTERLIST/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$filters/FILTER" CurrentElement="thisFilter">
+          <APPEND_TO_XML SelectList="$filterList">
+            <TO_XML SelectList="$thisFilter/*"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <IF_TEST Test="$thisParam/MKTNG_PGM_NBR/@Value=''">
+          <THEN>
+            <TO_DOCVAR AssignToVar="allMktngPrograms">
+              <ROOT>
+                <MKTNG_PGM/>
+              </ROOT>
+            </TO_DOCVAR>
+            <FOR_EACH SelectList="$thisParam/MKTNG_PGM/OPTION" CurrentElement="currElement">
+              <APPEND_TO_XML SelectList="$allMktngPrograms/MKTNG_PGM">
+                <MKTNG_PGM_NBR Value="{$currElement/@Id}"/>
+              </APPEND_TO_XML>
+            </FOR_EACH>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+        <GET_DOCUMENT Name="CNTNT_ELEM" ServiceName="BCM_MASTER" DirtyRead="true" AssignToVar="searchResults" ReturnRowCount="yes">
+          <TO_XML SelectList="$filterList/*"/>
+          <OR>
+            <TO_XML SelectList="$allMktngPrograms/MKTNG_PGM/*"/>
+          </OR>
+          <SELECT>
+            <CNTNT_ELEM_ID/>
+            <MKTNG_PGM_NBR/>
+            <ALT_SYS_CNTNT_ID/>
+            <CNTNT_NAME/>
+            <CNTNT_SHORT_NAME/>
+            <CNTNT_DESC/>
+            <CNSMR_ACTN_TYPE_CODE/>
+            <INCTV_NBR/>
+            <TRGT_PATH_TYPE_CODE/>
+            <TRGT_SUB_PATH_TYPE_CODE/>
+            <TRGT_CNSMR_SEG_CODE/>
+            <VIEW_WEB_SITE_URL_TXT/>
+            <CNTNT_OWNER_NAME/>
+            <CNTNT_PHYS_LOCATION/>
+            <CNTNT_ACTIVE_START_DATE/>
+            <CNTNT_ACTIVE_END_DATE/>
+          </SELECT>
+          <ORDER_BY>
+            <CNTNT_ELEM_ID Sort="Descending"/>
+          </ORDER_BY>
+        </GET_DOCUMENT>
+        <FOR_EACH SelectList="$searchResults/CNTNT_ELEM" CurrentElement="currentElement">
+          <FOR_EACH SelectList="$thisParam/MKTNG_PGM/OPTION" CurrentElement="curElement">
+            <IF_TEST Test="$curElement/@Value!='All'">
+              <THEN>
+                <IF_TEST Test="$currentElement/MKTNG_PGM_NBR/@Value=$curElement/@Id">
+                  <THEN>
+                    <SET FromValue="{$curElement/@Value}" DocVar="currentElement" Property="MKTNG_PGM_NAME"/>
+                  </THEN>
+                  <ELSE/>
+                </IF_TEST>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+          </FOR_EACH>
+        </FOR_EACH>
+        <FOR_EACH SelectList="$searchResults/CNTNT_ELEM" CurrentElement="currentElement">
+          <FOR_EACH SelectList="$thisParam/CNSMR_ACTN_TYPE/OPTION" CurrentElement="curElement">
+            <IF_TEST Test="$currentElement/CNSMR_ACTN_TYPE_CODE/@Value=$curElement/@Id">
+              <THEN>
+                <SET FromValue="{$curElement/@Value}" DocVar="currentElement" Property="CNSMR_ACTN_TYPE_NAME"/>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+          </FOR_EACH>
+        </FOR_EACH>
+        <!--  <FOR_EACH SelectList="$searchResults/INCTV" CurrentElement="currentElement">
+<FOR_EACH SelectList="$thisParam/INCTV_STATUS/OPTION" CurrentElement="curElement">
+<IF_TEST Test="$currentElement/INCTV_STATUS_CODE/@Value=$curElement/@Id">
+<THEN>
+<SET DocVar="currentElement" Property="INCTV_STATUS_NAME" FromValue="{$curElement/@Value}"/>
+</THEN>
+</IF_TEST>
+</FOR_EACH>
+</FOR_EACH>-->
+        <CLONE_XML DocVar="searchResults" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getContentOptions">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="ContentList">
+          <ROOT>
+            <CNTNT_ELEM/>
+          </ROOT>
+        </TO_DOCVAR>
+        <GET_DOCUMENT Name="CNTNT_ELEM" ServiceName="BCM_MASTER" DirtyRead="true" AssignToVar="allContents" ReturnRowCount="yes">
+          <SELECT>
+            <CNTNT_ELEM_ID/>
+            <CNTNT_NAME/>
+          </SELECT>
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+        </GET_DOCUMENT>
+        <!-- <APPEND_TO_XML SelectList="$ContentList/CNTNT_ELEM">
+<OPTION Id="" Value="All"/>
+</APPEND_TO_XML>-->
+        <FOR_EACH SelectList="$allContents/CNTNT_ELEM" CurrentElement="currentElement">
+          <SET FromValue="{$currentElement/CNTNT_NAME/@Value}" Var="contentName"/>
+          <SET FromValue="{$currentElement/CNTNT_ELEM_ID/@Value}" Var="contentId"/>
+          <APPEND_TO_XML SelectList="$ContentList/CNTNT_ELEM">
+            <OPTION Id="{$contentId}" Value="{$contentName}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="ContentList" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="saveContent">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="endDate">
+          <ROOT/>
+        </TO_DOCVAR>
+        <IF_TEST Test="$thisParam/CNTNT_ACTIVE_END_DATE/@Value!=''">
+          <THEN>
+            <APPEND_TO_XML SelectList="$endDate">
+              <CNTNT_ACTIVE_END_DATE Value="{$thisParam/CNTNT_ACTIVE_END_DATE/@Value}"/>
+            </APPEND_TO_XML>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+        <!--<TO_DOCVAR AssignToVar="trimtest">
+        <ROOT>
+          <trimtest1 Value="{starts-with($thisParam/GBL_CNTNT_ELEM/@Value,' ')}"/>
+          <trimtest1 Value="{trim($thisParam/GBL_CNTNT_ELEM/@Value)}"/>
+          <trim Value="{strlen(trim($thisParam/GBL_CNTNT_ELEM/@Value))}"/>
+        </ROOT>
+        </TO_DOCVAR>-->
+        <IF_TEST Test="$thisParam/GBL_CNTNT_ELEM_ID/@Value='' or $thisParam/GBL_CNTNT_ELEM_ID/@Value=null or strlen(trim($thisParam/GBL_CNTNT_ELEM_ID/@Value)) = 0 or $thisParam/GBL_CNTNT_ELEM_ID/@Value='NaN'">
+          <THEN>
+            <MODIFY_DOC_SMART Name="CNTNT_ELEM" ServiceName="BCM_MASTER">
+              <DOCUMENT_CONTEXT>
+                <CNTNT_ELEM_ID Value="{$thisParam/CNTNT_ELEM_ID/@Value}"/>
+              </DOCUMENT_CONTEXT>
+              <UPDATE_PROPERTIES>
+                <CNTNT_DESC Value="{$thisParam/CNTNT_DESC/@Value}"/>
+                <ALT_SYS_CNTNT_ID Value="{$thisParam/ALT_SYS_CNTNT_ID/@Value}"/>
+                <VIEW_WEB_SITE_URL_TXT Value="{$thisParam/VIEW_WEB_SITE_URL_TXT/@Value}"/>
+                <ENTITY_STATE Value="{$thisParam/ENTITY_STATE/@Value}"/>
+                <TO_XML SelectList="$endDate/*"/>
+                <!--<GBL_CNTNT_ELEM_ID Value="{$thisParam/GBL_CNTNT_ELEM/@Value}"/>-->
+                <!--INCTV_TYPE_CODE Value="{$thisParam/INCTV_TYPE_CODE/@Value}"/-->
+              </UPDATE_PROPERTIES>
+            </MODIFY_DOC_SMART>
+          </THEN>
+          <ELSE>
+            <!-- <MODIFY_DOC_SMART Name="CNTNT_ELEM" ServiceName="BCM_MASTER">
+              <DOCUMENT_CONTEXT>
+                <CNTNT_ELEM_ID Value="{$thisParam/CNTNT_ELEM_ID/@Value}"/>
+              </DOCUMENT_CONTEXT>
+              <UPDATE_PROPERTIES>
+                <CNTNT_DESC Value="{$thisParam/CNTNT_DESC/@Value}"/>
+                <ALT_SYS_CNTNT_ID Value="{$thisParam/ALT_SYS_CNTNT_ID/@Value}"/>
+                <VIEW_WEB_SITE_URL_TXT Value="{$thisParam/VIEW_WEB_SITE_URL_TXT/@Value}"/>
+                <ENTITY_STATE Value="{$thisParam/ENTITY_STATE/@Value}"/>
+                <TO_XML SelectList="$endDate/*"/>
+                <GBL_CNTNT_ELEM_ID Value="{$thisParam/GBL_CNTNT_ELEM/@Value}"/>
+                INCTV_TYPE_CODE Value="{$thisParam/INCTV_TYPE_CODE/@Value}"/
+              </UPDATE_PROPERTIES>
+            </MODIFY_DOC_SMART>-->
+            <DO_DB_PERSIST DocumentName="CNTNT_ELEM" Source="EXTERNAL" Action="UPDATE" ServiceName="BCM_MASTER" AssignToVar="CntntResponse">
+              <CNTNT_ELEM>
+                <CNTNT_ELEM_ID Value="{$thisParam/CNTNT_ELEM_ID/@Value}"/>
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                <ALT_SYS_CNTNT_ID Value="{$thisParam/ALT_SYS_CNTNT_ID/@Value}"/>
+                <CNTNT_DESC Value="{$thisParam/CNTNT_DESC/@Value}"/>
+                <VIEW_WEB_SITE_URL_TXT Value="{$thisParam/VIEW_WEB_SITE_URL_TXT/@Value}"/>
+                <ENTITY_STATE Value="{$thisParam/ENTITY_STATE/@Value}"/>
+                <GBL_CNTNT_ELEM_ID Value="{$thisParam/GBL_CNTNT_ELEM_ID/@Value}"/>
+                <TO_XML SelectList="$endDate/*"/>
+              </CNTNT_ELEM>
+            </DO_DB_PERSIST>
+            <IF_TEST Test="$CntntResponse/VALIDATION_RESULT/@Value='ERROR'">
+              <THEN>
+                <SET Var="err_ind2" FromValue="true"/>
+              </THEN>
+            </IF_TEST>
+          </ELSE>
+        </IF_TEST>
+        <APPEND_TO_XML DocVar="thisReturn">
+          <ERROR_CODE Value="{$CntntResponse/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+          <ERR Value="{$err_ind2}"/>
+        </APPEND_TO_XML>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="createContent">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="startDate">
+          <ROOT/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="endDate">
+          <ROOT/>
+        </TO_DOCVAR>
+        <IF_TEST Test="$thisParam/CNTNT_ACTIVE_START_DATE/@Value!=''">
+          <THEN>
+            <APPEND_TO_XML SelectList="$startDate">
+              <CNTNT_ACTIVE_START_DATE Value="{$thisParam/CNTNT_ACTIVE_START_DATE/@Value}"/>
+            </APPEND_TO_XML>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+        <IF_TEST Test="$thisParam/CNTNT_ACTIVE_END_DATE/@Value!=''">
+          <THEN>
+            <APPEND_TO_XML SelectList="$endDate">
+              <CNTNT_ACTIVE_END_DATE Value="{$thisParam/CNTNT_ACTIVE_END_DATE/@Value}"/>
+            </APPEND_TO_XML>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+        <IF_TEST Test="$inctvNbr = null or $inctvNbr ='' or strlen(trim($inctvNbr)) = 0">
+          <THEN>
+            <SET Var="inctvNbr" FromValue="0"/>
+          </THEN>
+          <ELSE>
+            <THEN>
+              <SET Var="inctvNbr" FromValue="{$curElem/INCTV_NBR/@Value}"/>
+            </THEN>
+          </ELSE>
+        </IF_TEST>
+        <!--<IF_TEST Test="$thisParam/GBL_CNTNT_ELEM_ID/@Value!=''">
+          <THEN>
+            <APPEND_TO_XML SelectList="$gblcntnt">
+              <GBL_CNTNT_ELEM Value="{$thisParam/GBL_CNTNT_ELEM/@Value}"/>
+            </APPEND_TO_XML>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>-->
+        <IF_TEST Test="$thisParam/LEVEL_IND/@Value='Global Level'">
+          <THEN>
+            <ADD_DOC_SMART Name="CNTNT_ELEM" ServiceName="BCM_MASTER" AssignToVar="createContentresult">
+              <CNTNT_ELEM_ID Value="{$thisParam/NEW_CNTNT_ELEM_ID/@Value}"/>
+              <ALT_SYS_CNTNT_ID Value="{$thisParam/ALT_SYS_CNTNT_ID/@Value}"/>
+              <CNTNT_NAME Value="{$thisParam/CNTNT_NAME/@Value}"/>
+              <CNTNT_SHORT_NAME Value="{$thisParam/CNTNT_SHORT_NAME/@Value}"/>
+              <CNTNT_DESC Value="{$thisParam/CNTNT_DESC/@Value}"/>
+              <CNSMR_ACTN_TYPE_CODE Value="{$thisParam/CNSMR_ACTN_TYPE_CODE/@Value}"/>
+              <!--<INCTV_NBR Value="{trim($thisParam/INCTV_NBR/@Value)}"/>-->
+              <INCTV_NBR Value="{$inctvNbr}"/>
+              <TRGT_PATH_TYPE_CODE Value="{$thisParam/TRGT_PATH_TYPE_CODE/@Value}"/>
+              <TRGT_SUB_PATH_TYPE_CODE Value="{$thisParam/TRGT_SUB_PATH_TYPE_CODE/@Value}"/>
+              <TRGT_CNSMR_SEG_CODE Value="{$thisParam/TRGT_CNSMR_SEG_CODE/@Value}"/>
+              <VIEW_WEB_SITE_URL_TXT Value="{$thisParam/VIEW_WEB_SITE_URL_TXT/@Value}"/>
+              <CNTNT_OWNER_NAME Value="{$thisParam/CNTNT_OWNER_NAME/@Value}"/>
+              <CNTNT_PHYS_LOCATION Value="{$thisParam/CNTNT_PHYS_LOCATION/@Value}"/>
+              <CNTNT_ELEM_TYPE_CODE Value="{$thisParam/CNTNT_ELEM_TYPE_CODE/@Value}"/>
+              <ENTITY_STATE Value="{$thisParam/ENTITY_STATE/@Value}"/>
+              <TO_XML SelectList="$startDate/*"/>
+              <TO_XML SelectList="$endDate/*"/>
+            </ADD_DOC_SMART>
+          </THEN>
+          <ELSE>
+            <!--<EXECUTE_SQL_QUERY AssignToVar="SameMPN" ReturnRowCount="true" Value="SEL * FROM CNTNT_ELEM WHERE MKTNG_PGM_NBR=$thisParam/MKTNG_PGM_NBR/@Value AND GBL_CNTNT_ELEM_ID=$thisParam/GBL_CNTNT_ELEM/@Value"> </EXECUTE_SQL_QUERY>-->
+            <!--<ADD_DOC_SMART Name="CNTNT_ELEM" ServiceName="BCM_MASTER" AssignToVar="createContentresult">-->
+            <IF_TEST Test="$thisParam/GBL_CNTNT_ELEM_ID/@Value='' or $thisParam/GBL_CNTNT_ELEM_ID/@Value=null or strlen(trim($thisParam/GBL_CNTNT_ELEM_ID/@Value)) = 0 or $thisParam/GBL_CNTNT_ELEM_ID/@Value='NaN'">
+              <THEN>
+                <DO_DB_PERSIST AssignToVar="createContentresult" Action="INSERT" DocumentName="CNTNT_ELEM" ServiceName="BCM_MASTER">
+                  <CNTNT_ELEM>
+                    <CNTNT_ELEM_ID Value="{$thisParam/NEW_CNTNT_ELEM_ID/@Value}"/>
+                    <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                    <ALT_SYS_CNTNT_ID Value="{$thisParam/ALT_SYS_CNTNT_ID/@Value}"/>
+                    <CNTNT_NAME Value="{$thisParam/CNTNT_NAME/@Value}"/>
+                    <CNTNT_SHORT_NAME Value="{$thisParam/CNTNT_SHORT_NAME/@Value}"/>
+                    <CNTNT_DESC Value="{$thisParam/CNTNT_DESC/@Value}"/>
+                    <CNSMR_ACTN_TYPE_CODE Value="{$thisParam/CNSMR_ACTN_TYPE_CODE/@Value}"/>
+                    <!--<INCTV_NBR Value="{trim($thisParam/INCTV_NBR/@Value)}"/>-->
+                    <INCTV_NBR Value="{$inctvNbr}"/>
+                    <TRGT_PATH_TYPE_CODE Value="{$thisParam/TRGT_PATH_TYPE_CODE/@Value}"/>
+                    <TRGT_SUB_PATH_TYPE_CODE Value="{$thisParam/TRGT_SUB_PATH_TYPE_CODE/@Value}"/>
+                    <TRGT_CNSMR_SEG_CODE Value="{$thisParam/TRGT_CNSMR_SEG_CODE/@Value}"/>
+                    <VIEW_WEB_SITE_URL_TXT Value="{$thisParam/VIEW_WEB_SITE_URL_TXT/@Value}"/>
+                    <CNTNT_OWNER_NAME Value="{$thisParam/CNTNT_OWNER_NAME/@Value}"/>
+                    <CNTNT_PHYS_LOCATION Value="{$thisParam/CNTNT_PHYS_LOCATION/@Value}"/>
+                    <CNTNT_ELEM_TYPE_CODE Value="{$thisParam/CNTNT_ELEM_TYPE_CODE/@Value}"/>
+                    <ENTITY_STATE Value="{$thisParam/ENTITY_STATE/@Value}"/>
+                    <TO_XML SelectList="$startDate/*"/>
+                    <TO_XML SelectList="$endDate/*"/>
+                    <!--<TO_XML SelectList="$gblcntnt/*"/>-->
+                  </CNTNT_ELEM>
+                </DO_DB_PERSIST>
+              </THEN>
+              <ELSE>
+                <DO_DB_PERSIST AssignToVar="createContentresult" Action="INSERT" DocumentName="CNTNT_ELEM" ServiceName="BCM_MASTER">
+                  <CNTNT_ELEM>
+                    <CNTNT_ELEM_ID Value="{$thisParam/NEW_CNTNT_ELEM_ID/@Value}"/>
+                    <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                    <ALT_SYS_CNTNT_ID Value="{$thisParam/ALT_SYS_CNTNT_ID/@Value}"/>
+                    <CNTNT_NAME Value="{$thisParam/CNTNT_NAME/@Value}"/>
+                    <CNTNT_SHORT_NAME Value="{$thisParam/CNTNT_SHORT_NAME/@Value}"/>
+                    <CNTNT_DESC Value="{$thisParam/CNTNT_DESC/@Value}"/>
+                    <CNSMR_ACTN_TYPE_CODE Value="{$thisParam/CNSMR_ACTN_TYPE_CODE/@Value}"/>
+                    <!--<INCTV_NBR Value="{trim($thisParam/INCTV_NBR/@Value)}"/>-->
+                    <INCTV_NBR Value="{$inctvNbr}"/>
+                    <TRGT_PATH_TYPE_CODE Value="{$thisParam/TRGT_PATH_TYPE_CODE/@Value}"/>
+                    <TRGT_SUB_PATH_TYPE_CODE Value="{$thisParam/TRGT_SUB_PATH_TYPE_CODE/@Value}"/>
+                    <TRGT_CNSMR_SEG_CODE Value="{$thisParam/TRGT_CNSMR_SEG_CODE/@Value}"/>
+                    <VIEW_WEB_SITE_URL_TXT Value="{$thisParam/VIEW_WEB_SITE_URL_TXT/@Value}"/>
+                    <CNTNT_OWNER_NAME Value="{$thisParam/CNTNT_OWNER_NAME/@Value}"/>
+                    <CNTNT_PHYS_LOCATION Value="{$thisParam/CNTNT_PHYS_LOCATION/@Value}"/>
+                    <CNTNT_ELEM_TYPE_CODE Value="{$thisParam/CNTNT_ELEM_TYPE_CODE/@Value}"/>
+                    <ENTITY_STATE Value="{$thisParam/ENTITY_STATE/@Value}"/>
+                    <TO_XML SelectList="$startDate/*"/>
+                    <TO_XML SelectList="$endDate/*"/>
+                    <!--<TO_XML SelectList="$gblcntnt/*"/>-->
+                    <GBL_CNTNT_ELEM_ID Value="{$thisParam/GBL_CNTNT_ELEM_ID/@Value}"/>
+                  </CNTNT_ELEM>
+                </DO_DB_PERSIST>
+              </ELSE>
+            </IF_TEST>
+            <!--</ADD_DOC_SMART>-->
+            <IF_TEST Test="$createContentresult/VALIDATION_RESULT/@Value='ERROR'">
+              <THEN>
+                <SET Var="err_ind" FromValue="true"/>
+              </THEN>
+            </IF_TEST>
+          </ELSE>
+        </IF_TEST>
+        <APPEND_TO_XML DocVar="thisReturn">
+          <ERROR_CODE Value="{$createContentresult/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+          <ERR Value="{$err_ind}"/>
+        </APPEND_TO_XML>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getTargetPathTypelist">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="TargetPathTypelist">
+          <ROOT>
+            <TRGT_PATH_TYPE/>
+          </ROOT>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY Value="SELECT CNTCT_PATH_TYPE_CODE, CNTCT_PATH_TYPE_NAME FROM CNTCT_PATH_TYPE" AssignToVar="allTrgtPathTypes"/>
+        <FOR_EACH SelectList="$allTrgtPathTypes/SQL_RESULT" CurrentElement="currentElement">
+          <SET FromValue="{$currentElement/CNTCT_PATH_TYPE_NAME/@Value}" Var="cntctpathtypename"/>
+          <SET FromValue="{$currentElement/CNTCT_PATH_TYPE_CODE/@Value}" Var="cntctpath"/>
+          <APPEND_TO_XML SelectList="$TargetPathTypelist/TRGT_PATH_TYPE">
+            <OPTION Id="{$cntctpath}" Value="{$cntctpathtypename}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="TargetPathTypelist" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getTargetSubPathTypelist">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="TargetSubPathTypelist">
+          <ROOT>
+            <TRGT_SUB_PATH_TYPE/>
+          </ROOT>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY Value="SELECT CNTCT_SUB_PATH_TYPE_CODE, CNTCT_SUB_PATH_TYPE_NAME FROM CNTCT_SUB_PATH_TYPE" AssignToVar="allTrgtSubPathTypes"/>
+        <FOR_EACH SelectList="$allTrgtSubPathTypes/SQL_RESULT" CurrentElement="currentElement">
+          <SET FromValue="{$currentElement/CNTCT_SUB_PATH_TYPE_NAME/@Value}" Var="cntctsubpathtypename"/>
+          <SET FromValue="{$currentElement/CNTCT_SUB_PATH_TYPE_CODE/@Value}" Var="cntctsubpath"/>
+          <APPEND_TO_XML SelectList="$TargetSubPathTypelist/TRGT_SUB_PATH_TYPE">
+            <OPTION Id="{$cntctsubpath}" Value="{$cntctsubpathtypename}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="TargetSubPathTypelist" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getTargetCnsmrSeglist">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="TargetCnsmrSeglist">
+          <ROOT>
+            <TRGT_CNSMR_SEG/>
+          </ROOT>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY Value="SELECT CNSMR_SEG_CODE, CNSMR_SEG_NAME FROM CNSMR_SEG" AssignToVar="allTrgtCnsmrSeg"/>
+        <FOR_EACH SelectList="$allTrgtCnsmrSeg/SQL_RESULT" CurrentElement="currentElement">
+          <SET FromValue="{$currentElement/CNSMR_SEG_NAME/@Value}" Var="cnsmrsegname"/>
+          <SET FromValue="{$currentElement/CNSMR_SEG_CODE/@Value}" Var="cnsmrseg"/>
+          <APPEND_TO_XML SelectList="$TargetCnsmrSeglist/TRGT_CNSMR_SEG">
+            <OPTION Id="{$cnsmrseg}" Value="{$cnsmrsegname}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="TargetCnsmrSeglist" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getCnsmrActionTypelist">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="CnsmrActionTypelist">
+          <ROOT>
+            <CNSMR_ACTN_TYPE/>
+          </ROOT>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY Value="SELECT CNSMR_ACTN_TYPE_CODE, CNSMR_ACTN_TYPE_NAME FROM CNSMR_ACTN_TYPE" AssignToVar="allCnsmerActnType"/>
+        <FOR_EACH SelectList="$allCnsmerActnType/SQL_RESULT" CurrentElement="currentElement">
+          <SET FromValue="{$currentElement/CNSMR_ACTN_TYPE_NAME/@Value}" Var="cnsmractnname"/>
+          <SET FromValue="{$currentElement/CNSMR_ACTN_TYPE_CODE/@Value}" Var="cnsmractntype"/>
+          <APPEND_TO_XML SelectList="$CnsmrActionTypelist/CNSMR_ACTN_TYPE">
+            <OPTION Id="{$cnsmractntype}" Value="{$cnsmractnname}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="CnsmrActionTypelist" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getContentElementDetails">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="CNTNT_ELEM" ServiceName="BCM_MASTER" AssignToVar="cntntElemDetails" ReturnRowCount="true">
+          <SELECT>
+            <CNTNT_ELEM_ID/>
+            <MKTNG_PGM_NBR/>
+            <ALT_SYS_CNTNT_ID/>
+            <CNTNT_NAME/>
+            <CNTNT_SHORT_NAME/>
+            <CNTNT_DESC/>
+            <CNSMR_ACTN_TYPE_CODE/>
+            <INCTV_NBR/>
+            <TRGT_PATH_TYPE_CODE/>
+            <TRGT_SUB_PATH_TYPE_CODE/>
+            <TRGT_CNSMR_SEG_CODE/>
+            <VIEW_WEB_SITE_URL_TXT/>
+            <CNTNT_OWNER_NAME/>
+            <CNTNT_PHYS_LOCATION/>
+            <CNTNT_ACTIVE_START_DATE/>
+            <CNTNT_ACTIVE_END_DATE/>
+          </SELECT>
+          <CNTNT_ELEM_ID Value="{$thisParam/CNTNT_ELEM_ID/@Value}"/>
+        </GET_DOCUMENT>
+        <CLONE_XML DocVar="cntntElemDetails" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="test">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="V_SRC_EMAIL_DETAIL" ServiceName="BCM_MASTER" DirtyRead="yes" AssignToVar="resSrcEmail">
+          <SELECT>
+            <SOURCE_ID/>
+            <REQ_MAIL_ID/>
+            <AGN_CON_MAIL_ID/>
+          </SELECT>
+          <LOAD_ID Value="{$thisParam/LoadId/@Value}"/>
+          <GROUP_BY>
+            <SOURCE_ID/>
+            <REQ_MAIL_ID/>
+            <AGN_CON_MAIL_ID/>
+          </GROUP_BY>
+        </GET_DOCUMENT>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="createCntntItem">
+    <RULE>
+      <ACTION>
+        <IF_TEST Test="$thisParam/ASSIGNED_ITEMS/ASSIGNED_ITEM = null or $thisParam/ASSIGNED_ITEMS/ASSIGNED_ITEM =''">
+          <THEN>
+            <CREATE_DOCUMENT_ID Name="CNTNT_ELEM_ITEM_ID" AssignToVar="cntntItemId1"/>
+            <SET Var="selectedCntntItemID1" FromValue="{$cntntItemId1}"/>
+            <EXECUTE_SQL_QUERY AssignToVar="brandItemName" Value="SELECT CATEG_NAME FROM CATEG where CATEG_CODE='{$thisParam/CATEG_CODE/@Value}';"/>
+            <SET Var="V_CNTNT_ITEM_NAME" FromValue="{$brandItemName/SQL_RESULT/CATEG_NAME/@Value}"/>
+            <ADD_DOC_SMART Name="CNTNT_ELEM_ITEM" AssignToVar="addCntntItem" ServiceName="BCM_MASTER">
+              <CNTNT_ELEM_ID Value="{$thisParam/CNTNT_ELEM_ID/@Value}"/>
+              <!--Need to check what value should come for INCTV_ITEM_NBR-->
+              <CNTNT_ELEM_ITEM_NBR Value="{$selectedCntntItemID1}"/>
+              <SECTOR_CODE Value="{$thisParam/SECTOR_CODE/@Value}"/>
+              <SUB_SECTOR_CODE Value="{$thisParam/SUB_SECTOR_CODE/@Value}"/>
+              <CATEG_CODE Value="{$thisParam/CATEG_CODE/@Value}"/>
+              <SEG_CODE Value="{$thisParam/SEG_CODE/@Value}"/>
+              <BRAND_CODE Value="{$thisParam/BRAND_CODE/@Value}"/>
+              <SUB_BRAND_CODE Value="{$thisParam/SUB_BRAND_CODE/@Value}"/>
+              <ITEM_VERS_CODE Value="{$thisParam/ITEM_VERS_CODE/@Value}"/>
+              <GLOBAL_FORM_CODE Value="{$thisParam/GLOBAL_FORM_CODE/@Value}"/>
+              <!--MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/-->
+              <!--INCTV_ITEM_QTY Value="{$thisParam/INCTV_ITEM_QTY/@Value}"/-->
+              <CNTNT_ELEM_ITEM_QTY Value="1"/>
+              <!--INCTV_ITEM_NAME Value="{$ProdItemName/SQL_RESULT/PROD_ITEM_NAME/@Value}"/-->
+              <CNTNT_ELEM_ITEM_NAME Value="{$V_CNTNT_ITEM_NAME}"/>
+              <ENTITY_STATE Value="{$thisParam/ENTITY_STATE/@Value}"/>
+            </ADD_DOC_SMART>
+          </THEN>
+          <ELSE>
+            <FOR_EACH SelectList="$thisParam/ASSIGNED_ITEMS/ASSIGNED_ITEM" CurrentElement="currElement">
+              <CREATE_DOCUMENT_ID Name="CNTNT_ELEM_ITEM_ID" AssignToVar="cntntItemId1"/>
+              <SET Var="selectedCntntItemID1" FromValue="{$cntntItemId1}"/>
+              <EXECUTE_SQL_QUERY AssignToVar="ProdItemName" Value="SELECT PROD_ITEM_NAME FROM PROD_ITEM WHERE PROD_ITEM_UPC='{$currElement/@Value}';"/>
+              <EXECUTE_SQL_QUERY AssignToVar="brandItemName" Value="SELECT CATEG_NAME FROM CATEG where CATEG_CODE='{$thisParam/CATEG_CODE/@Value}';"/>
+              <IF_TEST Test="$ProdItemName/SQL_RESULT/PROD_ITEM_NAME/@Value = null or $ProdItemName/SQL_RESULT/PROD_ITEM_NAME/@Value =''">
+                <THEN>
+                  <SET Var="V_CNTNT_ITEM_NAME" FromValue="{$brandItemName/SQL_RESULT/CATEG_NAME/@Value}"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="V_CNTNT_ITEM_NAME" FromValue="{$ProdItemName/SQL_RESULT/PROD_ITEM_NAME/@Value}"/>
+                </ELSE>
+              </IF_TEST>
+              <ADD_DOC_SMART Name="CNTNT_ELEM_ITEM" AssignToVar="addCntntItem" ServiceName="BCM_MASTER">
+                <CNTNT_ELEM_ID Value="{$thisParam/CNTNT_ELEM_ID/@Value}"/>
+                <!--Need to check what value should come for INCTV_ITEM_NBR-->
+                <CNTNT_ELEM_ITEM_NBR Value="{$selectedCntntItemID1}"/>
+                <SECTOR_CODE Value="{$thisParam/SECTOR_CODE/@Value}"/>
+                <SUB_SECTOR_CODE Value="{$thisParam/SUB_SECTOR_CODE/@Value}"/>
+                <CATEG_CODE Value="{$thisParam/CATEG_CODE/@Value}"/>
+                <SEG_CODE Value="{$thisParam/SEG_CODE/@Value}"/>
+                <BRAND_CODE Value="{$thisParam/BRAND_CODE/@Value}"/>
+                <SUB_BRAND_CODE Value="{$thisParam/SUB_BRAND_CODE/@Value}"/>
+                <ITEM_VERS_CODE Value="{$thisParam/ITEM_VERS_CODE/@Value}"/>
+                <GLOBAL_FORM_CODE Value="{$thisParam/GLOBAL_FORM_CODE/@Value}"/>
+                <!--MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/-->
+                <!--INCTV_ITEM_QTY Value="{$thisParam/INCTV_ITEM_QTY/@Value}"/-->
+                <CNTNT_ELEM_ITEM_QTY Value="1"/>
+                <CNTNT_ELEM_ITEM_NAME Value="{$V_CNTNT_ITEM_NAME}"/>
+                <!--INCTV_ITEM_SIZE Value="{$thisParam/INCTV_ITEM_SIZE/@Value}"/-->
+                <!--INCTV_ITEM_MEASURE Value="{$thisParam/INCTV_ITEM_MEASURE/@Value}"/-->
+                <!--INCTV_ITEM_DESC Value="{$thisParam/INCTV_ITEM_DESC/@Value}"/-->
+                <!--VISUAL_CODE Value="{$thisParam/VISUAL_CODE/@Value}"/-->
+                <PROD_ITEM_UPC Value="{$currElement/@Value}"/>
+                <ENTITY_STATE Value="{$thisParam/ENTITY_STATE/@Value}"/>
+              </ADD_DOC_SMART>
+            </FOR_EACH>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getContentItemDetails">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="CNTNT_ELEM_ITEM" AssignToVar="cntntItmDetails" ReturnRowCount="true" ServiceName="BCM_MASTER">
+          <SELECT>
+            <CNTNT_ELEM_ID/>
+            <CNTNT_ELEM_ITEM_NBR/>
+            <CNTNT_ELEM_ITEM_NAME/>
+            <CNTNT_ELEM_ITEM_QTY/>
+            <BRAND_CODE/>
+            <CNTNT_ELEM_ITEM_DESC/>
+            <PROD_ITEM_UPC/>
+            <ENTITY_STATE/>
+          </SELECT>
+          <CNTNT_ELEM_ID Value="{$thisParam/CNTNT_ELEM_ID/@Value}"/>
+        </GET_DOCUMENT>
+        <CLONE_XML DocVar="cntntItmDetails" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getContentTrtDetails">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="CNTNT_ELEM_TRT" AssignToVar="cntntTrtDetails" ReturnRowCount="true" ServiceName="BCM_MASTER">
+          <SELECT>
+            <CNTNT_ELEM_ID/>
+            <TRT_NBR/>
+            <CNTNT_ELEM_TRT_SEQ_NBR/>
+            <CNTNT_ELEM_TRT_TXT/>
+            <CNTNT_ELEM_TRT_DESC/>
+            <ENTITY_STATE/>
+          </SELECT>
+          <CNTNT_ELEM_ID Value="{$thisParam/CNTNT_ELEM_ID/@Value}"/>
+        </GET_DOCUMENT>
+        <CLONE_XML DocVar="cntntTrtDetails" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getcntntElemTypelist">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="cntntElemTypelist">
+          <ROOT>
+            <CNTNT_ELEM_TYPE/>
+          </ROOT>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY Value="SEL CNTNT_ELEM_TYPE_CODE,CNTNT_ELEM_TYPE_NAME FROM CNTNT_ELEM_TYPE;" AssignToVar="allcntntelemtype"/>
+        <FOR_EACH SelectList="$allcntntelemtype/SQL_RESULT" CurrentElement="currentElement">
+          <SET FromValue="{$currentElement/CNTNT_ELEM_TYPE_NAME/@Value}" Var="cntntElemTypeName"/>
+          <SET FromValue="{$currentElement/CNTNT_ELEM_TYPE_CODE/@Value}" Var="cntntElemCd"/>
+          <APPEND_TO_XML SelectList="$cntntElemTypelist/CNTNT_ELEM_TYPE">
+            <OPTION Id="{$cntntElemCd}" Value="{$cntntElemTypeName}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="cntntElemTypelist" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getProdItemListCntnt">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="ProdItemlist">
+          <ROOT>
+            <PROD_ITEM/>
+          </ROOT>
+        </TO_DOCVAR>
+        <IF_TEST Test="$thisParam/GLOBAL_FORM_CODE/@Value='NO_VALUE'">
+          <THEN>
+            <SET Var="globalFormClause" FromValue=""/>
+          </THEN>
+          <ELSE>
+            <SET Var="globalFormClause" FromValue="GLOBAL_FORM_CODE = '{$thisParam/GLOBAL_FORM_CODE/@Value}' AND"/>
+          </ELSE>
+        </IF_TEST>
+        <IF_TEST Test="$thisParam/BRAND_CODE/@Value='NO_VALUE'">
+          <THEN>
+            <SET Var="brandClause" FromValue=""/>
+          </THEN>
+          <ELSE>
+            <SET Var="brandClause" FromValue="BRAND_CODE = '{$thisParam/BRAND_CODE/@Value}' AND"/>
+          </ELSE>
+        </IF_TEST>
+        <IF_TEST Test="$thisParam/SEG_CODE/@Value='NO_VALUE'">
+          <THEN>
+            <SET Var="segClause" FromValue=""/>
+          </THEN>
+          <ELSE>
+            <SET Var="segClause" FromValue="SEG_CODE = '{$thisParam/SEG_CODE/@Value}' AND"/>
+          </ELSE>
+        </IF_TEST>
+        <IF_TEST Test="$thisParam/ITEM_VERS_CODE/@Value='NO_VALUE'">
+          <THEN>
+            <SET Var="itemVersClause" FromValue=""/>
+          </THEN>
+          <ELSE>
+            <SET Var="itemVersClause" FromValue="ITEM_VERS_CODE = '{$thisParam/ITEM_VERS_CODE/@Value}' AND"/>
+          </ELSE>
+        </IF_TEST>
+        <IF_TEST Test="$thisParam/SUB_BRAND_CODE/@Value='NO_VALUE'">
+          <THEN>
+            <SET Var="subBrandClause" FromValue=""/>
+          </THEN>
+          <ELSE>
+            <SET Var="subBrandClause" FromValue="SUB_BRAND_CODE = '{$thisParam/SUB_BRAND_CODE/@Value}' AND"/>
+          </ELSE>
+        </IF_TEST>
+        <EXECUTE_SQL_QUERY AssignToVar="allProdItemTypes" Value="SELECT DISTINCT A.PROD_ITEM_UPC, PROD_ITEM_NAME FROM PROD_ITEM_HIER_ASSOC A JOIN PROD_ITEM B ON A.PROD_ITEM_UPC=B.PROD_ITEM_UPC WHERE {$itemVersClause} {$subBrandClause} {$segClause} {$brandClause} {$globalFormClause} CATEG_CODE='{$thisParam/CATEG_CODE/@Value}' AND SUB_SECTOR_CODE='{$thisParam/SUB_SECTOR_CODE/@Value}' AND SECTOR_CODE='{$thisParam/SECTOR_CODE/@Value}' ORDER BY 2 ASC"/>
+        <FOR_EACH SelectList="$allProdItemTypes/SQL_RESULT" CurrentElement="currentElement">
+          <SET Var="prodname" FromValue="{$currentElement/PROD_ITEM_NAME/@Value}"/>
+          <SET Var="prodnbr" FromValue="{$currentElement/PROD_ITEM_UPC/@Value}"/>
+          <APPEND_TO_XML SelectList="$ProdItemlist/PROD_ITEM">
+            <OPTION Id="{$prodnbr}" Value="{$prodname}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="ProdItemlist" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

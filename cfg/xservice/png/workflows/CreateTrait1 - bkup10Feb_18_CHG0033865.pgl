@@ -1,0 +1,69 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_entry" source="studio.controller:load">
+  <ui:container id="container1" name="container1">
+    <ui:step id="Outer" name="Outer" displayText="REQUEST SCREEN">
+      <ui:validation successMessage="{$root/Message/@Value}" anyFieldIsRequired="false"/>
+      <ui:field-group id="createTrt" collapsable="true">
+        <ui:field-group columns="2" id="fieldGroups" select="$this">
+          <ui:dropdown id="LEGAL_ENT" name="LEGAL_ENT" displayText="Legal Entity" required="true" optionSrc="$root/LEGAL_ENT/LEGAL_ENT_NAME" selectOne="true" onChange="javascript:loadTRT_LE();" displayCondition="{$root/dispLegalEnt/@Value='N'}"/>
+          <ui:entry-field id="LEGAL_ENT" name="LEGAL_ENT" displayText="Legal Entity" value="####" displayCondition="{$root/dispLegalEnt/@Value='Y'}" editable="false"/>
+          <ui:dropdown id="MKTNG_PGM" name="MKTNG_PGM" displayText="Marketing Program" required="true" optionSrc="$root/MKTNG_PGM/MKTNG_PGM_NAME" selectOne="true" onChange="javascript:loadTRT_MP();" displayCondition="{$root/dispMktngPgm/@Value='N'}"/>
+          <ui:entry-field id="MKTNG_PGM" name="MKTNG_PGM" displayText="Marketing Program" value="####" displayCondition="{$root/dispMktngPgm/@Value='Y'}" editable="false"/>
+          <ui:dropdown id="TRT_NBR" name="TRT_NBR" displayText="Trait Number" optionSrc="$root/SQL_RESULT/TRT_NBR" selectOne="true" onChange="javascript:onTrtChange();"/>
+          <ui:entry-field id="TRT_NAME_LOCAL" name="TRT_NAME_LOCAL" displayText="Trait Text" value="{$root/TRT_NAME_LOCAL/@Value}" required="true"/>
+          <ui:entry-field id="TRT_NAME" name="TRT_NAME" displayText="Trait Text(English)" value="{$root/TRT_NAME/@Value}" dataType="LATIN"/>
+          <ui:entry-field id="DISPLAY_TYPE" name="DISPLAY_TYPE" displayText="Display Type" value="{$root/displayType/@Value}"/>
+          <ui:checkbox id="CHK_PREDFND_TRT" name="CHK_PREDFND_TRT" displayText="Predefined Trait" value="{$root/chkPredfndVal/@Value}" onClick="javascript:onChkPredfndTrt();"/>
+          <ui:checkbox id="CNSMR_PRVD_TRT" name="CNSMR_PRVD_TRT" displayText="Consumer Provided Trait" select="{$root/CNSMR_PRVD_TRT/@Value}" checkedValue="true" />
+        </ui:field-group>
+      </ui:field-group>
+      <ui:buttons>
+        <ui:button id="SAVE" name="SAVE" displayText="Save"/>
+        <ui:button id="REQUEST" name="REQUEST" displayText="Request" disabled="{$root/dispRequest/@Value}"/>
+        <ui:button id="ADD_PREDFND_TRT" name="ADD_PREDFND_TRT" displayText="Add Predefined Trait Value" disabled="{$root/dispAddPreTrt/@Value}"/>
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:container id="container2" name="container2">
+    <ui:step id="Inner" name="Inner" displayText="">
+      <ui:table id="bottomTable" displayText="Trait Request Status" displayTextNoRecords="No Record found" rowId="TRT_NBR#TRT_NAME#TRT_NAME_LOCAL#LEGAL_ENT_NBR#MKTNG_PGM_NBR#DISPLAY_TYPE#STATUS#ID#CNSMR_CLCT_IND" rowSrc="$root/TRT_IN_DUMMY" scrollable="true" selectable="Single" collapsable="true" maxRows="10" postRowIdAs="selected_TRT_REQ" filter="true" totalRowCount="$root/RowCount/@Value">
+        <ui:field-group id="tableColumns">
+          <ui:hidden-field id="ID" name="ID" displayText="ID"/>
+          <ui:display-field id="TRT_NBR" name="TRT_NBR" displayText="Trait Number"/>
+          <ui:display-field id="TRT_NAME" name="TRT_NAME" displayText="Trait Name English"/>
+          <ui:display-field id="TRT_NAME_LOCAL" name="TRT_NAME_LOCAL" displayText="Trait Name Local"/>
+          <ui:display-field id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR" displayText="Legal Entity Number"/>
+          <ui:display-field id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR" displayText="Marketing Program Number"/>
+          <ui:display-field id="DISPLAY_TYPE" name="DISPLAY_TYPE" displayText="Display Type"/>
+          <ui:display-field id="STATUS" name="STATUS" displayText="Status"/>
+       <ui:display-field id="CNSMR_CLCT_IND" name="CNSMR_CLCT_IND" displayText="Consumer Provided Trait" />
+        </ui:field-group>
+        <ui:buttons id="tableButtons">
+          <ui:button displayText="Modify" id="MODIFY" name="MODIFY" enabledBySelections="true"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+    function onTrtChange(){
+		document.form.BUTTON_ID.value = 'TRT_Change';
+		document.form.action = 'view.x2ps';
+		document.form.submit();
+	}
+	function onChkPredfndTrt() {
+		document.form.BUTTON_ID.value = 'Chk_PREDFND_TRT';
+		document.form.action = 'view.x2ps';
+		document.form.submit();
+    }
+    function loadTRT_LE() {
+		document.form.BUTTON_ID.value = 'LOAD_TRT_LE';
+		document.form.action = 'view.x2ps';
+		document.form.submit();
+    }
+	function loadTRT_MP() {
+		document.form.BUTTON_ID.value = 'LOAD_TRT_MP';
+		document.form.action = 'view.x2ps';
+		document.form.submit();
+	}
+
+</ui:script>
+</ui:page-group>

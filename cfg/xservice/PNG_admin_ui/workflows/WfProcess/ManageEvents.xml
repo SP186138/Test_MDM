@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="4" ShowInBreadCrumbs="true" Version="1.0" Name="ManageEvents" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="ManageEvents">
+    <variable Name="Status" Type="string" Comment=""/>
+    <variable Name="StatusMsg" Type="string" Comment=""/>
+    <variable Name="From" Type="string" Comment=""/>
+    <variable Name="SelectEventName" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <done Name="done">
+      <actions>
+        <action/>
+      </actions>
+      <next_nodes/>
+    </done>
+    <start Name="start">
+      <actions>
+        <action>
+          <IF_TEST Test="$thisParam/ROOT/FROM/@Value='manageProcess'">
+            <THEN>
+              <SET Var="From" FromValue="true"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Manage Event Descriptors"/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Manage Event Descriptors" Description="Manage Events" ShowInBreadCrumbs="SHOW" Template="ManageEvents.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <EXECUTE_SQL_QUERY AssignToVar="sqlResult" Value="locking row for access sel * from wf_params where (PROCESS_ID,NODE_ID) in (sel  PROCESS_ID,NODE_ID from wf_process_nodes where node_type='event')"/>
+          <SET Var="selWfEventTrue" FromValue="false"/>
+          <SET Var="selWfId" FromValue=""/>
+          <FOR_EACH CurrentElement="curAttr" SelectList="$sqlResult/*">
+            <STRING_TO_XML DocVar="stringXML" FromValue="{$curAttr/PARAM_VALUE/@Value}"/>
+            <SET Var="selWfId" FromValue="{$stringXML/Descriptor/@Value}|{$selWfId}"/>
+            <IF_TEST Test="$stringXML/Descriptor/@Value=$thisParam/SELECTED_EVENT_NAME/@Value">
+              <THEN>
+                <SET Var="selWfEventTrue" FromValue="true"/>
+              </THEN>
+            </IF_TEST>
+          </FOR_EACH>
+          <SET Var="selWfId" FromValue="'{$selWfId}'"/>
+          <TO_DOCVAR AssignToVar="dynPgl">
+            <DYNAMIC_PGL>
+              <ui:script xmlns:ui="http://www.teradata.com/ui">var allPropsVar={$selWfId};</ui:script>
+            </DYNAMIC_PGL>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="dynPgl"/>
+          <SET DocVar="pglFormInput" Property="From" FromValue="{$From}"/>
+          <SET DocVar="pglFormInput" Property="selWfEventTrue" FromValue="{$selWfEventTrue}"/>
+          <REQUEST Name="GetWfProcessEventDescriptors" ServiceName="BCM_MASTER" AssignToVar="allDescriptors"/>
+          <SET_NAME DocVar="allDescriptors" FromValue="EVENT_DESCRIPTORS"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="allDescriptors"/>
+          <SET DocVar="pglFormInput" Property="SaveBtn_DisplayText" FromValue="Save"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='EditEventDesc'">
+            <THEN>
+              <GET_DOCUMENT Name="SYS_WFPROCESS_EVENT_DESC" ServiceName="BPE_META" DirtyRead="true" AssignToVar="eventDescDetails">
+                <EventName Value="{$SelectEventName}"/>
+              </GET_DOCUMENT>
+              <TO_DOCVAR AssignToVar="editEventDetails">
+                <EDIT_DETAILS>
+                  <EventName Value="{$eventDescDetails/SYS_WFPROCESS_EVENT_DESC/EventName/@Value}"/>
+                  <Description Value="{$eventDescDetails/SYS_WFPROCESS_EVENT_DESC/Description/@Value}"/>
+                  <IsSynchronous Value="{$eventDescDetails/SYS_WFPROCESS_EVENT_DESC/IsSynchronous/@Value}"/>
+                </EDIT_DETAILS>
+              </TO_DOCVAR>
+              <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="editEventDetails"/>
+              <GET_DOCUMENT Name="SYS_WFPROCESS_EVENT_KEYS" ServiceName="BPE_META" DirtyRead="true" AssignToVar="eventDescKeyDetails">
+                <EventName Value="{$SelectEventName}"/>
+                <SELECT>
+                  <EventKey/>
+                  <KeySequence/>
+                </SELECT>
+                <ORDER_BY>
+                  <KeySequence/>
+                </ORDER_BY>
+              </GET_DOCUMENT>
+              <TO_DOCVAR AssignToVar="eventDescKeys">
+                <EDIT_KEYS/>
+              </TO_DOCVAR>
+              <FOR_EACH CurrentElement="currEventKey" SelectList="$eventDescKeyDetails/*">
+                <TO_DOCVAR AssignToVar="keyEditOption">
+                  <OPTION Id="{concat($currEventKey/EventKey/@Value,'#',$currEventKey/KeySequence/@Value)}" Value="{$currEventKey/EventKey/@Value}"/>
+                </TO_DOCVAR>
+                <ADD_CHILDREN DocVar="eventDescKeys" FromDocVar="keyEditOption"/>
+              </FOR_EACH>
+              <!--SET_NAME DocVar="eventDescKeyDetails" FromValue="EDIT_KEYS"/-->
+              <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="eventDescKeys"/>
+              <SET DocVar="pglFormInput" Property="key_seq_count" FromValue="{count($eventDescKeyDetails/*)}"/>
+              <SET DocVar="pglFormInput" Property="SaveBtn_DisplayText" FromValue="Update"/>
+              <SET DocVar="pglFormInput" Property="Param_Action" FromValue="Edit"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="($thisParam/BUTTON_ID/@Value='SYS_REFRESH') or ($thisParam/BUTTON_ID/@Value='Back') or ($thisParam/BUTTON_ID/@Value = 'AddEvent') or ($thisParam/BUTTON_ID/@Value = 'EditEventDesc')">
+            <THEN>
+              <SET Var="Status" FromValue=""/>
+              <SET Var="StatusMsg" FromValue=""/>
+            </THEN>
+          </IF_TEST>
+          <SET DocVar="pglFormInput" Property="status" FromValue="{$Status}"/>
+          <SET DocVar="pglFormInput" Property="status_msg" FromValue="{$StatusMsg}"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="SelectEventName" FromValue="{$thisParam/SELECTED_EVENT_NAME/@Value}"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Save'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="eventDescKeys">
+                <KEYS/>
+              </TO_DOCVAR>
+              <FOR_EACH SelectList="$thisParam/event_keys" CurrentElement="currKey">
+                <SET Var="keyNameSeq" FromValue="{$currKey/@Value}"/>
+                <SET Var="keyName" FromValue="{substringBefore($keyNameSeq,'#')}"/>
+                <SET Var="keyseq" FromValue="{substringAfter($keyNameSeq,'#')}"/>
+                <TO_DOCVAR AssignToVar="eventKey">
+                  <KEY Value="{$keyName}" Sequence="{$keyseq}"/>
+                </TO_DOCVAR>
+                <ADD_CHILDREN DocVar="eventDescKeys" FromDocVar="eventKey"/>
+              </FOR_EACH>
+              <REQUEST Name="saveWfProcessEvent" ServiceName="BCM_MASTER" AssignToVar="saveWfProcessEventResp">
+                <EventName Value="{$thisParam/event_name/@Value}"/>
+                <Description Value="{$thisParam/event_desc/@Value}"/>
+                <ServiceName Value="BCM_MASTER"/>
+                <IsSynchronous Value="{ifElse($thisParam/is_synchronized/@Value='Y','Y','N')}"/>
+                <ActionType Value="{$thisParam/saveButtonAction/@Value}"/>
+                <TO_XML DocVar="eventDescKeys"/>
+              </REQUEST>
+              <SET Var="Status" FromValue="{$saveWfProcessEventResp/@Status}"/>
+              <SET Var="StatusMsg" FromValue="{ifElse($Status='Success','Event descriptor saved successfully.','Event descriptor could not be saved. Please check logs for more details.')}"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='DeleteEventDesc'">
+            <THEN>
+              <REMOVE_DOCUMENT Name="SYS_WFPROCESS_EVENT_DESC" ServiceName="BPE_META" AssignToVar="delResponse">
+                <EventName Value="{$SelectEventName}"/>
+              </REMOVE_DOCUMENT>
+              <REMOVE_DOCUMENT Name="SYS_WFPROCESS_EVENT_KEYS" ServiceName="BPE_META" AssignToVar="delResponse">
+                <EventName Value="{$SelectEventName}"/>
+              </REMOVE_DOCUMENT>
+              <SET Var="Status" FromValue="{$delResponse/@Status}"/>
+              <SET Var="StatusMsg" FromValue="{ifElse($Status='Success','Event descriptor deleted successfully.','Event descriptor could not be deleted. Please check logs for more details.')}"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Save'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Event Descriptors" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='addEvenetKey'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='deleteEvenetKey'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='EditEventDesc'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Event Descriptors" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='DeleteEventDesc'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Event Descriptors" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='from'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <done font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="603,311" size="744,599">
+        <iconProps iconfile="z1end.gif"/>
+      </done>
+      <start font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="96,311" size="744,599">
+        <iconProps iconfile="z1start.gif"/>
+      </start>
+      <mgcnode Name="Manage Event Descriptors" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="347,311" size="1920,1040">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+    </mgcnodes>
+    <mgcconnectors>
+      <start>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="141,333" endpoint="347,333" ctrlRect1="293,331,4,4" ctrlRect2="190,331,4,4"/>
+      </start>
+      <mgcnode Name="Manage Event Descriptors">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="369,356" endpoint="369,356" ctrlRect1="367,429,4,4" ctrlRect2="365,405,4,4" ctrlRect2Dirty="true" textRect="364,415,9,8">
+          <textProps text="Save"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="369,311" endpoint="369,311" ctrlRect1="367,234,4,4" ctrlRect2="422,250,4,4" ctrlRect2Dirty="true" textRect="392,240,9,8">
+          <textProps text="Edit"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="369,311" endpoint="369,311" ctrlRect1="367,234,4,4" ctrlRect2="329,244,4,4" ctrlRect2Dirty="true" textRect="345,237,11,8">
+          <textProps text="Delete"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="392,333" endpoint="603,333" ctrlRect1="547,331,4,4" ctrlRect2="442,331,4,4" textRect="484,329,24,8">
+          <textProps text="Back"/>
+        </nextNodeView>
+      </mgcnode>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions/>
+    <post_actions/>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="37" ShowInBreadCrumbs="true" Version="1.0" Name="EventWF" Description="Event Workflow" Type="Sample Event Workflow" PrimaryDocument="PO" IsStartAllowed="Yes">
+  <variables>
+    <variable Name="thisStartedBy" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start">
+      <actions>
+        <action>
+          <SET Var="thisStartedBy" FromValue="Aps"/>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="NewEvent" Description=""/>
+      </next_nodes>
+    </start>
+    <event Name="NewEvent" Descriptor="//ADMIN_UI/NewEvent">
+      <pre_actions>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <PRINTLN Value="in post action of EventNode"/>
+        </action>
+      </post_actions>
+      <next_nodes>
+        <next_node Name="done" Description=""/>
+      </next_nodes>
+      <keys/>
+    </event>
+    <done Name="done">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start location="97,128" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start>
+      <NewEvent location="229,127" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="NewEvent" font="Verdana,0,9" textColor="186,12,12"/>
+        <iconProps iconfile="z1event.gif" location="0,0"/>
+      </NewEvent>
+      <done location="490,129" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done>
+    </mgcnodes>
+    <mgcconnectors>
+      <start>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="129,150" endpoint="229,149" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="202,148,4,4" ctrlRect2="152,147,4,4"/>
+      </start>
+      <NewEvent>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="261,149" endpoint="490,151" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="430,147,4,4" ctrlRect2="316,149,4,4"/>
+      </NewEvent>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="10,10" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="1" textAttrsKey0="thisStartedBy : string">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="thisStartedBy" Type="string" Comment=""/>
+      </variables>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+      <actions>
+        <action>
+          <SET Var="allowShutdown" FromValue="1"/>
+        </action>
+      </actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value="{$allowShutdown = 1}"/>
+  </shutdown_handler>
+</workflow>

@@ -1,0 +1,443 @@
+/***********************************************************************************************************
+SCRIPT:               CNSMR_DATA_RTNTN_REVERT.BTEQ 
+DESCRIPTION:          THIS SCRIPT DELETES CONSUMER INFORMATION
+DEPENDENCY:           
+INPUT:                GOLDEN TABLES
+OUTPUT:               
+ERRORS:
+SPECIAL INSTRUCTIONS:
+
+CHANGE LOG:
+VERSION              DATE                 AUTHOR                          CHANGES
+1.00                 10/9/2012           TERADATA                        INITIAL VERSION
+4.5                  10/9/2013           TERADATA                        RELEASE 4.5
+***********************************************************************************************************/
+
+.RUN FILE $LOGON_FILE;
+.SET ERROROUT STDOUT;
+.SET SESSION CHARSET 'UTF8';
+
+DATABASE $DATABASENAME;
+
+CREATE VOLATILE MULTISET TABLE CNSMR_CHCE_DATETM
+AS 
+(SEL
+A.MKTNG_PGM_NBR,
+A.REGIS_PRSNA_ID,
+CAST(MAX(CAST(CNSMR_CHCE_DATETM AS VARCHAR(10))) AS DATE FORMAT 'YYYY-MM-DD') CNSMR_CHCE_DATETM
+FROM
+(
+SEL 
+A.MKTNG_PGM_NBR,
+A.REGIS_PRSNA_ID,
+MAX(A.CNSMR_CHCE_DATETM)CNSMR_CHCE_DATETM
+FROM REGIS_PRSNA_EMAIL_ADDR A
+INNER JOIN DATA_RTNTN_REF B
+ON A.MKTNG_PGM_NBR = B.MKTNG_PGM_NBR 
+AND B.USE_CASE = 'EMAIL RETENTION'
+WHERE A.CNSMR_CHCE_DATETM IS NOT NULL
+AND A.MKTNG_PGM_NBR IN ($RTNTN_DATE)
+GROUP BY 1,2
+UNION ALL
+SEL 
+A.MKTNG_PGM_NBR,
+A.REGIS_PRSNA_ID,
+MAX(CAST(LATST_ACTVY_DATE AS TIMESTAMP(6))) CNSMR_CHCE_DATETM
+FROM REGIS_PRSNA A
+INNER JOIN DATA_RTNTN_REF B
+ON A.MKTNG_PGM_NBR = B.MKTNG_PGM_NBR 
+AND B.USE_CASE = 'EMAIL RETENTION'
+AND A.MKTNG_PGM_NBR IN ($RTNTN_DATE)
+GROUP BY 1,2
+UNION ALL
+SEL 
+A.MKTNG_PGM_NBR,
+A.REGIS_PRSNA_ID,
+MAX(CAST(REGIS_DATE AS TIMESTAMP(6))) CNSMR_CHCE_DATETM
+FROM REGIS_PRSNA A
+INNER JOIN DATA_RTNTN_REF B
+ON A.MKTNG_PGM_NBR = B.MKTNG_PGM_NBR 
+AND B.USE_CASE = 'EMAIL RETENTION'
+AND A.MKTNG_PGM_NBR IN ($RTNTN_DATE)
+GROUP BY 1,2
+UNION ALL
+SEL 
+A.MKTNG_PGM_NBR,
+A.REGIS_PRSNA_ID,
+MAX(CAST(RESP_DATETM AS TIMESTAMP(6))) CNSMR_CHCE_DATETM
+FROM EMAIL_CMPGN_RESP A
+INNER JOIN DATA_RTNTN_REF B
+ON A.MKTNG_PGM_NBR = B.MKTNG_PGM_NBR 
+AND B.USE_CASE = 'EMAIL RETENTION'
+AND A.MKTNG_PGM_NBR IN ($RTNTN_DATE)
+GROUP BY 1,2
+UNION ALL
+SEL 
+EXCM.MKTNG_PGM_NBR,
+L.REGIS_PRSNA_ID,
+MAX(CAST(Response_Dttm AS TIMESTAMP(6))) CNSMR_CHCE_DATETM
+FROM LH_CHANNEL_RESPONSE_HIST L 
+JOIN EX_COMMUNICATION EXCM
+ON L.COMMUNICATION_ID = EXCM.COMMUNICATION_ID
+JOIN CM_COMMUNICATION C
+ON C.COMMUNICATION_ID = L.COMMUNICATION_ID
+JOIN CM_COMMUNICATION_COMM_PLAN P
+ON C.COMMUNICATION_ID = P.COMMUNICATION_ID
+JOIN CM_COMM_PLAN_STEP S
+ON P.COMM_PLAN_ID = S.COMM_PLAN_ID
+JOIN CM_COMM_PLAN_MESSAGE M
+ON S.COMM_PLAN_ID = M.COMM_PLAN_ID
+AND S.STEP_ID = M.STEP_ID
+JOIN CM_MESSAGE ME
+ON M.MESSAGE_ID = ME.MESSAGE_ID
+JOIN CM_CHANNEL_CLASS CH
+ON ME.DEFAULT_CHANNEL_CLASS_ID = CH.CHANNEL_CLASS_ID
+JOIN CM_CHANNEL_INSTANCE CI
+ON ME.DEFAULT_CHANNEL_INSTANCE_ID = CI.CHANNEL_INSTANCE_ID
+INNER JOIN DATA_RTNTN_REF B
+ON EXCM.MKTNG_PGM_NBR = B.MKTNG_PGM_NBR 
+AND B.USE_CASE = 'EMAIL RETENTION'
+WHERE CH.NAME = 'Email Channel Class'
+AND EXCM.MKTNG_PGM_NBR IN ($RTNTN_DATE)
+GROUP BY 1,2
+UNION ALL
+SEL 
+EXCM.MKTNG_PGM_NBR,
+L.REGIS_PRSNA_ID,
+MAX(CAST(Response_Dttm AS TIMESTAMP(6))) CNSMR_CHCE_DATETM
+FROM LH_CHANNEL_RESPONSE L 
+JOIN EX_COMMUNICATION EXCM
+ON L.COMMUNICATION_ID = EXCM.COMMUNICATION_ID
+JOIN CM_COMMUNICATION C
+ON C.COMMUNICATION_ID = L.COMMUNICATION_ID
+JOIN CM_COMMUNICATION_COMM_PLAN P
+ON C.COMMUNICATION_ID = P.COMMUNICATION_ID
+JOIN CM_COMM_PLAN_STEP S
+ON P.COMM_PLAN_ID = S.COMM_PLAN_ID
+JOIN CM_COMM_PLAN_MESSAGE M
+ON S.COMM_PLAN_ID = M.COMM_PLAN_ID
+AND S.STEP_ID = M.STEP_ID
+JOIN CM_MESSAGE ME
+ON M.MESSAGE_ID = ME.MESSAGE_ID
+JOIN CM_CHANNEL_CLASS CH
+ON ME.DEFAULT_CHANNEL_CLASS_ID = CH.CHANNEL_CLASS_ID
+JOIN CM_CHANNEL_INSTANCE CI
+ON ME.DEFAULT_CHANNEL_INSTANCE_ID = CI.CHANNEL_INSTANCE_ID
+INNER JOIN DATA_RTNTN_REF B
+ON EXCM.MKTNG_PGM_NBR = B.MKTNG_PGM_NBR 
+AND B.USE_CASE = 'EMAIL RETENTION'
+WHERE CH.NAME = 'Email Channel Class'
+AND EXCM.MKTNG_PGM_NBR IN ($RTNTN_DATE)
+GROUP BY 1,2
+UNION ALL
+SELECT
+D.MKTNG_PGM_NBR,
+D.REGIS_PRSNA_ID,
+MAX(CAST(CNSMR_ACTN_START_DATETM AS TIMESTAMP(6))) CNSMR_CHCE_DATETM
+FROM
+CNSMR_ACTN D
+INNER JOIN DATA_RTNTN_REF B
+ON D.MKTNG_PGM_NBR = B.MKTNG_PGM_NBR 
+AND B.USE_CASE = 'EMAIL RETENTION'
+AND D.MKTNG_PGM_NBR IN ($RTNTN_DATE)
+WHERE CNSMR_ACTN_START_DATETM IS NOT NULL
+AND ((CNSMR_ACTN_TYPE_CODE='CR' 
+AND CNTCT_SUB_PATH_TYPE_CODE='EM')
+OR CNSMR_ACTN_TYPE_CODE='ER')
+GROUP BY 1,2
+UNION ALL
+SEL 
+EXCM.MKTNG_PGM_NBR,
+L.REGIS_PRSNA_ID,
+MAX(CAST(Selection_Dttm AS TIMESTAMP(6))) CNSMR_CHCE_DATETM
+FROM LH_REALIZED_LEAD_HIST L 
+JOIN EX_COMMUNICATION EXCM
+ON L.COMMUNICATION_ID = EXCM.COMMUNICATION_ID
+JOIN CM_COMMUNICATION C
+ON C.COMMUNICATION_ID = L.COMMUNICATION_ID
+JOIN CM_COMMUNICATION_COMM_PLAN P
+ON C.COMMUNICATION_ID = P.COMMUNICATION_ID
+JOIN CM_COMM_PLAN_STEP S
+ON P.COMM_PLAN_ID = S.COMM_PLAN_ID
+JOIN CM_COMM_PLAN_MESSAGE M
+ON S.COMM_PLAN_ID = M.COMM_PLAN_ID
+AND S.STEP_ID = M.STEP_ID
+JOIN CM_MESSAGE ME
+ON M.MESSAGE_ID = ME.MESSAGE_ID
+JOIN CM_CHANNEL_CLASS CH
+ON ME.DEFAULT_CHANNEL_CLASS_ID = CH.CHANNEL_CLASS_ID
+JOIN CM_CHANNEL_INSTANCE CI
+ON ME.DEFAULT_CHANNEL_INSTANCE_ID = CI.CHANNEL_INSTANCE_ID
+INNER JOIN DATA_RTNTN_REF B
+ON EXCM.MKTNG_PGM_NBR = B.MKTNG_PGM_NBR 
+AND B.USE_CASE = 'EMAIL RETENTION'
+WHERE CH.NAME = 'Email Channel Class'
+AND EXCM.MKTNG_PGM_NBR IN ($RTNTN_DATE)
+GROUP BY 1,2
+UNION ALL
+SEL 
+EXCM.MKTNG_PGM_NBR,
+L.REGIS_PRSNA_ID,
+MAX(CAST(Selection_Dttm AS TIMESTAMP(6))) CNSMR_CHCE_DATETM
+FROM LH_REALIZED_LEAD L 
+JOIN EX_COMMUNICATION EXCM
+ON L.COMMUNICATION_ID = EXCM.COMMUNICATION_ID
+JOIN CM_COMMUNICATION C
+ON C.COMMUNICATION_ID = L.COMMUNICATION_ID
+JOIN CM_COMMUNICATION_COMM_PLAN P
+ON C.COMMUNICATION_ID = P.COMMUNICATION_ID
+JOIN CM_COMM_PLAN_STEP S
+ON P.COMM_PLAN_ID = S.COMM_PLAN_ID
+JOIN CM_COMM_PLAN_MESSAGE M
+ON S.COMM_PLAN_ID = M.COMM_PLAN_ID
+AND S.STEP_ID = M.STEP_ID
+JOIN CM_MESSAGE ME
+ON M.MESSAGE_ID = ME.MESSAGE_ID
+JOIN CM_CHANNEL_CLASS CH
+ON ME.DEFAULT_CHANNEL_CLASS_ID = CH.CHANNEL_CLASS_ID
+JOIN CM_CHANNEL_INSTANCE CI
+ON ME.DEFAULT_CHANNEL_INSTANCE_ID = CI.CHANNEL_INSTANCE_ID
+INNER JOIN DATA_RTNTN_REF B
+ON EXCM.MKTNG_PGM_NBR = B.MKTNG_PGM_NBR 
+AND B.USE_CASE = 'EMAIL RETENTION'
+WHERE CH.NAME = 'Email Channel Class'
+AND EXCM.MKTNG_PGM_NBR IN ($RTNTN_DATE)
+GROUP BY 1,2
+) A
+GROUP BY 1,2
+)
+WITH DATA
+PRIMARY INDEX ( MKTNG_PGM_NBR,REGIS_PRSNA_ID )
+ON COMMIT PRESERVE ROWS
+;
+.IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE;
+
+COLLECT STATS CNSMR_CHCE_DATETM
+COLUMN MKTNG_PGM_NBR;
+.IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE;
+COLLECT STATS CNSMR_CHCE_DATETM
+COLUMN REGIS_PRSNA_ID;
+.IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE;
+
+
+CREATE VOLATILE MULTISET TABLE REGIS_ER
+AS 
+(
+SELECT A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID
+FROM REGIS_PRSNA_EMAIL_ADDR A
+
+LEFT OUTER JOIN CNSMR_CHCE_DATETM E1
+ON A.MKTNG_PGM_NBR = E1.MKTNG_PGM_NBR 
+AND A.REGIS_PRSNA_ID = E1.REGIS_PRSNA_ID
+
+WHERE EMAIL_STATUS_CODE='ER'
+AND A.MKTNG_PGM_NBR IN ($RTNTN_DATE)
+AND CAST(E1.CNSMR_CHCE_DATETM AS DATE FORMAT 'YYYY-MM-DD') >= ADD_MONTHS(CURRENT_DATE,-(12))
+)
+WITH DATA
+PRIMARY INDEX ( MKTNG_PGM_NBR,REGIS_PRSNA_ID )
+ON COMMIT PRESERVE ROWS
+;
+.IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE;
+
+COLLECT STATS REGIS_ER
+COLUMN MKTNG_PGM_NBR;
+.IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE;
+COLLECT STATS REGIS_ER
+COLUMN REGIS_PRSNA_ID;
+.IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE;
+
+
+CREATE VOLATILE TABLE EMAIL_REVERT AS (
+SEL * FROM (
+NONSEQUENCED TRANSACTIONTIME
+SELECT
+  A.REGIS_PRSNA_ID
+ ,A.MKTNG_PGM_NBR
+ ,LEGAL_ENT_NBR
+ ,CNTCT_POINT_CATEG_CODE
+ ,SUBSCRPTN_OPT_NBR
+ ,SUBSCRPTN_OPT_IND
+ ,CNSMR_CHCE_DATETM
+ ,PREF_CNTCT_POINT_IND
+ ,EMAIL_ADDR_TXT
+ ,EMAIL_FORMT_CODE
+ ,VALID_CNTCT_POINT_IND
+ ,GUARDN_NAME
+ ,GUARDN_EMAIL_ADDR_TXT
+ ,GUARDN_CNSNT_IND
+ ,ACNLGMT_DATE
+ ,EMAIL_STATUS_CODE
+ ,DATA_SRCE_NBR
+ ,SYS_SOURCE
+ ,SYS_TARGET_ID
+ ,SYS_AUTH_ID
+ ,SYS_CREATED_BY
+ ,SYS_CREATION_DATE
+ ,SYS_LAST_MODIFIED_DATE
+ ,SYS_ENT_STATE
+ ,SYS_LAST_MODIFIED_BY
+ ,SYS_NC_TYPE
+ ,SYS_ERR_CODE
+ ,SYS_ERR_SVRTY
+FROM ICRM_TBL.REGIS_PRSNA_EMAIL_ADDR A
+
+INNER JOIN REGIS_ER E1
+ON A.MKTNG_PGM_NBR = E1.MKTNG_PGM_NBR 
+AND A.REGIS_PRSNA_ID = E1.REGIS_PRSNA_ID
+
+WHERE EMAIL_STATUS_CODE<>'ER'
+QUALIFY RANK() OVER (PARTITION BY A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID,CNTCT_POINT_CATEG_CODE,COALESCE(SUBSCRPTN_OPT_NBR,0) 
+ORDER BY TEMPORAL_TIME DESC) = 1
+) A
+)
+WITH DATA
+PRIMARY INDEX (MKTNG_PGM_NBR,REGIS_PRSNA_ID,CNTCT_POINT_CATEG_CODE,SUBSCRPTN_OPT_NBR)
+ON COMMIT PRESERVE ROWS;
+.IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE;
+
+CREATE VOLATILE TABLE EMAIL_OPTOUT AS (
+SELECT
+  A.REGIS_PRSNA_ID
+ ,A.MKTNG_PGM_NBR
+ ,LEGAL_ENT_NBR
+ ,CNTCT_POINT_CATEG_CODE
+ ,SUBSCRPTN_OPT_NBR
+ ,SUBSCRPTN_OPT_IND
+ ,CNSMR_CHCE_DATETM
+ ,PREF_CNTCT_POINT_IND
+ ,EMAIL_ADDR_TXT
+ ,EMAIL_FORMT_CODE
+ ,VALID_CNTCT_POINT_IND
+ ,GUARDN_NAME
+ ,GUARDN_EMAIL_ADDR_TXT
+ ,GUARDN_CNSNT_IND
+ ,ACNLGMT_DATE
+ ,EMAIL_STATUS_CODE
+ ,DATA_SRCE_NBR
+ ,SYS_SOURCE
+ ,SYS_TARGET_ID
+ ,SYS_AUTH_ID
+ ,SYS_CREATED_BY
+ ,SYS_CREATION_DATE
+ ,SYS_LAST_MODIFIED_DATE
+ ,SYS_ENT_STATE
+ ,SYS_LAST_MODIFIED_BY
+ ,SYS_NC_TYPE
+ ,SYS_ERR_CODE
+ ,SYS_ERR_SVRTY
+FROM REGIS_PRSNA_EMAIL_ADDR A
+
+INNER JOIN REGIS_ER E1
+ON A.MKTNG_PGM_NBR = E1.MKTNG_PGM_NBR 
+AND A.REGIS_PRSNA_ID = E1.REGIS_PRSNA_ID
+
+WHERE EMAIL_STATUS_CODE='ER'
+AND SUBSCRPTN_OPT_IND='O'
+)
+WITH DATA
+PRIMARY INDEX (MKTNG_PGM_NBR,REGIS_PRSNA_ID,CNTCT_POINT_CATEG_CODE,SUBSCRPTN_OPT_NBR)
+ON COMMIT PRESERVE ROWS;
+.IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE;
+
+UPDATE EMAIL_REVERT
+FROM EMAIL_OPTOUT TEMP
+SET	SUBSCRPTN_OPT_IND = 'O'
+,SYS_LAST_MODIFIED_DATE= TEMP.SYS_LAST_MODIFIED_DATE
+,SYS_LAST_MODIFIED_BY = TEMP.SYS_LAST_MODIFIED_BY
+,CNSMR_CHCE_DATETM=TEMP.CNSMR_CHCE_DATETM
+,SYS_SOURCE=TEMP.SYS_SOURCE
+WHERE EMAIL_REVERT.MKTNG_PGM_NBR=TEMP.MKTNG_PGM_NBR
+AND EMAIL_REVERT.REGIS_PRSNA_ID=  TEMP.REGIS_PRSNA_ID
+AND EMAIL_REVERT.CNTCT_POINT_CATEG_CODE=TEMP.CNTCT_POINT_CATEG_CODE
+AND EMAIL_REVERT.SUBSCRPTN_OPT_IND = 'I'
+AND EMAIL_REVERT.CNSMR_CHCE_DATETM<=TEMP.CNSMR_CHCE_DATETM
+AND EMAIL_REVERT.SUBSCRPTN_OPT_NBR = TEMP.SUBSCRPTN_OPT_NBR
+;
+.IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE;
+
+INSERT INTO REGIS_PRSNA_EMAIL_ADDR
+ (  REGIS_PRSNA_ID
+ ,MKTNG_PGM_NBR
+ ,LEGAL_ENT_NBR
+ ,CNTCT_POINT_CATEG_CODE
+ ,SUBSCRPTN_OPT_NBR
+ ,SUBSCRPTN_OPT_IND
+ ,CNSMR_CHCE_DATETM
+ ,PREF_CNTCT_POINT_IND
+ ,EMAIL_ADDR_TXT
+ ,EMAIL_FORMT_CODE
+ ,VALID_CNTCT_POINT_IND
+ ,GUARDN_NAME
+ ,GUARDN_EMAIL_ADDR_TXT
+ ,GUARDN_CNSNT_IND
+ ,ACNLGMT_DATE
+ ,EMAIL_STATUS_CODE
+ ,DATA_SRCE_NBR
+ ,SYS_SOURCE
+ ,SYS_TARGET_ID
+ ,SYS_AUTH_ID
+ ,SYS_CREATED_BY
+ ,SYS_CREATION_DATE
+ ,SYS_LAST_MODIFIED_DATE
+ ,SYS_ENT_STATE
+ ,SYS_LAST_MODIFIED_BY
+ ,SYS_NC_TYPE
+ ,SYS_ERR_CODE
+ ,SYS_ERR_SVRTY
+)
+SEL DISTINCT
+REGIS_PRSNA_ID
+ ,MKTNG_PGM_NBR
+ ,LEGAL_ENT_NBR
+ ,CNTCT_POINT_CATEG_CODE
+ ,SUBSCRPTN_OPT_NBR
+ ,SUBSCRPTN_OPT_IND
+ ,CNSMR_CHCE_DATETM
+ ,PREF_CNTCT_POINT_IND
+ ,EMAIL_ADDR_TXT
+ ,EMAIL_FORMT_CODE
+ ,VALID_CNTCT_POINT_IND
+ ,GUARDN_NAME
+ ,GUARDN_EMAIL_ADDR_TXT
+ ,GUARDN_CNSNT_IND
+ ,ACNLGMT_DATE
+ ,EMAIL_STATUS_CODE
+ ,DATA_SRCE_NBR
+ ,SYS_SOURCE
+ ,SYS_TARGET_ID
+ ,SYS_AUTH_ID
+ ,SYS_CREATED_BY
+ ,SYS_CREATION_DATE
+ ,SYS_LAST_MODIFIED_DATE
+ ,SYS_ENT_STATE
+ ,SYS_LAST_MODIFIED_BY
+ ,SYS_NC_TYPE
+ ,SYS_ERR_CODE
+ ,SYS_ERR_SVRTY
+FROM EMAIL_REVERT;
+.IF ERRORLEVEL > 0 THEN .GOTO ERRORCODE;
+
+DEL  FROM REGIS_PRSNA_EMAIL_ADDR
+WHERE EMAIL_STATUS_CODE='ER'
+AND MKTNG_PGM_NBR IN ($RTNTN_DATE)
+AND (MKTNG_PGM_NBR,REGIS_PRSNA_ID,CNTCT_POINT_CATEG_CODE,COALESCE(SUBSCRPTN_OPT_NBR,0)) IN 
+(SEL MKTNG_PGM_NBR,REGIS_PRSNA_ID,CNTCT_POINT_CATEG_CODE,COALESCE(SUBSCRPTN_OPT_NBR,0) SUBSCRPTN_OPT_NBR
+FROM REGIS_PRSNA_EMAIL_ADDR
+GROUP BY 1,2,3,4
+HAVING COUNT(*) > 1)
+AND (MKTNG_PGM_NBR,REGIS_PRSNA_ID,CNTCT_POINT_CATEG_CODE,COALESCE(SUBSCRPTN_OPT_NBR,0)) IN 
+(SEL MKTNG_PGM_NBR,REGIS_PRSNA_ID,CNTCT_POINT_CATEG_CODE,COALESCE(SUBSCRPTN_OPT_NBR,0) SUBSCRPTN_OPT_NBR
+FROM EMAIL_REVERT);
+.IF ERRORLEVEL > 0 THEN .GOTO ERRORCODE;
+
+.LABEL EXIT
+
+.IF ERRORLEVEL > 4 THEN .GOTO ERR ;
+.IF ERRORLEVEL <= 4 THEN .GOTO WARN;
+
+.LABEL ERR
+.QUIT 1
+
+.LABEL WARN
+.QUIT 0                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      

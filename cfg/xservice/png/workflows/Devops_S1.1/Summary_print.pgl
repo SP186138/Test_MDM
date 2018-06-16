@@ -1,0 +1,331 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" scrollable="false"  name="studio.templates.simple_form" source="studio.controller:load" version="3">
+
+  <ui:container id="topContainer" scrollable="false">
+
+    <ui:step displayText="Basic PGL Controls" id="basicControls" scrollable="false">
+
+<ui:field-group id="tableColumns1" columns="3" select="$root/CONSUMER_DETAILS">
+
+<!--ui:display-field displayText="Program ID" name="MKTNG_PGM_NBR" id="MKTNG_PGM_NBR"/-->
+
+<!--ui:display-field displayText="Program Name" name="MKTNG_PGM_NAME" id="MKTNG_PGM_NAME"/-->
+
+<ui:dropdown id="MKTNG_PGM_NAME" name="MKTNG_PGM_NAME" displayText="Program Name" optionSrc="$root/MKTNG_PGM/OPTION" onChange="javascript:loadProgramID();"/>
+
+<ui:display-field displayText="Persona Id" name="REGIS_PRSNA_ID" id="REGIS_PRSNA_ID"/>
+
+<ui:display-field displayText="Matched Consumer ID" name="MATCHD_CNSMR_PRSNA_ID" id="MATCHD_CNSMR_PRSNA_ID"/>
+
+<ui:display-field displayText="Full Name" name="FULL_NAME" id="FULL_NAME"/>
+
+<!--ui:display-field displayText="User Name" name="CNSMR_USER_NAME" id="CNSMR_USER_NAME"/-->
+
+<ui:choose-field name="GENDR_IND_FIELD">
+
+<ui:when test="GENDR_IND/@Value='M'">
+
+<ui:display-field displayText="Gender" name="GENDR_IND" id="GENDR_IND" value="Male"/>
+
+</ui:when>
+
+<ui:when test="GENDR_IND/@Value='F'">
+
+<ui:display-field displayText="Gender" name="GENDR_IND" id="GENDR_IND" value="Female"/>
+
+</ui:when>
+
+<ui:otherwise>
+
+<ui:display-field displayText="Gender" name="GENDR_IND" id="GENDR_IND" value="Other"/>
+
+</ui:otherwise>
+
+</ui:choose-field>
+
+<!--ui:display-field displayText="Language" name="LANG_NAME" id="LANG_NAME"/-->
+
+<ui:display-field displayText="Date of Birth" name="BRTH_DATE" id="BRTH_DATE" dataType="Date"/>
+
+<ui:display-field displayText="Country" name="CNTRY_CODE" id="CNTRY_CODE"/>
+
+<ui:display-field id="NATIONAL_ID_NBR" name="NATIONAL_ID_NBR" displayText="National ID"/>
+
+<ui:display-field displayText="Language" name="LANG_NAME" id="LANG_NAME"/>
+
+</ui:field-group>
+
+<ui:field-group id="tableColumns2" select="$root/CONSUMER_DETAILS">
+
+<ui:display-field displayText="Full Address" name="FULL_ADDRESS"/>
+
+</ui:field-group>
+
+<ui:grid>
+
+<ui:row>
+
+<ui:cell width="50%">
+
+<ui:table id="EmailTable" displayText="Email Address" scrollable="false" rowSrc="EMAILDETAILS" maxRows="-1">
+
+<ui:field-group id="EmailTableColumns">
+
+<ui:display-field id="EMAIL_TYPE" name="EMAIL_TYPE" displayText="Email Type" size="40"/>
+
+<ui:display-field id="EMAIL_ADDR_TXT" name="EMAIL_ADDR_TXT" displayText="Email" size="50"/>
+
+</ui:field-group>
+
+</ui:table>
+
+</ui:cell>
+
+<ui:cell width="50%">
+
+<ui:table id="PhoneTable" displayText="Phone Number" scrollable="false" rowSrc="PHONEDETAILS" maxRows="-1">
+
+<ui:field-group id="PhoneTableColumns">
+
+<ui:display-field id="PHONE_TYPE" name="PHONE_TYPE" displayText="Phone Type" size="40"/>
+
+<ui:display-field id="FULL_PHONE" name="FULL_PHONE" displayText="Phone Number" size="50"/>
+
+</ui:field-group>
+
+</ui:table>
+
+</ui:cell>
+
+</ui:row>
+
+</ui:grid>
+
+<ui:table id="Depend_Table" displayText="Babies" maxRows="-1" rowSrc="DPEND">
+
+<ui:field-group id="Depend_TableColumns">
+
+<ui:display-field displayText="Name" id="DPEND_NAME" name="DPEND_NAME"/>
+
+<ui:display-field displayText="Date Of Birth" id="DPEND_BRTH_DATE" name="DPEND_BRTH_DATE" dataType="Date"/>
+
+<ui:choose-field name="DPEND_GENDR_IND_FIELD" displayText="Gender">
+
+<ui:when test="DPEND_GENDR_IND/@Value='M'">
+
+<ui:display-field displayText="Gender" name="DPEND_GENDR_IND" id="DPEND_GENDR_IND" value="Male"/>
+
+</ui:when>
+
+<ui:when test="DPEND_GENDR_IND/@Value='F'">
+
+<ui:display-field displayText="Gender" name="DPEND_GENDR_IND" id="DPEND_GENDR_IND" value="Female"/>
+
+</ui:when>
+
+<ui:otherwise>
+
+<ui:display-field displayText="Gender" name="DPEND_GENDR_IND" id="DPEND_GENDR_IND" value="Other"/>
+
+</ui:otherwise>
+
+</ui:choose-field>
+
+<ui:choose-field name="DECEASED_IND_FIELD" displayText="Deceased" size="25%">
+
+<ui:when test="DECEASED_IND/@Value='Y'">
+
+<ui:display-field displayText="Deceased" name="DECEASED_IND" id="DECEASED_IND" value="Yes"/>
+
+</ui:when>
+
+<ui:when test="DECEASED_IND/@Value='N'">
+
+<ui:display-field displayText="Deceased" name="DECEASED_IND" id="DECEASED_IND" value="No"/>
+
+</ui:when>
+
+<ui:otherwise>
+
+<ui:display-field displayText="Deceased" name="DECEASED_IND" id="DECEASED_IND"/>
+
+</ui:otherwise>
+
+</ui:choose-field>
+
+</ui:field-group>
+
+</ui:table>
+
+<ui:table id="Pet_Table" displayText="Pets" maxRows="-1" rowSrc="SQL_RESULT" scrollable="false">
+
+<ui:field-group id="Pet_TableColumns">
+
+<ui:display-field displayText="Name" id="PET_NAME" name="PET_NAME"/>
+
+<ui:display-field displayText="Date Of Birth" id="PET_BRTH_DATE" name="PET_BRTH_DATE" dataType="Date"/>
+
+<ui:choose-field name="DPEND_GENDR_IND_FIELD" displayText="Gender">
+
+<ui:when test="PET_GENDR_IND/@Value='M'">
+
+<ui:display-field displayText="Gender" name="PET_GENDR_IND" id="PET_GENDR_IND" value="Male"/>
+
+</ui:when>
+
+<ui:when test="PET_GENDR_IND/@Value='F'">
+
+<ui:display-field displayText="Gender" name="PET_GENDR_IND" id="PET_GENDR_IND" value="Female"/>
+
+</ui:when>
+
+<ui:otherwise>
+
+<ui:display-field displayText="Gender" name="PET_GENDR_IND" id="PET_GENDR_IND" value="Other"/>
+
+</ui:otherwise>
+
+</ui:choose-field>
+
+<ui:choose-field name="DECEASED_IND_FIELD" displayText="Deceased">
+
+<ui:when test="DECEASED_IND/@Value='Y'">
+
+<ui:display-field displayText="Deceased" name="DECEASED_IND" id="DECEASED_IND" value="Yes"/>
+
+</ui:when>
+
+<ui:when test="DECEASED_IND/@Value='N'">
+
+<ui:display-field displayText="Deceased" name="DECEASED_IND" id="DECEASED_IND" value="No"/>
+
+</ui:when>
+
+<ui:otherwise>
+
+<ui:display-field displayText="Deceased" name="DECEASED_IND" id="DECEASED_IND"/>
+
+</ui:otherwise>
+
+</ui:choose-field>
+
+</ui:field-group>
+
+</ui:table>
+
+<ui:table id="Subscriptions_Table" displayText="Subscriptions" scrollable="false" maxRows="-1" rowSrc="SUBSCRIPTIONS">
+
+<ui:field-group id="Subscriptions_TableColumns">
+
+<ui:display-field displayText="Subscription Id" name="SUBSCRPTN_OPT_NBR" id="SUBSCRPTN_OPT_NBR"/>
+
+<ui:display-field displayText="Subscription Text" name="SUBSCRPTN_OPT_NAME" id="SUBSCRPTN_OPT_NAME"/>
+
+<ui:display-field displayText="Frequency" name="SUBSCRPTN_OPT_FREQ_TXT" id="SUBSCRPTN_OPT_FREQ_TXT"/>
+
+<ui:display-field displayText="TimeStamp" name="CNSMR_CHCE_DATETM" id="CNSMR_CHCE_DATETM"/>
+
+<ui:display-field displayText="Channel" name="CHANNEL_TYPE" id="CHANNEL_TYPE"/>
+
+<ui:choose-field name="SUBSCRPTN_OPT_IND" id="SUBSCRPTN_OPT_IND" displayText="Subscription Status">
+
+<ui:when test="SUBSCRPTN_OPT_IND/@Value='I'">
+
+<ui:display-field displayText="In/Out" name="SUBSCRPTN_OPT_IND" id="SUBSCRPTN_OPT_IND" value="Opt In"/>
+
+</ui:when>
+
+<ui:when test="SUBSCRPTN_OPT_IND/@Value='O'">
+
+<ui:display-field displayText="In/Out" name="SUBSCRPTN_OPT_IND" id="SUBSCRPTN_OPT_IND" value="Opt Out"/>
+
+</ui:when>
+
+<ui:otherwise>
+
+<ui:display-field displayText="In/Out" name="SUBSCRPTN_OPT_IND" id="SUBSCRPTN_OPT_IND"/>
+
+</ui:otherwise>
+
+</ui:choose-field>
+
+</ui:field-group>
+
+</ui:table>
+
+<ui:table id="Communications_Table" displayText="Communications" scrollable="false" maxRows="-1" rowSrc="COMMUNICATIONS">
+
+<ui:field-group id="Communications_TableColumns">
+
+<ui:display-field displayText="Mode" id="CHANNEL_NAME" name="CHANNEL_NAME"/>
+
+<ui:display-field displayText="Date" id="CONTACT_DTTM" name="CONTACT_DTTM"/>
+
+<ui:display-field displayText="Communication Name" id="COMMUNICATION_NAME" name="COMMUNICATION_NAME"/>
+
+<ui:display-field displayText="Communication Details" id="COMMUNICATION_DETAILS" name="COMMUNICATION_DETAILS"/>
+
+<ui:display-field displayText="Lead Key" id="LEAD_KEY_ID" name="LEAD_KEY_ID"/>
+
+</ui:field-group>
+
+</ui:table>
+
+<ui:table id="Coupons_Table" displayText="Coupons" maxRows="10" scrollable="true" rowSrc="FULFILLMENT_COUPONS" displayTextNoRecords="No Coupons found">
+
+<ui:field-group id="Coupons_TableColumns">
+
+<ui:display-field displayText="Action Id" id="ACTION_ID" name="ACTION_ID"/>
+
+<ui:display-field displayText="Date" dataType="Date" id="DATE" name="DATE"/>
+
+<ui:display-field displayText="Reaction Type" id="REACTION_TYPE" name="REACTION_TYPE"/>
+
+<ui:display-field displayText="Reaction" id="REACTION" name="REACTION"/>
+
+<ui:display-field displayText="Details" id="DETAILS" name="DETAILS"/>
+
+<ui:display-field displayText="Channel" id="CHANNEL" name="CHANNEL"/>
+
+</ui:field-group>
+
+</ui:table>
+
+<ui:table id="Samples_Table" displayText="Samples" maxRows="10" scrollable="true" rowSrc="$root/V_SAMPLE" displayTextNoRecords="No Samples found">
+
+<ui:field-group id="Samples_TableColumns">
+
+<ui:display-field displayText="Action Number" id="CNSMR_ACTN_ID" name="CNSMR_ACTN_ID"/>
+
+<ui:display-field displayText="Ship Date" id="SHIPPED_DATE" name="SHIPPED_DATE"/>
+
+<ui:display-field displayText="Courier URL" id="COURIER_URL" name="COURIER_URL"/>
+
+<ui:display-field displayText="Status" id="ORDER_STATUS" name="ORDER_STATUS"/>
+
+<ui:display-field displayText="Brand Name" id="BRAND_NAME" name="BRAND_NAME"/>
+
+<ui:display-field displayText="Incentive Name" id="INCTV_NAME" name="INCTV_NAME"/>
+
+<ui:display-field displayText="Tracking number" id="TRACKING_NBR" name="TRACKING_NBR"/>
+
+</ui:field-group>
+
+</ui:table>
+
+      <ui:buttons>
+
+        <ui:button id="Print2" name="Print2" displayText="Print" emphasized="true" onClick="javascript:window.print();" />
+
+      </ui:buttons>
+<ui:script>
+
+
+</ui:script>
+    </ui:step>
+
+  </ui:container>
+
+</ui:page-group>
+
+
+

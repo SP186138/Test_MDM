@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--**************************************************************************
+***************************************************************************-->
+<!--
+ <REQUEST Name="validateDataSource" UserId="user_1" ScenarioId="0" SysSource="UI">
+    <DocumentName Value="Item"/>
+    <DataSourceName Value="UOM"/>
+    <DataSourceValue Value="abc"/>
+ </REQUEST>
+
+ <RESPONSES Status="Success">
+   <RESPONSE Status="Success">
+     <_RESULT Value="ERROR"/>
+   </RESPONSE>
+</RESPONSES>
+
+-->
+
+  <DEFINE_METHOD Name="validateDataSource">
+    <RULE>
+      <ACTION>
+        <PRINTLN Value="###########$$$$  anish in validateDataSource $$$$$$$#############"/>
+		    <PRINTLN Var="thisParam"/>
+        <IF_TEST Test="($thisParam/DocumentName/@Value!='')and (($thisParam/DocumentName!=null) and (($thisParam/DataSourceName/@Value!='')and (($thisParam/DataSourceName!=null) and (($thisParam/DataSourceValue/@Value!='')and (($thisParam/DataSourceValue!=null))))))">
+          <THEN>
+		        <REQUEST Name="getValidValues" AssignToVar="validValues">
+			        <DOCUMENT Name="{$thisParam/DocumentName/@Value}"/>
+		        </REQUEST>
+      		  <PRINTLN Value="###########$$$$$$$$$$$#############"/>
+      		  <PRINTLN Var="validValues"/>
+            <SET Var="doesValueExists" FromValue="false"/>
+            <FOR_EACH SelectList="$validValues/PROPERTY" CurrentElement="propDoc">
+             
+              <IF_TEST Test="$propDoc/@Name = $thisParam/DataSourceName/@Value">
+                <THEN>                  
+                <FOR_EACH SelectList="$propDoc/VALID_VALUE" CurrentElement="vldDoc">
+                  <IF_TEST Test="$vldDoc/@Value = $thisParam/DataSourceValue/@Value">
+                    <THEN>
+                      <SET Var="doesValueExists" FromValue="true"/>
+                      <BREAK/>
+                    </THEN>
+                  </IF_TEST>
+                </FOR_EACH>                
+                </THEN>               
+              </IF_TEST>     
+              
+              <IF_TEST Test="$doesValueExists = 'true'">
+                <THEN> 
+                  <BREAK/>
+                </THEN>
+              </IF_TEST>
+            </FOR_EACH>
+          </THEN>
+        </IF_TEST>
+        
+        <IF_TEST Test="$doesValueExists = 'false'">
+          <THEN>
+            <SET DocVar="thisReturn" Property="_RESULT" FromValue="ERROR"/>
+          </THEN>
+          <ELSE>
+           <SET DocVar="thisReturn" Property="_RESULT" FromValue="SUCCESS"/>
+          </ELSE>
+        </IF_TEST>
+
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <!--**************************************************************************
+***************************************************************************-->
+
+</DOCUMENTS>

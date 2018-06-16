@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <DEFINE_METHOD Name="ExecuteSearchSQL">
+    <RULE>
+      <ACTION>
+        <SET FromDocVar="{$thisParam/SEARCHCRITERIA}" DocVar="SearchCriteria"/>
+        <GET_SESSION Name="GServerName" HandleException="true" AssignToVar="GServer"/>
+        <IF_TEST Test="$SearchCriteria/Status/@Value = 'Event'">
+          <THEN>
+            <!-- Form the event query -->
+            <SET FromValue="locking row for access select wi.id, wi.wfl_desc, wi.history,  wi.started_by, wi.wfl_svc, wi.primary_doc, wi.primary_doc_id, wi.template, wi.start_date,  wae.node as waitingonevent, 'Event' as status, wae.evt_desc, wae.event_svc from wfl_instance wi, wfl_atv_events wae where wi.id=wae.instance_id " Var="eventQuery"/>
+            <IF_TEST Test="strlen($SearchCriteria/InstanceId/@Value) >= 1">
+              <THEN>
+                <SET FromValue=" and Id like '%{$SearchCriteria/InstanceId/@Value}%'  " Var="eventwhereClause1"/>
+                <SET FromValue="{concat($eventQuery, $eventwhereClause1)}" Var="eventQuery"/>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+            <IF_TEST Test="strlen($SearchCriteria/StartedBy/@Value) >= 1">
+              <THEN>
+                <SET FromValue=" and started_by like '%{$SearchCriteria/StartedBy/@Value}%'  " Var="eventwhereClause2"/>
+                <SET FromValue="{concat($eventQuery, $eventwhereClause2)}" Var="eventQuery"/>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+            <IF_TEST Test="strlen($SearchCriteria/PrimaryDoc/@Value) >= 1">
+              <THEN>
+                <SET FromValue=" and Primary_Doc = '{$SearchCriteria/PrimaryDoc/@Value}'  " Var="eventwhereClause3"/>
+                <SET FromValue="{concat($eventQuery, $eventwhereClause3)}" Var="eventQuery"/>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+            <IF_TEST Test="strlen($SearchCriteria/WaitingonEvent/@Value) >= 1">
+              <THEN>
+                <SET FromValue=" and node = '{$SearchCriteria/WaitingonEvent/@Value}'  " Var="eventwhereClause4"/>
+                <SET FromValue="{concat($eventQuery, $eventwhereClause4)}" Var="eventQuery"/>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+            <IF_TEST Test="strlen($SearchCriteria/Template/@Value) >= 1">
+              <THEN>
+                <SET FromValue=" and wi.template like '%{$SearchCriteria/Template/@Value}%'  " Var="eventwhereClause5"/>
+                <SET FromValue="{concat($eventQuery, $eventwhereClause5)}" Var="eventQuery"/>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+            <IF_TEST Test="strlen($SearchCriteria/FROM_StartDate/@Value) >= 1">
+              <THEN>
+                <SET FromValue=" and start_date >= to_date( '{$SearchCriteria/FROM_StartDate/@Value}','mm/dd/yyyy' )  " Var="eventwhereClause6"/>
+                <SET FromValue="{concat($eventQuery, $eventwhereClause6)}" Var="eventQuery"/>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+            <IF_TEST Test="strlen($SearchCriteria/TO_StartDate/@Value) >= 1">
+              <THEN>
+                <SET FromValue=" and start_date &lt;= to_date( '{$SearchCriteria/TO_StartDate/@Value}','mm/dd/yyyy' )  " Var="eventwhereClause7"/>
+                <SET FromValue="{concat($eventQuery, $eventwhereClause7)}" Var="eventQuery"/>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+            <NATIVE_FUNCTION MethodName="executeSqlQueries" ClassName="com.teradata.xcore.bpm.BPMUtil" AssignToVar="WFInstList">
+              <PARAM Var="thisContext"/>
+              <PARAM Value="{$eventQuery}" Type="String"/>
+              <PARAM Value="WFInstList" Type="String"/>
+              <PARAM Value="{substringBefore($GServer/@Value, ':')}" Type="String"/>
+              <PARAM Value="{substringAfter($GServer/@Value, ':')}" Type="String"/>
+            </NATIVE_FUNCTION>
+          </THEN>
+          <ELSE>
+            <!-- Form the non event query -->
+            <SET FromValue="locking row for access select wi.id, wi.wfl_desc, wi.history,  wi.wfl_svc, wi.started_by, wi.primary_doc, wi.primary_doc_id, wi.template, wi.start_date, wan.node_name as waitingonevent, wan.node_type as status from wfl_instance wi, wfl_atv_nodes wan where wi.id=wan.instance_id " Var="nonEventQuery"/>
+            <IF_TEST Test="strlen($SearchCriteria/InstanceId/@Value) >= 1">
+              <THEN>
+                <SET FromValue=" and Id like '%{$SearchCriteria/InstanceId/@Value}%'  " Var="nonEventwhereClause1"/>
+                <SET FromValue="{concat($nonEventQuery, $nonEventwhereClause1)}" Var="nonEventQuery"/>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+            <IF_TEST Test="strlen($SearchCriteria/StartedBy/@Value) >= 1">
+              <THEN>
+                <SET FromValue=" and started_by like '%{$SearchCriteria/StartedBy/@Value}%'  " Var="nonEventwhereClause2"/>
+                <SET FromValue="{concat($nonEventQuery, $nonEventwhereClause2)}" Var="nonEventQuery"/>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+            <IF_TEST Test="strlen($SearchCriteria/PrimaryDoc/@Value) >= 1">
+              <THEN>
+                <SET FromValue=" and Primary_Doc = '{$SearchCriteria/PrimaryDoc/@Value}'  " Var="nonEventwhereClause3"/>
+                <SET FromValue="{concat($nonEventQuery, $nonEventwhereClause3)}" Var="nonEventQuery"/>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+            <IF_TEST Test="strlen($SearchCriteria/WaitingonEvent/@Value) >= 1">
+              <THEN>
+                <SET FromValue=" and node_name = '{$SearchCriteria/WaitingonEvent/@Value}'  " Var="nonEventwhereClause4"/>
+                <SET FromValue="{concat($nonEventQuery, $nonEventwhereClause4)}" Var="nonEventQuery"/>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+            <IF_TEST Test="strlen($SearchCriteria/Template/@Value) >= 1">
+              <THEN>
+                <SET FromValue=" and template like '%{$SearchCriteria/Template/@Value}%'  " Var="nonEventwhereClause5"/>
+                <SET FromValue="{concat($nonEventQuery, $nonEventwhereClause5)}" Var="nonEventQuery"/>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+            <IF_TEST Test="strlen($SearchCriteria/Status/@Value) >= 1">
+              <THEN>
+                <SET FromValue=" and node_type = '{$SearchCriteria/Status/@Value}'  " Var="nonEventwhereClause6"/>
+                <SET FromValue="{concat($nonEventQuery, $nonEventwhereClause6)}" Var="nonEventQuery"/>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+            <IF_TEST Test="strlen($SearchCriteria/FROM_StartDate/@Value) >= 1">
+              <THEN>
+                <SET FromValue=" and start_date >= to_date( '{$SearchCriteria/FROM_StartDate/@Value}','mm/dd/yyyy' )  " Var="nonEventwhereClause7"/>
+                <SET FromValue="{concat($nonEventQuery, $nonEventwhereClause7)}" Var="nonEventQuery"/>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+            <IF_TEST Test="strlen($SearchCriteria/TO_StartDate/@Value) >= 1">
+              <THEN>
+                <SET FromValue=" and start_date &lt;=   to_date( '{$SearchCriteria/TO_StartDate/@Value}','mm/dd/yyyy' )  " Var="nonEventwhereClause8"/>
+                <SET FromValue="{concat($nonEventQuery, $nonEventwhereClause8)}" Var="nonEventQuery"/>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+            <NATIVE_FUNCTION MethodName="executeSqlQueries" ClassName="com.teradata.xcore.bpm.BPMUtil" AssignToVar="WFInstList">
+              <PARAM Var="thisContext"/>
+              <PARAM Value="{$nonEventQuery}" Type="String"/>
+              <PARAM Value="WFInstList" Type="String"/>
+              <PARAM Value="{substringBefore($GServer/@Value, ':')}" Type="String"/>
+              <PARAM Value="{substringAfter($GServer/@Value, ':')}" Type="String"/>
+            </NATIVE_FUNCTION>
+          </ELSE>
+        </IF_TEST>
+        <TO_DOCVAR AssignToVar="thisReturn">
+          <SEARCH>
+            <TO_XML DocVar="WFInstList"/>
+            <TO_XML DocVar="SearchCriteria"/>
+          </SEARCH>
+        </TO_DOCVAR>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="populateWorkflows">
+    <RULE>
+      <ACTION>
+        <GET_TEMPLATES ServiceName="{$thisParam/ServiceName/@Value}" AssignToVar="templateDetails"/>
+        <EXECUTE_SQL_QUERY AssignToVar="docDetails" Value="LOCKING ROW FOR ACCESS SELECT * FROM WF_PROCESS WHERE CATEGORY='System'"/>
+        <TO_DOCVAR AssignToVar="thisReturn">
+          <RESPONSE/>
+        </TO_DOCVAR>
+        <FOR_EACH CurrentElement="curAttr" SelectList="$templateDetails/Template">
+          <IF_TEST Test="strlen($docDetails/SQL_RESULT/PROCESS_NAME[@Value=$curAttr/Name/@Value]/@Value)=0">
+            <THEN>
+              <ADD_CHILDREN DocVar="thisReturn" FromDocVar="curAttr"/>
+            </THEN>
+          </IF_TEST>
+        </FOR_EACH>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getPartialMonitoringObject">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="SYS_WKFLW_NODE_LOG" ServiceName="BPE_META" AssignToVar="wfNodeLogResults" ReturnRowCount="yes" DirtyRead="true">
+          <WFInstanceID Value="{$thisParam/SELECTED_INSTANCE_ID/@Value}"/>
+          <SELECT>
+            <NodeId/>
+            <NodeName/>
+            <NodeType/>
+            <StartTime/>
+            <EndTime/>
+            <Status/>
+            <StatusColorCd/>
+            <PrevNodeName/>
+            <ChildWFInstanceID/>
+          </SELECT>
+          <ORDER_BY>
+            <StartTime Sort="Ascending"/>
+            <EndTime Sort="Ascending"/>
+          </ORDER_BY>
+        </GET_DOCUMENT>
+        <REQUEST Name="getCodeMasterValue" ServiceName="USER_SECURITY" AssignToVar="StatusColorCodes">
+          <TYPE_ID Value="Status Color Codes"/>
+        </REQUEST>
+        <FOR_EACH SelectList="$wfNodeLogResults/SYS_WKFLW_NODE_LOG" CurrentElement="currNodeLog">
+          <SET Var="HexCode" FromValue="{$StatusColorCodes/CODE_MASTER_VALUE[VALUE_ID/@Value=$currNodeLog/StatusColorCd/@Value]/DESCRIPTION/@Value}"/>
+          <SET Property="HexColorCode" FromValue="{concat('#',$HexCode)}" DocVar="currNodeLog"/>
+        </FOR_EACH>
+        <SET DocVar="wfNodeLogResults" Attribute="workflowInstanceId" FromValue="{$thisParam/SELECTED_INSTANCE_ID/@Value}"/>
+        <NATIVE_FUNCTION MethodName="getPartialMonitoringObject" ClassName="com.teradata.xcore.util.bpmn.WorkflowProcessAPI" AssignToVar="nativeReturn">
+          <PARAM Var="thisContext" Caption="thisContext"/>
+          <PARAM Var="thisParam" Caption="thisParam"/>
+          <PARAM Var="wfNodeLogResults" Caption="workflowDetails"/>
+        </NATIVE_FUNCTION>
+        <SET DocVar="thisReturn" Property="JSON_OBJ" FromValue="{$nativeReturn}"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="checkAuditExists">
+    <RULE>
+      <ACTION>
+        <EXECUTE_SQL_QUERY AssignToVar="result" Value="LOCKING ROW FOR ACCESS SELECT INSTANCEID FROM WF_PROCESS_AUDIT T1, SYS_WKFLW_LOG T2 WHERE T1.PROCESS_NAME=T2.WFNAME AND COALESCE(T2.ENDTIME,T2.STARTTIME) &gt; COALESCE(T1.SYS_LAST_MODIFIED_DATE, T1.SYS_CREATION_DATE) AND INSTANCEID ='{$thisParam/InstanceId/@Value}';" ReturnRowCount="yes"/>
+        <IF_TEST Test="$result/TotalRowCount/@Value = 0">
+          <THEN>
+            <SET Property="AuditExistsFlag" FromValue="false" DocVar="thisReturn"/>
+          </THEN>
+          <ELSE>
+			<SET Property="AuditExistsFlag" FromValue="true" DocVar="thisReturn"/>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

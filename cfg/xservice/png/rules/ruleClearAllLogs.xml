@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+ 	 Copyright (c) 2009 by Teradata Corporation. 
+	 All Rights Reserved. 
+	 Teradata CONFIDENTIAL AND TRADE SECRET 
+ -->
+  <!--**********************************************************************************************************
+
+*
+
+*		Created Date	: December 11, 2017
+
+*		Created By   	: Ankita Sadhwani
+
+*       Description		: This method clears all the logs and deletes all the older files from logs when invoked.
+
+**********************************************************************************************************-->
+  <DEFINE_METHOD Name="clearAllLogs">
+    <RULE>
+      <ACTION>
+        <REQUEST Name="getServices" ServiceName="BCM_MASTER" AssignToVar="varServiceList"/>
+        <FOR_EACH CurrentElement="currService" SelectList="$varServiceList/*">
+          <REQUEST Name="clearLogFiles" ServiceName="BCM_MASTER" AssignToVar="varClearservice">
+            <!--<OPTION Value="XServer"/>
+<SNAME Value="XServer"/>-->
+            <OPTION Value="All"/>
+            <SNAME Value="{$currService/@Value}"/>
+          </REQUEST>
+        </FOR_EACH>
+        <EXECUTE_SHELL_COMMAND Value="DeleteOldLogs.BAT" AssignToVar="errStatus"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

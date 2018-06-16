@@ -1,0 +1,134 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_form" source="studio.controller:load">
+  <ui:container id="topContainer">
+	<ui:help displayPage="../../bcm/help/Manage_Template.htm"/>
+    <ui:step displayText="SC_DEFAULT_TEMPLATE" id="selfConTemp">
+      <ui:field-group columns="3">
+        <ui:hidden-field id="templateType" name="templateType"/>
+        <ui:image src="/bpi_check.gif" id="AlertGreenIconAjax" displayCondition="{string-length($root/ABC/AlertGreen/@Value)!=0}"/>
+        <ui:image src="/cancel.gif" id="AlertRedIconAjax" displayCondition="{string-length($root/ABC/AlertRed/@Value)!=0}"/>
+        <ui:display-field value="{$root/ABC/AlertGreen/@Value}" displayCondition="{string-length($root/ABC/AlertGreen/@Value) != 0}" id="success" name="success" class="requiredIndicatorGreen" style="color:green;"/>
+        <ui:display-field value="{$root/ABC/AlertRed/@Value}" displayCondition="{string-length($root/ABC/AlertRed/@Value) != 0}" id="error" name="error" class="requiredIndicator" style="color:red;"/>
+      </ui:field-group>
+      <ui:field-group columns="4">
+        <ui:field-group columns="1">
+          <ui:radiobutton id="templateType" name="lrdmTemplate" unFormat="true" checkedValue="LRDM" displayText="SC_LRDM_TEMPLATES" value="{$root/templateType/@Value}" onClick="javascript:showLrdmTemplates();"/>
+          <ui:radiobutton id="templateType" name="heirchyTemplate" unFormat="true" checkedValue="HIERARCHY" displayText="SC_HIERARCHRY_TEMPLATES" value="{$root/templateType/@Value}" onClick="javascript:showHeirachryTemplates();"/>
+          <ui:entry-field id="selectedModelCount" name="selectedModelCount" displayText="SC_ENTER_NUMB_TABLES_GEN" required="true" onKeyUp="javascript:onlyIntergerUnderscore(this);"/>
+          <ui:hidden-field id="modelCount" name="modelCount" displayText="SC_ENTER_NUMB_TABLES_GEN" required="true" value="{$root/SELF_CONF_MODEL/SELF_CONF_MODEL[1]/MODEL_COUNT/@Value}"/>
+        </ui:field-group>
+        <ui:field-space/>
+        <ui:textarea id="validateModelsLog" name="validateModelsLog" displayText="SC_TEMPLATE_VALIDATOR_LOGS" value="{$root/modelValidatorLog/@Value}" displayCondition="{string-length($root/modelValidatorLog/@Value)!=0}" maxlength="20000" columns="105" rows="5" displayNoWrap="false" editable="true" format="true" inFormat="true"/>
+      </ui:field-group>
+      <ui:table id="uiTable" displayText="SEARCH_SELF_TEMPLATES" scrollable="true" displayTextNoRecords="SELF_GEN_NO_TEMPLATES_FOUND" collapsable="false" doPaging="true" selectable="All" select="$root/SELF_CONF_MODEL" totalRowCount="$root/totalRowCount/@Value" startAtRow="$root/startAtRow/@Value" postRowIdAs="SELECTED_ID" maxRows="20" filter="true" rowId="TABLE_ID">
+        <ui:field-group>
+          <ui:display-field name="TABLE_NAME" id="TABLE_NAME" displayText="SELF_GEN_TEMPLATE_NAME" sortable="true" title="SELF_GEN_TEMPLATE_NAME_HOV" unFormat="true"/>
+          <ui:display-field name="FOLDER_NAME" id="FOLDER_NAME" displayText="SELF_GEN_CONFIG_FOLDER_NAME" sortable="true" title="SELF_GEN_CONFIG_FOLDER_NAME_HOV" unFormat="true"/>
+          <ui:display-field name="MODEL_COUNT" id="MODEL_COUNT" displayText="SELF_GEN_TEMPLATE_GENERATED_COUNT" title="SELF_GEN__MODEL_UI_STATUS_HOV" filter="false"/>
+          <!--ui:display-field name="CREATED_BY" id="CREATED_BY" displayText="SELF_GEN_CREATED_BY" sortable="true" title="SELF_GEN_CREATED_BY_HOV"/>
+          <ui:display-field name="CREATION_DATE" id="CREATION_DATE" displayText="SELF_GEN_CREATION_DATE" sortable="true" title="SELF_GEN_CREATION_DATE_HOV" dataType="DateTime"/-->
+          <ui:display-field name="LAST_MODIFIED_BY" id="LAST_MODIFIED_BY" displayText="SELF_GEN_LAST_MODIFIED_BY" sortable="true" title="SELF_GEN_LAST_MODIFIED_BY_HOV"/>
+          <ui:display-field name="LAST_MODIFIED_DATE" id="LAST_MODIFIED_DATE" displayText="SELF_GEN_LAST_MODIFIED_DATE" sortable="true" title="SELF_GEN_LAST_MODIFIED_DATE_HOV" dataType="DateTime"/>
+        </ui:field-group>
+        <ui:buttons>
+          <!--ui:button id="uploadTemplate" name="uploadTemplate" displayText="SC_GEN_UPLOAD_TEMPLATE" emphasized="false"/>
+          <ui:divider/-->
+          <ui:button id="back" name="back" displayText="Back" emphasized="false"/>
+          <ui:divider/>
+          <ui:button id="Validate" name="Validate" displayText="SELF_GEN_TEMPLATE_VALIDATOR" emphasized="false" enabledBySelections="true"/>
+          <ui:divider/>
+          <!--ui:button id="downloadTemplate" name="downloadTemplate" displayText="SC_GEN_DOWNLOAD_TEMPLATE" emphasized="false"/>
+          <ui:divider/>
+          <ui:button id="CreateTemplate" name="CreateTemplate" displayText="SELF_GEN_CREATE" emphasized="false"/>
+          <ui:divider/-->
+          <ui:button id="EditTemplate" name="EditTemplate" displayText="SELF_GEN_EDIT" emphasized="false" enabledBySelections="true" onClick="javascript:onEdit();"/>
+          <ui:divider/>
+          <ui:button id="generateMultiModels" name="generateMultiModels" displayText="SC_GEN_CREATE_MULTI_MODELS" emphasized="false" onClick="javascript:generateMultiModels();"/>
+          <ui:divider/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>                   
+   
+function onEdit(){        
+if(checkSelectedOne()){
+	document.form.BUTTON_ID.value = 'EditTemplate';
+	document.form.action = 'view.x2ps';
+	document.form.submit();
+	grayOut(true);
+
+	}
+}              
+    
+
+function onlyIntergerUnderscore(thisobj){
+var validCase ='1234567890_';
+var obj=thisobj;
+var strobj = '';
+var f=0;
+for(var i=0;i&lt;obj.value.length;i++)
+{
+if(obj.value.charAt(0) ==' ')
+obj.value = obj.value.trim();
+		
+if(validCase.indexOf(obj.value.charAt(i)) !=-1)
+{
+strobj = strobj + obj.value.charAt(i);
+}else{
+f=1;
+break;
+}
+}
+if(f==1){
+thisobj.value = strobj;
+}
+ if(parseInt(strobj) > 50){
+		core_alert_jquery('PLZ_SELECT_LESS_THAN_THOUSAND');
+		thisobj.value = '';		
+  }
+else if(parseInt(strobj) + parseInt(document.getElementById('modelCount').value) > 1000){
+		core_alert_jquery('PLZ_SELECT_LESS_THAN_THOUSAND');
+		thisobj.value = '';
+    }
+}
+    
+    function generateMultiModels(){
+	if(isValid_selfConTemp())
+    {    
+		var obj = $('[name=SELECTED_ID]');
+		for(var i = 0;i&lt;obj.length;i++){
+			$('[name=SELECTED_ID]')[i].setAttribute(&quot;checked&quot;,&quot;true&quot;);
+		}
+	core_confirm_jquery('SC_CONFIG_TEMPLATES_CONFIRM','onEditCallback');    	
+	}
+ }
+    
+function onEditCallback(response){
+if( response === 'yes' )
+{
+	document.form.BUTTON_ID.value = 'createMultiModels';
+	document.form.submit();
+	grayOut(true);
+}
+}
+    
+function showLrdmTemplates(){
+	document.getElementsByName('lrdmTemplate')[0].value=true;
+	document.getElementsByName('heirchyTemplate')[0].value=false;
+	document.getElementById('templateType').value = &quot;LRDM&quot;;
+	document.form.BUTTON_ID.value = 'showTemplates';
+	document.form.submit();
+	grayOut(true);
+}
+    
+function showHeirachryTemplates(){
+	document.getElementsByName('lrdmTemplate')[0].value=false;
+	document.getElementsByName('heirchyTemplate')[0].value=true;
+	document.getElementById('templateType').value = &quot;HIERARCHY&quot;;
+	document.form.BUTTON_ID.value = 'showTemplates';
+	document.form.submit();
+	grayOut(true);
+}
+    
+  </ui:script>
+</ui:page-group>

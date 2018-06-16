@@ -1,0 +1,75 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" Id="Node16.pgl" version="3">
+  <ui:container id="wf_editor_container" inner="true" scrollable="true" style="height:100%">
+    <ui:step id="wf_editor_step" displayText="{concat('Workflow Log Viewer : ',$root/PROCESS_DETAILS/Process_Name/@Value)}" scrollable="true">
+      <ui:div id="wfeditor_div" style="width:100%;height:100%"/>
+      <ui:div id="html_div"/>
+      <ui:field-group>
+        <ui:hidden-field id="SELECTED_INSTANCE_ID" name="SELECTED_INSTANCE_ID" value="{$root/SELECTED_INSTANCE_ID/@Value}"/>
+        <ui:hidden-field id="ProcessId" name="ProcessId" value="{$root/PROCESS_DETAILS/Process_Id/@Value}"/>
+        <ui:hidden-field id="versionId" name="versionId" value="{$root/PROCESS_DETAILS/Version_Id/@Value}"/>
+        <ui:hidden-field id="ProcessName" name="ProcessName" value="{$root/PROCESS_DETAILS/Process_Name/@Value}"/>
+        <ui:hidden-field id="ProcessEntity" name="ProcessEntity" value="{$root/PROCESS_DETAILS/Process_Template/@Value}"/>
+        <ui:hidden-field id="ProcessDescription" name="ProcessDescription" value="{$root/PROCESS_DETAILS/Process_Description/@Value}"/>
+        <ui:hidden-field id="FavWorkflowJson" name="FavWorkflowJson" value="{$root/JsonFavWorkflow/@Value}"/>
+        <ui:hidden-field id="selNode" name="selNode"/>
+        <ui:hidden-field id="WfObject" name="WfObject" value="{$root/wfObject/@Value}"/>
+        <ui:hidden-field id="selForkNode" name="selForkNode" />
+      </ui:field-group>
+      <ui:buttons id="buttons1" name="buttons1">
+        <ui:button id="wfDetails" name="wfDetails" onClick="javascript:openWfDetailsWindow()" displayText="Workflow Details"/>
+        <ui:button id="redrawWF" name="redrawWF" onClick="javascript:intiateRedraw()" displayText="Redraw Workflow"/>
+        <ui:divider/>
+        <ui:button displayText="Back" id="Back" name="Back" displayCondition="{$root/BUTTON_ID/@Value!='drillDownViewer'}"/>
+        <ui:button displayText="Back" id="BackD" name="BackD" displayCondition="{$root/BUTTON_ID/@Value='drillDownViewer'}"/>
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:dynamic-pgl id="dyn1" select="$root/DYNAMIC_PGL/*"/>
+  <ui:script>
+$('#html_div').append('&lt;link rel="stylesheet" href="../../bcm/wfeditor/css/nodes.css" type="text/css" /&gt;');
+$('#html_div').append('&lt;link rel="stylesheet" href="../../bcm/wfeditor/css/jquery.contextMenu.css" type="text/css" /&gt;');
+</ui:script>
+  <script>
+var _globalWfDetailsobj = new Object();
+var _editWfData = new Object();
+function onLoad(){
+hideNavigatationFrame();
+var wfObject=document.getElementById('WfObject').value;
+if(wfObject){
+wfObject=wfObject.replace(/\_-_/g,'&quot;');
+_editWfData.jsonWfObj = jQuery.parseJSON(wfObject);
+unpackForkNodes(_editWfData.jsonWfObj);
+}
+
+_editWfData.reloadEdit = true;
+_editWfData.isMonitoring = true;
+_globalWfDetailsobj.Process_Id = document.getElementById('ProcessId').value;
+_globalWfDetailsobj.Process_Name = document.getElementById('ProcessName').value;
+_globalWfDetailsobj.Process_Entity = document.getElementById('ProcessEntity').value;
+_globalWfDetailsobj.Process_Desc = document.getElementById('ProcessDescription').value;
+_globalWfDetailsobj.FavWorkflowJson = document.getElementById('FavWorkflowJson').value;
+    
+$(&quot;#wfeditor_div&quot;).load(omxContextPath+'/bcm/wfeditor/wfeditor.html');
+//onLoadSuper();
+onResize();
+var editorWindowHeight_ = ($(window).height()-160);
+$('#wfeditor_div').height(editorWindowHeight_);
+}
+    
+function unpackForkNodes(wfObj){
+jQuery.each(wfObj.node_list, function(index, obj){
+if(obj.type === "fork"){
+var taskNodes = jQuery.parseJSON(obj.cfg_data.task_details);
+var mergeObj = taskNodes.node_list.filter(function(node){return node.type === "fork_merge";});
+var conns = _editWfData.jsonWfObj.conn_list.filter(function(conn){return conn.src_id === obj.node_id;});
+jQuery.each(conns, function(i,conn){
+    if(typeof conn.tgt_id != "undefined")
+		conn.src_id = mergeObj[0].node_id;
+});
+_editWfData.jsonWfObj.node_list = _editWfData.jsonWfObj.node_list.concat(taskNodes.node_list);
+_editWfData.jsonWfObj.conn_list = _editWfData.jsonWfObj.conn_list.concat(taskNodes.conn_list);
+}
+});
+}
+</script>
+</ui:page-group>

@@ -1,0 +1,59 @@
+<document>
+  <documentation>The representation of a consumer or a household. There are three types:&#xD;
+&#xD;
+     REGISTRATION PERSONA, which is built when a consumer registers for a particular MARKETING PROGRAM&#xD;
+&#xD;
+     LEGAL ENTITY PERSONA, which is constructed by P&amp;G from the REGISTRATION PERSONAs for a consumer&#xD;
+&#xD;
+     HOUSEHOLD PERSONA, which is constructed by P&amp;G from the COPRORATE PERSONAs for the consumers in a household.&#xD;
+&#xD;
+A consumer can have several REGISTRATION PERSONAs (one for each MARKETING PROGRAM that she/he has registered for), but only one COPPORATE PERSONA. Likewise, a household has only one HOUSEHOLD PERSONA.</documentation>
+  <properties>
+    <property Name="PRSNA_STATUS_CODE" Required="true">
+      <documentation>The code that P&amp;G assigned to uniquely distinguish the PERSONA STATUS from all others. Will be used to designate "legal hold" and record must not be deleted.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="PRSNA_STATUS_CODE" />
+    </property>
+    <property Name="HSHLD_PRSNA_ID" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="HSHLD_PRSNA_ID" />
+    </property>
+    <property Name="LEGAL_ENT_NBR" Required="true">
+      <documentation>The number that P&amp;G assigned to uniquely distinguish the LEGAL ENTITY from all others.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="LEGAL_ENT_NBR" />
+    </property>
+    <property Name="UNIVERSAL_OPT_OUT">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="UNIVERSAL_OPT_OUT" />
+    </property>
+    <property Name="FAMLY_NAME" CharSet="UNICODE">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="FAMLY_NAME" />
+    </property>
+    <property Name="NOTE_TXT" CharSet="UNICODE">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="NOTE_TXT" />
+    </property>
+  </properties>
+  <keys>
+    <key Active="true" Name="HSHLD_PRSNA_UPI" PhysicalName="HSHLD_PRSNA_UPI" Kind="PRIMARY">
+      <property Name="HSHLD_PRSNA_ID" />
+      <property Name="LEGAL_ENT_NBR" />
+    </key>
+    <key Active="true" Name="HSHLD_PRSNA_IX" PhysicalName="HSHLD_PRSNA_IX" Kind="INDEX">
+      <property Name="LEGAL_ENT_NBR" />
+    </key>
+  </keys>
+  <links>
+    <link Active="true" Name="HSHLD_PRSNA_FK" PhysicalName="HSHLD_PRSNA_FK">
+      <keymap FromKey="HSHLD_PRSNA_IX" ToPackage="models/pngModel" ToModelUnit="LEGAL_ENT.mtt" ToKey="LEGAL_ENT_UPI" ReverseLink="true" ReverseLinkName="R_HSHLD_PRSNA" DeleteRule="RESTRICT">
+        <mapping FromProperty="LEGAL_ENT_NBR" ToProperty="LEGAL_ENT_NBR" />
+      </keymap>
+    </link>
+  </links>
+  <docFacets>
+    <mdmWebServiceFacet />
+    <mdmAuthorizationFacet />
+    <mdmSysTableMapFacet TableClass="MASTER" Source="MASTER" MasterTable="HSHLD_PRSNA" />
+    <miscFacet PhysicalName="HSHLD_PRSNA" Active="true" />
+    <mdmConfigFacet SchemaGen="true" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql />
+</document>
+

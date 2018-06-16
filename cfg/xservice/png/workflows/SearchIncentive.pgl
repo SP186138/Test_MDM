@@ -1,0 +1,258 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" Id="SearchIncentive.pgl" version="3">
+
+<ui:container id="outerContainer1" name="outerContainer1" scrollable="true">
+
+<ui:step id="outerStep1" name="outerStep1" scrollable="true">
+
+<ui:container id="searchContainer">
+
+<ui:step id="searchStep">
+
+<ui:field-group id="searchFG" displayText="Search" collapsable="true">
+
+<ui:field-group columns="2" id="fieldGroups" select="$this">
+
+<!--ui:display-field id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR" displayText="Selected Authoring Program" displayCondition="{$root/SOURCE/@Value='CNTNT_SEARCH'}" colSpan="3"/-->
+
+<!--ui:dropdown id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR" displayText="Matched Domain" optionSrc="$root/LEGAL_ENT/OPTION" required="true" onChange="javascript:loadProgramList()" displayCondition="{$root/SOURCE/@Value='CNTNT_SEARCH'}" disabled="true"/>
+
+<ui:dropdown id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR" displayText="Authoring Program" optionSrc="$root/MKTNG_PGM/OPTION" displayCondition="{$root/SOURCE/@Value='CNTNT_SEARCH'}" disabled="true"/>
+
+<ui:hidden-field id="SOURCE" name="SOURCE"/>
+
+<ui:hidden-field id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR" displayCondition="{$root/SOURCE/@Value='CNTNT_SEARCH'}"/>
+
+<ui:hidden-field id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR" displayCondition="{$root/SOURCE/@Value='CNTNT_SEARCH'}"/-->
+
+<ui:dropdown id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR" displayText="Matched Domain" optionSrc="$root/LEGAL_ENT/LEGAL_ENT_NAME" required="true" onChange="javascript:loadProgramList()"/>
+
+<ui:dropdown id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR" displayText="Program Name" optionSrc="$root/MKTNG_PGM/OPTION"/>
+
+<!--ui:dropdown id="INCTV_NBR" name="INCTV_NBR" displayText="Incentive Name" optionSrc="$root/INCTV/OPTION"/-->
+
+<ui:entry-field id="INCTV_NAME" name="INCTV_NAME" displayText="Incentive Name"/>
+
+<ui:entry-field id="INCTV_DESC" name="INCTV_DESC" displayText="Description"/>
+
+</ui:field-group>
+
+</ui:field-group>
+
+<ui:buttons>
+
+<ui:button displayText="Reset" id="Reset" name="Reset" validate="false" onClick="javascript:on_RETURN()"/>
+
+<ui:button id="SEARCH_INCENTIVES" displayText="Search Incentives" emphasized="true"/>
+
+</ui:buttons>
+
+</ui:step>
+
+</ui:container>
+
+<ui:table id="searchResultsTable" displayText="Incentives Search Results" rowId="INCTV_NBR" rowSrc="$root/RESPONSE/INCTV" scrollable="true" displayTextNoRecords="No Incentives Found" maxRows="15" postRowIdAs="selectedIncentiveID" doPaging="true" totalRowCount="$root/RESPONSE/@TotalRowCount" selectable="single" exportable="True">
+
+<ui:field-group id="tableColumns" select="$root/RESPONSE/*">
+
+<ui:display-field id="INCTV_NBR" name="INCTV_NBR" displayText="Incentive Number"/>
+
+<!--ui:link-field id="INCTV_NAME" name="INCTV_NAME" displayText="Incentive Name">
+
+<ui:url page="page.x2ps">
+
+<BUTTON_ID select="'VIEW_INCENTIVE_DETAILS'"/>
+
+<INCTV_NBR select="INCTV_NBR/@Value"/>
+
+<PROGRAM_ID select="MKTNG_PGM_NBR/@Value"/>
+
+<LEGAL_ENT_NBR select="LEGAL_ENT_NBR/@Value"/>
+
+</ui:url>
+
+</ui:link-field-->
+
+<ui:display-field id="INCTV_NAME" name="INCTV_NAME" displayText="Incentive Name"/>
+
+<ui:display-field id="INCTV_DESC" name="INCTV_DESC" displayText="Description"/>
+
+<ui:display-field id="MKTNG_PGM_NAME" name="MKTNG_PGM_NAME" displayText="Program Name"/>
+
+<!--ui:display-field id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR" displayText="Domain ID"/-->
+
+<ui:display-field id="INCTV_STATUS_NAME" name="INCTV_STATUS_NAME" displayText="Incentive Status"/>
+
+<ui:display-field id="INCTV_TYPE_NAME" name="INCTV_TYPE_NAME" displayText="Incentive Type "/>
+
+</ui:field-group>
+
+<ui:buttons id="SELECT">
+
+<!--ui:button id="SELECT_INCENTIVE" displayText="Select Incentive" emphasized="true" enabledBySelections="false" onClick="javascript:selectInctv();" displayCondition="{$root/SOURCE/@Value='CNTNT_SEARCH'}"/-->
+
+<ui:button id="ADD_INCENTIVES" displayText="Create Incentive" emphasized="true"/>
+
+<ui:button id="VIEW_INCENTIVE_DETAILS" displayText="Modify Incentive" emphasized="true" enabledBySelections="true" onClick="javascript:selectInctvToEdit();"/>
+
+</ui:buttons>
+
+</ui:table>
+
+</ui:step>
+
+</ui:container>
+
+<ui:script>
+
+function IEEnterKey()
+
+{
+
+if( window.event.keyCode == 13)
+
+{
+
+var ele=document.form.LEGAL_ENT_NBR;
+
+for ( var x =0 ; x &lt; ele.length; x++ ) {
+
+if(ele.value!=''){
+
+if ( ele.options[ x ].selected != ele.options[ x ].defaultSelected ){
+
+return true;
+
+}
+
+}
+
+}
+
+onSearchClick();
+
+}
+
+}
+
+browserName = navigator.appName;
+
+function NetEnterKey(e)
+
+{
+
+key = e.which;
+
+if(key == 13)
+
+{
+
+onSearchClick();
+
+}
+
+}
+
+if (browserName == &quot;Netscape&quot;)
+
+{
+
+document.captureEvents(Event.KEYPRESS);
+
+document.onkeypress=NetEnterKey;
+
+}
+
+else
+
+{
+
+if (browserName.indexOf(&quot;Explorer&quot;) >= 0)
+
+{
+
+document.onkeypress=IEEnterKey;
+
+}
+
+}
+
+function onSearchClick()
+
+{
+
+document.form.BUTTON_ID.value = 'SEARCH_INCENTIVES';
+
+document.form.action = 'view.x2ps';
+
+document.form.submit();
+
+return false;
+
+}
+
+function loadProgramList(){
+
+document.form.BUTTON_ID.value = 'LOAD_PROGRAM_LIST';
+
+document.form.action = 'view.x2ps';
+
+document.form.submit();
+
+}
+
+function selectInctvToEdit(){
+
+document.form.BUTTON_ID.value = 'VIEW_INCENTIVE_DETAILS';
+
+document.form.action = 'view.x2ps';
+
+document.form.submit();
+
+}
+
+function selectInctv(){
+
+for (index=0; index &lt; document.form.selectedIncentiveID.length; index++) {
+
+if (document.form.selectedIncentiveID[index].checked) {
+
+var radioValue = document.form.selectedIncentiveID[index].value;
+
+break;
+
+}
+
+}
+
+window.opener.document.getElementById('INCTV_NBR').value=radioValue; //document.getElementById('selectedIncentiveID').value;
+
+window.close();
+
+//window.opener.document.form.action = &quot;view.x2ps&quot;;
+
+//window.opener.document.form.BUTTON_ID.value = &quot;SYS_REFRESH&quot;;
+
+//window.opener.document.form.SAVE_PARAMS.value = true;
+
+//window.opener.document.form.submit();
+
+window.opener.location.href='start.x2ps?START_WORKFLOW=Collateral&amp;SERVICE_NAME=BCM_MASTER&amp;SELECT_WF=CreateContentElement&amp;TYPE=Select&amp;ACTION_TYPE=CREATE';
+
+}
+
+function on_RETURN(){
+
+document.getElementById('INCTV_NAME').value='';
+
+document.getElementById('INCTV_DESC').value='';
+
+document.getElementById('MKTNG_PGM_NBR').value='';
+
+return;
+
+}
+
+</ui:script>
+
+</ui:page-group>
+

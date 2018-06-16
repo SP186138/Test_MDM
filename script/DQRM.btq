@@ -1,0 +1,72 @@
+/***********************************************************************************************************
+SCRIPT:               DQRM.BTQ 
+DESCRIPTION:          THIS SCRIPT invoke stored procedure to execute DQRM rules
+DEPENDENCY:           
+INPUT:                
+OUTPUT:               
+ERRORS:
+SPECIAL INSTRUCTIONS:
+
+CHANGE LOG:
+VERSION              DATE                 AUTHOR                          CHANGES
+DQRM                 04/01/2016           TERADATA                        DQRM
+                                                                          INITIAL VERSION
+***********************************************************************************************************/
+.logon $TDPID/$TDUSER,$TDPWD
+
+
+.SET ERROROUT STDOUT;
+.SET SESSION CHARSET 'UTF8';
+.SET ERRORLEVEL 3624 SEVERITY 0
+SET QUERY_BAND = 'WorkFlow=DQRM;ProjectId=$PRJCTID;Frequency=$Freq;ProcessId=$PRCSID;Step=Step01;' FOR SESSION;
+
+insert into ETL_CTRL.LOAD_CONTROL
+(
+LOAD_ID
+,SOURCE_ID
+,FORMAT_ID
+,FileName
+,FILERECEIVEDTS
+,LOAD_TYPE
+,MIG_TASK
+,LOADSTARTTS
+,LOADSTATUS
+,SOURCECNT
+,TARGETCNT
+,REJECTSCNT
+,MDM_PROCESS_DESC
+)
+SELECT
+$PRCSID
+,1532
+,25
+,'DQRM_$PRJCTID_$Freq_'||CURRENT_DATE||'.txt'
+,CURRENT_TIMESTAMP(0)
+,'ETL'
+,'N'
+,CURRENT_TIMESTAMP(0)
+,'In Progress'
+,0
+,0
+,0
+,'$PRJCTID_$Freq';
+ .IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE;
+/*
+1st paramter is the process id
+2nd parameter is the project id
+3rd parameter is the frequency
+4th parameter is the return code from the wrapper
+0 for succuss
+-1 for failure
+*/
+.export report file=E:/Teradata/MDM/3.05.02/custom/pngrelease3/bin/DQRM_Output_File_$PRCSID.out
+CALL DQ_EXECUTE_WRAPPER ($PRCSID,$PRJCTID,'$Freq', :return_value);
+ .IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE;
+ 
+UPDATE ETL_CTRL.LOAD_CONTROL
+SET LOADSTATUS='Success'
+,MDM_PROCESS_DESC='$PRJCTID_$Freq - Completed'
+,LOADENDTS=CURRENT_TIMESTAMP(0)
+WHERE LOAD_ID = $PRCSID;
+ .IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE;
+.exit

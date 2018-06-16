@@ -1,0 +1,678 @@
+BTEQ 13.10.00.03 Tue Feb 21 15:21:31 2012
+ 
++---------+---------+---------+---------+---------+---------+---------+----
+/***********************************************************************************************************
+SCRIPT:               CNSMR_MERGE.BTEQ 
+DESCRIPTION:          THIS SCRIPT MERGES CONSUMER INFORMATION
+DEPENDENCY:           WRAPPER
+INPUT:                GOLDEN TABLES
+OUTPUT:               
+ERRORS:
+SPECIAL INSTRUCTIONS:
+
+CHANGE LOG:
+VERSION              DATE                 AUTHOR                          CHANGES
+1.00                 05/17/2011           TERADATA                        INITIAL VERSION
+***********************************************************************************************************/
+
+.RUN FILE \\10.36.32.4\Teradata\MDM\3.04.01.00\custom\pngrelease3\logon\LOGON.
+txt;
++---------+---------+---------+---------+---------+---------+---------+----
+.LOGON 10.36.32.14/mdm,
+
+ *** Logon successfully completed.
+ *** Teradata Database Release is 13.10.01.01                   
+ *** Teradata Database Version is 13.10.01.01                     
+ *** Transaction Semantics are BTET.
+ *** Session Character Set Name is 'ASCII'.
+ 
+ *** Total elapsed time was 1 second.
+ 
++---------+---------+---------+---------+---------+---------+---------+----
+.SET ERROROUT STDOUT;
+ *** Error messages now directed to STDOUT.
++---------+---------+---------+---------+---------+---------+---------+----
+.SET SESSION CHARSET 'UTF8';
++---------+---------+---------+---------+---------+---------+---------+----
+
+DATABASE MDM;
+
+ *** New default database accepted. 
+ *** Total elapsed time was 1 second.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+
+COLLECT STATS ON MDM.TRILLIUM_OUTPUT_DUP1
+COLUMN MKTNG_PGM_NBR;
+
+ *** Update completed. One row changed. 
+ *** Total elapsed time was 1 second.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
++---------+---------+---------+---------+---------+---------+---------+----
+COLLECT STATS ON MDM.TRILLIUM_OUTPUT_DUP1
+COLUMN REGIS_CNSMR_ID_VAL;
+
+ *** Update completed. One row changed. 
+ *** Total elapsed time was 41 seconds.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
++---------+---------+---------+---------+---------+---------+---------+----
+COLLECT STATS ON MDM.TRILLIUM_OUTPUT_DUP1
+COLUMN (MKTNG_PGM_NBR,REGIS_CNSMR_ID_VAL);
+
+ *** Update completed. One row changed. 
+ *** Total elapsed time was 1 second.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
++---------+---------+---------+---------+---------+---------+---------+----
+COLLECT STATS ON MDM.TRILLIUM_OUTPUT_DUP1
+COLUMN REFERENCE_REGISTRATIONKEY;
+
+ *** Update completed. One row changed. 
+ *** Total elapsed time was 4 seconds.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
++---------+---------+---------+---------+---------+---------+---------+----
+COLLECT STATS ON MDM.TRILLIUM_OUTPUT_DUP1
+COLUMN DUP_REGIS_PRSNA_ID;
+
+ *** Update completed. One row changed. 
+ *** Total elapsed time was 3 seconds.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
++---------+---------+---------+---------+---------+---------+---------+----
+COLLECT STATS ON MDM.TRILLIUM_OUTPUT_DUP1
+COLUMN (LEGAL_ENT_NBR,MKTNG_PGM_NBR,REFERENCE_REGISTRATIONKEY);
+
+ *** Update completed. One row changed. 
+ *** Total elapsed time was 5 seconds.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
++---------+---------+---------+---------+---------+---------+---------+----
+COLLECT STATS ON MDM.TRILLIUM_OUTPUT_DUP1
+COLUMN (LEGAL_ENT_NBR,MKTNG_PGM_NBR,DUP_REGIS_PRSNA_ID);
+
+ *** Update completed. One row changed. 
+ *** Total elapsed time was 5 seconds.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
++---------+---------+---------+---------+---------+---------+---------+----
+COLLECT STATS ON MDM.TRILLIUM_OUTPUT_DUP1
+COLUMN (LEGAL_ENT_NBR,MKTNG_PGM_NBR,DUP_REGIS_PRSNA_ID,REGIS_CNSMR_ID_VAL)
+;
+
+ *** Update completed. One row changed. 
+ *** Total elapsed time was 3 seconds.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
++---------+---------+---------+---------+---------+---------+---------+----
+
+DELETE FROM PRSNA_DPLCT ALL;
+
+ *** Delete completed. 1481841 rows removed. 
+ *** Total elapsed time was 1 second.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
++---------+---------+---------+---------+---------+---------+---------+----
+
+INSERT PRSNA_DPLCT
+(
+DUP_REGIS_PRSNA_ID,
+LEGAL_ENT_NBR,
+MKTNG_PGM_NBR,
+REFERENCE_REGISTRATIONKEY
+)
+SELECT DISTINCT
+CASE WHEN C.REGIS_PRSNA_ID IS NOT NULL
+     THEN C.REGIS_PRSNA_ID
+     WHEN B.REGIS_PRSNA_ID IS NOT NULL
+     THEN B.REGIS_PRSNA_ID
+ END DUP_REGIS_PRSNA_ID1,
+A.LEGAL_ENT_NBR,
+A.MKTNG_PGM_NBR,
+CASE WHEN C.REGIS_PRSNA_ID IS NOT NULL
+     THEN CAST(A.REFERENCE_REGISTRATIONKEY AS INTEGER)
+     WHEN B.REGIS_PRSNA_ID IS NOT NULL
+     THEN CAST(A.DUP_REGIS_PRSNA_ID AS INTEGER)     
+ END REFERENCE_REGISTRATIONKEY1
+FROM
+TRILLIUM_OUTPUT_DUP1 A
+
+LEFT OUTER JOIN REGIS_PRSNA B
+ON CAST(A.REFERENCE_REGISTRATIONKEY AS INTEGER) = B.REGIS_PRSNA_ID
+AND A.LEGAL_ENT_NBR = B.LEGAL_ENT_NBR
+AND A.MKTNG_PGM_NBR = B.MKTNG_PGM_NBR
+AND B.PRSNA_STATUS_CODE = 'DP'
+LEFT OUTER JOIN REGIS_PRSNA C
+ON CAST(A.DUP_REGIS_PRSNA_ID AS INTEGER) = C.REGIS_PRSNA_ID
+AND A.LEGAL_ENT_NBR = C.LEGAL_ENT_NBR
+AND A.MKTNG_PGM_NBR = C.MKTNG_PGM_NBR
+AND C.PRSNA_STATUS_CODE = 'DP'
+WHERE (B.PRSNA_STATUS_CODE = 'DP' OR C.PRSNA_STATUS_CODE = 'DP')
+AND A.SYS_SOURCE <> 'BACKEND'
+AND DUP_REGIS_PRSNA_ID1 IS NOT NULL 
+AND REFERENCE_REGISTRATIONKEY1 IS NOT NULL
+QUALIFY RANK() OVER (PARTITION BY DUP_REGIS_PRSNA_ID1
+ORDER BY A.SYS_CREATION_DATE DESC,REFERENCE_REGISTRATIONKEY1 DESC,A.REGIS_
+CNSMR_ID_VAL DESC, A.REGIS_DATE DESC) = 1
+;
+
+ *** Insert completed. 1481855 rows added. 
+ *** Total elapsed time was one minute and 25 seconds.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
++---------+---------+---------+---------+---------+---------+---------+----
+
+COLLECT STATS PRSNA_DPLCT
+COLUMN ( LEGAL_ENT_NBR,MKTNG_PGM_NBR,DUP_REGIS_PRSNA_ID);
+
+ *** Update completed. One row changed. 
+ *** Total elapsed time was 1 second.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
++---------+---------+---------+---------+---------+---------+---------+----
+COLLECT STATS PRSNA_DPLCT
+COLUMN ( LEGAL_ENT_NBR,MKTNG_PGM_NBR,REFERENCE_REGISTRATIONKEY);
+
+ *** Update completed. One row changed. 
+ *** Total elapsed time was 2 seconds.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
++---------+---------+---------+---------+---------+---------+---------+----
+COLLECT STATS PRSNA_DPLCT
+COLUMN ( LEGAL_ENT_NBR,MKTNG_PGM_NBR,REFERENCE_REGISTRATIONKEY,DUP_REGIS_P
+RSNA_ID);
+
+ *** Update completed. One row changed. 
+ *** Total elapsed time was 1 second.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
++---------+---------+---------+---------+---------+---------+---------+----
+
+UPDATE REGIS_PRSNA_POSTL_ADDR
+FROM (
+SEL E.REGIS_PRSNA_ID,E.LEGAL_ENT_NBR,E.MKTNG_PGM_NBR,E.SUBSCRPTN_OPT_NBR
+ FROM PRSNA_DPLCT A
+INNER JOIN REGIS_PRSNA_POSTL_ADDR E
+ON E.REGIS_PRSNA_ID = A.DUP_REGIS_PRSNA_ID
+AND E.LEGAL_ENT_NBR = A.LEGAL_ENT_NBR
+AND E.MKTNG_PGM_NBR = A.MKTNG_PGM_NBR
+AND E.SUBSCRPTN_OPT_NBR IS NOT NULL
+AND E.POSTL_STATUS_CODE = 'AC'
+INNER JOIN REGIS_PRSNA_POSTL_ADDR D
+ON D.REGIS_PRSNA_ID = A.REFERENCE_REGISTRATIONKEY
+AND D.LEGAL_ENT_NBR = A.LEGAL_ENT_NBR
+AND D.MKTNG_PGM_NBR = A.MKTNG_PGM_NBR
+AND D.SUBSCRPTN_OPT_NBR IS NOT NULL
+
+WHERE E.SUBSCRPTN_OPT_NBR = D.SUBSCRPTN_OPT_NBR
+GROUP BY 1,2,3,4
+) B
+SET POSTL_STATUS_CODE = 'DP'
+WHERE REGIS_PRSNA_POSTL_ADDR.REGIS_PRSNA_ID = B.REGIS_PRSNA_ID
+AND REGIS_PRSNA_POSTL_ADDR.LEGAL_ENT_NBR = B.LEGAL_ENT_NBR
+AND REGIS_PRSNA_POSTL_ADDR.MKTNG_PGM_NBR = B.MKTNG_PGM_NBR
+AND COALESCE(REGIS_PRSNA_POSTL_ADDR.SUBSCRPTN_OPT_NBR,0) = COALESCE(B.SUBS
+CRPTN_OPT_NBR,0)
+AND REGIS_PRSNA_POSTL_ADDR.POSTL_STATUS_CODE = 'AC'
+;
+
+ *** Update completed. No rows changed. 
+ *** Total elapsed time was 26 seconds.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
++---------+---------+---------+---------+---------+---------+---------+----
+
+UPDATE REGIS_PRSNA_PHONE
+FROM (
+SEL E.REGIS_PRSNA_ID,E.LEGAL_ENT_NBR,E.MKTNG_PGM_NBR,E.SUBSCRPTN_OPT_NBR
+ FROM PRSNA_DPLCT A
+INNER JOIN REGIS_PRSNA_PHONE E
+ON E.REGIS_PRSNA_ID = A.DUP_REGIS_PRSNA_ID
+AND E.LEGAL_ENT_NBR = A.LEGAL_ENT_NBR
+AND E.MKTNG_PGM_NBR = A.MKTNG_PGM_NBR
+AND E.SUBSCRPTN_OPT_NBR IS NOT NULL
+AND E.PHONE_STATUS_CODE = 'AC'
+INNER JOIN REGIS_PRSNA_PHONE D
+ON D.REGIS_PRSNA_ID = A.REFERENCE_REGISTRATIONKEY
+AND D.LEGAL_ENT_NBR = A.LEGAL_ENT_NBR
+AND D.MKTNG_PGM_NBR = A.MKTNG_PGM_NBR
+AND D.SUBSCRPTN_OPT_NBR IS NOT NULL
+
+WHERE E.SUBSCRPTN_OPT_NBR = D.SUBSCRPTN_OPT_NBR
+GROUP BY 1,2,3,4
+) B
+SET PHONE_STATUS_CODE = 'DP'
+WHERE REGIS_PRSNA_PHONE.REGIS_PRSNA_ID = B.REGIS_PRSNA_ID
+AND REGIS_PRSNA_PHONE.LEGAL_ENT_NBR = B.LEGAL_ENT_NBR
+AND REGIS_PRSNA_PHONE.MKTNG_PGM_NBR = B.MKTNG_PGM_NBR
+AND COALESCE(REGIS_PRSNA_PHONE.SUBSCRPTN_OPT_NBR,0) = COALESCE(B.SUBSCRPTN
+_OPT_NBR,0)
+AND REGIS_PRSNA_PHONE.PHONE_STATUS_CODE = 'AC';
+
+ *** Update completed. No rows changed. 
+ *** Total elapsed time was 20 seconds.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
++---------+---------+---------+---------+---------+---------+---------+----
+
+UPDATE REGIS_PRSNA_EMAIL_ADDR
+FROM (
+SEL E.REGIS_PRSNA_ID,E.LEGAL_ENT_NBR,E.MKTNG_PGM_NBR,E.SUBSCRPTN_OPT_NBR
+ FROM PRSNA_DPLCT A
+INNER JOIN REGIS_PRSNA_EMAIL_ADDR E
+ON E.REGIS_PRSNA_ID = A.DUP_REGIS_PRSNA_ID
+AND E.LEGAL_ENT_NBR = A.LEGAL_ENT_NBR
+AND E.MKTNG_PGM_NBR = A.MKTNG_PGM_NBR
+AND E.SUBSCRPTN_OPT_NBR IS NOT NULL
+AND E.EMAIL_STATUS_CODE = 'AC'
+INNER JOIN REGIS_PRSNA_EMAIL_ADDR D
+ON D.REGIS_PRSNA_ID = A.REFERENCE_REGISTRATIONKEY
+AND D.LEGAL_ENT_NBR = A.LEGAL_ENT_NBR
+AND D.MKTNG_PGM_NBR = A.MKTNG_PGM_NBR
+AND D.SUBSCRPTN_OPT_NBR IS NOT NULL
+
+WHERE E.SUBSCRPTN_OPT_NBR = D.SUBSCRPTN_OPT_NBR
+GROUP BY 1,2,3,4
+) B
+SET EMAIL_STATUS_CODE = 'DP'
+WHERE REGIS_PRSNA_EMAIL_ADDR.REGIS_PRSNA_ID = B.REGIS_PRSNA_ID
+AND REGIS_PRSNA_EMAIL_ADDR.LEGAL_ENT_NBR = B.LEGAL_ENT_NBR
+AND REGIS_PRSNA_EMAIL_ADDR.MKTNG_PGM_NBR = B.MKTNG_PGM_NBR
+AND COALESCE(REGIS_PRSNA_EMAIL_ADDR.SUBSCRPTN_OPT_NBR,0) = COALESCE(B.SUBS
+CRPTN_OPT_NBR,0)
+AND REGIS_PRSNA_EMAIL_ADDR.EMAIL_STATUS_CODE = 'AC'
+;
+
+ *** Update completed. No rows changed. 
+ *** Total elapsed time was 23 seconds.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
++---------+---------+---------+---------+---------+---------+---------+----
+
+UPDATE REGIS_PRSNA_SOC_NET_ACCT
+FROM (
+SEL E.REGIS_PRSNA_ID,E.LEGAL_ENT_NBR,E.MKTNG_PGM_NBR,E.SUBSCRPTN_OPT_NBR
+ FROM PRSNA_DPLCT A
+INNER JOIN REGIS_PRSNA_SOC_NET_ACCT E
+ON E.REGIS_PRSNA_ID = A.DUP_REGIS_PRSNA_ID
+AND E.LEGAL_ENT_NBR = A.LEGAL_ENT_NBR
+AND E.MKTNG_PGM_NBR = A.MKTNG_PGM_NBR
+AND E.SUBSCRPTN_OPT_NBR IS NOT NULL
+AND E.SOC_NET_STATUS_CODE = 'AC'
+INNER JOIN REGIS_PRSNA_SOC_NET_ACCT D
+ON D.REGIS_PRSNA_ID = A.REFERENCE_REGISTRATIONKEY
+AND D.LEGAL_ENT_NBR = A.LEGAL_ENT_NBR
+AND D.MKTNG_PGM_NBR = A.MKTNG_PGM_NBR
+AND D.SUBSCRPTN_OPT_NBR IS NOT NULL
+
+WHERE E.SUBSCRPTN_OPT_NBR = D.SUBSCRPTN_OPT_NBR
+GROUP BY 1,2,3,4
+) B
+SET SOC_NET_STATUS_CODE = 'DP'
+WHERE REGIS_PRSNA_SOC_NET_ACCT.REGIS_PRSNA_ID = B.REGIS_PRSNA_ID
+AND REGIS_PRSNA_SOC_NET_ACCT.LEGAL_ENT_NBR = B.LEGAL_ENT_NBR
+AND REGIS_PRSNA_SOC_NET_ACCT.MKTNG_PGM_NBR = B.MKTNG_PGM_NBR
+AND COALESCE(REGIS_PRSNA_SOC_NET_ACCT.SUBSCRPTN_OPT_NBR,0) = COALESCE(B.SU
+BSCRPTN_OPT_NBR,0)
+AND REGIS_PRSNA_SOC_NET_ACCT.SOC_NET_STATUS_CODE = 'AC'
+;
+
+ *** Update completed. No rows changed. 
+ *** Total elapsed time was 1 second.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
++---------+---------+---------+---------+---------+---------+---------+----
+
+UPDATE MATCHD_CNSMR_PRSNA
+SET PRSNA_STATUS_CODE = 'AC'
+WHERE PRSNA_STATUS_CODE = 'IN'
+AND (LEGAL_ENT_NBR,MATCHD_CNSMR_PRSNA_ID) IN 
+(SEL LEGAL_ENT_NBR,MATCHD_CNSMR_PRSNA_ID
+FROM REGIS_PRSNA
+WHERE PRSNA_STATUS_CODE = 'AC'
+);
+
+ *** Update completed. No rows changed. 
+ *** Total elapsed time was 14 seconds.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
++---------+---------+---------+---------+---------+---------+---------+----
+
+UPDATE MATCHD_CNSMR_PRSNA
+SET PRSNA_STATUS_CODE = 'IN'
+WHERE PRSNA_STATUS_CODE = 'AC'
+AND (LEGAL_ENT_NBR,MATCHD_CNSMR_PRSNA_ID) NOT IN 
+(SEL LEGAL_ENT_NBR,MATCHD_CNSMR_PRSNA_ID
+FROM REGIS_PRSNA
+WHERE PRSNA_STATUS_CODE = 'AC'
+);
+
+ *** Update completed. 2 rows changed. 
+ *** Total elapsed time was 18 seconds.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
++---------+---------+---------+---------+---------+---------+---------+----
+
+UPDATE HSHLD_PRSNA
+SET PRSNA_STATUS_CODE = 'AC'
+WHERE PRSNA_STATUS_CODE = 'IN'
+AND (LEGAL_ENT_NBR,HSHLD_PRSNA_ID) IN 
+(SEL LEGAL_ENT_NBR,HSHLD_PRSNA_ID
+FROM MATCHD_CNSMR_PRSNA
+WHERE PRSNA_STATUS_CODE = 'AC'
+);
+
+ *** Update completed. No rows changed. 
+ *** Total elapsed time was 7 seconds.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
++---------+---------+---------+---------+---------+---------+---------+----
+
+UPDATE HSHLD_PRSNA
+SET PRSNA_STATUS_CODE = 'IN'
+WHERE PRSNA_STATUS_CODE = 'AC'
+AND (LEGAL_ENT_NBR,HSHLD_PRSNA_ID) NOT IN 
+(SEL LEGAL_ENT_NBR,HSHLD_PRSNA_ID
+FROM MATCHD_CNSMR_PRSNA
+WHERE PRSNA_STATUS_CODE = 'AC'
+);
+
+ *** Update completed. 2 rows changed. 
+ *** Total elapsed time was 13 seconds.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
++---------+---------+---------+---------+---------+---------+---------+----
+
+UPDATE REGIS_PRSNA
+FROM (
+SEL C.REGIS_PRSNA_ID,C.LEGAL_ENT_NBR,C.MKTNG_PGM_NBR,C.REGIS_CNSMR_ID_VAL
+ FROM REGIS_PRSNA C
+INNER JOIN REGIS_PRSNA C1
+ON C.REGIS_PRSNA_ID = C1.REGIS_PRSNA_ID
+AND C.LEGAL_ENT_NBR = C1.LEGAL_ENT_NBR
+AND C.MKTNG_PGM_NBR = C1.MKTNG_PGM_NBR
+AND C.REGIS_CNSMR_ID_VAL = C1.REGIS_CNSMR_ID_VAL
+AND C.PRSNA_STATUS_CODE = 'DP'
+LEFT OUTER JOIN REGIS_PRSNA_EMAIL_ADDR E
+ON E.REGIS_PRSNA_ID = C.REGIS_PRSNA_ID
+AND E.LEGAL_ENT_NBR = C.LEGAL_ENT_NBR
+AND E.MKTNG_PGM_NBR = C.MKTNG_PGM_NBR
+AND E.EMAIL_STATUS_CODE = 'AC'
+LEFT OUTER JOIN REGIS_PRSNA_PHONE E1
+ON E1.REGIS_PRSNA_ID = C.REGIS_PRSNA_ID
+AND E1.LEGAL_ENT_NBR = C.LEGAL_ENT_NBR
+AND E1.MKTNG_PGM_NBR = C.MKTNG_PGM_NBR
+AND E1.PHONE_STATUS_CODE = 'AC'
+LEFT OUTER JOIN REGIS_PRSNA_POSTL_ADDR E2
+ON E2.REGIS_PRSNA_ID = C.REGIS_PRSNA_ID
+AND E2.LEGAL_ENT_NBR = C.LEGAL_ENT_NBR
+AND E2.MKTNG_PGM_NBR = C.MKTNG_PGM_NBR
+AND E2.POSTL_STATUS_CODE = 'AC'
+LEFT OUTER JOIN REGIS_PRSNA_SOC_NET_ACCT E3
+ON E3.REGIS_PRSNA_ID = C.REGIS_PRSNA_ID
+AND E3.LEGAL_ENT_NBR = C.LEGAL_ENT_NBR
+AND E3.MKTNG_PGM_NBR = C.MKTNG_PGM_NBR
+AND E3.SOC_NET_STATUS_CODE = 'AC'
+WHERE E.EMAIL_STATUS_CODE = 'AC'
+OR E1.PHONE_STATUS_CODE = 'AC'
+OR E2.POSTL_STATUS_CODE = 'AC'
+OR E3.SOC_NET_STATUS_CODE = 'AC'
+GROUP BY 1,2,3,4
+) B
+SET PRSNA_STATUS_CODE = 'AC'
+WHERE REGIS_PRSNA.REGIS_PRSNA_ID = B.REGIS_PRSNA_ID
+AND REGIS_PRSNA.LEGAL_ENT_NBR = B.LEGAL_ENT_NBR
+AND REGIS_PRSNA.MKTNG_PGM_NBR = B.MKTNG_PGM_NBR
+AND REGIS_PRSNA.REGIS_CNSMR_ID_VAL = B.REGIS_CNSMR_ID_VAL
+;
+
+ *** Update completed. 26323 rows changed. 
+ *** Total elapsed time was one minute and 48 seconds.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
++---------+---------+---------+---------+---------+---------+---------+----
+
+UPDATE REGIS_PRSNA
+FROM (
+SEL C.REGIS_PRSNA_ID,C.LEGAL_ENT_NBR,C.MKTNG_PGM_NBR,C.REGIS_CNSMR_ID_VAL
+ FROM REGIS_PRSNA C
+LEFT OUTER JOIN REGIS_PRSNA_EMAIL_ADDR E
+ON E.REGIS_PRSNA_ID = C.REGIS_PRSNA_ID
+AND E.LEGAL_ENT_NBR = C.LEGAL_ENT_NBR
+AND E.MKTNG_PGM_NBR = C.MKTNG_PGM_NBR
+LEFT OUTER JOIN REGIS_PRSNA_PHONE E1
+ON E1.REGIS_PRSNA_ID = C.REGIS_PRSNA_ID
+AND E1.LEGAL_ENT_NBR = C.LEGAL_ENT_NBR
+AND E1.MKTNG_PGM_NBR = C.MKTNG_PGM_NBR
+LEFT OUTER JOIN REGIS_PRSNA_POSTL_ADDR E2
+ON E2.REGIS_PRSNA_ID = C.REGIS_PRSNA_ID
+AND E2.LEGAL_ENT_NBR = C.LEGAL_ENT_NBR
+AND E2.MKTNG_PGM_NBR = C.MKTNG_PGM_NBR
+LEFT OUTER JOIN REGIS_PRSNA_SOC_NET_ACCT E3
+ON E3.REGIS_PRSNA_ID = C.REGIS_PRSNA_ID
+AND E3.LEGAL_ENT_NBR = C.LEGAL_ENT_NBR
+AND E3.MKTNG_PGM_NBR = C.MKTNG_PGM_NBR
+WHERE   ((E.EMAIL_STATUS_CODE = 'DP' AND E1.PHONE_STATUS_CODE = 'DP'  AND 
+E2.POSTL_STATUS_CODE = 'DP'  AND E3.SOC_NET_STATUS_CODE = 'DP') 
+OR (E.EMAIL_STATUS_CODE = 'DP' AND E1.PHONE_STATUS_CODE = 'DP'  AND E2.POS
+TL_STATUS_CODE = 'DP'  AND E3.SOC_NET_STATUS_CODE IS NULL)
+OR (E.EMAIL_STATUS_CODE = 'DP' AND E1.PHONE_STATUS_CODE = 'DP'  AND E2.POS
+TL_STATUS_CODE IS NULL AND E3.SOC_NET_STATUS_CODE = 'DP')
+OR (E.EMAIL_STATUS_CODE = 'DP' AND E1.PHONE_STATUS_CODE = 'DP'  AND E2.POS
+TL_STATUS_CODE IS NULL AND E3.SOC_NET_STATUS_CODE IS NULL)
+OR (E.EMAIL_STATUS_CODE = 'DP' AND E1.PHONE_STATUS_CODE IS NULL AND E2.POS
+TL_STATUS_CODE = 'DP'  AND E3.SOC_NET_STATUS_CODE = 'DP') 
+OR (E.EMAIL_STATUS_CODE = 'DP' AND E1.PHONE_STATUS_CODE IS NULL AND E2.POS
+TL_STATUS_CODE = 'DP'  AND E3.SOC_NET_STATUS_CODE IS NULL) 
+OR (E.EMAIL_STATUS_CODE = 'DP' AND E1.PHONE_STATUS_CODE IS NULL AND E2.POS
+TL_STATUS_CODE IS NULL AND E3.SOC_NET_STATUS_CODE = 'DP') 
+OR (E.EMAIL_STATUS_CODE = 'DP' AND E1.PHONE_STATUS_CODE IS NULL AND E2.POS
+TL_STATUS_CODE IS NULL AND E3.SOC_NET_STATUS_CODE IS NULL)
+OR (E1.PHONE_STATUS_CODE = 'DP' AND E.EMAIL_STATUS_CODE = 'DP'  AND E2.POS
+TL_STATUS_CODE = 'DP'  AND E3.SOC_NET_STATUS_CODE IS NULL)
+OR (E1.PHONE_STATUS_CODE = 'DP' AND E.EMAIL_STATUS_CODE = 'DP'  AND E2.POS
+TL_STATUS_CODE IS NULL AND E3.SOC_NET_STATUS_CODE = 'DP')
+OR (E1.PHONE_STATUS_CODE = 'DP' AND E.EMAIL_STATUS_CODE = 'DP'  AND E2.POS
+TL_STATUS_CODE IS NULL AND E3.SOC_NET_STATUS_CODE IS NULL)
+OR (E1.PHONE_STATUS_CODE = 'DP' AND E.EMAIL_STATUS_CODE IS NULL AND E2.POS
+TL_STATUS_CODE = 'DP'  AND E3.SOC_NET_STATUS_CODE = 'DP') 
+OR (E1.PHONE_STATUS_CODE = 'DP' AND E.EMAIL_STATUS_CODE IS NULL AND E2.POS
+TL_STATUS_CODE = 'DP'  AND E3.SOC_NET_STATUS_CODE IS NULL) 
+OR (E1.PHONE_STATUS_CODE = 'DP' AND E.EMAIL_STATUS_CODE IS NULL AND E2.POS
+TL_STATUS_CODE IS NULL AND E3.SOC_NET_STATUS_CODE = 'DP') 
+OR (E1.PHONE_STATUS_CODE = 'DP' AND E.EMAIL_STATUS_CODE IS NULL AND E2.POS
+TL_STATUS_CODE IS NULL AND E3.SOC_NET_STATUS_CODE IS NULL)
+OR (E2.POSTL_STATUS_CODE = 'DP' AND E.EMAIL_STATUS_CODE = 'DP'  AND E1.PHO
+NE_STATUS_CODE = 'DP'  AND E3.SOC_NET_STATUS_CODE IS NULL)
+OR (E2.POSTL_STATUS_CODE = 'DP' AND E.EMAIL_STATUS_CODE = 'DP'  AND E1.PHO
+NE_STATUS_CODE IS NULL AND E3.SOC_NET_STATUS_CODE = 'DP')
+OR (E2.POSTL_STATUS_CODE = 'DP' AND E.EMAIL_STATUS_CODE = 'DP'  AND E1.PHO
+NE_STATUS_CODE IS NULL AND E3.SOC_NET_STATUS_CODE IS NULL)
+OR (E2.POSTL_STATUS_CODE = 'DP' AND E.EMAIL_STATUS_CODE IS NULL AND E1.PHO
+NE_STATUS_CODE = 'DP'  AND E3.SOC_NET_STATUS_CODE = 'DP') 
+OR (E2.POSTL_STATUS_CODE = 'DP' AND E.EMAIL_STATUS_CODE IS NULL AND E1.PHO
+NE_STATUS_CODE = 'DP'  AND E3.SOC_NET_STATUS_CODE IS NULL) 
+OR (E2.POSTL_STATUS_CODE = 'DP' AND E.EMAIL_STATUS_CODE IS NULL AND E1.PHO
+NE_STATUS_CODE IS NULL AND E3.SOC_NET_STATUS_CODE = 'DP') 
+OR (E2.POSTL_STATUS_CODE = 'DP' AND E.EMAIL_STATUS_CODE IS NULL AND E1.PHO
+NE_STATUS_CODE IS NULL AND E3.SOC_NET_STATUS_CODE IS NULL)
+OR (E3.SOC_NET_STATUS_CODE = 'DP' AND E.EMAIL_STATUS_CODE = 'DP'  AND E1.P
+HONE_STATUS_CODE = 'DP'  AND E2.POSTL_STATUS_CODE IS NULL)
+OR (E3.SOC_NET_STATUS_CODE = 'DP' AND E.EMAIL_STATUS_CODE = 'DP'  AND E1.P
+HONE_STATUS_CODE IS NULL AND E2.POSTL_STATUS_CODE = 'DP')
+OR (E3.SOC_NET_STATUS_CODE = 'DP' AND E.EMAIL_STATUS_CODE = 'DP'  AND E1.P
+HONE_STATUS_CODE IS NULL AND E2.POSTL_STATUS_CODE IS NULL)
+OR (E3.SOC_NET_STATUS_CODE = 'DP' AND E.EMAIL_STATUS_CODE IS NULL AND E1.P
+HONE_STATUS_CODE = 'DP'  AND E2.POSTL_STATUS_CODE = 'DP') 
+OR (E3.SOC_NET_STATUS_CODE = 'DP' AND E.EMAIL_STATUS_CODE IS NULL AND E1.P
+HONE_STATUS_CODE = 'DP'  AND E2.POSTL_STATUS_CODE IS NULL) 
+OR (E3.SOC_NET_STATUS_CODE = 'DP' AND E.EMAIL_STATUS_CODE IS NULL AND E1.P
+HONE_STATUS_CODE IS NULL AND E2.POSTL_STATUS_CODE = 'DP') 
+OR (E3.SOC_NET_STATUS_CODE = 'DP' AND E.EMAIL_STATUS_CODE IS NULL AND E1.P
+HONE_STATUS_CODE IS NULL AND E2.POSTL_STATUS_CODE IS NULL))
+AND PRSNA_STATUS_CODE='AC'
+GROUP BY 1,2,3,4
+) B
+SET PRSNA_STATUS_CODE = 'DP'
+WHERE REGIS_PRSNA.REGIS_PRSNA_ID = B.REGIS_PRSNA_ID
+AND REGIS_PRSNA.LEGAL_ENT_NBR = B.LEGAL_ENT_NBR
+AND REGIS_PRSNA.MKTNG_PGM_NBR = B.MKTNG_PGM_NBR
+AND REGIS_PRSNA.REGIS_CNSMR_ID_VAL = B.REGIS_CNSMR_ID_VAL
+;
+
+ *** Update completed. 26306 rows changed. 
+ *** Total elapsed time was one minute and 43 seconds.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
++---------+---------+---------+---------+---------+---------+---------+----
+
+UPDATE REGIS_PRSNA_POSTL_ADDR
+SET VALID_CNTCT_POINT_IND = 'N'
+WHERE ADDR_LINE_1_TXT IS NULL 
+;
+
+ *** Update completed. 1034268 rows changed. 
+ *** Total elapsed time was 18 seconds.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
++---------+---------+---------+---------+---------+---------+---------+----
+
+COLLECT STATS RPT_LOAD_NBR
+COLUMN ( LOAD_ID);
+
+ *** Update completed. One row changed. 
+ *** Total elapsed time was 1 second.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
++---------+---------+---------+---------+---------+---------+---------+----
+COLLECT STATS LOAD_INFO1
+COLUMN ( LOAD_ID);
+
+ *** Update completed. One row changed. 
+ *** Total elapsed time was 1 second.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
++---------+---------+---------+---------+---------+---------+---------+----
+COLLECT STATS LOAD_INFO1
+COLUMN ( STATUS);
+
+ *** Update completed. One row changed. 
+ *** Total elapsed time was 1 second.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
++---------+---------+---------+---------+---------+---------+---------+----
+COLLECT STATS LOAD_INFO1
+COLUMN ( PROCESS_NAME);
+
+ *** Update completed. One row changed. 
+ *** Total elapsed time was 1 second.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
++---------+---------+---------+---------+---------+---------+---------+----
+COLLECT STATS LOAD_INFO1
+COLUMN ( LOAD_ID,STATUS,PROCESS_NAME);
+
+ *** Update completed. One row changed. 
+ *** Total elapsed time was 1 second.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
++---------+---------+---------+---------+---------+---------+---------+----
+COLLECT STATS LOAD_INFO1
+COLUMN ( LOAD_ID,STATUS);
+
+ *** Update completed. One row changed. 
+ *** Total elapsed time was 1 second.
+
+
++---------+---------+---------+---------+---------+---------+---------+----
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
++---------+---------+---------+---------+---------+---------+---------+----
+
+.LABEL EXIT
++---------+---------+---------+---------+---------+---------+---------+----
+
+.IF ERRORLEVEL > 4 THEN .GOTO ERR ;
++---------+---------+---------+---------+---------+---------+---------+----
+.IF ERRORLEVEL <= 4 THEN .GOTO WARN;
+.GOTO WARN;
++---------+---------+---------+---------+---------+---------+---------+----
+
+.LABEL ERR
++---------+---------+---------+---------+---------+---------+---------+----
+.QUIT 1
+ *** Skipped.
++---------+---------+---------+---------+---------+---------+---------+----
+
+.LABEL WARN
++---------+---------+---------+---------+---------+---------+---------+----
+.QUIT 0
+ *** You are now logged off from the DBC.
+ *** Exiting BTEQ...
+ *** RC (return code) = 0 

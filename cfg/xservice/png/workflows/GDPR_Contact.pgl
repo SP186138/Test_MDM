@@ -1,0 +1,26 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_form" source="studio.controller:load">
+<ui:container id="topContainer">
+<ui:step displayText="GDPR Contact Link" id="basicControls">
+<ui:field-group>
+<ui:image src="/bpi_check.gif" displayCondition="{string-length($root/AlertGreen/@Value) != 0}" id="checkImg"/>
+<ui:display-field value="{$root/AlertGreen/@Value}" displayCondition="{string-length($root/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen" align="left"/>
+<ui:image src="/cancel.gif" displayCondition="{string-length($root/AlertRed/@Value) != 0}"/>
+<ui:display-field value="{$root/AlertRed/@Value}" displayCondition="{string-length($root/AlertRed/@Value) != 0}" name="error" class="requiredIndicatorRed"/>
+</ui:field-group>
+<ui:field-group id="Create">
+<ui:field-group id="left fields">
+<ui:entry-field id="HNDLR_ID" displayText="Handler ID" name="HNDLR_ID" value="{$root/HNDLR_ID/@Value}" editable="false"/>
+<ui:entry-field id="CNTRY_NAME" name="CNTRY_NAME" displayText="Country" value="{$root/CNTRY_NAME/@Value}" editable="false"/>
+<ui:entry-field id="CNTCT_NBR" displayText="Contact Number" name="CNTCT_NBR" required="true"/>
+</ui:field-group>
+</ui:field-group>
+<ui:buttons id="buttons">
+<ui:button id="Back" displayText="Back" name="Back" validate="false"/>
+<ui:button id="LinktoContact" displayText="Link to Contact" name="LinktoContact" validate="false"/>
+<ui:button id="SaveandReturn" displayText="Save and Return" name="SaveandReturn" disabled="{string-length($root/CNTCT_NBR/@Value) = 0}"/>
+<ui:button id="Save" displayText="Save" name="Save" disabled="{string-length($root/CNTCT_NBR/@Value) = 0}"/>
+<ui:button id="AddNewCNTCT" displayText="Add New Contact" name="AddNewCNTCT" validate="false"/>
+</ui:buttons>
+</ui:step>
+</ui:container>
+</ui:page-group>

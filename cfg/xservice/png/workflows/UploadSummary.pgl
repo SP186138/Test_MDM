@@ -1,0 +1,55 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_form" source="studio.controller:load">
+  <ui:container id="documentUploadContainer" displayText="Upload Documents" showFavorite="false">
+    <ui:step id="documentUploadStep">
+      <ui:field-group id="dataUploadFields">
+        <ui:image src="/bpi_check.gif" displayCondition="{string-length($root/Message/@Value) != 0}" id="checkImg"/>
+        <ui:display-field value="{$root/Message/@Value}" displayCondition="{string-length($root/Message/@Value) != 0}" name="success" class="requiredIndicatorGreen" align="left"/>
+        <ui:image src="/cancel.gif" displayCondition="{string-length($root/ErrMessage/@Value) != 0}"/>
+        <ui:display-field value="{$root/ErrMessage/@Value}" displayCondition="{string-length($root/ErrMessage/@Value) != 0}" name="success" class="requiredIndicatorGreen" align="left"/>
+        <ui:entry-field id="filename" name="filename" displayText="Choose file to be uploaded" dataType="File" required="false"/>
+        <ui:hidden-field id="filePath" name="filePath" value="{$root/Filepath1/@Value}"/>
+      </ui:field-group>
+      <ui:buttons id="documentUploadButtons">
+        <ui:button id="Save" name="Save" displayText="Save" onClick="javascript:on_UploadTest();"/>
+        <ui:button id="Back" name="Back" displayText="Back"/>
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+
+function on_UploadTest()
+{
+togglenav();
+onLoadSuper();
+var path = document.getElementById('filePath').value;
+var filenm = document.getElementById('filename').value;
+//alert(path)
+   // alert(omxContextPath)
+
+if (document.getElementById(&quot;filename&quot;).value != null &amp; trimString(document.getElementById(&quot;filename&quot;).value) != &quot;&quot;)
+{
+document.form.action = omxContextPath+'/upload_kit/uploads/action_file_upload.jsp?FILE_PATH='+path;
+    
+//document.form.action = omxContextPath+'/bcm/framework/Upload_retest.jsp?FILE_PATH='+path;
+    
+
+    
+//window.location.href ='Upload_retest.jsp?FILE_PATH='+path;
+//alert('upload completed')
+document.form.BUTTON_ID.value = 'UploadAction';
+document.form.action = 'view.x2ps';
+document.form.submit();
+
+//var button=document.getElementById('UploadAction').value;
+// alert(button)
+grayOut(true);
+onResize();
+}
+else
+{
+core_alert_jquery(&quot;Please select a document to Upload.&quot;);
+}
+}
+
+  </ui:script>
+</ui:page-group>

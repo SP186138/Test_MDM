@@ -1,0 +1,1190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <DEFINE_METHOD Name="getNavigation">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="navigationXml">
+          <PAD Name="Studio" DisplayText="TDM Mgmt" Scrollable="yes">
+          </PAD>
+        </TO_DOCVAR>
+        <!--<TO_DOCVAR AssignToVar="PglEditorXml">
+
+          <PAD_ITEM DisplayText="Enterprise Business Mgmt"/>
+
+        </TO_DOCVAR>        -->
+        <REQUEST Name="getDocumentAccessControlList" ServiceName="USER_SECURITY" AssignToVar="assignedActivities">
+          <USER_ID Value="{$UserId}"/>
+        </REQUEST>
+        <!-- comment below lines after test-->
+        <!--GET_DOCUMENT AssignToVar="userProfiles" Name="USER_PROFILE" ServiceName="USER_SECURITY" ReturnRowCount="yes">
+
+          <ID Value="{$thisParam/@UserId}"/>
+
+        </GET_DOCUMENT>
+
+        <IF_TEST Test="$userProfiles/USER_PROFILE/USER_GRP_ID/@Value ='SU_UGP'">
+
+          <THEN>
+
+            <APPEND_TO_XML DocVar="navigationXml">
+
+              <PAD_ITEM DisplayText="TEST">
+
+                <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=testbykunal&amp;SOLUTION_NAME=MDM&amp;SERVICE_NAME=BCM_MASTER" DisplayText="Incentive"/>
+
+              </PAD_ITEM>
+
+            </APPEND_TO_XML>
+
+          </THEN>
+
+        </IF_TEST-->
+        <!-- comment above lines after test-->
+        <FOR_EACH CurrentElement="activity" SelectList="$assignedActivities/UIFORM_ACTIVITIES/*">
+          <IF_TEST Test="$activity/@Value = 'manageLegalEntity' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Legal Entity">
+                  <!-- <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=LEGAL_ENT&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Manage Legal Entity"/>-->
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ManageLegalEnt&amp;SOLUTION_NAME=MDM&amp;SERVICE_NAME=BCM_MASTER" DisplayText="Manage Legal Entity"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadLEGAL_ENT'">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Legal Entity">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityLEGAL_ENTTemplate&amp;DISPLAY_NAME=LEGAL_ENT&amp;DATA_TYPE=xls" DisplayText="Manage Upload Legal Entity"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityLEGAL_ENTTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageMarketingProgram' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Marketing Program">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=MKTNG_PGM&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Marketing Program"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <!--<IF_TEST Test="$activity/@Value = 'manageMarketingBrand' ">
+
+            <THEN>
+
+              <APPEND_TO_XML DocVar="navigationXml">
+
+                <PAD_ITEM DisplayText="Manage Marketing Brand">
+
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=MKTNG_PGM_BRAND&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Marketing Brand 1"/>
+
+                </PAD_ITEM>
+
+              </APPEND_TO_XML>
+
+            </THEN>
+
+          </IF_TEST>-->
+          <IF_TEST Test="$activity/@Value = 'manageMarketingCntryBrand' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Marketing Pgm Cntry Brand">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=MKTNG_PGM_CNTRY_BRAND&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Marketing Pgm Cntry Brand"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageSubsOptType' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Subs Opt Type">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=SUBSCRPTN_OPT_TYPE&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Subs Opt Type"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageTraits' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Traits">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=TRT&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Trait"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageSubscriptionOpt' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Subscription Option">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=SUBSCRPTN_OPT&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Subscription Option"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'managePredfndTrtVal' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Predefined Trait Value">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=PREDFND_TRT_VAL&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Predefined Trait value"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageIncentive' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Incentive">
+                  <!--PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=INCTV&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Incentive"/-->
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=IncentiveMgmt&amp;SOLUTION_NAME=MDM&amp;SERVICE_NAME=BCM_MASTER" DisplayText="Incentive"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <!--IF_TEST Test="$activity/@Value = 'manageIncentiveItem' ">
+
+            <THEN>
+
+              <APPEND_TO_XML DocVar="navigationXml">
+
+                <PAD_ITEM DisplayText="Manage Incentive Item">
+
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=INCTV_ITEM&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Incentive Item"/>
+
+                </PAD_ITEM>
+
+              </APPEND_TO_XML>
+
+            </THEN>
+
+          </IF_TEST-->
+          <IF_TEST Test="$activity/@Value = 'manageContentElement' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Content Element">
+                  <!--<PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=COLLTRL&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="COLLTRL"/>-->
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=Collateral&amp;SOLUTION_NAME=MDM&amp;SERVICE_NAME=BCM_MASTER" DisplayText="Content Element"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageMKTNG_PGM_TRAIT_MAP' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Marketing Pgm Trait Map">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=MKTNG_PGM_TRAIT_MAP&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Marketing Pgm Trait Map"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadMKTNG_PGM_TRAIT_MAP' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Marketing Prgm Trait Map">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityMKTNG_PGM_TRAIT_MAPTemplate&amp;DISPLAY_NAME=MKTNG_PGM_TRAIT_MAP&amp;DATA_TYPE=xls" DisplayText="Manage Upload Marketing Prgm Trait Map"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityMKTNG_PGM_TRAIT_MAPTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <!--IF_TEST Test="$activity/@Value = 'ManageUploadINCTV' ">
+
+            <THEN>
+
+              <APPEND_TO_XML DocVar="navigationXml">
+
+                <PAD_ITEM DisplayText="Manage Upload Incentive">
+
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityINCTVTemplate&amp;DISPLAY_NAME=INCTV&amp;DATA_TYPE=xls" DisplayText="Manage Upload Incentive"/>
+
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityINCTVTemplate" DisplayText="View Reports"/>
+
+                </PAD_ITEM>
+
+              </APPEND_TO_XML>
+
+            </THEN>
+
+          </IF_TEST-->
+          <IF_TEST Test="$activity/@Value = 'ManageUploadMktngPgmBrand' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Marketing Pgm Brand">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityMKTNG_PGM_BRANDTemplate&amp;DISPLAY_NAME=MKTNG_PGM_BRAND&amp;DATA_TYPE=xls" DisplayText="Manage Upload Marketing Pgm Brand"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityMKTNG_PGM_BRANDTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadMktngPgmCntryBrand' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Marketing Pgm Cntry Brand">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityMKTNG_PGM_CNTRY_BRANDTemplate&amp;DISPLAY_NAME=MKTNG_PGM_CNTRY_BRAND&amp;DATA_TYPE=xls" DisplayText="Manage Upload Marketing Pgm Cntry Brand"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityMKTNG_PGM_CNTRY_BRANDTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadPredfndTrtVal' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Predefined Trait Value">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityPREDFND_TRT_VALTemplate&amp;DISPLAY_NAME=PREDFND_TRT_VAL&amp;DATA_TYPE=xls" DisplayText="Manage Upload Predefined Trait Value"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityTRTTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <!--<IF_TEST Test="$activity/@Value = 'ManageUploadSubs' ">
+
+            <THEN>
+
+              <APPEND_TO_XML DocVar="navigationXml">
+
+                <PAD_ITEM DisplayText="Manage Upload Subscription">
+
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityEXCEL_UPLOAD_SUBSCRIPTIONTemplate&amp;DISPLAY_NAME=EXCEL_UPLOAD_SUBSCRIPTION&amp;DATA_TYPE=xls" DisplayText="Manage Subscriptions"/>
+
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityEXCEL_UPLOAD_SUBSCRIPTIONTemplate" DisplayText="View Reports"/>
+
+                </PAD_ITEM>
+
+              </APPEND_TO_XML>
+
+            </THEN>
+
+          </IF_TEST>-->
+          <IF_TEST Test="$activity/@Value = 'ManageUploadSubscriptionOpt' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Subscription Opt">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntitySUBSCRPTN_OPTTemplate&amp;DISPLAY_NAME=SUBSCRPTN_OPT&amp;DATA_TYPE=xls" DisplayText="Manage Upload Subscription Opt"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntitySUBSCRPTN_OPTTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadTrt' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Trait">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityTRTTemplate&amp;DISPLAY_NAME=TRT&amp;DATA_TYPE=xls" DisplayText="Manage Upload Trait"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityTRTTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'managePET_TYPE' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Pet Type">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=PET_TYPE&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Pet Type"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadPET_TYPE' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Pet Type">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityPET_TYPETemplate&amp;DISPLAY_NAME=PET_TYPE&amp;DATA_TYPE=xls" DisplayText="Manage Upload Pet Type"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityPET_TYPETemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'managePET_BREED_SIZE' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Pet Breed Size">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=PET_BREED_SIZE&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Pet Breed Size"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadPET_BREED_SIZE' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Pet Breed Size">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityPET_BREED_SIZETemplate&amp;DISPLAY_NAME=PET_BREED_SIZE&amp;DATA_TYPE=xls" DisplayText="Manage Upload Pet Breed Size"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityPET_BREED_SIZETemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'managePET_BREED' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Pet Breed">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=PET_BREED&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Pet Breed"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadPET_BREED' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Uplaod Pet Breed">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityPET_BREEDTemplate&amp;DISPLAY_NAME=PET_BREED&amp;DATA_TYPE=xls" DisplayText="Manage Upload Pet Breed"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityPET_BREEDTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <!--  <IF_TEST Test="$activity/@Value = 'manageVulgarNameList' ">
+
+            <THEN>
+
+              <APPEND_TO_XML DocVar="navigationXml">
+
+                <PAD_ITEM DisplayText="Manage Vulgar Name List">
+
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=VULGAR_NAME_LIST&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Vulgar Name List"/>
+
+                </PAD_ITEM>
+
+              </APPEND_TO_XML>
+
+            </THEN>
+
+          </IF_TEST>
+
+          <IF_TEST Test="$activity/@Value = 'ManageUploadVULGAR_NAME_LIST' ">
+
+            <THEN>
+
+              <APPEND_TO_XML DocVar="navigationXml">
+
+                <PAD_ITEM DisplayText="Manage Upload Vulgar Name List">
+
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityVULGAR_NAME_LISTTemplate&amp;DISPLAY_NAME=VULGAR_NAME_LIST&amp;DATA_TYPE=xls" DisplayText="Manage Upload Vulgar Name List"/>
+
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityVULGAR_NAME_LISTTemplate" DisplayText="View Reports"/>
+
+                </PAD_ITEM>
+
+              </APPEND_TO_XML>
+
+            </THEN>
+
+          </IF_TEST>-->
+          <!--<IF_TEST Test="$activity/@Value = 'manageVulgarName' ">
+
+            <THEN>
+
+              <APPEND_TO_XML DocVar="navigationXml">
+
+                <PAD_ITEM DisplayText="Manage Vulgar Name">
+
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=VULGAR_NAME&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Vulgar Name"/>
+
+                </PAD_ITEM>
+
+              </APPEND_TO_XML>
+
+            </THEN>
+
+          </IF_TEST>-->
+          <!--IF_TEST Test="$activity/@Value = 'manageDataRtntnRef' ">
+
+            <THEN>
+
+              <APPEND_TO_XML DocVar="navigationXml">
+
+                <PAD_ITEM DisplayText="Manage Data Rtntn Ref">
+
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=DATA_RTNTN_REF&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="DATA RTNTN REF"/>
+
+                </PAD_ITEM>
+
+              </APPEND_TO_XML>
+
+            </THEN>
+
+          </IF_TEST>
+
+          <IF_TEST Test="$activity/@Value = 'ManageUploadDATA_RTNTN_REF' ">
+
+            <THEN>
+
+              <APPEND_TO_XML DocVar="navigationXml">
+
+                <PAD_ITEM DisplayText="Manage Upload Data Rtntn Ref">
+
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityDATA_RTNTN_REFTemplate&amp;DISPLAY_NAME=DATA_RTNTN_REF&amp;DATA_TYPE=xls" DisplayText="Manage Upload Data Rtntn Ref"/>
+
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityDATA_RTNTN_REFTemplate" DisplayText="View Reports"/>
+
+                </PAD_ITEM>
+
+              </APPEND_TO_XML>
+
+            </THEN>
+
+          </IF_TEST-->
+          <IF_TEST Test="$activity/@Value = 'managePET_LIFE_STAGE' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Pet Life Stage">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=PET_LIFE_STAGE&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Pet Life Stage"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadPET_LIFE_STAGE' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Uplaod Pet Life Stage">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityPET_LIFE_STAGETemplate&amp;DISPLAY_NAME=PET_LIFE_STAGE&amp;DATA_TYPE=xls" DisplayText="Manage Upload Pet Life Stage"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityPET_LIFE_STAGETemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageLEGAL_ENT_TRAIT_MAP'">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Legal Entity Trait Map">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=LEGAL_ENT_TRAIT_MAP&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Manage Legal Entity Trait Map"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadLEGAL_ENT_TRAIT_MAP' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Legal Entity Trait Map">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityLEGAL_ENT_TRAIT_MAPTemplate&amp;DISPLAY_NAME=LEGAL_ENT_TRAIT_MAP&amp;DATA_TYPE=xls" DisplayText="Manage Upload Legal Entity Trait Map"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityLEGAL_ENT_TRAIT_MAPTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageMTCHD_CNSMR_SCR_DMN_MAP'">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Matched Consumer Score Domain Map">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=MTCHD_CNSMR_SCR_DMN_MAP&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Manage Matched Consumer Score Domain Map"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadMTCHD_CNSMR_SCR_DMN_MAP' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Matched Consumer Score Domain Map">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityMTCHD_CNSMR_SCR_DMN_MAPTemplate&amp;DISPLAY_NAME=MTCHD_CNSMR_SCR_DMN_MAP&amp;DATA_TYPE=xls" DisplayText="Manage Upload Matched Consumer Score Domain Map"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityMTCHD_CNSMR_SCR_DMN_MAPTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageCNSMR_SCORE_REF'">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Consumer Score Reference">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=CNSMR_SCORE_REF&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Manage Consumer Score Reference"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadCNSMR_SCORE_REF' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Consumer Score Reference">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityCNSMR_SCORE_REFTemplate&amp;DISPLAY_NAME=CNSMR_SCORE_REF&amp;DATA_TYPE=xls" DisplayText="Manage Upload Consumer Score Reference"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityCNSMR_SCORE_REFTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <!-- <IF_TEST Test="$activity/@Value = 'manageMATCHD_CNSMR_SCORE_DOMAIN_MAP'">
+
+            <THEN>
+
+              <APPEND_TO_XML DocVar="navigationXml">
+
+                <PAD_ITEM DisplayText="Manage Matched Consumer Score Domain Map">
+
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=MATCHD_CNSMR_SCORE_DOMAIN_MAP&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Manage Matched Consumer Score Domain Map"/>
+
+                </PAD_ITEM>
+
+              </APPEND_TO_XML>
+
+            </THEN>
+
+          </IF_TEST>
+
+          <IF_TEST Test="$activity/@Value = 'ManageUploadMATCHD_CNSMR_SCORE_DOMAIN_MAP' ">
+
+            <THEN>
+
+              <APPEND_TO_XML DocVar="navigationXml">
+
+                <PAD_ITEM DisplayText="Manage Upload Matched Consumer Score Domain Map">
+
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityMATCHD_CNSMR_SCORE_DOMAIN_MAPTemplate&amp;DISPLAY_NAME=MATCHD_CNSMR_SCORE_DOMAIN_MAP&amp;DATA_TYPE=xls" DisplayText="Manage Upload Matched Consumer Score Domain Map"/>
+
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityMATCHD_CNSMR_SCORE_DOMAIN_MAPTemplate" DisplayText="View Reports"/>
+
+                </PAD_ITEM>
+
+              </APPEND_TO_XML>
+
+            </THEN>
+
+          </IF_TEST>-->
+          <IF_TEST Test="$activity/@Value = 'manageWEB_SITE'">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Web Site">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=WEB_SITE&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Web Site"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadWEB_SITE' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Web Site">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityWEB_SITETemplate&amp;DISPLAY_NAME=WEB_SITE&amp;DATA_TYPE=xls" DisplayText="Upload Web Site"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityWEB_SITETemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageDATA_SRCE'">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Data Source">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=DATA_SRCE&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Data Source"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadDATA_SRCE' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Data Source">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityDATA_SRCETemplate&amp;DISPLAY_NAME=DATA_SRCE&amp;DATA_TYPE=xls" DisplayText="Upload Data Source"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityDATA_SRCETemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageSALES_CONTR'">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Sales Counter">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=SALES_CONTR&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Sales Counter"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadSALES_CONTR' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Sales Counter">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntitySALES_CONTRTemplate&amp;DISPLAY_NAME=SALES_CONTR&amp;DATA_TYPE=xls" DisplayText="Upload Sales Counter"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntitySALES_CONTRTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageRETLR_TYPE'">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Retailer Type">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=RETLR_TYPE&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Retailer Type"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadRETLR_TYPE' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Retailer Type">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityRETLR_TYPETemplate&amp;DISPLAY_NAME=RETLR_TYPE&amp;DATA_TYPE=xls" DisplayText="Upload Retailer Type"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityRETLR_TYPETemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageRETLR'">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Retailer">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=RETLR&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Retailer"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadRETLR' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Retailer">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityRETLRTemplate&amp;DISPLAY_NAME=RETLR&amp;DATA_TYPE=xls" DisplayText="Upload Retailer"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityRETLRTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageSTORE' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Store">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=STORE&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Store"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadSTORE' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Uplaod Store">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntitySTORETemplate&amp;DISPLAY_NAME=STORE&amp;DATA_TYPE=xls" DisplayText="Upload Store"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntitySTORETemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageSTORE_TYPE' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Store Type">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=STORE_TYPE&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Store Type"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadSTORE_TYPE' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Uplaod Store Type">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntitySTORE_TYPETemplate&amp;DISPLAY_NAME=STORE_TYPE&amp;DATA_TYPE=xls" DisplayText="Upload Store Type"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntitySTORE_TYPETemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageAttributes' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Attributes">
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=AttributeMaintainence&amp;SERVICE_NAME=BCM_MASTER" DisplayText="Attribute Maintainence"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'PnGWfl' ">
+            <!--  <IF_TEST Test="$userProfiles/USER_PROFILE/USER_GRP_ID/@Value ='SU_UGP'"> -->
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Profile Editor">
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=IndividualMgmt&amp;SOLUTION_NAME=MDM&amp;SERVICE_NAME=BCM_MASTER" DisplayText="Search Individuals"/>
+                </PAD_ITEM>
+                <!--PAD_ITEM DisplayText="Manage Content Element">
+
+					<PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=Collateral&amp;SOLUTION_NAME=MDM&amp;SERVICE_NAME=BCM_MASTER" DisplayText="Content Element"/>
+
+                </PAD_ITEM-->
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageCNSMR_INTEL_PROC' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Consumer Intel Process List">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=CNSMR_INTEL_PROC&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="CNSMR INTEL PROC"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadCNSMR_INTEL_PROC' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Consumer Intel Process List">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityCNSMR_INTEL_PROCTemplate&amp;DISPLAY_NAME=CNSMR_INTEL_PROC&amp;DATA_TYPE=xls" DisplayText="Manage Upload Consumer Intel Process List"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityCNSMR_INTEL_PROCTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageCNSMR_INTEL_TRUSTED_REF' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Consumer Intel Trusted Ref">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=CNSMR_INTEL_TRUSTED_REF&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="CNSMR INTEL TRUSTED REF"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadCNSMR_INTEL_TRUSTED_REF' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Consumer Intel Trusted Ref">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityCNSMR_INTEL_TRUSTED_REFTemplate&amp;DISPLAY_NAME=CNSMR_INTEL_TRUSTED_REF&amp;DATA_TYPE=xls" DisplayText="Manage Upload Consumer Intel Trusted Ref"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityCNSMR_INTEL_TRUSTED_REFTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageCNSMR_INTEL_TRUSTED_REF_VAL' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Consumer Intel Trusted Ref Val">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=CNSMR_INTEL_TRUSTED_REF_VAL&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="CNSMR INTEL TRUSTED REF VAL"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadCNSMR_INTEL_TRUSTED_REF_VAL' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Consumer Intel Trusted Ref Val">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityCNSMR_INTEL_TRUSTED_REF_VALTemplate&amp;DISPLAY_NAME=CNSMR_INTEL_TRUSTED_REF_VAL&amp;DATA_TYPE=xls" DisplayText="Manage Upload Consumer Intel Trusted Ref Val"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityCNSMR_INTEL_TRUSTED_REF_VALTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageREJECT_STRING' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Reject String List">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=REJECT_STRING&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="REJECT STRING LIST"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadREJECT_STRING' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Reject String List">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityREJECT_STRINGTemplate&amp;DISPLAY_NAME=REJECT_STRING&amp;DATA_TYPE=xls" DisplayText="Manage Upload Reject String List"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityREJECT_STRINGTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageTRM_COUPN_LEADKEY_CNTRL' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage TRM Coupon LeadKey Control">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=TRM_COUPN_LEADKEY_CNTRL&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="TRM COUPN LEADKEY CNTRL"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadTRM_COUPN_LEADKEY_CNTRL' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload TRM Coupon LeadKey Control">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityTRM_COUPN_LEADKEY_CNTRLTemplate&amp;DISPLAY_NAME=TRM_COUPN_LEADKEY_CNTRL&amp;DATA_TYPE=xls" DisplayText="Manage Upload TRM Coupon LeadKey Control"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityTRM_COUPN_LEADKEY_CNTRLTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadINCTV' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Incentive List">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityINCTVTemplate&amp;DISPLAY_NAME=INCTV&amp;DATA_TYPE=xls" DisplayText="Manage Upload Incentive List"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityINCTVTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageDATA_SRCE_MKTNG_PGM' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Data Source Marketing Program">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=DATA_SRCE_MKTNG_PGM&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Data Source Marketing Program"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageMATCHD_CNSMR_WF_USAGE_LOG' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Matched Consumer Workflow Usage Log">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=MATCHD_CNSMR_WF_USAGE_LOG&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Matched Consumer Workflow Usage Log"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <!--Added by Debashish For Major Release 5.2-->
+          <IF_TEST Test="$activity/@Value = 'managePC_ENRICHDATA_CONFIG' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage PC Enrichdata Config">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=PC_ENRICHDATA_CONFIG&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="PC ENRICHDATA CONFIG"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadPC_ENRICHDATA_CONFIG' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload PC Enrichdata Config">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityPC_ENRICHDATA_CONFIGTemplate&amp;DISPLAY_NAME=PC_ENRICHDATA_CONFIG&amp;DATA_TYPE=xls" DisplayText="Manage Upload PC Enrichdata Config"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityPC_ENRICHDATA_CONFIGTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'managePC_SOURCE_CONFIG' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage PC Source Config">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=PC_SOURCE_CONFIG&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="PC SOURCE CONFIG"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadPC_SOURCE_CONFIG' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload PC Source Config">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityPC_SOURCE_CONFIGTemplate&amp;DISPLAY_NAME=PC_SOURCE_CONFIG&amp;DATA_TYPE=xls" DisplayText="Manage Upload PC Source Config"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityPC_SOURCE_CONFIGTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageRTN_RULES' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Retention Rules">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=RTN_RULES&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="RETENTION RULES"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadRTN_RULES' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Retention Rules">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityRTN_RULESTemplate&amp;DISPLAY_NAME=RTN_RULES&amp;DATA_TYPE=xls" DisplayText="Manage Upload Retention Rules"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityRTN_RULESTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageRTN_RULES_DTL' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Retention Rules Details">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=RTN_RULES_DTL&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="RETENTION RULES DETAILS"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadRTN_RULES_DTL' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Retention Rules Details">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityRTN_RULES_DTLTemplate&amp;DISPLAY_NAME=RTN_RULES_DTL&amp;DATA_TYPE=xls" DisplayText="Manage Upload Retention Rules Details"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityRTN_RULES_DTLTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadCNTNT_ELEM' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Content List">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityCNTNT_ELEMTemplate&amp;DISPLAY_NAME=CNTNT_ELEM&amp;DATA_TYPE=xls" DisplayText="Manage Upload Content List"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityCNTNT_ELEMTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageCNTNT_ELEM_TYPE' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Content Element Type">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=CNTNT_ELEM_TYPE&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Manage Content Element Type"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadCNTNT_ELEM_TYPE' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Content Element Type">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityCNTNT_ELEM_TYPETemplate&amp;DISPLAY_NAME=CNTNT_ELEM_TYPE&amp;DATA_TYPE=xls" DisplayText="Manage Upload Content Element Type"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityCNTNT_ELEM_TYPETemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageCOCRM_REF_DATA_CONFIG' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage COCRM Reference Data Config">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=COCRM_REF_DATA_CONFIG&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="COCRM Reference Data Config"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadCOCRM_REF_DATA_CONFIG' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload COCRM Reference Data Config">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityCOCRM_REF_DATA_CONFIGTemplate&amp;DISPLAY_NAME=COCRM_REF_DATA_CONFIG&amp;DATA_TYPE=xls" DisplayText="Manage Upload COCRM Reference Data Config"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityCOCRM_REF_DATA_CONFIGTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageCNSMR_ACTN_SUB_TYPE' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Consumer Action Sub Type">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=CNSMR_ACTN_SUB_TYPE&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Consumer Action Sub Type"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadCNSMR_ACTN_SUB_TYPE'">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Consumer Action Sub Type">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityCNSMR_ACTN_SUB_TYPETemplate&amp;DISPLAY_NAME=CNSMR_ACTN_SUB_TYPE&amp;DATA_TYPE=xls" DisplayText="Manage Upload Consumer Action Sub Type"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityCNSMR_ACTN_SUB_TYPETemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageMATCHD_CNSMR_TRT_REF' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Matched Consumer Trait Promotion">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=MATCHD_CNSMR_TRT_REF&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Matched Consumer Trait Promotion"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadMATCHD_CNSMR_TRT_REF'">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Matched Consumer Trait Promotion">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityMATCHD_CNSMR_TRT_REFTemplate&amp;DISPLAY_NAME=MATCHD_CNSMR_TRT_REF&amp;DATA_TYPE=xls" DisplayText="Manage Upload Matched Consumer Trait Promotion"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityMATCHD_CNSMR_TRT_REFTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageCOUPN_TYPE' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Coupon Type">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=COUPN_TYPE&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Manage Coupon Type"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadCOUPN_TYPE'">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Coupon Type">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityCOUPN_TYPETemplate&amp;DISPLAY_NAME=COUPN_TYPE&amp;DATA_TYPE=xls" DisplayText="Manage Upload Coupon Type"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityCOUPN_TYPETemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <!--<IF_TEST Test="$activity/@Value = 'manageORG_REGN' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Organization Region">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=ORG_REGN&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Manage Organization Region"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadORG_REGN'">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Organization Region">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityORG_REGNTemplate&amp;DISPLAY_NAME=ORG_REGN&amp;DATA_TYPE=xls" DisplayText="Manage Upload Organization Region"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityORG_REGNTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageORG_SUB_REGN' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Organization Sub Region">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=ORG_SUB_REGN&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Manage Organization Sub Region"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadORG_SUB_REGN'">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Organization Sub Region">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityORG_SUB_REGNTemplate&amp;DISPLAY_NAME=ORG_SUB_REGN&amp;DATA_TYPE=xls" DisplayText="Manage Upload Organization Sub Region"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityORG_SUB_REGNTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>-->
+          <IF_TEST Test="$activity/@Value = 'manageCNTRY' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Country">
+                  <!--<PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=CNTRY&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Manage Country"/>-->
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ManageCountry&amp;SOLUTION_NAME=MDM&amp;SERVICE_NAME=BCM_MASTER" DisplayText="Manage Country"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadCNTRY'">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Country">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityCNTRYTemplate&amp;DISPLAY_NAME=CNTRY&amp;DATA_TYPE=xls" DisplayText="Manage Upload Country"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityCNTRYTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageGEOC_REGN' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Geographic Region">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=GEOC_REGN&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Manage Geographic Region"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadGEOC_REGN'">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Geographic Region">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityGEOC_REGNTemplate&amp;DISPLAY_NAME=GEOC_REGN&amp;DATA_TYPE=xls" DisplayText="Manage Upload Geographic Region"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityGEOC_REGNTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageGEOC_SUB_REGN' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Geographic Sub Region">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=GEOC_SUB_REGN&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Manage Geographic Sub Region"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadGEOC_SUB_REGN'">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Geographic Sub Region">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityGEOC_SUB_REGNTemplate&amp;DISPLAY_NAME=GEOC_SUB_REGN&amp;DATA_TYPE=xls" DisplayText="Manage Upload Geographic Sub Region"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityGEOC_SUB_REGNTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'manageRTN_EXTR_CONFIG' ">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Retention Extract Configuration">
+                  <PAD_ITEM OnClick="/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=RTN_EXTR_CONFIG&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true" DisplayText="Manage Retention Extract Configuration"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'ManageUploadRTN_EXTR_CONFIG'">
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Manage Upload Retention Extract Configuration">
+                  <PAD_ITEM OnClick="/mdm/upload_kit/uploads/local_trans_upload_details.jsp?TEMPLATE_NAME=EntityRTN_EXTR_CONFIGTemplate&amp;DISPLAY_NAME=RTN_EXTR_CONFIG&amp;DATA_TYPE=xls" DisplayText="Manage Upload Retention Extract Configuration"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ViewReports&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;TEMPLATE_NAME=EntityRTN_EXTR_CONFIGTemplate" DisplayText="View Reports"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$activity/@Value = 'PnGReportWfl' ">
+            <!--  <IF_TEST Test="$userProfiles/USER_PROFILE/USER_GRP_ID/@Value ='SU_UGP'"> -->
+            <THEN>
+              <APPEND_TO_XML DocVar="navigationXml">
+                <PAD_ITEM DisplayText="Profile Editor Reports">
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ProfileChanges&amp;SOLUTION_NAME=MDM&amp;SERVICE_NAME=BCM_MASTER" DisplayText="Profile Change Report"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=DashBoard&amp;SOLUTION_NAME=MDM&amp;SERVICE_NAME=BCM_MASTER" DisplayText="Data Load Dashboard"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=ConsumerDataDashBoard&amp;SOLUTION_NAME=MDM&amp;SERVICE_NAME=BCM_MASTER" DisplayText="Consumer Data Dashboard"/>
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=AddressQualityDashBoard&amp;SOLUTION_NAME=MDM&amp;SERVICE_NAME=BCM_MASTER" DisplayText="Address Quality Dashboard"/>
+                  <!--PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=htmltopdf_kunal&amp;SOLUTION_NAME=MDM&amp;SERVICE_NAME=BCM_MASTER" DisplayText="Convert It"/-->
+                  <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=OptOutFound&amp;SOLUTION_NAME=MDM&amp;SERVICE_NAME=BCM_MASTER" DisplayText="No OPT found report"/>
+                </PAD_ITEM>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+        </FOR_EACH>
+        <!--<IF_TEST Test="count($PglEditorXml/*)>0">
+
+<THEN>
+
+<APPEND_TO_XML DocVar="navigationXml">
+
+<TO_XML SelectList="$PglEditorXml"/>
+
+</APPEND_TO_XML>
+
+</THEN>
+
+</IF_TEST>-->
+        <FOR_EACH SelectList="$navigationXml/*" CurrentElement="currElement">
+          <SET Var="DISPLAY_NAME" FromValue="{$currElement/@DisplayText}"/>
+          <TO_DOCVAR AssignToVar="DISPLAY_VAR">
+            <CHILD_DOC>
+              <DISPLAY_NAME Value="{$DISPLAY_NAME/@Value}"/>
+            </CHILD_DOC>
+          </TO_DOCVAR>
+          <APPEND_CHILDREN DocVar="currElement" FromDocVar="DISPLAY_VAR"/>
+        </FOR_EACH>
+        <SORT SelectList="$navigationXml/PAD_ITEM" DataType="string" Key="DISPLAY_NAME" SortOrder="ascending"/>
+        <ADD_CHILDREN DocVar="thisReturn" FromSelect="$navigationXml"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <!--<DEFINE_METHOD Name="getImgFolder">
+
+    <RULE>
+
+      <ACTION>
+
+        <NATIVE_FUNCTION ClassName="com.teradata.x2.util.X2Util" MethodName="getPropertyValue" AssignToVar="result">
+
+          <PARAM Value="{$thisParam/FOLDER_NAME/@Value}"/>
+
+        </NATIVE_FUNCTION>
+
+        <PRINTLN Value="Folder Name :{$result} "/>
+
+        <SET DocVar="thisReturn" Property="IMG_FOLDER" FromValue="{$result/@Value}"/>
+
+      </ACTION>
+
+    </RULE>
+
+  </DEFINE_METHOD>-->
+  <DEFINE_METHOD Name="getDataForXLS">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="thisReturn">
+          <TO_XML DocVar="VIEW_FILE_CONTENTS"/>
+        </TO_DOCVAR>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

@@ -1,0 +1,42 @@
+/***********************************************************************************************************
+SCRIPT:               CNSMR_TSS_MATCH_STG.BTEQ 
+DESCRIPTION:          THIS SCRIPT UPDATES LOAD_INFO
+DEPENDENCY:           
+INPUT:                TRILLIUM OUTPUT
+OUTPUT:               TRILLIUM OUTPUT
+ERRORS:
+SPECIAL INSTRUCTIONS:
+
+CHANGE LOG:
+VERSION              DATE                 AUTHOR                          CHANGES
+1.00                 01/21/2011           TERADATA                        INITIAL VERSION
+2.00                 10/31/2011           TERADATA                        CHANGES FOR ||ELISM
+R2O                  05/11/2012           TERADATA                        ADD VALIDATION FOR BLANK WINKEY
+***********************************************************************************************************/
+
+.RUN FILE \\10.138.21.14\Teradata\MDM\3.05.02\custom\pngrelease3\logon\LOGON.txt;
+.SET ERROROUT STDOUT;
+.SET ERRORLEVEL (3807,3110) SEVERITY 0;
+
+DATABASE MDM;
+
+.import vartext '|' LOBCOLS=1 file='\\10.138.21.14\Teradata\MDM\3.05.02\custom\pngrelease3\data\TSS_MATCH_OUTPUT_ROU.errfiletmp';
+ 
+.repeat *
+using (lobFile clob as deferred, id varchar(500))
+insert into TRILLIUM_OUTPUT1_ERRFILES (ERR_FILE_KEY, ERR_FILE)
+values (:id, :lobFile);
+
+.IF ERRORLEVEL > 0 THEN .GOTO EXIT;
+
+.LABEL EXIT
+
+.IF ERRORLEVEL > 4 THEN .GOTO ERR ;
+.IF ERRORLEVEL <= 4 THEN .GOTO WARN;
+
+.LABEL ERR
+.QUIT ERRORCODE;
+
+.LABEL WARN
+.QUIT 0
+

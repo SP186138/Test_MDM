@@ -1,0 +1,674 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="251" ShowInBreadCrumbs="true" Version="1.0" Name="ManageCodeMaster" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables>
+    <variable Name="PARENT_ID" Type="string" Comment=""/>
+    <variable Name="TYPE_ID" Type="string" Comment=""/>
+    <variable Name="advSrch" Type="string" Comment=""/>
+    <variable Name="alertGreen" Type="string" Comment=""/>
+    <variable Name="alertRed" Type="string" Comment=""/>
+    <variable Name="flag" Type="string" Comment=""/>
+    <variable Name="is_editable" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start2">
+      <actions>
+      </actions>
+      <next_nodes OutputVar="{pglFormOutput,xml}">
+        <next_node Name="Manage Code Master" Description=""/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Manage CodeMaster Type" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="manageCodeMType.pgl" InputVar="{root,xml}">
+      <pre_actions>
+        <action>
+          <SET Var="sortBy" FromValue="{ifElse($thisParam/SORT_BY/@Value = null or $thisParam/SORT_BY/@Value = 'ID', 'TYPE_ID', $thisParam/SORT_BY/@Value)}"/>
+          <SET Var="sortOrder" FromValue="{ifElse($thisParam/SORT_ORDER/@Value = null, 'Descending', $thisParam/SORT_ORDER/@Value)}"/>
+          <TO_DOCVAR AssignToVar="orderBy">
+            <ORDER_BY>
+            </ORDER_BY>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="orderProp">
+            <TEMP_PROP Sort="{$sortOrder}"/>
+          </TO_DOCVAR>
+          <SET_NAME Value="{$orderProp}" FromValue="{$sortBy}"/>
+          <ADD_CHILD DocVar="orderBy" ChildDocVar="orderProp"/>
+          <IF_TEST Test="$root/BUTTON_ID/@Value = 'search_button'">
+            <THEN>
+              <SET Var="paginateStart" FromValue="{int(ifElse($thisParam/START_COUNT/@Value = null, 0, $thisParam/START_COUNT/@Value))}"/>
+              <!-- Code added for fix of issue MDM-1921 by Ankur Goyal-->
+              <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+                <TYPE_ID MatchBy="CONTAINS"/>
+                <DESCRIPTION MatchBy="CONTAINS"/>
+                <IS_EDITABLE MatchBy="CONTAINS"/>
+              </FORM_SEARCH_FILTER>
+              <TO_DOCVAR AssignToVar="tt">
+                <A/>
+              </TO_DOCVAR>
+              <FOR_EACH SelectList="$filters/FILTER" CurrentElement="thisFilter">
+                <APPEND_TO_XML SelectList="$tt">
+                  <TO_XML SelectList="$thisFilter/*"/>
+                </APPEND_TO_XML>
+              </FOR_EACH>
+              <!-- MDM-1921 ends-->
+              <GET_DOCUMENT Name="CODE_MASTER_TYPE" AssignToVar="codetypeResults" ServiceName="USER_SECURITY" MaxRows="10" StartAtRow="{$paginateStart}" ReturnRowCount="true">
+                <!-- Code modified for fix of issue MDM-1921 by Ankur Goyal-->
+                <!--<AND>
+                  <TYPE_ID Value="{$thisParam/TYPE_ID/@Value}" MatchBy="CONTAINS"/>
+                  <DESCRIPTION Value="{$thisParam/Description/@Value}" MatchBy="CONTAINS"/>
+                  <IS_EDITABLE Value="{$thisParam/IS_EDITABLE/@Value}" MatchBy="CONTAINS"/>
+                </AND>-->
+                <TO_XML SelectList="$tt/*"/>
+                <!-- MDM 1921 ends-->
+                <TO_XML Select="$orderBy"/>
+              </GET_DOCUMENT>
+              <TO_DOCVAR AssignToVar="test">
+                <TEST>
+                  <TYPE_ID Value="{$thisParam/TYPE_ID/@Value}" MatchBy="CONTAINS"/>
+                  <DESCRIPTION Value="{$thisParam/Description/@Value}" MatchBy="CONTAINS"/>
+                  <IS_EDITABLE Value="{$thisParam/IS_EDITABLE/@Value}" MatchBy="CONTAINS"/>
+                </TEST>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <ITEM_RESULTS>
+                <TO_XML SelectList="$codetypeResults/*"/>
+              </ITEM_RESULTS>
+              <!--TO_XML SelectList="$nodeInputXml/*"/-->
+            </ROOT>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="alertz">
+            <ABC>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </ABC>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="page">
+            <ABC>
+              <StartRowCount Value="{$paginateStart}"/>
+              <TotalRowCount Value="{$codetypeResults/@TotalRowCount}"/>
+            </ABC>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$alertz/*"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$test/*"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$page/*"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="alertRed" FromValue=""/>
+          <SET Var="alertGreen" FromValue=""/>
+          <SET Var="flag" FromValue="false"/>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Add'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='search_button'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Manage CodeMaster Type" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='add_codetype'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Add Code Type" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SHOWALL'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='back_code'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done4" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <done Name="done4">
+      <actions>
+      </actions>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="Add Code Type" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="addCodeType.pgl">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$flag/@Value='true'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <AlertGreen Value="{$alertGreen/@Value}"/>
+                  <AlertRed Value="{$alertRed/@Value}"/>
+                  <TYPE_ID Value="{$thisParam/TYPE_ID/@Value}" MatchBy="CONTAINS"/>
+                  <Description Value="{$thisParam/Description/@Value}" MatchBy="CONTAINS"/>
+                  <IS_EDITABLE Value="{$thisParam/IS_EDITABLE/@Value}" MatchBy="CONTAINS"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="alertRed" FromValue=""/>
+          <SET Var="alertGreen" FromValue=""/>
+          <TO_DOCVAR AssignToVar="test">
+            <TEST>
+              <TYPE_ID Value="{$pglFormOutput/TYPE_ID/@Value}"/>
+              <DESCRIPTION Value="{$pglFormOutput/Description/@Value}"/>
+              <IS_EDITABLE Value="{$pglFormOutput/IS_EDITABLE/@Value}"/>
+            </TEST>
+          </TO_DOCVAR>
+          <IF_TEST Test="$userAction='Save'">
+            <THEN>
+              <GET_DOCUMENT Name="CODE_MASTER_TYPE" AssignToVar="codetypeResults" ServiceName="USER_SECURITY">
+                <TYPE_ID Value="{$pglFormOutput/TYPE_ID/@Value}"/>
+              </GET_DOCUMENT>
+              <IF_TEST Test="$codetypeResults/CODE_MASTER_TYPE/TYPE_ID/@Value != null">
+                <THEN>
+                  <SET Var="alertRed" FromValue="Code Master Type already exists"/>
+                  <SET Var="userAction" FromValue="Error"/>
+                  <!--ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$test/*"/-->
+                </THEN>
+                <ELSE>
+                  <ADD_DOCUMENT Name="CODE_MASTER_TYPE" AssignToVar="responseCodetype" ServiceName="USER_SECURITY">
+                    <TYPE_ID Value="{$pglFormOutput/TYPE_ID/@Value}"/>
+                    <DESCRIPTION Value="{$pglFormOutput/Description/@Value}"/>
+                    <IS_EDITABLE Value="{$pglFormOutput/IS_EDITABLE/@Value}"/>
+                  </ADD_DOCUMENT>
+                  <IF_TEST Test="$responseCodetype/@Status='Success'">
+                    <THEN>
+                      <SET Var="alertGreen" FromValue="Code Master Type added"/>
+                      <SET Var="userAction" FromValue="Success"/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="alertRed" FromValue="{$responseCodetype/@Description}"/>
+                      <SET Var="userAction" FromValue="Error"/>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <SET Var="flag" FromValue="true"/>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Success'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage CodeMaster Type" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Cancel'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage CodeMaster Type" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Save'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Error'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Add Code Type" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="Manage Code Master" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="manageCodeMaster.pgl">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="CMType">
+            <CODE_MASTER_TYPES/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="CMValue">
+            <CODE_MASTER_VALUES/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="filterXml">
+            <FILTERS/>
+          </TO_DOCVAR>
+          <GET_DOCUMENT Name="CODE_MASTER_TYPE" AssignToVar="cmTypes" ServiceName="USER_SECURITY">
+            <ORDER_BY>
+              <TYPE_ID Sort="Ascending"/>
+            </ORDER_BY>
+          </GET_DOCUMENT>
+          <!-- Setting Type ID for the first time, the first TYPE_ID from the list of editable Code Master Types-->
+          <IF_TEST Test="strlen($TYPE_ID)=0">
+            <THEN>
+              <GET_FIRST_CHILD DocVar="cmTypes" AssignToVar="firstCMType"/>
+              <SET Var="TYPE_ID" FromValue="{$firstCMType/TYPE_ID/@Value}"/>
+              <SET Var="is_editable" FromValue="{$firstCMType/IS_EDITABLE/@Value}"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Search'">
+            <THEN>
+              <SET Var="PARENT_ID" FromValue=""/>
+              <SET DocVar="thisParam" Property="START_COUNT" FromValue="0"/>
+              <SET Var="TYPE_ID" FromValue="{$thisParam/TYPE/@Value}"/>
+              <GET_DOCUMENT Name="CODE_MASTER_TYPE" AssignToVar="checkIsEditable" ServiceName="USER_SECURITY">
+                <TYPE_ID Value="{$TYPE_ID}"/>
+              </GET_DOCUMENT>
+              <SET Var="is_editable" FromValue="{$checkIsEditable/CODE_MASTER_TYPE/IS_EDITABLE/@Value}"/>
+              <IF_TEST Test="strlen($thisParam/searchName/@Value)!=0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="test">
+                    <TEST>
+                      <VALUE_ID Value="{$thisParam/searchName/@Value}" MatchBy="CONTAINS"/>
+                    </TEST>
+                  </TO_DOCVAR>
+                  <TO_DOCVAR AssignToVar="test1">
+                    <TEST>
+                      <searchName Value="{$thisParam/searchName/@Value}"/>
+                    </TEST>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="filterXml" FromSelectList="$test/*"/>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$test1/*"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($thisParam/searchDesc/@Value)!=0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="test">
+                    <TEST>
+                      <DESCRIPTION Value="{$thisParam/searchDesc/@Value}" MatchBy="CONTAINS"/>
+                    </TEST>
+                    <TO_DOCVAR AssignToVar="test1">
+                      <TEST>
+                        <searchDesc Value="{$thisParam/searchName/@Value}"/>
+                      </TEST>
+                    </TO_DOCVAR>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="filterXml" FromSelectList="$test/*"/>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$test1/*"/>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <FOR_EACH SelectList="$cmTypes/CODE_MASTER_TYPE" CurrentElement="currElem">
+            <SET Var="typeId" FromValue="{$currElem/TYPE_ID/@Value}"/>
+            <IF_TEST Test="$typeId = $TYPE_ID">
+              <THEN>
+                <TO_DOCVAR AssignToVar="currOptionsVar">
+                  <ROOT>
+                    <OPTION Value="{$typeId}" Id="{$typeId}" Selected="true"/>
+                  </ROOT>
+                </TO_DOCVAR>
+              </THEN>
+              <ELSE>
+                <TO_DOCVAR AssignToVar="currOptionsVar">
+                  <ROOT>
+                    <OPTION Value="{$typeId}" Id="{$typeId}"/>
+                  </ROOT>
+                </TO_DOCVAR>
+              </ELSE>
+            </IF_TEST>
+            <APPEND_CHILDREN DocVar="CMType" FromDocVar="currOptionsVar"/>
+          </FOR_EACH>
+          <!--  <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+    <TO_XML SelectList="$filterXml/*"/>
+  </FORM_SEARCH_FILTER>
+  <TO_DOCVAR AssignToVar="tt">
+    <A/>
+  </TO_DOCVAR>
+  <FOR_EACH SelectList="$filters/FILTER" CurrentElement="thisFilt">
+    <APPEND_TO_XML SelectList="$tt">
+      <TO_XML SelectList="$thisFilt/*"/>
+    </APPEND_TO_XML>
+  </FOR_EACH>-->
+          <SET Var="paginateStart" FromValue="{int(ifElse($thisParam/START_COUNT/@Value = null, 0, $thisParam/START_COUNT/@Value))}"/>
+          <GET_DOCUMENT Name="CODE_MASTER_VALUE" ServiceName="USER_SECURITY" AssignToVar="cmValues" MaxRows="10" StartAtRow="{$paginateStart}" ReturnRowCount="true">
+            <TYPE_ID Value="{$TYPE_ID}"/>
+            <TO_XML SelectList="$filterXml/*"/>
+            <ORDER_BY>
+              <VALUE_ID Sort="Ascending"/>
+            </ORDER_BY>
+          </GET_DOCUMENT>
+          <GET_FIRST_CHILD DocVar="cmValues" AssignToVar="firstCMValue"/>
+          <IF_TEST Test="strlen($firstCMValue/PARENT_ID/@Value) > 0">
+            <THEN>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Search'">
+                <THEN>
+                  <SET Var="PARENT_ID" FromValue="{$thisParam/PARENT_TYPE/@Value}"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen($PARENT_ID)=0">
+                <THEN>
+                  <SET Var="PARENT_ID" FromValue="{$firstCMValue/PARENT_ID/@Value}"/>
+                </THEN>
+              </IF_TEST>
+              <GET_DOCUMENT Name="CODE_MASTER_VALUE" ServiceName="USER_SECURITY" AssignToVar="parentType">
+                <ID Value="{$PARENT_ID}"/>
+              </GET_DOCUMENT>
+              <GET_DOCUMENT Name="CODE_MASTER_VALUE" ServiceName="USER_SECURITY" AssignToVar="parentValues">
+                <TYPE_ID Value="{$parentType/CODE_MASTER_VALUE/TYPE_ID/@Value}"/>
+                <!-- <STATUS Value="ACTIVE"/>-->
+                <ORDER_BY>
+                  <VALUE_ID Sort="Ascending"/>
+                </ORDER_BY>
+              </GET_DOCUMENT>
+              <TO_DOCVAR AssignToVar="CMParentType">
+                <CODE_MASTER_PARENT_VALUES/>
+              </TO_DOCVAR>
+              <FOR_EACH SelectList="$parentValues/CODE_MASTER_VALUE" CurrentElement="currElem">
+                <SET Var="valueId" FromValue="{$currElem/VALUE_ID/@Value}"/>
+                <SET Var="ID" FromValue="{$currElem/ID/@Value}"/>
+                <!-- <SET Var="parentId" FromValue="{$currElem/PARENT_ID/@Value}"/>-->
+                <IF_TEST Test="$ID = $PARENT_ID">
+                  <THEN>
+                    <TO_DOCVAR AssignToVar="currOptionsVar">
+                      <ROOT>
+                        <OPTION Value="{$valueId}" Id="{$ID}" Selected="true"/>
+                      </ROOT>
+                    </TO_DOCVAR>
+                  </THEN>
+                  <ELSE>
+                    <TO_DOCVAR AssignToVar="currOptionsVar">
+                      <ROOT>
+                        <OPTION Value="{$valueId}" Id="{$ID}"/>
+                      </ROOT>
+                    </TO_DOCVAR>
+                  </ELSE>
+                </IF_TEST>
+                <APPEND_CHILDREN DocVar="CMParentType" FromDocVar="currOptionsVar"/>
+              </FOR_EACH>
+              <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="CMParentType"/>
+              <GET_DOCUMENT Name="CODE_MASTER_VALUE" ServiceName="USER_SECURITY" AssignToVar="cmValues" MaxRows="10" StartAtRow="{$paginateStart}" ReturnRowCount="true">
+                <TYPE_ID Value="{$TYPE_ID}"/>
+                <TO_XML SelectList="$filterXml/*"/>
+                <PARENT_ID Value="{$PARENT_ID}"/>
+                <ORDER_BY>
+                  <VALUE_ID Sort="Ascending"/>
+                </ORDER_BY>
+              </GET_DOCUMENT>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="alertz">
+            <ABC>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </ABC>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="page">
+            <ABC>
+              <StartRowCount Value="{$paginateStart}"/>
+              <TotalRowCount Value="{$cmValues/@TotalRowCount}"/>
+            </ABC>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="isEditable">
+            <ABC>
+              <isEditable Value="{$is_editable}"/>
+            </ABC>
+          </TO_DOCVAR>
+          <IF_TEST Test="($thisParam/BUTTON_ID/@Value='AdvSearch') or ($advSrch/@Value='True')">
+            <THEN>
+              <TO_DOCVAR AssignToVar="searchButton">
+                <ABC>
+                  <AdvancedSearch Value="{$thisParam/BUTTON_ID/@Value}"/>
+                </ABC>
+              </TO_DOCVAR>
+              <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$searchButton/*"/>
+            </THEN>
+          </IF_TEST>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$alertz/*"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$page/*"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$isEditable/*"/>
+          <ADD_CHILDREN DocVar="CMValue" FromSelectList="$cmValues/*"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="CMValue"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="CMType"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="alertGreen" FromValue=""/>
+          <SET Var="alertRed" FromValue=""/>
+          <IF_TEST Test="$pglFormOutput/BUTTON_ID/@Value='Add'">
+            <THEN>
+              <REQUEST Name="addCodeMasterValue" AssignToVar="addCMVal" ServiceName="USER_SECURITY">
+                <TYPE_ID Value="{$TYPE_ID}"/>
+                <VALUE_ID Value="{trim($pglFormOutput/Name/@Value)}"/>
+                <DESCRIPTION Value="{trim($pglFormOutput/Description/@Value)}"/>
+                <PARENT_ID Value="{$pglFormOutput/PARENT_TYPE_ID/@Value}"/>
+              </REQUEST>
+              <IF_TEST Test="strlen($addCMVal/_RESULT/_ERROR/@Value) > 0">
+                <THEN>
+                  <SET Var="alertRed" FromValue="{$addCMVal/_RESULT/_ERROR/@Value}"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertGreen" FromValue="Code Master entry added"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$pglFormOutput/BUTTON_ID/@Value='Update'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="selectedId">
+                <ID>
+                  <TO_XML SelectList="$pglFormOutput/SELECTED_ID"/>
+                </ID>
+              </TO_DOCVAR>
+              <REMOVE_CHILDREN DocVar="pglFormOutput" ChildName="SELECTED_ID"/>
+              <TO_DOCVAR AssignToVar="NameDescPairs">
+                <NameDescPairs>
+                  <INPUT>
+                    <TO_XML SelectList="$pglFormOutput/ID"/>
+                    <TO_XML SelectList="$pglFormOutput/VALUE_ID"/>
+                    <TO_XML SelectList="$pglFormOutput/DESCRIPTION"/>
+                  </INPUT>
+                  <COLLATE_LIST Value="NAME_DESC">
+                    <ID/>
+                    <VALUE_ID/>
+                    <DESCRIPTION/>
+                  </COLLATE_LIST>
+                </NameDescPairs>
+              </TO_DOCVAR>
+              <COLLATE_XML DocVar="NameDescPairs" AssignToVar="collateDoc"/>
+              <FOR_EACH SelectList="$collateDoc/NAME_DESC" CurrentElement="currElem">
+                <FOR_EACH SelectList="$selectedId/SELECTED_ID" CurrentElement="currSelectedId">
+                  <IF_TEST Test="$currSelectedId/@Value = $currElem/ID/@Value">
+                    <THEN>
+                      <IF_TEST Test="strlen($PARENT_ID)=0">
+                        <THEN>
+                          <REQUEST Name="modifyCodeMasterValue" ServiceName="USER_SECURITY" AssignToVar="cmValues">
+                            <ID Value="{$currElem/ID/@Value}"/>
+                            <VALUE_ID Value="{$currElem/VALUE_ID/@Value}"/>
+                            <DESCRIPTION Value="{$currElem/DESCRIPTION/@Value}"/>
+                          </REQUEST>
+                        </THEN>
+                        <ELSE>
+                          <REQUEST Name="modifyCodeMasterValue" ServiceName="USER_SECURITY" AssignToVar="cmValues">
+                            <ID Value="{$currElem/ID/@Value}"/>
+                            <VALUE_ID Value="{$currElem/VALUE_ID/@Value}"/>
+                            <DESCRIPTION Value="{$currElem/DESCRIPTION/@Value}"/>
+                            <PARENT_ID Value="{$PARENT_ID}"/>
+                          </REQUEST>
+                        </ELSE>
+                      </IF_TEST>
+                      <IF_TEST Test="strlen($cmValues/_RESULT/_ERROR/@Value) > 0">
+                        <THEN>
+                          <SET Var="alertRed" FromValue="{$cmValues/_RESULT/_ERROR/@Value}"/>
+                          <TO_DOCVAR AssignToVar="errorSelectedId">
+                            <ERROR>
+                              <SELECTED_ID Value="{$currSelectedId/@Value}"/>
+                            </ERROR>
+                          </TO_DOCVAR>
+                          <ADD_CHILDREN DocVar="pglFormOutput" FromSelectList="$errorSelectedId/*"/>
+                          <BREAK/>
+                        </THEN>
+                        <ELSE>
+                          <SET Var="alertGreen" FromValue="Code Master entry updated"/>
+                        </ELSE>
+                      </IF_TEST>
+                    </THEN>
+                  </IF_TEST>
+                </FOR_EACH>
+              </FOR_EACH>
+              <IF_TEST Test="strlen($alertRed) > 0">
+                <THEN>
+                  <SET Var="alertGreen" FromValue=""/>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$pglFormOutput/BUTTON_ID/@Value='Delete'">
+            <THEN>
+              <FOR_EACH SelectList="$pglFormOutput/SELECTED_ID/@Value" CurrentElement="currElem">
+                <REQUEST Name="removeCodeMasterValue" ServiceName="USER_SECURITY" AssignToVar="cmValues">
+                  <ID Value="{$currElem/@Value}"/>
+                </REQUEST>
+              </FOR_EACH>
+              <IF_TEST Test="strlen($cmValues/_RESULT/_ERROR/@Value) > 0">
+                <THEN>
+                  <SET Var="alertRed" FromValue="{$cmValues/_RESULT/_ERROR/@Value}"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertGreen" FromValue="Code Master entry removed."/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$pglFormOutput/BUTTON_ID/@Value='SimpleSearch'">
+            <THEN>
+              <SET Var="advSrch" FromValue="False"/>
+              <SET Var="TYPE_ID" FromValue="{$pglFormOutput/TYPE/@Value}"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$pglFormOutput/BUTTON_ID/@Value='AdvSearch'">
+            <THEN>
+              <SET Var="advSrch" FromValue="True"/>
+              <SET Var="TYPE_ID" FromValue="{$pglFormOutput/TYPE/@Value}"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='manageType'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage CodeMaster Type" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Search'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Code Master" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Add'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Code Master" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Update'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Code Master" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Delete'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Code Master" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='AdvSearch'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Code Master" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SimpleSearch'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Code Master" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start2 location="85,128" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start2" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start2>
+      <mgcnode Name="Manage CodeMaster Type" location="589,127" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Manage CodeMaster Type" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <done4 location="725,128" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done4" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done4>
+      <mgcnode Name="Add Code Type" location="589,253" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Add Code Type" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <mgcnode Name="Manage Code Master" location="294,127" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Manage Code Master" font="Verdana,0,9" textColor="186,12,12"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+    </mgcnodes>
+    <mgcconnectors>
+      <start2>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="117,150" endpoint="294,150" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="247,148,4,4" ctrlRect2="159,148,4,4"/>
+      </start2>
+      <mgcnode Name="Manage CodeMaster Type">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="605,127" endpoint="605,127" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="603,50,4,4" ctrlRect2="662,59,4,4" textRect="556,52,157,9">
+          <textProps text="[$userAction ='search_button']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="605,173" endpoint="605,253" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="535,202,4,4" ctrlRect2="562,227,4,4" textRect="473,212,155,9">
+          <textProps text="[$userAction ='add_codetype']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="621,150" endpoint="725,150" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="697,148,4,4" ctrlRect2="645,148,4,4"/>
+      </mgcnode>
+      <mgcnode Name="Add Code Type">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="605,253" endpoint="605,173" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="688,199,4,4" ctrlRect2="629,187,4,4" textRect="596,191,128,9">
+          <textProps text="[$userAction ='Success']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="605,253" endpoint="605,173" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="603,191,4,4" ctrlRect2="603,231,4,4"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="605,299" endpoint="605,299" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="603,372,4,4" ctrlRect2="667,327,4,4" textRect="582,347,110,9">
+          <textProps text="[$userAction ='Error']" font="Verdana,0,9"/>
+        </nextNodeView>
+      </mgcnode>
+      <mgcnode Name="Manage Code Master">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="326,150" endpoint="589,150" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="520,148,4,4" ctrlRect2="389,148,4,4" textRect="382,146,149,9">
+          <textProps text="[$userAction ='manageType']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="294,150" endpoint="294,150" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="217,148,4,4" ctrlRect2="183,235,4,4" textRect="142,189,120,9">
+          <textProps text="[$userAction ='Search']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="310,173" endpoint="310,173" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="308,246,4,4" ctrlRect2="381,215,4,4" textRect="294,228,105,9"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="294,150" endpoint="294,150" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="217,148,4,4" ctrlRect2="184,58,4,4" textRect="142,101,121,9">
+          <textProps text="[$userAction ='Update']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="310,173" endpoint="310,173" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="308,246,4,4" ctrlRect2="231,216,4,4" textRect="212,229,118,9">
+          <textProps text="[$userAction ='Delete']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="310,127" endpoint="310,127" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="308,50,4,4" ctrlRect2="210,47,4,4" textRect="191,46,140,9"/>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="310,127" endpoint="310,127" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="308,50,4,4" ctrlRect2="422,50,4,4" textRect="290,48,154,9">
+          <textProps text="[$userAction ='SimpleSearch']" font="Verdana,0,9"/>
+        </nextNodeView>
+      </mgcnode>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="16,16" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="7" textAttrsKey0="PARENT_ID : string" textAttrsKey1="TYPE_ID : string" textAttrsKey2="advSrch : string" textAttrsKey3="alertGreen : string" textAttrsKey4="alertRed : string" textAttrsKey5="flag : string" textAttrsKey6="is_editable : string">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="PARENT_ID" Type="string" Comment=""/>
+        <variable Name="TYPE_ID" Type="string" Comment=""/>
+        <variable Name="advSrch" Type="string" Comment=""/>
+        <variable Name="alertGreen" Type="string" Comment=""/>
+        <variable Name="alertRed" Type="string" Comment=""/>
+        <variable Name="flag" Type="string" Comment=""/>
+        <variable Name="is_editable" Type="string" Comment=""/>
+      </variables>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

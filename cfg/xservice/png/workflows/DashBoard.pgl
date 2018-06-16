@@ -1,0 +1,178 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" name="studio.templates.simple_entry" source="studio.controller:load" version="3">
+  <ui:container id="outerContainer1" name="outerContainer1" scrollable="true">
+    <ui:step id="outerStep1" name="outerStep1" scrollable="true">
+      <ui:field-group name="mesg" select="$root" displayCondition="{string-length($root/MESSAGE/@Value) != 0}">
+        <ui:choose-field name="BUTTON_ID">
+          <ui:when test="$root/Result/@Value = 'Failure'">
+            <ui:display-field displayText="" name="error" value="{$root/MESSAGE/@Value}" class="requiredIndicator"/>
+          </ui:when>
+          <ui:when test="$root/Result/@Value= 'Success'">
+            <ui:display-field displayText="" name="success" value="{$root/MESSAGE/@Value}" class="requiredIndicatorGreen"/>
+          </ui:when>
+          <ui:otherwise/>
+        </ui:choose-field>
+      </ui:field-group>
+      <ui:container id="searchContainer">
+        <ui:step id="searchStep">
+          <ui:field-group id="searchFG" displayText="Search Load Details" collapsable="true">
+            <ui:field-group columns="3" id="fieldGroups" select="$this">
+              <ui:entry-field id="LOAD_ID" name="LOAD_ID" displayText="Load Id"/>
+              <ui:dropdown id="LEGAL_ENT_NAME" name="LEGAL_ENT_NAME" displayText="Matching Domain" optionSrc="$root/LEGAL_ENT/LEGAL_ENT_NAME" onChange="javascript:loadProgramList();"/>
+              <ui:dropdown id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR" displayText="Program Name" optionSrc="$root/MKTNG_PGM/OPTION"/>
+              <ui:entry-field id="START_DATE" name="START_DATE" displayText="Start Date(mm/dd/yyyy)" dataType="Date" displayCondition="True"/>
+              <ui:entry-field id="END_DATE" name="END_DATE" displayText="End Date(mm/dd/yyyy)" dataType="Date" displayCondition="True"/>
+            </ui:field-group>
+          </ui:field-group>
+          <ui:buttons>
+            <ui:button id="RESET" name="RESET" displayText="Reset" onClick="javascript:on_RESET();"/>
+            <ui:button id="SEARCH_LOAD" name="SEARCH_LOAD" displayText="Search Loads" emphasized="true"/>
+          </ui:buttons>
+        </ui:step>
+      </ui:container>
+      <ui:table id="searchResultsTable" displayText="Data Load Dashboard" rowId="LOAD_ID" rowSrc="$root/RESPONSE/V_RPT_LOAD_NBR" selectable="Single" displayTextNoRecords="No Loads found" maxRows="10" postRowIdAs="SELECTED_LOAD_ID" totalRowCount="$root/RESPONSE/@TotalRowCount" exportable="true">
+        <ui:field-group id="tableColumns" select="$root/RESPONSE/*">
+          <ui:display-field id="LOAD_ID" name="LOAD_ID" displayText="Load ID" sortable="true"/>
+          <ui:display-field id="LEGAL_ENT_NAME" name="LEGAL_ENT_NAME" displayText="Matching Domain" sortable="true"/>
+          <ui:display-field id="MKTNG_PGM_NAME" name="MKTNG_PGM_NAME" displayText="Marketing Program" sortable="true"/>
+          <ui:display-field id="START_DATE" name="START_DATE" displayText="Start Date" sortable="true"/>
+          <ui:display-field id="END_DATE" name="END_DATE" displayText="End Date" sortable="true"/>
+          <ui:display-field id="STAGING_NBR" name="STAGING_NBR" displayText="Staging" sortable="true"/>
+          <ui:link-field id="ERROR_NBR" name="ERROR_NBR" displayText="Rejected Registrations" sortable="true">
+            <ui:url page="bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=error_PRSNA_STG&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true">
+              <F_LOAD_ID select="LOAD_ID/@Value"/>
+            </ui:url>
+          </ui:link-field>
+          <ui:display-field id="ACTIVE_NBR" name="ACTIVE_NBR" displayText="Active" sortable="true"/>
+          <ui:display-field id="DUPLICATE_NBR" name="DUPLICATE_NBR" displayText="Duplicate" sortable="true"/>
+          <ui:display-field id="LOAD_SUCCESS" name="LOAD_SUCCESS" displayText="Load Success" sortable="true"/>
+        </ui:field-group>
+        <ui:buttons id="tableButtons">
+          <!-- Commenting below line as link field for error records is used within above table.-->
+          <!--ui:button id="RejectedData" name="RejectedData" displayText="Rejected Data" enabledBySelections="true" onClick="javascript:on_SEARCH_REJECTED_RECORDS();"/-->
+          <ui:button id="RestartLoad" name="RestartLoad" displayText="Restart Load" enabledBySelections="true" onClick="javascript:onRestartLoad();"/>
+          <ui:button id="DeleteLoad" name="DeleteLoad" displayText="Delete Load" enabledBySelections="true" onClick="javascript:onDeleteLoad();"/>
+          <ui:button id="Details" name="Details" displayText="Details" enabledBySelections="true"/>
+        </ui:buttons>
+      </ui:table>
+      <ui:hr/>
+      <ui:table id="Details" displayText="Load Details" rowSrc="$root/RESPONSE/RPT_LOAD_NBR_DETAILS/RPT_LOAD_NBR" rowId="LOAD_ID">
+        <ui:field-group id="tblcolumns1" select="$root/RESPONSE//RPT_LOAD_NBR_DETAILS/*">
+          <ui:display-field id="LOAD_ID" name="LOAD_ID" displayText="Load ID"/>
+          <ui:display-field id="MKTNG_PGM_NAME" name="MKTNG_PGM_NAME" displayText="Marketing Program"/>
+          <ui:display-field id="LEGAL_ENT_NAME" name="LEGAL_ENT_NAME" displayText="Matching Domain"/>
+          <ui:display-field id="POSTAL_OPT_IN" name="POSTAL_OPT_IN" displayText="Postal Opt-Ins"/>
+          <ui:display-field id="POSTAL_OPT_OUT" name="POSTAL_OPT_OUT" displayText="Postal Opt-Outs"/>
+          <ui:display-field id="EMAIL_OPT_IN" name="EMAIL_OPT_IN" displayText="Email Opt-Ins"/>
+          <ui:display-field id="EMAIL_OPT_OUT" name="EMAIL_OPT_OUT" displayText="Email Opt-Outs"/>
+          <ui:display-field id="PHONE_OPT_IN" name="PHONE_OPT_IN" displayText="Mobile Opt-Ins"/>
+          <ui:display-field id="PHONE_OPT_OUT" name="PHONE_OPT_OUT" displayText="Mobile Opt-Outs"/>
+          <ui:display-field id="SOCIAL_OPT_IN" name="SOCIAL_OPT_IN" displayText="Social Opt-Ins"/>
+          <ui:display-field id="SOCIAL_OPT_OUT" name="SOCIAL_OPT_OUT" displayText="Social Opt-Outs"/>
+        </ui:field-group>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>function loadProgramList(){
+document.form.BUTTON_ID.value = 'LOAD_PROGRAM_LIST';
+document.form.action = 'view.x2ps';
+document.form.submit();
+}
+function on_SEARCH_REJECTED_RECORDS()
+{
+var selectedLoadId;
+for (var i=0; i &lt; document.form.SELECTED_LOAD_ID.length;i++) {
+		
+if (document.form.SELECTED_LOAD_ID[i].checked)
+selectedLoadId=document.form.SELECTED_LOAD_ID[i].value;
+}
+//var selectedLoadId=document.getElementById('SELECTED_LOAD_ID').value;
+var currURL=document.location.href;
+if (currURL.indexOf(&quot;localhost&quot;)!=-1)
+var mdmUrl =&quot;http://localhost:8080/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=error_PRSNA_STG&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true&quot;+&quot;&amp;F_LOAD_ID=&quot;+selectedLoadId;
+else if (currURL.indexOf(&quot;sdwl0064&quot;)!=-1)
+var mdmUrl =&quot;http://sdwl0064:8080/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=error_PRSNA_STG&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true&quot;+&quot;&amp;F_LOAD_ID=&quot;+selectedLoadId;
+else var mdmUrl =&quot;https://www.profileeditor-staging-pg.com/mdm/bcm/framework/tableeditor/tableeditor.jsp?DIRECTORY=bcm.framework.tableeditor&amp;FILE=TableEditorView&amp;MODE=START&amp;TABLE_NAME=error_PRSNA_STG&amp;SERVICE=BCMMasterService&amp;Auth_Enabled=true&quot;+&quot;&amp;F_LOAD_ID=&quot;+selectedLoadId;
+document.location.href = mdmUrl;
+}
+/*
+function onRestartLoad()
+{
+var message = &quot;This will restart the selected load. Are you sure you want to continue?&quot;;
+if (	core_confirm( message ) == 'yes' )
+{
+form.BUTTON_ID.value = &quot;RestartLoad&quot; ;
+form.submit();
+}
+else
+{
+return;
+}
+}
+*/
+
+
+function onRestartLoad()
+{
+//var message = &quot;This will restart the selected load. Are you sure you want to continue?&quot;;
+core_confirm_jquery('This will restart the selected load. Are you sure you want to continue?','onConfirmRestart');
+}
+
+function onConfirmRestart(response)
+{
+if (response== 'yes' )
+{
+form.BUTTON_ID.value = &quot;RestartLoad&quot; ;
+form.submit();
+}
+else
+{
+return;
+}	
+}
+
+/*
+function onDeleteLoad()
+{
+var message = &quot;This will delete the selected load. Are you sure you want to continue?&quot;;
+if (	core_confirm( message ) == 'yes' )
+{
+form.BUTTON_ID.value = &quot;DeleteLoad&quot; ;
+form.submit();
+}
+else
+{
+return;
+}
+}
+*/
+function on_RESET(){
+document.getElementById('LOAD_ID').value='';
+document.getElementById('START_DATE').value='';
+document.getElementById('END_DATE').value='';
+return;
+}
+
+
+function onDeleteLoad()
+{
+//var message = &quot;This will delete the selected load. Are you sure you want to continue?&quot;;
+core_confirm_jquery('This will delete the selected load. Are you sure you want to continue?','onConfirmDel');
+}
+
+
+
+function onConfirmDel(response)
+{
+if (response== 'yes' )
+{
+form.BUTTON_ID.value = &quot;DeleteLoad&quot; ;
+form.submit();
+}
+else
+{
+return;
+}	
+}
+
+</ui:script>
+</ui:page-group>

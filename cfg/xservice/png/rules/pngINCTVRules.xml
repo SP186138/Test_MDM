@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+		Copyright (c) 2009 by Teradata Corporation. All Rights Reserved.
+		Teradata CONFIDENTIAL AND TRADE SECRET
+	-->
+  <DEFINE_METHOD Name="pngStopINCTVTimer">
+    <!--
+			**********************************************************************************************************
+			* Module Name : pngINCTV * Created Date : October 12, 2012 * Created
+			By : Teradata * Called Functions: * Called By Functions: * Short Desc
+			: Rule that stops INCTV timer. * Change Log : * DATE LC OWNER
+			DESCRIPTION *
+			**********************************************************************************************************
+		-->
+    <RULE>
+      <ACTION>
+        <STOP_TIMER>
+          <IDENTIFIED_BY>
+            <NAME Value="TIMER_FOR_INCTV"/>
+          </IDENTIFIED_BY>
+        </STOP_TIMER>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="pngStartINCTVTimer">
+    <!--
+			**********************************************************************************************************
+			* Module Name : pngINCTV * Created Date : October 12, 2012 * Created
+			By : Teradata * Called Functions: Calls pngINCTVRule script * Called
+			By Functions: * Short Desc : Rule that invokes timer for INCTV
+			Migration * Change Log : * DATE LC OWNER DESCRIPTION *
+			**********************************************************************************************************
+		-->
+    <RULE>
+      <ACTION>
+        <START_TIMER>
+          <IDENTIFIED_BY>
+            <NAME Value="TIMER_FOR_INCTV"/>
+          </IDENTIFIED_BY>
+          <CALLBACK_DATE Value="{incrDate(date(), duration(0, 0, 10, 0))}"/>
+          <CALLBACK_DURATION Value="{duration(0,0,10,0)}"/>
+          <CALLBACK_ACTIONS>
+            <REQUEST Name="pngINCTVRule" ServiceName="BCM_MASTER" AssignToVar="resINCTVTimerRule"/>
+          </CALLBACK_ACTIONS>
+        </START_TIMER>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="pngINCTVRule">
+    <!--
+			**********************************************************************************************************
+			* Module Name : pngINCTVMigration * Created Date : October 12, 2012 *
+			Created By : Teradata * Called Functions: Calls INCTV_MIG.bat script *
+			Called By Functions: pngINCTVTimer * Short Desc : Rule that performs
+			standardizes data * Change Log : * DATE LC OWNER DESCRIPTION *
+			**********************************************************************************************************
+		-->
+    <RULE>
+      <ACTION>
+        <EXECUTE_SHELL_COMMAND Value="del MDM_LOAD_CONTROL_INCTV.err" AssignToVar="errStatus"/>
+        <EXECUTE_SHELL_COMMAND Value="IncentiveFileCopy.bat" AssignToVar="INCTVInputResult"/>
+        <IF_TEST Test="$INCTVInputResult/@ShellReturnValue = 0">
+          <THEN>
+            <TO_DOCVAR AssignToVar="thisReturn">
+              <SUCCESS>
+                <Message Value="INCTV Successful"/>
+              </SUCCESS>
+            </TO_DOCVAR>
+          </THEN>
+          <ELSE>
+            <SET Var="Description" FromValue="{$INCTVInputResult/@ShellReturnValue}"/>
+            <IF_TEST Test="$INCTVInputResult/@ShellReturnValue = 2">
+            <THEN>
+            <REQUEST Name="emailOnErrorNode" ServiceName="BCM_MASTER">
+              <Subject Value="INCTV Failure - User Not Found"/>>
+              <Short_Description Value="User Not Found"/>
+              <Description Value="Automated Excel Upload Failure - User not allowed to upload incentives"/>
+              <SubCategory Value="INCTV Error"/>
+            </REQUEST>            
+            </THEN>
+            </IF_TEST>
+            <IF_TEST Test="$INCTVInputResult/@ShellReturnValue = 1">
+            <THEN>
+            <REQUEST Name="emailOnErrorNode" ServiceName="BCM_MASTER">
+              <Subject Value="INCTV Failure - Batch Upload Process"/>>
+              <Short_Description Value="Batch Upload Process Failure"/>
+              <Description Value="Automated Excel Upload Failure - Please check the png_master and dataupload logs on the MDM server."/>
+              <SubCategory Value="INCTV Error"/>
+            </REQUEST>            
+            </THEN>
+            </IF_TEST>
+            <EXECUTE_SHELL_COMMAND Value="echo Error > MDM_LOAD_CONTROL_INCTV.err" AssignToVar="errStatus"/>
+            <TO_DOCVAR AssignToVar="thisReturn">
+              <FAILURE>
+                <Message Value="{$INCTVOutputResult/STD_ERR/LINE[1]/@Value}"/>
+              </FAILURE>
+            </TO_DOCVAR>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

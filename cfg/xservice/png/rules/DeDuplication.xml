@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+ 	 Copyright (c) 2009 by Teradata Corporation. 
+	 All Rights Reserved. 
+	 Teradata CONFIDENTIAL AND TRADE SECRET 
+ -->
+  <DEFINE_METHOD Name="Trillium_Dedup_Rule">
+    <RULE>
+      <ACTION>
+        <EXECUTE_SHELL_COMMAND Value="TSS_CLEANSE_INPUT_DEDUP.BAT" AssignToVar="result" Synchronous="true"/>
+        <IF_TEST Test="$result/@ShellReturnValue = 1">
+          <THEN>
+            <TO_DOCVAR AssignToVar="thisReturn">
+              <FAILURE>
+                <Message Value="TSS_CLEANSE_INPUT_DEDUP.BAT failed - {$result/STD_ERR/LINE[1]/@Value}"/>
+              </FAILURE>
+            </TO_DOCVAR>
+          </THEN>
+          <ELSE>
+            <EXECUTE_SHELL_COMMAND Value="TSSEnvSet.BAT" AssignToVar="result1" Synchronous="true"/>
+            <IF_TEST Test="$result1/@ShellReturnValue = 1">
+              <THEN>
+                <TO_DOCVAR AssignToVar="thisReturn">
+                  <FAILURE>
+                    <Message Value="TSSEnvSet.BAT failed - {$result1/STD_ERR/LINE[1]/@Value}"/>
+                  </FAILURE>
+                </TO_DOCVAR>
+              </THEN>
+              <ELSE>
+                <REQUEST Name="invokeRouteCleanse" ServiceName="Trillium" AssignToVar="result2" Synchronous="true"/>
+                <IF_TEST Test="$result2/@ShellReturnValue = 1">
+                  <THEN>
+                    <TO_DOCVAR AssignToVar="thisReturn">
+                      <FAILURE>
+                        <Message Value="invokeRouteCleanse failed - {$result2/STD_ERR/LINE[1]/@Value}"/>
+                      </FAILURE>
+                    </TO_DOCVAR>
+                  </THEN>
+                  <ELSE>
+                    <EXECUTE_SHELL_COMMAND Value="CNSMR_TSS_WINKEY_OUTPUT_STG.BAT" AssignToVar="result3" Synchronous="true"/>
+                    <IF_TEST Test="$result3/@ShellReturnValue = 1">
+                      <THEN>
+                        <TO_DOCVAR AssignToVar="thisReturn">
+                          <FAILURE>
+                            <Message Value="CNSMR_TSS_WINKEY_OUTPUT_STG.BAT failed - {$result3/STD_ERR/LINE[1]/@Value}"/>
+                          </FAILURE>
+                        </TO_DOCVAR>
+                      </THEN>
+                      <ELSE>
+                        <EXECUTE_SHELL_COMMAND Value="TSS_MATCH_INPUT_CRM_DEDUP.BAT" AssignToVar="result4" Synchronous="true"/>
+                        <IF_TEST Test="$result4/@ShellReturnValue = 1">
+                          <THEN>
+                            <TO_DOCVAR AssignToVar="thisReturn">
+                              <FAILURE>
+                                <Message Value="TSS_MATCH_INPUT_CRM_DEDUP.BAT failed - {$result4/STD_ERR/LINE[1]/@Value}"/>
+                              </FAILURE>
+                            </TO_DOCVAR>
+                          </THEN>
+                          <ELSE>
+                            <REQUEST Name="TSSMatch" ServiceName="Trillium" AssignToVar="result5" Synchronous="true"/>
+                            <IF_TEST Test="$result5/@ShellReturnValue = 1">
+                              <THEN>
+                                <TO_DOCVAR AssignToVar="thisReturn">
+                                  <FAILURE>
+                                    <Message Value="TSS Match Failed - {$result5/STD_ERR/LINE[1]/@Value}"/>
+                                  </FAILURE>
+                                </TO_DOCVAR>
+                              </THEN>
+                              <ELSE>
+                                <EXECUTE_SHELL_COMMAND Value="TSS_MATCH_STG_DEDUP.BAT" AssignToVar="result6" Synchronous="true"/>
+                                <IF_TEST Test="$result6/@ShellReturnValue = 0">
+                                  <THEN>
+                                    <TO_DOCVAR AssignToVar="thisReturn">
+                                      <SUCCESS>
+                                        <Message Value="Trillium Dedup Rule Successful"/>
+                                      </SUCCESS>
+                                    </TO_DOCVAR>
+                                  </THEN>
+                                  <ELSE>
+                                    <TO_DOCVAR AssignToVar="thisReturn">
+                                      <FAILURE>
+                                        <Message Value="TSS_MATCH_STG_DEDUP.BAT failed - {$result/STD_ERR/LINE[1]/@Value}"/>
+                                      </FAILURE>
+                                    </TO_DOCVAR>
+                                  </ELSE>
+                                </IF_TEST>
+                              </ELSE>
+                            </IF_TEST>
+                          </ELSE>
+                        </IF_TEST>
+                      </ELSE>
+                    </IF_TEST>
+                  </ELSE>
+                </IF_TEST>
+              </ELSE>
+            </IF_TEST>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

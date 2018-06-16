@@ -1,0 +1,23 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_form" source="studio.controller:load">
+  <ui:container id="topContainer">
+    <ui:step displayText="AGENCY COUNTRY CONTACT" id="AGENCY_COUNTRY_CONTACT">
+      <ui:validation successMessage="{$root/SuccessMessage/@Value}"/>
+      <ui:field-group>
+        <ui:image src="/bpi_check.gif" displayCondition="{string-length($root/MSG/AlertGreen/@Value) != 0}" id="checkImg"/>
+        <ui:display-field id="success" value="{$root/MSG/AlertGreen/@Value}" displayCondition="{string-length($root/MSG/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen"/>
+        <ui:image src="/cancel.gif" displayCondition="{string-length($root/MSG/AlertRed/@Value) != 0}"/>
+        <ui:display-field value="{$root/MSG/AlertRed/@Value}" displayCondition="{string-length($root/MSG/AlertRed/@Value) != 0}" name="error" class="requiredIndicator"/>
+      </ui:field-group>
+      <ui:field-group id="left fields" columns="1">
+        <ui:display-field id="AGNCY_NBR" displayText="Agency Number" name="AGNCY_NBR"/>
+        <ui:display-field id="CNTRY_CODE" displayText="Country" name="CNTRY_CODE"/>
+        <ui:entry-field id="CNTCT_NBR" name="CNTCT_NBR" displayText="Contact" required="true"/>
+      </ui:field-group>
+      <ui:buttons id="buttons">
+        <ui:button id="LinkToContact" displayText="Link To Contact" name="LinkToContact" emphasized="true" validate="false"/>
+        <ui:button id="Save_Contact" displayText="Save" name="Save_Contact" emphasized="true"/>
+        <ui:button id="SaveAndReturn_Contact" displayText="Save And Return" name="SaveAndReturn_Contact" emphasized="true"/>
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+</ui:page-group>

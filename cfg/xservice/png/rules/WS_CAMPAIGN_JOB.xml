@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+ 	 Copyright (c) 2009 by Teradata Corporation. 
+	 All Rights Reserved. 
+	 Teradata CONFIDENTIAL AND TRADE SECRET 
+Created By : Subhradeep Shah/Nayan Chavan
+Demand Number: RITM0419492	 
+Change Number: CHG0098824
+	 
+ -->
+  <DEFINE_METHOD Name="WS_CAMPAIGN_JOBS" Access="Public">
+    <API_DOC>
+      <INPUT>
+        <REQUEST Name="WS_CAMPAIGN_JOBS">
+          <WS_CAMPAIGN_JOBS>
+            <CAMPAIGN_NAME Value="LTT_E_AU_SS_105_250316_CCP_MR2_5.4"/>
+            <COUNTRY Value="TAIWAN"/>
+            <MKTNG_PGM_NBR Value="105"/>
+            <FROM_END_DTTM Value="03/28/2018"/>
+            <TO_END_DTTM Value="03/30/2018"/>
+            <FROM_NEXT_SCHEDULED_RUN_DTTM Value="03/28/2018"/>
+            <TO_NEXT_SCHEDULED_RUN_DTTM Value="03/30/2018"/>
+            <STATUS Value="FAILED"/>
+          </WS_CAMPAIGN_JOBS>
+        </REQUEST>
+      </INPUT>
+      <OUTPUT>
+        <RESPONSES Status="Success">
+          <RESPONSE Status="Success" DbgTag_="REQUEST" DbgCmd_="WS_CAMPAIGN_JOBS">
+            <readRESTResponse>
+              <STATUS Description="Success">
+                <MESSAGE Value="Query Returned 1 Row"/>
+              </STATUS>
+              <READ_VAL>
+                <SQL_RESULT>
+                  <CAMPAIGN_NAME Value="#1 Sampling Comm-Revised"/>
+                  <MKTNG_PGM_NBR Value="1"/>
+                  <MKTNG_PGM_NAME Value="GHH-IND-1"/>
+                  <COUNTRY Value="India"/>
+                  <VENDOR_NAME Value="MGinger Fulfillment Channel Instance"/>
+                  <EMAIL_DEPLOYMENT_DATE Value="02/07/2013 00:00:00"/>
+                  <EMAIL_DEPLOYMENT_TIME Value="19:27:43"/>
+                  <START_DTTM Value="02/07/2013 17:50:02"/>
+                  <END_DTTM Value="02/07/2013 19:27:43"/>
+                  <DURATION Value="97.57"/>
+                  <AUTOMATED_IND Value="Y"/>
+                  <STATUS Value="Successful"/>
+                  <SYS_ENT_STATE Value="ACTIVE"/>
+                </SQL_RESULT>
+              </READ_VAL>
+            </readRESTResponse>
+          </RESPONSE>
+        </RESPONSES>
+      </OUTPUT>
+    </API_DOC>
+    <RULE>
+      <ACTION>
+        <EXECUTE_SQL_QUERY AssignToVar="Access" Value="LOCKING ROW FOR ACCESS SEL DISTINCT role_id FROM USR_GRP_ROLE_MAP WHERE usr_grp_id IN (SEL user_grp_id FROM USER_UG_RELATION WHERE user_id='{$UserId}') AND ROLE_ID in('WS_CAMPAIGN_JOB_ROLE','WebService_Role')" ReturnRowCount="yes"/>
+        <IF_TEST Test="$Access/@TotalRowCount != 0">
+          <THEN>
+            <TO_DOCVAR AssignToVar="thisReturn">
+            </TO_DOCVAR>
+            <TO_DOCVAR AssignToVar="errorStatus">
+              <ROOT/>
+            </TO_DOCVAR>
+            
+            <FORM_SEARCH_FILTER Value="{$thisParam/WS_CAMPAIGN_JOBS}" AssignToVar="filters">
+              <CAMPAIGN_NAME/>
+              <MKTNG_PGM_NBR/>
+              <COUNTRY/>
+			  <CAMPAIGN_URL/>
+			  <END_DTTM Range="true"/>
+              <NEXT_SCHEDULED_RUN_DTTM Range="true"/>
+              <STATUS/>
+			  <VENDOR_NAME/>
+			  <MKTNG_PGM_NAME/>
+			  <LEAD_GENERATION_CNT/>
+			  <AUTOMATED_IND/>
+			  </FORM_SEARCH_FILTER>
+            <TO_DOCVAR AssignToVar="filterList">
+              <FILTERLIST/>
+            </TO_DOCVAR>
+            <TO_DOCVAR AssignToVar="ORcondition">
+              <OR>
+                <AND>
+                  <TO_XML SelectList="$filters/FILTER/END_DTTM"/>
+                </AND>
+                <AND>
+                  <TO_XML SelectList="$filters/FILTER/NEXT_SCHEDULED_RUN_DTTM"/>
+                </AND>
+              </OR>
+            </TO_DOCVAR>
+           
+            <REMOVE_CHILDREN SelectList="$filters/FILTER" ChildName="END_DTTM"/>
+            <REMOVE_CHILDREN SelectList="$filters/FILTER" ChildName="NEXT_SCHEDULED_RUN_DTTM"/>
+            <FOR_EACH SelectList="$filters/FILTER" CurrentElement="thisFilter">
+              <APPEND_TO_XML SelectList="$filterList">
+                <TO_XML SelectList="$thisFilter/*"/>
+              </APPEND_TO_XML>
+            </FOR_EACH>
+            <ADD_CHILDREN DocVar="filterList" FromDocVar="ORcondition"/>
+            <GET_DOC_SMART AssignToVar="Result" Name="WS_CAMPAIGN_JOBS" ReturnRowCount="yes">
+              <TO_XML SelectList="$filterList/*"/>
+            </GET_DOC_SMART>
+            
+            <IF_TEST Test="$Result/VALIDATION_RESULT/@Value='Error' or $Result/VALIDATION_RESULT/@Value='ERROR'">
+              <THEN>
+                <APPEND_TO_XML DocVar="thisReturn">
+                  <ON_ERROR>
+                    <RESPONSE Comment="{$Result/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                  </ON_ERROR>
+                </APPEND_TO_XML>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+            <IF_TEST Test="$Result/@Status='Error' or $Result/@Status='ERROR'">
+              <THEN>
+                <APPEND_TO_XML DocVar="thisReturn">
+                  <ON_ERROR>
+                    <RESPONSE Comment="{$Result/@Description}"/>
+                  </ON_ERROR>
+                </APPEND_TO_XML>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+            <IF_TEST Test="$Result/@Status='Success' or $Result/VALIDATION_RESULT/@Value='SUCCESS'">
+              <THEN>
+                <TO_DOCVAR AssignToVar="Campaign_Result">
+                  <readRESTResponse>
+                    <STATUS Description="{$Result/@Status}">
+                      <MESSAGE Value="Query Returned {$Result/@TotalRowCount} Rows"/>
+                    </STATUS>
+                    <READ_VAL>
+                      <TO_XML SelectList="$Result/WS_CAMPAIGN_JOBS"/>
+                    </READ_VAL>
+                  </readRESTResponse>
+                </TO_DOCVAR>
+                <APPEND_TO_XML DocVar="thisReturn">
+                  <TO_XML Select="$Campaign_Result"/>
+                </APPEND_TO_XML>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+          </THEN>
+          <ELSE>
+            <TO_DOCVAR AssignToVar="thisReturn">
+              <ERROR Value="Access Denied">
+                <Message Value="User does not have access to the resource"/>
+              </ERROR>
+            </TO_DOCVAR>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

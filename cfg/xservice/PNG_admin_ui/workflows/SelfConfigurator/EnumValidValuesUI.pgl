@@ -1,0 +1,231 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_form" source="studio.controller:load">
+  <ui:container id="topContainer">
+    <ui:step displayText="ENUM_VALID_VALUES" id="enumControls">
+      <ui:field-group>
+        <ui:hidden-field id="enumJsonValue" name="enumJsonValue" value="{$root/enumJsonValue/@Value}"/>
+        <ui:hidden-field id="sourcePropertiesVal" name="sourcePropertiesVal" value="{$root/Source_Property/@Value}"/>
+      </ui:field-group>
+      <ui:field-group columns="2" width="28%">
+        <ui:dropdown id="enumType" name="enumType" displayText="SC_VALID_VALUES" title="SC_TABLE_CLASS_HOV" value="{$root/ENUM_TYPE/@Value}" onChange="javascipt:onChangeValidValues(this);">
+          <ui:option id="Constant" value="Constant"/>
+          <ui:option id="Lookup" value="Lookup"/>
+          <ui:option id="Reference" value="Reference"/>
+        </ui:dropdown>
+        <ui:field-space/>
+        <ui:dropdown id="sourceTab" name="sourceTab" displayText="SC_SOURCE_TAB" title="SC_SOURCE_TAB_HOV" selectOne="true" optionSrc="$root/RESPONSE/DOCUMENT" value="{$root/Source_Table/@Value}" required="true" onChange="javascript:on_ChangTableName(this);"/>
+        <ui:field-space/>
+        <ui:dropdown id="sourceProperties" name="sourceProperties" displayText="SC_SOURCE_PROP" required="true" selectOne="true" title="SC_SOURCE_PROP_HOV"/>
+        <ui:field-space/>
+        <ui:dropdown id="codeSet" name="codeSet" selectOne="true" displayText="SC_CODE_SET_VALUE" title="SC_CODE_SET_VALUE_HOV" required="true" optionSrc="$root/CODE_SETS/NAME" value="{$root/Code_Set/@Value}"/>
+        <ui:field-space/>
+        <ui:entry-field id="constantValue" displayText="SC_CONSTANT_VALUE" name="constantValue" title="SC_CONSATNT_VALUE_HOV" />
+        <ui:button id="addConstant" name="addConstant" displayText="SC_ADD" onClick="javascript:onAddConstant()"/>
+        <ui:dropdown id="constant" displayText="SC_CONSATNT_VALUES" name="constant" size="10" title="SC_CONSATNT_VALUES_HOV" optionSrc="$root/OPTIONS/OPTION" style="width:100px" onClick="javascript:on_selectConstants();"/>
+        <ui:field-group id="as">
+          <ui:button id="up" name="up" displayText="Up" disabled="true" onClick="javascript:moveUp();"/>
+          <ui:button id="down" name="down" displayText="Down" disabled="true" onClick="javascript:moveDown();"/>
+          <ui:button id="delete" name="delete" displayText="SC_DELETE" disabled="true" onClick="javascript:onDeleteEnum()"/>
+        </ui:field-group>
+      </ui:field-group>
+      <ui:buttons>
+        <ui:button id="back" displayText="SC_CLOSE" onClick="javascript:onBack()"/>
+        <ui:button id="delete" displayText="SC_DELETE"  displayCondition="{$root/ENUM_DEFINED/@Value}" onClick="javascript:onDelete()"/>
+        <ui:button id="save" displayText="SC_SAVE" onClick="javascript:onSave()"/>
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+    
+var refernceFlag = false;
+
+function onAddConstant(){
+	var newOption   = document.createElement('OPTION');
+	var value = $('#constantValue').val();
+    if(value != null &amp;&amp;  value.length &gt; 0){
+		value = value.trim();
+		newOption.text  =value;
+		newOption.value = value;
+		newOption.title = value;
+		document.getElementById(&quot;constant&quot;).options.add(newOption);
+		$('#constantValue').val(&quot;&quot;);
+    }
+}    
+    
+function onLoad(){
+
+var enumJsonVal = document.getElementById(&quot;enumJsonValue&quot;).value;
+if( typeof $(&quot;#enumJsonValue&quot;).val() != &quot;undefined&quot; &amp;&amp; enumJsonVal.length > 0){
+
+window.opener.setEnumValue(enumJsonVal);
+window.close();
+}else{
+var enumObj = document.getElementById(&quot;enumType&quot;);
+onChangeValidValues(enumObj);
+    
+if(enumObj != null  &amp;&amp; enumObj.value ==='Reference'){
+var docObj = document.getElementById(&quot;sourceTab&quot;)
+refernceFlag = true;
+on_ChangTableName(docObj);
+}
+    
+}
+}
+    
+function onBack(){
+window.close();
+}
+    
+function onDelete(){
+window.opener.setEnumValue(&quot;&quot;);
+window.close();
+}
+    
+function onSave(){
+var enumType = document.getElementById(&quot;enumType&quot;).value;
+if(enumType ==='Constant'){
+for(h=0;h&lt;document.getElementById('constant').options.length;h++)
+{
+document.getElementById('constant').options[h].selected=true;
+}
+document.getElementById(&quot;codeSet&quot;).removeAttribute('required');
+document.getElementById(&quot;sourceTab&quot;).removeAttribute('required');
+document.getElementById(&quot;sourceProperties&quot;).removeAttribute('required');
+    
+}else if(enumType ==='Lookup'){
+document.getElementById(&quot;sourceTab&quot;).removeAttribute('required');
+document.getElementById(&quot;sourceProperties&quot;).removeAttribute('required');
+}
+else{
+document.getElementById(&quot;codeSet&quot;).removeAttribute('required');
+}
+if(isValid_enumControls()){
+document.form.BUTTON_ID.value = 'save';
+document.form.submit();
+}
+}
+
+
+    
+function onDeleteEnum(){
+var selValue = document.getElementById(&quot;constant&quot;).value;
+$(&quot;option[value=&quot;+selValue+&quot;]&quot;).remove();
+}
+    
+    
+function onChangeValidValues(thisObj){
+var selectedValue = thisObj.value;
+if(selectedValue === 'Lookup'){
+hideConstantField();
+$(&quot;[id='constantValue_td']&quot;).hide();
+$(&quot;[id='addConstant']&quot;).hide();
+$(&quot;[id='sourceTab_td']&quot;).parent().hide();
+$(&quot;[id='sourceProperties_td']&quot;).parent().hide();
+$(&quot;[id='codeSet_td']&quot;).parent().show();
+enableSelect2();
+}
+else if(selectedValue === 'Reference'){
+hideConstantField()
+$(&quot;[id='constantValue_td']&quot;).hide();
+$(&quot;[id='addConstant']&quot;).hide();
+$(&quot;[id='codeSet_td']&quot;).parent().hide()
+$(&quot;[id='sourceTab_td']&quot;).parent().show()
+$(&quot;[id='sourceProperties_td']&quot;).parent().show()
+enableSelect2();
+}
+else{
+$(&quot;[id='constantValue_td']&quot;).show();
+$(&quot;[id='addConstant']&quot;).show();
+$(&quot;[id='sourceTab_td']&quot;).parent().hide()
+$(&quot;[id='sourceProperties_td']&quot;).parent().hide()
+$(&quot;[id='codeSet_td']&quot;).parent().hide()
+showConstantField();
+}
+}
+function hideConstantField(){
+$('[id=&quot;constant_td&quot;]').hide();
+$('#up').hide();
+$('#down').hide();
+$('#delete').hide();
+$(&quot;[id='constantLsit_td']&quot;).hide();
+}
+    
+function showConstantField(){
+$('[id=&quot;constant_td&quot;]').show();
+$('#up').show();
+$('#down').show();
+$('#delete').show();
+$(&quot;[id='constantLsit_td']&quot;).show();
+}
+    
+    
+    
+    
+function on_ChangTableName(selectedTab){
+var tableName = selectedTab.value;
+    
+var request='&lt;REQUEST Name=&quot;getDocumentPropSelfConfReq&quot;  ServiceName=&quot;BPE_META&quot;>' +
+'&lt;TabName Value=&quot;' +tableName+ '&quot;/>'+
+'&lt;/REQUEST>';
+    
+var xpath=&quot;/RESPONSES/RESPONSE/COLUMNS_NAME&quot;;
+SendAjaxRequest('BPE_META',request,'callBackChangeTableName',xpath);
+        
+}
+	
+function callBackChangeTableName(node)
+{
+var skipNameArr = [&quot;SOURCE&quot;,&quot;SYS_AUTH_ID&quot;,&quot;CREATED_BY&quot;,&quot;CREATION_DATE&quot;,&quot;SYS_ERR_SEVERITY&quot;,&quot;SYS_ERR_CODE&quot;,&quot;SYS_TYPE&quot;,&quot;LAST_MODIFIED_DATE&quot;,&quot;LAST_MODIFIED_BY&quot;,&quot;ENTITY_STATE&quot;,&quot;SYS_TARGET_ID&quot;];
+document.getElementById(&quot;sourceProperties&quot;).options.length =0;
+var newOption   = document.createElement('OPTION');
+newOption.text  = 'Select...';
+jQuery.each($(node).find('NAME'), function(i, eachOption) {
+if (eachOption.length != 0) {
+var newOption   = document.createElement('OPTION');
+   
+newOption.text  =$(eachOption).attr(&quot;Value&quot;);
+newOption.value = $(eachOption).attr(&quot;Value&quot;);
+newOption.title = newOption.text;
+var value =newOption.value;
+        	
+var index = $.inArray(value, skipNameArr);
+var val = value.substring(0,10);
+if(!(val === "EXT_ATTRB_")  &amp;&amp; (index === -1) ){
+	document.getElementById(&quot;sourceProperties&quot;).options.add(newOption);
+}
+    
+}
+});
+
+if(refernceFlag){
+var propVal = $('#sourcePropertiesVal').val();
+$('#sourceProperties').val(propVal);
+}
+}
+function moveUp()
+{
+var index = document.form.constant.selectedIndex;
+var opt;
+
+if (index > 0) {
+opt = document.form.constant.options[index];
+document.form.constant.insertBefore(opt, document.form.constant.options[--index]);
+}}
+    
+function moveDown()
+{
+var index = document.form.constant.selectedIndex;
+var opt;
+
+if (index &lt;document.form.constant.options.length-1) {
+opt = document.form.constant.options[index];
+document.form.constant.insertBefore(opt, document.form.constant.options[index+1].nextSibling);
+}}
+    
+function on_selectConstants(){
+tduiToggleButtonState( 'up', 'enabled');
+tduiToggleButtonState( 'down', 'enabled');
+tduiToggleButtonState( 'delete', 'enabled');
+}
+    
+</ui:script>
+</ui:page-group>

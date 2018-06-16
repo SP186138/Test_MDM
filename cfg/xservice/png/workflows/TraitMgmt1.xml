@@ -1,0 +1,1258 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="6" ShowInBreadCrumbs="true" Version="1.0" Name="TraitMgmt1" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="TraitMgmt1">
+    <variable Name="legalEntNbr" Type="string" Comment=""/>
+    <variable Name="mktngPgmNbr" Type="string" Comment=""/>
+    <variable Name="PREDFND_TRT_MSG" Type="string" Comment=""/>
+    <variable Name="TRT_MSG" Type="string" Comment=""/>
+    <variable Name="GBL_TRT_NBR" Type="string" Comment=""/>
+    <variable Name="GBL_TRT_NAME" Type="string" Comment=""/>
+    <variable Name="matchedDomainValues" Type="xml" Comment=""/>
+    <variable Name="mktngPgmValues" Type="xml" Comment=""/>
+    <variable Name="region" Type="string" Comment=""/>
+    <variable Name="dispMktngPgm" Type="string" Comment=""/>
+    <variable Name="dispLegalEnt" Type="string" Comment=""/>
+    <variable Name="dispRequest" Type="string" Comment=""/>
+    <variable Name="displayType" Type="string" Comment=""/>
+    <variable Name="GBL_TRT_NAME_LOCAL" Type="string" Comment=""/>
+    <variable Name="chkPredfndVal" Type="string" Comment=""/>
+    <variable Name="trt_detail" Type="xml" Comment=""/>
+    <variable Name="TBL_TRT_IN_DUMMY" Type="xml" Comment=""/>
+    <variable Name="selected_LEGAL_ENT" Type="string" Comment=""/>
+    <variable Name="selected_MKTNG_PGM" Type="string" Comment=""/>
+    <variable Name="TRT_NBR_11" Type="string" Comment=""/>
+    <variable Name="TRT_NAME_11" Type="string" Comment=""/>
+    <variable Name="LEGAL_ENT_11" Type="string" Comment=""/>
+    <variable Name="MKTNG_PGM_11" Type="string" Comment=""/>
+    <variable Name="STATUS_11" Type="string" Comment=""/>
+    <variable Name="TRT_ID" Type="string" Comment=""/>
+    <variable Name="PREDFND_TRT_ID" Type="string" Comment=""/>
+    <variable Name="TRT_NAME_LOCAL_11" Type="string" Comment=""/>
+    <variable Name="DISPLAY_TYPE_11" Type="string" Comment=""/>
+    <variable Name="chkModify" Type="string" Comment=""/>
+    <variable Name="TRT_NBR_21" Type="string" Comment=""/>
+    <variable Name="TRT_NAME_21" Type="string" Comment=""/>
+    <variable Name="TRT_NAME_LOCAL_21" Type="string" Comment=""/>
+    <variable Name="LEGAL_ENT_21" Type="string" Comment=""/>
+    <variable Name="MKTNG_PGM_21" Type="string" Comment=""/>
+    <variable Name="DISPLAY_TYPE_21" Type="string" Comment=""/>
+    <variable Name="dispAddPreTrt" Type="string" Comment=""/>
+    <variable Name="MOD_TRT_MSG" Type="string" Comment=""/>
+    <variable Name="ID_11" Type="string" Comment=""/>
+    <variable Name="CNSMR_CLCT_IND" Type="string" Comment=""/>
+    <variable Name="CnsmrVar" Type="string" Comment=""/>
+    <variable Name="selected_cnsmr_trt" Type="string" Comment=""/>
+    <variable Name="Selected_PRDFN_TRT_IND" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start0">
+      <actions>
+        <action>
+          <REQUEST Name="getMatchedDomains" ServiceName="BCM_MASTER" AssignToVar="domainValues"/>
+          <TO_DOCVAR AssignToVar="matchedDomainValues">
+            <TO_XML SelectList="$domainValues"/>
+          </TO_DOCVAR>
+          <REQUEST Name="getMarketingPrograms" ServiceName="BCM_MASTER" AssignToVar="mktngPgms"/>
+          <TO_DOCVAR AssignToVar="mktngPgmValues">
+            <TO_XML SelectList="$mktngPgms"/>
+          </TO_DOCVAR>
+          <SET Var="dispLegalEnt" FromValue="N"/>
+          <SET Var="dispMktngPgm" FromValue="N"/>
+          <SET Var="chkPredfndVal" FromValue="true"/>
+          <SET Var="dispRequest" FromValue="true"/>
+          <SET Var="dispAddPreTrt" FromValue="false"/>
+          <GET_DOC_SMART AssignToVar="TBL_TRT_IN_DUMMY" Name="TRT_IN_DUMMY" ServiceName="BCM_MASTER" DirtyRead="true" HandleException="true">
+            <SELECT>
+              <TRT_NBR/>
+              <TRT_NAME/>
+              <LEGAL_ENT_NBR/>
+              <MKTNG_PGM_NBR/>
+              <STATUS/>
+            </SELECT>
+          </GET_DOC_SMART>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="CreateTrait1"/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="CreateTrait1" ShowInBreadCrumbs="HIDE" Template="CreateTrait1.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <root/>
+          </TO_DOCVAR>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <TO_XML SelectList="$matchedDomainValues/*"/>
+            <TO_XML SelectList="$mktngPgmValues/*"/>
+          </APPEND_TO_XML>
+          <IF_TEST Test="$userAction='BACK'">
+            <THEN>
+              <SET Var="chkPredfndVal" FromValue="true"/>
+              <SET Var="dispRequest" FromValue="false"/>
+              <GET_DOC_SMART AssignToVar="TBL_TRT_IN_DUMMY" Name="TRT_IN_DUMMY" ServiceName="BCM_MASTER" DirtyRead="true" HandleException="true">
+                <SELECT>
+                  <ID/>
+                  <TRT_NBR/>
+                  <TRT_NAME/>
+                  <TRT_NAME_LOCAL/>
+                  <LEGAL_ENT_NBR/>
+                  <MKTNG_PGM_NBR/>
+                  <DISPLAY_TYPE/>
+                  <STATUS/>
+                  <CNSMR_CLCT_IND/>
+                </SELECT>
+              </GET_DOC_SMART>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="LEGAL_ENT"/>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="MKTNG_PGM"/>
+              <APPEND_TO_XML DocVar="thisParam">
+                <TO_XML SelectList="$thisReturn/*"/>
+              </APPEND_TO_XML>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <TO_XML SelectList="$TBL_TRT_IN_DUMMY/*"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='LOAD_TRT_LE'">
+            <THEN>
+              <SET Var="dispMktngPgm" FromValue="Y"/>
+              <!-- <SET Var="legalEntNbr" FromValue="{$matchedDomainValues/LEGAL_ENT[LEGAL_ENT_NAME/@Value=$thisParam/LEGAL_ENT/@Value]/LEGAL_ENT_NBR/@Value}" /> -->
+              <SET Var="legalEntNbr" FromValue="{$matchedDomainValues/LEGAL_ENT[LEGAL_ENT_NAME/@Value=$thisParam/LEGAL_ENT/@Value]/LEGAL_ENT_NBR/@Value}"/>
+              <SET Var="mktngPgmNbr" FromValue="####"/>
+              <IF_TEST Test="$legalEntNbr = '' or $legalEntNbr = null">
+                <THEN>
+                  <SET Var="dispMktngPgm" FromValue="N"/>
+                </THEN>
+                <ELSE>
+                  <EXECUTE_SQL_QUERY AssignToVar="trait" Value="SELECT TRT_NBR, TRT_NAME FROM TRT WHERE TRT_NBR IN (SELECT DISTINCT TRT_NBR FROM LEGAL_ENT_TRAIT_MAP WHERE LEGAL_ENT_NBR={$legalEntNbr/@Value}) order by TRT_NBR;"/>
+                </ELSE>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="trt_detail">
+                <TO_XML SelectList="$trait"/>
+              </TO_DOCVAR>
+              <!--<APPEND_TO_XML DocVar="pglFormInput">
+                <TO_XML SelectList="$trt_detail/*" />
+              </APPEND_TO_XML>-->
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='LOAD_TRT_MP'">
+            <THEN>
+              <SET Var="dispLegalEnt" FromValue="Y"/>
+              <SET Var="mktngPgmNbr" FromValue="{$mktngPgmValues/MKTNG_PGM[MKTNG_PGM_NAME/@Value=$thisParam/MKTNG_PGM/@Value]/MKTNG_PGM_NBR/@Value}"/>
+              <SET Var="legalEntNbr" FromValue="####"/>
+              <IF_TEST Test="$mktngPgmNbr = '' or $mktngPgmNbr = null">
+                <THEN>
+                  <SET Var="dispLegalEnt" FromValue="N"/>
+                </THEN>
+                <ELSE>
+                  <EXECUTE_SQL_QUERY AssignToVar="trait" Value="SELECT TRT_NBR, TRT_NAME FROM TRT WHERE TRT_NBR IN (SELECT DISTINCT TRT_NBR FROM MKTNG_PGM_TRAIT_MAP WHERE MKTNG_PGM_NBR={$mktngPgmNbr/@Value}) order by TRT_NBR;"/>
+                </ELSE>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="trt_detail">
+                <TO_XML SelectList="$trait"/>
+              </TO_DOCVAR>
+              <!--<APPEND_TO_XML DocVar="pglFormInput">
+                <TO_XML SelectList="$trt_detail/*" />
+              </APPEND_TO_XML>-->
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='TRT_Change'">
+            <THEN>
+              <SET Var="TRT_NUM" FromSelect="$thisParam/TRT_NBR/@Value"/>
+              <SET Var="GBL_TRT_NAME_LOCAL" FromValue="{$trt_detail/SQL_RESULT[TRT_NBR/@Value=$thisParam/TRT_NBR/@Value]/TRT_NAME/@Value}"/>
+              <!--<SET Var="TRT_NAME" FromValue="{$trt_detail/SQL_RESULT[TRT_NBR/@Value=$thisParam/TRT_NBR/@Value]/TRT_NAME/@Value}"/>
+      
+      <APPEND_TO_XML DocVar="pglFormInput">
+        <TRT_NAME Value="{$TRT_NAME/@Value}"/>
+      </APPEND_TO_XML> -->
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='SAVE'">
+            <THEN>
+              <SET Var="TRT_NUM" FromSelect="$thisParam/TRT_NBR/@Value"/>
+              <SET Var="TRT_NAME" FromSelect="$thisParam/TRT_NAME/@Value"/>
+              <SET Var="TRT_NAME_LOCAL" FromSelect="$thisParam/TRT_NAME_LOCAL/@Value"/>
+              <SET Var="DISPLAY_TYPE" FromSelect="$thisParam/DISPLAY_TYPE/@Value"/>
+              <SET Var="Status" FromValue="Saved"/>
+              <!--SET Var="CNSMR_CLCT_IND" FromValue="{$thisParam/CNSMR_PRVD_TRT/@Value}"/-->
+              <SET Var="CNSMR_CLCT_IND" FromSelect="ifElse($thisParam/CNSMR_PRVD_TRT/@Value = 'true','true','false')"/>
+              <IF_TEST Test="$CNSMR_CLCT_IND = 'true'">
+                <THEN>
+                  <SET Var="CNSMR_CLCT_IND" FromValue="Y"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$CNSMR_CLCT_IND = 'false'">
+                <THEN>
+                  <SET Var="CNSMR_CLCT_IND" FromValue="N"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/CHK_PREDFND_TRT/@Value = 'true'">
+                <THEN>
+                  <SET Var="PRDFN_TRT_IND" FromValue="Y"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="PRDFN_TRT_IND" FromValue="N"/>
+                </ELSE>
+              </IF_TEST>
+              <!--<IF_TEST Test="$TRT_NUM=''">
+        <THEN>
+          <SET Var="TRT_NUM" FromValue="0" />
+        </THEN>
+      </IF_TEST>-->
+              <IF_TEST Test="$legalEntNbr='####'">
+                <THEN>
+                  <SET Var="legalEntNbr1" FromValue=""/>
+                </THEN>
+                <ELSE>
+                  <SET Var="legalEntNbr1" FromValue="{$legalEntNbr/@Value}"/>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$mktngPgmNbr='####'">
+                <THEN>
+                  <SET Var="mktngPgmNbr1" FromValue=""/>
+                </THEN>
+                <ELSE>
+                  <SET Var="mktngPgmNbr1" FromValue="{$mktngPgmNbr/@Value}"/>
+                </ELSE>
+              </IF_TEST>
+              <CREATE_DOCUMENT_ID AssignToVar="TRT_ID" Name="TRT_ID"/>
+              <!--
+      <SET Var="TRT_ID" FromValue="1"/>
+      <EXECUTE_SQL_QUERY AssignToVar="maxId" Value="SEl MAX(ID)+1 AS MAX_ID FROM TRT_IN_DUMMY;"></EXECUTE_SQL_QUERY>
+              <FOR_EACH CurrentElement="currElem" SelectList="$maxId/SQL_RESULT">
+                <SET Var="maxIdVal" FromValue="$currElem/MAX_ID/@Value"/>
+              </FOR_EACH>-->
+              <ADD_DOC_SMART Name="TRT_IN_DUMMY" AssignToVar="trt_in_d_ins" ServiceName="BCM_MASTER" HandleException="true">
+                <ID Value="{$TRT_ID}"/>
+                <TRT_NBR Value="{$TRT_NUM}"/>
+                <TRT_NAME_LOCAL Value="{$TRT_NAME_LOCAL}"/>
+                <TRT_NAME Value="{$TRT_NAME}"/>
+                <LEGAL_ENT_NBR Value="{$legalEntNbr1}"/>
+                <MKTNG_PGM_NBR Value="{$mktngPgmNbr1}"/>
+                <DISPLAY_TYPE Value="{$DISPLAY_TYPE}"/>
+                <STATUS Value="{$Status}"/>
+                <CNSMR_CLCT_IND Value="{$CNSMR_CLCT_IND}"/>
+                <PRDFN_TRT_IND Value="{$PRDFN_TRT_IND}"/>
+              </ADD_DOC_SMART>
+              <IF_TEST Test="$trt_in_d_ins/@Status='Success' ">
+                <THEN>
+                  <SET Var="TRT_MSG" FromValue="Record has been saved."/>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$trt_in_d_ins/@Status='Error'">
+                    <THEN>
+                      <SET Var="TRT_MSG" FromValue="Trait Text(English) field does not allow untransable character"/>
+                    </THEN>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='REQUEST'">
+            <THEN>
+              <SET Var="TRT_NUM" FromSelect="$thisParam/TRT_NBR/@Value"/>
+              <SET Var="TRT_NAME" FromSelect="$thisParam/TRT_NAME/@Value"/>
+              <SET Var="TRT_NAME_LOCAL" FromSelect="$thisParam/TRT_NAME_LOCAL/@Value"/>
+              <SET Var="DISPLAY_TYPE" FromSelect="$thisParam/DISPLAY_TYPE/@Value"/>
+              <SET Var="Status" FromValue="Pending For Approval"/>
+              <!--SET Var="CNSMR_CLCT_IND" FromSelect="$thisParam/CNSMR_PRVD_TRT/@Value" /-->
+              <!--<SET Var="CNSMR_CLCT_IND" FromValue="{$thisParam/CNSMR_CLCT_IND/@Value}"/>-->
+              <SET Var="CNSMR_CLCT_IND" FromSelect="ifElse($thisParam/CNSMR_PRVD_TRT/@Value = 'true','true','false')"/>
+              <IF_TEST Test="$CNSMR_CLCT_IND = 'true'">
+                <THEN>
+                  <SET Var="CNSMR_CLCT_IND" FromValue="Y"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$CNSMR_CLCT_IND = 'false'">
+                <THEN>
+                  <SET Var="CNSMR_CLCT_IND" FromValue="N"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/CHK_PREDFND_TRT/@Value = 'true'">
+                <THEN>
+                  <SET Var="PRDFN_TRT_IND" FromValue="Y"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="PRDFN_TRT_IND" FromValue="N"/>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$legalEntNbr='####'">
+                <THEN>
+                  <SET Var="legalEntNbr1" FromValue=""/>
+                </THEN>
+                <ELSE>
+                  <SET Var="legalEntNbr1" FromValue="{$legalEntNbr/@Value}"/>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$mktngPgmNbr='####'">
+                <THEN>
+                  <SET Var="mktngPgmNbr1" FromValue=""/>
+                </THEN>
+                <ELSE>
+                  <SET Var="mktngPgmNbr1" FromValue="{$mktngPgmNbr/@Value}"/>
+                </ELSE>
+              </IF_TEST>
+              <!--<EXECUTE_SQL_QUERY AssignToVar="maxId" Value="SEl MAX(ID)+1 AS MAX_ID FROM TRT_IN_DUMMY;"></EXECUTE_SQL_QUERY>
+              <FOR_EACH CurrentElement="currElem" SelectList="$maxId/SQL_RESULT">
+<SET Var="maxIdVal" FromValue="$currElem/MAX_ID/@Value"/>
+</FOR_EACH>-->
+              <CREATE_DOCUMENT_ID AssignToVar="TRT_ID" Name="TRT_ID"/>
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="TRT_IN_INS" DocumentName="TRT_IN" ServiceName="BCM_MASTER" Source="EXTERNAL" HandleException="true">
+                <ID Value="{$TRT_ID}"/>
+                <TRT_NBR Value="{$TRT_NUM}"/>
+                <TRT_NAME Value="{$TRT_NAME}"/>
+                <TRT_NAME_LOCAL Value="{$TRT_NAME_LOCAL}"/>
+                <DISPLAY_TYPE Value="{$DISPLAY_TYPE}"/>
+                <LEGAL_ENT_NBR Value="{$legalEntNbr1}"/>
+                <MKTNG_PGM_NBR Value="{$mktngPgmNbr1}"/>
+                <CNSMR_CLCT_IND Value="{$CNSMR_CLCT_IND}"/>
+                <PRDFN_TRT_IND Value="{$PRDFN_TRT_IND}"/>
+              </DO_DB_PERSIST>
+              <IF_TEST Test="$TRT_IN_INS/@Status='Success'">
+                <THEN>
+                  <SET Var="TRT_MSG" FromValue="Record has been sent for approval."/>
+                </THEN>
+                <ELSE>
+                  <SET Var="TRT_MSG" FromValue="Record not sent for approval. Please check input data."/>
+                </ELSE>
+              </IF_TEST>
+              <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+                <TRT_NBR/>
+                <TRT_NAME/>
+                <TRT_NAME_LOCAL/>
+                <CNSMR_CLCT_IND Value="{$CNSMR_CLCT_IND}"/>
+                <LEGAL_ENT_NBR Value="{$legalEntNbr1/@Value}" AddOn="true"/>
+                <MKTNG_PGM_NBR Value="{$mktngPgmNbr1/@Value}" AddOn="true"/>
+              </FORM_SEARCH_FILTER>
+              <TO_DOCVAR AssignToVar="filterList">
+                <FILTERLIST/>
+              </TO_DOCVAR>
+              <FOR_EACH SelectList="$filters/FILTER" CurrentElement="thisFilter">
+                <APPEND_TO_XML SelectList="$filterList">
+                  <TO_XML SelectList="$thisFilter/*"/>
+                </APPEND_TO_XML>
+              </FOR_EACH>
+              <GET_DOCUMENT AssignToVar="GET_TRT_IN_DUMMY" Name="TRT_IN_DUMMY" ServiceName="BCM_MASTER" HandleException="true">
+                <TO_XML SelectList="$filterList/*"/>
+              </GET_DOCUMENT>
+              <SET Var="Status" FromValue="Pending For Approval"/>
+              <SET Var="count1" FromValue="{count($GET_TRT_IN_DUMMY/TRT_IN_DUMMY)}"/>
+              <IF_TEST Test="$count1='0'">
+                <THEN>
+                  <ADD_DOC_SMART Name="TRT_IN_DUMMY" AssignToVar="trt_in_d_ins" ServiceName="BCM_MASTER" HandleException="true">
+                    <ID Value="{$TRT_ID}"/>
+                    <TRT_NBR Value="{$TRT_NUM}"/>
+                    <TRT_NAME Value="{$TRT_NAME}"/>
+                    <TRT_NAME_LOCAL Value="{$TRT_NAME_LOCAL}"/>
+                    <DISPLAY_TYPE Value="{$DISPLAY_TYPE}"/>
+                    <LEGAL_ENT_NBR Value="{$legalEntNbr1}"/>
+                    <MKTNG_PGM_NBR Value="{$mktngPgmNbr1}"/>
+                    <STATUS Value="{$Status}"/>
+                    <CNSMR_CLCT_IND Value="{$CNSMR_CLCT_IND}"/>
+                    <PRDFN_TRT_IND Value="{$PRDFN_TRT_IND}"/>
+                  </ADD_DOC_SMART>
+                </THEN>
+                <ELSE>
+                  <MODIFY_DOC_SMART Name="TRT_IN_DUMMY" AssignToVar="trt_in_d_updt" ServiceName="BCM_MASTER" HandleException="true">
+                    <DOCUMENT_CONTEXT>
+                      <TRT_NBR Value="{$TRT_NUM}"/>
+                      <TRT_NAME_LOCAL Value="{$TRT_NAME_LOCAL}"/>
+                      <TRT_NAME Value="{$TRT_NAME}"/>
+                      <DISPLAY_TYPE Value="{$DISPLAY_TYPE}"/>
+                      <LEGAL_ENT_NBR Value="{$legalEntNbr1}"/>
+                      <MKTNG_PGM_NBR Value="{$mktngPgmNbr1}"/>
+                      <CNSMR_CLCT_IND Value="{$CNSMR_CLCT_IND}"/>
+                    </DOCUMENT_CONTEXT>
+                    <UPDATE_PROPERTIES>
+                      <STATUS Value="{$Status}"/>
+                    </UPDATE_PROPERTIES>
+                  </MODIFY_DOC_SMART>
+                </ELSE>
+              </IF_TEST>
+              <MODIFY_DOC_SMART Name="PREDFND_TRT_VAL_IN_DUMMY" AssignToVar="trt_in_d_updt" ServiceName="BCM_MASTER" HandleException="true">
+                <DOCUMENT_CONTEXT>
+                  <TRT_NBR Value="{$TRT_NUM}"/>
+                  <TRT_NAME Value="{$TRT_NAME_LOCAL}"/>
+                  <LEGAL_ENT_NBR Value="{$legalEntNbr1}"/>
+                  <MKTNG_PGM_NBR Value="{$mktngPgmNbr1}"/>
+                  <!--<PREDFND_TRT_VAL_NBR Value="{$PREDFND_TRT_NBR}" />
+                  <PREDFND_TRT_VAL_NAME Value="{$PREDFND_TRT_VAL_NAME}" />
+                  <PREDFND_TRT_VAL_NAME_LOCAL Value="{$PREDFND_TRT_VAL_NAME_LOCAL}" />-->
+                </DOCUMENT_CONTEXT>
+                <UPDATE_PROPERTIES>
+                  <STATUS Value="{$Status}"/>
+                </UPDATE_PROPERTIES>
+              </MODIFY_DOC_SMART>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='Chk_PREDFND_TRT'">
+            <THEN>
+              <SET Var="chkPredfndVal" FromValue="{$thisParam/CHK_PREDFND_TRT/@Value}"/>
+              <IF_TEST Test="$chkPredfndVal='true'">
+                <THEN>
+                  <SET Var="dispRequest" FromValue="true"/>
+                  <SET Var="dispAddPreTrt" FromValue="false"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="dispRequest" FromValue="false"/>
+                  <SET Var="dispAddPreTrt" FromValue="true"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <!--IF_TEST Test="$userAction='Chk_CNSMR_PRVD_TRT'">
+            <THEN>
+              <SET Var="chkCnsmrPrvdTrtVal" FromValue="{$thisParam/Chk_CNSMR_PRVD_TRT/@Value}" />
+              <IF_TEST Test="$chkCnsmrPrvdTrtVal='true'">
+                <THEN>
+                  <SET Var="dispCnsmr" FromValue="Y" />
+                </THEN>
+                <ELSE>
+                  <SET Var="dispCnsmr" FromValue="N" />
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST-->
+          <IF_TEST Test="$thisParam/START_WORKFLOW/@Value!='' and $userAction!='BACK'">
+            <THEN>
+              <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+                <FILTER_TRT_NBR/>
+                <FILTER_TRT_NAME/>
+                <FILTER_TRT_NAME_LOCAL/>
+                <FILTER_LEGAL_ENT_NBR/>
+                <FILTER_MKTNG_PGM_NBR/>
+                <FILTER_DISPLAY_TYPE/>
+                <FILTER_STATUS/>
+              </FORM_SEARCH_FILTER>
+              <FOR_EACH SelectList="$filters/*/*" CurrentElement="currentSearchColumn">
+                <SET_NAME DocVar="currentSearchColumn" FromValue="{substringAfter($currentSearchColumn/name(),'FILTER_')}"/>
+              </FOR_EACH>
+              <TO_DOCVAR AssignToVar="filterList">
+                <FILTERLIST/>
+              </TO_DOCVAR>
+              <FOR_EACH SelectList="$filters/FILTER" CurrentElement="thisFilter">
+                <APPEND_TO_XML SelectList="$filterList">
+                  <TO_XML SelectList="$thisFilter/*"/>
+                </APPEND_TO_XML>
+              </FOR_EACH>
+              <SET Var="startRow1" FromValue="{$thisParam/START_COUNT/@Value}"/>
+              <GET_DOC_SMART AssignToVar="TBL_TRT_IN_DUMMY" Name="TRT_IN_DUMMY" ServiceName="BCM_MASTER" DirtyRead="true" HandleException="true" MaxRows="10" StartAtRow="{$startRow1}" ReturnRowCount="yes">
+                <TO_XML SelectList="$filterList/*"/>
+                <SELECT>
+                  <ID/>
+                  <TRT_NBR/>
+                  <TRT_NAME/>
+                  <TRT_NAME_LOCAL/>
+                  <LEGAL_ENT_NBR/>
+                  <MKTNG_PGM_NBR/>
+                  <DISPLAY_TYPE/>
+                  <STATUS/>
+                  <CNSMR_CLCT_IND/>
+                  <PRDFN_TRT_IND/>
+                </SELECT>
+              </GET_DOC_SMART>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <TO_XML SelectList="$TBL_TRT_IN_DUMMY/*"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <SET Var="selected_LEGAL_ENT" FromValue="{$thisParam/LEGAL_ENT/@Value}"/>
+          <SET Var="selected_MKTNG_PGM" FromValue="{$thisParam/MKTNG_PGM/@Value}"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='BACK'">
+            <THEN>
+              <IF_TEST Test="$CNSMR_CLCT_IND ='Y'">
+                <THEN>
+                  <SET Var="CNSMR_CLCT_IND" FromValue="true"/>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <dispMktngPgm Value="{$dispMktngPgm/@Value}"/>
+            <dispLegalEnt Value="{$dispLegalEnt/@Value}"/>
+            <dispRequest Value="{$dispRequest/@Value}"/>
+            <chkPredfndVal Value="{$chkPredfndVal/@Value}"/>
+            <chkCnsmrPrvdTrtVal Value="{$chkCnsmrPrvdTrtVal/@Value}"/>
+            <legalEntNbr Value="{$legalEntNbr/@Value}"/>
+            <mktngPgmNbr Value="{$mktngPgmNbr/@Value}"/>
+            <displayType Value="{$displayType/@Value}"/>
+            <TRT_NBR Value="{$GBL_TRT_NBR/@Value}"/>
+            <TRT_NAME Value="{$GBL_TRT_NAME/@Value}"/>
+            <TRT_NAME_LOCAL Value="{$GBL_TRT_NAME_LOCAL/@Value}"/>
+            <Message Value="{$TRT_MSG/@Value}"/>
+            <TO_XML SelectList="$trt_detail/*"/>
+            <dispAddPreTrt Value="{$dispAddPreTrt/@Value}"/>
+            <RowCount Value="{$TBL_TRT_IN_DUMMY/@TotalRowCount}"/>
+            <CNSMR_PRVD_TRT Value="{$CNSMR_CLCT_IND/@Value}"/>
+          </APPEND_TO_XML>
+          <!--<PRINTLN DocVar="pglFormInput" ToVar="varPglFormIN" />-->
+          <PRINT_TO_FILE File="myFile_TRT.txt" NewFile="yes" SameLine="yes" Value="{$pglFormInput}" Beautify="true"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="GBL_TRT_NBR" FromValue="{$thisParam/TRT_NBR/@Value}"/>
+          <SET Var="GBL_TRT_NAME" FromValue="{$thisParam/TRT_NAME/@Value}"/>
+          <SET Var="GBL_TRT_NAME_LOCAL" FromValue="{$thisParam/TRT_NAME_LOCAL/@Value}"/>
+          <IF_TEST Test="$thisParam/DISPLAY_TYPE/@Value!='' and $displayType!=$thisParam/DISPLAY_TYPE/@Value">
+            <THEN>
+              <SET Var="displayType" FromSelect="$thisParam/DISPLAY_TYPE/@Value"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='MODIFY'">
+            <THEN>
+              <SET Var="TRT_NBR_11" FromValue="{substringBefore($thisParam/selected_TRT_REQ/@Value, '#')}"/>
+              <SET Var="TRT_NBR_11" FromValue="{substringAfter($TRT_NBR_11, '=')}"/>
+              <SET Var="selected_ID_11" FromValue="{substringAfter($thisParam/selected_TRT_REQ/@Value, '#')}"/>
+              <SET Var="TRT_NAME_11" FromValue="{substringBefore($selected_ID_11/@Value, '#')}"/>
+              <SET Var="TRT_NAME_11" FromValue="{substringAfter($TRT_NAME_11, '=')}"/>
+              <SET Var="selected_ID_12" FromValue="{substringAfter($selected_ID_11/@Value, '#')}"/>
+              <SET Var="TRT_NAME_LOCAL_11" FromValue="{substringBefore($selected_ID_12/@Value, '#')}"/>
+              <SET Var="TRT_NAME_LOCAL_11" FromValue="{substringAfter($TRT_NAME_LOCAL_11, '=')}"/>
+              <SET Var="selected_ID_13" FromValue="{substringAfter($selected_ID_12/@Value, '#')}"/>
+              <SET Var="LEGAL_ENT_11" FromValue="{substringBefore($selected_ID_13/@Value, '#')}"/>
+              <SET Var="LEGAL_ENT_11" FromValue="{substringAfter($LEGAL_ENT_11, '=')}"/>
+              <IF_TEST Test="$LEGAL_ENT_11/@Value != '' ">
+                <THEN>
+                  <SET Var="LEGAL_ENT_11" FromValue="{$matchedDomainValues/LEGAL_ENT[LEGAL_ENT_NBR/@Value=$LEGAL_ENT_11/@Value]/LEGAL_ENT_NAME/@Value}"/>
+                </THEN>
+              </IF_TEST>
+              <!--<SET Var="LEGAL_ENT_11" FromValue="{$matchedDomainValues/LEGAL_ENT[LEGAL_ENT_NBR/@Value=$LEGAL_ENT_11/@Value]/LEGAL_ENT_NAME/@Value}"/>-->
+              <SET Var="selected_ID_14" FromValue="{substringAfter($selected_ID_13/@Value, '#')}"/>
+              <SET Var="selected_cnsmr_trt" FromValue="{substringBefore(substringAfter($selected_ID_13/@Value, '#CNSMR_CLCT_IND='),'#PRDFN_TRT_IND=N')}"/>
+              <SET Var="Selected_PRDFN_TRT_IND" FromValue="{substringAfter($selected_ID_13, 'PRDFN_TRT_IND=')}"/>
+              <SET Var="MKTNG_PGM_11" FromValue="{substringBefore($selected_ID_14/@Value, '#')}"/>
+              <SET Var="MKTNG_PGM_11" FromValue="{substringAfter($MKTNG_PGM_11, '=')}"/>
+              <IF_TEST Test="$selected_cnsmr_trt='Y'">
+                <THEN>
+                  <SET Var="CnsmrVar" FromValue="true"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="CnsmrVar" FromValue="false"/>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test=" $MKTNG_PGM_11/@Value != '' ">
+                <!--$MKTNG_PGM_11/@Value != null or-->
+                <THEN>
+                  <SET Var="MKTNG_PGM_11" FromValue="{$mktngPgmValues/MKTNG_PGM[MKTNG_PGM_NBR/@Value=$MKTNG_PGM_11/@Value]/MKTNG_PGM_NAME/@Value}"/>
+                </THEN>
+              </IF_TEST>
+              <!--<SET Var="MKTNG_PGM_11" FromValue="{$mktngPgmValues/MKTNG_PGM[MKTNG_PGM_NBR/@Value=$MKTNG_PGM_11/@Value]/MKTNG_PGM_NAME/@Value}"/>-->
+              <SET Var="selected_ID_15" FromValue="{substringAfter($selected_ID_14/@Value, '#')}"/>
+              <SET Var="DISPLAY_TYPE_11" FromValue="{substringBefore($selected_ID_15/@Value, '#')}"/>
+              <SET Var="DISPLAY_TYPE_11" FromValue="{substringAfter($DISPLAY_TYPE_11, '=')}"/>
+              <SET Var="selected_ID_16" FromValue="{substringAfter($selected_ID_15/@Value, '#')}"/>
+              <SET Var="STATUS_11" FromValue="{substringBefore($selected_ID_16/@Value, '#')}"/>
+              <SET Var="STATUS_11" FromValue="{substringAfter($STATUS_11, '=')}"/>
+              <SET Var="ID_11" FromValue="{substringAfter($selected_ID_16/@Value, '#')}"/>
+              <!--SET Var="ID_11" FromValue="{substringBefore($ID_11, '#CNSMR_CLCT_IND')}"/-->
+              <SET Var="ID_11" FromValue="{substringAfter(substringBefore($ID_11,'#CNSMR_CLCT_IND'),'ID=')}"/>
+              <IF_TEST Test="$STATUS_11='APPROVED' or $STATUS_11='Sent For Approval' or $STATUS_11='Pending For Approval' ">
+                <THEN>
+                  <SET Var="TRT_MSG" FromValue="Record can't be modified. Record is either Approved or Pending  for Approval"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="userAction" FromValue="MODIFY_1"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='SAVE'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="CreateTrait1" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='REQUEST'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="CreateTrait1" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ADD_PREDFND_TRT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="CreatePredfndTrait" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Chk_PREDFND_TRT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="CreateTrait1" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='TRT_Change'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="CreateTrait1" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_TRT_LE'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="CreateTrait1" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_TRT_MP'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="CreateTrait1" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction =''">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='MODIFY'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="CreateTrait1" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='MODIFY_1'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ModifyTrait" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Chk_CNSMR_PRVD_TRT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="CreateTrait1" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done2" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <done Name="done2">
+      <actions/>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="CreatePredfndTrait" ShowInBreadCrumbs="HIDE" Template="CreatePredfndTrait.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <root/>
+          </TO_DOCVAR>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <TO_XML SelectList="$matchedDomainValues/*"/>
+            <TO_XML SelectList="$mktngPgmValues/*"/>
+            <TRT_NBR Value="{$GBL_TRT_NBR/@Value}"/>
+            <TRT_NAME Value="{$GBL_TRT_NAME/@Value}"/>
+            <LEGAL_ENTITY_NBR Value="{$legalEntNbr/@Value}"/>
+            <MKTNG_PGM_NBR Value="{$mktngPgmNbr/@Value}"/>
+          </APPEND_TO_XML>
+          <IF_TEST Test="$userAction='ADD_PREDFND_TRT' ">
+            <THEN>
+              <SET Var="TRT_NBR_21" FromValue="{$thisParam/TRT_NBR/@Value}"/>
+              <SET Var="TRT_NAME_21" FromValue="{$thisParam/TRT_NAME/@Value}"/>
+              <SET Var="TRT_NAME_LOCAL_21" FromValue="{$thisParam/TRT_NAME_LOCAL/@Value}"/>
+              <SET Var="DISPLAY_TYPE_21" FromValue="{$thisParam/DISPLAY_TYPE/@Value}"/>
+              <SET Var="LEGAL_ENT_21" FromValue="{$thisParam/LEGAL_ENT/@Value}"/>
+              <SET Var="MKTNG_PGM_21" FromValue="{$thisParam/MKTNG_PGM/@Value}"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='SAVE'">
+            <THEN>
+              <SET Var="TRT_NUM" FromSelect="$thisParam/TRT_NBR/@Value"/>
+              <SET Var="TRT_NAME" FromSelect="$thisParam/TRT_NAME_LOCAL/@Value"/>
+              <SET Var="PREDFND_TRT_NBR" FromSelect="$thisParam/PREDFND_TRT_VAL_NBR/@Value"/>
+              <SET Var="PREDFND_TRT_TXT" FromSelect="$thisParam/PREDFND_TRT_TXT/@Value"/>
+              <SET Var="PREDFND_TRT_TXT_LOCAL" FromSelect="$thisParam/PREDFND_TRT_TXT_LOCAL/@Value"/>
+              <SET Var="Status" FromValue="Saved"/>
+              <!--<IF_TEST Test="$TRT_NUM=''">
+                <THEN>
+                  <SET Var="TRT_NUM" FromValue="0" />
+                </THEN>
+              </IF_TEST>-->
+              <IF_TEST Test="$LEGAL_ENT_21='' or $LEGAL_ENT_21='####'">
+                <THEN>
+                  <SET Var="legalEntNbr1" FromValue=""/>
+                </THEN>
+                <ELSE>
+                  <SET Var="legalEntNbr1" FromValue="{$matchedDomainValues/LEGAL_ENT[LEGAL_ENT_NAME/@Value=$LEGAL_ENT_21/@Value]/LEGAL_ENT_NBR/@Value}"/>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$MKTNG_PGM_21='' or $MKTNG_PGM_21='####'">
+                <THEN>
+                  <SET Var="mktngPgmNbr1" FromValue=""/>
+                </THEN>
+                <ELSE>
+                  <SET Var="mktngPgmNbr1" FromValue="{$mktngPgmValues/MKTNG_PGM[MKTNG_PGM_NAME/@Value=$MKTNG_PGM_21/@Value]/MKTNG_PGM_NBR/@Value}"/>
+                </ELSE>
+              </IF_TEST>
+              <CREATE_DOCUMENT_ID AssignToVar="PREDFND_TRT_ID" Name="PREDFND_TRT_ID"/>
+              <!--<SET Var="PRE_TRT_ID" FromValue="1"/>
+      <EXECUTE_SQL_QUERY AssignToVar="maxId" Value="SEl MAX(ID)+1 AS MAX_ID FROM TRT_IN_DUMMY;"></EXECUTE_SQL_QUERY>
+              <FOR_EACH CurrentElement="currElem" SelectList="$maxId/SQL_RESULT">
+<SET Var="maxIdVal" FromValue="$currElem/MAX_ID/@Value"/>
+</FOR_EACH>-->
+              <ADD_DOC_SMART Name="PREDFND_TRT_VAL_IN_DUMMY" AssignToVar="predfnd_trt_in_d_ins" ServiceName="BCM_MASTER" HandleException="true">
+                <ID Value="{$PREDFND_TRT_ID}"/>
+                <TRT_NBR Value="{$TRT_NUM}"/>
+                <TRT_NAME Value="{$TRT_NAME}"/>
+                <LEGAL_ENT_NBR Value="{$legalEntNbr1}"/>
+                <MKTNG_PGM_NBR Value="{$mktngPgmNbr1}"/>
+                <PREDFND_TRT_VAL_NBR Value="{$PREDFND_TRT_NBR}"/>
+                <PREDFND_TRT_TXT Value="{$PREDFND_TRT_TXT}"/>
+                <PREDFND_TRT_TXT_LOCAL Value="{$PREDFND_TRT_TXT_LOCAL}"/>
+                <STATUS Value="{$Status}"/>
+              </ADD_DOC_SMART>
+              <ADD_DOC_SMART Name="PREDFND_TRT_VAL_IN" AssignToVar="predfnd_trt_in_ins" ServiceName="BCM_MASTER" HandleException="true">
+                <ID Value="{$PREDFND_TRT_ID}"/>
+                <TRT_NBR Value="{$TRT_NUM}"/>
+                <TRT_NAME Value="{$TRT_NAME}"/>
+                <LEGAL_ENT_NBR Value="{$legalEntNbr1}"/>
+                <MKTNG_PGM_NBR Value="{$mktngPgmNbr1}"/>
+                <PREDFND_TRT_VAL_NBR Value="{$PREDFND_TRT_NBR}"/>
+                <PREDFND_TRT_TXT Value="{$PREDFND_TRT_TXT}"/>
+                <PREDFND_TRT_TXT_LOCAL Value="{$PREDFND_TRT_TXT_LOCAL}"/>
+              </ADD_DOC_SMART>
+              <IF_TEST Test="$predfnd_trt_in_d_ins/@Status='Success' and $predfnd_trt_in_ins/@Status='Success'">
+                <THEN>
+                  <SET Var="PREDFND_TRT_MSG" FromValue="Record has been saved."/>
+                </THEN>
+                <ELSE>
+                  <SET Var="PREDFND_TRT_MSG" FromValue="Record not saved. Please check input data."/>
+                </ELSE>
+              </IF_TEST>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="PREDFND_TRT_VAL_NBR"/>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="PREDFND_TRT_TXT"/>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="PREDFND_TRT_TXT_LOCAL"/>
+            </THEN>
+          </IF_TEST>
+          <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+            <TRT_NBR/>
+            <TRT_NAME Value="{$thisParam/TRT_NAME_LOCAL/@Value}" AddOn="true"/>
+          </FORM_SEARCH_FILTER>
+          <TO_DOCVAR AssignToVar="filterList">
+            <FILTERLIST/>
+          </TO_DOCVAR>
+          <FOR_EACH SelectList="$filters/FILTER" CurrentElement="thisFilter">
+            <APPEND_TO_XML SelectList="$filterList">
+              <TO_XML SelectList="$thisFilter/*"/>
+            </APPEND_TO_XML>
+          </FOR_EACH>
+          <GET_DOC_SMART AssignToVar="TBL_PREDFND_TRT_IN_DUMMY" Name="PREDFND_TRT_VAL_IN_DUMMY" ServiceName="BCM_MASTER" DirtyRead="true" HandleException="true">
+            <TO_XML SelectList="$filterList/*"/>
+            <SELECT>
+              <TRT_NBR/>
+              <TRT_NAME/>
+              <LEGAL_ENT_NBR/>
+              <MKTNG_PGM_NBR/>
+              <PREDFND_TRT_VAL_NBR/>
+              <PREDFND_TRT_TXT/>
+              <PREDFND_TRT_TXT_LOCAL/>
+              <STATUS/>
+            </SELECT>
+          </GET_DOC_SMART>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <TO_XML SelectList="$TBL_PREDFND_TRT_IN_DUMMY/*"/>
+            <legalEntNbr Value="{$legalEntNbr/@Value}"/>
+            <mktngPgmNbr Value="{$mktngPgmNbr/@Value}"/>
+            <dispMktngPgm Value="{$dispMktngPgm/@Value}"/>
+            <dispLegalEnt Value="{$dispLegalEnt/@Value}"/>
+            <Message Value="{$PREDFND_TRT_MSG/@Value}"/>
+            <TO_XML SelectList="$thisParam/*"/>
+          </APPEND_TO_XML>
+          <REMOVE_CHILDREN DocVar="thisParam" ChildName="LEGAL_ENT"/>
+          <REMOVE_CHILDREN DocVar="thisParam" ChildName="MKTNG_PGM"/>
+          <APPEND_TO_XML DocVar="thisParam">
+            <LEGAL_ENT Value="{$LEGAL_ENT_21/@Value}"/>
+            <MKTNG_PGM Value="{$MKTNG_PGM_21/@Value}"/>
+          </APPEND_TO_XML>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="thisReturn">
+            <root/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$userAction='BACK'">
+            <THEN>
+              <IF_TEST Test="$chkModify='Y'">
+                <THEN>
+                  <SET Var="userAction" FromValue="BACK_1"/>
+                </THEN>
+                <ELSE>
+                  <APPEND_TO_XML DocVar="thisReturn">
+                    <LEGAL_ENT Value="{$LEGAL_ENT_21/@Value}"/>
+                    <MKTNG_PGM Value="{$MKTNG_PGM_21/@Value}"/>
+                  </APPEND_TO_XML>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction =''">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='SAVE'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="CreatePredfndTrait" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='REQUEST'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='BACK'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="CreateTrait1" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='BACK_1'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ModifyTrait" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="ModifyTrait" ShowInBreadCrumbs="HIDE" Template="ModifyTrait.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <root/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$userAction='MODIFY_1' or $userAction='MODIFY' or $userAction='BACK_1' or $userAction='BACK'">
+            <THEN>
+              <!--<SET Var="TRT_NBR_11" FromValue="{substringBefore($thisParam/selected_TRT_REQ/@Value, '#')}"/>
+<SET Var="TRT_NBR_11" FromValue="{substringAfter($TRT_NBR_11, '=')}"/>
+<SET Var="selected_ID_11" FromValue="{substringAfter($thisParam/selected_TRT_REQ/@Value, '#')}"/>
+<SET Var="TRT_NAME_11" FromValue="{substringBefore($selected_ID_11/@Value, '#')}"/>
+<SET Var="TRT_NAME_11" FromValue="{substringAfter($TRT_NAME_11, '=')}"/>
+<SET Var="selected_ID_12" FromValue="{substringAfter($selected_ID_11/@Value, '#')}"/>
+<SET Var="LEGAL_ENT_11" FromValue="{substringBefore($selected_ID_12/@Value, '#')}"/>
+<SET Var="LEGAL_ENT_11" FromValue="{substringAfter($LEGAL_ENT_11, '=')}"/>
+<SET Var="selected_ID_13" FromValue="{substringAfter($selected_ID_12/@Value, '#')}"/>
+<SET Var="MKTNG_PGM_11" FromValue="{substringBefore($selected_ID_13/@Value, '#')}"/>
+<SET Var="MKTNG_PGM_11" FromValue="{substringAfter($MKTNG_PGM_11, '=')}"/>
+<SET Var="STATUS_11" FromValue="{substringAfter($selected_ID_13/@Value, '#')}"/>
+<SET Var="STATUS_11" FromValue="{substringAfter($STATUS_11, '=')}"/> -->
+              <IF_TEST Test="$LEGAL_ENT_11 != '' ">
+                <THEN>
+                  <SET Var="dispLegalEnt" FromValue="N"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="dispLegalEnt" FromValue="Y"/>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$MKTNG_PGM_11 != '' ">
+                <THEN>
+                  <SET Var="dispMktngPgm" FromValue="N"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="dispMktngPgm" FromValue="Y"/>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='BACK'">
+                <THEN>
+                  <IF_TEST Test="$selected_cnsmr_trt ='Y'">
+                    <THEN>
+                      <SET Var="CnsmrVar" FromValue="true"/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="CnsmrVar" FromValue="false"/>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+              </IF_TEST>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <TO_XML SelectList="$matchedDomainValues/*"/>
+                <TO_XML SelectList="$mktngPgmValues/*"/>
+                <TRT_NBR Value="{$TRT_NBR_11/Value}"/>
+                <TRT_NAME_LOCAL Value="{$TRT_NAME_LOCAL_11/@Value}"/>
+                <legalEntNbr Value="{$LEGAL_ENT_11/@Value}"/>
+                <mktngPgmNbr Value="{$MKTNG_PGM_11/@Value}"/>
+                <displayType Value="{$DISPLAY_TYPE_11/@Value}"/>
+                <TRT_NAME Value="{$TRT_NAME_11/@Value}"/>
+                <dispLegalEnt Value="{$dispLegalEnt/@Value}"/>
+                <dispMktngPgm Value="{$dispMktngPgm/@Value}"/>
+                <CNSMR_CLCT_IND Value="{$CnsmrVar/@Value}"/>
+                <PRDFN_TRT_IND Value="{$Selected_PRDFN_TRT_IND/@Value}"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='SAVE'">
+            <THEN>
+              <SET Var="TRT_NUM" FromSelect="$thisParam/TRT_NBR/@Value"/>
+              <SET Var="TRT_NAME" FromSelect="$thisParam/TRT_NAME/@Value"/>
+              <SET Var="TRT_NAME_LOCAL" FromSelect="$thisParam/TRT_NAME_LOCAL/@Value"/>
+              <SET Var="DISPLAY_TYPE" FromSelect="$thisParam/DISPLAY_TYPE/@Value"/>
+              <SET Var="Status" FromValue="Saved"/>
+              <IF_TEST Test="$LEGAL_ENT_11=''">
+                <THEN>
+                  <SET Var="legalEntNbr1" FromValue=""/>
+                </THEN>
+                <ELSE>
+                  <SET Var="legalEntNbr1" FromValue="{$matchedDomainValues/LEGAL_ENT[LEGAL_ENT_NAME/@Value=$LEGAL_ENT_11/@Value]/LEGAL_ENT_NBR/@Value}"/>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$MKTNG_PGM_11=''">
+                <THEN>
+                  <SET Var="mktngPgmNbr1" FromValue=""/>
+                </THEN>
+                <ELSE>
+                  <SET Var="mktngPgmNbr1" FromValue="{$matchedDomainValues/MKTNG_PGM[MKTNG_PGM_NAME/@Value=$MKTNG_PGM_11/@Value]/MKTNG_PGM_NBR/@Value}"/>
+                </ELSE>
+              </IF_TEST>
+              <SET Var="Cnsmr" FromSelect="ifElse($thisParam/CNSMR_CLCT_IND/@Value = 'true','true','false')"/>
+              <IF_TEST Test="$Cnsmr = 'true'">
+                <THEN>
+                  <SET Var="selected_cnsmr_trt" FromValue="Y"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$Cnsmr = 'false'">
+                <THEN>
+                  <SET Var="selected_cnsmr_trt" FromValue="N"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/PRDFN_TRT_IND/@Value = 'Y'">
+                <THEN>
+                  <SET Var="PRDFN_TRT_IND" FromValue="Y"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="PRDFN_TRT_IND" FromValue="N"/>
+                </ELSE>
+              </IF_TEST>
+              <MODIFY_DOC_SMART Name="TRT_IN_DUMMY" AssignToVar="trt_in_d_upd" ServiceName="BCM_MASTER">
+                <DOCUMENT_CONTEXT>
+                  <ID Value="{$ID_11/@Value}"/>
+                  <!--<TRT_NAME_LOCAL Value="TRT_NAME_LOCAL_11"/>-->
+                </DOCUMENT_CONTEXT>
+                <UPDATE_PROPERTIES>
+                  <TRT_NBR Value="{$TRT_NUM}"/>
+                  <TRT_NAME Value="{$TRT_NAME}"/>
+                  <TRT_NAME_LOCAL Value="{$TRT_NAME_LOCAL}"/>
+                  <DISPLAY_TYPE Value="{$DISPLAY_TYPE}"/>
+                  <STATUS Value="{$Status}"/>
+                  <CNSMR_CLCT_IND Value="{$selected_cnsmr_trt}"/>
+                  <PRDFN_TRT_IND Value="{$PRDFN_TRT_IND}"/>
+                </UPDATE_PROPERTIES>
+              </MODIFY_DOC_SMART>
+              <IF_TEST Test="$trt_in_d_upd/@Status='Success' ">
+                <THEN>
+                  <SET Var="MOD_TRT_MSG" FromValue="Record has been modified/saved."/>
+                </THEN>
+                <ELSE>
+                  <SET Var="MOD_TRT_MSG" FromValue="Record not saved. Please check input data."/>
+                </ELSE>
+              </IF_TEST>
+              <SET Var="TRT_NBR_11" FromValue="{$TRT_NUM/@Value}"/>
+              <SET Var="TRT_NAME_11" FromValue="{$TRT_NAME/@Value}"/>
+              <SET Var="TRT_NAME_LOCAL_11" FromValue="{$TRT_NAME_LOCAL/@Value}"/>
+              <SET Var="DISPLAY_TYPE_11" FromValue="{$DISPLAY_TYPE/@Value}"/>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <Message Value="{$MOD_TRT_MSG/@Value}"/>
+                <TO_XML SelectList="$matchedDomainValues/*"/>
+                <TO_XML SelectList="$mktngPgmValues/*"/>
+                <TRT_NBR Value="{$TRT_NBR_11/Value}"/>
+                <TRT_NAME_LOCAL Value="{$TRT_NAME_LOCAL_11/@Value}"/>
+                <legalEntNbr Value="{$LEGAL_ENT_11/@Value}"/>
+                <mktngPgmNbr Value="{$MKTNG_PGM_11/@Value}"/>
+                <displayType Value="{$DISPLAY_TYPE_11/@Value}"/>
+                <TRT_NAME Value="{$TRT_NAME_11/@Value}"/>
+                <dispLegalEnt Value="{$dispLegalEnt/@Value}"/>
+                <dispMktngPgm Value="{$dispMktngPgm/@Value}"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='REQUEST'">
+            <THEN>
+              <SET Var="TRT_NUM" FromSelect="$thisParam/TRT_NBR/@Value"/>
+              <SET Var="TRT_NAME" FromSelect="$thisParam/TRT_NAME/@Value"/>
+              <SET Var="TRT_NAME_LOCAL" FromSelect="$thisParam/TRT_NAME_LOCAL/@Value"/>
+              <SET Var="DISPLAY_TYPE" FromSelect="$thisParam/DISPLAY_TYPE/@Value"/>
+              <SET Var="Status" FromValue="Pending For Approval"/>
+              <SET Var="CNSMR_CLCT_IND" FromSelect="ifElse($thisParam/CNSMR_CLCT_IND/@Value = 'true','true','false')"/>
+              <IF_TEST Test="$CNSMR_CLCT_IND = 'true'">
+                <THEN>
+                  <SET Var="CNSMR_CLCT_IND" FromValue="Y"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$CNSMR_CLCT_IND = 'false'">
+                <THEN>
+                  <SET Var="CNSMR_CLCT_IND" FromValue="N"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/PRDFN_TRT_IND/@Value = 'Y'">
+                <THEN>
+                  <SET Var="PRDFN_TRT_IND" FromValue="Y"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="PRDFN_TRT_IND" FromValue="N"/>
+                </ELSE>
+              </IF_TEST>
+              <!-- <IF_TEST Test="$TRT_NUM=''">
+                <THEN>
+                  <SET Var="TRT_NUM" FromValue="0" />
+                </THEN>
+              </IF_TEST>-->
+              <IF_TEST Test="$LEGAL_ENT_11=''">
+                <THEN>
+                  <SET Var="legalEntNbr1" FromValue=""/>
+                </THEN>
+                <ELSE>
+                  <SET Var="legalEntNbr1" FromValue="{$matchedDomainValues/LEGAL_ENT[LEGAL_ENT_NAME/@Value=$LEGAL_ENT_11/@Value]/LEGAL_ENT_NBR/@Value}"/>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$MKTNG_PGM_11=''">
+                <THEN>
+                  <SET Var="mktngPgmNbr1" FromValue=""/>
+                </THEN>
+                <ELSE>
+                  <SET Var="mktngPgmNbr1" FromValue="{$matchedDomainValues/MKTNG_PGM[MKTNG_PGM_NAME/@Value=$MKTNG_PGM_11/@Value]/MKTNG_PGM_NBR/@Value}"/>
+                </ELSE>
+              </IF_TEST>
+              <CREATE_DOCUMENT_ID AssignToVar="TRT_ID" Name="TRT_ID"/>
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="TRT_IN_INS" DocumentName="TRT_IN" ServiceName="BCM_MASTER" Source="EXTERNAL" HandleException="true">
+                <ID Value="{$TRT_ID}"/>
+                <TRT_NBR Value="{$TRT_NUM}"/>
+                <TRT_NAME Value="{$TRT_NAME}"/>
+                <TRT_NAME_LOCAL Value="{$TRT_NAME_LOCAL}"/>
+                <DISPLAY_TYPE Value="{$DISPLAY_TYPE}"/>
+                <LEGAL_ENT_NBR Value="{$legalEntNbr1}"/>
+                <MKTNG_PGM_NBR Value="{$mktngPgmNbr1}"/>
+                <CNSMR_CLCT_IND Value="{$CNSMR_CLCT_IND}"/>
+                <PRDFN_TRT_IND Value="{$PRDFN_TRT_IND}"/>
+              </DO_DB_PERSIST>
+              <IF_TEST Test="$TRT_IN_INS/@Status='Success'">
+                <THEN>
+                  <SET Var="MOD_TRT_MSG" FromValue="Record has been sent for approval."/>
+                </THEN>
+                <ELSE>
+                  <SET Var="MOD_TRT_MSG" FromValue="Record not sent for approval. Please check input data."/>
+                </ELSE>
+              </IF_TEST>
+              <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+                <TRT_NBR/>
+                <TRT_NAME_LOCAL/>
+                <LEGAL_ENT_NBR Value="{$legalEntNbr1/@Value}" AddOn="true"/>
+                <MKTNG_PGM_NBR Value="{$mktngPgmNbr1/@Value}" AddOn="true"/>
+              </FORM_SEARCH_FILTER>
+              <TO_DOCVAR AssignToVar="filterList">
+                <FILTERLIST/>
+              </TO_DOCVAR>
+              <FOR_EACH SelectList="$filters/FILTER" CurrentElement="thisFilter">
+                <APPEND_TO_XML SelectList="$filterList">
+                  <TO_XML SelectList="$thisFilter/*"/>
+                </APPEND_TO_XML>
+              </FOR_EACH>
+              <GET_DOCUMENT AssignToVar="GET_TRT_IN_DUMMY" Name="TRT_IN_DUMMY" ServiceName="BCM_MASTER" HandleException="true">
+                <!--<TO_XML SelectList="$filterList/*" />-->
+                <ID Value="{$ID_11/@Value}"/>
+              </GET_DOCUMENT>
+              <SET Var="Status" FromValue="Pending For Approval"/>
+              <SET Var="count1" FromValue="{count($GET_TRT_IN_DUMMY/TRT_IN_DUMMY)}"/>
+              <IF_TEST Test="$count1='0'">
+                <THEN>
+                  <CREATE_DOCUMENT_ID AssignToVar="TRT_ID" Name="TRT_ID"/>
+                  <ADD_DOC_SMART Name="TRT_IN_DUMMY" AssignToVar="trt_in_d_ins" ServiceName="BCM_MASTER" HandleException="true">
+                    <ID Value="{$TRT_ID}"/>
+                    <TRT_NBR Value="{$TRT_NUM}"/>
+                    <TRT_NAME Value="{$TRT_NAME}"/>
+                    <TRT_NAME_LOCAL Value="{$TRT_NAME_LOCAL}"/>
+                    <DISPLAY_TYPE Value="{$DISPLAY_TYPE}"/>
+                    <LEGAL_ENT_NBR Value="{$legalEntNbr1}"/>
+                    <MKTNG_PGM_NBR Value="{$mktngPgmNbr1}"/>
+                    <STATUS Value="{$Status}"/>
+                  </ADD_DOC_SMART>
+                </THEN>
+                <ELSE>
+                  <!--<MODIFY_DOC_SMART Name="TRT_IN_DUMMY" AssignToVar="trt_in_d_updt" ServiceName="BCM_MASTER" HandleException="true">
+                    <DOCUMENT_CONTEXT>
+                      
+                    </DOCUMENT_CONTEXT>
+                    <UPDATE_PROPERTIES>
+                      <STATUS Value="{$Status}"/>
+                    </UPDATE_PROPERTIES>
+                  </MODIFY_DOC_SMART>-->
+                  <MODIFY_DOC_SMART Name="TRT_IN_DUMMY" AssignToVar="trt_in_d_upd" ServiceName="BCM_MASTER">
+                    <DOCUMENT_CONTEXT>
+                      <ID Value="{$ID_11/@Value}"/>
+                      <!--<TRT_NAME_LOCAL Value="TRT_NAME_LOCAL_11"/>-->
+                    </DOCUMENT_CONTEXT>
+                    <UPDATE_PROPERTIES>
+                      <TRT_NBR Value="{$TRT_NUM}"/>
+                      <TRT_NAME Value="{$TRT_NAME}"/>
+                      <TRT_NAME_LOCAL Value="{$TRT_NAME_LOCAL}"/>
+                      <DISPLAY_TYPE Value="{$DISPLAY_TYPE}"/>
+                      <STATUS Value="{$Status}"/>
+                    </UPDATE_PROPERTIES>
+                  </MODIFY_DOC_SMART>
+                </ELSE>
+              </IF_TEST>
+              <MODIFY_DOC_SMART Name="PREDFND_TRT_VAL_IN_DUMMY" AssignToVar="trt_in_d_updt" ServiceName="BCM_MASTER" HandleException="true">
+                <DOCUMENT_CONTEXT>
+                  <TRT_NBR Value="{$TRT_NUM}"/>
+                  <TRT_NAME Value="{$TRT_NAME}"/>
+                  <LEGAL_ENT_NBR Value="{$legalEntNbr1}"/>
+                  <MKTNG_PGM_NBR Value="{$mktngPgmNbr1}"/>
+                </DOCUMENT_CONTEXT>
+                <UPDATE_PROPERTIES>
+                  <STATUS Value="{$Status}"/>
+                </UPDATE_PROPERTIES>
+              </MODIFY_DOC_SMART>
+              <SET Var="TRT_NBR_11" FromValue="{$TRT_NUM/@Value}"/>
+              <SET Var="TRT_NAME_11" FromValue="{$TRT_NAME/@Value}"/>
+              <SET Var="TRT_NAME_LOCAL_11" FromValue="{$TRT_NAME_LOCAL/@Value}"/>
+              <SET Var="DISPLAY_TYPE_11" FromValue="{$DISPLAY_TYPE/@Value}"/>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <Message Value="{$MOD_TRT_MSG/@Value}"/>
+                <TO_XML SelectList="$matchedDomainValues/*"/>
+                <TO_XML SelectList="$mktngPgmValues/*"/>
+                <TRT_NBR Value="{$TRT_NBR_11/Value}"/>
+                <TRT_NAME_LOCAL Value="{$TRT_NAME_LOCAL_11/@Value}"/>
+                <legalEntNbr Value="{$LEGAL_ENT_11/@Value}"/>
+                <mktngPgmNbr Value="{$MKTNG_PGM_11/@Value}"/>
+                <displayType Value="{$DISPLAY_TYPE_11/@Value}"/>
+                <TRT_NAME Value="{$TRT_NAME_11/@Value}"/>
+                <dispLegalEnt Value="{$dispLegalEnt/@Value}"/>
+                <dispMktngPgm Value="{$dispMktngPgm/@Value}"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <!--<APPEND_TO_XML DocVar="pglFormInput">
+            <Message Value="{$MOD_TRT_MSG/@Value}"/>
+            <TO_XML SelectList="$matchedDomainValues/*"/>
+            <TO_XML SelectList="$mktngPgmValues/*"/>
+            <TRT_NBR Value="{$TRT_NBR_11/Value}"/>
+            <TRT_NAME_LOCAL Value="{$TRT_NAME_LOCAL_11/@Value}"/>
+            <legalEntNbr Value="{$LEGAL_ENT_11/@Value}"/>
+            <mktngPgmNbr Value="{$MKTNG_PGM_11/@Value}"/>
+            <displayType Value="{$DISPLAY_TYPE_11/@Value}"/>
+            <TRT_NAME Value="{$TRT_NAME_11/@Value}"/>
+            <dispLegalEnt Value="{$dispLegalEnt/@Value}"/>
+            <dispMktngPgm Value="{$dispMktngPgm/@Value}"/>
+          </APPEND_TO_XML>-->
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="chkModify" FromValue="Y"/>
+          <REMOVE_CHILDREN DocVar="thisParam" ChildName="LEGAL_ENT"/>
+          <REMOVE_CHILDREN DocVar="thisParam" ChildName="MKTNG_PGM"/>
+          <APPEND_TO_XML DocVar="thisParam">
+            <LEGAL_ENT Value="{$LEGAL_ENT_11/@Value}"/>
+            <MKTNG_PGM Value="{$MKTNG_PGM_11/@Value}"/>
+          </APPEND_TO_XML>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction =''">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='SAVE'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ModifyTrait" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='REQUEST'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ModifyTrait" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ADD_PREDFND_TRT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="CreatePredfndTrait" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='BACK_FRM_MOD_TRT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="CreateTrait1" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <start0 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="51,307" size="732,526">
+        <iconProps iconfile="z1start.gif"/>
+      </start0>
+      <CreateTrait1 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="254,306" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </CreateTrait1>
+      <done2 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="615,316">
+        <iconProps iconfile="z1end.gif"/>
+      </done2>
+      <CreatePredfndTrait font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="412,409" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </CreatePredfndTrait>
+      <ModifyTrait font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="644,204" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </ModifyTrait>
+    </mgcnodes>
+    <mgcconnectors>
+      <start0>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="96,329" endpoint="254,328" ctrlRect1="212,327,4,4" ctrlRect2="133,326,4,4"/>
+      </start0>
+      <CreateTrait1>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="276,306" endpoint="276,306" ctrlRect1="274,229,4,4" ctrlRect2="453,77,4,4" ctrlRect2Dirty="true" textRect="353,151,24,8">
+          <textProps text="$userAction ='SAVE'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="299,328" endpoint="299,328" ctrlRect1="372,326,4,4" ctrlRect2="67,662,4,4" ctrlRect2Dirty="true" textRect="208,492,27,8">
+          <textProps text="$userAction ='REQUEST'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="299,328" endpoint="412,431" ctrlRect1="381,326,4,4" ctrlRect2="346,487,4,4" ctrlRect2Dirty="true" textRect="348,404,35,8">
+          <textProps text="$userAction ='ADD_PREDFND_TRT'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="254,328" endpoint="254,328" ctrlRect1="177,326,4,4" ctrlRect2="140,434,4,4" ctrlRect2Dirty="true" textRect="143,378,35,8">
+          <textProps text="$userAction ='Chk_PREDFND_TRT'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="276,306" endpoint="276,306" ctrlRect1="274,229,4,4" ctrlRect2="352,144,4,4" ctrlRect2Dirty="true" textRect="300,184,30,8">
+          <textProps text="$userAction ='TRT_Change'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="254,328" endpoint="276,306" ctrlRect1="177,326,4,4" ctrlRect2="261,200,4,4" ctrlRect2Dirty="true" textRect="206,261,31,8">
+          <textProps text="$userAction ='LOAD_TRT_LE'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="276,306" endpoint="276,306" ctrlRect1="274,229,4,4" ctrlRect2="270,190,4,4" ctrlRect2Dirty="true" textRect="259,207,31,8">
+          <textProps text="$userAction ='LOAD_TRT_MP'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="299,328" endpoint="299,328" ctrlRect1="372,326,4,4" ctrlRect2="625,145,4,4" ctrlRect2Dirty="true" textRect="487,233,26,8">
+          <textProps text="$userAction ='MODIFY'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="299,328" endpoint="666,204" ctrlRect1="571,326,4,4" ctrlRect2="655,22,4,4" textRect="601,172,28,8" ctrlRect2Dirty="true">
+          <textProps text="$userAction ='MODIFY_1'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="299,328" endpoint="276,351" ctrlRect1="372,326,4,4" ctrlRect2="332,585,4,4" ctrlRect2Dirty="true" textRect="335,453,38,8">
+          <textProps text="$userAction ='Chk_CNSMR_PRVD_TRT'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="299,328" endpoint="615,338" ctrlRect1="534,326,4,4" ctrlRect2="376,336,4,4"/>
+      </CreateTrait1>
+      <CreatePredfndTrait>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="457,431" endpoint="457,431" ctrlRect1="530,429,4,4" ctrlRect2="564,509,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="434,409" endpoint="299,328" ctrlRect1="432,347,4,4" ctrlRect2="399,326,4,4" textRect="405,334,24,8">
+          <textProps text="$userAction ='BACK'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="434,409" endpoint="644,226" ctrlRect1="432,271,4,4" ctrlRect2="484,224,4,4" textRect="447,245,26,8">
+          <textProps text="$userAction ='BACK_1'"/>
+        </nextNodeView>
+      </CreatePredfndTrait>
+      <ModifyTrait>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="689,226" endpoint="689,226" ctrlRect1="762,224,4,4" ctrlRect2="849,225,4,4" ctrlRect2Dirty="true" textRect="795,222,24,8">
+          <textProps text="$userAction ='SAVE'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="666,204" endpoint="666,204" ctrlRect1="664,127,4,4" ctrlRect2="786,96,4,4" ctrlRect2Dirty="true" textRect="714,109,27,8">
+          <textProps text="$userAction ='REQUEST'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="644,226" endpoint="434,409" ctrlRect1="485,224,4,4" ctrlRect2="432,269,4,4" textRect="443,244,35,8">
+          <textProps text="$userAction ='ADD_PREDFND_TRT'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="644,226" endpoint="299,328" ctrlRect1="384,224,4,4" ctrlRect2="556,326,4,4" textRect="454,273,36,8">
+          <textProps text="$userAction ='BACK_FRM_MOD_TRT'"/>
+        </nextNodeView>
+      </ModifyTrait>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+      <action/>
+    </pre_actions>
+    <post_actions>
+      <action/>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

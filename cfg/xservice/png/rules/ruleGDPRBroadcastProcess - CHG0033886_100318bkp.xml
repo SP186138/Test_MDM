@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+ 	 Copyright (c) 2009 by Teradata Corporation. 
+	 All Rights Reserved. 
+	 Teradata CONFIDENTIAL AND TRADE SECRET 
+ -->
+  <DEFINE_METHOD Name="ruleGDPRBroadcastProcess">
+    <!--**********************************************************************************************************
+* 
+*		Created Date	: June 08, 2017
+*		Created By   	: Ankita Sadhwani
+*
+**********************************************************************************************************-->
+    <RULE>
+      <ACTION>
+        <REQUEST Name="WS_OUT_GDPR_GRS" ServiceName="BCM_MASTER" AssignToVar="errStatus">
+          <LoadId Value="{$thisParam/LoadId/@Value}"/>
+        </REQUEST>
+        <IF_TEST Test="$errStatus/@Status !='Success'">
+          <THEN>
+            <EXECUTE_SQL_QUERY Value="UPDATE etl_ctrl.extract_control SET ExtractSTATUS='Failed' WHERE EXTRACT_ID={$thisParam/LoadId/@Value}" AssignToVar="resUpd"/>
+            <SET Var="Description" FromValue="{$resUpd/@ShellReturnValue}"/>
+            <REQUEST Name="emailOnErrorNode" ServiceName="BCM_MASTER">
+              <LoadId Value="{$thisParam/LoadId/@Value}"/>
+              <Subject Value="GDPR Broadcast Failure"/>
+              <Short_Description Value="Webservice Invocation Failed"/>
+              <Description Value="Following Load Id failed :{$thisParam/LoadId/@Value}. Please verify the png_master.log and xserver.log at E:\Teradata\MDM\3.05.02\custom\pngrelease3\log on the MDM server."/>
+              <SubCategory Value="GDPR Broadcast Error"/>
+            </REQUEST>
+          </THEN>
+          <ELSE>
+          </ELSE>
+        </IF_TEST>
+        <REQUEST Name="WS_OUT_GDPR_DMC_EMAIL" ServiceName="BCM_MASTER" AssignToVar="errStatus">
+          <LoadId Value="{$thisParam/LoadId/@Value}"/>
+        </REQUEST>
+        <IF_TEST Test="$errStatus/@Status !='Success'">
+          <THEN>
+            <EXECUTE_SQL_QUERY Value="UPDATE etl_ctrl.extract_control SET ExtractSTATUS='Failed' WHERE EXTRACT_ID=1" AssignToVar="resUpd"/>
+            <!--<EXECUTE_SQL_QUERY Value="UPDATE ETL_CTRL.LOAD_CONTROL SET EDW_LOAD_STATUS='Failed', EDW_LOAD_ENDTS=CURRENT_TIMESTAMP(0) WHERE LOAD_ID={$thisParam/LoadId/@Value}" AssignToVar="resUpd"/>-->
+            <SET Var="Description" FromValue="{$resUpd/@ShellReturnValue}"/>
+            <!--<REQUEST Name="emailOnErrorNode" ServiceName="BCM_MASTER" AssignToVar="test">
+               <LoadId Value="{$thisParam/LoadId/@Value}"/>
+              <LoadId Value="1"/>
+              <Subject Value="GDPR Broadcast Failure"/>
+              <Short_Description Value="{$errStatus/Description/@Value}"/>
+              <Short_Description Value="Webservice Invocation Failed"/>
+              <Description Value="Following Load Id failed :{$thisParam/LoadId/@Value}. Please verify the png_master.log and xserver.log at E:\Teradata\MDM\3.05.02\custom\pngrelease3\log on the MDM server."/>
+              <Description Value="Following Load Id failed :1. Please verify the png_master.log and xserver.log at E:\Teradata\MDM\3.05.02\custom\pngrelease3\log on the MDM server."/>
+              <SubCategory Value="GDPR Broadcast Error"/>
+            </REQUEST>-->
+            <REQUEST Name="emailOnErrorNode" ServiceName="BCM_MASTER">
+              <LoadId Value="{$thisParam/LoadId/@Value}"/>
+              <Subject Value="GDPR Broadcast Failure"/>
+              <Short_Description Value="Webservice Invocation Failed"/>
+              <Description Value="Following Load Id failed :{$thisParam/LoadId/@Value}. Please verify the png_master.log and xserver.log at E:\Teradata\MDM\3.05.02\custom\pngrelease3\log on the MDM server."/>
+              <SubCategory Value="GDPR Broadcast Error"/>
+            </REQUEST>
+          </THEN>
+          <ELSE>
+          </ELSE>
+        </IF_TEST>
+        <REQUEST Name="WS_OUT_GDPR_DMC_PHONE" ServiceName="BCM_MASTER" AssignToVar="errStatus">
+          <LoadId Value="{$thisParam/LoadId/@Value}"/>
+        </REQUEST>
+        <IF_TEST Test="$errStatus/@Status !='Success'">
+          <THEN>
+            <EXECUTE_SQL_QUERY Value="UPDATE etl_ctrl.extract_control SET ExtractSTATUS='Failed' WHERE EXTRACT_ID=1" AssignToVar="resUpd"/>
+            <SET Var="Description" FromValue="{$resUpd/@ShellReturnValue}"/>
+            <REQUEST Name="emailOnErrorNode" ServiceName="BCM_MASTER">
+              <LoadId Value="{$thisParam/LoadId/@Value}"/>
+              <Subject Value="GDPR Broadcast Failure"/>
+              <Short_Description Value="Webservice Invocation Failed"/>
+              <Description Value="Following Load Id failed :{$thisParam/LoadId/@Value}. Please verify the png_master.log and xserver.log at E:\Teradata\MDM\3.05.02\custom\pngrelease3\log on the MDM server."/>
+              <SubCategory Value="GDPR Broadcast Error"/>
+            </REQUEST>
+          </THEN>
+          <ELSE>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

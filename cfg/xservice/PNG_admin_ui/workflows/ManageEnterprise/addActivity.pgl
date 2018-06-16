@@ -1,0 +1,85 @@
+<ui:page-group version="3" xmlns:ui="http://www.teradata.com/ui" Id="ui_form218.pgl">
+  <ui:container id="searchCont" displayText="Add Activity ">
+    <!--Line added for issue MDM-1937 by Ankur Goyal-->
+    <ui:help displayPage="{$pages: manageActivityHelp}"/>
+    <ui:step id="ItemStep">
+      <ui:field-group id="leftFields1" columns="3">
+        <ui:image src="/cancel.gif" displayCondition="{string-length($root/AlertRed/@Value) != 0}"/>
+        <ui:display-field value="{$root/AlertRed/@Value}" displayCondition="{string-length($root/AlertRed/@Value) != 0}" name="error" class="requiredIndicator"/>
+      </ui:field-group>
+      <ui:field-group>
+		<ui:entry-field displayText="Activity Id" maxlength="128" id="ID" name="ID" required="true" title="ManageActivityId" onChange="ValidityCheck();"/>
+		<ui:display-field id="validityChk" value="This Activity Id already exists." class="requiredIndicator"/>
+        <ui:entry-field displayText="Activity Name" name="NAME" id="NAME" required="true" maxlength="128" title="ManageActivityName"/>
+        <ui:dropdown displayText="Activity Type" id="ACTIVITY_TYPE" name="ACTIVITY_TYPE" required="true" selectOne="true" title="ManageActivityType">
+          <ui:option value="Admin"/>
+          <ui:option value="MenuForm"/>
+          <ui:option value="UIForm"/>
+        </ui:dropdown>
+      </ui:field-group>
+      <ui:validation/>
+      <ui:buttons>
+        <ui:button id="Cancel" displayText="Cancel" onClick="javascript:onMyBack()"/>
+        <ui:button id="Save" name="Save" displayText="Save" emphasized="true"/>
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+function onLoad()
+{
+toggleDisplayField('validityChk_td','hide');
+}
+    
+function onMyBack()
+{
+//document.location = omxContextPath + &quot;/view.x2ps?START_WORKFLOW=ManageActivity&amp;SOLUTION_NAME=MDM&amp;SERVICE_NAME=ADMIN_UI&quot;;
+loadMainContentPanel(omxContextPath + &quot;/view.x2ps?START_WORKFLOW=ManageActivity&amp;SOLUTION_NAME=MDM&amp;SERVICE_NAME=ADMIN_UI&quot;,'appFrame');
+}    
+function toggleDisplayField(id,state)
+{
+fieldCell  = document.getElementById(id);
+fieldRow = fieldCell.parentNode;
+toggleItemVisibility(fieldRow, state);
+var i = document.getElementById(id);
+if (state==&quot;hide&quot;)
+{
+//validation_clearFieldErrors(i);
+i.disabled = true;
+}
+else
+{
+i.disabled = false;
+i.enabled = true;
+}
+}
+function getUserGroupsCallback(node)
+{
+
+var test;
+//if(document.all){
+test=node[0].getAttribute(&quot;Value&quot;);
+//}
+//else{
+//x=node.getElementsByTagName('StatusFlagVal');
+//test=x[0].getAttribute(&quot;Value&quot;);
+//}
+if(test==&quot;TRUE&quot;)
+{
+toggleDisplayField('validityChk_td','show');
+}
+else
+{
+toggleDisplayField('validityChk_td','hide');
+}
+}
+function ValidityCheck()
+{
+var activityId = document.form.ID.value;
+var service_name = &quot;USER_SECURITY&quot;;
+var request= &quot;&lt;REQUEST Name='getDocumentAjaxValidation' ServiceName='USER_SECURITY' AssignToVar='loginReturnValue'>&lt;DocName Value='UserActivity' />&lt;ServName Value='USER_SECURITY' />&lt;property>&lt;ID Value='&quot;+activityId+&quot;' />&lt;/property>&lt;/REQUEST>&quot;
+var xpath = &quot;/RESPONSES/RESPONSE/StatusFlagVal&quot;;
+SendAjaxRequest(service_name,request,'getUserGroupsCallback',xpath);
+}
+     
+  </ui:script>
+</ui:page-group>

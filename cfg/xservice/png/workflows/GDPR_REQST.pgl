@@ -1,0 +1,25 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_form" source="studio.controller:load">
+  <ui:container id="topContainer">
+    <ui:step displayText="GDPR Request Type Link" id="basicControls">
+      <ui:field-group>
+        <ui:image src="/bpi_check.gif" displayCondition="{string-length($root/AlertGreen/@Value) != 0}" id="checkImg"/>
+        <ui:display-field value="{$root/AlertGreen/@Value}" displayCondition="{string-length($root/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen" align="left"/>
+        <ui:image src="/cancel.gif" displayCondition="{string-length($root/AlertRed/@Value) != 0}"/>
+        <ui:display-field value="{$root/AlertRed/@Value}" displayCondition="{string-length($root/AlertRed/@Value) != 0}" name="error" class="requiredIndicatorRed"/>
+      </ui:field-group>
+      <ui:field-group id="Create">
+        <ui:field-group id="left fields">
+          <ui:entry-field id="HNDLR_ID" displayText="Handler ID" name="HNDLR_ID" editable="false"/>
+          <ui:entry-field id="CNTRY_NAME" displayText="Country" name="CNTRY_NAME" editable="false"/>
+          <ui:dropdown id="GDPR_RQST_TYPE_CD" name="GDPR_RQST_TYPE_CD" displayText="Request Type" optionSrc="$root/Request_TypeNAMES/SQL_RESULT/*" selectOne="true" required="true">
+          </ui:dropdown>
+        </ui:field-group>
+      </ui:field-group>
+      <ui:buttons id="buttons">
+        <ui:button id="Back" displayText="Back" name="Back" validate="false"/>
+        <ui:button id="SaveandReturn" displayText="Save and Return" name="SaveandReturn"/>
+        <ui:button id="Save" displayText="Save" name="Save"/>
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+</ui:page-group>

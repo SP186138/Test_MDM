@@ -1,0 +1,114 @@
+<ui:page-group version="3" xmlns:ui="http://www.teradata.com/ui" Id="viewRecordCombine.pgl">
+  <ui:container scrollable="true">
+    <ui:help displayPage="/mdm/bcm/help/Approval_Monitor_Help.htm"/>
+    <ui:step id="Outermost" displayText="{concat('View Record(s) Page: ',$root/insDocType/@Value)}" scrollable="true">
+      <ui:table id="ViewRecordTable" displayText="" selectedId="selected_ID" selectable="single" postRowIdAs="selected_ID" rowId="selected_ID" collapsable="false" scrollable="true" rowSrc="$root/DocumentAttributes" select="$root/DocumentAttributes" startAtRow="$root/StartRowCount/@Value" maxRows="$root/maxRow/@Value" totalRowCount="$root/TotalRowCount/@Value">
+        <ui:field-group>
+          <ui:display-field displayText="Attribute" id="AttributeID" name="AttributeID" title="ApprovalInboxAttributeID"/>
+          <ui:display-field displayText="Current Value" id="oldAttributeValue" name="oldAttributeValue" title="ApprovalInboxOldAttributeValue" displayNoWrap="false"/>
+          <ui:display-field displayText="New Value" id="AttributeValue" name="AttributeValue" title="ApprovalInboxNewAttributeValue"  displayNoWrap="false"/>
+          <ui:hidden-field id="TABLE_NAME" name="TABLE_NAME"/>
+        </ui:field-group>
+      </ui:table>
+      <ui:field-group>
+        <ui:hidden-field id="ID" name="ID" value="{$root/ID/@Value}"/>
+        <ui:hidden-field id="selected_ID" name="selected_ID" value="{$root/selected_ID/@Value}"/>
+        <ui:hidden-field id="InstanceType" name="InstanceType" value="{$root/insDocType/@Value}"/>
+        <ui:textarea displayText="Comments" id="Comment" name="Comment" required="true" title="ApprovalInboxComments" filter="false" configurable="false" displayCondition="{$root/AcceptRejectEnabled/@Value='true'}"/>
+      </ui:field-group>
+      <ui:buttons id="buttons1" name="buttons1">
+        <ui:button displayText="Back" id="Back" name="Back" validate="false"/>
+        <ui:button displayText="Reject" id="REJECT" name="REJECT" onClick="javascript:submitRejectForm();" displayCondition="{$root/AcceptRejectEnabled/@Value='true'}"/>
+        <ui:button displayText="Accept" id="ACCEPT" name="ACCEPT" emphasized="true" onClick="javascript:submitAcceptForm();" displayCondition="{$root/AcceptRejectEnabled/@Value='true'}"/>
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+function onLoadSuper()
+{
+	var rowobj=document.getElementById(&quot;ViewRecordTable_data&quot;).getElementsByTagName(&quot;tr&quot;);
+	var cnt=document.getElementById(&quot;START_COUNT&quot;).value;
+    	var tableName =  document.getElementsByName(&quot;TABLE_NAME&quot;);
+	for(var i=0;i&lt;rowobj.length;i++)
+    {
+		var elTableCells = rowobj[i].getElementsByTagName(&quot;td&quot;);   
+		if(elTableCells.length == 3)
+		{
+			if(document.all)
+			{
+					if(elTableCells[1].innerText!=elTableCells[2].innerText)
+          				elTableCells[1].className=&quot;editableFieldOnChangeBgColor&quot;;
+					if(elTableCells[0].innerText=='')
+    				{
+						cnt++;
+    					if(tableName[i].value != "")
+							elTableCells[0].innerText= tableName[i].value+ ' #'+cnt;
+    					else
+							elTableCells[0].innerText='Record #'+cnt;
+						elTableCells[0].className=&quot;containerHeaderLeft&quot;;
+						elTableCells[1].className=&quot;containerHeaderLeft&quot;;
+						elTableCells[2].className=&quot;containerHeaderLeft&quot;;
+					}
+			}	
+			else
+			{
+				if(elTableCells[1].textContent!=elTableCells[2].textContent)
+				elTableCells[1].className=&quot;editableFieldOnChangeBgColor&quot;;
+				var textval=elTableCells[0].textContent;
+				if(textval.length==1)
+				{
+					cnt++;
+					if(tableName[i].value != "")
+						elTableCells[0].innerHTML= tableName[i].value+ ' #'+cnt;
+					else
+						elTableCells[0].innerHTML='Record #'+cnt;
+					elTableCells[0].className=&quot;containerHeaderLeft&quot;;
+					elTableCells[1].className=&quot;containerHeaderLeft&quot;;
+					elTableCells[2].className=&quot;containerHeaderLeft&quot;;
+				}
+			}
+		}
+    }
+    
+
+ }
+ 
+function submitAcceptForm()
+{
+		// LOGIC FOR SUBMIT A FORM
+		var bIsValid = true;
+		document.form.SUBMIT_AS_XML.value = 'false';
+		disableButtons();
+		trapExcelPivotChanges();
+		document.form.BUTTON_ID.value = 'ACCEPT';
+		document.form.action = 'view.x2ps';
+		document.form.submit();
+		grayOut(true);
+		onResize();
+	    return;
+}
+
+function submitRejectForm()
+{
+    
+		if(document.form.Comment.value=='')
+		{
+			core_alert_jquery(&quot;Please enter comment for Rejection&quot;);
+			document.form.UDF1.focus();
+			return;
+		}
+	// LOGIC FOR SUBMIT A FORM
+	var bIsValid = true;
+	document.form.SUBMIT_AS_XML.value = 'false';
+	disableButtons();
+	trapExcelPivotChanges();
+	document.form.BUTTON_ID.value = 'REJECT';
+	document.form.action = 'view.x2ps';
+	document.form.submit();
+	grayOut(true);
+	onResize();
+	return;
+} 
+ 
+</ui:script>
+</ui:page-group>

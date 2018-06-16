@@ -1,0 +1,1158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="0" ShowInBreadCrumbs="true" Version="1.0" Name="IncentiveMgmt" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="IncentiveMgmt">
+    <variable Name="selectedIncentiveID" Type="string" Comment=""/>
+    <variable Name="selectedIncentiveItemID" Type="string" Comment=""/>
+    <variable Name="selectedContentID" Type="string" Comment=""/>
+    <variable Name="searchResults" Type="xml" Comment=""/>
+    <variable Name="programIDValues" Type="xml" Comment=""/>
+    <variable Name="matchedDomainValues" Type="xml" Comment=""/>
+    <variable Name="InctvTypeValues" Type="xml" Comment=""/>
+    <variable Name="CouponTypeValues" Type="xml" Comment=""/>
+    <variable Name="CouponTypeValuesIncentive" Type="xml" Comment=""/>
+    <variable Name="ContentElemTypeValues" Type="xml" Comment=""/>
+    <variable Name="SectorTypeValues" Type="xml" Comment=""/>
+    <variable Name="alertGreen" Type="string" Comment=""/>
+    <variable Name="IncentiveDetails" Type="xml" Comment=""/>
+    <variable Name="actionType" Type="string" Comment=""/>
+    <variable Name="SubSectorTypeValues" Type="xml" Comment=""/>
+    <variable Name="CategTypeValues" Type="xml" Comment=""/>
+    <variable Name="BrandTypeValues" Type="xml" Comment=""/>
+    <variable Name="ProdItemValues" Type="xml" Comment=""/>
+    <variable Name="NonPngInctvItem" Type="xml" Comment=""/>
+    <variable Name="SegTypeValues" Type="xml" Comment=""/>
+    <variable Name="SubBrandTypeValues" Type="xml" Comment=""/>
+    <variable Name="ItemVersTypeValues" Type="xml" Comment=""/>
+    <variable Name="GlobalFormValues" Type="xml" Comment=""/>
+    <variable Name="isItemPresent" Type="string" Comment=""/>
+    <variable Name="IncentiveItemDetails" Type="xml" Comment=""/>
+    <variable Name="InctvStatusTypeValues" Type="xml" Comment=""/>
+    <variable Name="alertRed" Type="string" Comment=""/>
+    <variable Name="req" Type="string" Comment=""/>
+    <variable Name="allDataSrc" Type="xml" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start0">
+      <actions>
+        <action>
+          <!--REQUEST Name="getIncentiveOptions" ServiceName="BCM_MASTER" AssignToVar="IncentiveList" /-->
+          <REQUEST Name="getMatchedDomains" ServiceName="BCM_MASTER" AssignToVar="matchedDomainValues"/>
+          <REQUEST Name="getProgramIDlist" ServiceName="BCM_MASTER" AssignToVar="programIDValues">
+            <SOURCE Value="SEARCH"/>
+            <LEGAL_ENT_NBR Value="{$matchedDomainValues/LEGAL_ENT/LEGAL_ENT_NBR/@Value}"/>
+            <!--<LEGAL_ENT_NBR Value="{$matchedDomainValues/LEGAL_ENT/OPTION/@Id}" />-->
+          </REQUEST>
+          <REQUEST Name="getInctvlist" ServiceName="BCM_MASTER" AssignToVar="InctvTypeValues"/>
+          <REQUEST Name="getInctvStatuslist" ServiceName="BCM_MASTER" AssignToVar="InctvStatusTypeValues"/>
+          <REQUEST Name="getCouponlist" ServiceName="BCM_MASTER" AssignToVar="CouponTypeValuesIncentive"/>
+          <REQUEST Name="getSectorlist" ServiceName="BCM_MASTER" AssignToVar="SectorTypeValues"/>
+          <TO_DOCVAR AssignToVar="NonPngInctvItem">
+            <INCTV_ITEMS/>
+          </TO_DOCVAR>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Search Incentives"/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Search Incentives" ShowInBreadCrumbs="SHOW" Template="SearchIncentive.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pMessage">
+            <_ERRORS/>
+          </TO_DOCVAR>
+          <IF_TEST Test="($userAction='SEARCH_INCENTIVES' or $thisParam/START_COUNT/@Value>=0)">
+            <THEN>
+              <SET Property="LEGAL_ENT_NBR" DocVar="thisParam" FromValue="{$thisParam/LEGAL_ENT/@Value}"/>
+              <REQUEST Name="getInctvSearchResults" AssignToVar="searchResults" ServiceName="BCM_MASTER">
+                <TO_XML SelectList="$thisParam/*"/>
+                <TO_XML SelectList="$programIDValues/*"/>
+                <TO_XML SelectList="$InctvTypeValues/*"/>
+                <TO_XML SelectList="$InctvStatusTypeValues/*"/>
+                <START_AT_ROW Value="{$thisParam/START_COUNT/@Value}"/>
+              </REQUEST>
+            </THEN>
+          </IF_TEST>
+          <!--IF_TEST Test="$thisParam/SOURCE/@Value='CNTNT_ELEM'">
+<THEN>
+<SET Var="source" FromValue="CNTNT_SEARCH"/>
+<REQUEST Name="getProgramIDlist" AssignToVar="programIDValues" ServiceName="BCM_MASTER">
+<SOURCE Value="SEARCH"/>
+<LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+</REQUEST>
+</THEN>
+<ELSE>
+<SET Var="source" FromValue="INCTV_SEARCH"/>
+</ELSE>
+</IF_TEST-->
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <TO_XML SelectList="$matchedDomainValues/*"/>
+              <TO_XML SelectList="$programIDValues/*"/>
+              <TO_XML SelectList="$searchResults"/>
+              <TO_XML DocVar="pMessage"/>
+              <!--TO_XML SelectList="$srceVal" /-->
+              <!--SOURCE Value="{$source/@Value}"/-->
+            </ROOT>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_PROGRAM_LIST'">
+            <THEN>
+              <!--GET_DOCUMENT Name="LEGAL_ENT" AssignToVar="legalEntNbr" ServiceName="BCM_MASTER" DirtyRead="true">
+<LEGAL_ENT_NAME Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+<SELECT>
+<LEGAL_ENT_NBR/>
+</SELECT>
+</GET_DOCUMENT-->
+              <REQUEST Name="getMatchedDomains" ServiceName="BCM_MASTER" AssignToVar="domainValues"/>
+              <REQUEST Name="getProgramIDlist" AssignToVar="programIDValues" ServiceName="BCM_MASTER">
+                <SOURCE Value="SEARCH"/>
+                <LEGAL_ENT_NBR Value="{$domainValues/LEGAL_ENT[LEGAL_ENT_NAME/@Value=$thisParam/LEGAL_ENT_NBR/@Value]/LEGAL_ENT_NBR/@Value}"/>
+              </REQUEST>
+              <TO_DOCVAR AssignToVar="searchResults">
+                <ROOT/>
+              </TO_DOCVAR>
+              <SET Property="SHOW_LOAD_SEARCH_RESULTS" DocVar="thisParam" FromValue="FALSE"/>
+              <SET Property="START_COUNT" DocVar="thisParam" FromValue="0"/>
+            </THEN>
+            <!--ELSE>
+<IF_TEST Test="$userAction='Reset'">
+<THEN>
+<REQUEST Name="getProgramIDlist" AssignToVar="programIDValues" ServiceName="BCM_MASTER">
+<SOURCE Value="SEARCH"/>
+<LEGAL_ENT_NBR Value="{$matchedDomainValues/LEGAL_ENT/OPTION/@Id}"/>
+</REQUEST>
+<SET DocVar="thisParam" Property="MKTNG_PGM_NBR" FromValue=""/>
+<SET DocVar="thisParam" Property="LEGAL_ENT_NBR" FromValue=""/>
+<SET DocVar="thisParam" Property="INCTV_NAME" FromValue=""/>
+<SET DocVar="thisParam" Property="INCTV_DESC" FromValue=""/>
+<TO_DOCVAR AssignToVar="searchResults">
+<ROOT/>
+</TO_DOCVAR>
+</THEN>
+</IF_TEST>
+</ELSE-->
+            <!--ELSE>
+<IF_TEST Test="$userAction='ADD_INCENTIVES' or $userAction='VIEW_INCENTIVE_DETAILS'">
+<THEN>
+<REQUEST Name="getIncentiveOptions" ServiceName="BCM_MASTER" AssignToVar="IncentiveNames">
+<MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+</REQUEST>
+</THEN>
+</IF_TEST>
+</ELSE-->
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='SEARCH_INCENTIVEL'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='SEARCH_INCENTIVES'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Search Incentives" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='VIEW_INCENTIVE_DETAILS'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Incentive Management" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ADD_INCENTIVES'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Incentive Management" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_PROGRAM_LIST'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Search Incentives" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SELECT_INCENTIVE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Reset'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <done Name="done2">
+      <actions/>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="Incentive Management" ShowInBreadCrumbs="SHOW" Template="IncentiveMgmt.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$userAction='SAVE_ITEM'">
+            <THEN>
+              <SET Var="userAction" FromValue="UPDATE"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='ADD_INCENTIVES'">
+            <THEN>
+              <REQUEST Name="getMatchedDomains" ServiceName="BCM_MASTER" AssignToVar="domainValues"/>
+              <REQUEST Name="getProgramIDlist" AssignToVar="programIDValues" ServicssseName="BCM_MASTER">
+                <SOURCE Value="NOT_SEARCH"/>
+                <LEGAL_ENT_NBR Value="{$domainValues/LEGAL_ENT[LEGAL_ENT_NAME/@Value=$thisParam/LEGAL_ENT_NBR/@Value]/LEGAL_ENT_NBR/@Value}"/>
+              </REQUEST>
+              <!--REQUEST Name="getDataSrcNbrInctv" ServiceName="BCM_MASTER" AssignToVar="srceVal" HandleException="true"/-->
+              <!--GET_DOCUMENT Name="INCTV" AssignToVar="incentiveNumber" DirtyRead="yes" ServiceName="BCM_MASTER">
+<SELECT>
+<SQL_FN Name="MAX" Alias="INCTV_NBR">
+<PROP Name="INCTV_NBR"/>
+</SQL_FN>
+</SELECT>
+</GET_DOCUMENT>
+<SET Var="selectedIncentiveID" FromValue="{int($incentiveNumber/INCTV/INCTV_NBR/@Value+1)}"/-->
+              <CREATE_DOCUMENT_ID Name="INCTV_ID" AssignToVar="inctvId"/>
+              <CREATE_DOCUMENT_ID Name="CNTNT_ID" AssignToVar="cntntId"/>
+              <SET Var="selectedIncentiveID" FromValue="{$inctvId}"/>
+              <SET Var="selectedContentID" FromValue="{$cntntId}"/>
+              <CREATE_DOCUMENT_ID Name="INCTV_ITEM_ID" AssignToVar="inctvItemId"/>
+              <SET Var="selectedIncentiveItemID" FromValue="{$inctvItemId}"/>
+              <SET Var="actionType" FromValue="INSERT"/>
+              <SET Var="isItemPresent" FromValue="NO"/>
+              <TO_DOCVAR AssignToVar="IncentiveDetails">
+                <ROOT>
+                  <SQL_RESULT>
+                    <INCTV_NBR Value="{$selectedIncentiveID/@Value}"/>
+                  </SQL_RESULT>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='VIEW_INCENTIVE_DETAILS' or $userAction='UPDATE' or $actionType='CREATE_SUCCESS'">
+                <THEN>
+                  <SET Var="actionType" FromValue="UPDATE"/>
+                  <IF_TEST Test="$thisParam/BUTTON_ID/@Value='VIEW_INCENTIVE_DETAILS'">
+                    <THEN>
+                      <SET Var="selectedIncentiveID" FromValue="{$thisParam/selectedIncentiveID/@Value}"/>
+                      <SET Var="isItemPresent" FromValue="YES"/>
+                      <!--Incentive items can not not be added once Incetv is created.-->
+                    </THEN>
+                  </IF_TEST>
+                  <!--GET_DOCUMENT Name="INCTV" AssignToVar="IncentiveDetails" DirtyRead="yes" ServiceName="BCM_MASTER">
+<INCTV_NBR Value="{$thisParam/INCTV_NBR/@Value}"/>
+<SELECT>
+<INCTV_NBR/>
+<MKTNG_PGM_NBR/>
+<LEGAL_ENT_NBR/>
+<INCTV_NAME/>
+<INCTV_VAL_AMT/>
+<INCTV_VAL_PCT/>
+<INCTV_START_DATE/>
+<INCTV_END_DATE/>
+<INCTV_EXPRN_DAY_CNT/>
+<INCTV_CRTN_DATE/>
+<INCTV_STATUS_CODE/>
+<INCTV_TYPE_CODE/>
+<COUPN_TYPE_CODE/>
+<OTHER_INCENTIVE_TXT/>
+<BUNDLE_PACK_IND/>
+<CONTEST_NBR />
+<INCTV_DESC />
+<PREMARKET_OFFER_IND />
+<LYLTY_OFFER_NBR />
+</SELECT>
+</GET_DOCUMENT-->
+                  <EXECUTE_SQL_QUERY AssignToVar="IncentiveDetails" Value="SELECT * FROM INCTV WHERE INCTV_NBR = {$selectedIncentiveID/@Value}"/>
+                  <REQUEST Name="getIncentiveItemDetails" AssignToVar="IncentiveItemDetails" ServiceName="BCM_MASTER">
+                    <INCTV_NBR Value="{$selectedIncentiveID/@Value}"/>
+                  </REQUEST>
+                  <IF_TEST Test="$IncentiveItemDetails/@TotalRowCount='0'">
+                    <THEN>
+                      <IF_TEST Test="$userAction='UPDATE'">
+                        <THEN>
+                          <SET Var="isItemPresent" FromValue="YES"/>
+                        </THEN>
+                        <ELSE>
+                          <IF_TEST Test="$actionType='CREATE_SUCCESS'">
+                            <THEN>
+                              <SET Var="isItemPresent" FromValue="NO"/>
+                            </THEN>
+                          </IF_TEST>
+                        </ELSE>
+                      </IF_TEST>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="isItemPresent" FromValue="YES"/>
+                      <!--REQUEST Name="getInctvItemSectorDetails" AssignToVar="InctvItemSectorDetails" ServiceName="BCM_MASTER">
+<PROD_ITEM_NUM Value="{$IncentiveItemDetails/INCTV_ITEM/PROD_ITEM_NUM/@Value}" />
+</REQUEST>
+<SET_NAME Value="{$InctvItemSectorDetails/SQL_RESULT}" FromValue="INCTV_ITEM_DETAILS" />
+<TO_DOCVAR AssignToVar="assignedItems">
+<ROOT />
+</TO_DOCVAR>
+<TO_DOCVAR AssignToVar="availableItems">
+<ROOT />
+</TO_DOCVAR>
+<FOR_EACH SelectList="$IncentiveItemDetails/INCTV_ITEM" CurrentElement="currElement">
+<EXECUTE_SQL_QUERY AssignToVar="assignedProdItemName" Value="SELECT PROD_ITEM_NAME FROM PROD_ITEM WHERE PROD_ITEM_NUM={$currElement/PROD_ITEM_NUM/@Value}" />
+<SET_NAME Value="{$assignedProdItemName/SQL_RESULT}" FromValue="ASSIGNED_ITEMS" />
+<APPEND_TO_XML SelectList="$assignedItems">
+<TO_XML SelectList="$assignedProdItemName/ASSIGNED_ITEMS/*" />
+</APPEND_TO_XML>
+</FOR_EACH>
+<EXECUTE_SQL_QUERY AssignToVar="availableItems" Value="SELECT PROD_ITEM_NAME FROM PROD_ITEM WHERE ITEM_VERSION_CODE='{$InctvItemSectorDetails/INCTV_ITEM_DETAILS/BRAND_CODE/@Value}'" />
+<SET_NAME SelectList="$availableItems/*" FromValue="AVAILABLE_ITEMS" />
+<FOR_EACH SelectList="$availableItems/AVAILABLE_ITEMS" CurrentElement="availtemp">
+<FOR_EACH SelectList="$assignedItems/*" CurrentElement="assigntemp">
+<IF_TEST Test="$availtemp/PROD_ITEM_NAME/@Value=$assigntemp/@Value">
+<ELSE>
+<APPEND_TO_XML SelectList="$availableItems">
+<AVAIL_PROD_ITEM_NAME Value="{$availtemp/PROD_ITEM_NAME/@Value}" />
+</APPEND_TO_XML>
+</ELSE>
+</IF_TEST>
+</FOR_EACH>
+</FOR_EACH-->
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$actionType='CREATE_FAILED'">
+            <THEN>
+              <SET Var="actionType" FromValue="INSERT"/>
+              <APPEND_TO_XML SelectList="($IncentiveDetails/SQL_RESULT)">
+                <TO_XML SelectList="$thisParam/*"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <INCTV_NBR Value="{$selectedIncentiveID/@Value}"/>
+              <ACTION_TYPE Value="{$actionType/@Value}"/>
+              <IS_ITEM_PRESENT Value="{$isItemPresent/@Value}"/>
+              <TO_XML SelectList="$IncentiveDetails/*"/>
+              <TO_XML SelectList="$searchResults"/>
+              <TO_XML SelectList="$matchedDomainValues/*"/>
+              <TO_XML SelectList="$programIDValues/*"/>
+              <TO_XML SelectList="$InctvTypeValues/*"/>
+              <TO_XML SelectList="$InctvStatusTypeValues/*"/>
+              <TO_XML SelectList="$CouponTypeValues/*"/>
+              <TO_XML SelectList="$CouponTypeValuesIncentive/*"/>
+              <TO_XML SelectList="$IncentiveItemDetails/*"/>
+              <TO_XML SelectList="$legalEntNbr/SQL_RESULT/*"/>
+              <TO_XML SelectList="$ContentElemTypeValues/*"/>
+              <CNTNT_ELEM_TYPE Value="{$cpnType/@Value}"/>
+              <TO_XML SelectList="$allDataSrc/*"/>
+              <REQ_TYPE Value="{$req/@Value}"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="alertz">
+            <ABC>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </ABC>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$alertz/*"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="alertGreen" FromValue=""/>
+          <SET Var="alertRed" FromValue=""/>
+          <SET Var="req" FromValue="false"/>
+          <IF_TEST Test="$userAction='UPDATE'">
+            <THEN>
+              <REQUEST Name="saveInctv" ServiceName="BCM_MASTER" AssignToVar="saveInctvResults">
+                <INCTV_NBR Value="{$selectedIncentiveID/@Value}"/>
+                <TO_XML SelectList="$thisParam/*"/>
+              </REQUEST>
+              <IF_TEST Test="$saveInctvResults/@Status='Success'">
+                <THEN>
+                  <SET Var="alertGreen" FromValue="Incentive Saved Successfully"/>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$userAction='CREATE'">
+                <THEN>
+                  <SET Var="isNameValid" FromValue="YES"/>
+                  <!--REQUEST Name="getIncentiveOptions" ServiceName="BCM_MASTER" AssignToVar="IncentiveNames">
+<MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+</REQUEST>
+<FOR_EACH SelectList="$IncentiveNames/INCTV/OPTION" CurrentElement="curElement">
+<IF_TEST Test="$curElement/@Value=$thisParam/INCTV_NAME/@Value">
+<THEN>
+<SET Var="alertRed" FromValue="Incentive with the same name already exists. Use different Incentive Name"/>
+<SET Var="isNameValid" FromValue="NO"/>
+<SET Var="actionType" FromValue="CREATE_FAILED"/>
+</THEN>
+</IF_TEST>
+</FOR_EACH>-->
+                  <IF_TEST Test="$isNameValid='YES'">
+                    <THEN>
+                      <REQUEST Name="createInctv" ServiceName="BCM_MASTER" AssignToVar="createInctvResults">
+                        <NEW_INCTV_NBR Value="{$selectedIncentiveID/@Value}"/>
+                        <TO_XML SelectList="$thisParam/*"/>
+                      </REQUEST>
+                      <IF_TEST Test="$createInctvResults/RESPONSE/VALIDATION_RESULT/@Value='SUCCESS'">
+                        <THEN>
+                          <IF_TEST Test="$thisParam/INCTV_TYPE_CODE/@Value='CP'">
+                            <THEN>
+                              <REQUEST Name="createContentInc" ServiceName="BCM_MASTER" AssignToVar="createContentIncresult">
+                                <NEW_INCTV_NBR Value="{$selectedIncentiveID/@Value}"/>
+                                <NEW_CNTNT_ELEM_ID Value="{$selectedContentID/@Value}"/>
+                                <TO_XML SelectList="$thisParam/*"/>
+                              </REQUEST>
+                            </THEN>
+                          </IF_TEST>
+                          <SET Var="alertGreen" FromValue="New Incentive Created"/>
+                          <SET Var="actionType" FromValue="CREATE_SUCCESS"/>
+                        </THEN>
+                      </IF_TEST>
+                      <IF_TEST Test="$createInctvResults/RESPONSE/VALIDATION_RESULT/@Value='ERROR'">
+                        <THEN>
+                          <SET Var="alertRed" FromValue="{$createInctvResults/RESPONSE/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                        </THEN>
+                      </IF_TEST>
+                    </THEN>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_PROGRAM_LIST'">
+                    <THEN>
+                      <SET Var="actionType" FromValue="{$thisParam/ACTION_TYPE/@Value}"/>
+                      <EXECUTE_SQL_QUERY AssignToVar="legalEntNbr" Value="SEL legal_ent_nbr,legal_ent_name FROM legal_ent where legal_ent_name='{$thisParam/LEGAL_ENT_NBR/@Value}';"/>
+                      <SET Var="legalEnt" FromValue="{$legalEntNbr/SQL_RESULT/LEGAL_ENT_NBR/@Value}"/>
+                      <SET Var="legalEntnm" FromValue="{$legalEntNbr/SQL_RESULT/LEGAL_ENT_NAME/@Value}"/>
+                      <REQUEST Name="getProgramIDlist" AssignToVar="programIDValues" ServiceName="BCM_MASTER">
+                        <SOURCE Value="NOT_SEARCH"/>
+                        <LEGAL_ENT_NBR Value="{$legalEnt}"/>
+                      </REQUEST>
+                      <TO_DOCVAR AssignToVar="IncentiveDetailsCopy">
+                        <TO_XML SelectList="$IncentiveDetails/*"/>
+                      </TO_DOCVAR>
+                      <SET Property="INCTV_NBR" FromValue="{$selectedIncentiveID/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="LEGAL_ENT_NBR" FromValue="{$thisParam/LEGAL_ENT_NBR/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="INCTV_DESC" FromValue="{$thisParam/INCTV_DESC/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="INCTV_NAME" FromValue="{$thisParam/INCTV_NAME/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="INCTV_VAL_AMT" FromValue="{$thisParam/INCTV_VAL_AMT/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="INCTV_VAL_PCT" FromValue="{$thisParam/INCTV_VAL_PCT/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="INCTV_START_DATE" FromValue="{$thisParam/INCTV_START_DATE/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="INCTV_END_DATE" FromValue="{$thisParam/INCTV_END_DATE/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="INCTV_STATUS_CODE" FromValue="{$thisParam/INCTV_STATUS_CODE/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="COUPN_UNIQUE_IND" FromValue="{$thisParam/COUPN_UNIQUE_IND/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="EXTRN_COUPN_DATA_SRCE_NBR" FromValue="{$thisParam/EXTRN_COUPN_DATA_SRCE_NBR/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="INCTV_TYPE_CODE" FromValue="{$thisParam/INCTV_TYPE_CODE/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="INCTV_EXPRN_DAY_CNT" FromValue="{$thisParam/INCTV_EXPRN_DAY_CNT/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="OTHER_INCENTIVE_TXT" FromValue="{$thisParam/OTHER_INCENTIVE_TXT/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="BUNDLE_PACK_IND" FromValue="{$thisParam/BUNDLE_PACK_IND/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="PREMARKET_OFFER_IND" FromValue="{$thisParam/PREMARKET_OFFER_IND/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="ALT_SYS_INCTV_ID" FromValue="{$thisParam/ALT_SYS_INCTV_ID/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="BRAND_NAME" FromValue="{$thisParam/BRAND_NAME/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="CONTENT_ELEM_TYPE" FromValue="{$cpnType/@Value}" DocVar="IncentiveDetailsCopy"/>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_CONTENT_TYPE_LIST'">
+                    <THEN>
+                      <TO_DOCVAR AssignToVar="IncentiveDetailsCopy">
+                        <TO_XML SelectList="$IncentiveDetails/*"/>
+                      </TO_DOCVAR>
+                      <IF_TEST Test="$thisParam/INCTV_TYPE_CODE/@Value='CP'">
+                        <THEN>
+                          <EXECUTE_SQL_QUERY AssignToVar="CouponTypeValues" Value="SEL CNTNT_ELEM_TYPE_CODE,CNTNT_ELEM_TYPE_NAME FROM CNTNT_ELEM_TYPE WHERE CNTNT_ELEM_TYPE_CODE='CC';"/>
+                          <SET Var="cpnType" FromValue="{$CouponTypeValues/SQL_RESULT/CNTNT_ELEM_TYPE_NAME}"/>
+                          <SET Var="req" FromValue="true"/>
+                          <EXECUTE_SQL_QUERY AssignToVar="ExtrnDataSrcValues" Value="SEL DATA_SRCE_NAME FROM DATA_SRCE;"/>
+                          <TO_DOCVAR AssignToVar="allDataSrc">
+                            <dataSrc/>
+                          </TO_DOCVAR>
+                          <FOR_EACH CurrentElement="currDataSrc" SelectList="$ExtrnDataSrcValues/*">
+                            <APPEND_TO_XML DocVar="allDataSrc">
+                              <TO_XML SelectList="$currDataSrc/*"/>
+                            </APPEND_TO_XML>
+                          </FOR_EACH>
+                          <!--   <SET Var="ExtrnData" FromValue="{$ExtrnDataSrcValues/SQL_RESULT/DATA_SRCE_NAME}"/>
+-->
+                        </THEN>
+                        <ELSE>
+                          <SET Var="ExtrnData" FromValue=""/>
+                          <SET Var="cpnType" FromValue=""/>
+                          <SET Var="req" FromValue="false"/>
+                        </ELSE>
+                      </IF_TEST>
+                      <SET Property="INCTV_NBR" FromValue="{$selectedIncentiveID/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="LEGAL_ENT_NBR" FromValue="{$thisParam/LEGAL_ENT_NBR/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="MKTNG_PGM_NBR" FromValue="{$thisParam/MKTNG_PGM_NBR/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="INCTV_DESC" FromValue="{$thisParam/INCTV_DESC/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="INCTV_NAME" FromValue="{$thisParam/INCTV_NAME/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="INCTV_VAL_AMT" FromValue="{$thisParam/INCTV_VAL_AMT/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="INCTV_VAL_PCT" FromValue="{$thisParam/INCTV_VAL_PCT/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="INCTV_START_DATE" FromValue="{$thisParam/INCTV_START_DATE/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="INCTV_END_DATE" FromValue="{$thisParam/INCTV_END_DATE/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="INCTV_STATUS_CODE" FromValue="{$thisParam/INCTV_STATUS_CODE/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="INCTV_TYPE_CODE" FromValue="{$thisParam/INCTV_TYPE_CODE/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="INCTV_EXPRN_DAY_CNT" FromValue="{$thisParam/INCTV_EXPRN_DAY_CNT/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="OTHER_INCENTIVE_TXT" FromValue="{$thisParam/OTHER_INCENTIVE_TXT/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="BUNDLE_PACK_IND" FromValue="{$thisParam/BUNDLE_PACK_IND/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="PREMARKET_OFFER_IND" FromValue="{$thisParam/PREMARKET_OFFER_IND/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="ALT_SYS_INCTV_ID" FromValue="{$thisParam/ALT_SYS_INCTV_ID/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="BRAND_NAME" FromValue="{$thisParam/BRAND_NAME/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="CONTENT_ELEM_TYPE" FromValue="{$cpnType/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="COUPN_UNIQUE_IND" FromValue="{$thisParam/COUPN_UNIQUE_IND/@Value}" DocVar="IncentiveDetailsCopy"/>
+                      <SET Property="EXTRN_COUPN_DATA_SRCE_NBR" FromValue="{$allDataSrc/dataSrc/DATA_SRCE_NAME/@Value}" DocVar="IncentiveDetailsCopy"/>
+                    </THEN>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='CREATE_ITEM' or $userAction='ADD_MORE_INCENTIVE_ITEM'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="IncentiveItemDetails">
+                <INCTV_ITEMS/>
+              </TO_DOCVAR>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$userAction='CANCEL'">
+                <THEN>
+                  <REQUEST Name="getProgramIDlist" AssignToVar="programIDValues" ServiceName="BCM_MASTER">
+                    <SOURCE Value="SEARCH"/>
+                    <LEGAL_ENT_NBR Value="{$matchedDomainValues/LEGAL_ENT/OPTION/@Id}"/>
+                  </REQUEST>
+                  <SET Property="LEGAL_ENT_NBR" FromValue="" DocVar="thisParam"/>
+                  <SET Property="MKTNG_PGM_NBR" FromValue="" DocVar="thisParam"/>
+                  <SET Property="INCTV_DESC" FromValue="" DocVar="thisParam"/>
+                  <SET Property="INCTV_NAME" FromValue="" DocVar="thisParam"/>
+                </THEN>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Save'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Cancel'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Left'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Right'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='CANCEL'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Search Incentives" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_PROGRAM_LIST'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Incentive Management" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='UPDATE'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Incentive Management" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='CREATE'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Incentive Management" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='CREATE_ITEM'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="IncentiveItem" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ADD_MORE_INCENTIVE_ITEM'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="IncentiveItem" Description="$userAction ='ADD_MORE_INCENTIVE_ITEM'"/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Add_More_Incentive_item'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ADD'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ADD_CONTENT_ITEM'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ADD_MORE_CONTENT_ITEM'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_CONTENT_TYPE_LIST'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Incentive Management" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done2" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="IncentiveItem" ShowInBreadCrumbs="SHOW" Template="IncentiveItem.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <!--GET_DOCUMENT Name="PROD_ITEM" AssignToVar="prodItemNumber" DirtyRead="yes" ServiceName="BCM_MASTER">
+<SELECT>
+<SQL_FN Name="MAX" Alias="PROD_ITEM_NUM">
+<PROP Name="PROD_ITEM_NUM" />
+</SQL_FN>
+</SELECT>
+</GET_DOCUMENT-->
+          <!--EXECUTE_SQL_QUERY AssignToVar="prodItemNumber" Value="SELECT MAX(CAST (PROD_ITEM_UPC AS INTEGER) ) AS PROD_ITEM_UPC FROM PROD_ITEM" />
+<SET Var="prodItemNum" FromValue="{int($prodItemNumber/SQL_RESULT/PROD_ITEM_UPC/@Value+1)}" /-->
+          <!--IF_TEST Test="$thisParam/BUTTON_ID/@Value='ADD_MORE_INCENTIVE_ITEM'">
+<THEN-->
+          <GET_DOCUMENT Name="INCTV_ITEM" ServiceName="BCM_MASTER" AssignToVar="items" ReturnRowCount="yes">
+            <SELECT>
+              <PROD_ITEM_UPC/>
+              <INCTV_ITEM_NAME/>
+              <INCTV_ITEM_QTY/>
+              <BRAND_CODE/>
+              <!--INCTV_ITEM_SIZE /-->
+              <INCTV_ITEM_DESC/>
+            </SELECT>
+            <INCTV_NBR Value="{$selectedIncentiveID/@Value}"/>
+          </GET_DOCUMENT>
+          <!--/THEN>
+</IF_TEST-->
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='ADD_MORE_INCENTIVE_ITEM' or $thisParam/BUTTON_ID/@Value='CREATE_ITEM'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <INCTV_NBR Value="{$selectedIncentiveID/@Value}"/>
+                  <PROD_ITEM_UPC Value="{$prodItemNum/@Value}"/>
+                  <TO_XML SelectList="$IncentiveDetails/*"/>
+                  <TO_XML SelectList="$SectorTypeValues/*"/>
+                  <TO_XML SelectList="$SubSectorTypeValues/*"/>
+                  <TO_XML SelectList="$CategTypeValues/*"/>
+                  <TO_XML SelectList="$SegTypeValues/*"/>
+                  <TO_XML SelectList="$BrandTypeValues/*"/>
+                  <TO_XML SelectList="$SubBrandTypeValues/*"/>
+                  <TO_XML SelectList="$ItemVersTypeValues/*"/>
+                  <TO_XML SelectList="$GlobalFormValues/*"/>
+                  <!--TO_XML SelectList="$ProdItemValues/*" /-->
+                  <TO_XML SelectList="$NonPngInctvItem/*"/>
+                  <TO_XML SelectList="$items/*"/>
+                  <BUTTON_NAME Value="{$thisParam/BUTTON_ID/@Value}"/>
+                  <ITM_CNT Value="{$items/@TotalRowCount}"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+            <ELSE>
+              <THEN>
+                <TO_DOCVAR AssignToVar="pglFormInput">
+                  <ROOT>
+                    <INCTV_NBR Value="{$selectedIncentiveID/@Value}"/>
+                    <PROD_ITEM_UPC Value="{$prodItemNum/@Value}"/>
+                    <TO_XML SelectList="$IncentiveDetails/*"/>
+                    <TO_XML SelectList="$SectorTypeValues/*"/>
+                    <TO_XML SelectList="$SubSectorTypeValues/*"/>
+                    <TO_XML SelectList="$CategTypeValues/*"/>
+                    <TO_XML SelectList="$SegTypeValues/*"/>
+                    <TO_XML SelectList="$BrandTypeValues/*"/>
+                    <TO_XML SelectList="$SubBrandTypeValues/*"/>
+                    <TO_XML SelectList="$ItemVersTypeValues/*"/>
+                    <TO_XML SelectList="$GlobalFormValues/*"/>
+                    <TO_XML SelectList="$ProdItemValues/*"/>
+                    <TO_XML SelectList="$NonPngInctvItem/*"/>
+                    <TO_XML SelectList="$items/*"/>
+                    <BUTTON_NAME Value="{$thisParam/BUTTON_ID/@Value}"/>
+                    <ITM_CNT Value="{$items/@TotalRowCount}"/>
+                  </ROOT>
+                </TO_DOCVAR>
+              </THEN>
+            </ELSE>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="alertz">
+            <ABC>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+            </ABC>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$alertz/*"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_SUB_SEC_LIST'">
+            <THEN>
+              <REQUEST Name="getSubSectorList" AssignToVar="SubSectorTypeValues" ServiceName="BCM_MASTER">
+                <SECTOR_CODE Value="{$thisParam/SECTOR_CODE/@Value}"/>
+              </REQUEST>
+              <TO_DOCVAR AssignToVar="CategTypeValues">
+                <ROOT/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="SegTypeValues">
+                <ROOT/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="BrandTypeValues">
+                <ROOT/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="SubBrandTypeValues">
+                <ROOT/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="ItemVersTypeValues">
+                <ROOT/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="GlobalFormValues">
+                <ROOT/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="ProdItemValues">
+                <ROOT/>
+              </TO_DOCVAR>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_CATEG_LIST'">
+                <THEN>
+                  <REQUEST Name="getCategList" AssignToVar="CategTypeValues" ServiceName="BCM_MASTER">
+                    <SUB_SECTOR_CODE Value="{$thisParam/SUB_SECTOR_CODE/@Value}"/>
+                    <SECTOR_CODE Value="{$thisParam/SECTOR_CODE/@Value}"/>
+                  </REQUEST>
+                  <TO_DOCVAR AssignToVar="SegTypeValues">
+                    <ROOT/>
+                  </TO_DOCVAR>
+                  <TO_DOCVAR AssignToVar="BrandTypeValues">
+                    <ROOT/>
+                  </TO_DOCVAR>
+                  <TO_DOCVAR AssignToVar="SubBrandTypeValues">
+                    <ROOT/>
+                  </TO_DOCVAR>
+                  <TO_DOCVAR AssignToVar="ItemVersTypeValues">
+                    <ROOT/>
+                  </TO_DOCVAR>
+                  <TO_DOCVAR AssignToVar="GlobalFormValues">
+                    <ROOT/>
+                  </TO_DOCVAR>
+                  <TO_DOCVAR AssignToVar="ProdItemValues">
+                    <ROOT/>
+                  </TO_DOCVAR>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_BRAND_LIST'">
+                    <THEN>
+                      <SET Property="BRAND_CODE" DocVar="thisParam" FromValue=""/>
+                      <REQUEST Name="getBrandList" AssignToVar="BrandTypeValues" ServiceName="BCM_MASTER">
+                        <SEG_CODE Value="{$thisParam/SEG_CODE/@Value}"/>
+                        <CATEG_CODE Value="{$thisParam/CATEG_CODE/@Value}"/>
+                        <SUB_SECTOR_CODE Value="{$thisParam/SUB_SECTOR_CODE/@Value}"/>
+                        <SECTOR_CODE Value="{$thisParam/SECTOR_CODE/@Value}"/>
+                      </REQUEST>
+                      <TO_DOCVAR AssignToVar="SubBrandTypeValues">
+                        <ROOT/>
+                      </TO_DOCVAR>
+                      <TO_DOCVAR AssignToVar="ItemVersTypeValues">
+                        <ROOT/>
+                      </TO_DOCVAR>
+                      <TO_DOCVAR AssignToVar="GlobalFormValues">
+                        <ROOT/>
+                      </TO_DOCVAR>
+                      <TO_DOCVAR AssignToVar="ProdItemValues">
+                        <ROOT/>
+                      </TO_DOCVAR>
+                    </THEN>
+                    <ELSE>
+                      <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_PROD_ITEM_LIST'">
+                        <THEN>
+                          <REQUEST Name="getProdItemList" AssignToVar="ProdItemValues" ServiceName="BCM_MASTER">
+                            <ITEM_VERS_CODE Value="{$thisParam/ITEM_VERS_CODE/@Value}"/>
+                            <SUB_BRAND_CODE Value="{$thisParam/SUB_BRAND_CODE/@Value}"/>
+                            <BRAND_CODE Value="{$thisParam/BRAND_CODE/@Value}"/>
+                            <SEG_CODE Value="{$thisParam/SEG_CODE/@Value}"/>
+                            <CATEG_CODE Value="{$thisParam/CATEG_CODE/@Value}"/>
+                            <SUB_SECTOR_CODE Value="{$thisParam/SUB_SECTOR_CODE/@Value}"/>
+                            <SECTOR_CODE Value="{$thisParam/SECTOR_CODE/@Value}"/>
+                          </REQUEST>
+                        </THEN>
+                        <ELSE>
+                          <IF_TEST Test="$userAction='SAVE_ITEM'">
+                            <THEN>
+                              <TO_DOCVAR AssignToVar="selectedId">
+                                <ID>
+                                  <TO_XML SelectList="$pglFormOutput/assignedItems"/>
+                                </ID>
+                              </TO_DOCVAR>
+                              <TO_DOCVAR AssignToVar="toAssignItems">
+                                <ASSIGNED_ITEMS/>
+                              </TO_DOCVAR>
+                              <FOR_EACH SelectList="$selectedId/assignedItems" CurrentElement="currElem">
+                                <TO_DOCVAR AssignToVar="tempItem">
+                                  <ASSIGNED_ITEM Value="{$currElem/@Value}"/>
+                                </TO_DOCVAR>
+                                <ADD_CHILDREN DocVar="toAssignItems" FromDocVar="tempItem"/>
+                              </FOR_EACH>
+                              <REQUEST Name="createInctvItem" ServiceName="BCM_MASTER" AssignToVar="createInctvItem">
+                                <INCTV_NBR Value="{$selectedIncentiveID/@Value}"/>
+                                <NEW_INCTV_ITEM_NBR Value="{$selectedIncentiveItemID/@Value}"/>
+                                <MKTNG_PGM_NBR Value="{$IncentiveDetails/SQL_RESULT/MKTNG_PGM_NBR/@Value}"/>
+                                <INCTV_ITEM_NAME Value="{$pglFormOutput/INCTV_ITEM_NAME/@Value}"/>
+                                <INCTV_ITEM_QTY Value="{$pglFormOutput/INCTV_ITEM_QTY/@Value}"/>
+                                <SECTOR_CODE Value="{$pglFormOutput/SECTOR_CODE/@Value}"/>
+                                <SUB_SECTOR_CODE Value="{$pglFormOutput/SUB_SECTOR_CODE/@Value}"/>
+                                <CATEG_CODE Value="{$pglFormOutput/CATEG_CODE/@Value}"/>
+                                <SEG_CODE Value="{$pglFormOutput/SEG_CODE/@Value}"/>
+                                <BRAND_CODE Value="{$pglFormOutput/BRAND_CODE/@Value}"/>
+                                <SUB_BRAND_CODE Value="{$pglFormOutput/SUB_BRAND_CODE/@Value}"/>
+                                <ITEM_VERS_CODE Value="{$pglFormOutput/ITEM_VERS_CODE/@Value}"/>
+                                <GLOBAL_FORM_CODE Value="{$pglFormOutput/GLOBAL_FORM_CODE/@Value}"/>
+                                <!--INCTV_ITEM_SIZE Value="{$thisParam/INCTV_ITEM_SIZE/@Value}" />
+<INCTV_ITEM_DESC Value="{$thisParam/INCTV_ITEM_DESC/@Value}" />
+<INCTV_ITEM_MEASURE Value="{$thisParam/INCTV_ITEM_MEASURE/@Value}"/-->
+                                <TO_XML DocVar="toAssignItems"/>
+                              </REQUEST>
+                              <IF_TEST Test="strlen($createInctvItem/_RESULT/_ERROR/@Value) > 0">
+                                <THEN>
+                                  <SET Var="alertRed" FromValue="{$createInctvItem/_RESULT/_ERROR/@Value}"/>
+                                </THEN>
+                                <ELSE>
+                                  <SET Var="alertGreen" FromValue="Incentive Item Created"/>
+                                  <SET Var="isItemPresent" FromValue="YES"/>
+                                </ELSE>
+                              </IF_TEST>
+                            </THEN>
+                            <ELSE>
+                              <IF_TEST Test="$userAction='ADD_NON_PNG_INCTV_ITEM'">
+                                <THEN>
+                                  <!--ADD_DOC_SMART Name="PROD_ITEM" ServiceName="BCM_MASTER" AssignToVar="addNonPngProdItem">
+<PROD_ITEM_NUM Value="{$thisParam/PROD_ITEM_NUM/@Value}" />
+<PROD_ITEM_NAME Value="{$thisParam/PROD_ITEM_NAME/@Value}" />
+<PROD_ITEM_DESC Value="{$thisParam/PROD_ITEM_DESC/@Value}" />
+</ADD_DOC_SMART-->
+                                  <!--EXECUTE_SQL_QUERY AssignToVar="addprodItemresult" Value="INSERT INTO PROD_ITEM (PROD_ITEM_UPC, PROD_ITEM_NAME, PROD_ITEM_DESC) VALUES ('{$thisParam/PROD_ITEM_UPC/@Value}','{$thisParam/PROD_ITEM_NAME_T/@Value}','{$thisParam/PROD_ITEM_DESC_T/@Value}')"/-->
+                                  <ADD_DOC_SMART Name="INCTV_ITEM" ServiceName="BCM_MASTER" AssignToVar="addNonPngInctvItem">
+                                    <INCTV_NBR Value="{$selectedIncentiveID/@Value}"/>
+                                    <!--Need to check the value of INCTV_ITEM_NBR-->
+                                    <INCTV_ITEM_NBR Value="{$selectedIncentiveID/@Value}"/>
+                                    <PROD_ITEM_UPC Value=""/>
+                                    <INCTV_ITEM_NAME Value="{$thisParam/INCTV_ITEM_NAME_T/@Value}"/>
+                                    <INCTV_ITEM_QTY Value="{$thisParam/INCTV_ITEM_QTY_T/@Value}"/>
+                                    <INCTV_ITEM_SIZE Value="{$thisParam/INCTV_ITEM_SIZE_T/@Value}"/>
+                                    <INCTV_ITEM_DESC Value="{$thisParam/INCTV_ITEM_DESC_T/@Value}"/>
+                                    <!--MKTNG_PGM_NBR Value="{$IncentiveDetails/SQL_RESULT/MKTNG_PGM_NBR/@Value}" /-->
+                                    <!--INCTV_ITEM_MEASURE Value="{$thisParam/INCTV_ITEM_MEASURE_T/@Value}"/-->
+                                  </ADD_DOC_SMART>
+                                  <IF_TEST Test="strlen($addNonPngInctvItem/_RESULT/_ERROR/@Value) > 0">
+                                    <THEN>
+                                      <SET Var="alertRed" FromValue="{$addNonPngInctvItem/_RESULT/_ERROR/@Value}"/>
+                                    </THEN>
+                                    <ELSE>
+                                      <SET Var="alertGreen" FromValue="Incentive Item Created"/>
+                                      <SET Var="isItemPresent" FromValue="YES"/>
+                                      <TO_DOCVAR AssignToVar="NonPnGInctvItemTemp">
+                                        <ROOT>
+                                          <INCTV_ITEM>
+                                            <!--PROD_ITEM_UPC Value="{$thisParam/PROD_ITEM_UPC/@Value}"/>
+<PROD_ITEM_NAME Value="{$thisParam/PROD_ITEM_NAME_T/@Value}"/>
+<PROD_ITEM_DESC Value="{$thisParam/PROD_ITEM_DESC_T/@Value}"/-->
+                                            <INCTV_ITEM_NAME Value="{$thisParam/INCTV_ITEM_NAME_T/@Value}"/>
+                                            <INCTV_ITEM_QTY Value="{$thisParam/INCTV_ITEM_QTY_T/@Value}"/>
+                                            <INCTV_ITEM_SIZE Value="{$thisParam/INCTV_ITEM_SIZE_T/@Value}"/>
+                                            <INCTV_ITEM_DESC Value="{$thisParam/INCTV_ITEM_DESC_T/@Value}"/>
+                                            <!--INCTV_ITEM_MEASURE Value="{$thisParam/INCTV_ITEM_MEASURE_T/@Value}"/-->
+                                          </INCTV_ITEM>
+                                        </ROOT>
+                                      </TO_DOCVAR>
+                                      <ADD_CHILDREN DocVar="NonPngInctvItem" FromSelectList="$NonPnGInctvItemTemp/*"/>
+                                      <ADD_CHILDREN DocVar="IncentiveItemDetails" FromSelectList="$NonPnGInctvItemTemp/*"/>
+                                    </ELSE>
+                                  </IF_TEST>
+                                </THEN>
+                              </IF_TEST>
+                            </ELSE>
+                          </IF_TEST>
+                        </ELSE>
+                      </IF_TEST>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_SEG_LIST'">
+            <THEN>
+              <REQUEST Name="getSegList" AssignToVar="SegTypeValues" ServiceName="BCM_MASTER">
+                <CATEG_CODE Value="{$thisParam/CATEG_CODE/@Value}"/>
+                <SUB_SECTOR_CODE Value="{$thisParam/SUB_SECTOR_CODE/@Value}"/>
+                <SECTOR_CODE Value="{$thisParam/SECTOR_CODE/@Value}"/>
+              </REQUEST>
+              <TO_DOCVAR AssignToVar="BrandTypeValues">
+                <ROOT/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="SubBrandTypeValues">
+                <ROOT/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="ItemVersTypeValues">
+                <ROOT/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="GlobalFormValues">
+                <ROOT/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="ProdItemValues">
+                <ROOT/>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_SUB_BRAND_LIST'">
+            <THEN>
+              <REQUEST Name="getSubBrandList" AssignToVar="SubBrandTypeValues" ServiceName="BCM_MASTER">
+                <BRAND_CODE Value="{$thisParam/BRAND_CODE/@Value}"/>
+                <SEG_CODE Value="{$thisParam/SEG_CODE/@Value}"/>
+                <CATEG_CODE Value="{$thisParam/CATEG_CODE/@Value}"/>
+                <SUB_SECTOR_CODE Value="{$thisParam/SUB_SECTOR_CODE/@Value}"/>
+                <SECTOR_CODE Value="{$thisParam/SECTOR_CODE/@Value}"/>
+              </REQUEST>
+              <TO_DOCVAR AssignToVar="ItemVersTypeValues">
+                <ROOT/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="GlobalFormValues">
+                <ROOT/>
+              </TO_DOCVAR>
+              <REQUEST Name="getProdItemList" AssignToVar="ProdItemValues" ServiceName="BCM_MASTER">
+                <ITEM_VERS_CODE Value="NO_VALUE"/>
+                <SUB_BRAND_CODE Value="NO_VALUE"/>
+                <BRAND_CODE Value="{$thisParam/BRAND_CODE/@Value}"/>
+                <SEG_CODE Value="{$thisParam/SEG_CODE/@Value}"/>
+                <CATEG_CODE Value="{$thisParam/CATEG_CODE/@Value}"/>
+                <SUB_SECTOR_CODE Value="{$thisParam/SUB_SECTOR_CODE/@Value}"/>
+                <SECTOR_CODE Value="{$thisParam/SECTOR_CODE/@Value}"/>
+              </REQUEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_ITEM_VERS_LIST'">
+            <THEN>
+              <REQUEST Name="getItemVersList" AssignToVar="ItemVersTypeValues" ServiceName="BCM_MASTER">
+                <SUB_BRAND_CODE Value="{$thisParam/SUB_BRAND_CODE/@Value}"/>
+                <BRAND_CODE Value="{$thisParam/BRAND_CODE/@Value}"/>
+                <SEG_CODE Value="{$thisParam/SEG_CODE/@Value}"/>
+                <CATEG_CODE Value="{$thisParam/CATEG_CODE/@Value}"/>
+                <SUB_SECTOR_CODE Value="{$thisParam/SUB_SECTOR_CODE/@Value}"/>
+                <SECTOR_CODE Value="{$thisParam/SECTOR_CODE/@Value}"/>
+              </REQUEST>
+              <TO_DOCVAR AssignToVar="GlobalFormValues">
+                <ROOT/>
+              </TO_DOCVAR>
+              <REQUEST Name="getProdItemList" AssignToVar="ProdItemValues" ServiceName="BCM_MASTER">
+                <ITEM_VERS_CODE Value="NO_VALUE"/>
+                <GLOBAL_FORM_CODE Value="NO_VALUE"/>
+                <SUB_BRAND_CODE Value="{$thisParam/SUB_BRAND_CODE/@Value}"/>
+                <BRAND_CODE Value="{$thisParam/BRAND_CODE/@Value}"/>
+                <SEG_CODE Value="{$thisParam/SEG_CODE/@Value}"/>
+                <CATEG_CODE Value="{$thisParam/CATEG_CODE/@Value}"/>
+                <SUB_SECTOR_CODE Value="{$thisParam/SUB_SECTOR_CODE/@Value}"/>
+                <SECTOR_CODE Value="{$thisParam/SECTOR_CODE/@Value}"/>
+              </REQUEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_GLOBAL_FORM_LIST'">
+            <THEN>
+              <REQUEST Name="getGlobalFormList" AssignToVar="GlobalFormValues" ServiceName="BCM_MASTER">
+                <SUB_BRAND_CODE Value="{$thisParam/SUB_BRAND_CODE/@Value}"/>
+                <BRAND_CODE Value="{$thisParam/BRAND_CODE/@Value}"/>
+                <SEG_CODE Value="{$thisParam/SEG_CODE/@Value}"/>
+                <CATEG_CODE Value="{$thisParam/CATEG_CODE/@Value}"/>
+                <SUB_SECTOR_CODE Value="{$thisParam/SUB_SECTOR_CODE/@Value}"/>
+                <SECTOR_CODE Value="{$thisParam/SECTOR_CODE/@Value}"/>
+              </REQUEST>
+              <REQUEST Name="getProdItemList" AssignToVar="ProdItemValues" ServiceName="BCM_MASTER">
+                <GLOBAL_FORM_CODE Value="NO_VALUE"/>
+                <SUB_BRAND_CODE Value="{$thisParam/SUB_BRAND_CODE/@Value}"/>
+                <BRAND_CODE Value="{$thisParam/BRAND_CODE/@Value}"/>
+                <SEG_CODE Value="{$thisParam/SEG_CODE/@Value}"/>
+                <CATEG_CODE Value="{$thisParam/CATEG_CODE/@Value}"/>
+                <SUB_SECTOR_CODE Value="{$thisParam/SUB_SECTOR_CODE/@Value}"/>
+                <SECTOR_CODE Value="{$thisParam/SECTOR_CODE/@Value}"/>
+              </REQUEST>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Left'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Right'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='CREATE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SAVE_ITEM'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Incentive Management" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_SUB_SEC_LIST'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="IncentiveItem" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_CATEG_LIST'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="IncentiveItem" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_BRAND_LIST'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="IncentiveItem" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_PROD_ITEM_LIST'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="IncentiveItem" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ADD_NON_PNG_INCTV_ITEM'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="IncentiveItem" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_SEG_LIST'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="IncentiveItem" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_SUB_BRAND_LIST'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="IncentiveItem" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_ITEM_VERS_LIST'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="IncentiveItem" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='BACK'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='RETURN'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Incentive Management" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_GLOBAL_FORM_LIST'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="IncentiveItem" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='buttonId1'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="1126,223"/>
+    <mgcnodes>
+      <start0 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="76,390" size="732,526">
+        <iconProps iconfile="z1start.gif"/>
+      </start0>
+      <mgcnode Name="Search Incentives" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="106,215" size="1608,864">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <done2 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="560,291">
+        <iconProps iconfile="z1end.gif"/>
+      </done2>
+      <mgcnode Name="Incentive Management" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="462,136" size="1364,724">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <IncentiveItem font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="890,108" size="1920,1032">
+        <iconProps iconfile="x1age80.gif"/>
+      </IncentiveItem>
+    </mgcnodes>
+    <mgcconnectors>
+      <start0>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="98,390" endpoint="128,260" ctrlRect1="96,291,4,4" ctrlRect2="134,287,4,4" ctrlRect2Dirty="true"/>
+      </start0>
+      <mgcnode Name="Search Incentives">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="128,215" endpoint="128,215" ctrlRect1="126,138,4,4" ctrlRect2="47,-27,4,4" ctrlRect2Dirty="true" textRect="70,53,37,8">
+          <textProps text="$userAction ='SEARCH_INCENTIVES'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="128,215" endpoint="462,158" ctrlRect1="123,177,4,4" ctrlRect2="209,156,4,4" textRect="147,164,42,8" ctrlRect1Dirty="true">
+          <textProps text="$userAction ='VIEW_INCENTIVE_DETAILS'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="128,215" endpoint="462,158" ctrlRect1="176,59,4,4" ctrlRect2="209,156,4,4" ctrlRect1Dirty="true" textRect="177,105,34,8">
+          <textProps text="$userAction ='ADD_INCENTIVES'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="128,215" endpoint="106,237" ctrlRect1="117,27,4,4" ctrlRect2="-120,227,4,4" ctrlRect2Dirty="true" textRect="-18,125,37,8" ctrlRect1Dirty="true">
+          <textProps text="$userAction ='LOAD_PROGRAM_LIST'"/>
+        </nextNodeView>
+      </mgcnode>
+      <mgcnode Name="Incentive Management">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="462,158" endpoint="128,215" ctrlRect1="210,156,4,4" ctrlRect2="104,204,4,4" textRect="146,178,26,8" ctrlRect2Dirty="true">
+          <textProps text="$userAction ='CANCEL'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="507,158" endpoint="507,158" ctrlRect1="580,156,4,4" ctrlRect2="622,59,4,4" ctrlRect2Dirty="true" textRect="585,105,37,8">
+          <textProps text="$userAction ='LOAD_PROGRAM_LIST'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="462,158" endpoint="462,158" ctrlRect1="385,156,4,4" ctrlRect2="286,261,4,4" textRect="324,206,26,8" ctrlRect2Dirty="true">
+          <textProps text="$userAction ='UPDATE'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="484,136" endpoint="484,136" ctrlRect1="482,59,4,4" ctrlRect2="375,38,4,4" textRect="417,46,26,8" ctrlRect2Dirty="true">
+          <textProps text="$userAction ='CREATE'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="507,158" endpoint="890,130" ctrlRect1="625,155,4,4" ctrlRect2="617,188,4,4" textRect="608,169,31,8" ctrlRect2Dirty="true" ctrlRect1Dirty="true">
+          <textProps text="$userAction ='CREATE_ITEM'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="507,158" endpoint="890,130" ctrlRect1="689,295,4,4" ctrlRect2="600,128,4,4" textRect="625,209,43,8" ctrlRect1Dirty="true">
+          <textProps text="$userAction ='ADD_MORE_INCENTIVE_ITEM'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="507,158" endpoint="507,158" ctrlRect1="580,156,4,4" ctrlRect2="447,284,4,4" ctrlRect2Dirty="true" textRect="494,218,42,8">
+          <textProps text="$userAction ='LOAD_CONTENT_TYPE_LIST'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="507,158" endpoint="605,313" ctrlRect1="578,156,4,4" ctrlRect2="629,279,4,4" ctrlRect2Dirty="true"/>
+      </mgcnode>
+      <IncentiveItem>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="890,130" endpoint="507,158" ctrlRect1="608,129,4,4" ctrlRect2="634,111,4,4" ctrlRect1Dirty="true" textRect="609,118,29,8" ctrlRect2Dirty="true">
+          <textProps text="$userAction ='SAVE_ITEM'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="890,130" endpoint="890,130" ctrlRect1="816,115,4,4" ctrlRect2="674,-76,4,4" textRect="728,17,38,8" ctrlRect2Dirty="true" ctrlRect1Dirty="true">
+          <textProps text="$userAction ='LOAD_SUB_SEC_LIST'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="890,130" endpoint="912,108" ctrlRect1="786,53,4,4" ctrlRect2="840,-61,4,4" ctrlRect2Dirty="true" textRect="798,-6,35,8" ctrlRect1Dirty="true">
+          <textProps text="$userAction ='LOAD_CATEG_LIST'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="912,108" endpoint="912,108" ctrlRect1="910,31,4,4" ctrlRect2="900,87,4,4" textRect="890,57,35,8" ctrlRect2Dirty="true">
+          <textProps text="$userAction ='LOAD_BRAND_LIST'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="935,130" endpoint="935,130" ctrlRect1="1008,128,4,4" ctrlRect2="1036,202,4,4" ctrlRect2Dirty="true" textRect="1005,163,39,8">
+          <textProps text="$userAction ='LOAD_PROD_ITEM_LIST'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="935,130" endpoint="935,130" ctrlRect1="1008,128,4,4" ctrlRect2="1008,128,4,4" textRect="989,126,42,8">
+          <textProps text="$userAction ='ADD_NON_PNG_INCTV_ITEM'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="912,153" endpoint="912,153" ctrlRect1="910,226,4,4" ctrlRect2="979,299,4,4" ctrlRect2Dirty="true" textRect="930,260,33,8">
+          <textProps text="$userAction ='LOAD_SEG_LIST'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="890,130" endpoint="890,130" ctrlRect1="813,128,4,4" ctrlRect2="833,271,4,4" ctrlRect2Dirty="true" textRect="806,197,39,8">
+          <textProps text="$userAction ='LOAD_SUB_BRAND_LIST'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="890,130" endpoint="890,130" ctrlRect1="813,128,4,4" ctrlRect2="545,310,4,4" ctrlRect2Dirty="true" textRect="662,217,39,8">
+          <textProps text="$userAction ='LOAD_ITEM_VERS_LIST'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="890,130" endpoint="507,158" ctrlRect1="602,128,4,4" ctrlRect2="631,23,4,4" ctrlRect2Dirty="true" textRect="606,73,24,8">
+          <textProps text="$userAction ='RETURN'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="935,130" endpoint="935,130" ctrlRect1="1008,128,4,4" ctrlRect2="961,257,4,4" ctrlRect2Dirty="true" textRect="966,190,41,8">
+          <textProps text="$userAction ='LOAD_GLOBAL_FORM_LIST'"/>
+        </nextNodeView>
+      </IncentiveItem>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+      <action/>
+    </pre_actions>
+    <post_actions>
+      <action/>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

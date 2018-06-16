@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+ 	 Copyright (c) 2009 by Teradata Corporation. 
+	 All Rights Reserved. 
+	 Teradata CONFIDENTIAL AND TRADE SECRET 
+ -->
+  <DEFINE_METHOD Name="pngStopExtrnStdrdTimer">
+    <!--**********************************************************************************************************
+*   Module Name	: pngExtrnStdrdMigration
+*		Created Date	: April 1, 2016
+*		Created By   	: Teradata
+*		Called Functions:
+*		Called By Functions:
+*		Short Desc	: Rule that stops ExtrnStdrd timer.
+*  		Change Log 		:
+*		DATE							LC						OWNER		DESCRIPTION
+*
+**********************************************************************************************************-->
+    <RULE>
+      <ACTION>
+        <STOP_TIMER>
+          <IDENTIFIED_BY>
+            <NAME Value="TIMER_FOR_ExtrnStdrd"/>
+          </IDENTIFIED_BY>
+        </STOP_TIMER>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="pngStartExtrnStdrdTimer">
+    <!--**********************************************************************************************************
+*   Module Name	: pngExtrnStdrdMigration
+*		Created Date	: April 1, 2016
+*		Created By   	: Teradata
+*		Called Functions: Calls pngExtrnStdrdMigRule script 
+*		Called By Functions:
+*		Short Desc	: Rule that invokes timer for ExtrnStdrd Migration
+*  		Change Log 		:
+*		DATE							LC						OWNER		DESCRIPTION
+*
+**********************************************************************************************************-->
+    <RULE>
+      <ACTION>
+        <START_TIMER>
+          <IDENTIFIED_BY>
+            <NAME Value="TIMER_FOR_ExtrnStdrd"/>
+          </IDENTIFIED_BY>
+          <CALLBACK_DATE Value="{incrDate(date(), duration(0, 0, 10, 0))}"/>
+          <CALLBACK_DURATION Value="{duration(0,0,10,0)}"/>
+          <CALLBACK_ACTIONS>
+            <REQUEST Name="pngExtrnStdrdMigRule" ServiceName="BCM_MASTER" AssignToVar="resExtrnStdrdTimerRule"/>
+          </CALLBACK_ACTIONS>
+        </START_TIMER>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="pngExtrnStdrdMigRule">
+    <!--**********************************************************************************************************
+*   Module Name	: pngExtrnStdrdMigration
+*		Created Date	: April 1, 2016
+*		Created By   	: Teradata
+*		Called Functions: Calls ExtrnStdrd_MIG.bat script 
+*		Called By Functions:  pngExtrnStdrdTimer
+*		Short Desc	: Rule that performs standardizes data
+*  		Change Log 		:
+*		DATE							LC						OWNER		DESCRIPTION
+*
+**********************************************************************************************************-->
+    <RULE>
+      <ACTION>
+        <IF_TEST Test="$previousExtrnStdrdLoadStatus/@Value='Failed'">
+          <THEN>
+            <REQUEST Name="emailOnSerdownNPrevLoadInFailState" ServiceName="BCM_MASTER" AssignToVar="resPreviousLoad">
+              <SUBJECT Value="Previous External Standardization is still in Failed State"/>
+              <DATA Value="Previous External Standardization is still in Failed State and hence the Workflow wont be executed"/>
+            </REQUEST>
+          </THEN>
+          <ELSE>
+            <!-- identify if previous migration load is still in progress-->
+            <GET_DOCUMENT Name="LOAD_INFO" AssignToVar="respLoadInfo" ServiceName="BCM_MASTER">
+              <OR>
+                <AND>
+                  <PROCESS_NAME Value="Trillium"/>
+                  <CNTRY_NAME Value="ESP"/>
+                  <STATUS Value="In Progress"/>
+                </AND>
+                <AND>
+                  <PROCESS_NAME Value="Trillium"/>
+                  <CNTRY_NAME Value="ESP"/>
+                  <STATUS Value="Ready to Process"/>
+                </AND>
+                <AND>
+                  <PROCESS_NAME Value="Wrapper"/>
+                  <CNTRY_NAME Value="ESP"/>
+                  <STATUS Value="In Progress"/>
+                </AND>
+                <AND>
+                  <PROCESS_NAME Value="Wrapper"/>
+                  <CNTRY_NAME Value="ESP"/>
+                  <STATUS Value="Ready to Process"/>
+                </AND>
+                <AND>
+                  <PROCESS_NAME Value="Validations"/>
+                  <STATUS Value="In Progress"/>
+                </AND>
+                <AND>
+                  <PROCESS_NAME Value="ExtrnStdrd Postl Update"/>
+                  <CNTRY_NAME Value="ESP"/>
+                  <STATUS Value="In Progress"/>
+                </AND>
+                <AND>
+                  <PROCESS_NAME Value="Trillium"/>
+                  <CNTRY_NAME Value="PRT"/>
+                  <STATUS Value="In Progress"/>
+                </AND>
+                <AND>
+                  <PROCESS_NAME Value="Trillium"/>
+                  <CNTRY_NAME Value="PRT"/>
+                  <STATUS Value="Ready to Process"/>
+                </AND>
+                <AND>
+                  <PROCESS_NAME Value="Wrapper"/>
+                  <CNTRY_NAME Value="PRT"/>
+                  <STATUS Value="In Progress"/>
+                </AND>
+                <AND>
+                  <PROCESS_NAME Value="Wrapper"/>
+                  <CNTRY_NAME Value="PRT"/>
+                  <STATUS Value="Ready to Process"/>
+                </AND>
+                <AND>
+                  <PROCESS_NAME Value="Validations"/>
+                  <STATUS Value="In Progress"/>
+                </AND>
+                <AND>
+                  <PROCESS_NAME Value="ExtrnStdrd Postl Update"/>
+                  <CNTRY_NAME Value="PRT"/>
+                  <STATUS Value="In Progress"/>
+                </AND>                
+              </OR>
+            </GET_DOCUMENT>
+            <IF_TEST Test="count($respLoadInfo/LOAD_INFO) > 0">
+              <THEN>
+                <TO_DOCVAR AssignToVar="thisReturn">
+                  <SUCCESS>
+                    <Message Value="Previous Load Running"/>
+                  </SUCCESS>
+                </TO_DOCVAR>
+              </THEN>
+              <ELSE>
+                <EXECUTE_SQL_QUERY Value="SEL LOAD_ID FROM MDM_LOAD_CONTROL A WHERE NOT EXISTS(SEL LOAD_ID FROM LOAD_INFO B WHERE PROCESS_NAME LIKE '%ExtrnStdrd%' AND A.LOAD_ID = B.LOAD_ID) AND LOAD_ID IN (SEL LOAD_ID FROM LOAD_CONTROL WHERE FORMAT_ID IN (SEL AV_CODE FROM ATTRIBUTE_VALUES WHERE ATTRIBUTE_TYPE_ID IN (SEL ATTRIBUTE_TYPE_ID  FROM ATTRIBUTE_TYPES WHERE ATTRIBUTE_TYPE='i20b Format') AND SYS_ENT_STATE='Active')) QUALIFY RANK() OVER (PARTITION BY 1 ORDER BY LOAD_ID ASC)=1 ;" AssignToVar="ExtrnStdrdReadyLoadIds"/>
+                <IF_TEST Test="count($ExtrnStdrdReadyLoadIds/SQL_RESULT) > 0">
+                  <THEN>
+                    <!-- Sets the Status variable so that ExtrnStdrd Wf is not started when EDWPersist is Running-->
+                    <SET Var="ExtrnStdrdMig_Status" FromValue="Yes" Scope="Global"/>
+                    <SET Var="count" FromValue="1"/>
+                    <FOR_EACH SelectList="$ExtrnStdrdReadyLoadIds/*" CurrentElement="currLoad">
+                      <IF_TEST Test="$count=1">
+                        <THEN>
+                          <SET Var="concatenatedLoadIds" FromValue="{$currLoad/LOAD_ID/@Value}"/>
+                        </THEN>
+                        <ELSE>
+                          <SET Var="concatenatedLoadIds" FromValue="{concat($concatenatedLoadIds/@Value,',',$currLoad/LOAD_ID/@Value)}"/>
+                        </ELSE>
+                      </IF_TEST>
+                      <SET Var="count" FromValue="{int(int($count)+1)}"/>
+                    </FOR_EACH>
+                    <EXECUTE_SHELL_COMMAND Value="i20b_postl_update.cmd {$concatenatedLoadIds/@Value}" AssignToVar="ExtrnStdrdInputResult"/>
+                    <IF_TEST Test="$ExtrnStdrdInputResult/@ShellReturnValue = 0">
+                      <THEN>
+                        <!-- Sets back status to NO so that ORIG Wf is free to Run-->
+                        <SET Var="ExtrnStdrdMig_Status" FromValue="No" Scope="Global"/>
+                        <SET Var="previousExtrnStdrdLoadStatus" FromValue="Success" Scope="Global"/>
+                        <!-- Call Status Update batch Script which does inserts into ETL_CTRL.LOAD_CONTROL -->
+                        <EXECUTE_SHELL_COMMAND Value="MDM_STATUS_ExtrnStdrd.BAT" AssignToVar="resMdmStatus"/>
+                      </THEN>
+                      <ELSE>
+                        <DO_TRANSACTION>
+                          <MODIFY_DOC_SMART Name="LOAD_INFO" ServiceName="BCM_MASTER">
+                            <DOCUMENT_CONTEXT>
+                              <PROCESS_NAME Value="ExtrnStdrd Postl Update"/>
+                              <STATUS Value="In Progress"/>
+                            </DOCUMENT_CONTEXT>
+                            <UPDATE_PROPERTIES>
+                              <STATUS Value="Failure"/>
+                              <ERROR_MSG_TXT Value="{$ExtrnStdrdInputResult/STD_ERR/LINE[1]/@Value}"/>
+                              <PROCESS_END_TIME Value="{date()}"/>
+                            </UPDATE_PROPERTIES>
+                          </MODIFY_DOC_SMART>
+                        </DO_TRANSACTION>
+                        <!-- Call Status Update batch Script which does inserts into ETL_CTRL.LOAD_CONTROL -->
+                        <EXECUTE_SHELL_COMMAND Value="MDM_STATUS_ExtrnStdrd.BAT" AssignToVar="resMdmStatus"/>
+                        <!-- send the email with concatenated list of load ids that failed-->
+                        <SET Var="Description" FromValue="{$ExtrnStdrdInputResult/@ShellReturnValue}"/>
+                        <REQUEST Name="emailOnErrorNode" ServiceName="BCM_MASTER">
+                          <LoadId Value="{$concatenatedLoadIds/@Value}"/>
+                          <Subject Value="ExtrnStdrd Failure"/>
+                          <BatchIdORLoadId Value="LoadId"/>
+                          <Short_Description Value="{$Description/@Value}"/>
+                          <Description Value="Following Load Id failed :{$concatenatedLoadIds/@Value}"/>
+                          <SubCategory Value="ExtrnStdrd Error"/>
+                        </REQUEST>
+                        <TO_DOCVAR AssignToVar="thisReturn">
+                          <FAILURE>
+                            <Message Value="{$ExtrnStdrdInputResult/STD_ERR/LINE[1]/@Value}"/>
+                          </FAILURE>
+                        </TO_DOCVAR>
+                        <SET Var="ExtrnStdrdMig_Status" FromValue="No" Scope="Global"/>
+                      </ELSE>
+                    </IF_TEST>
+                  </THEN>
+                  <ELSE>
+                    <TO_DOCVAR AssignToVar="thisReturn">
+                      <SUCCESS>
+                        <Message Value="No Load Id to Process"/>
+                      </SUCCESS>
+                    </TO_DOCVAR>
+                  </ELSE>
+                </IF_TEST>
+              </ELSE>
+            </IF_TEST>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="pngSETPreviousExtrnStdrdLoadStatus">
+    <RULE>
+      <ACTION>
+        <SET Var="previousExtrnStdrdLoadStatus" FromValue="Success" Scope="Global"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

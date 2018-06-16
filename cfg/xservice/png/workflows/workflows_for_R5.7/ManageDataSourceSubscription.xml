@@ -1,0 +1,1157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="5" ShowInBreadCrumbs="true" Version="1.0" Name="ManageDataSourceSubscription" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="ManageDataSourceSubscription">
+    <variable Name="matchedDomainValues" Type="xml" Comment=""/>
+    <variable Name="programIDValues" Type="xml" Comment=""/>
+    <variable Name="LEGAL_ENT_NBR" Type="string" Comment=""/>
+    <variable Name="PROGRAM_NAME" Type="string" Comment=""/>
+    <variable Name="SourceValues" Type="xml" Comment=""/>
+    <variable Name="getInsertResult" Type="xml" Comment=""/>
+    <variable Name="getUpdateResult" Type="xml" Comment=""/>
+    <variable Name="getResults" Type="xml" Comment=""/>
+    <variable Name="domainValues" Type="xml" Comment=""/>
+    <variable Name="DATA_SRCE_NBR_new" Type="string" Comment=""/>
+    <variable Name="LEGAL_ENT_NBR_new" Type="string" Comment=""/>
+    <variable Name="retainValues" Type="xml" Comment=""/>
+    <variable Name="retainValuesNames" Type="xml" Comment=""/>
+    <variable Name="updateNames" Type="xml" Comment=""/>
+    <variable Name="thisParam_Bkp" Type="xml" Comment=""/>
+    <variable Name="getOptInputResults" Type="xml" Comment=""/>
+    <variable Name="alertMsg" Type="xml" Comment=""/>
+    <variable Name="getSaveResultDmy" Type="xml" Comment=""/>
+    <variable Name="DMY_id_Modify_Save" Type="string" Comment=""/>
+    <variable Name="DMY_id_Create" Type="string" Comment=""/>
+    <variable Name="DMY_id_Create_Save" Type="string" Comment=""/>
+    <variable Name="dispRequest" Type="string" Comment=""/>
+    <variable Name="DATA_SRCE_NAME_new" Type="string" Comment=""/>
+    <variable Name="DMY_id" Type="string" Comment=""/>
+    <variable Name="startRow1" Type="string" Comment=""/>
+    <variable Name="DMY_id_global" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start0">
+      <actions>
+        <action>
+          <!--<SET Property="SHOW_CREATE_CONSUMER" DocVar="thisParam" FromValue="FALSE"/>-->
+          <SET Var="dispRequest" FromValue="false"/>
+          <REQUEST Name="getMatchedDomains" ServiceName="BCM_MASTER" AssignToVar="domainValues"/>
+          <TO_DOCVAR AssignToVar="matchedDomainValues">
+            <TO_XML SelectList="$domainValues"/>
+          </TO_DOCVAR>
+          <REQUEST Name="getProgramIDs_for_Subscription" ServiceName="BCM_MASTER" AssignToVar="programIDValues">
+            <SOURCE Value="SEARCH"/>
+            <LEGAL_ENT_NBR Value="{$domainValues/LEGAL_ENT/LEGAL_ENT_NBR/@Value}"/>
+          </REQUEST>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="SearchDataSourceSubscription"/>
+      </next_nodes>
+    </start>
+    <done Name="done1">
+      <actions/>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="SearchDataSourceSubscription" ShowInBreadCrumbs="SHOW" Template="SearchDataSrcSubscrptn.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <!-- Code Written  by Ankita Sadhwani,  April,2016 -->
+          <SET Var="startRow1" FromValue="{$thisParam/START_COUNT/@Value}"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Back' and $thisParam/PAGE/@Value='BCM_MASTER.ManageDataSourceSubscription.ModifyDataSrceSubsOpt.pgl'">
+            <THEN>
+              <FOR_EACH SelectList="$SourceValues/DATA_SRCE/*" CurrentElement="currEle_filterNew">
+                <IF_TEST Test="$thisParam/DATA_SRCE_NBR/@Value=$currEle_filterNew/@Value">
+                  <THEN>
+                    <SET Var="DATA_SRCE_NBR_Back" FromValue="{$currEle_filterNew/@Id}"/>
+                    <SET Var="DATA_SRCE_NAME_Back" FromValue="{$currEle_filterNew/@Value}"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <FOR_EACH SelectList="$programIDValues/MKTNG_PGM/OPTION" CurrentElement="currEle7">
+                <IF_TEST Test="$currEle7/@Value=$thisParam/MKTNG_PGM_NBR/@Value">
+                  <THEN>
+                    <SET Var="MKTNG_PGM_NBR_Back" FromValue="{$currEle7/@Id}"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <REMOVE_CHILDREN ChildName="DATA_SRCE_NBR" DocVar="thisParam"/>
+              <REMOVE_CHILDREN ChildName="MKTNG_PGM_NBR" DocVar="thisParam"/>
+              <APPEND_TO_XML DocVar="thisParam">
+                <MKTNG_PGM_NBR Value="{$MKTNG_PGM_NBR_Back/@Value}"/>
+                <DATA_SRCE_NBR Value="{$DATA_SRCE_NBR_Back/@Value}"/>
+              </APPEND_TO_XML>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <TO_XML SelectList="$matchedDomainValues/*"/>
+                  <TO_XML SelectList="$programIDValues/*"/>
+                  <TO_XML SelectList="$SourceValues/*"/>
+                  <TO_XML SelectList="$getResults"/>
+                  <LEGAL_ENT_NAME Value="{$thisParam/LEGAL_ENT_NAME/@Value}"/>
+                  <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR/@Value}"/>
+                  <MKTNG_PGM_NBR Value="{$MKTNG_PGM_NBR_Back/@Value}"/>
+                  <DATA_SRCE_NBR Value="{$DATA_SRCE_NBR_Back/@Value}"/>
+                  <RowCount Value="{$getResults/@TotalRowCount}"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+            <ELSE>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <TO_XML SelectList="$matchedDomainValues/*"/>
+                  <TO_XML SelectList="$programIDValues/*"/>
+                  <TO_XML SelectList="$SourceValues/*"/>
+                  <TO_XML SelectList="$getResults"/>
+                  <LEGAL_ENT_NAME Value="{$thisParam/LEGAL_ENT_NAME/@Value}"/>
+                  <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR/@Value}"/>
+                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                  <DATA_SRCE_NBR Value="{$thisParam/DATA_SRCE_NBR/@Value}"/>
+                  <RowCount Value="{$getResults/@TotalRowCount}"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <!-- Code Written  by Ankita Sadhwani,  April,2016 -->
+          <!--Loads the dropdown values for Legal Entity, and accordingly for Marketing Program Number-->
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_PROGRAM_LIST'">
+            <THEN>
+              <REQUEST Name="getMatchedDomains" ServiceName="BCM_MASTER" AssignToVar="domainValues"/>
+              <REQUEST Name="getProgramIDs_for_Subscription" AssignToVar="programIDValues" ServiceName="BCM_MASTER">
+                <SOURCE Value="SEARCH"/>
+                <LEGAL_ENT_NBR Value="{$domainValues/LEGAL_ENT[LEGAL_ENT_NAME/@Value=$thisParam/LEGAL_ENT_NAME/@Value]/LEGAL_ENT_NBR/@Value}"/>
+              </REQUEST>
+            </THEN>
+          </IF_TEST>
+          <!--Loads the values of Data Source Number according to Marketing Program Number-->
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_SOURCE_LIST'">
+            <THEN>
+              <REQUEST Name="getDataSourceNamesAndNbr" ServiceName="BCM_MASTER" AssignToVar="SourceValues">
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+              </REQUEST>
+            </THEN>
+          </IF_TEST>
+          <!--To get the name displayed and its actual value for Legal Entity & Data Source Number-->
+          <FOR_EACH SelectList="$SourceValues/DATA_SRCE/*" CurrentElement="currEle_filterNew">
+            <IF_TEST Test="$thisParam/DATA_SRCE_NBR/@Value=$currEle_filterNew/@Id">
+              <THEN>
+                <SET Var="DATA_SRCE_NBR_filterNew" FromValue="{$currEle_filterNew/@Id}"/>
+                <SET Var="DATA_SRCE_NAME_filterNew" FromValue="{$currEle_filterNew/@Value}"/>
+              </THEN>
+            </IF_TEST>
+          </FOR_EACH>
+          <FOR_EACH SelectList="$domainValues/*" CurrentElement="currEle_filterNew1">
+            <IF_TEST Test="$thisParam/LEGAL_ENT_NAME/@Value=$currEle_filterNew1/LEGAL_ENT_NAME/@Value">
+              <THEN>
+                <SET Var="LEGAL_ENT_NBR_filterNew" FromValue="{$currEle_filterNew1/LEGAL_ENT_NBR/@Value}"/>
+              </THEN>
+            </IF_TEST>
+          </FOR_EACH>
+          <!--Search handled when DATA_SRCE_NBR passed as filter and when not-->
+          <IF_TEST Test="$thisParam/DATA_SRCE_NBR/@Value=''">
+            <THEN>
+              <TO_DOCVAR AssignToVar="thisParamFilter">
+                <ROOT>
+                  <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR_filterNew/@Value}"/>
+                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                  <DATA_SRCE_NBR Value="{$thisParam/DATA_SRCE_NBR/@Value}"/>
+                  <CR_NUM Value="{$thisParam/CR_NUM/@Value}"/>
+                  <CR_DESC Value="{$thisParam/CR_DESC/@Value}"/>
+                  <ENG_TXT Value="{$thisParam/ENG_TXT/@Value}"/>
+                  <LOCAL_TXT Value="{$thisParam/LOCAL_TXT/@Value}"/>
+                  <BRAND_CODE Value="{$thisParam/BRAND_CODE/@Value}"/>
+                  <COMMENTS Value="{$thisParam/COMMENTS/@Value}"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="filter">
+                <filter/>
+              </TO_DOCVAR>
+              <IF_TEST Test="$userAction='Search'">
+                <THEN>
+                  <SET Var="LEGAL_ENT_NBR" FromSelect="$LEGAL_ENT_NBR_filterNew/@Value"/>
+                  <SET Var="MKTNG_PGM_NBR" FromSelect="$thisParam/MKTNG_PGM_NBR/@Value"/>
+                  <SET Var="DATA_SRCE_NBR" FromSelect="$thisParam/DATA_SRCE_NBR/@Value"/>
+                  <SET Var="CR_NUM" FromSelect="$thisParam/CR_NUM/@Value"/>
+                  <SET Var="CR_DESC" FromSelect="$thisParam/CR_DESC/@Value"/>
+                  <SET Var="ENG_TXT" FromSelect="$thisParam/ENG_TXT/@Value"/>
+                  <SET Var="LOCAL_TXT" FromSelect="$thisParam/LOCAL_TXT/@Value"/>
+                  <SET Var="BRAND_CODE" FromSelect="$thisParam/BRAND_CODE/@Value"/>
+                  <SET Var="COMMENTS" FromSelect="$thisParam/COMMENTS/@Value"/>
+                  <FORM_SEARCH_FILTER Value="{$thisParamFilter}" AssignToVar="filter">
+                    <LEGAL_ENT_NBR/>
+                    <MKTNG_PGM_NBR/>
+                    <DATA_SRCE_NBR/>
+                    <CR_NUM/>
+                    <CR_DESC/>
+                    <ENG_TXT/>
+                    <LOCAL_TXT/>
+                    <BRAND_CODE/>
+                    <COMMENTS/>
+                  </FORM_SEARCH_FILTER>
+                  <GET_DOC_SMART Name="DATA_SRCE_SUBS_OPT_IN_DMY" AssignToVar="getOptInputResults" DirtyRead="true" MaxRows="10" StartAtRow="{$startRow1}" ReturnRowCount="yes">
+                    <TO_XML SelectList="$filter/*/*"/>
+                    <SELECT>
+                      <LEGAL_ENT_NBR/>
+                      <MKTNG_PGM_NBR/>
+                      <DATA_SRCE_NBR/>
+                      <CR_NUM/>
+                      <CR_DESC/>
+                      <ENG_TXT/>
+                      <LOCAL_TXT/>
+                      <BRAND_CODE/>
+                      <COMMENTS/>
+                      <STATUS/>
+                      <DMY_id/>
+                    </SELECT>
+                  </GET_DOC_SMART>
+                  <!--Remove the values for LEGAL_ENT_NBR,MKTNG_PGM_NBR,DATA_SRCE_NBR from the Get_Doc result,
+                  and add its names that needs to be displayed-->
+                  <FOR_EACH SelectList="$getOptInputResults/DATA_SRCE_SUBS_OPT_IN_DMY" CurrentElement="currDataSrce">
+                    <TO_DOCVAR AssignToVar="DATA_SRCE_NBR1">
+                      <!--<DATA_SRCE_NBR Value="{$SourceValues/SQL_RESULT[DATA_SRCE_NBR/@Value=$currDataSrce/DATA_SRCE_NBR/@Value]/DATA_SRCE_NAME/@Value}"/>-->
+                      <DATA_SRCE_NBR Value="{$SourceValues/DATA_SRCE/OPTION[@Id=$currDataSrce/DATA_SRCE_NBR/@Value]/@Value}"/>
+                    </TO_DOCVAR>
+                    <REMOVE_CHILDREN ChildName="DATA_SRCE_NBR" DocVar="currDataSrce"/>
+                    <ADD_CHILDREN DocVar="currDataSrce" FromDocVar="DATA_SRCE_NBR1"/>
+                  </FOR_EACH>
+                  <REMOVE_CHILDREN ChildName="LEGAL_ENT_NBR" SelectList="$getOptInputResults/*"/>
+                  <REMOVE_CHILDREN ChildName="MKTNG_PGM_NBR" SelectList="$getOptInputResults/*"/>
+                  <TO_DOCVAR AssignToVar="LEGAL_ENT_NBR_7">
+                    <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NAME/@Value}"/>
+                  </TO_DOCVAR>
+                  <!--Get the value of MKTNG_PGM_NBR from the name displayed-->
+                  <FOR_EACH SelectList="$programIDValues/MKTNG_PGM/OPTION" CurrentElement="currEle7">
+                    <IF_TEST Test="$currEle7/@Id=$thisParam/MKTNG_PGM_NBR/@Value">
+                      <THEN>
+                        <SET Var="MKTNG_PGM_NBR_new7" FromValue="{$currEle7/@Value}"/>
+                      </THEN>
+                    </IF_TEST>
+                  </FOR_EACH>
+                  <TO_DOCVAR AssignToVar="MKTNG_PGM_NBR">
+                    <MKTNG_PGM_NBR Value="{$MKTNG_PGM_NBR_new7/@Value}"/>
+                  </TO_DOCVAR>
+                  <SET_CHILD FromDocVar="LEGAL_ENT_NBR_7" SelectList="$getOptInputResults/*"/>
+                  <SET_CHILD FromDocVar="MKTNG_PGM_NBR" SelectList="$getOptInputResults/*"/>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+            <ELSE>
+              <TO_DOCVAR AssignToVar="thisParamFilter">
+                <ROOT>
+                  <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR_filterNew/@Value}"/>
+                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                  <DATA_SRCE_NBR Value="{$DATA_SRCE_NBR_filterNew/@Value}"/>
+                  <CR_NUM Value="{$thisParam/CR_NUM/@Value}"/>
+                  <CR_DESC Value="{$thisParam/CR_DESC/@Value}"/>
+                  <ENG_TXT Value="{$thisParam/ENG_TXT/@Value}"/>
+                  <LOCAL_TXT Value="{$thisParam/LOCAL_TXT/@Value}"/>
+                  <BRAND_CODE Value="{$thisParam/BRAND_CODE/@Value}"/>
+                  <COMMENTS Value="{$thisParam/COMMENTS/@Value}"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="filter">
+                <filter/>
+              </TO_DOCVAR>
+              <IF_TEST Test="$userAction='Search'">
+                <THEN>
+                  <SET Var="LEGAL_ENT_NBR" FromSelect="$LEGAL_ENT_NBR_filterNew/@Value"/>
+                  <SET Var="MKTNG_PGM_NBR" FromSelect="$thisParam/MKTNG_PGM_NBR/@Value"/>
+                  <SET Var="DATA_SRCE_NBR" FromSelect="$DATA_SRCE_NBR_filterNew/@Value"/>
+                  <SET Var="CR_NUM" FromSelect="$thisParam/CR_NUM/@Value"/>
+                  <SET Var="CR_DESC" FromSelect="$thisParam/CR_DESC/@Value"/>
+                  <SET Var="ENG_TXT" FromSelect="$thisParam/ENG_TXT/@Value"/>
+                  <SET Var="LOCAL_TXT" FromSelect="$thisParam/LOCAL_TXT/@Value"/>
+                  <SET Var="BRAND_CODE" FromSelect="$thisParam/BRAND_CODE/@Value"/>
+                  <SET Var="COMMENTS" FromSelect="$thisParam/COMMENTS/@Value"/>
+                  <FORM_SEARCH_FILTER Value="{$thisParamFilter}" AssignToVar="filter">
+                    <LEGAL_ENT_NBR/>
+                    <MKTNG_PGM_NBR/>
+                    <DATA_SRCE_NBR/>
+                    <CR_NUM/>
+                    <CR_DESC/>
+                    <ENG_TXT/>
+                    <LOCAL_TXT/>
+                    <BRAND_CODE/>
+                    <COMMENTS/>
+                  </FORM_SEARCH_FILTER>
+                  <GET_DOC_SMART Name="DATA_SRCE_SUBS_OPT_IN_DMY" AssignToVar="getOptInputResults" DirtyRead="true" ReturnRowCount="yes">
+                    <TO_XML SelectList="$filter/*/*"/>
+                    <SELECT>
+                      <LEGAL_ENT_NBR/>
+                      <MKTNG_PGM_NBR/>
+                      <DATA_SRCE_NBR/>
+                      <CR_NUM/>
+                      <CR_DESC/>
+                      <ENG_TXT/>
+                      <LOCAL_TXT/>
+                      <BRAND_CODE/>
+                      <COMMENTS/>
+                      <STATUS/>
+                      <DMY_id/>
+                    </SELECT>
+                  </GET_DOC_SMART>
+                  <REMOVE_CHILDREN ChildName="LEGAL_ENT_NBR" SelectList="$getOptInputResults/*"/>
+                  <REMOVE_CHILDREN ChildName="MKTNG_PGM_NBR" SelectList="$getOptInputResults/*"/>
+                  <REMOVE_CHILDREN ChildName="DATA_SRCE_NBR" SelectList="$getOptInputResults/*"/>
+                  <TO_DOCVAR AssignToVar="DATA_SRCE_NBR">
+                    <DATA_SRCE_NBR Value="{$DATA_SRCE_NAME_filterNew/@Value}"/>
+                  </TO_DOCVAR>
+                  <TO_DOCVAR AssignToVar="LEGAL_ENT_NBR_7">
+                    <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NAME/@Value}"/>
+                  </TO_DOCVAR>
+                  <FOR_EACH SelectList="$programIDValues/MKTNG_PGM/OPTION" CurrentElement="currEle7">
+                    <IF_TEST Test="$currEle7/@Id=$thisParam/MKTNG_PGM_NBR/@Value">
+                      <THEN>
+                        <SET Var="MKTNG_PGM_NBR_new7" FromValue="{$currEle7/@Value}"/>
+                      </THEN>
+                    </IF_TEST>
+                  </FOR_EACH>
+                  <TO_DOCVAR AssignToVar="MKTNG_PGM_NBR">
+                    <MKTNG_PGM_NBR Value="{$MKTNG_PGM_NBR_new7/@Value}"/>
+                  </TO_DOCVAR>
+                  <SET_CHILD FromDocVar="DATA_SRCE_NBR" SelectList="$getOptInputResults/*"/>
+                  <SET_CHILD FromDocVar="LEGAL_ENT_NBR_7" SelectList="$getOptInputResults/*"/>
+                  <SET_CHILD FromDocVar="MKTNG_PGM_NBR" SelectList="$getOptInputResults/*"/>
+                </THEN>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="getResults">
+            <TO_XML SelectList="$getOptInputResults"/>
+          </TO_DOCVAR>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='DONE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Search'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="SearchDataSourceSubscription" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Create'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="CreateDataSrceSubscriptionOpt" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Modify'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ModifyDataSrceSubscriptionOpt" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_PROGRAM_LIST'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="SearchDataSourceSubscription" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_SOURCE_LIST'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="SearchDataSourceSubscription" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Save'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done1" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="ModifyDataSrceSubscriptionOpt" ShowInBreadCrumbs="SHOW" Template="ModifyDataSrceSubsOpt.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <!-- Code Written  by Ankita Sadhwani,  April,2016 -->
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <root/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="thisParam_Bkp">
+            <TO_XML SelectList="$thisParam"/>
+          </TO_DOCVAR>
+          <SET Var="DATA_SRCE_NBR" FromValue="{substringBefore(substringAfter($thisParam/SELECTED_ID/@Value,'DATA_SRCE_NBR='),'#')}"/>
+          <SET Var="DMY_id" FromValue="{substringAfter(substringAfter($thisParam/SELECTED_ID/@Value,'DATA_SRCE_NBR='),'#DMY_id=')}"/>
+          <IF_TEST Test="$userAction='Modify'">
+            <THEN>
+              <SET Var="DMY_id_global" FromValue="{$DMY_id/@Value}"/>
+            </THEN>
+          </IF_TEST>
+          <!--Get the DATA_SRCE_NBR,DMY_id from SELECTED_ID-->
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value !='Modify'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="retainValuesNames">
+                <ROOT>
+                  <TO_XML SelectList="$matchedDomainValues/*"/>
+                  <TO_XML SelectList="$programIDValues/*"/>
+                  <TO_XML SelectList="$SourceValues/*"/>
+                  <LEGAL_ENT_NAME Value="{$thisParam/LEGAL_ENT_NAME/@Value}"/>
+                  <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR/@Value}"/>
+                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                  <DATA_SRCE_NBR Value="{$thisParam/DATA_SRCE_NBR/@Value}"/>
+                  <BRAND_CODE Value="{$thisParam/BRAND_CODE/@Value}"/>
+                  <COMMENTS Value="{$thisParam/COMMENTS/@Value}"/>
+                  <CR_NUM Value="{$thisParam/CR_NUM/@Value}"/>
+                  <CR_DESC Value="{$thisParam/CR_DESC/@Value}"/>
+                  <ENG_TXT Value="{$thisParam/ENG_TXT/@Value}"/>
+                  <LOCAL_TXT Value="{$thisParam/LOCAL_TXT/@Value}"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$alertMsg"/>
+              <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$retainValuesNames/*"/>
+            </THEN>
+            <ELSE>
+              <REQUEST Name="getMatchedDomains" ServiceName="BCM_MASTER" AssignToVar="domainValues"/>
+              <FOR_EACH SelectList="$domainValues/*" CurrentElement="currEle2">
+                <IF_TEST Test="$thisParam/LEGAL_ENT_NAME/@Value=$currEle2/LEGAL_ENT_NAME/@Value">
+                  <THEN>
+                    <SET Var="LEGAL_ENT_NBR_new8" FromValue="{$currEle2/LEGAL_ENT_NBR/@Value}"/>
+                    <SET Var="LEGAL_ENT_NAME_new8" FromValue="{$currEle2/LEGAL_ENT_NAME/@Value}"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <REQUEST Name="getProgramIDs_for_Subscription" AssignToVar="programIDValues" ServiceName="BCM_MASTER">
+                <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR_new8/@Value}"/>
+              </REQUEST>
+              <FOR_EACH SelectList="$programIDValues/MKTNG_PGM/*" CurrentElement="currEle3">
+                <IF_TEST Test="$currEle3/@Id=$thisParam/MKTNG_PGM_NBR/@Value">
+                  <THEN>
+                    <SET Var="MKTNG_PGM_NBR_new1" FromValue="{$currEle3/@Value}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$currEle3/@Value=$thisParam/MKTNG_PGM_NBR/@Value">
+                  <THEN>
+                    <SET Var="MKTNG_PGM_NBR_new1" FromValue="{$currEle3/@Id}"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <REQUEST Name="getDataSourceNamesAndNbr" ServiceName="BCM_MASTER" AssignToVar="SourceValues">
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+              </REQUEST>
+              <FOR_EACH SelectList="$SourceValues/DATA_SRCE/*" CurrentElement="currEle_filterNew">
+                <IF_TEST Test="$DATA_SRCE_NBR/@Value=$currEle_filterNew/@Value">
+                  <THEN>
+                    <SET Var="DATA_SRCE_NBR_new8" FromValue="{$currEle_filterNew/@Id}"/>
+                    <SET Var="DATA_SRCE_NAME_new8" FromValue="{$currEle_filterNew/@Value}"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <GET_DOC_SMART Name="DATA_SRCE_SUBS_OPT_IN_DMY" AssignToVar="getSelectedValues" DirtyRead="true" HandleException="true" ServiceName="BCM_MASTER" ReturnRowCount="true">
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                <DATA_SRCE_NBR Value="{$DATA_SRCE_NBR_new8/@Value}"/>
+                <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR_new8/@Value}"/>
+                <DMY_id Value="{$DMY_id_global/@Value}"/>
+              </GET_DOC_SMART>
+              <TO_DOCVAR AssignToVar="retainValuesNames">
+                <ROOT>
+                  <TO_XML SelectList="$matchedDomainValues/*"/>
+                  <TO_XML SelectList="$programIDValues/*"/>
+                  <TO_XML SelectList="$SourceValues/*"/>
+                  <LEGAL_ENT_NAME Value="{$LEGAL_ENT_NAME_new8/@Value}"/>
+                  <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR_new8/@Value}"/>
+                  <MKTNG_PGM_NBR Value="{$MKTNG_PGM_NBR_new1/@Value}"/>
+                  <DATA_SRCE_NBR Value="{$DATA_SRCE_NAME_new8/@Value}"/>
+                  <BRAND_CODE Value="{$getSelectedValues/DATA_SRCE_SUBS_OPT_IN_DMY/BRAND_CODE/@Value}"/>
+                  <COMMENTS Value="{$getSelectedValues/DATA_SRCE_SUBS_OPT_IN_DMY/COMMENTS/@Value}"/>
+                  <CR_NUM Value="{$getSelectedValues/DATA_SRCE_SUBS_OPT_IN_DMY/CR_NUM/@Value}"/>
+                  <CR_DESC Value="{$getSelectedValues/DATA_SRCE_SUBS_OPT_IN_DMY/CR_DESC/@Value}"/>
+                  <ENG_TXT Value="{$getSelectedValues/DATA_SRCE_SUBS_OPT_IN_DMY/ENG_TXT/@Value}"/>
+                  <LOCAL_TXT Value="{$getSelectedValues/DATA_SRCE_SUBS_OPT_IN_DMY/LOCAL_TXT/@Value}"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$retainValuesNames/*"/>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <!-- Code Written  by Ankita Sadhwani,  April,2016 -->
+          <IF_TEST Test="$userAction='Request'">
+            <THEN>
+              <REQUEST Name="getMatchedDomains" ServiceName="BCM_MASTER" AssignToVar="domainValues"/>
+              <FOR_EACH SelectList="$domainValues/*" CurrentElement="currEle2">
+                <!--<IF_TEST Test="$thisParam/LEGAL_ENT_NBR/@Value=$currEle2/LEGAL_ENT_NAME/@Value">-->
+                <IF_TEST Test="$thisParam/LEGAL_ENT_NAME/@Value=$currEle2/LEGAL_ENT_NAME/@Value">
+                  <THEN>
+                    <SET Var="LEGAL_ENT_NBR_new5" FromValue="{$currEle2/LEGAL_ENT_NBR/@Value}"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <REQUEST Name="getProgramIDs_for_Subscription" AssignToVar="programIDValues" ServiceName="BCM_MASTER">
+                <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR_new5/@Value}"/>
+              </REQUEST>
+              <FOR_EACH SelectList="$programIDValues/MKTNG_PGM/*" CurrentElement="currEle3">
+                <IF_TEST Test="$currEle3/@Value=$thisParam/MKTNG_PGM_NBR/@Value">
+                  <THEN>
+                    <SET Var="MKTNG_PGM_NBR_new5" FromValue="{$currEle3/@Id}"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <REQUEST Name="getDataSourceNamesAndNbr" ServiceName="BCM_MASTER" AssignToVar="SourceValues">
+                <MKTNG_PGM_NBR Value="{$MKTNG_PGM_NBR_new5/@Value}"/>
+              </REQUEST>
+              <FOR_EACH SelectList="$SourceValues/DATA_SRCE/*" CurrentElement="currEle4">
+                <IF_TEST Test="$thisParam/DATA_SRCE_NBR/@Value=$currEle4/@Value">
+                  <THEN>
+                    <SET Var="DATA_SRCE_NBR_new5" FromValue="{$currEle4/@Id}"/>
+                    <SET Var="DATA_SRCE_NAME_new5" FromValue="{$currEle4/@Value}"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <TO_DOCVAR AssignToVar="updateNames">
+                <ROOT>
+                  <LEGAL_ENT_NBR_new5 Value="{$LEGAL_ENT_NBR_new5/@Value}"/>
+                  <MKTNG_PGM_NBR_new5 Value="{$MKTNG_PGM_NBR_new5/@Value}"/>
+                  <DATA_SRCE_NBR_new5 Value="{$DATA_SRCE_NBR_new5/@Value}"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <!--<GET_DOC_SMART Name="DATA_SRCE_SUBS_OPT_IN" AssignToVar="select_UpdateORInsert" DirtyRead="true" HandleException="true" ReturnRowCount="true" ServiceName="BCM_MASTER">
+                <LEGAL_ENT_NBR Value="{$updateNames/LEGAL_ENT_NBR_new5/@Value}"/>
+                <MKTNG_PGM_NBR Value="{$updateNames/MKTNG_PGM_NBR_new5/@Value}"/>
+                <DATA_SRCE_NBR Value="{$updateNames/DATA_SRCE_NBR_new5/@Value}"/>
+              </GET_DOC_SMART>-->
+              <GET_DOC_SMART Name="DATA_SRCE_SUBS_OPT_IN_DMY" AssignToVar="checkStatus" DirtyRead="true" HandleException="true" ReturnRowCount="true" ServiceName="BCM_MASTER">
+                <LEGAL_ENT_NBR Value="{$updateNames/LEGAL_ENT_NBR_new5/@Value}"/>
+                <MKTNG_PGM_NBR Value="{$updateNames/MKTNG_PGM_NBR_new5/@Value}"/>
+                <DATA_SRCE_NBR Value="{$updateNames/DATA_SRCE_NBR_new5/@Value}"/>
+                <DMY_id Value="{$DMY_id_global/@Value}"/>
+              </GET_DOC_SMART>
+              <IF_TEST Test="$checkStatus/DATA_SRCE_SUBS_OPT_IN_DMY/STATUS/@Value='Approved' or $checkStatus/DATA_SRCE_SUBS_OPT_IN_DMY/STATUS/@Value='Approval Pending'">
+                <THEN>
+                  <SET Var="alertGreen" FromValue=""/>
+                  <SET Var="alertRed" FromValue="Request for this record has either been Approved or is Pending for Approval."/>
+                </THEN>
+                <ELSE>
+                  <!--<IF_TEST Test="$select_UpdateORInsert/@TotalRowCount= '0'">
+                    <THEN>-->
+                  <CREATE_DOCUMENT_ID Name="OPT_IN_DMY1" AssignToVar="inID1"/>
+                  <SET Var="inID_Modify" FromValue="{$inID1}"/>
+                  <DO_DB_PERSIST DocumentName="DATA_SRCE_SUBS_OPT_IN" Action="INSERT" AssignToVar="updateResult" ServiceName="BCM_MASTER" Source="EXTERNAL" HandleException="true">
+                    <IN_id Value="{$inID_Modify/@Value}"/>
+                    <LEGAL_ENT_NBR Value="{$updateNames/LEGAL_ENT_NBR_new5/@Value}"/>
+                    <MKTNG_PGM_NBR Value="{$updateNames/MKTNG_PGM_NBR_new5/@Value}"/>
+                    <DATA_SRCE_NBR Value="{$updateNames/DATA_SRCE_NBR_new5/@Value}"/>
+                    <CR_NUM Value="{$thisParam/CR_NUM/@Value}"/>
+                    <CR_DESC Value="{$thisParam/CR_DESC/@Value}"/>
+                    <ENG_TXT Value="{$thisParam/ENG_TXT/@Value}"/>
+                    <LOCAL_TXT Value="{$thisParam/LOCAL_TXT/@Value}"/>
+                    <BRAND_CODE Value="{$thisParam/BRAND_CODE/@Value}"/>
+                    <COMMENTS Value="{$thisParam/COMMENTS/@Value}"/>
+                    <SUBSCRPTN_OPT_NBR Value=""/>
+                  </DO_DB_PERSIST>
+                  <!--</THEN>
+                    <ELSE>
+                      <DO_DB_PERSIST DocumentName="DATA_SRCE_SUBS_OPT_IN" Action="UPDATE" AssignToVar="updateResult" ServiceName="BCM_MASTER" Source="EXTERNAL" HandleException="true">
+                        <DOCUMENT_CONTEXT>
+                          <LEGAL_ENT_NBR Value="{$updateNames/LEGAL_ENT_NBR_new5/@Value}"/>
+                          <MKTNG_PGM_NBR Value="{$updateNames/MKTNG_PGM_NBR_new5/@Value}"/>
+                          <DATA_SRCE_NBR Value="{$updateNames/DATA_SRCE_NBR_new5/@Value}"/>
+                        </DOCUMENT_CONTEXT>
+                        <UPDATE_PROPERTIES>
+                          <CR_NUM Value="{$thisParam/CR_NUM/@Value}"/>
+                          <CR_DESC Value="{$thisParam/CR_DESC/@Value}"/>
+                          <ENG_TXT Value="{$thisParam/ENG_TXT/@Value}"/>
+                          <LOCAL_TXT Value="{$thisParam/LOCAL_TXT/@Value}"/>
+                          <BRAND_CODE Value="{$thisParam/BRAND_CODE/@Value}"/>
+                          <COMMENTS Value="{$thisParam/COMMENTS/@Value}"/>
+                          <SUBSCRPTN_OPT_NBR Value=""/>
+                        </UPDATE_PROPERTIES>
+                      </DO_DB_PERSIST>
+                    </ELSE>
+                  </IF_TEST>-->
+                  <IF_TEST Test="$updateResult/@Status= 'Success'">
+                    <THEN>
+                      <IF_TEST Test="$updateResult/VALIDATION_RESULT/@Value ='SUCCESS'">
+                        <THEN>
+                          <MODIFY_DOC_SMART Name="DATA_SRCE_SUBS_OPT_IN_DMY" AssignToVar="updateResult_dmy" HandleException="true" ServiceName="BCM_MASTER">
+                            <DOCUMENT_CONTEXT>
+                              <LEGAL_ENT_NBR Value="{$updateNames/LEGAL_ENT_NBR_new5/@Value}"/>
+                              <MKTNG_PGM_NBR Value="{$updateNames/MKTNG_PGM_NBR_new5/@Value}"/>
+                              <DATA_SRCE_NBR Value="{$updateNames/DATA_SRCE_NBR_new5/@Value}"/>
+                              <DMY_id Value="{$DMY_id_global/@Value}"/>
+                            </DOCUMENT_CONTEXT>
+                            <UPDATE_PROPERTIES>
+                              <CR_NUM Value="{$thisParam/CR_NUM/@Value}"/>
+                              <CR_DESC Value="{$thisParam/CR_DESC/@Value}"/>
+                              <ENG_TXT Value="{$thisParam/ENG_TXT/@Value}"/>
+                              <LOCAL_TXT Value="{$thisParam/LOCAL_TXT/@Value}"/>
+                              <BRAND_CODE Value="{$thisParam/BRAND_CODE/@Value}"/>
+                              <COMMENTS Value="{$thisParam/COMMENTS/@Value}"/>
+                              <SUBSCRPTN_OPT_NBR Value=""/>
+                              <STATUS Value="Approval Pending"/>
+                            </UPDATE_PROPERTIES>
+                          </MODIFY_DOC_SMART>
+                          <SET Var="alertGreen" FromValue="Record has been sent for Approval."/>
+                          <SET Var="alertRed" FromValue=""/>
+                        </THEN>
+                        <ELSE>
+                          <SET Var="alertGreen" FromValue=""/>
+                          <SET Var="alertRed" FromValue="{$updateResult/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                        </ELSE>
+                      </IF_TEST>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="alertGreen" FromValue=""/>
+                      <SET Var="alertRed" FromValue="The data you have entered is incorrect. Please Note: Change Request Number should be a Number and Text(English) should only contain English Language."/>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='Save'">
+            <THEN>
+              <REQUEST Name="getMatchedDomains" ServiceName="BCM_MASTER" AssignToVar="domainValues"/>
+              <FOR_EACH SelectList="$domainValues/*" CurrentElement="currEle2">
+                <IF_TEST Test="$thisParam/LEGAL_ENT_NAME/@Value=$currEle2/LEGAL_ENT_NAME/@Value">
+                  <THEN>
+                    <SET Var="LEGAL_ENT_NBR_new5" FromValue="{$currEle2/LEGAL_ENT_NBR/@Value}"/>
+                    <SET Var="LEGAL_ENT_NAME_new5" FromValue="{$currEle2/LEGAL_ENT_NAME/@Value}"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <REQUEST Name="getProgramIDs_for_Subscription" AssignToVar="programIDValues" ServiceName="BCM_MASTER">
+                <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR_new5/@Value}"/>
+              </REQUEST>
+              <FOR_EACH SelectList="$programIDValues/MKTNG_PGM/*" CurrentElement="currEle3">
+                <IF_TEST Test="$currEle3/@Value=$thisParam/MKTNG_PGM_NBR/@Value">
+                  <THEN>
+                    <SET Var="MKTNG_PGM_NBR_new5" FromValue="{$currEle3/@Id}"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <REQUEST Name="getDataSourceNamesAndNbr" ServiceName="BCM_MASTER" AssignToVar="SourceValues">
+                <MKTNG_PGM_NBR Value="{$MKTNG_PGM_NBR_new5/@Value}"/>
+              </REQUEST>
+              <!--<FOR_EACH SelectList="$SourceValues/*" CurrentElement="currEle4">
+        <IF_TEST Test="$thisParam/DATA_SRCE_NBR/@Value=$currEle4/DATA_SRCE_NAME/@Value">
+          <THEN>
+            <SET Var="DATA_SRCE_NBR_new5" FromValue="{$currEle4/DATA_SRCE_NBR/@Value}"/>
+          </THEN>
+        </IF_TEST>
+      </FOR_EACH>-->
+              <FOR_EACH SelectList="$SourceValues/DATA_SRCE/*" CurrentElement="currEle4">
+                <IF_TEST Test="$thisParam/DATA_SRCE_NBR/@Value=$currEle4/@Value">
+                  <THEN>
+                    <SET Var="DATA_SRCE_NBR_new5" FromValue="{$currEle4/@Id}"/>
+                    <SET Var="DATA_SRCE_NAME_new5" FromValue="{$currEle4/@Value}"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <TO_DOCVAR AssignToVar="updateNames">
+                <ROOT>
+                  <LEGAL_ENT_NBR_new5 Value="{$LEGAL_ENT_NBR_new5/@Value}"/>
+                  <MKTNG_PGM_NBR_new5 Value="{$MKTNG_PGM_NBR_new5/@Value}"/>
+                  <DATA_SRCE_NBR_new5 Value="{$DATA_SRCE_NBR_new5/@Value}"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <CREATE_DOCUMENT_ID Name="OPT_IN_DMY" AssignToVar="DMY_id_1"/>
+              <SET Var="DMY_id_Modify_Save" FromValue="{$DMY_id_1}"/>
+              <!--<GET_DOC_SMART Name="DATA_SRCE_SUBS_OPT_IN_DMY" AssignToVar="select_UpdateORInsert" DirtyRead="true" HandleException="true" ReturnRowCount="true" ServiceName="BCM_MASTER">
+                <LEGAL_ENT_NBR Value="{$updateNames/LEGAL_ENT_NBR_new5/@Value}"/>
+                <MKTNG_PGM_NBR Value="{$updateNames/MKTNG_PGM_NBR_new5/@Value}"/>
+                <DATA_SRCE_NBR Value="{$updateNames/DATA_SRCE_NBR_new5/@Value}"/>
+              </GET_DOC_SMART>-->
+              <GET_DOC_SMART Name="DATA_SRCE_SUBS_OPT_IN_DMY" AssignToVar="checkStatus" DirtyRead="true" HandleException="true" ReturnRowCount="true" ServiceName="BCM_MASTER">
+                <LEGAL_ENT_NBR Value="{$updateNames/LEGAL_ENT_NBR_new5/@Value}"/>
+                <MKTNG_PGM_NBR Value="{$updateNames/MKTNG_PGM_NBR_new5/@Value}"/>
+                <DATA_SRCE_NBR Value="{$updateNames/DATA_SRCE_NBR_new5/@Value}"/>
+                <DMY_id Value="{$DMY_id_global/@Value}"/>
+              </GET_DOC_SMART>
+              <IF_TEST Test="$checkStatus/DATA_SRCE_SUBS_OPT_IN_DMY/STATUS/@Value='Approved' or $checkStatus/DATA_SRCE_SUBS_OPT_IN_DMY/STATUS/@Value='Approval Pending'">
+                <THEN>
+                  <SET Var="alertGreen" FromValue=""/>
+                  <SET Var="alertRed" FromValue="Request for this record has either been Approved or is Pending for Approval."/>
+                </THEN>
+                <ELSE>
+                  <!--<IF_TEST Test="$select_UpdateORInsert/@TotalRowCount= '0'">
+                    <THEN>-->
+                  <!--<ADD_DOC_SMART Name="DATA_SRCE_SUBS_OPT_IN_DMY" AssignToVar="saveResultDmy" HandleException="true" ServiceName="BCM_MASTER">
+            <DMY_id Value="{$DMY_id_Modify_Save/@Value}"/>
+            <LEGAL_ENT_NBR Value="{$updateNames/LEGAL_ENT_NBR_new5/@Value}"/>
+            <MKTNG_PGM_NBR Value="{$updateNames/MKTNG_PGM_NBR_new5/@Value}"/>
+            <DATA_SRCE_NBR Value="{$updateNames/DATA_SRCE_NBR_new5/@Value}"/>
+            <CR_NUM Value="{$thisParam/CR_NUM/@Value}"/>
+            <CR_DESC Value="{$thisParam/CR_DESC/@Value}"/>
+            <ENG_TXT Value="{$thisParam/ENG_TXT/@Value}"/>
+            <LOCAL_TXT Value="{$thisParam/LOCAL_TXT/@Value}"/>
+            <BRAND_CODE Value="{$thisParam/BRAND_CODE/@Value}"/>
+            <COMMENTS Value="{$thisParam/COMMENTS/@Value}"/>
+            <SUBSCRPTN_OPT_NBR Value=""/>
+            <STATUS Value="Saved"/>
+          </ADD_DOC_SMART>-->
+                  <MODIFY_DOC_SMART Name="DATA_SRCE_SUBS_OPT_IN_DMY" AssignToVar="saveResultDmy" HandleException="true" ServiceName="BCM_MASTER">
+                    <DOCUMENT_CONTEXT>
+                      <LEGAL_ENT_NBR Value="{$updateNames/LEGAL_ENT_NBR_new5/@Value}"/>
+                      <MKTNG_PGM_NBR Value="{$updateNames/MKTNG_PGM_NBR_new5/@Value}"/>
+                      <DATA_SRCE_NBR Value="{$updateNames/DATA_SRCE_NBR_new5/@Value}"/>
+                      <DMY_id Value="{$checkStatus/DATA_SRCE_SUBS_OPT_IN_DMY/DMY_id/@Value}"/>
+                    </DOCUMENT_CONTEXT>
+                    <UPDATE_PROPERTIES>
+                      <CR_NUM Value="{$thisParam/CR_NUM/@Value}"/>
+                      <CR_DESC Value="{$thisParam/CR_DESC/@Value}"/>
+                      <ENG_TXT Value="{$thisParam/ENG_TXT/@Value}"/>
+                      <LOCAL_TXT Value="{$thisParam/LOCAL_TXT/@Value}"/>
+                      <BRAND_CODE Value="{$thisParam/BRAND_CODE/@Value}"/>
+                      <COMMENTS Value="{$thisParam/COMMENTS/@Value}"/>
+                      <SUBSCRPTN_OPT_NBR Value=""/>
+                      <STATUS Value="Saved"/>
+                    </UPDATE_PROPERTIES>
+                  </MODIFY_DOC_SMART>
+                  <!--</THEN>
+                    <ELSE>
+                      <MODIFY_DOC_SMART Name="DATA_SRCE_SUBS_OPT_IN_DMY" AssignToVar="saveResultDmy" HandleException="true" ServiceName="BCM_MASTER">
+                        <DOCUMENT_CONTEXT>
+                          <LEGAL_ENT_NBR Value="{$updateNames/LEGAL_ENT_NBR_new5/@Value}"/>
+                          <MKTNG_PGM_NBR Value="{$updateNames/MKTNG_PGM_NBR_new5/@Value}"/>
+                          <DATA_SRCE_NBR Value="{$updateNames/DATA_SRCE_NBR_new5/@Value}"/>
+                        </DOCUMENT_CONTEXT>
+                        <UPDATE_PROPERTIES>
+                          <CR_NUM Value="{$thisParam/CR_NUM/@Value}"/>
+                          <CR_DESC Value="{$thisParam/CR_DESC/@Value}"/>
+                          <ENG_TXT Value="{$thisParam/ENG_TXT/@Value}"/>
+                          <LOCAL_TXT Value="{$thisParam/LOCAL_TXT/@Value}"/>
+                          <BRAND_CODE Value="{$thisParam/BRAND_CODE/@Value}"/>
+                          <COMMENTS Value="{$thisParam/COMMENTS/@Value}"/>
+                          <SUBSCRPTN_OPT_NBR Value=""/>
+                          <STATUS Value="Saved"/>
+                        </UPDATE_PROPERTIES>
+                      </MODIFY_DOC_SMART>
+                    </ELSE>
+                  </IF_TEST>-->
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$saveResultDmy/@Status= 'Success'">
+                <THEN>
+                  <SET Var="alertGreen" FromValue="Record saved successfully."/>
+                  <SET Var="alertRed" FromValue=""/>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertGreen" FromValue=""/>
+                  <SET Var="alertRed" FromValue="The data you have entered is incorrect. Please Note: Change Request Number should be a Number and Text(English) should only contain English Language."/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="getUpdateResult">
+            <TO_XML SelectList="$updateResult"/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="getSaveResultDmy">
+            <TO_XML SelectList="$saveResultDmy"/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="alertMsg">
+            <MSG>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </MSG>
+          </TO_DOCVAR>
+          <!--<IF_TEST Test="$thisParam/BUTTON_ID/@Value='Back'">
+            <THEN>
+              <FOR_EACH SelectList="$SourceValues/DATA_SRCE/*" CurrentElement="currEleBack">
+                <IF_TEST Test="$thisParam/DATA_SRCE_NBR/@Value=$currEleBack/@Value">
+                  <THEN>
+                    <SET Var="DATA_SRCE_NBR_Back" FromValue="{$currEleBack/@Id}"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <FOR_EACH SelectList="$programIDValues/MKTNG_PGM/OPTION" CurrentElement="currEleBack1">
+                <IF_TEST Test="$currEleBack1/@Value=$thisParam/MKTNG_PGM_NBR/@Value">
+                  <THEN>
+                    <SET Var="MKTNG_PGM_NBR_Back" FromValue="{$currEleBack1/@Id}"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>-->
+          <!--<SET Var="MKTNG_PGM_NBR_Back" FromValue="{$programIDValues/MKTNG_PGM/OPTION[@Value=$thisParam/DATA_SRCE_NBR/@Value]/LEGAL_ENT_NBR/@Id}"/>-->
+          <!--<SET Var="DATA_SRCE_NBR_Back" FromValue="{$SourceValues/DATA_SRCE/OPTION[@Value=$currDataSrce/DATA_SRCE_NBR/@Value]/@Id}"/>-->
+          <!--<REMOVE_CHILDREN ChildName="DATA_SRCE_NBR" DocVar="thisParam"/>
+              <REMOVE_CHILDREN ChildName="MKTNG_PGM_NBR" DocVar="thisParam"/>
+              <APPEND_TO_XML DocVar="thisParam">
+                <MKTNG_PGM_NBR Value="{$MKTNG_PGM_NBR_Back/@Value}"/>
+                <DATA_SRCE_NBR Value="{$DATA_SRCE_NBR_Back/@Value}"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>-->
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='BACK'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="SearchDataSourceSubscription" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Submit'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Save'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ModifyDataSrceSubscriptionOpt" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Request'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ModifyDataSrceSubscriptionOpt" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="CreateDataSrceSubscriptionOpt" ShowInBreadCrumbs="SHOW" Template="CreateDataSrceSubscrptnOpt.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <!-- Code Written  by Ankita Sadhwani,  April,2016 -->
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <TO_XML SelectList="$saveResult"/>
+              <TO_XML SelectList="$alertMsg"/>
+              <TO_XML SelectList="$matchedDomainValues/*"/>
+              <TO_XML SelectList="$programIDValues/*"/>
+              <TO_XML SelectList="$SourceValues/*"/>
+              <LEGAL_ENT_NAME Value="{$thisParam/LEGAL_ENT_NAME/@Value}"/>
+              <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+              <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+              <DATA_SRCE_NBR Value="{$thisParam/DATA_SRCE_NBR/@Value}"/>
+              <CR_NUM Value="{$thisParam/CR_NUM/@Value}"/>
+              <CR_DESC Value="{$thisParam/CR_DESC/@Value}"/>
+              <ENG_TXT Value="{$thisParam/ENG_TXT/@Value}"/>
+              <LOCAL_TXT Value="{$thisParam/LOCAL_TXT/@Value}"/>
+              <BRAND_CODE Value="{$thisParam/BRAND_CODE/@Value}"/>
+              <COMMENTS Value="{$thisParam/COMMENTS/@Value}"/>
+              <dispRequest Value="{$dispRequest/@Value}"/>
+            </ROOT>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <!-- Code Written  by Ankita Sadhwani,  April,2016 -->
+          <IF_TEST Test="$userAction='Request'">
+            <THEN>
+              <SET Var="DATA_SRCE_NBR_new" FromValue=""/>
+              <SET Var="LEGAL_ENT_NBR_new" FromValue=""/>
+              <FOR_EACH SelectList="$SourceValues/DATA_SRCE/*" CurrentElement="currEle_filterNew">
+                <IF_TEST Test="$thisParam/DATA_SRCE_NBR/@Value=$currEle_filterNew/@Id">
+                  <THEN>
+                    <SET Var="DATA_SRCE_NBR_new" FromValue="{$currEle_filterNew/@Id}"/>
+                    <SET Var="DATA_SRCE_NAME_new" FromValue="{$currEle_filterNew/@Value}"/>
+                  </THEN>
+                </IF_TEST>
+                <FOR_EACH SelectList="$domainValues/*" CurrentElement="currEle2">
+                  <IF_TEST Test="$thisParam/LEGAL_ENT_NAME/@Value=$currEle2/LEGAL_ENT_NAME/@Value">
+                    <THEN>
+                      <SET Var="LEGAL_ENT_NBR_new" FromValue="{$currEle2/LEGAL_ENT_NBR/@Value}"/>
+                    </THEN>
+                  </IF_TEST>
+                </FOR_EACH>
+              </FOR_EACH>
+              <!-- <GET_DOC_SMART Name="DATA_SRCE_SUBS_OPT_IN_DMY" AssignToVar="checkDuplicateForDDB" DirtyRead="true" HandleException="true" ReturnRowCount="true" ServiceName="BCM_MASTER">
+        <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR_new/@Value}"/>
+        <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+        <DATA_SRCE_NBR Value="{$DATA_SRCE_NBR_new/@Value}"/>
+      </GET_DOC_SMART>
+      <IF_TEST Test="$checkDuplicateForDDB/@TotalRowCount= '0'">
+        <THEN>-->
+              <CREATE_DOCUMENT_ID Name="OPT_IN_DMY1" AssignToVar="inID"/>
+              <SET Var="inID_Insert" FromValue="{$inID}"/>
+              <!--<SET Var="inID_Insert" FromValue="{substringAfter($inID/@Value,'OPT_IN_DMY1-')}"/>-->
+              <DO_DB_PERSIST DocumentName="DATA_SRCE_SUBS_OPT_IN" Action="INSERT" AssignToVar="createInsertResult" ServiceName="BCM_MASTER" Source="EXTERNAL" HandleException="true">
+                <IN_id Value="{$inID_Insert/@Value}"/>
+                <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR_new/@Value}"/>
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                <DATA_SRCE_NBR Value="{$DATA_SRCE_NBR_new/@Value}"/>
+                <CR_NUM Value="{$thisParam/CR_NUM/@Value}"/>
+                <CR_DESC Value="{$thisParam/CR_DESC/@Value}"/>
+                <ENG_TXT Value="{$thisParam/ENG_TXT/@Value}"/>
+                <LOCAL_TXT Value="{$thisParam/LOCAL_TXT/@Value}"/>
+                <BRAND_CODE Value="{$thisParam/BRAND_CODE/@Value}"/>
+                <COMMENTS Value="{$thisParam/COMMENTS/@Value}"/>
+                <SUBSCRPTN_OPT_NBR Value=""/>
+              </DO_DB_PERSIST>
+              <IF_TEST Test="$createInsertResult/@Status='Success'">
+                <THEN>
+                  <IF_TEST Test="$createInsertResult/VALIDATION_RESULT/@Value ='SUCCESS'">
+                    <THEN>
+                      <CREATE_DOCUMENT_ID Name="OPT_IN_DMY" AssignToVar="dmyID"/>
+                      <SET Var="dmyID_Insert" FromValue="{$dmyID}"/>
+                      <ADD_DOC_SMART Name="DATA_SRCE_SUBS_OPT_IN_DMY" AssignToVar="createInsertResult_dmy" HandleException="true" ServiceName="BCM_MASTER">
+                        <DMY_id Value="{$dmyID_Insert/@Value}"/>
+                        <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR_new/@Value}"/>
+                        <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                        <DATA_SRCE_NBR Value="{$DATA_SRCE_NBR_new/@Value}"/>
+                        <CR_NUM Value="{$thisParam/CR_NUM/@Value}"/>
+                        <CR_DESC Value="{$thisParam/CR_DESC/@Value}"/>
+                        <ENG_TXT Value="{$thisParam/ENG_TXT/@Value}"/>
+                        <LOCAL_TXT Value="{$thisParam/LOCAL_TXT/@Value}"/>
+                        <BRAND_CODE Value="{$thisParam/BRAND_CODE/@Value}"/>
+                        <COMMENTS Value="{$thisParam/COMMENTS/@Value}"/>
+                        <SUBSCRPTN_OPT_NBR Value=""/>
+                        <STATUS Value="Approval Pending"/>
+                      </ADD_DOC_SMART>
+                      <SET Var="alertGreen" FromValue="Record has been sent for Approval."/>
+                      <SET Var="alertRed" FromValue=""/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="alertGreen" FromValue=""/>
+                      <SET Var="alertRed" FromValue="{$createInsertResult/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertGreen" FromValue=""/>
+                  <SET Var="alertRed" FromValue="The data you have entered is incorrect. Please Note: Change Request Number should be a Number and Text(English) should only contain English Language."/>
+                </ELSE>
+              </IF_TEST>
+              <!-- </THEN>
+      <ELSE>
+          <SET Var="alertGreen" FromValue=""/>
+          <SET Var="alertRed" FromValue="Record you are trying to create already exists. Please choose a different combination of Legal Entity,Program Name and Source."/>
+        </ELSE>
+      </IF_TEST>-->
+              <TO_DOCVAR AssignToVar="alertMsg">
+                <MSG>
+                  <AlertGreen Value="{$alertGreen/@Value}"/>
+                  <AlertRed Value="{$alertRed/@Value}"/>
+                </MSG>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="getInsertResult">
+            <TO_XML SelectList="$createInsertResult"/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_PROGRAM_LIST'">
+            <THEN>
+              <REQUEST Name="getMatchedDomains" ServiceName="BCM_MASTER" AssignToVar="domainValues"/>
+              <REQUEST Name="getProgramIDs_for_Subscription" AssignToVar="programIDValues" ServiceName="BCM_MASTER">
+                <LEGAL_ENT_NBR Value="{$domainValues/LEGAL_ENT[LEGAL_ENT_NAME/@Value=$thisParam/LEGAL_ENT_NAME/@Value]/LEGAL_ENT_NBR/@Value}"/>
+              </REQUEST>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="matchedDomainValues">
+            <TO_XML SelectList="$domainValues"/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_SOURCE_LIST'">
+            <THEN>
+              <REQUEST Name="getDataSourceNamesAndNbr" ServiceName="BCM_MASTER" AssignToVar="SourceValues">
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+              </REQUEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='Save'">
+            <THEN>
+              <SET Var="DATA_SRCE_NBR_new" FromValue=""/>
+              <SET Var="LEGAL_ENT_NBR_new" FromValue=""/>
+              <FOR_EACH SelectList="$SourceValues/DATA_SRCE/*" CurrentElement="currEle_filterNew">
+                <IF_TEST Test="$thisParam/DATA_SRCE_NBR/@Value=$currEle_filterNew/@Id">
+                  <THEN>
+                    <SET Var="DATA_SRCE_NBR_new" FromValue="{$currEle_filterNew/@Id}"/>
+                    <SET Var="DATA_SRCE_NAME_new" FromValue="{$currEle_filterNew/@Value}"/>
+                  </THEN>
+                </IF_TEST>
+                <FOR_EACH SelectList="$domainValues/*" CurrentElement="currEle2">
+                  <IF_TEST Test="$thisParam/LEGAL_ENT_NAME/@Value=$currEle2/LEGAL_ENT_NAME/@Value">
+                    <THEN>
+                      <SET Var="LEGAL_ENT_NBR_new" FromValue="{$currEle2/LEGAL_ENT_NBR/@Value}"/>
+                    </THEN>
+                  </IF_TEST>
+                </FOR_EACH>
+              </FOR_EACH>
+              <CREATE_DOCUMENT_ID Name="OPT_IN_DMY" AssignToVar="dmyID1"/>
+              <SET Var="dmyID_Save" FromValue="{$dmyID1}"/>
+              <!--<GET_DOC_SMART Name="DATA_SRCE_SUBS_OPT_IN_DMY" AssignToVar="select_UpdateORInsert" DirtyRead="true" HandleException="true" ReturnRowCount="true" ServiceName="BCM_MASTER">
+                <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR_new/@Value}"/>
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                <DATA_SRCE_NBR Value="{$DATA_SRCE_NBR_new/@Value}"/>
+              </GET_DOC_SMART>-->
+              <GET_DOC_SMART Name="DATA_SRCE_SUBS_OPT_IN_DMY" AssignToVar="checkStatus" DirtyRead="true" HandleException="true" ReturnRowCount="true" ServiceName="BCM_MASTER">
+                <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR_new/@Value}"/>
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                <DATA_SRCE_NBR Value="{$DATA_SRCE_NBR_new/@Value}"/>
+              </GET_DOC_SMART>
+              <IF_TEST Test="$checkStatus/DATA_SRCE_SUBS_OPT_IN_DMY/STATUS/@Value='Approved' or $checkStatus/DATA_SRCE_SUBS_OPT_IN_DMY/STATUS/@Value='Approval Pending'">
+                <THEN>
+                  <SET Var="alertGreen" FromValue=""/>
+                  <SET Var="alertRed" FromValue="Request for this record has either been Approved or is Pending for Approval."/>
+                </THEN>
+                <ELSE>
+                  <!--<IF_TEST Test="$select_UpdateORInsert/@TotalRowCount= '0'">
+            <THEN>-->
+                  <ADD_DOC_SMART Name="DATA_SRCE_SUBS_OPT_IN_DMY" AssignToVar="saveResult" ServiceName="BCM_MASTER" HandleException="true">
+                    <DMY_id Value="{$dmyID_Save/@Value}"/>
+                    <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR_new/@Value}"/>
+                    <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                    <DATA_SRCE_NBR Value="{$DATA_SRCE_NBR_new/@Value}"/>
+                    <CR_NUM Value="{$thisParam/CR_NUM/@Value}"/>
+                    <CR_DESC Value="{$thisParam/CR_DESC/@Value}"/>
+                    <ENG_TXT Value="{$thisParam/ENG_TXT/@Value}"/>
+                    <LOCAL_TXT Value="{$thisParam/LOCAL_TXT/@Value}"/>
+                    <BRAND_CODE Value="{$thisParam/BRAND_CODE/@Value}"/>
+                    <COMMENTS Value="{$thisParam/COMMENTS/@Value}"/>
+                    <SUBSCRPTN_OPT_NBR Value=""/>
+                    <STATUS Value="Saved"/>
+                  </ADD_DOC_SMART>
+                  <!--</THEN>
+            <ELSE>
+              <MODIFY_DOC_SMART Name="DATA_SRCE_SUBS_OPT_IN_DMY" AssignToVar="saveResult" ServiceName="BCM_MASTER" HandleException="true">
+                <DOCUMENT_CONTEXT>
+                  <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR_new/@Value}"/>
+                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                  <DATA_SRCE_NBR Value="{$DATA_SRCE_NBR_new/@Value}"/>
+                </DOCUMENT_CONTEXT>
+                <UPDATE_PROPERTIES>
+                  <CR_NUM Value="{$thisParam/CR_NUM/@Value}"/>
+                  <CR_DESC Value="{$thisParam/CR_DESC/@Value}"/>
+                  <ENG_TXT Value="{$thisParam/ENG_TXT/@Value}"/>
+                  <LOCAL_TXT Value="{$thisParam/LOCAL_TXT/@Value}"/>
+                  <BRAND_CODE Value="{$thisParam/BRAND_CODE/@Value}"/>
+                  <COMMENTS Value="{$thisParam/COMMENTS/@Value}"/>
+                  <SUBSCRPTN_OPT_NBR Value=""/>
+                  <STATUS Value="Saved"/>
+                </UPDATE_PROPERTIES>
+              </MODIFY_DOC_SMART>
+            </ELSE>
+          </IF_TEST>-->
+                  <IF_TEST Test="$saveResult/@Status='Success'">
+                    <THEN>
+                      <SET Var="alertGreen" FromValue="Record saved successfully."/>
+                      <SET Var="alertRed" FromValue=""/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="alertGreen" FromValue=""/>
+                      <SET Var="alertRed" FromValue="The data you have entered is incorrect. Please Note: Change Request Number should be a Number and Text(English) should only contain English Language."/>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="alertMsg">
+                <MSG>
+                  <AlertGreen Value="{$alertGreen/@Value}"/>
+                  <AlertRed Value="{$alertRed/@Value}"/>
+                </MSG>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$alertMsg/AlertGreen/@Value='Record saved successfully.'">
+            <THEN>
+              <SET Var="dispRequest" FromValue="true"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='DONE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Request'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="CreateDataSrceSubscriptionOpt" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="SearchDataSourceSubscription" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_PROGRAM_LIST'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="CreateDataSrceSubscriptionOpt" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_SOURCE_LIST'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="CreateDataSrceSubscriptionOpt" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Save'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="CreateDataSrceSubscriptionOpt" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <start0 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="39,258" size="732,526">
+        <iconProps iconfile="z1start.gif"/>
+      </start0>
+      <done1 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="786,172">
+        <iconProps iconfile="z1end.gif"/>
+      </done1>
+      <SearchDataSourceSubscription font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="268,68" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </SearchDataSourceSubscription>
+      <ModifyDataSrceSubscriptionOpt font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="490,54" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </ModifyDataSrceSubscriptionOpt>
+      <CreateDataSrceSubscriptionOpt font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="251,290" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </CreateDataSrceSubscriptionOpt>
+    </mgcnodes>
+    <mgcconnectors>
+      <start0>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="84,280" endpoint="268,90" ctrlRect1="220,278,4,4" ctrlRect2="128,88,4,4"/>
+      </start0>
+      <SearchDataSourceSubscription>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="290,68" endpoint="290,68" ctrlRect1="288,-9,4,4" ctrlRect2="330,-93,4,4" textRect="298,-53,26,8" ctrlRect2Dirty="true">
+          <textProps text="$userAction ='Search'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="313,90" endpoint="273,290" ctrlRect1="372,135,4,4" ctrlRect2="271,138,4,4" textRect="310,134,26,8" ctrlRect1Dirty="true">
+          <textProps text="$userAction ='Create'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="313,90" endpoint="490,76" ctrlRect1="373,147,4,4" ctrlRect2="355,74,4,4" textRect="353,108,26,8" ctrlRect1Dirty="true">
+          <textProps text="$userAction ='Modify'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="290,113" endpoint="290,113" ctrlRect1="288,186,4,4" ctrlRect2="404,276,4,4" textRect="330,229,37,8" ctrlRect2Dirty="true">
+          <textProps text="$userAction ='LOAD_PROGRAM_LIST'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="290,113" endpoint="290,113" ctrlRect1="288,186,4,4" ctrlRect2="335,236,4,4" ctrlRect2Dirty="true" textRect="295,209,36,8">
+          <textProps text="$userAction ='LOAD_SOURCE_LIST'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="313,90" endpoint="786,194" ctrlRect1="665,88,4,4" ctrlRect2="467,280,4,4" ctrlRect2Dirty="true"/>
+      </SearchDataSourceSubscription>
+      <ModifyDataSrceSubscriptionOpt>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="490,76" endpoint="313,90" ctrlRect1="356,74,4,4" ctrlRect2="444,88,4,4" textRect="390,79,24,8">
+          <textProps text="$userAction ='Back'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="535,76" endpoint="535,76" ctrlRect1="608,74,4,4" ctrlRect2="608,74,4,4" textRect="598,72,24,8">
+          <textProps text="$userAction ='Save'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="535,76" endpoint="535,76" ctrlRect1="608,74,4,4" ctrlRect2="546,38,4,4" ctrlRect2Dirty="true" textRect="566,54,27,8">
+          <textProps text="$userAction ='Request'"/>
+        </nextNodeView>
+      </ModifyDataSrceSubscriptionOpt>
+      <CreateDataSrceSubscriptionOpt>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="296,312" endpoint="296,312" ctrlRect1="369,310,4,4" ctrlRect2="332,292,4,4" ctrlRect2Dirty="true" textRect="339,299,27,8">
+          <textProps text="$userAction ='Request'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="273,290" endpoint="290,113" ctrlRect1="271,156,4,4" ctrlRect2="288,244,4,4" textRect="269,198,24,8">
+          <textProps text="$userAction ='Back'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="251,312" endpoint="251,312" ctrlRect1="174,310,4,4" ctrlRect2="-33,392,4,4" ctrlRect2Dirty="true" textRect="54,349,37,8">
+          <textProps text="$userAction ='LOAD_PROGRAM_LIST'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="296,312" endpoint="273,335" ctrlRect1="369,310,4,4" ctrlRect2="322,397,4,4" ctrlRect2Dirty="true" textRect="329,351,36,8">
+          <textProps text="$userAction ='LOAD_SOURCE_LIST'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="251,312" endpoint="251,312" ctrlRect1="174,310,4,4" ctrlRect2="76,449,4,4" ctrlRect2Dirty="true" textRect="115,377,24,8">
+          <textProps text="$userAction ='Save'"/>
+        </nextNodeView>
+      </CreateDataSrceSubscriptionOpt>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+      <action/>
+    </pre_actions>
+    <post_actions>
+      <action/>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

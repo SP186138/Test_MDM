@@ -1,0 +1,64 @@
+/***********************************************************************************************************
+SCRIPT:               DPEND_STG_VAL.BTEQ 
+DESCRIPTION:          This script validates the records received from ETL Staging.
+DEPENDENCY:           
+INPUT:                ETL Staging
+OUTPUT:               MST Staging
+ERRORS:
+SPECIAL INSTRUCTIONS:
+
+CHANGE LOG:
+VERSION              DATE                 AUTHOR                          CHANGES
+1.00                 01/21/2011           TERADATA                        INITIAL VERSION
+2.00                 08/22/2011           TERADATA                        Change OF Failure-BadFile
+3.00                 10/31/2011           TERADATA                        Removal of Deletes as  part of ||elism
+4.00                 03/26/2012		  TERADATA                        Made change in insert to LOAD_INFO to
+                                                                          manipulate LA data  
+5.1                  04/08/2014           TERADATA                        RELEASE 5.1
+									                                      Move vulgar name validation to wrapper
+***********************************************************************************************************/
+
+.logon $TDPID/$TDUSER,$TDPWD
+ 
+.SET ERROROUT STDOUT;
+.SET SESSION CHARSET 'UTF8';
+.SET ERRORLEVEL 3624 SEVERITY 0
+.SET ERRORLEVEL 3803 SEVERITY 0
+
+
+INSERT INTO VALIDATION_ERR_$BTCH(
+MKTNG_PGM_NBR
+,REGIS_CNSMR_ID_VAL
+,LOAD_ID
+,SYS_ERR_CODE
+,RECORD_SOURCE)
+
+SELECT
+DER1.MKTNG_PGM_NBR,
+DER1.REGIS_CNSMR_ID_VAL,
+DER1.LOAD_ID,
+'DUPLICATE DEPENDENT INFORMATION ON SOURCE FILE' SYS_ERR_CODE,
+'DPEND_STG'
+FROM
+(
+SELECT 
+stg.MKTNG_PGM_NBR,
+stg.REGIS_CNSMR_ID_VAL,
+stg.DPEND_SEQ_NBR,
+stg.LOAD_ID,
+stg.RECORD_IND
+
+FROM
+$ETL_DB.DPEND_STG STG
+JOIN
+ VALIDATION_$BTCH B
+ON stg.LOAD_ID = B.LOAD_ID
+GROUP BY 1,2,3,4,5
+HAVING COUNT(*) >1
+)DER1;
+
+.IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE
+
+.EXIT
+
+

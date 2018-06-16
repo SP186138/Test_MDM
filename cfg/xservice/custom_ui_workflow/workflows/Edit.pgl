@@ -1,0 +1,222 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" Id="Node17.pgl">
+  <ui:container id="topContainer">
+    <ui:step id="basicControls" scrollable="true">
+      <ui:field-group columns="2">
+        <ui:hidden-field id="referencePosition" name="referencePosition"/>
+      </ui:field-group>
+    </ui:step>
+  </ui:container>
+  <ui:dynamic-pgl select="$root/PGL/*"/>
+  <ui:script>
+        
+$( document ).ready(function() {
+if(msieversion() == 8 ){
+$('#step1_scroller').html($('#step1_scroller').html().replace(/\&amp;amp/g,"").replace(/\;apos;/g,"'"))
+}
+enableSelect2();
+});
+function onRefTableClick(refers,toProperty,linkName,joinMech,prefix,serviceName,tableRank,thisObj)
+{
+
+jQuery.each( $(&quot;select&quot;) , function( i, eachNode ) {
+$(eachNode).removeAttr(&quot;disabled&quot;);
+});
+    
+    
+var position = undefined;
+var table = document.getElementById(&quot;massEditTable_freeze_syncmaster_header&quot;);
+row = table.rows[0];
+
+for (var j = 0, col; col = row.cells[j]; j++) {
+if($(col).children().closest(&quot;a&quot;)[0] == thisObj )
+{
+position = j;
+break;
+}	
+}
+    
+if(typeof position == &quot;undefined&quot;) {
+    
+table = document.getElementById(&quot;massEditTable_freeze_syncmaster_data&quot;);
+for (var i = 0, row; row = table.rows[i]; i++) {
+for (var j = 0, col; col = row.cells[j]; j++) {
+if($(col).children().closest(&quot;a&quot;)[0] == thisObj )
+{
+position = j;
+break;
+}
+}
+}    
+}
+document.getElementById('referencePosition').value = position
+document.getElementById('refers').value=refers;
+document.getElementById('toProperty').value=toProperty;
+document.getElementById('linkName').value=linkName;
+document.getElementById('joinMech').value=joinMech;
+document.getElementById('prefix').value=prefix;
+document.getElementById('serviceName').value=serviceName;
+document.getElementById('tableRank').value=tableRank;
+document.form.BUTTON_ID.value = 'tableNode';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+}
+$( &quot;a[title='Create Favorite']&quot; ).click(function() {
+grayOut('true');
+jQuery.each( $(&quot;select&quot;) , function( i, eachNode ) {
+$(eachNode).removeAttr(&quot;disabled&quot;);
+});
+});
+
+function on_Edit()
+{
+
+bIsValid = (isValid_step1());
+if( bIsValid == false )
+{
+validation_alert('OuterStep');
+return;
+}
+grayOut('true');
+jQuery.each( $(&quot;select&quot;) , function( i, eachNode ) {
+$(eachNode).removeAttr(&quot;disabled&quot;);
+});
+    
+    
+inputElements = document.getElementsByTagName('input');
+for(var i=0; i&lt;inputElements.length; i++)
+{
+if(inputElements[i].type=='hidden' &amp;&amp; inputElements[i].value.indexOf('#dup#') != -1)
+{
+inputElements[i].value=inputElements[i].value.replace('#dup#','');
+try
+{
+inputElements[i].value=document.getElementsByName(inputElements[i].value)[0].value;
+}
+catch(Err)
+{
+inputElements[i].value='';
+}
+}
+}
+document.form.BUTTON_ID.value = 'Edit';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+}
+function onLoad()
+{
+onLoadSuper();
+scrollHelper();
+autoCollapseRows(); // may be empty (default impl)
+populateValidChildren();
+enableSelect2();
+}
+    
+function populateValidChildren(){
+var dropdowns = document.getElementsByTagName('select');
+var len = dropdowns.length;
+for(var i=0;i&lt;len;i++){
+   if(dropdowns[i].value!=''){
+    populateChildren(dropdowns[i]);
+	populateParent(dropdowns[i]);
+    }
+}
+
+for(var i=0;i&lt;len;i++){
+if(dropdowns[i].value==''){
+var optionsLen = dropdowns[i].options.length;
+for(var j=0;j&lt;optionsLen;j++){
+if(dropdowns[i].options[j].getAttribute('selected')=='yes'){
+dropdowns[i].options[j].setAttribute('selected',true);
+}
+}
+}
+}
+    
+}
+function populateChildren(obj){
+var selects =getDropdownsInSameColumn(obj,'table');
+var objCodeSet = obj.getAttribute("data-code-set");
+var objValue = obj.value;
+
+if(objCodeSet!=null){
+for(i=0;i&lt;selects.length;i++){
+var parentCodeSet = selects[i].getAttribute("data-parent-code-set");
+if(parentCodeSet!=null &amp;&amp; parentCodeSet==objCodeSet){
+var sel2=selects[i];
+if (!sel2.save){
+sel2.save=[];
+for (var c=1;c&lt;sel2.options.length;c++){
+sel2.save.push(sel2.options[c]);
+}
+}
+sel2.options.length=1;
+for (var z=0;z&lt;sel2.save.length;z++){
+if (obj.value==sel2.save[z].getAttribute('data-parent')||obj.selectedIndex==0){
+if(msieversion()&lt;=8){
+sel2.save[z].innerText = sel2.save[z].text;
+sel2.appendChild(sel2.save[z]);
+}else{
+sel2.appendChild(sel2.save[z]);
+}
+}
+}
+}
+}
+}
+}
+function populateParent(obj){
+var selects =getDropdownsInSameColumn(obj,'table');
+var objParentCodeSet = obj.getAttribute("data-parent-code-set");
+var objValue = obj.value;
+if(objParentCodeSet!=null){
+for(i=0;i&lt;selects.length;i++){
+var codeSet = selects[i].getAttribute("data-code-set");
+if(codeSet!=null &amp;&amp; codeSet==objParentCodeSet){
+var parent=selects[i];
+var parentVal = obj.options[obj.selectedIndex].getAttribute("data-parent");
+if(parentVal==null){
+parentVal='';
+}
+parent.value=parentVal;
+}
+}
+}
+}
+function getDropdownsInSameColumn(element,tagname){
+var selects = [];
+var cellIndex = element.parentNode.cellIndex;
+var pa=element.parentNode;
+while(pa.tagName.toLowerCase()!=tagname.toLowerCase()){
+pa=pa.parentNode;
+}
+var tableId =pa.id.substr(0, pa.id.indexOf('_'));
+    
+var table = document.getElementById(tableId+'_freeze_syncmaster_header');
+for (var i = 0, row; row = table.rows[i]; i++) {
+for (var j = 0, col; col = row.cells[j]; j++) {
+if(col.cellIndex==cellIndex){
+var cellSelects = col.getElementsByTagName("SELECT");
+for(m=0;m&lt;cellSelects.length;m++){
+selects.push(cellSelects[m]);
+}
+}
+}
+}
+var table = document.getElementById(tableId+'_freeze_syncmaster_data');
+for (var i = 0, row; row = table.rows[i]; i++) {
+for (var j = 0, col; col = row.cells[j]; j++) {
+if(col.cellIndex==cellIndex){
+var cellSelects = col.getElementsByTagName("SELECT");
+for(m=0;m&lt;cellSelects.length;m++){
+selects.push(cellSelects[m]);
+}
+}
+}
+}
+    return selects;
+}
+    
+</ui:script>
+</ui:page-group>

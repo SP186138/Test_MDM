@@ -1,0 +1,2589 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+Copyright (c) 2009 by Teradata Corporation.
+All Rights Reserved.
+Teradata CONFIDENTIAL AND TRADE SECRET
+-->
+  <DEFINE_METHOD Name="getMatchedDomains">
+    <RULE>
+      <ACTION>
+        <REQUEST Name="getUserGrp" ServiceName="BCM_MASTER" AssignToVar="assignUserGroup"/>
+        <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT DISTINCT LEGAL_ENT_NBR, LEGAL_ENT_NAME FROM LEGAL_ENTX WHERE SYS_USR_GRP_ID IN ({$GroupID}) ORDER BY LEGAL_ENT_NAME ASC" AssignToVar="matchedDomains" ReturnRowCount="yes"/>
+        <!--<GET_DOCUMENT Name="LEGAL_ENT" ServiceName="BCM_MASTER" AssignToVar="matchedDomains" DirtyRead="true" ReturnRowCount="true">
+          <SELECT>
+            <LEGAL_ENT_NAME/>
+            <LEGAL_ENT_NBR/>
+          </SELECT>
+          <ORDER_BY>
+            <LEGAL_ENT_NAME Sort="Ascending"/>
+          </ORDER_BY>
+        </GET_DOCUMENT>
+        <CLONE_XML DocVar="matchedDomains" AssignToVar="thisReturn"/>-->
+        <SET_NAME SelectList="$matchedDomains/SQL_RESULT" FromValue="LEGAL_ENT"/>
+        <CLONE_XML DocVar="matchedDomains" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <!--Added by Usha-->
+  <DEFINE_METHOD Name="getUserGrp">
+    <RULE>
+      <ACTION>
+        <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT USER_GRP_ID FROM USER_UG_RELATION WHERE USER_ID='{$UserId}'" AssignToVar="AllGroupId"/>
+        <TO_DOCVAR AssignToVar="userGroups">
+          <ROOT/>
+        </TO_DOCVAR>
+        <IF_TEST Test="$AllGroupId/SQL_RESULT/USER_GRP_ID/@Value != NULL">
+          <THEN>
+            <SET Var="Sample" FromValue="1"/>
+            <FOR_EACH SelectList="$AllGroupId/*" CurrentElement="currSource">
+              <IF_TEST Test="$Sample=1">
+                <THEN>
+                  <SET Var="GroupID" FromValue="'{$currSource/USER_GRP_ID/@Value}'" Scope="Global"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="GroupID1" FromValue="'{$currSource/USER_GRP_ID/@Value}'" Scope="Global"/>
+                  <SET Var="GroupID" FromValue="{concat($GroupID/@Value,',',$GroupID1/@Value)}" Scope="Global"/>
+                </ELSE>
+              </IF_TEST>
+              <SET Var="Sample" FromValue="{int(int($Sample)+1)}"/>
+              <APPEND_TO_XML DocVar="userGroups">
+                <TO_XML SelectList="$currSource/USER_GRP_ID"/>
+              </APPEND_TO_XML>
+            </FOR_EACH>
+          </THEN>
+        </IF_TEST>
+        <!--<FOR_EACH SelectList="$AllGroupId/SQL_RESULT/USER_GRP_ID" CurrentElement="CurrEle">
+          <APPEND_TO_XML DocVar="userGroups">
+            <TO_XML SelectList="$currSource/USER_GRP_ID"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>-->
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getMatchedDomainsUsrSpecific">
+    <RULE>
+      <ACTION>
+        <SET Var="checkID" FromValue="{$thisParam/userId/@Value}"/>
+        <!--EXECUTE_SQL_QUERY Value="SEL legal_ent_nbr,legal_ent_name FROM legal_ent WHERE sys_auth_id IN (SEL role_id FROM USR_GRP_ROLE_MAP WHERE usr_grp_id IN (SEL user_grp_id FROM USER_UG_RELATION WHERE user_id='{$checkID}'))
+ORDER BY legal_ent_name ASC;" AssignToVar="matchedDomains" ReturnRowCount="yes"/-->
+        <EXECUTE_SQL_QUERY AssignToVar="cntryDomains" Value="LOCKING ROW FOR ACCESS SEL DISTINCT role_id FROM USR_GRP_ROLE_MAP WHERE usr_grp_id IN (SEL user_grp_id FROM USER_UG_RELATION WHERE user_id='{$checkID}')"/>
+        <!-- Commented by Usha-->
+        <!--<EXECUTE_SQL_QUERY AssignToVar="cntryDomains" Value="SEL role_id FROM USR_GRP_ROLE_MAP WHERE usr_grp_id IN '{$userGroups}' and user_id='{$checkID}'"/>-->
+        <TO_DOCVAR AssignToVar="countryList">
+          <ROOT>
+            <SYS_AUTH/>
+          </ROOT>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$cntryDomains/*" CurrentElement="currentElement">
+          <APPEND_TO_XML SelectList="$countryList/SYS_AUTH">
+            <SYS_AUTH_ID Value="{$currentElement/ROLE_ID/@Value}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <GET_DOCUMENT Name="LEGAL_ENT" ServiceName="BCM_MASTER" AssignToVar="matchedDomains" DirtyRead="true" ReturnRowCount="true">
+          <OR>
+            <TO_XML SelectList="$countryList/SYS_AUTH/*"/>
+          </OR>
+          <SELECT>
+            <LEGAL_ENT_NAME/>
+            <LEGAL_ENT_NBR/>
+          </SELECT>
+          <ORDER_BY>
+            <LEGAL_ENT_NAME Sort="Ascending"/>
+          </ORDER_BY>
+        </GET_DOCUMENT>
+        <CLONE_XML DocVar="matchedDomains" AssignToVar="thisReturn"/>
+        <!--ADD_CHILDREN FromSelect="$consumerDetails" DocVar="thisReturn" /-->
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getProgramIDs">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="allProgramIDs">
+          <MKTNG_PGM/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="programIdsList">
+          <ROOT>
+            <MKTNG_PGM/>
+          </ROOT>
+        </TO_DOCVAR>
+        <IF_TEST Test="$thisParam/SOURCE/@Value='SEARCH'">
+          <!--This is for search screen where all program IDs will be displayed -->
+          <THEN>
+            <!--REQUEST Name="getMatchedDomains" ServiceName="BCM_MASTER" AssignToVar="domainValues"/-->
+            <GET_DOCUMENT Name="MKTNG_PGM" ServiceName="BCM_MASTER" AssignToVar="allProgramIDs" DirtyRead="true" ReturnRowCount="yes">
+              <!--OR>
+                <TO_XML SelectList="$domainValues/LEGAL_ENT/LEGAL_ENT_NBR"/>
+              </OR-->
+              <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+              <SELECT>
+                <MKTNG_PGM_NBR/>
+                <MKTNG_PGM_NAME/>
+              </SELECT>
+            </GET_DOCUMENT>
+            <APPEND_TO_XML SelectList="$programIdsList/MKTNG_PGM">
+              <OPTION Id="" Value="All"/>
+            </APPEND_TO_XML>
+          </THEN>
+          <ELSE>
+            <!--This is for all tabs where program IDs for each user will be displayed -->
+            <!-- Usha- Need to comment this below GET_DOCUMENT code for Performance Issue in R5.9-->
+            <GET_DOCUMENT Name="REGIS_PRSNA" ServiceName="BCM_MASTER" AssignToVar="userProgramIDs" DirtyRead="true">
+              <MATCHD_CNSMR_PRSNA_ID Value="{$thisParam/MATCHD_CNSMR_PRSNA_ID/@Value}"/>
+              <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+              <!--<PRSNA_STATUS_CODE Value="AC"/>-->
+              <SELECT>
+                <MKTNG_PGM_NBR/>
+              </SELECT>
+            </GET_DOCUMENT>
+            <!-- Usha-No need to pass LE as we are getting MP from thisParam directly-->
+            <GET_DOCUMENT Name="MKTNG_PGM" ServiceName="BCM_MASTER" AssignToVar="allProgramIDs" DirtyRead="true">
+              <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+              <!--<MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>-->
+              <OR>
+                <TO_XML SelectList="$userProgramIDs/REGIS_PRSNA/MKTNG_PGM_NBR"/>
+              </OR>
+              <SELECT>
+                <MKTNG_PGM_NBR/>
+                <MKTNG_PGM_NAME/>
+              </SELECT>
+            </GET_DOCUMENT>
+          </ELSE>
+        </IF_TEST>
+        <FOR_EACH SelectList="$allProgramIDs/MKTNG_PGM" CurrentElement="currentElement">
+          <SET Var="programname" FromValue="{$currentElement/MKTNG_PGM_NAME/@Value}"/>
+          <SET Var="programnbr" FromValue="{$currentElement/MKTNG_PGM_NBR/@Value}"/>
+          <APPEND_TO_XML SelectList="$programIdsList/MKTNG_PGM">
+            <OPTION Id="{$programnbr}" Value="{$programname}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="programIdsList" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <!--Added by Ankita Sadhwani 13th May,2016 starts-->
+  <DEFINE_METHOD Name="getProgramIDs_for_Subscription">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="allProgramIDs">
+          <MKTNG_PGM/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="programIdsList">
+          <ROOT>
+            <MKTNG_PGM/>
+          </ROOT>
+        </TO_DOCVAR>
+        <GET_DOCUMENT Name="MKTNG_PGM" ServiceName="BCM_MASTER" AssignToVar="allProgramIDs" DirtyRead="true" ReturnRowCount="yes">
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <SELECT>
+            <MKTNG_PGM_NBR/>
+            <MKTNG_PGM_NAME/>
+          </SELECT>
+        </GET_DOCUMENT>
+        <APPEND_TO_XML SelectList="$programIdsList/MKTNG_PGM">
+          <OPTION Id="" Value="All"/>
+        </APPEND_TO_XML>
+        <FOR_EACH SelectList="$allProgramIDs/MKTNG_PGM" CurrentElement="currentElement">
+          <SET Var="programname" FromValue="{$currentElement/MKTNG_PGM_NAME/@Value}"/>
+          <SET Var="programnbr" FromValue="{$currentElement/MKTNG_PGM_NBR/@Value}"/>
+          <APPEND_TO_XML SelectList="$programIdsList/MKTNG_PGM">
+            <OPTION Id="{$programnbr}" Value="{$programname}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="programIdsList" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <!--Added by Ankita Sadhwani ends-->
+  <DEFINE_METHOD Name="getCountries">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="CNTRY" ServiceName="BCM_MASTER" AssignToVar="cntryDetails" DirtyRead="true">
+          <SELECT>
+            <CNTRY_CODE/>
+            <CNTRY_NAME/>
+          </SELECT>
+          <ORDER_BY>
+            <CNTRY_NAME Sort="Ascending"/>
+          </ORDER_BY>
+        </GET_DOCUMENT>
+        <TO_DOCVAR AssignToVar="countriesList">
+          <ROOT>
+            <CNTRY_CODE/>
+          </ROOT>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$cntryDetails/CNTRY" CurrentElement="currentElement">
+          <SET Var="cntryCode" FromValue="{$currentElement/CNTRY_CODE/@Value}"/>
+          <SET Var="cntryName" FromValue="{$currentElement/CNTRY_NAME/@Value}"/>
+          <APPEND_TO_XML SelectList="$countriesList/CNTRY_CODE">
+            <OPTION Id="{$cntryCode}" Value="{$cntryName}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="countriesList" AssignToVar="thisReturn"/>
+        <!--ADD_CHILDREN FromSelect="$consumerDetails" DocVar="thisReturn" /-->
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getConsumerDetails">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="REGIS_PRSNA" ServiceName="BCM_MASTER" AssignToVar="consumerDetails" DirtyRead="true">
+          <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <!--<PRSNA_STATUS_CODE Value="AC"/>-->
+        </GET_DOCUMENT>
+        <EXECUTE_SQL_QUERY AssignToVar="LANG_NAME" Value="SEL LANG_NAME FROM LANG where lang_code= '{$consumerDetails/REGIS_PRSNA/LANG_CODE/@Value}' "/>
+        <APPEND_TO_XML SelectList="$consumerDetails/REGIS_PRSNA">
+          <TO_XML SelectList="$LANG_NAME/SQL_RESULT/*"/>
+        </APPEND_TO_XML>
+        <SET_NAME Value="{$consumerDetails/REGIS_PRSNA}" FromValue="CONSUMER_DETAILS"/>
+        <GET_DOCUMENT Name="REGIS_PRSNA_POSTL_ADDR" ServiceName="BCM_MASTER" AssignToVar="postalAddrDetails" DirtyRead="true">
+          <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <OR>
+            <TO_XML SelectList="$thisParam/CONTACT_CODES/CNTCT_POINT_CATEG_CODE"/>
+          </OR>
+        </GET_DOCUMENT>
+        <SET_NAME Value="{$postalAddrDetails/REGIS_PRSNA_POSTL_ADDR/GUARDN_CNSNT_IND}" FromValue="PARENTAL_CNTRL"/>
+        <TO_DOCVAR AssignToVar="consumerDetailsCopy">
+          <TO_XML SelectList="$consumerDetails/*"/>
+        </TO_DOCVAR>
+        <SET DocVar="consumerDetailsCopy" Property="FULL_NAME" FromValue="{$consumerDetails/CONSUMER_DETAILS/FAMLY_NAME/@Value}, {$consumerDetails/CONSUMER_DETAILS/GVN_NAME/@Value}"/>
+        <APPEND_TO_XML SelectList="($consumerDetails/CONSUMER_DETAILS)">
+          <TO_XML SelectList="$postalAddrDetails/REGIS_PRSNA_POSTL_ADDR/*"/>
+          <FULL_ADDRESS Value="{$postalAddrDetails/REGIS_PRSNA_POSTL_ADDR/ADDR_LINE_1_TXT/@Value}, {$postalAddrDetails/REGIS_PRSNA_POSTL_ADDR/ADDR_LINE_2_TXT/@Value}, {$postalAddrDetails/REGIS_PRSNA_POSTL_ADDR/ADDR_LINE_3_TXT/@Value}, {$postalAddrDetails/REGIS_PRSNA_POSTL_ADDR/CITY_NAME/@Value}"/>
+        </APPEND_TO_XML>
+        <!--REQUEST Name="getProgramNames" ServiceName="BCM_MASTER" AssignToVar="programNames">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+        </REQUEST-->
+        <TO_DOCVAR AssignToVar="programNames">
+          <ROOT>
+            <MKTNG_PGM>
+              <MKTNG_PGM_NAME Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+            </MKTNG_PGM>
+          </ROOT>
+        </TO_DOCVAR>
+        <SET_CHILD Value="{$consumerDetails/CONSUMER_DETAILS}" FromValue="{$programNames/MKTNG_PGM/MKTNG_PGM_NAME}"/>
+        <!--<REQUEST Name="getMaxAge" AssignToVar="maxAge" ServiceName="BCM_MASTER">
+          <COUNTRY Value="{trim($consumerDetails/CONSUMER_DETAILS/CNTRY_CODE/@Value)}"/>
+        </REQUEST>-->
+        <SET_CHILD Value="{$consumerDetails/CONSUMER_DETAILS}" FromValue="{$maxAge/AGE_MIN_MAX/MAX_AGE}"/>
+        <CLONE_XML DocVar="consumerDetails" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <!--  <DEFINE_METHOD Name="doUniversalOptOut">
+    <RULE>
+      <ACTION>
+        <MODIFY_DOC_SMART Name="MATCHD_CNSMR_PRSNA" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <MATCHD_CNSMR_PRSNA_ID Value="{$thisParam/MATCHD_CNSMR_PRSNA_ID/@Value}"/>
+            <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <UNIVERSAL_OPT_OUT Value="Y"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOC_SMART>
+        <GET_DOCUMENT Name="REGIS_PRSNA" ServiceName="BCM_MASTER" AssignToVar="regisPersonaIDs" DirtyRead="true">
+          <MATCHD_CNSMR_PRSNA_ID Value="{$thisParam/MATCHD_CNSMR_PRSNA_ID/@Value}"/>
+          <PRSNA_STATUS_CODE Value="AC"/>
+          <SELECT>
+            <REGIS_PRSNA_ID/>
+            <MKTNG_PGM_NBR/>
+          </SELECT>
+        </GET_DOCUMENT>
+        <FOR_EACH SelectList="$regisPersonaIDs/REGIS_PRSNA" CurrentElement="currElement">
+          <REQUEST Name="doProgramOptOut" ServiceName="BCM_MASTER" AssignToVar="programoptoutresults">
+            <REGIS_PRSNA_ID Value="{$currElement/REGIS_PRSNA_ID/@Value}"/>
+            <MKTNG_PGM_NBR Value="{$currElement/MKTNG_PGM_NBR/@Value}"/>
+            <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          </REQUEST>
+        </FOR_EACH>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="doUniversalEmailOptOut">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="REGIS_PRSNA" ServiceName="BCM_MASTER" AssignToVar="regisPersonaIDs" DirtyRead="true">
+          <MATCHD_CNSMR_PRSNA_ID Value="{$thisParam/MATCHD_CNSMR_PRSNA_ID/@Value}"/>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <PRSNA_STATUS_CODE Value="AC"/>
+          <SELECT>
+            <REGIS_PRSNA_ID/>
+            <MKTNG_PGM_NBR/>
+          </SELECT>
+        </GET_DOCUMENT>
+        <FOR_EACH SelectList="$regisPersonaIDs/REGIS_PRSNA" CurrentElement="currElement">
+          <REQUEST Name="updateRegisPrsnaForTemporal" AssignToVar="updateRegisPrsnaForTemporalResult" ServiceName="BCM_MASTER">
+            <REGIS_PRSNA_ID Value="{$currElement/REGIS_PRSNA_ID/@Value}"/>
+            <MKTNG_PGM_NBR Value="{$currElement/MKTNG_PGM_NBR/@Value}"/>
+            <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          </REQUEST>
+          <MODIFY_DOC_SMART Name="REGIS_PRSNA_EMAIL_ADDR" ServiceName="BCM_MASTER">
+            <DOCUMENT_CONTEXT>
+              <REGIS_PRSNA_ID Value="{$currElement/REGIS_PRSNA_ID/@Value}"/>
+              <MKTNG_PGM_NBR Value="{$currElement/MKTNG_PGM_NBR/@Value}"/>
+              <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+            </DOCUMENT_CONTEXT>
+            <UPDATE_PROPERTIES>
+              <SUBSCRPTN_OPT_IND Value="O"/>
+              <CNSMR_CHCE_DATETM Value="{date()}"/>
+            </UPDATE_PROPERTIES>
+          </MODIFY_DOC_SMART>
+        </FOR_EACH>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="doUniversalPhoneOptOut">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="REGIS_PRSNA" ServiceName="BCM_MASTER" AssignToVar="regisPersonaIDs" DirtyRead="true">
+          <MATCHD_CNSMR_PRSNA_ID Value="{$thisParam/MATCHD_CNSMR_PRSNA_ID/@Value}"/>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <PRSNA_STATUS_CODE Value="AC"/>
+          <SELECT>
+            <REGIS_PRSNA_ID/>
+            <MKTNG_PGM_NBR/>
+          </SELECT>
+        </GET_DOCUMENT>
+        <FOR_EACH SelectList="$regisPersonaIDs/REGIS_PRSNA" CurrentElement="currElement">
+          <REQUEST Name="updateRegisPrsnaForTemporal" AssignToVar="updateRegisPrsnaForTemporalResult" ServiceName="BCM_MASTER">
+            <REGIS_PRSNA_ID Value="{$currElement/REGIS_PRSNA_ID/@Value}"/>
+            <MKTNG_PGM_NBR Value="{$currElement/MKTNG_PGM_NBR/@Value}"/>
+            <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          </REQUEST>
+          <MODIFY_DOC_SMART Name="REGIS_PRSNA_PHONE" ServiceName="BCM_MASTER">
+            <DOCUMENT_CONTEXT>
+              <REGIS_PRSNA_ID Value="{$currElement/REGIS_PRSNA_ID/@Value}"/>
+              <MKTNG_PGM_NBR Value="{$currElement/MKTNG_PGM_NBR/@Value}"/>
+              <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+            </DOCUMENT_CONTEXT>
+            <UPDATE_PROPERTIES>
+              <SUBSCRPTN_OPT_IND Value="O"/>
+              <CNSMR_CHCE_DATETM Value="{date()}"/>
+            </UPDATE_PROPERTIES>
+          </MODIFY_DOC_SMART>
+        </FOR_EACH>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="doUniversalPostlOptOut">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="REGIS_PRSNA" ServiceName="BCM_MASTER" AssignToVar="regisPersonaIDs" DirtyRead="true">
+          <MATCHD_CNSMR_PRSNA_ID Value="{$thisParam/MATCHD_CNSMR_PRSNA_ID/@Value}"/>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <PRSNA_STATUS_CODE Value="AC"/>
+          <SELECT>
+            <REGIS_PRSNA_ID/>
+            <MKTNG_PGM_NBR/>
+          </SELECT>
+        </GET_DOCUMENT>
+        <FOR_EACH SelectList="$regisPersonaIDs/REGIS_PRSNA" CurrentElement="currElement">
+          <REQUEST Name="updateRegisPrsnaForTemporal" AssignToVar="updateRegisPrsnaForTemporalResult" ServiceName="BCM_MASTER">
+            <REGIS_PRSNA_ID Value="{$currElement/REGIS_PRSNA_ID/@Value}"/>
+            <MKTNG_PGM_NBR Value="{$currElement/MKTNG_PGM_NBR/@Value}"/>
+            <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          </REQUEST>
+          <MODIFY_DOC_SMART Name="REGIS_PRSNA_POSTL_ADDR" ServiceName="BCM_MASTER">
+            <DOCUMENT_CONTEXT>
+              <REGIS_PRSNA_ID Value="{$currElement/REGIS_PRSNA_ID/@Value}"/>
+              <MKTNG_PGM_NBR Value="{$currElement/MKTNG_PGM_NBR/@Value}"/>
+              <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+            </DOCUMENT_CONTEXT>
+            <UPDATE_PROPERTIES>
+              <SUBSCRPTN_OPT_IND Value="O"/>
+              <CNSMR_CHCE_DATETM Value="{date()}"/>
+            </UPDATE_PROPERTIES>
+          </MODIFY_DOC_SMART>
+        </FOR_EACH>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="doUniversalSocialOptOut">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="REGIS_PRSNA" ServiceName="BCM_MASTER" AssignToVar="regisPersonaIDs" DirtyRead="true">
+          <MATCHD_CNSMR_PRSNA_ID Value="{$thisParam/MATCHD_CNSMR_PRSNA_ID/@Value}"/>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <PRSNA_STATUS_CODE Value="AC"/>
+          <SELECT>
+            <REGIS_PRSNA_ID/>
+            <MKTNG_PGM_NBR/>
+          </SELECT>
+        </GET_DOCUMENT>
+        <FOR_EACH SelectList="$regisPersonaIDs/REGIS_PRSNA" CurrentElement="currElement">
+          <REQUEST Name="updateRegisPrsnaForTemporal" AssignToVar="updateRegisPrsnaForTemporalResult" ServiceName="BCM_MASTER">
+            <REGIS_PRSNA_ID Value="{$currElement/REGIS_PRSNA_ID/@Value}"/>
+            <MKTNG_PGM_NBR Value="{$currElement/MKTNG_PGM_NBR/@Value}"/>
+            <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          </REQUEST>
+          <MODIFY_DOC_SMART Name="REGIS_PRSNA_SOC_NETK_ACT" ServiceName="BCM_MASTER">
+            <DOCUMENT_CONTEXT>
+              <REGIS_PRSNA_ID Value="{$currElement/REGIS_PRSNA_ID/@Value}"/>
+              <MKTNG_PGM_NBR Value="{$currElement/MKTNG_PGM_NBR/@Value}"/>
+              <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+            </DOCUMENT_CONTEXT>
+            <UPDATE_PROPERTIES>
+              <SUBSCRPTN_OPT_IND Value="O"/>
+              <CNSMR_CHCE_DATETM Value="{date()}"/>
+            </UPDATE_PROPERTIES>
+          </MODIFY_DOC_SMART>
+        </FOR_EACH>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="doProgramOptOut">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="WHERE_CLAUSE">
+          <WHERE_CLAUSE>
+            <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+            <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+            <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          </WHERE_CLAUSE>
+        </TO_DOCVAR>
+        <REQUEST Name="updateRegisPrsnaForTemporal" AssignToVar="updateRegisPrsnaForTemporalResult" ServiceName="BCM_MASTER">
+          <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+        </REQUEST>
+        <MODIFY_DOC_SMART Name="REGIS_PRSNA_EMAIL_ADDR" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <TO_XML SelectList="$WHERE_CLAUSE/*"/>
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <SUBSCRPTN_OPT_IND Value="O"/>
+            <CNSMR_CHCE_DATETM Value="{date()}"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOC_SMART>
+        <MODIFY_DOC_SMART Name="REGIS_PRSNA_PHONE" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <TO_XML SelectList="$WHERE_CLAUSE/*"/>
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <SUBSCRPTN_OPT_IND Value="O"/>
+            <CNSMR_CHCE_DATETM Value="{date()}"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOC_SMART>
+        <MODIFY_DOC_SMART Name="REGIS_PRSNA_POSTL_ADDR" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <TO_XML SelectList="$WHERE_CLAUSE/*"/>
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <SUBSCRPTN_OPT_IND Value="O"/>
+            <CNSMR_CHCE_DATETM Value="{date()}"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOC_SMART>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="doEmailSubscriptionOptOut">
+    <RULE>
+      <ACTION>
+        <GET_DOC_SMART Name="REGIS_PRSNA_EMAIL_ADDR" ServiceName="BCM_MASTER" DirtyRead="true" AssignToVar="checkRegPrsnaEmail">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <SUBSCRPTN_OPT_NBR Value="{$thisParam/SUBSCRPTN_OPT_NBR/@Value}"/>
+          <SELECT>
+            <SUBSCRPTN_OPT_IND/>
+          </SELECT>
+        </GET_DOC_SMART>
+        <IF_TEST Test="$checkRegPrsnaEmail/REGIS_PRSNA_EMAIL_ADDR/SUBSCRPTN_OPT_IND/@Value != 'O'">
+          <THEN>
+            <MODIFY_DOC_SMART Name="REGIS_PRSNA_EMAIL_ADDR" ServiceName="BCM_MASTER">
+              <DOCUMENT_CONTEXT>
+                <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+              
+                <SUBSCRPTN_OPT_NBR Value="{$thisParam/SUBSCRPTN_OPT_NBR/@Value}"/>
+              </DOCUMENT_CONTEXT>
+              <UPDATE_PROPERTIES>
+                <SUBSCRPTN_OPT_IND Value="O"/>
+                <CNSMR_CHCE_DATETM Value="{date()}"/>
+              </UPDATE_PROPERTIES>
+            </MODIFY_DOC_SMART>
+            <REQUEST Name="updateRegisPrsnaForTemporal" AssignToVar="updateRegisPrsnaForTemporalResult" ServiceName="BCM_MASTER">
+              <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+              <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+              <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+            </REQUEST>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="doPhoneSubscriptionOptOut">
+    <RULE>
+      <ACTION>
+        <GET_DOC_SMART Name="REGIS_PRSNA_PHONE" ServiceName="BCM_MASTER" DirtyRead="true" AssignToVar="checkRegPrsnaPhone">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <SUBSCRPTN_OPT_NBR Value="{$thisParam/SUBSCRPTN_OPT_NBR/@Value}"/>
+          <SELECT>
+            <SUBSCRPTN_OPT_IND/>
+          </SELECT>
+        </GET_DOC_SMART>
+        <IF_TEST Test="$checkRegPrsnaPhone/REGIS_PRSNA_PHONE/SUBSCRPTN_OPT_IND/@Value != 'O'">
+          <THEN>
+            <MODIFY_DOC_SMART Name="REGIS_PRSNA_PHONE" ServiceName="BCM_MASTER">
+              <DOCUMENT_CONTEXT>
+                <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+               
+                <SUBSCRPTN_OPT_NBR Value="{$thisParam/SUBSCRPTN_OPT_NBR/@Value}"/>
+              </DOCUMENT_CONTEXT>
+              <UPDATE_PROPERTIES>
+                <SUBSCRPTN_OPT_IND Value="O"/>
+                <CNSMR_CHCE_DATETM Value="{date()}"/>
+              </UPDATE_PROPERTIES>
+            </MODIFY_DOC_SMART>
+            <REQUEST Name="updateRegisPrsnaForTemporal" AssignToVar="updateRegisPrsnaForTemporalResult" ServiceName="BCM_MASTER">
+              <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+              <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+              <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+            </REQUEST>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="doPostalSubscriptionOptOut">
+    <RULE>
+      <ACTION>
+        <GET_DOC_SMART Name="REGIS_PRSNA_POSTL_ADDR" ServiceName="BCM_MASTER" DirtyRead="true" AssignToVar="checkRegPrsnaPostal">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <SUBSCRPTN_OPT_NBR Value="{$thisParam/SUBSCRPTN_OPT_NBR/@Value}"/>
+          <SELECT>
+            <SUBSCRPTN_OPT_IND/>
+          </SELECT>
+        </GET_DOC_SMART>
+        <IF_TEST Test="$checkRegPrsnaPostal/REGIS_PRSNA_POSTL_ADDR/SUBSCRPTN_OPT_IND/@Value != 'O'">
+          <THEN>
+            <MODIFY_DOC_SMART Name="REGIS_PRSNA_POSTL_ADDR" ServiceName="BCM_MASTER">
+              <DOCUMENT_CONTEXT>
+                <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+            
+                <SUBSCRPTN_OPT_NBR Value="{$thisParam/SUBSCRPTN_OPT_NBR/@Value}"/>
+              </DOCUMENT_CONTEXT>
+              <UPDATE_PROPERTIES>
+                <SUBSCRPTN_OPT_IND Value="O"/>
+                <CNSMR_CHCE_DATETM Value="{date()}"/>
+              </UPDATE_PROPERTIES>
+            </MODIFY_DOC_SMART>
+            <REQUEST Name="updateRegisPrsnaForTemporal" AssignToVar="updateRegisPrsnaForTemporalResult" ServiceName="BCM_MASTER">
+              <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+              <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+              <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+            </REQUEST>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="doSocialSubscriptionOptOut">
+    <RULE>
+      <ACTION>
+        <GET_DOC_SMART Name="REGIS_PRSNA_SOC_NETK_ACT" ServiceName="BCM_MASTER" DirtyRead="true" AssignToVar="checkRegPrsnaSocial">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <SUBSCRPTN_OPT_NBR Value="{$thisParam/SUBSCRPTN_OPT_NBR/@Value}"/>
+          <SELECT>
+            <SUBSCRPTN_OPT_IND/>
+          </SELECT>
+        </GET_DOC_SMART>
+        <IF_TEST Test="$checkRegPrsnaSocial/REGIS_PRSNA_SOC_NETK_ACT/SUBSCRPTN_OPT_IND/@Value != 'O'">
+          <THEN>
+            <MODIFY_DOC_SMART Name="REGIS_PRSNA_SOC_NETK_ACT" ServiceName="BCM_MASTER">
+              <DOCUMENT_CONTEXT>
+                <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+            
+                <SUBSCRPTN_OPT_NBR Value="{$thisParam/SUBSCRPTN_OPT_NBR/@Value}"/>
+              </DOCUMENT_CONTEXT>
+              <UPDATE_PROPERTIES>
+                <SUBSCRPTN_OPT_IND Value="O"/>
+                <CNSMR_CHCE_DATETM Value="{date()}"/>
+              </UPDATE_PROPERTIES>
+            </MODIFY_DOC_SMART>
+            <REQUEST Name="updateRegisPrsnaForTemporal" AssignToVar="updateRegisPrsnaForTemporalResult" ServiceName="BCM_MASTER">
+              <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+              <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+              <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+            </REQUEST>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>-->
+  <DEFINE_METHOD Name="getEmailSubscriptions">
+    <RULE>
+      <ACTION>
+        <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS LOCKING ROW FOR ACCESS NONSEQUENCED TRANSACTIONTIME SELECT DISTINCT EM.REGIS_PRSNA_ID,EM.SUBSCRPTN_OPT_IND,EM.CNSMR_CHCE_DATETM,EM.PREF_CNTCT_POINT_IND,EM.EMAIL_ADDR_TXT ,EM.CNTCT_POINT_CATEG_CODE,EM.SUBSCRPTN_OPT_NBR,EM.MKTNG_PGM_NBR,EM.LEGAL_ENT_NBR,SO.SUBSCRPTN_OPT_NAME ,SO.SUBSCRPTN_OPT_STMT_TXT,SO.SUBSCRPTN_OPT_FREQ_TXT ,TRIM(EM.SUBSCRPTN_OPT_NBR)||'|'||TRIM(EM.SUBSCRPTN_OPT_IND)  AS SUBSCRPTN_OPT_NBR_IND ,C.CNTCT_POINT_CATEG_NAME AS AV_DESCRIPTION FROM MDM.REGIS_PRSNA_EMAIL_ADDR EM LEFT JOIN (SELECT A.MKTNG_PGM_NBR,A.LEGAL_ENT_NBR,A.SUBSCRPTN_OPT_NBR,SUBSCRPTN_OPT_NAME,SUBSCRPTN_OPT_FREQ_TXT,SUBSCRPTN_OPT_STMT_TXT FROM SUBSCRPTN_OPT A LEFT JOIN SUBSCRPTN_OPT_TYPE B ON A.SUBSCRPTN_OPT_NBR=B.SUBSCRPTN_OPT_NBR AND A.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR AND B.CNTCT_CHANL_TYPE_CODE IN ('E') )SO ON EM.MKTNG_PGM_NBR=SO.MKTNG_PGM_NBR AND EM.LEGAL_ENT_NBR=SO.LEGAL_ENT_NBR AND EM.SUBSCRPTN_OPT_NBR=SO.SUBSCRPTN_OPT_NBR LEFT JOIN MDM.CNTCT_POINT_CATEG C ON EM.CNTCT_POINT_CATEG_CODE=C.CNTCT_POINT_CATEG_CODE WHERE EM.MKTNG_PGM_NBR IN ({$thisParam/MKTNG_PGM_NBR/@Value})AND EM.REGIS_PRSNA_ID IN ({$thisParam/REGIS_PRSNA_ID/@Value})AND EM.SUBSCRPTN_OPT_NBR IS NOT NULL AND EM.EMAIL_ADDR_TXT IS NOT NULL ORDER BY EM.SUBSCRPTN_OPT_NBR,EM.CNSMR_CHCE_DATETM DESC;" AssignToVar="emailResultsRaw1"/>
+        <TO_DOCVAR AssignToVar="emailResultsRaw2">
+          <ROOT/>
+        </TO_DOCVAR>
+        <FOR_EACH CurrentElement="currEmail" SelectList="$emailResultsRaw1/*">
+          <APPEND_TO_XML DocVar="emailResultsRaw2">
+            <EMAIL_RESULTS>
+              <TO_XML SelectList="$currEmail/*"/>
+            </EMAIL_RESULTS>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <SET Var="emailResultsRaw" FromSelectList="$emailResultsRaw2/*"/>
+        <TO_DOCVAR AssignToVar="emailResults">
+          <EMAIL_RESULTS>
+          </EMAIL_RESULTS>
+        </TO_DOCVAR>
+        <FOR_EACH CurrentElement="currEmailResults" SelectList="$emailResultsRaw">
+          <APPEND_TO_XML DocVar="emailResults">
+            <V_EMAIL>
+              <TO_XML SelectList="$currEmailResults/*"/>
+            </V_EMAIL>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="emailResults" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getPhoneSubscriptions">
+    <RULE>
+      <ACTION>
+        <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS LOCKING ROW FOR ACCESS NONSEQUENCED TRANSACTIONTIME SELECT DISTINCT  PH.REGIS_PRSNA_ID ,PH.SUBSCRPTN_OPT_IND ,PH.CNSMR_CHCE_DATETM ,PH.PREF_CNTCT_POINT_IND ,PH.FULL_PHONE_NUM ,PH.CNTCT_POINT_CATEG_CODE ,PH.SUBSCRPTN_OPT_NBR ,PH.MKTNG_PGM_NBR ,PH.LEGAL_ENT_NBR ,SO.SUBSCRPTN_OPT_NAME ,SO.SUBSCRPTN_OPT_STMT_TXT ,SO.SUBSCRPTN_OPT_FREQ_TXT ,TRIM(PH.SUBSCRPTN_OPT_NBR)||'|'||TRIM(PH.SUBSCRPTN_OPT_IND) AS SUBSCRPTN_OPT_NBR_IND ,C.CNTCT_POINT_CATEG_NAME AS AV_DESCRIPTION  FROM MDM.REGIS_PRSNA_PHONE PH LEFT JOIN (SELECT A.MKTNG_PGM_NBR,A.LEGAL_ENT_NBR,A.SUBSCRPTN_OPT_NBR,SUBSCRPTN_OPT_NAME,SUBSCRPTN_OPT_FREQ_TXT,SUBSCRPTN_OPT_STMT_TXT FROM SUBSCRPTN_OPT A LEFT JOIN SUBSCRPTN_OPT_TYPE B ON A.SUBSCRPTN_OPT_NBR=B.SUBSCRPTN_OPT_NBR AND A.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR AND B.CNTCT_CHANL_TYPE_CODE IN ('P') )SO ON PH.MKTNG_PGM_NBR=SO.MKTNG_PGM_NBR AND PH.LEGAL_ENT_NBR=SO.LEGAL_ENT_NBR AND PH.SUBSCRPTN_OPT_NBR=SO.SUBSCRPTN_OPT_NBR LEFT JOIN MDM.CNTCT_POINT_CATEG C ON PH.CNTCT_POINT_CATEG_CODE=C.CNTCT_POINT_CATEG_CODE WHERE PH.MKTNG_PGM_NBR IN ({$thisParam/MKTNG_PGM_NBR/@Value})AND PH.REGIS_PRSNA_ID IN ({$thisParam/REGIS_PRSNA_ID/@Value})AND PH.SUBSCRPTN_OPT_NBR IS NOT NULL AND PH.FULL_PHONE_NUM IS NOT NULL ORDER BY PH.SUBSCRPTN_OPT_NBR,PH.CNSMR_CHCE_DATETM DESC;" AssignToVar="phoneResultsRaw1"/>
+        <TO_DOCVAR AssignToVar="phoneResultsRaw2">
+          <ROOT/>
+        </TO_DOCVAR>
+        <FOR_EACH CurrentElement="currPhone" SelectList="$phoneResultsRaw1/*">
+          <APPEND_TO_XML DocVar="phoneResultsRaw2">
+            <PHONE_RESULTS>
+              <TO_XML SelectList="$currPhone/*"/>
+            </PHONE_RESULTS>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <SET Var="phoneResultsRaw" FromSelectList="$phoneResultsRaw2/*"/>
+        <TO_DOCVAR AssignToVar="phoneResults">
+          <PHONE_RESULTS>
+          </PHONE_RESULTS>
+        </TO_DOCVAR>
+        <FOR_EACH CurrentElement="currPhoneResults" SelectList="$phoneResultsRaw">
+          <APPEND_TO_XML DocVar="phoneResults">
+            <V_PHONE>
+              <TO_XML SelectList="$currPhoneResults/*"/>
+            </V_PHONE>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="phoneResults" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getPostalSubscriptions">
+    <RULE>
+      <ACTION>
+        <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS NONSEQUENCED TRANSACTIONTIME SELECT DISTINCT AD.REGIS_PRSNA_ID ,AD.SUBSCRPTN_OPT_IND ,AD.CNSMR_CHCE_DATETM ,COALESCE(AD.ADDR_LINE_1_TXT,'') || COALESCE(AD.ADDR_LINE_2_TXT,'') || COALESCE(AD.CITY_NAME,'') || COALESCE(AD.POSTL_AREA_CODE,'') AS ADDR_LINE_1_TXT ,AD.ADDR_LINE_2_TXT ,AD.CITY_NAME ,AD.POSTL_AREA_CODE ,AD.CNTRY_CODE ,AD.CNTCT_POINT_CATEG_CODE ,AD.SUBSCRPTN_OPT_NBR ,AD.MKTNG_PGM_NBR ,AD.LEGAL_ENT_NBR ,SO.SUBSCRPTN_OPT_NAME ,SO.SUBSCRPTN_OPT_STMT_TXT ,SO.SUBSCRPTN_OPT_FREQ_TXT     ,TRIM(AD.SUBSCRPTN_OPT_NBR)||'|'||TRIM(AD.SUBSCRPTN_OPT_IND)  AS SUBSCRPTN_OPT_NBR_IND ,C.CNTCT_POINT_CATEG_NAME AS AV_DESCRIPTION FROM MDM.REGIS_PRSNA_POSTL_ADDR AD LEFT JOIN (SELECT A.MKTNG_PGM_NBR,A.LEGAL_ENT_NBR,A.SUBSCRPTN_OPT_NBR,SUBSCRPTN_OPT_NAME,SUBSCRPTN_OPT_FREQ_TXT,SUBSCRPTN_OPT_STMT_TXT FROM SUBSCRPTN_OPT A LEFT JOIN SUBSCRPTN_OPT_TYPE B ON A.SUBSCRPTN_OPT_NBR=B.SUBSCRPTN_OPT_NBR AND A.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR AND B.CNTCT_CHANL_TYPE_CODE IN ('A') )SO ON AD.MKTNG_PGM_NBR=SO.MKTNG_PGM_NBR AND AD.LEGAL_ENT_NBR=SO.LEGAL_ENT_NBR AND AD.SUBSCRPTN_OPT_NBR=SO.SUBSCRPTN_OPT_NBR LEFT JOIN MDM.CNTCT_POINT_CATEG C ON AD.CNTCT_POINT_CATEG_CODE=C.CNTCT_POINT_CATEG_CODE WHERE AD.MKTNG_PGM_NBR IN ({$thisParam/MKTNG_PGM_NBR/@Value})AND AD.REGIS_PRSNA_ID IN ({$thisParam/REGIS_PRSNA_ID/@Value})AND AD.SUBSCRPTN_OPT_NBR IS NOT NULL ORDER BY AD.SUBSCRPTN_OPT_NBR,AD.CNSMR_CHCE_DATETM DESC;" AssignToVar="postalResultsRaw1"/>
+        <TO_DOCVAR AssignToVar="postalResultsRaw2">
+          <ROOT/>
+        </TO_DOCVAR>
+        <FOR_EACH CurrentElement="currPostal" SelectList="$postalResultsRaw1/*">
+          <APPEND_TO_XML DocVar="postalResultsRaw2">
+            <POSTAL_RESULTS>
+              <TO_XML SelectList="$currPostal/*"/>
+            </POSTAL_RESULTS>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <SET Var="postalResultsRaw" FromSelectList="$postalResultsRaw2/*"/>
+        <TO_DOCVAR AssignToVar="postalResults">
+          <POSTAL_RESULTS>
+          </POSTAL_RESULTS>
+        </TO_DOCVAR>
+        <FOR_EACH CurrentElement="currPostalResults" SelectList="$postalResultsRaw">
+          <APPEND_TO_XML DocVar="postalResults">
+            <V_ADDRESS>
+              <TO_XML SelectList="$currPostalResults/*"/>
+            </V_ADDRESS>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="postalResults" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getSocialSubscriptions">
+    <RULE>
+      <ACTION>
+        <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS NONSEQUENCED TRANSACTIONTIME SELECT DISTINCT SOC.REGIS_PRSNA_ID ,SOC.SUBSCRPTN_OPT_IND ,SOC.CNSMR_CHCE_DATETM ,SOC.PREF_CNTCT_POINT_IND ,SOC.SOC_NET_STATUS_CODE ,SOC.CNTCT_POINT_CATEG_CODE ,SOC.SUBSCRPTN_OPT_NBR ,SOC.MKTNG_PGM_NBR ,SOC.LEGAL_ENT_NBR ,SOC.SOCIAL_NETWK_ACCT_ID_VAL ,SO.SUBSCRPTN_OPT_NAME ,SO.SUBSCRPTN_OPT_STMT_TXT ,SO.SUBSCRPTN_OPT_FREQ_TXT     ,TRIM(SOC.SUBSCRPTN_OPT_NBR)||'|'||TRIM(SOC.SUBSCRPTN_OPT_IND)  AS SUBSCRPTN_OPT_NBR_IND ,C.CNTCT_POINT_CATEG_NAME AS AV_DESCRIPTION  FROM MDM.REGIS_PRSNA_SOC_NET_ACCT SOC LEFT JOIN (SELECT A.MKTNG_PGM_NBR,A.LEGAL_ENT_NBR,A.SUBSCRPTN_OPT_NBR,SUBSCRPTN_OPT_NAME,SUBSCRPTN_OPT_FREQ_TXT,SUBSCRPTN_OPT_STMT_TXT FROM SUBSCRPTN_OPT A LEFT JOIN SUBSCRPTN_OPT_TYPE B ON A.SUBSCRPTN_OPT_NBR=B.SUBSCRPTN_OPT_NBR AND A.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR AND B.CNTCT_CHANL_TYPE_CODE IN ('A') )SO ON SOC.MKTNG_PGM_NBR=SO.MKTNG_PGM_NBR AND SOC.LEGAL_ENT_NBR=SO.LEGAL_ENT_NBR AND SOC.SUBSCRPTN_OPT_NBR=SO.SUBSCRPTN_OPT_NBR LEFT JOIN MDM.CNTCT_POINT_CATEG C ON SOC.CNTCT_POINT_CATEG_CODE=C.CNTCT_POINT_CATEG_CODE WHERE SOC.MKTNG_PGM_NBR IN ({$thisParam/MKTNG_PGM_NBR/@Value})AND SOC.REGIS_PRSNA_ID IN ({$thisParam/REGIS_PRSNA_ID/@Value})AND SOC.SUBSCRPTN_OPT_NBR IS NOT NULL AND SOC.SOCIAL_NETWK_ACCT_ID_VAL IS NOT NULL ORDER BY SOC.SUBSCRPTN_OPT_NBR,SOC.CNSMR_CHCE_DATETM DESC;" AssignToVar="socialResultsRaw1"/>
+        <TO_DOCVAR AssignToVar="socialResultsRaw2">
+          <ROOT/>
+        </TO_DOCVAR>
+        <FOR_EACH CurrentElement="currSocial" SelectList="$socialResultsRaw1/*">
+          <APPEND_TO_XML DocVar="socialResultsRaw2">
+            <SOCIAL_RESULTS>
+              <TO_XML SelectList="$currSocial/*"/>
+            </SOCIAL_RESULTS>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <SET Var="socialResultsRaw" FromSelectList="$socialResultsRaw2/*"/>
+        <TO_DOCVAR AssignToVar="socialResults">
+          <SOCIAL_RESULTS>
+          </SOCIAL_RESULTS>
+        </TO_DOCVAR>
+        <FOR_EACH CurrentElement="currSocialResults" SelectList="$socialResultsRaw">
+          <APPEND_TO_XML DocVar="socialResults">
+            <V_SOCIAL>
+              <TO_XML SelectList="$currSocialResults/*"/>
+            </V_SOCIAL>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="socialResults" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <!--<DEFINE_METHOD Name="getSubscriprionsDropdownList">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="REGIS_PRSNA_EMAIL_ADDR" ServiceName="BCM_MASTER" DirtyRead="true" AssignToVar="emailList">
+          <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <EMAIL_ADDR_TXT MatchBy="NOT_EQUAL"/>
+          <EMAIL_ADDR_TXT Value="" MatchBy="NOT_EQUAL"/>
+          <OR>
+            <TO_XML SelectList="$thisParam/CONTACT_CODES/CNTCT_POINT_CATEG_CODE"/>
+          </OR>
+      
+          <SELECT>
+            <EMAIL_ADDR_TXT/>
+          </SELECT>
+        </GET_DOCUMENT>
+        <GET_DOCUMENT Name="REGIS_PRSNA_PHONE" ServiceName="BCM_MASTER" DirtyRead="true" AssignToVar="phoneList">
+          <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <FULL_PHONE_NUM MatchBy="NOT_EQUAL"/>
+          <FULL_PHONE_NUM Value="" MatchBy="NOT_EQUAL"/>
+          <OR>
+            <TO_XML SelectList="$thisParam/CONTACT_CODES/CNTCT_POINT_CATEG_CODE"/>
+          </OR>
+         
+          <SELECT>
+            <FULL_PHONE_NUM/>
+          </SELECT>
+        </GET_DOCUMENT>
+        <GET_DOCUMENT Name="REGIS_PRSNA_SOC_NETK_ACT" ServiceName="BCM_MASTER" DirtyRead="true" AssignToVar="socialList">
+          <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <SOCIAL_NETWK_ACCT_ID_VAL MatchBy="NOT_EQUAL"/>
+          <SOCIAL_NETWK_ACCT_ID_VAL Value="" MatchBy="NOT_EQUAL"/>
+          <OR>
+            <TO_XML SelectList="$thisParam/CONTACT_CODES/CNTCT_POINT_CATEG_CODE"/>
+          </OR>
+         
+          <SELECT>
+            <SOCIAL_NETWK_ACCT_ID_VAL/>
+          </SELECT>
+        </GET_DOCUMENT>
+        <ADD_CHILDREN FromSelect="$emailList" DocVar="thisReturn"/>
+        <ADD_CHILDREN FromSelect="$phoneList" DocVar="thisReturn"/>
+        <ADD_CHILDREN FromSelect="$socialList" DocVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>-->
+  <!--<DEFINE_METHOD Name="getEmailTypes">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="ATTRIBUTE_VALUES" ServiceName="BCM_MASTER" DirtyRead="true" AssignToVar="emailTypes">
+          <ATTRIBUTE_TYPE_ID Value="3.00"/>
+          <AV_CODE Value="E" MatchBy="STARTS_WITH"/>
+          <SELECT>
+            <AV_CODE/>
+            <AV_DESCRIPTION/>
+          </SELECT>
+        </GET_DOCUMENT>
+        <CLONE_XML DocVar="emailTypes" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getPhoneTypes">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="ATTRIBUTE_VALUES" ServiceName="BCM_MASTER" DirtyRead="true" AssignToVar="phoneTypes">
+          <ATTRIBUTE_TYPE_ID Value="3.00"/>
+          <AV_CODE Value="P" MatchBy="STARTS_WITH"/>
+          <SELECT>
+            <AV_CODE/>
+            <AV_DESCRIPTION/>
+          </SELECT>
+        </GET_DOCUMENT>
+        <CLONE_XML DocVar="phoneTypes" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getSocialTypes">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="ATTRIBUTE_VALUES" ServiceName="BCM_MASTER" DirtyRead="true" AssignToVar="socialTypes">
+          <ATTRIBUTE_TYPE_ID Value="3.00"/>
+          <AV_CODE Value="S" MatchBy="STARTS_WITH"/>
+          <SELECT>
+            <AV_CODE/>
+            <AV_DESCRIPTION/>
+          </SELECT>
+        </GET_DOCUMENT>
+        <CLONE_XML DocVar="socialTypes" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>-->
+  <DEFINE_METHOD Name="getContactTypes">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="ATTRIBUTE_VALUES" ServiceName="BCM_MASTER" DirtyRead="true" AssignToVar="contactTypes">
+          <ATTRIBUTE_TYPE_ID Value="3.00"/>
+          <SELECT>
+            <AV_CODE/>
+            <AV_DESCRIPTION/>
+          </SELECT>
+        </GET_DOCUMENT>
+        <SET_NAME SelectList="$contactTypes/*" FromValue="CONTACT_CODES"/>
+        <SET_NAME SelectList="$contactTypes/CONTACT_CODES/AV_CODE" FromValue="CNTCT_POINT_CATEG_CODE"/>
+        <CLONE_XML DocVar="contactTypes" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="updateRegisPrsnaEmail">
+    <RULE>
+      <ACTION>
+        <GET_DOC_SMART Name="REGIS_PRSNA_EMAIL_ADDR" ServiceName="BCM_MASTER" DirtyRead="true" AssignToVar="regisPrsnaEmail" ReturnRowCount="true">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <CNTCT_POINT_CATEG_CODE Value="{$thisParam/CNTCT_POINT_CATEG_CODE/@Value}"/>
+        </GET_DOC_SMART>
+        <IF_TEST Test="$regisPrsnaEmail/@TotalRowCount != 0">
+          <THEN>
+            <GET_DOC_SMART Name="REGIS_PRSNA_EMAIL_ADDR" ServiceName="BCM_MASTER" DirtyRead="true" AssignToVar="checkRegPrsnaEmail" ReturnRowCount="true">
+              <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+              <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+              <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+              <CNTCT_POINT_CATEG_CODE Value="{$thisParam/CNTCT_POINT_CATEG_CODE/@Value}"/>
+              <EMAIL_ADDR_TXT Value="{$thisParam/EMAIL_ADDR_TXT/@Value}"/>
+            </GET_DOC_SMART>
+            <IF_TEST Test="$checkRegPrsnaEmail/@TotalRowCount = 0">
+              <THEN>
+                <EXECUTE_SQL_QUERY Value="SEL SHA256('{$thisParam/EMAIL_ADDR_TXT/@Value}') AS HASHVAL" AssignToVar="HASHVAL"/>
+                <MODIFY_DOC_SMART Name="REGIS_PRSNA_EMAIL_ADDR" ServiceName="BCM_MASTER" AssignToVar="MOD_EMAIL_ADDR">
+                  <DOCUMENT_CONTEXT>
+                    <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                    <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                    <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                    <CNTCT_POINT_CATEG_CODE Value="{$thisParam/CNTCT_POINT_CATEG_CODE/@Value}"/>
+                  </DOCUMENT_CONTEXT>
+                  <UPDATE_PROPERTIES>
+                    <EMAIL_ADDR_TXT Value="{$thisParam/EMAIL_ADDR_TXT/@Value}"/>
+                    <EMAIL_ADDR_TXT_HASH Value="{$HASHVAL/SQL_RESULT/HASHVAL/@Value}"/>
+                    <!--CNSMR_CHCE_DATETM Value="{date()}"/-->
+                  </UPDATE_PROPERTIES>
+                </MODIFY_DOC_SMART>
+                <IF_TEST Test="$MOD_EMAIL_ADDR/@Status='Success'">
+                  <THEN>
+                    <SET Var="EMAIL_MSG" FromValue="Success"/>
+                  </THEN>
+                  <ELSE>
+                    <SET Var="EMAIL_MSG" FromValue="Error"/>
+                  </ELSE>
+                </IF_TEST>
+                <REQUEST Name="updateRegisPrsnaForTemporal" AssignToVar="updateRegisPrsnaForTemporalResult" ServiceName="BCM_MASTER">
+                  <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                  <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                </REQUEST>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+          </THEN>
+          <ELSE>
+            <IF_TEST Test="$regisPrsnaEmail/@TotalRowCount=0">
+              <THEN>
+                <REQUEST Name="createRegisPrsnaEmail" ServiceName="BCM_MASTER" AssignToVar="createRegisPrsnaEmailResult">
+                  <TO_XML SelectList="$thisParam/*"/>
+                </REQUEST>
+                <IF_TEST Test="$createRegisPrsnaEmailResult/@Status='Success'">
+                  <THEN>
+                    <SET Var="EMAIL_MSG" FromValue="Success"/>
+                  </THEN>
+                  <ELSE>
+                    <SET Var="EMAIL_MSG" FromValue="Error"/>
+                  </ELSE>
+                </IF_TEST>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+          </ELSE>
+        </IF_TEST>
+        <TO_DOCVAR AssignToVar="thisReturn">
+          <root/>
+        </TO_DOCVAR>
+        <APPEND_TO_XML DocVar="thisReturn">
+          <EMAIL_MSG Value="{$EMAIL_MSG/@Value}"/>
+        </APPEND_TO_XML>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="createRegisPrsnaEmail">
+    <RULE>
+      <ACTION>
+        <GET_DOC_SMART Name="REGIS_PRSNA_EMAIL_ADDR" ServiceName="BCM_MASTER" DirtyRead="true" AssignToVar="regPrsnaEmail" ReturnRowCount="true">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <CNTCT_POINT_CATEG_CODE Value="{$thisParam/CNTCT_POINT_CATEG_CODE/@Value}"/>
+        </GET_DOC_SMART>
+        <IF_TEST Test="$regPrsnaEmail/@TotalRowCount = 0">
+          <THEN>
+            <IF_TEST Test="strlen(trim($thisParam/EMAIL_ADDR_TXT/@Value))> 0">
+              <THEN>
+                <EXECUTE_SQL_QUERY Value="SEL SHA256('{$thisParam/EMAIL_ADDR_TXT/@Value}') AS HASHVAL" AssignToVar="HASHVAL"/>
+                <!--Added STATUS_CODE tag as part of CHG0033319-->
+                <ADD_DOC_SMART Name="REGIS_PRSNA_EMAIL_ADDR" ServiceName="BCM_MASTER" AssignToVar="resAddEmail">
+                  <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                  <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                  <CNTCT_POINT_CATEG_CODE Value="{$thisParam/CNTCT_POINT_CATEG_CODE/@Value}"/>
+                  <EMAIL_ADDR_TXT Value="{$thisParam/EMAIL_ADDR_TXT/@Value}"/>
+                  <EMAIL_ADDR_TXT_HASH Value="{$HASHVAL/SQL_RESULT/HASHVAL/@Value}"/>
+                  <!-- <CNSMR_CHCE_DATETM Value="{date()}"/>-->
+                  <PREF_CNTCT_POINT_IND Value="N"/>
+                  <EMAIL_STATUS_CODE Value="AC"/>
+                </ADD_DOC_SMART>
+                <REQUEST Name="updateRegisPrsnaForTemporal" AssignToVar="updateRegisPrsnaForTemporalResult" ServiceName="BCM_MASTER">
+                  <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                  <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                </REQUEST>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="updateRegisPrsnaPhone">
+    <RULE>
+      <ACTION>
+        <GET_DOC_SMART Name="REGIS_PRSNA_PHONE" ServiceName="BCM_MASTER" DirtyRead="true" AssignToVar="regisPrsnaPhone" ReturnRowCount="true">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <CNTCT_POINT_CATEG_CODE Value="{$thisParam/CNTCT_POINT_CATEG_CODE/@Value}"/>
+        </GET_DOC_SMART>
+        <IF_TEST Test="$regisPrsnaPhone/@TotalRowCount != 0">
+          <THEN>
+            <GET_DOC_SMART Name="REGIS_PRSNA_PHONE" ServiceName="BCM_MASTER" DirtyRead="true" AssignToVar="checkRegisPrsnaPhone" ReturnRowCount="true">
+              <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+              <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+              <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+              <CNTCT_POINT_CATEG_CODE Value="{$thisParam/CNTCT_POINT_CATEG_CODE/@Value}"/>
+              <FULL_PHONE_NUM Value="{$thisParam/FULL_PHONE_NUM/@Value}"/>
+            </GET_DOC_SMART>
+            <IF_TEST Test="$checkRegisPrsnaPhone/@TotalRowCount = 0">
+              <THEN>
+                <EXECUTE_SQL_QUERY Value="SEL SHA256('{$thisParam/FULL_PHONE_NUM/@Value}') AS HASHVAL" AssignToVar="HASHVAL"/>
+                <MODIFY_DOC_SMART Name="REGIS_PRSNA_PHONE" ServiceName="BCM_MASTER" AssignToVar="MOD_PHONE">
+                  <DOCUMENT_CONTEXT>
+                    <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                    <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                    <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                    <CNTCT_POINT_CATEG_CODE Value="{$thisParam/CNTCT_POINT_CATEG_CODE/@Value}"/>
+                  </DOCUMENT_CONTEXT>
+                  <UPDATE_PROPERTIES>
+                    <FULL_PHONE_NUM Value="{$thisParam/FULL_PHONE_NUM/@Value}"/>
+                    <FULL_PHONE_NUM_HASH Value="{$HASHVAL/SQL_RESULT/HASHVAL/@Value}"/>
+                    <!--CNSMR_CHCE_DATETM Value="{date()}"/-->
+                  </UPDATE_PROPERTIES>
+                </MODIFY_DOC_SMART>
+                <IF_TEST Test="$MOD_PHONE/@Status='Success'">
+                  <THEN>
+                    <SET Var="PHONE_MSG" FromValue="Success"/>
+                  </THEN>
+                  <ELSE>
+                    <SET Var="PHONE_MSG" FromValue="Error"/>
+                  </ELSE>
+                </IF_TEST>
+                <REQUEST Name="updateRegisPrsnaForTemporal" AssignToVar="updateRegisPrsnaForTemporalResult" ServiceName="BCM_MASTER">
+                  <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                  <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                </REQUEST>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+          </THEN>
+          <ELSE>
+            <IF_TEST Test="$regisPrsnaPhone/@TotalRowCount=0">
+              <THEN>
+                <REQUEST Name="createRegisPrsnaPhone" ServiceName="BCM_MASTER" AssignToVar="createrRegisPrsnaPhoneResult">
+                  <TO_XML SelectList="$thisParam/*"/>
+                </REQUEST>
+                <IF_TEST Test="$createrRegisPrsnaPhoneResult/@Status='Success'">
+                  <THEN>
+                    <SET Var="PHONE_MSG" FromValue="Success"/>
+                  </THEN>
+                  <ELSE>
+                    <SET Var="PHONE_MSG" FromValue="Error"/>
+                  </ELSE>
+                </IF_TEST>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+          </ELSE>
+        </IF_TEST>
+        <TO_DOCVAR AssignToVar="thisReturn">
+          <root/>
+        </TO_DOCVAR>
+        <APPEND_TO_XML DocVar="thisReturn">
+          <PHONE_MSG Value="{$PHONE_MSG/@Value}"/>
+        </APPEND_TO_XML>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="createRegisPrsnaPhone">
+    <RULE>
+      <ACTION>
+        <GET_DOC_SMART Name="REGIS_PRSNA_PHONE" ServiceName="BCM_MASTER" DirtyRead="true" AssignToVar="regPrsnaPhone" ReturnRowCount="true">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <CNTCT_POINT_CATEG_CODE Value="{$thisParam/CNTCT_POINT_CATEG_CODE/@Value}"/>
+        </GET_DOC_SMART>
+        <IF_TEST Test="$regPrsnaPhone/@TotalRowCount = 0">
+          <THEN>
+            <IF_TEST Test="strlen(trim($thisParam/FULL_PHONE_NUM/@Value))> 0">
+              <THEN>
+                <EXECUTE_SQL_QUERY Value="SEL SHA256('{$thisParam/FULL_PHONE_NUM/@Value}') AS HASHVAL" AssignToVar="HASHVAL"/>
+                <!--Added STATUS_CODE tag as part of CHG0033319-->
+                <ADD_DOC_SMART Name="REGIS_PRSNA_PHONE" ServiceName="BCM_MASTER" AssignToVar="resAddPhone">
+                  <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                  <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                  <CNTCT_POINT_CATEG_CODE Value="{$thisParam/CNTCT_POINT_CATEG_CODE/@Value}"/>
+                  <FULL_PHONE_NUM Value="{$thisParam/FULL_PHONE_NUM/@Value}"/>
+                  <FULL_PHONE_NUM_HASH Value="{$HASHVAL/SQL_RESULT/HASHVAL/@Value}"/>
+                  <SMS_PREFR_IND Value="N"/>
+                  <PREF_CNTCT_POINT_IND Value="N"/>
+                  <PHONE_STATUS_CODE Value="AC"/>
+                  <!--<CNSMR_CHCE_DATETM Value="{date()}"/>-->
+                </ADD_DOC_SMART>
+                <REQUEST Name="updateRegisPrsnaForTemporal" AssignToVar="updateRegisPrsnaForTemporalResult" ServiceName="BCM_MASTER">
+                  <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                  <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                </REQUEST>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="updateRegisPrsnaPostal">
+    <RULE>
+      <ACTION>
+        <GET_DOC_SMART Name="REGIS_PRSNA_POSTL_ADDR" ServiceName="BCM_MASTER" DirtyRead="true" AssignToVar="regisPrsnaPostal" ReturnRowCount="true">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+        </GET_DOC_SMART>
+        <IF_TEST Test="$regisPrsnaPostal/@TotalRowCount != 0">
+          <THEN>
+            <GET_DOC_SMART Name="REGIS_PRSNA_POSTL_ADDR" ServiceName="BCM_MASTER" DirtyRead="true" AssignToVar="checkRegisPrsnaPostal" ReturnRowCount="true">
+              <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+              <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+              <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+              <ADDR_LINE_1_TXT Value="{$thisParam/ADDR_LINE_1_TXT/@Value}"/>
+              <ADDR_LINE_2_TXT Value="{$thisParam/ADDR_LINE_2_TXT/@Value}"/>
+              <ADDR_LINE_3_TXT Value="{$thisParam/ADDR_LINE_3_TXT/@Value}"/>
+              <CITY_NAME Value="{$thisParam/CITY_NAME/@Value}"/>
+              <TERR_CODE Value="{$thisParam/TERR_CODE/@Value}"/>
+              <TERR_NAME Value="{$thisParam/TERR_NAME/@Value}"/>
+              <CNTRY_CODE Value="{$thisParam/CNTRY_CODE/@Value}"/>
+              <POSTL_AREA_CODE Value="{$thisParam/POSTL_AREA_CODE/@Value}"/>
+            </GET_DOC_SMART>
+            <IF_TEST Test="$checkRegisPrsnaPostal/@TotalRowCount = 0">
+              <THEN>
+                <EXECUTE_SQL_QUERY Value="SEL TERR_NAME FROM TERR WHERE TERR_CODE='{$thisParam/TERR_CODE/@Value}'" AssignToVar="TERRNAME"/>
+                <MODIFY_DOC_SMART Name="REGIS_PRSNA_POSTL_ADDR" ServiceName="BCM_MASTER">
+                  <DOCUMENT_CONTEXT>
+                    <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                    <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                    <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                  </DOCUMENT_CONTEXT>
+                  <UPDATE_PROPERTIES>
+                    <ADDR_LINE_1_TXT Value="{$thisParam/ADDR_LINE_1_TXT/@Value}"/>
+                    <ADDR_LINE_2_TXT Value="{$thisParam/ADDR_LINE_2_TXT/@Value}"/>
+                    <ADDR_LINE_3_TXT Value="{$thisParam/ADDR_LINE_3_TXT/@Value}"/>
+                    <CITY_NAME Value="{$thisParam/CITY_NAME/@Value}"/>
+                    <TERR_CODE Value="{$thisParam/TERR_CODE/@Value}"/>
+                    <TERR_NAME Value="{$TERRNAME/SQL_RESULT/TERR_NAME/@Value}"/>
+                    <CNTRY_CODE Value="{$thisParam/CNTRY_CODE/@Value}"/>
+                    <POSTL_AREA_CODE Value="{$thisParam/POSTL_AREA_CODE/@Value}"/>
+                    <!--CNSMR_CHCE_DATETM Value="{date()}"/-->
+                  </UPDATE_PROPERTIES>
+                </MODIFY_DOC_SMART>
+                <REQUEST Name="updateRegisPrsnaForTemporal" AssignToVar="updateRegisPrsnaForTemporalResult" ServiceName="BCM_MASTER">
+                  <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                  <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                </REQUEST>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+          </THEN>
+          <ELSE>
+            <IF_TEST Test="$regisPrsnaPostal/@TotalRowCount=0">
+              <THEN>
+                <REQUEST Name="createRegisPrsnaPostal" ServiceName="BCM_MASTER" AssignToVar="createRegisPrsnaPostalResult">
+                  <TO_XML SelectList="$thisParam/*"/>
+                </REQUEST>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="createRegisPrsnaPostal">
+    <RULE>
+      <ACTION>
+        <GET_DOC_SMART Name="REGIS_PRSNA_POSTL_ADDR" ServiceName="BCM_MASTER" DirtyRead="true" AssignToVar="regPrsnaPostal" ReturnRowCount="true">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+        </GET_DOC_SMART>
+        <IF_TEST Test="$regPrsnaPostal/@TotalRowCount = 0">
+          <THEN>
+            <!--Added STATUS_CODE tag as part of CHG0033319-->
+            <EXECUTE_SQL_QUERY Value="SEL TERR_NAME FROM TERR WHERE TERR_CODE='{$thisParam/TERR_CODE/@Value}'" AssignToVar="TERRNAME"/>
+            <ADD_DOC_SMART Name="REGIS_PRSNA_POSTL_ADDR" ServiceName="BCM_MASTER" AssignToVar="resAddPostal">
+              <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+              <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+              <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+              <CNTCT_POINT_CATEG_CODE Value="AR"/>//Check with Tarun
+<PREF_CNTCT_POINT_IND Value="Y"/>
+              <ADDR_LINE_1_TXT Value="{$thisParam/ADDR_LINE_1_TXT/@Value}"/>
+              <ADDR_LINE_2_TXT Value="{$thisParam/ADDR_LINE_2_TXT/@Value}"/>
+              <ADDR_LINE_3_TXT Value="{$thisParam/ADDR_LINE_3_TXT/@Value}"/>
+              <CITY_NAME Value="{$thisParam/CITY_NAME/@Value}"/>
+              <TERR_CODE Value="{$thisParam/TERR_CODE/@Value}"/>
+              <TERR_NAME Value="{$TERRNAME/SQL_RESULT/TERR_NAME/@Value}"/>
+              <POSTL_AREA_CODE Value="{$thisParam/POSTL_AREA_CODE/@Value}"/>
+              <POSTL_STATUS_CODE Value="AC"/>
+              <!--<CNSMR_CHCE_DATETM Value="{date()}"/>-->
+            </ADD_DOC_SMART>
+            <REQUEST Name="updateRegisPrsnaForTemporal" AssignToVar="updateRegisPrsnaForTemporalResult" ServiceName="BCM_MASTER">
+              <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+              <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+              <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+            </REQUEST>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="updateRegisPrsnaSocial">
+    <RULE>
+      <ACTION>
+        <GET_DOC_SMART Name="REGIS_PRSNA_SOC_NETK_ACT" ServiceName="BCM_MASTER" DirtyRead="true" AssignToVar="regisPrsnaSocial" ReturnRowCount="true">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <CNTCT_POINT_CATEG_CODE Value="{$thisParam/CNTCT_POINT_CATEG_CODE/@Value}"/>
+        </GET_DOC_SMART>
+        <IF_TEST Test="$regisPrsnaSocial/@TotalRowCount != 0">
+          <THEN>
+            <GET_DOC_SMART Name="REGIS_PRSNA_SOC_NETK_ACT" ServiceName="BCM_MASTER" DirtyRead="true" AssignToVar="checkRegisPrsnaSocial" ReturnRowCount="true">
+              <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+              <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+              <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+              <CNTCT_POINT_CATEG_CODE Value="{$thisParam/CNTCT_POINT_CATEG_CODE/@Value}"/>
+              <SOCIAL_NETWK_ACCT_ID_VAL Value="{$thisParam/SOCIAL_NETWK_ACCT_ID_VAL/@Value}"/>
+            </GET_DOC_SMART>
+            <IF_TEST Test="$checkRegisPrsnaSocial/@TotalRowCount = 0">
+              <THEN>
+                <EXECUTE_SQL_QUERY Value="SEL SHA256('{$thisParam/SOCIAL_ADDR_TXT/@Value}') AS HASHVAL" AssignToVar="HASHVAL"/>
+                <MODIFY_DOC_SMART Name="REGIS_PRSNA_SOC_NETK_ACT" ServiceName="BCM_MASTER" AssignToVar="MOD_SOC">
+                  <DOCUMENT_CONTEXT>
+                    <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                    <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                    <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                    <CNTCT_POINT_CATEG_CODE Value="{$thisParam/CNTCT_POINT_CATEG_CODE/@Value}"/>
+                  </DOCUMENT_CONTEXT>
+                  <UPDATE_PROPERTIES>
+                    <SOCIAL_NETWK_ACCT_ID_VAL Value="{$thisParam/SOCIAL_NETWK_ACCT_ID_VAL/@Value}"/>
+                    <SOCIAL_NETWK_ACCT_ID_VAL_HASH Value="{$HASHVAL/SQL_RESULT/HASHVAL/@Value}"/>
+                    <!--CNSMR_CHCE_DATETM Value="{date()}"/-->
+                  </UPDATE_PROPERTIES>
+                </MODIFY_DOC_SMART>
+                <IF_TEST Test="$MOD_SOC/@Status='Success'">
+                  <THEN>
+                    <SET Var="SOC_MSG" FromValue="Success"/>
+                  </THEN>
+                  <ELSE>
+                    <SET Var="SOC_MSG" FromValue="ERROR"/>
+                  </ELSE>
+                </IF_TEST>
+                <REQUEST Name="updateRegisPrsnaForTemporal" AssignToVar="updateRegisPrsnaForTemporalResult" ServiceName="BCM_MASTER">
+                  <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                  <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                </REQUEST>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+          </THEN>
+          <ELSE>
+            <IF_TEST Test="$regisPrsnaSocial/@TotalRowCount=0">
+              <THEN>
+                <REQUEST Name="createRegisPrsnaSocial" ServiceName="BCM_MASTER" AssignToVar="createrRegisPrsnaSocialResult">
+                  <TO_XML SelectList="$thisParam/*"/>
+                </REQUEST>
+                <IF_TEST Test="$createrRegisPrsnaSocialResult/@Status='Success'">
+                  <THEN>
+                    <SET Var="SOC_MSG" FromValue="Success"/>
+                  </THEN>
+                  <ELSE>
+                    <SET Var="SOC_MSG" FromValue="ERROR"/>
+                  </ELSE>
+                </IF_TEST>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+          </ELSE>
+        </IF_TEST>
+        <TO_DOCVAR AssignToVar="thisReturn">
+          <root/>
+        </TO_DOCVAR>
+        <APPEND_TO_XML DocVar="thisReturn">
+          <SOC_MSG Value="{$SOC_MSG/@Value}"/>
+        </APPEND_TO_XML>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="createRegisPrsnaSocial">
+    <RULE>
+      <ACTION>
+        <GET_DOC_SMART Name="REGIS_PRSNA_SOC_NETK_ACT" ServiceName="BCM_MASTER" DirtyRead="true" AssignToVar="regPrsnaSocial" ReturnRowCount="true">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <CNTCT_POINT_CATEG_CODE Value="{$thisParam/CNTCT_POINT_CATEG_CODE/@Value}"/>
+        </GET_DOC_SMART>
+        <IF_TEST Test="$regPrsnaSocial/@TotalRowCount = 0">
+          <THEN>
+            <IF_TEST Test="strlen(trim($thisParam/SOCIAL_NETWK_ACCT_ID_VAL/@Value))> 0">
+              <THEN>
+                <EXECUTE_SQL_QUERY Value="SEL SHA256('{$thisParam/SOCIAL_ADDR_TXT/@Value}') AS HASHVAL" AssignToVar="HASHVAL"/>
+                <!--Added STATUS_CODE tag as part of CHG0033319-->
+                <ADD_DOC_SMART Name="REGIS_PRSNA_SOC_NETK_ACT" ServiceName="BCM_MASTER" AssignToVar="resAddSocial">
+                  <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                  <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                  <CNTCT_POINT_CATEG_CODE Value="{$thisParam/CNTCT_POINT_CATEG_CODE/@Value}"/>
+                  <SOCIAL_NETWK_ACCT_ID_VAL Value="{$thisParam/SOCIAL_NETWK_ACCT_ID_VAL/@Value}"/>
+                  <SOCIAL_NETWK_ACCT_ID_VAL_HASH Value="{$HASHVAL/SQL_RESULT/HASHVAL/@Value}"/>
+                  <PREF_CNTCT_POINT_IND Value="N"/>
+                  <!--SOC_NET_STATUS_CODE Value=&quot;AC&quot;/-->
+                  <CNSMR_CHCE_DATETM Value="{date()}"/>
+                  <SOC_NET_STATUS_CODE Value="AC"/>
+                </ADD_DOC_SMART>
+                <REQUEST Name="updateRegisPrsnaForTemporal" AssignToVar="updateRegisPrsnaForTemporalResult" ServiceName="BCM_MASTER">
+                  <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                  <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                </REQUEST>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getAttributeValues">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="ATTRIBUTE_VALUES" ServiceName="BCM_MASTER" AssignToVar="AttributeValues" DirtyRead="true">
+          <TO_XML SelectList="$thisParam/*"/>
+          <ORDER_BY>
+            <AV_DESCRIPTION Sort="Ascending"/>
+          </ORDER_BY>
+        </GET_DOCUMENT>
+        <SET FromDocVar="AttributeValues" DocVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getSubscriptionsSummary">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="WHERE_CLAUSE">
+          <WHERE_CLAUSE>
+            <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+            <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+            <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          </WHERE_CLAUSE>
+        </TO_DOCVAR>
+        <REQUEST Name="getEmailSubscriptions" ServiceName="BCM_MASTER" AssignToVar="emailResults">
+          <TO_XML SelectList="$WHERE_CLAUSE/*"/>
+          <!--<TO_XML SelectList="$thisParam/*"/>-->
+        </REQUEST>
+        <APPEND_TO_XML SelectList="$emailResults/*">
+          <CHANNEL_TYPE Value="Email"/>
+        </APPEND_TO_XML>
+        <SET_NAME SelectList="$emailResults/*" FromValue="SUBSCRIPTIONS"/>
+        <REQUEST Name="getPhoneSubscriptions" ServiceName="BCM_MASTER" AssignToVar="phoneResults">
+          <TO_XML SelectList="$WHERE_CLAUSE/*"/>
+          <!-- <TO_XML SelectList="$thisParam/*"/>-->
+        </REQUEST>
+        <APPEND_TO_XML SelectList="$phoneResults/*">
+          <CHANNEL_TYPE Value="Phone"/>
+        </APPEND_TO_XML>
+        <SET_NAME SelectList="$phoneResults/*" FromValue="SUBSCRIPTIONS"/>
+        <REQUEST Name="getPostalSubscriptions" ServiceName="BCM_MASTER" AssignToVar="postalResults">
+          <TO_XML SelectList="$WHERE_CLAUSE/*"/>
+          <!-- <TO_XML SelectList="$thisParam/*"/>-->
+        </REQUEST>
+        <APPEND_TO_XML SelectList="$postalResults/*">
+          <CHANNEL_TYPE Value="Postal"/>
+        </APPEND_TO_XML>
+        <SET_NAME SelectList="$postalResults/*" FromValue="SUBSCRIPTIONS"/>
+        <TO_DOCVAR AssignToVar="thisReturn">
+          <RESPONSE>
+            <TO_XML SelectList="$emailResults/*"/>
+            <TO_XML SelectList="$phoneResults/*"/>
+            <TO_XML SelectList="$postalResults/*"/>
+          </RESPONSE>
+        </TO_DOCVAR>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getEmailDetails">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="EMAILDETAILS">
+          <A/>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT EM.EMAIL_ADDR_TXT,C.CNTCT_POINT_CATEG_CODE AS EMAIL_CODE,C.CNTCT_POINT_CATEG_NAME AS EMAIL_TYPE,EM.GUARDN_CNSNT_IND AS GUARDN_IND FROM    MDM.CNTCT_POINT_CATEG C LEFT JOIN MDM.REGIS_PRSNA_EMAIL_ADDR EM ON EM.CNTCT_POINT_CATEG_CODE=C.CNTCT_POINT_CATEG_CODE AND EM.MKTNG_PGM_NBR IN ({$thisParam/MKTNG_PGM_NBR/@Value}) AND EM.REGIS_PRSNA_ID IN ({$thisParam/REGIS_PRSNA_ID/@Value}) WHERE    C.CNTCT_POINT_CATEG_CODE IN ('EP','EM','EB') GROUP BY 1,2,3,4;" AssignToVar="emailResults" ReturnRowCount="yes" HandleException="true"/>
+        <FOR_EACH CurrentElement="currEmailDetails" SelectList="$emailResults/*">
+          <APPEND_TO_XML DocVar="EMAILDETAILS">
+            <EMAILDETAILS>
+              <TO_XML SelectList="$currEmailDetails/*"/>
+            </EMAILDETAILS>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="EMAILDETAILS" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getPhoneDetails">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="PHONEDETAILS">
+          <A/>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT EP.FULL_PHONE_NUM,C.CNTCT_POINT_CATEG_CODE AS PHONE_CODE, C.CNTCT_POINT_CATEG_NAME AS PHONE_TYPE,EP.GUARDN_CNSNT_IND AS GUARDN_IND FROM    MDM.CNTCT_POINT_CATEG C LEFT JOIN MDM.REGIS_PRSNA_PHONE EP ON EP.CNTCT_POINT_CATEG_CODE=C.CNTCT_POINT_CATEG_CODE  AND EP.MKTNG_PGM_NBR IN ({$thisParam/MKTNG_PGM_NBR/@Value})  AND EP.REGIS_PRSNA_ID IN ({$thisParam/REGIS_PRSNA_ID/@Value}) WHERE    C.CNTCT_POINT_CATEG_CODE IN ('PH','PM','PB') GROUP BY 1,2,3,4;" AssignToVar="phoneResults" ReturnRowCount="yes" HandleException="true"/>
+        <FOR_EACH CurrentElement="currPhoneDetails" SelectList="$phoneResults/*">
+          <SET_NAME SelectList="$currPhoneDetails/FULL_PHONE_NUM" FromValue="FULL_PHONE"/>
+          <APPEND_TO_XML DocVar="PHONEDETAILS">
+            <PHONEDETAILS>
+              <TO_XML SelectList="$currPhoneDetails/*"/>
+            </PHONEDETAILS>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="PHONEDETAILS" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getSocialDetails">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="SOCIALDETAILS">
+          <A/>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT RS.SOCIAL_NETWK_ACCT_ID_VAL,C.CNTCT_POINT_CATEG_CODE AS SOCIAL_CODE,C.CNTCT_POINT_CATEG_NAME AS SOCIAL_TYPE,RS.GUARDN_CNSNT_IND AS GUARDN_IND FROM MDM.CNTCT_POINT_CATEG C LEFT JOIN MDM.REGIS_PRSNA_SOC_NETK_ACT RS ON RS.CNTCT_POINT_CATEG_CODE=C.CNTCT_POINT_CATEG_CODE AND RS.MKTNG_PGM_NBR IN ({$thisParam/MKTNG_PGM_NBR/@Value}) AND RS.REGIS_PRSNA_ID IN ({$thisParam/REGIS_PRSNA_ID/@Value}) WHERE    C.CNTCT_POINT_CATEG_CODE IN ('ST','SF') GROUP BY 1,2,3,4;" AssignToVar="socialResults" ReturnRowCount="yes" HandleException="true"/>
+        <FOR_EACH CurrentElement="currSocialDetails" SelectList="$socialResults/*">
+          <APPEND_TO_XML DocVar="SOCIALDETAILS">
+            <SOCIALDETAILS>
+              <TO_XML SelectList="$currSocialDetails/*"/>
+            </SOCIALDETAILS>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="SOCIALDETAILS" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="saveSubscriptions">
+    <RULE>
+      <ACTION>
+        <SET FromValue="1" Var="i"/>
+        <SET FromValue="1" Var="j"/>
+        <SET FromValue="1" Var="k"/>
+        <!--<SET Var="EMAIL_MSG" FromValue=""/>
+        <SET Var="PHONE_MSG" FromValue=""/>
+        <SET Var="SOC_MSG" FromValue=""/>-->
+        <TO_DOCVAR AssignToVar="EMAIL_STATUS">
+          <EMAIL_STATUS/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="PHONE_STATUS">
+          <PHONE_STATUS/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="SOC_STATUS">
+          <SOC_STATUS/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="EMAIL_SAVE_INPUT">
+          <EMAIL_SAVE_INPUT/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="EMAIL_OPT_IND">
+          <EMAIL_OPT_IND/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="EMAIL_CODE">
+          <EMAIL_CODE/>
+        </TO_DOCVAR>
+        <SET FromValue="{$thisParam/NO_OF_ROWS/@Value}" Var="totalEmailCount"/>
+        <SET FromValue="{count($thisParam/EMAIL_ADDR_TXT)}" Var="activeEmailCount"/>
+        <WHILE Condition="$i &lt;=$totalEmailCount">
+          <APPEND_TO_XML SelectList="$EMAIL_OPT_IND">
+            <OPT_IND Value="{$thisParam/SUBSCRPTN_OPT_IND[int($i)]/@Value}"/>
+          </APPEND_TO_XML>
+          <APPEND_TO_XML SelectList="$EMAIL_CODE">
+            <CODE Value="{$thisParam/CNTCT_POINT_CATEG_CODE[int($i)]/@Value}"/>
+          </APPEND_TO_XML>
+          <SET FromValue="1" Var="j"/>
+          <WHILE Condition="$j &lt;=$activeEmailCount">
+            <IF_TEST Test="$thisParam/SUBSCRPTN_OPT_IND[int($i)]/@Value='I'">
+              <THEN>
+                <APPEND_TO_XML SelectList="$EMAIL_SAVE_INPUT">
+                  <EMAIL Value="{$thisParam/EMAIL_ADDR_TXT[int($k)]/@Value}"/>
+                </APPEND_TO_XML>
+                <SET FromValue="{int($activeEmailCount+1)}" Var="j"/>
+                <SET FromValue="{int($k+1)}" Var="k"/>
+              </THEN>
+              <ELSE>
+                <APPEND_TO_XML SelectList="$EMAIL_SAVE_INPUT">
+                  <EMAIL Value=""/>
+                </APPEND_TO_XML>
+                <SET FromValue="{int($activeEmailCount+1)}" Var="j"/>
+              </ELSE>
+            </IF_TEST>
+          </WHILE>
+          <SET FromValue="{int($i+1)}" Var="i"/>
+        </WHILE>
+        <SET FromValue="1" Var="i"/>
+        <SET FromValue="1" Var="j"/>
+        <SET FromValue="1" Var="k"/>
+        <TO_DOCVAR AssignToVar="PHONE_SAVE_INPUT">
+          <PHONE_SAVE_INPUT/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="PHONE_OPT_IND">
+          <PHONE_OPT_IND/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="PHONE_CODE">
+          <PHONE_CODE/>
+        </TO_DOCVAR>
+        <SET FromValue="{$thisParam/Table2_NO_OF_ROWS/@Value}" Var="totalPhoneCount"/>
+        <SET FromValue="{count($thisParam/FULL_PHONE_NUM)}" Var="activePhoneCount"/>
+        <WHILE Condition="$i &lt;=$totalPhoneCount">
+          <APPEND_TO_XML SelectList="$PHONE_OPT_IND">
+            <OPT_IND Value="{$thisParam/SUBSCRPTN_OPT_IND[int($i+$totalEmailCount)]/@Value}"/>
+          </APPEND_TO_XML>
+          <APPEND_TO_XML SelectList="$PHONE_CODE">
+            <CODE Value="{$thisParam/CNTCT_POINT_CATEG_CODE[int($i+$totalEmailCount)]/@Value}"/>
+          </APPEND_TO_XML>
+          <SET FromValue="1" Var="j"/>
+          <WHILE Condition="$j &lt;=$activePhoneCount">
+            <IF_TEST Test="$thisParam/SUBSCRPTN_OPT_IND[int($i+$totalEmailCount)]/@Value='I'">
+              <THEN>
+                <APPEND_TO_XML SelectList="$PHONE_SAVE_INPUT">
+                  <PHONE Value="{$thisParam/FULL_PHONE_NUM[int($k)]/@Value}"/>
+                </APPEND_TO_XML>
+                <SET FromValue="{int($activePhoneCount+1)}" Var="j"/>
+                <SET FromValue="{int($k+1)}" Var="k"/>
+              </THEN>
+              <ELSE>
+                <APPEND_TO_XML SelectList="$PHONE_SAVE_INPUT">
+                  <PHONE Value=""/>
+                </APPEND_TO_XML>
+                <SET FromValue="{int($activePhoneCount+1)}" Var="j"/>
+              </ELSE>
+            </IF_TEST>
+          </WHILE>
+          <SET FromValue="{int($i+1)}" Var="i"/>
+        </WHILE>
+        <TO_DOCVAR AssignToVar="EMAIL_LIST">
+          <EMAIL>
+            <INPUT>
+              <TO_XML SelectList="$EMAIL_OPT_IND/*"/>
+              <TO_XML SelectList="$EMAIL_SAVE_INPUT/*"/>
+              <TO_XML SelectList="$EMAIL_CODE/*"/>
+            </INPUT>
+            <COLLATE_LIST Value="EMAIL_DETAILS">
+              <OPT_IND/>
+              <EMAIL/>
+              <CODE/>
+            </COLLATE_LIST>
+          </EMAIL>
+        </TO_DOCVAR>
+        <COLLATE_XML DocVar="EMAIL_LIST" AssignToVar="collateEmails"/>
+        <FOR_EACH SelectList="$collateEmails/EMAIL_DETAILS" CurrentElement="currElement">
+          <IF_TEST Test="$currElement/OPT_IND/@Value='I'">
+            <THEN>
+              <SET FromValue="SAVED" Var="test"/>
+              <REQUEST Name="updateRegisPrsnaEmail" ServiceName="BCM_MASTER" AssignToVar="updateRegisPrsnaEmailResult">
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                <CNTCT_POINT_CATEG_CODE Value="{$currElement/CODE/@Value}"/>
+                <EMAIL_ADDR_TXT Value="{$currElement/EMAIL/@Value}"/>
+              </REQUEST>
+            </THEN>
+            <ELSE/>
+          </IF_TEST>
+          <APPEND_TO_XML DocVar="EMAIL_STATUS">
+            <EMAIL_MSG Value="{$updateRegisPrsnaEmailResult/EMAIL_MSG/@Value}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <TO_DOCVAR AssignToVar="PHONE_LIST">
+          <PHONE>
+            <INPUT>
+              <TO_XML SelectList="$PHONE_OPT_IND/*"/>
+              <TO_XML SelectList="$PHONE_SAVE_INPUT/*"/>
+              <TO_XML SelectList="$PHONE_CODE/*"/>
+            </INPUT>
+            <COLLATE_LIST Value="PHONE_DETAILS">
+              <OPT_IND/>
+              <PHONE/>
+              <CODE/>
+            </COLLATE_LIST>
+          </PHONE>
+        </TO_DOCVAR>
+        <COLLATE_XML DocVar="PHONE_LIST" AssignToVar="collatePhones"/>
+        <FOR_EACH SelectList="$collatePhones/PHONE_DETAILS" CurrentElement="currElement">
+          <IF_TEST Test="$currElement/OPT_IND/@Value='I'">
+            <THEN>
+              <REQUEST Name="updateRegisPrsnaPhone" ServiceName="BCM_MASTER" AssignToVar="updateRegisPrsnaPhoneResult">
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                <CNTCT_POINT_CATEG_CODE Value="{$currElement/CODE/@Value}"/>
+                <FULL_PHONE_NUM Value="{$currElement/PHONE/@Value}"/>
+              </REQUEST>
+            </THEN>
+            <ELSE/>
+          </IF_TEST>
+          <APPEND_TO_XML DocVar="PHONE_STATUS">
+            <PHONE_MSG Value="{$updateRegisPrsnaPhoneResult/PHONE_MSG/@Value}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <SET FromValue="1" Var="i"/>
+        <SET FromValue="1" Var="j"/>
+        <SET FromValue="1" Var="k"/>
+        <TO_DOCVAR AssignToVar="SOCIAL_SAVE_INPUT">
+          <SOCIAL_SAVE_INPUT/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="SOCIAL_OPT_IND">
+          <SOCIAL_OPT_IND/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="SOCIAL_CODE">
+          <SOCIAL_CODE/>
+        </TO_DOCVAR>
+        <SET FromValue="{$thisParam/Table4_NO_OF_ROWS/@Value}" Var="totalSocialCount"/>
+        <SET FromValue="{count($thisParam/SOCIAL_NETWK_ACCT_ID_VAL)}" Var="activeSocialCount"/>
+        <WHILE Condition="$i &lt;=$totalSocialCount">
+          <APPEND_TO_XML SelectList="$SOCIAL_OPT_IND">
+            <OPT_IND Value="{$thisParam/SUBSCRPTN_OPT_IND[int($i+$totalEmailCount+$totalPhoneCount)]/@Value}"/>
+          </APPEND_TO_XML>
+          <APPEND_TO_XML SelectList="$SOCIAL_CODE">
+            <CODE Value="{$thisParam/CNTCT_POINT_CATEG_CODE[int($i+$totalEmailCount+$totalPhoneCount)]/@Value}"/>
+          </APPEND_TO_XML>
+          <SET FromValue="1" Var="j"/>
+          <WHILE Condition="$j &lt;=$activeSocialCount">
+            <IF_TEST Test="$thisParam/SUBSCRPTN_OPT_IND[int($i+$totalEmailCount+$totalPhoneCount)]/@Value='I'">
+              <THEN>
+                <APPEND_TO_XML SelectList="$SOCIAL_SAVE_INPUT">
+                  <SOCIAL Value="{$thisParam/SOCIAL_NETWK_ACCT_ID_VAL[int($k)]/@Value}"/>
+                </APPEND_TO_XML>
+                <SET FromValue="{int($activeSocialCount+1)}" Var="j"/>
+                <SET FromValue="{int($k+1)}" Var="k"/>
+              </THEN>
+              <ELSE>
+                <APPEND_TO_XML SelectList="$SOCIAL_SAVE_INPUT">
+                  <SOCIAL Value=""/>
+                </APPEND_TO_XML>
+                <SET FromValue="{int($activeSocialCount+1)}" Var="j"/>
+              </ELSE>
+            </IF_TEST>
+          </WHILE>
+          <SET FromValue="{int($i+1)}" Var="i"/>
+        </WHILE>
+        <TO_DOCVAR AssignToVar="SOCIAL_LIST">
+          <SOCIAL>
+            <INPUT>
+              <TO_XML SelectList="$SOCIAL_OPT_IND/*"/>
+              <TO_XML SelectList="$SOCIAL_SAVE_INPUT/*"/>
+              <TO_XML SelectList="$SOCIAL_CODE/*"/>
+            </INPUT>
+            <COLLATE_LIST Value="SOCIAL_DETAILS">
+              <OPT_IND/>
+              <SOCIAL/>
+              <CODE/>
+            </COLLATE_LIST>
+          </SOCIAL>
+        </TO_DOCVAR>
+        <COLLATE_XML DocVar="SOCIAL_LIST" AssignToVar="collateSocials"/>
+        <FOR_EACH SelectList="$collateSocials/SOCIAL_DETAILS" CurrentElement="currElement">
+          <IF_TEST Test="$currElement/OPT_IND/@Value='I'">
+            <THEN>
+              <SET FromValue="SAVED" Var="test"/>
+              <REQUEST Name="updateRegisPrsnaSocial" ServiceName="BCM_MASTER" AssignToVar="updateRegisPrsnaSocialResult">
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                <CNTCT_POINT_CATEG_CODE Value="{$currElement/CODE/@Value}"/>
+                <SOCIAL_ADDR_TXT Value="{$currElement/SOCIAL/@Value}"/>
+              </REQUEST>
+            </THEN>
+            <ELSE/>
+          </IF_TEST>
+          <APPEND_TO_XML DocVar="SOC_STATUS">
+            <SOC_MSG Value="{$updateRegisPrsnaSocialResult/SOC_MSG/@Value}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <SET Var="chk_EMAIL_ERROR" FromValue=""/>
+        <SET Var="chk_EMAIL_ERROR" FromValue="{$EMAIL_STATUS[EMAIL_MSG/@Value='Error']/EMAIL_MSG/@Value}"/>
+        <SET Var="chk_PHONE_ERROR" FromValue=""/>
+        <SET Var="chk_PHONE_ERROR" FromValue="{$PHONE_STATUS[PHONE_MSG/@Value='Error']/PHONE_MSG/@Value}"/>
+        <SET Var="chk_SOC_ERROR" FromValue=""/>
+        <SET Var="chk_SOC_ERROR" FromValue="{$SOC_STATUS[SOC_MSG/@Value='Error']/SOC_MSG/@Value}"/>
+        <TO_DOCVAR AssignToVar="thisReturn">
+          <root/>
+        </TO_DOCVAR>
+        <SET Var="Message" FromValue=""/>
+        <IF_TEST Test="$chk_EMAIL_ERROR != null and $chk_PHONE_ERROR != null and $chk_SOC_ERROR != null">
+          <THEN>
+            <SET Var="Message" FromValue="{concat($Message/@Value, ' Subscription save failed')}"/>
+          </THEN>
+          <ELSE>
+            <IF_TEST Test="$chk_EMAIL_ERROR = null and $chk_PHONE_ERROR = null and $chk_SOC_ERROR = null">
+              <THEN>
+                <SET Var="Message" FromValue="{concat($Message/@Value, ' Saved subscription successfully')}"/>
+              </THEN>
+              <ELSE>
+                <IF_TEST Test="$chk_EMAIL_ERROR != null">
+                  <THEN>
+                    <SET Var="Message" FromValue="{concat($Message/@Value, ' Failed to save Email Subscription')}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$chk_PHONE_ERROR != null">
+                  <THEN>
+                    <SET Var="Message" FromValue="{concat($Message/@Value, ' Failed to save Phone Subscription')}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$chk_SOC_ERROR != null">
+                  <THEN>
+                    <SET Var="Message" FromValue="{concat($Message/@Value, ' Failed to save Social Subscription')}"/>
+                  </THEN>
+                </IF_TEST>
+              </ELSE>
+            </IF_TEST>
+          </ELSE>
+        </IF_TEST>
+        <APPEND_TO_XML DocVar="thisReturn">
+          <Message Value="{$Message/@Value}"/>
+        </APPEND_TO_XML>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="updateRegisPrsnaInfo">
+    <RULE>
+      <ACTION>
+        <IF_TEST Test="$thisParam/BRTH_DATE/@Value=''">
+          <THEN>
+            <TO_DOCVAR AssignToVar="BIRTH_DATE">
+              <BIRTH_DATE>
+                <BRTH_DATE/>
+              </BIRTH_DATE>
+            </TO_DOCVAR>
+          </THEN>
+          <ELSE>
+            <TO_DOCVAR AssignToVar="BIRTH_DATE">
+              <BIRTH_DATE>
+                <BRTH_DATE Value="{$thisParam/BRTH_DATE/@Value}"/>
+              </BIRTH_DATE>
+            </TO_DOCVAR>
+          </ELSE>
+        </IF_TEST>
+        <EXECUTE_SQL_QUERY AssignToVar="LANG_CODE_FOR_RP" Value="SEL LANG_CODE FROM LANG WHERE LANG_NAME = '{$thisParam/LANG_NAME/@Value}'"/>
+        <MODIFY_DOC_SMART Name="REGIS_PRSNA" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+            <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+            <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+            <PRSNA_STATUS_CODE Value="AC"/>
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <NAME_PREFX_TXT Value="{$thisParam/DR_MRMRS/@Value}"/>
+            <GVN_NAME Value="{$thisParam/DR_FIRST_NAME/@Value}"/>
+            <MID_NAME Value="{$thisParam/DR_MIDDLE_NAME/@Value}"/>
+            <FAMLY_NAME Value="{$thisParam/DR_LAST_NAME/@Value}"/>
+            <NAME_SUFFX_TXT Value="{$thisParam/DR_NAME_SUFFIX/@Value}"/>
+            <GENDR_IND Value="{$thisParam/DR_NAME_GENDER/@Value}"/>
+            <TO_XML SelectList="$BIRTH_DATE/*"/>
+            <LATST_ACTVY_DATE Value="{date()}"/>
+            <REGIS_LAST_MODIFIED_DATETM Value="{date()}"/>
+            <LANG_CODE Value="{$LANG_CODE_FOR_RP/SQL_RESULT/LANG_CODE/@Value}"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOC_SMART>
+        <MODIFY_DOC_SMART Name="REGIS_PRSNA" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <MATCHD_CNSMR_PRSNA_ID Value="{$thisParam/MATCHD_CNSMR_PRSNA_ID/@Value}"/>
+            <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+            <PRSNA_STATUS_CODE Value="AC"/>
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <GENDR_IND Value="{$thisParam/DR_NAME_GENDER/@Value}"/>
+            <TO_XML SelectList="$BIRTH_DATE/*"/>
+            <LATST_ACTVY_DATE Value="{date()}"/>
+            <REGIS_LAST_MODIFIED_DATETM Value="{date()}"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOC_SMART>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getProgramNames">
+    <RULE>
+      <ACTION>
+        <!--GET_DOCUMENT Name="REGIS_PRSNA" ServiceName="BCM_MASTER" AssignToVar="programNumbers" DirtyRead="true">
+<MATCHD_CNSMR_PRSNA_ID Value="{$thisParam/MATCHD_CNSMR_PRSNA_ID/@Value}"/>
+<LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+<SELECT>
+<MKTNG_PGM_NBR/>
+</SELECT>
+</GET_DOCUMENT>
+<TO_DOCVAR AssignToVar="programNames">
+<PROGRAM_NAMES/>
+</TO_DOCVAR>
+<FOR_EACH SelectList="$programNumbers/REGIS_PRSNA/MKTNG_PGM_NBR" CurrentElement="currElement">
+<GET_DOCUMENT Name="MKTNG_PGM" ServiceName="BCM_MASTER" AssignToVar="programName" DirtyRead="true">
+<MKTNG_PGM_NBR Value="{$currElement/@Value}"/>
+<SELECT>
+<MKTNG_PGM_NAME/>
+</SELECT>
+</GET_DOCUMENT>
+<APPEND_TO_XML DocVar="programNames">
+<PROGRAM_NAME>
+<MKTNG_PGM_NAME Value="{$programName/MKTNG_PGM/MKTNG_PGM_NAME/@Value}"/>
+</PROGRAM_NAME>
+</APPEND_TO_XML>
+</FOR_EACH-->
+        <GET_DOCUMENT Name="MKTNG_PGM" ServiceName="BCM_MASTER" AssignToVar="programName" DirtyRead="true">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <SELECT>
+            <MKTNG_PGM_NAME/>
+          </SELECT>
+        </GET_DOCUMENT>
+        <CLONE_XML DocVar="programName" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getMaxAge">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="AGE_MIN_MAX" ServiceName="BCM_MASTER" AssignToVar="maxAge" DirtyRead="yes">
+          <COUNTRY Value="{$thisParam/COUNTRY/@Value}" MatchBy="STARTS_WITH"/>
+          <SELECT>
+            <MAX_AGE/>
+          </SELECT>
+        </GET_DOCUMENT>
+        <CLONE_XML DocVar="maxAge" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getStates">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="TERR" ServiceName="BCM_MASTER" AssignToVar="statesList" DirtyRead="true">
+          <CNTRY_CODE Value="{$thisParam/CNTRY_CODE/@Value}"/>
+          <SELECT>
+            <TERR_CODE/>
+            <TERR_NAME/>
+          </SELECT>
+          <ORDER_BY>
+            <TERR_NAME Sort="Ascending"/>
+          </ORDER_BY>
+        </GET_DOCUMENT>
+        <TO_DOCVAR AssignToVar="stateNames">
+          <ROOT>
+            <TERR_CODE/>
+          </ROOT>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$statesList/TERR" CurrentElement="currentElement">
+          <SET Var="terrCode" FromValue="{$currentElement/TERR_CODE/@Value}"/>
+          <SET Var="terrName" FromValue="{$currentElement/TERR_NAME/@Value}"/>
+          <APPEND_TO_XML SelectList="$stateNames/TERR_CODE">
+            <OPTION Id="{$terrCode}" Value="{$terrName}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <CLONE_XML DocVar="stateNames" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getSearchResuls">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="allregisprsnaids">
+          <REGIS_PRSNA_IDS/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="regisprsnaids">
+          <REGIS_PRSNA_IDS/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="mktngpgmnbrs">
+          <MKTNG_PGM_NBR/>
+        </TO_DOCVAR>
+        <SET Var="LEGAL_ENT_NBR" FromValue="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+        <SET Var="REGIS_CNSMR_ID_VAL" FromValue="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+        <SET Var="MKTNG_PGM_NBR" FromValue="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+        <SET Var="GVN_NAME" FromValue="{$thisParam/GVN_NAME/@Value}"/>
+        <SET Var="FAMLY_NAME" FromValue="{$thisParam/FAMLY_NAME/@Value}"/>
+        <SET Var="BRTH_DATE" FromValue="{$thisParam/BRTH_DATE/@Value}"/>
+        <SET Var="ADDR_LINE_1_TXT" FromValue="{$thisParam/ADDR_LINE_1_TXT/@Value}"/>
+        <SET Var="ADDR_LINE_2_TXT" FromValue="{$thisParam/ADDR_LINE_2_TXT/@Value}"/>
+        <SET Var="ADDR_LINE_3_TXT" FromValue="{$thisParam/ADDR_LINE_3_TXT/@Value}"/>
+        <SET Var="CITY_NAME" FromValue="{$thisParam/CITY_NAME/@Value}"/>
+        <SET Var="TERR_CODE" FromValue="{$thisParam/TERR_CODE/@Value}"/>
+        <SET Var="CNTRY_CODE" FromValue="{$thisParam/CNTRY_CODE/@Value}"/>
+        <SET Var="POSTL_AREA_CODE" FromValue="{$thisParam/POSTL_AREA_CODE/@Value}"/>
+        <SET Var="EMAIL_ADDR_TXT" FromValue="{$thisParam/EMAIL_ADDR_TXT/@Value}"/>
+        <SET Var="FULL_PHONE_NUM" FromValue="{$thisParam/FULL_PHONE_NUM/@Value}"/>
+        <SET Var="startRow" FromValue="{$thisParam/START_AT_ROW/@Value}"/>
+        <SET Var="LYLTY_ACCT_NUM" FromValue="{$thisParam/LYLTY_ACCT_NUM/@Value}"/>
+        <SET Var="NATIONAL_ID_NBR" FromValue="{$thisParam/NATIONAL_ID_NBR/@Value}"/>
+        <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+          <REGIS_CNSMR_ID_VAL/>
+          <LEGAL_ENT_NBR/>
+          <MKTNG_PGM_NBR/>
+          <GVN_NAME/>
+          <FAMLY_NAME/>
+          <BRTH_DATE/>
+          <ADDR_LINE_1_TXT/>
+          <ADDR_LINE_2_TXT/>
+          <ADDR_LINE_3_TXT/>
+          <CITY_NAME/>
+          <TERR_CODE/>
+          <CNTRY_CODE/>
+          <POSTL_AREA_CODE/>
+          <EMAIL_ADDR_TXT/>
+          <FULL_PHONE_NUM/>
+          <LYLTY_ACCT_NUM/>
+          <NATIONAL_ID_NBR/>
+        </FORM_SEARCH_FILTER>
+        <TO_DOCVAR AssignToVar="filterList">
+          <FILTERLIST/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$filters/FILTER" CurrentElement="thisFilter">
+          <APPEND_TO_XML SelectList="$filterList">
+            <TO_XML SelectList="$thisFilter/*"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <IF_TEST Test="$thisParam/MKTNG_PGM_NBR/@Value=''">
+          <THEN>
+            <TO_DOCVAR AssignToVar="allMktngPrograms">
+              <ROOT>
+                <MKTNG_PGM/>
+              </ROOT>
+            </TO_DOCVAR>
+            <FOR_EACH SelectList="$thisParam/MKTNG_PGM/OPTION[strlen(@Id) > 0]" CurrentElement="currElement">
+              <APPEND_TO_XML SelectList="$allMktngPrograms/MKTNG_PGM">
+                <MKTNG_PGM_NBR Value="{$currElement/@Id}"/>
+              </APPEND_TO_XML>
+            </FOR_EACH>
+          </THEN>
+        </IF_TEST>
+        <TO_DOCVAR AssignToVar="errorStatus">
+          <LINE/>
+        </TO_DOCVAR>
+        <SET Var="recordIndicator" FromValue="Y"/>
+        <IF_TEST Test="$EMAIL_ADDR_TXT!=''and $recordIndicator='Y'">
+          <THEN>
+            <GET_DOCUMENT Name="REGIS_PRSNA_EMAIL_ADDR" AssignToVar="prsnaids" ServiceName="BCM_MASTER" ReturnRowCount="yes" DirtyRead="true" HandleException="true" Distinct="false">
+              <TO_XML SelectList="$filterList/EMAIL_ADDR_TXT"/>
+              <!--TO_XML SelectList="$filterList/LEGAL_ENT_NBR"/-->
+              <TO_XML SelectList="$filterList/MKTNG_PGM_NBR"/>
+              <!-- <OR>
+                <TO_XML SelectList="$thisParam/CONTACT_CODES/CNTCT_POINT_CATEG_CODE"/>
+              </OR>-->
+              <OR>
+                <TO_XML SelectList="$allMktngPrograms/MKTNG_PGM/MKTNG_PGM_NBR"/>
+              </OR>
+              <SELECT>
+                <REGIS_PRSNA_ID/>
+                <MKTNG_PGM_NBR/>
+              </SELECT>
+            </GET_DOCUMENT>
+            <SET Var="msgDescp" FromValue="{$prsnaids/@Description}"/>
+            <SET Var="msgDescp" FromValue="{substringAfter($msgDescp, '[Error 5793] [SQLState HY000] ')}"/>
+            <SET Var="msgDescp" FromValue="{substringBefore($msgDescp, '[BCM_MASTER]')}"/>
+            <IF_TEST Test="$prsnaids/@Status='Error' and trim($msgDescp)='Limit on the number of host variables in USING modifier exceeded'">
+              <THEN>
+                <TO_DOCVAR AssignToVar="errorStatus">
+                  <LINE>
+                    <message Value="3000"/>
+                  </LINE>
+                </TO_DOCVAR>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="$prsnaids/@TotalRowCount!= '0'">
+              <THEN>
+                <TO_DOCVAR AssignToVar="allregisprsnaids">
+                  <ROOT>
+                  </ROOT>
+                </TO_DOCVAR>
+                <APPEND_TO_XML SelectList="$allregisprsnaids">
+                  <REGIS_PRSNA_IDS>
+                    <TO_XML SelectList="$prsnaids/REGIS_PRSNA_EMAIL_ADDR/REGIS_PRSNA_ID"/>
+                  </REGIS_PRSNA_IDS>
+                </APPEND_TO_XML>
+                <IF_TEST Test="$thisParam/MKTNG_PGM_NBR/@Value=''">
+                  <THEN>
+                    <TO_DOCVAR AssignToVar="allMktngPrograms">
+                      <ROOT>
+                      </ROOT>
+                    </TO_DOCVAR>
+                    <APPEND_TO_XML SelectList="$allMktngPrograms">
+                      <MKTNG_PGM>
+                        <TO_XML SelectList="$prsnaids/REGIS_PRSNA_EMAIL_ADDR/MKTNG_PGM_NBR"/>
+                      </MKTNG_PGM>
+                    </APPEND_TO_XML>
+                  </THEN>
+                </IF_TEST>
+              </THEN>
+              <ELSE>
+                <THEN>
+                  <SET Var="recordIndicator" FromValue="N"/>
+                </THEN>
+              </ELSE>
+            </IF_TEST>
+          </THEN>
+        </IF_TEST>
+        <IF_TEST Test="$FULL_PHONE_NUM!=''and $recordIndicator='Y'">
+          <THEN>
+            <GET_DOCUMENT Name="REGIS_PRSNA_PHONE" AssignToVar="prsnaids" ServiceName="BCM_MASTER" ReturnRowCount="yes" DirtyRead="true" HandleException="true" Distinct="false">
+              <TO_XML SelectList="$filterList/FULL_PHONE_NUM"/>
+              <!--TO_XML SelectList="$filterList/LEGAL_ENT_NBR"/-->
+              <TO_XML SelectList="$filterList/MKTNG_PGM_NBR"/>
+              <!--  <OR>
+                <TO_XML SelectList="$thisParam/CONTACT_CODES/CNTCT_POINT_CATEG_CODE"/>
+              </OR>-->
+              <OR>
+                <TO_XML SelectList="$allregisprsnaids/REGIS_PRSNA_IDS/REGIS_PRSNA_ID"/>
+              </OR>
+              <OR>
+                <TO_XML SelectList="$allMktngPrograms/MKTNG_PGM/MKTNG_PGM_NBR"/>
+              </OR>
+              <SELECT>
+                <REGIS_PRSNA_ID/>
+                <MKTNG_PGM_NBR/>
+              </SELECT>
+            </GET_DOCUMENT>
+            <SET Var="msgDescp" FromValue="{$prsnaids/@Description}"/>
+            <SET Var="msgDescp" FromValue="{substringAfter($msgDescp, '[Error 5793] [SQLState HY000] ')}"/>
+            <SET Var="msgDescp" FromValue="{substringBefore($msgDescp, '[BCM_MASTER]')}"/>
+            <IF_TEST Test="$prsnaids/@Status='Error' and trim($msgDescp)='Limit on the number of host variables in USING modifier exceeded'">
+              <THEN>
+                <TO_DOCVAR AssignToVar="errorStatus">
+                  <LINE>
+                    <message Value="3000"/>
+                  </LINE>
+                </TO_DOCVAR>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="$prsnaids/@TotalRowCount!= '0'">
+              <THEN>
+                <TO_DOCVAR AssignToVar="allregisprsnaids">
+                  <ROOT>
+                  </ROOT>
+                </TO_DOCVAR>
+                <APPEND_TO_XML SelectList="$allregisprsnaids">
+                  <REGIS_PRSNA_IDS>
+                    <TO_XML SelectList="$prsnaids/REGIS_PRSNA_PHONE/REGIS_PRSNA_ID"/>
+                  </REGIS_PRSNA_IDS>
+                </APPEND_TO_XML>
+                <IF_TEST Test="$thisParam/MKTNG_PGM_NBR/@Value=''">
+                  <THEN>
+                    <TO_DOCVAR AssignToVar="allMktngPrograms">
+                      <ROOT>
+                      </ROOT>
+                    </TO_DOCVAR>
+                    <APPEND_TO_XML SelectList="$allMktngPrograms">
+                      <MKTNG_PGM>
+                        <TO_XML SelectList="$prsnaids/REGIS_PRSNA_PHONE/MKTNG_PGM_NBR"/>
+                      </MKTNG_PGM>
+                    </APPEND_TO_XML>
+                  </THEN>
+                </IF_TEST>
+              </THEN>
+              <ELSE>
+                <THEN>
+                  <SET Var="recordIndicator" FromValue="N"/>
+                </THEN>
+              </ELSE>
+            </IF_TEST>
+          </THEN>
+        </IF_TEST>
+        <IF_TEST Test="$recordIndicator ='Y'">
+          <THEN>
+            <IF_TEST Test="$ADDR_LINE_1_TXT!='' or $ADDR_LINE_2_TXT!='' or $ADDR_LINE_3_TXT!='' or $CITY_NAME!='' or $TERR_CODE!='' or $CNTRY_CODE!='' or $POSTL_AREA_CODE!=''">
+              <THEN>
+                <GET_DOCUMENT Name="REGIS_PRSNA_POSTL_ADDR" AssignToVar="prsnaids" ServiceName="BCM_MASTER" ReturnRowCount="yes" DirtyRead="true" HandleException="true" Distinct="false">
+                  <TO_XML SelectList="$filterList/ADDR_LINE_1_TXT"/>
+                  <TO_XML SelectList="$filterList/ADDR_LINE_2_TXT"/>
+                  <TO_XML SelectList="$filterList/ADDR_LINE_3_TXT"/>
+                  <TO_XML SelectList="$filterList/CITY_NAME"/>
+                  <TO_XML SelectList="$filterList/TERR_CODE"/>
+                  <TO_XML SelectList="$filterList/CNTRY_CODE"/>
+                  <TO_XML SelectList="$filterList/POSTL_AREA_CODE"/>
+                  <TO_XML SelectList="$filterList/MKTNG_PGM_NBR"/>
+                  <!--TO_XML SelectList="$filterList/LEGAL_ENT_NBR"/-->
+                  <!--   <OR>
+                <TO_XML SelectList="$thisParam/CONTACT_CODES/CNTCT_POINT_CATEG_CODE"/>
+              </OR>-->
+                  <OR>
+                    <TO_XML SelectList="$allregisprsnaids/REGIS_PRSNA_IDS/REGIS_PRSNA_ID"/>
+                  </OR>
+                  <OR>
+                    <TO_XML SelectList="$allMktngPrograms/MKTNG_PGM/MKTNG_PGM_NBR"/>
+                  </OR>
+                  <SELECT>
+                    <REGIS_PRSNA_ID/>
+                    <MKTNG_PGM_NBR/>
+                  </SELECT>
+                </GET_DOCUMENT>
+                <SET Var="msgDescp" FromValue="{$prsnaids/@Description}"/>
+                <SET Var="msgDescp" FromValue="{substringAfter($msgDescp, '[Error 5793] [SQLState HY000] ')}"/>
+                <SET Var="msgDescp" FromValue="{substringBefore($msgDescp, '[BCM_MASTER]')}"/>
+                <IF_TEST Test="$prsnaids/@Status='Error' and trim($msgDescp)='Limit on the number of host variables in USING modifier exceeded'">
+                  <THEN>
+                    <TO_DOCVAR AssignToVar="errorStatus">
+                      <LINE>
+                        <message Value="3000"/>
+                      </LINE>
+                    </TO_DOCVAR>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$prsnaids/@TotalRowCount!= '0'">
+                  <THEN>
+                    <TO_DOCVAR AssignToVar="allregisprsnaids">
+                      <ROOT>
+                      </ROOT>
+                    </TO_DOCVAR>
+                    <APPEND_TO_XML SelectList="$allregisprsnaids">
+                      <REGIS_PRSNA_IDS>
+                        <TO_XML SelectList="$prsnaids/REGIS_PRSNA_POSTL_ADDR/REGIS_PRSNA_ID"/>
+                      </REGIS_PRSNA_IDS>
+                    </APPEND_TO_XML>
+                    <IF_TEST Test="$thisParam/MKTNG_PGM_NBR/@Value=''">
+                      <THEN>
+                        <TO_DOCVAR AssignToVar="allMktngPrograms">
+                          <ROOT>
+                          </ROOT>
+                        </TO_DOCVAR>
+                        <APPEND_TO_XML SelectList="$allMktngPrograms">
+                          <MKTNG_PGM>
+                            <TO_XML SelectList="$prsnaids/REGIS_PRSNA_POSTL_ADDR/MKTNG_PGM_NBR"/>
+                          </MKTNG_PGM>
+                        </APPEND_TO_XML>
+                      </THEN>
+                    </IF_TEST>
+                  </THEN>
+                  <ELSE>
+                    <THEN>
+                      <SET Var="recordIndicator" FromValue="N"/>
+                    </THEN>
+                  </ELSE>
+                </IF_TEST>
+              </THEN>
+            </IF_TEST>
+          </THEN>
+        </IF_TEST>
+        <IF_TEST Test="$recordIndicator ='Y'">
+          <THEN>
+            <IF_TEST Test="$GVN_NAME!='' or $FAMLY_NAME!='' or $BRTH_DATE!='' or $REGIS_CNSMR_ID_VAL!='' or $LYLTY_ACCT_NUM!='' or $NATIONAL_ID_NBR!=''">
+              <THEN>
+                <GET_DOCUMENT Name="REGIS_PRSNA" AssignToVar="prsnaids" ServiceName="BCM_MASTER" ReturnRowCount="yes" DirtyRead="true" HandleException="true" Distinct="false">
+                  <TO_XML SelectList="$filterList/GVN_NAME"/>
+                  <TO_XML SelectList="$filterList/FAMLY_NAME"/>
+                  <TO_XML SelectList="$filterList/BRTH_DATE"/>
+                  <TO_XML SelectList="$filterList/REGIS_CNSMR_ID_VAL"/>
+                  <TO_XML SelectList="$filterList/MKTNG_PGM_NBR"/>
+                  <TO_XML SelectList="$filterList/LYLTY_ACCT_NUM"/>
+                  <TO_XML SelectList="$filterList/NATIONAL_ID_NBR"/>
+                  <!--TO_XML SelectList="$filterList/LEGAL_ENT_NBR"/-->
+                  <!--PRSNA_STATUS_CODE Value="AC"/-->
+                  <OR>
+                    <TO_XML SelectList="$allregisprsnaids/REGIS_PRSNA_IDS/REGIS_PRSNA_ID"/>
+                  </OR>
+                  <OR>
+                    <TO_XML SelectList="$allMktngPrograms/MKTNG_PGM/MKTNG_PGM_NBR"/>
+                  </OR>
+                  <SELECT>
+                    <REGIS_PRSNA_ID/>
+                    <MKTNG_PGM_NBR/>
+                  </SELECT>
+                </GET_DOCUMENT>
+                <SET Var="msgDescp" FromValue="{$prsnaids/@Description}"/>
+                <SET Var="msgDescp" FromValue="{substringAfter($msgDescp, '[Error 5793] [SQLState HY000] ')}"/>
+                <SET Var="msgDescp" FromValue="{substringBefore($msgDescp, '[BCM_MASTER]')}"/>
+                <IF_TEST Test="$prsnaids/@Status='Error' and trim($msgDescp)='Limit on the number of host variables in USING modifier exceeded'">
+                  <THEN>
+                    <TO_DOCVAR AssignToVar="errorStatus">
+                      <LINE>
+                        <message Value="3000"/>
+                      </LINE>
+                    </TO_DOCVAR>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$prsnaids/@TotalRowCount!= '0'">
+                  <THEN>
+                    <TO_DOCVAR AssignToVar="allregisprsnaids">
+                      <ROOT>
+                      </ROOT>
+                    </TO_DOCVAR>
+                    <APPEND_TO_XML SelectList="$allregisprsnaids">
+                      <REGIS_PRSNA_IDS>
+                        <TO_XML SelectList="$prsnaids/REGIS_PRSNA/REGIS_PRSNA_ID"/>
+                      </REGIS_PRSNA_IDS>
+                    </APPEND_TO_XML>
+                    <IF_TEST Test="$thisParam/MKTNG_PGM_NBR/@Value=''">
+                      <THEN>
+                        <TO_DOCVAR AssignToVar="allMktngPrograms">
+                          <ROOT>
+                          </ROOT>
+                        </TO_DOCVAR>
+                        <APPEND_TO_XML SelectList="$allMktngPrograms">
+                          <MKTNG_PGM>
+                            <TO_XML SelectList="$prsnaids/REGIS_PRSNA/MKTNG_PGM_NBR"/>
+                          </MKTNG_PGM>
+                        </APPEND_TO_XML>
+                      </THEN>
+                    </IF_TEST>
+                  </THEN>
+                  <ELSE>
+                    <THEN>
+                      <SET Var="recordIndicator" FromValue="N"/>
+                    </THEN>
+                  </ELSE>
+                </IF_TEST>
+              </THEN>
+            </IF_TEST>
+          </THEN>
+        </IF_TEST>
+        <IF_TEST Test="$prsnaids/@TotalRowCount > 0 and $recordIndicator='Y' and $prsnaids/@TotalRowCount &lt;= 500 ">
+          <THEN>
+            <!--FOR_EACH SelectList="$regisprsnaids/REGIS_PRSNA_ID" CurrentElement="currElement"-->
+            <GET_DOCUMENT Name="V_REGIS_PRSNA" AssignToVar="searchResults" ServiceName="BCM_MASTER" DirtyRead="true" MaxRows="100" StartAtRow="{$startRow}" ReturnRowCount="true" Distinct="false">
+              <TO_XML SelectList="$filterList/MKTNG_PGM_NBR"/>
+              <!--TO_XML SelectList="$filterList/LEGAL_ENT_NBR"/-->
+              <OR>
+                <TO_XML SelectList="$allregisprsnaids/REGIS_PRSNA_IDS/REGIS_PRSNA_ID"/>
+              </OR>
+              <OR>
+                <TO_XML SelectList="$allMktngPrograms/MKTNG_PGM/MKTNG_PGM_NBR"/>
+              </OR>
+              <SELECT>
+                <REGIS_PRSNA_ID/>
+                <HSHLD_PRSNA_ID/>
+                <REGIS_CNSMR_ID_VAL/>
+                <LEGAL_ENT_NBR/>
+                <MKTNG_PGM_NBR/>
+                <MKTNG_PGM_NAME/>
+                <LEGAL_ENT_NBR/>
+                <MATCHD_CNSMR_PRSNA_ID/>
+                <FULL_NAME/>
+                <FULL_ADDRESS/>
+                <EMAIL_ADDR_TXT/>
+                <FULL_PHONE_NUM/>
+                <NATIONAL_ID_NBR/>
+                <PRSNA_STATUS_CODE/>
+              </SELECT>
+            </GET_DOCUMENT>
+            <!--/FOR_EACH-->
+          </THEN>
+          <ELSE>
+            <IF_TEST Test="$prsnaids/@TotalRowCount > 500">
+              <THEN>
+                <TO_DOCVAR AssignToVar="searchResults">
+                  <ROOT TotalRowCount="501"/>
+                </TO_DOCVAR>
+              </THEN>
+              <ELSE>
+                <TO_DOCVAR AssignToVar="searchResults">
+                  <ROOT TotalRowCount="0"/>
+                </TO_DOCVAR>
+              </ELSE>
+            </IF_TEST>
+          </ELSE>
+        </IF_TEST>
+        <IF_TEST Test="$errorStatus/message/@Value='3000'">
+          <THEN>
+            <TO_DOCVAR AssignToVar="searchResults">
+              <LINE>
+                <TO_XML SelectList="$errorStatus/*"/>
+              </LINE>
+            </TO_DOCVAR>
+          </THEN>
+          <ELSE>
+            <THEN>
+              <TO_DOCVAR AssignToVar="searchResults">
+                <TO_XML SelectList="$errorStatus/*"/>
+              </TO_DOCVAR>
+            </THEN>
+          </ELSE>
+        </IF_TEST>
+        <CLONE_XML DocVar="searchResults" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getMonthStartDates">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="V_RPT_PROFILE_CHANGES" ServiceName="BCM_MASTER" AssignToVar="monthStartDates" DirtyRead="true">
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <SELECT>
+            <MONTH_START/>
+          </SELECT>
+        </GET_DOCUMENT>
+        <CLONE_XML DocVar="monthStartDates" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="updateRegisPrsnaForTemporal">
+    <RULE>
+      <ACTION>
+        <MODIFY_DOC_SMART Name="REGIS_PRSNA" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+            <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+            <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+            <!--<PRSNA_STATUS_CODE Value="AC"/>-->
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <SYS_LAST_MODIFIED_DATE Value="{date()}"/>
+            <LATST_ACTVY_DATE Value="{date()}"/>
+            <REGIS_LAST_MODIFIED_DATETM Value="{date()}"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOC_SMART>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <!-- <DEFINE_METHOD Name="getCampaignDetails">
+    <RULE>
+      <ACTION>
+        <SET Var="startRow" FromValue="{$thisParam/START_AT_ROW/@Value}"/>
+        <GET_DOCUMENT Name="V_CAMPAIGN" ServiceName="BCM_MASTER" AssignToVar="campaignDetails" DirtyRead="true" MaxRows="10" StartAtRow="{$startRow}" ReturnRowCount="true">
+          <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <ORDER_BY>
+            <CAMPAIGN_EXEC_DATE Sort="Descending"/>
+          </ORDER_BY>
+        </GET_DOCUMENT>
+        <CLONE_XML DocVar="campaignDetails" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>-->
+  <DEFINE_METHOD Name="getLegacyCampaignDetails">
+    <RULE>
+      <ACTION>
+        <SET Var="startRow" FromValue="{$thisParam/START_AT_ROW/@Value}"/>
+        <GET_DOCUMENT Name="V_CAMPAIGN" ServiceName="BCM_MASTER" AssignToVar="legacyCampaignDetails" Distinct="false" DirtyRead="true" MaxRows="10" StartAtRow="{$startRow}" ReturnRowCount="true">
+          <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+          <!--Commented by Debashish-->
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <ORDER_BY>
+            <CAMPAIGN_EXEC_DATE Sort="Descending"/>
+          </ORDER_BY>
+        </GET_DOCUMENT>
+        <CLONE_XML DocVar="legacyCampaignDetails" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getDataSourceDetails">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="V_DATA_SRCE" ServiceName="BCM_MASTER" AssignToVar="dataSourceDetails" DirtyRead="true" ReturnRowCount="true">
+          <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+        </GET_DOCUMENT>
+        <CLONE_XML DocVar="dataSourceDetails" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="ViewConsumerEMAIL">
+    <RULE>
+      <ACTION>
+        <IF_TEST Test="$thisParam/Method_Name/@Value='ruleGDPRDataAccessProcess'">
+          <THEN>
+            <GET_DOCUMENT Name="REGIS_PRSNA_EMAIL_ADDR" AssignToVar="respViewEMAIL" DirtyRead="true" ServiceName="BCM_MASTER" ReturnRowCount="yes">
+              <OR>
+                <TO_XML SelectList="$thisParam/REGIS_PRSNA_ID"/>
+              </OR>
+              <OR>
+                <TO_XML SelectList="$thisParam/MKTNG_PGM_NBR"/>
+              </OR>
+            </GET_DOCUMENT>
+          </THEN>
+          <ELSE>
+            <GET_DOCUMENT Name="REGIS_PRSNA_EMAIL_ADDR" AssignToVar="respViewEMAIL" DirtyRead="true" ServiceName="BCM_MASTER" ReturnRowCount="yes">
+              <OR>
+                <TO_XML SelectList="$thisParam/REGIS_PRSNA_ID"/>
+              </OR>
+              <OR>
+                <TO_XML SelectList="$thisParam/MKTNG_PGM_NBR"/>
+              </OR>
+              <OR>
+                <SUBSCRPTN_OPT_NBR Value="" MatchBy="NOT_EQUAL"/>
+                <SUBSCRPTN_OPT_NBR MatchBy="NOT_EQUAL"/>
+              </OR>
+            </GET_DOCUMENT>
+          </ELSE>
+        </IF_TEST>
+        <TO_DOCVAR AssignToVar="ViewEMAILResults">
+          <A/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$respViewEMAIL/REGIS_PRSNA_EMAIL_ADDR" CurrentElement="currElement">
+          <IF_TEST Test="$currElement/SUBSCRPTN_OPT_NBR/@Value = null">
+            <THEN>
+            </THEN>
+            <ELSE>
+              <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT SUBSCRPTN_OPT_NAME,SUBSCRPTN_OPT_FREQ_TXT FROM SUBSCRPTN_OPT A LEFT JOIN SUBSCRPTN_OPT_TYPE B ON A.SUBSCRPTN_OPT_NBR=B.SUBSCRPTN_OPT_NBR AND A.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR AND B.CNTCT_CHANL_TYPE_CODE IN ('E') WHERE A.MKTNG_PGM_NBR IN ({$currElement/MKTNG_PGM_NBR/@Value})AND A.SUBSCRPTN_OPT_NBR IN ({$currElement/SUBSCRPTN_OPT_NBR/@Value})AND A.SUBSCRPTN_OPT_NBR IS NOT NULL;" AssignToVar="SubsEMAILResult"/>
+            </ELSE>
+          </IF_TEST>
+          <REQUEST Name="getAttributeValues" AssignToVar="emailTypeValues">
+            <AV_CODE Value="{$currElement/CNTCT_POINT_CATEG_CODE/@Value}"/>
+          </REQUEST>
+          <APPEND_TO_XML DocVar="ViewEMAILResults">
+            <EMAIL_RESULTS>
+              <EMAIL_TYPE Value="{$emailTypeValues/ATTRIBUTE_VALUES/AV_DESCRIPTION/@Value}"/>
+              <SUBSCRPTN_OPT_NAME Value="{$SubsEMAILResult/SQL_RESULT/SUBSCRPTN_OPT_NAME/@Value}"/>
+              <SUBSCRPTN_OPT_FREQ_TXT Value="{$SubsEMAILResult/SQL_RESULT/SUBSCRPTN_OPT_FREQ_TXT/@Value}"/>
+              <TO_XML SelectList="$currElement/*"/>
+            </EMAIL_RESULTS>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <SET_NAME SelectList="$respViewEMAIL/*" FromValue="REGIS_PRSNA_EMAIL_ADDR"/>
+        <APPEND_TO_XML DocVar="ViewEMAILResults">
+          <TO_XML SelectList="$currElement"/>
+        </APPEND_TO_XML>
+        <CLONE_XML DocVar="ViewEMAILResults" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="ViewConsumerPHONE">
+    <RULE>
+      <ACTION>
+        <IF_TEST Test="$thisParam/Method_Name/@Value='ruleGDPRDataAccessProcess'">
+          <THEN>
+            <GET_DOCUMENT Name="REGIS_PRSNA_PHONE" AssignToVar="respViewPHONE" DirtyRead="true" ServiceName="BCM_MASTER" ReturnRowCount="yes">
+              <OR>
+                <TO_XML SelectList="$thisParam/REGIS_PRSNA_ID"/>
+              </OR>
+              <OR>
+                <TO_XML SelectList="$thisParam/MKTNG_PGM_NBR"/>
+              </OR>
+            </GET_DOCUMENT>
+          </THEN>
+          <ELSE>
+            <GET_DOCUMENT Name="REGIS_PRSNA_PHONE" AssignToVar="respViewPHONE" DirtyRead="true" ServiceName="BCM_MASTER" ReturnRowCount="yes">
+              <OR>
+                <TO_XML SelectList="$thisParam/REGIS_PRSNA_ID"/>
+              </OR>
+              <OR>
+                <TO_XML SelectList="$thisParam/MKTNG_PGM_NBR"/>
+              </OR>
+              <OR>
+                <SUBSCRPTN_OPT_NBR Value="" MatchBy="NOT_EQUAL"/>
+                <SUBSCRPTN_OPT_NBR MatchBy="NOT_EQUAL"/>
+              </OR>
+            </GET_DOCUMENT>
+          </ELSE>
+        </IF_TEST>
+        <TO_DOCVAR AssignToVar="ViewPHONEResults">
+          <A/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$respViewPHONE/REGIS_PRSNA_PHONE" CurrentElement="currElement">
+          <IF_TEST Test="$currElement/SUBSCRPTN_OPT_NBR/@Value = null">
+            <THEN>
+            </THEN>
+            <ELSE>
+              <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT SUBSCRPTN_OPT_NAME,SUBSCRPTN_OPT_FREQ_TXT FROM SUBSCRPTN_OPT A LEFT JOIN SUBSCRPTN_OPT_TYPE B ON A.SUBSCRPTN_OPT_NBR=B.SUBSCRPTN_OPT_NBR AND A.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR AND B.CNTCT_CHANL_TYPE_CODE IN ('P') WHERE A.MKTNG_PGM_NBR IN ({$currElement/MKTNG_PGM_NBR/@Value})AND A.SUBSCRPTN_OPT_NBR IN ({$currElement/SUBSCRPTN_OPT_NBR/@Value})AND A.SUBSCRPTN_OPT_NBR IS NOT NULL;" AssignToVar="SubsPHONEResult"/>
+            </ELSE>
+          </IF_TEST>
+          <REQUEST Name="getAttributeValues" AssignToVar="phoneTypeValues">
+            <AV_CODE Value="{$currElement/CNTCT_POINT_CATEG_CODE/@Value}"/>
+          </REQUEST>
+          <APPEND_TO_XML DocVar="ViewPHONEResults">
+            <PHONE_RESULTS>
+              <PHONE_TYPE Value="{$phoneTypeValues/ATTRIBUTE_VALUES/AV_DESCRIPTION/@Value}"/>
+              <SUBSCRPTN_OPT_NAME Value="{$SubsPHONEResult/SQL_RESULT/SUBSCRPTN_OPT_NAME/@Value}"/>
+              <SUBSCRPTN_OPT_FREQ_TXT Value="{$SubsPHONEResult/SQL_RESULT/SUBSCRPTN_OPT_FREQ_TXT/@Value}"/>
+              <TO_XML SelectList="$currElement/*"/>
+            </PHONE_RESULTS>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <SET_NAME SelectList="$respViewPHONE/*" FromValue="REGIS_PRSNA_PHONE"/>
+        <APPEND_TO_XML DocVar="ViewPHONEResults">
+          <TO_XML SelectList="$currElement"/>
+        </APPEND_TO_XML>
+        <CLONE_XML DocVar="ViewPHONEResults" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="ViewConsumerADDRESS">
+    <RULE>
+      <ACTION>
+        <IF_TEST Test="$thisParam/Method_Name/@Value='ruleGDPRDataAccessProcess'">
+          <THEN>
+            <GET_DOCUMENT Name="REGIS_PRSNA_POSTL_ADDR" AssignToVar="respViewADDRESS" DirtyRead="true" ServiceName="BCM_MASTER" ReturnRowCount="yes">
+              <OR>
+                <TO_XML SelectList="$thisParam/REGIS_PRSNA_ID"/>
+              </OR>
+              <OR>
+                <TO_XML SelectList="$thisParam/MKTNG_PGM_NBR"/>
+              </OR>
+            </GET_DOCUMENT>
+          </THEN>
+          <ELSE>
+            <GET_DOCUMENT Name="REGIS_PRSNA_POSTL_ADDR" AssignToVar="respViewADDRESS" DirtyRead="true" ServiceName="BCM_MASTER" ReturnRowCount="yes">
+              <OR>
+                <TO_XML SelectList="$thisParam/REGIS_PRSNA_ID"/>
+              </OR>
+              <OR>
+                <TO_XML SelectList="$thisParam/MKTNG_PGM_NBR"/>
+              </OR>
+              <OR>
+                <SUBSCRPTN_OPT_NBR Value="" MatchBy="NOT_EQUAL"/>
+                <SUBSCRPTN_OPT_NBR MatchBy="NOT_EQUAL"/>
+              </OR>
+            </GET_DOCUMENT>
+          </ELSE>
+        </IF_TEST>
+        <TO_DOCVAR AssignToVar="ViewADDRESSResults">
+          <A/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$respViewADDRESS/REGIS_PRSNA_POSTL_ADDR" CurrentElement="currElement">
+          <IF_TEST Test="$currElement/SUBSCRPTN_OPT_NBR/@Value = null">
+            <THEN/>
+            <ELSE>
+              <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT SUBSCRPTN_OPT_NAME,SUBSCRPTN_OPT_FREQ_TXT FROM SUBSCRPTN_OPT A LEFT JOIN SUBSCRPTN_OPT_TYPE B ON A.SUBSCRPTN_OPT_NBR=B.SUBSCRPTN_OPT_NBR AND A.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR AND B.CNTCT_CHANL_TYPE_CODE IN ('A') WHERE A.MKTNG_PGM_NBR IN ({$currElement/MKTNG_PGM_NBR/@Value})AND A.SUBSCRPTN_OPT_NBR IN ({$currElement/SUBSCRPTN_OPT_NBR/@Value})AND A.SUBSCRPTN_OPT_NBR IS NOT NULL;" AssignToVar="SubsADDRESSResult"/>
+            </ELSE>
+          </IF_TEST>
+          <REQUEST Name="getAttributeValues" AssignToVar="addressTypeValues">
+            <AV_CODE Value="{$currElement/CNTCT_POINT_CATEG_CODE/@Value}"/>
+          </REQUEST>
+          <APPEND_TO_XML DocVar="ViewADDRESSResults">
+            <ADDRESS_RESULTS>
+              <ADDRESS_TYPE Value="{$addressTypeValues/ATTRIBUTE_VALUES/AV_DESCRIPTION/@Value}"/>
+              <SUBSCRPTN_OPT_NAME Value="{$SubsADDRESSResult/SQL_RESULT/SUBSCRPTN_OPT_NAME/@Value}"/>
+              <SUBSCRPTN_OPT_FREQ_TXT Value="{$SubsADDRESSResult/SQL_RESULT/SUBSCRPTN_OPT_FREQ_TXT/@Value}"/>
+              <TO_XML SelectList="$currElement/*"/>
+            </ADDRESS_RESULTS>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <SET_NAME SelectList="$respViewADDRESS/*" FromValue="REGIS_PRSNA_POSTL_ADDR"/>
+        <APPEND_TO_XML DocVar="ViewADDRESSResults">
+          <TO_XML SelectList="$currElement"/>
+        </APPEND_TO_XML>
+        <CLONE_XML DocVar="ViewADDRESSResults" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="ViewConsumerSOCIAL">
+    <RULE>
+      <ACTION>
+        <IF_TEST Test="$thisParam/Method_Name/@Value='ruleGDPRDataAccessProcess'">
+          <THEN>
+            <GET_DOCUMENT Name="REGIS_PRSNA_SOC_NETK_ACT" AssignToVar="respViewSOCIAL" DirtyRead="true" ServiceName="BCM_MASTER" ReturnRowCount="yes">
+              <OR>
+                <TO_XML SelectList="$thisParam/REGIS_PRSNA_ID"/>
+              </OR>
+              <OR>
+                <TO_XML SelectList="$thisParam/MKTNG_PGM_NBR"/>
+              </OR>
+            </GET_DOCUMENT>
+          </THEN>
+          <ELSE>
+            <GET_DOCUMENT Name="REGIS_PRSNA_SOC_NETK_ACT" AssignToVar="respViewSOCIAL" DirtyRead="true" ServiceName="BCM_MASTER" ReturnRowCount="yes">
+              <OR>
+                <TO_XML SelectList="$thisParam/REGIS_PRSNA_ID"/>
+              </OR>
+              <OR>
+                <TO_XML SelectList="$thisParam/MKTNG_PGM_NBR"/>
+              </OR>
+              <OR>
+                <SUBSCRPTN_OPT_NBR Value="" MatchBy="NOT_EQUAL"/>
+                <SUBSCRPTN_OPT_NBR MatchBy="NOT_EQUAL"/>
+              </OR>
+            </GET_DOCUMENT>
+          </ELSE>
+        </IF_TEST>
+        <TO_DOCVAR AssignToVar="ViewSOCIALResults">
+          <A/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$respViewSOCIAL/REGIS_PRSNA_SOC_NETK_ACT" CurrentElement="currElement">
+          <IF_TEST Test="$currElement/SUBSCRPTN_OPT_NBR/@Value = null">
+            <THEN/>
+            <ELSE>
+              <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT SUBSCRPTN_OPT_NAME,SUBSCRPTN_OPT_FREQ_TXT FROM SUBSCRPTN_OPT A LEFT JOIN SUBSCRPTN_OPT_TYPE B ON A.SUBSCRPTN_OPT_NBR=B.SUBSCRPTN_OPT_NBR AND A.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR AND B.CNTCT_CHANL_TYPE_CODE IN ('S') WHERE A.MKTNG_PGM_NBR IN ({$currElement/MKTNG_PGM_NBR/@Value})AND A.SUBSCRPTN_OPT_NBR IN ({$currElement/SUBSCRPTN_OPT_NBR/@Value})AND A.SUBSCRPTN_OPT_NBR IS NOT NULL;" AssignToVar="SubsSOCIALResult"/>
+            </ELSE>
+          </IF_TEST>
+          <REQUEST Name="getAttributeValues" AssignToVar="socialTypeValues">
+            <AV_CODE Value="{$currElement/CNTCT_POINT_CATEG_CODE/@Value}"/>
+          </REQUEST>
+          <APPEND_TO_XML DocVar="ViewSOCIALResults">
+            <SOCIAL_RESULTS>
+              <SOCIAL_TYPE Value="{$socialTypeValues/ATTRIBUTE_VALUES/AV_DESCRIPTION/@Value}"/>
+              <SUBSCRPTN_OPT_NAME Value="{$SubsSOCIALResult/SQL_RESULT/SUBSCRPTN_OPT_NAME/@Value}"/>
+              <SUBSCRPTN_OPT_FREQ_TXT Value="{$SubsSOCIALResult/SQL_RESULT/SUBSCRPTN_OPT_FREQ_TXT/@Value}"/>
+              <TO_XML SelectList="$currElement/*"/>
+            </SOCIAL_RESULTS>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <SET_NAME SelectList="$respViewSOCIAL/*" FromValue="REGIS_PRSNA_SOC_NETK_ACT"/>
+        <APPEND_TO_XML DocVar="ViewSOCIALResults">
+          <TO_XML SelectList="$currElement"/>
+        </APPEND_TO_XML>
+        <CLONE_XML DocVar="ViewSOCIALResults" AssignToVar="thisReturn"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

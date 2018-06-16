@@ -1,0 +1,42 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_entry" source="studio.controller:load">
+  <ui:container id="container1" name="container1">
+    <ui:step displayText="Trait Lookup Screen" id="searchContainer">
+      <ui:field-group id="fieldGroups" columns="2">
+        <ui:entry-field id="LEGAL_ENT" name="LEGAL_ENT" displayText="Legal Entity" value="{$root/lookup_LEGAL_ENT/@Value}" editable="false" />
+        <ui:entry-field id="MKTNG_PGM" name="MKTNG_PGM" displayText="Marketing Program" value="{$root/lookup_MKTNG_PGM/@Value}" editable="false"/>
+        <ui:entry-field id="TRT_NBR" name="TRT_NBR" displayText="Trait Number" value="{$root/lookup_TRT_NBR/@Value}" editable="false"/>
+        <ui:entry-field id="TRT_NAME" name="TRT_NAME" displayText="Trait Text(English)" value="{$root/lookup_TRT_NAME/@Value}" editable="false"/>
+        <ui:entry-field id="TRT_NAME_LOCAL" name="TRT_NAME_LOCAL" displayText="Trait Text" value="{$root/lookup_TRT_NAME_LOCAL/@Value}" editable="false"/>
+
+        <!--<ui:entry-field id="TRT_DESC" name="TRT_DESC" displayText="Trait Desc"/>
+        <ui:entry-field id="TRT_DTTP_CODE" name="TRT_DTTP_CODE" displayText="Trait DTTP Code"/>
+        <ui:dropdown id="PII_DATA_IND" name="PII_DATA_IND" displayText="PII Data Indicator" selectOne="true">
+          <ui:option id="Y" value="Yes"/>
+          <ui:option id="N" value="No"/>
+        </ui:dropdown>-->
+      </ui:field-group>
+      <!--<ui:buttons id="searchButtons">
+        <ui:button displayText="Search" id="Search" name="Search"/>
+      </ui:buttons>-->
+    </ui:step>
+  </ui:container>
+  <ui:container id="container2" name="container2">
+    <ui:step id="Inner" name="Inner" displayText="">
+      <ui:table id="bottomTable" displayText="Trait Search Results" displayTextNoRecords="No Record found" rowId="TRT_NBR#TRT_NAME" rowSrc="$root/TRT" scrollable="true" selectable="Single" collapsable="true" maxRows="50" postRowIdAs="selected_TRT" filter="true" totalRowCount="$root/RowCount/@Value">
+        <ui:field-group id="tableColumns">
+          <ui:display-field id="TRT_NBR" name="TRT_NBR" displayText="Trait Number"/>
+          <ui:display-field id="TRT_ENT_TYPE_CODE" name="TRT_ENT_TYPE_CODE" displayText="Trait Entity Type Code"/>
+          <ui:display-field id="TRT_NAME" name="TRT_NAME" displayText="Trait Name"/>
+          <ui:display-field id="TRT_DESC" name="TRT_DESC" displayText="Trait Description"/>
+          <ui:display-field id="TRT_DTTP_CODE" name="TRT_DTTP_CODE" displayText="Trait DTTP Code"/>
+          <ui:display-field id="PII_DATA_IND" name="PII_DATA_IND" displayText="PII Data Indicator"/>
+        </ui:field-group>
+        <ui:buttons id="tableButtons">
+          <ui:button id="BACK" name="BACK" displayText="Back"/>
+          <ui:button displayText="Create" id="CREATE" name="CREATE"/>
+          <ui:button displayText="Select and Return" id="SEL_N_RTRN" name="SEL_N_RTRN" enabledBySelections="true"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+</ui:page-group>

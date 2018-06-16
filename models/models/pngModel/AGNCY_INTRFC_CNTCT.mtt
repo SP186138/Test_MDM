@@ -1,0 +1,46 @@
+<document>
+  <properties>
+    <property Name="INTRFC_NBR" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="INTRFC_NBR" />
+    </property>
+    <property Name="CNTCT_NBR" PhysicalName="CNTCT_NBR" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="CNTCT_NBR" />
+    </property>
+    <property Name="AGNCY_NBR" PhysicalName="AGNCY_NBR" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="AGNCY_NBR" />
+    </property>
+    <property Name="PRMRY_CNTCT_IND" PhysicalName="PRMRY_CNTCT_IND" Required="true" CharSet="LATIN">
+      <default>N</default>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="PRMRY_CNTCT_IND" />
+    </property>
+  </properties>
+  <keys>
+    <key Active="true" Name="AGNCY_INTRFC_CNTCT_UPI" PhysicalName="AGNCY_INTRFC_CNTCT_UPI" Kind="PRIMARY">
+      <property Name="AGNCY_NBR" />
+      <property Name="CNTCT_NBR" />
+      <property Name="INTRFC_NBR" />
+    </key>
+  </keys>
+  <links>
+    <link Active="true" Name="Link1" PhysicalName="Interface_nbr_link1">
+      <keymap ToPackage="models/pngModel" ToModelUnit="INTRFC.mtt" ToKey="INTRFC_UPI" ReverseLink="true" ReverseLinkName="Interface_nbr" DeleteRule="RESTRICT">
+        <mapping FromProperty="INTRFC_NBR" ToProperty="INTRFC_NBR" />
+      </keymap>
+    </link>
+    <link Active="true" Name="Link2" PhysicalName="Agncy_nbr_cntct_nbr_link">
+      <keymap ToPackage="models/pngModel" ToModelUnit="AGNCY_CNTCT.mtt" ToKey="AGNCY_CNTCT_UPI" ReverseLink="true" ReverseLinkName="CNTCT_NBR_AGNCY_NBR" DeleteRule="RESTRICT">
+        <mapping FromProperty="AGNCY_NBR" ToProperty="AGNCY_NBR" />
+        <mapping FromProperty="CNTCT_NBR" ToProperty="CNTCT_NBR" />
+      </keymap>
+    </link>
+  </links>
+  <docFacets>
+    <mdmWebServiceFacet />
+    <mdmSysTableMapFacet TableClass="MASTER" Source="MASTER" MasterTable="AGNCY_INTRFC_CNTCT" />
+    <miscFacet PhysicalName="AGNCY_INTRFC_CNTCT" Active="true" />
+    <mdmConfigFacet SchemaGen="true" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql />
+</document>
+

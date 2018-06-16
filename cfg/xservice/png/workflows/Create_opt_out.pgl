@@ -1,0 +1,190 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" name="studio.templates.simple_form" source="studio.controller:load" version="3">
+<ui:container id="topContainer" scrollable="true">
+<ui:step displayText="NOT_FOUND_OPT_LIST" id="NOT_FOUND_OPT_LIST">
+<ui:validation successMessage="{$root/Message/@Value}" anyFieldIsRequired="false"/>
+<ui:field-group>
+<ui:entry-field displayText="Given Name" name="GVN_NAME"/>
+<ui:entry-field displayText="Middle Name" name="MID_NAME"/>
+<ui:entry-field displayText="Family Name" name="FAMLY_NAME"/>
+<ui:entry-field displayText="Email Address" name="EMAIL_ADDR_TXT" id="EMAIL_ADDR_TXT"/>
+<ui:entry-field displayText="Full Phone Number" name="FULL_PHONE_NUMBER" id="FULL_PHONE_NUMBER"/>
+<ui:entry-field id="NATIONAL_ID_NBR" name="NATIONAL_ID_NBR" displayText="National ID"/>
+<ui:entry-field displayText="Address Line 1" name="ADDR_LINE_1_TXT" id="ADDR_LINE_1_TXT"/>
+<ui:entry-field displayText="Address Line 2" name="ADDR_LINE_2_TXT"/>
+<ui:entry-field displayText="Address Line 3" name="ADDR_LINE_3_TXT"/>
+<ui:entry-field displayText="City Name" name="CITY_NAME"/>
+<ui:entry-field displayText="Postal Area Code" name="POSTL_AREA_CODE"/>
+<ui:entry-field displayText="Territory Name" name="TERR_NAME"/>
+<ui:dropdown displayText="Country Name" name="CNTRY_NAME" optionSrc="$root/cntry/OPTION" required="true"  selectOne="true" select="$root/CNTRY_CODE"/>
+<ui:entry-field displayText="Legal Entity Name" name="LEGAL_ENT_NAME" editable="false"/>
+</ui:field-group>
+<ui:buttons>
+<ui:button id="Back" name="Back" displayText="Back" emphasized="true" validate="false" /> <!--  onClick="javascript:onCancel();"  -->
+        
+<ui:button id="save" name="save" displayText="Save" emphasized="true" onClick="javascript:doValidateForm();" displayCondition="{$root/BUTTON_ID/@Value !='save'}"/>
+        
+<ui:button id="update" name="update" displayText="Update" emphasized="true" displayCondition="{$root/BUTTON_ID/@Value='save'}"/>
+</ui:buttons>
+</ui:step>
+</ui:container>
+<ui:script>
+function doValidateForm()
+{
+if (document.getElementById('ADDR_LINE_1_TXT').value==''  &amp;&amp; document.getElementById('EMAIL_ADDR_TXT').value=='' &amp;&amp; document.getElementById('FULL_PHONE_NUMBER').value=='' &amp;&amp; document.getElementById('NATIONAL_ID_NBR').value=='')
+{
+
+core_alert('Please enter atleast Adress Line 1 or Email Address or Full Phone Number or National Id Number');
+return;
+}
+else
+{
+document.form.BUTTON_ID.value = 'save';
+document.form.action = 'save.x2ps';
+document.form.submit();
+}
+}
+    
+function onCancel(){
+    
+var formchanged=isFormChanged();
+if(formchanged){
+var cancelMessage = &quot;Modified information will be discarded, Do you want to continue?&quot;;
+if (	core_confirm( cancelMessage ) == 'yes' ){
+form.BUTTON_ID.value = &quot;Back&quot; ;
+form.submit();
+}else{
+return;
+}
+}else{
+form.BUTTON_ID.value = &quot;CANCEL&quot; ;
+form.submit();
+}
+
+    
+
+}
+
+
+function isFormChanged() {
+
+var rtnVal = false;
+
+var frm = document.forms[0];
+
+var ele = frm.elements;
+
+for ( i=0; i &lt; ele.length; i++ ) {
+
+if ( ele[i].type.length > 0 ) {
+
+if ( isElementChanged( ele, i ) ) {
+
+rtnVal = true;
+
+break;
+
+}
+
+}
+
+}
+
+return rtnVal;
+
+}
+
+
+function isElementChanged( ele, i ) {
+
+var isEleChanged = false;
+
+switch ( ele[i].type ) {
+
+case &quot;text&quot; :
+
+if ( ele[i].value != ele[i].defaultValue ){
+
+return true;
+
+}
+
+break;
+
+
+
+case &quot;textarea&quot; :
+
+if ( ele[i].value != ele[i].defaultValue ) return true;
+
+break;
+
+
+
+case &quot;radio&quot; :
+
+val = &quot;&quot;;
+
+if ( ele[i].checked != ele[i].defaultChecked ) return true;
+
+break;
+
+
+
+case &quot;select-one&quot; :
+
+for ( var x =0 ; x &lt; ele[i].length; x++ ) {
+
+if(ele[i].name!='LEGAL_ENT_NBR'){
+
+if(ele[i].value!='' ){
+
+if ( ele[i].options[ x ].selected != ele[i].options[ x ].defaultSelected ){
+
+return true;
+
+}
+
+}
+
+}
+
+}
+
+break;
+
+
+
+case &quot;select-multiple&quot; :
+
+for ( var x =0 ; x &lt; ele[i].length; x++ ) {
+
+if ( ele[i].options[ x ].selected
+
+!= ele[i].options[ x ].defaultSelected )
+
+return true;
+
+}
+
+break;
+
+
+
+case &quot;checkbox&quot; :
+
+if ( ele[i].checked != ele[i].defaultChecked ) return true;
+
+  
+
+default:
+
+return false;
+
+break;
+
+}
+
+}
+
+</ui:script>
+</ui:page-group>

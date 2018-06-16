@@ -1,0 +1,24 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" Id="ContactCountry.pgl" version="3">
+  <ui:container id="topContainer">
+    <ui:step displayText="AGENCY COUNTRY" id="AGENCY_COUNTRY">
+      <ui:validation successMessage="{$root/SuccessMessage/@Value}"/>
+      <ui:field-group>
+        <ui:image src="/bpi_check.gif" displayCondition="{string-length($root/MSG/AlertGreen/@Value) != 0}" id="checkImg"/>
+        <ui:display-field id="success" value="{$root/MSG/AlertGreen/@Value}" displayCondition="{string-length($root/MSG/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen"/>
+        <ui:image src="/cancel.gif" displayCondition="{string-length($root/MSG/AlertRed/@Value) != 0}"/>
+        <ui:display-field value="{$root/MSG/AlertRed/@Value}" displayCondition="{string-length($root/MSG/AlertRed/@Value) != 0}" name="error" class="requiredIndicator"/>
+      </ui:field-group>
+      <ui:field-group id="Create">
+        <ui:field-group id="left fields" columns="1">
+          <ui:display-field id="AGNCY_NBR" displayText="Agency Number" name="AGNCY_NBR"/>
+          <ui:dropdown id="CNTRY_CODE" displayText="Country" name="CNTRY_CODE" required="true" optionSrc="$root/CNTRY/CNTRY_NAME"/>
+        </ui:field-group>
+      </ui:field-group>
+      <ui:buttons id="buttons">
+        <ui:button id="Add_Contact" displayText="Add Contact" name="Add_Contact" emphasized="true" displayCondition="{$root/Add_Contact/@Value='true'}" validate="false"/>
+        <ui:button id="Save_Country" displayText="Save" name="Save_Country" emphasized="true"/>
+        <ui:button id="SaveAndReturn_Country" displayText="Save And Return" name="SaveAndReturn_Country" emphasized="true"/>
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+</ui:page-group>

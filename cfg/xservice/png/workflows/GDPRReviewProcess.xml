@@ -1,0 +1,3008 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="11" ShowInBreadCrumbs="true" Version="1.0" Name="GDPRReviewProcess" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="GDPRReviewProcess">
+    <variable Name="globalVarReviewCaseXML" Type="xml" Comment="specific case details chosen for review"/>
+    <variable Name="copy_globalVarReviewCaseXML" Type="xml" Comment=""/>
+    <variable Name="filepath" Type="string" Comment=""/>
+    <variable Name="SFTPDirPathSynch" Type="string" Comment=""/>
+    <variable Name="filepathSynch" Type="string" Comment=""/>
+    <variable Name="omxContextPath" Type="string" Comment=""/>
+    <variable Name="resStatusName" Type="xml" Comment=""/>
+    <variable Name="currentGDPRCaseID" Type="string" Comment=""/>
+    <variable Name="currentGDPRCaseID1" Type="string" Comment=""/>
+    <variable Name="ProcInd" Type="string" Comment=""/>
+    <variable Name="SubjectResultXML" Type="xml" Comment=""/>
+    <variable Name="searchResultXML" Type="xml" Comment=""/>
+    <variable Name="FinalUpdateCollateDoc" Type="xml" Comment=""/>
+    <variable Name="ProcessInd" Type="string" Comment=""/>
+    <variable Name="resLegalEntNbr" Type="string" Comment=""/>
+    <variable Name="reviewCaseDetail" Type="xml" Comment=""/>
+    <variable Name="matchedDomainValues" Type="xml" Comment=""/>
+    <variable Name="programIDValues" Type="xml" Comment=""/>
+    <variable Name="searchResultProcIndic" Type="xml" Comment=""/>
+    <variable Name="cntryNames" Type="xml" Comment=""/>
+    <variable Name="UserNames" Type="xml" Comment=""/>
+    <variable Name="stateNames" Type="xml" Comment=""/>
+    <variable Name="FinalSUDCollateDoc" Type="xml" Comment=""/>
+    <variable Name="resCountryName" Type="xml" Comment=""/>
+    <variable Name="LegalEntVar" Type="string" Comment=""/>
+    <variable Name="VarGivenName" Type="string" Comment=""/>
+    <variable Name="VarFamilyName" Type="string" Comment=""/>
+    <variable Name="VarPhoneNum" Type="string" Comment=""/>
+    <variable Name="VarAddrLine1" Type="string" Comment=""/>
+    <variable Name="VarAddrLine2" Type="string" Comment=""/>
+    <variable Name="VarAddrLine3" Type="string" Comment=""/>
+    <variable Name="VarregisCnsmrId" Type="string" Comment=""/>
+    <variable Name="VarNationalID" Type="string" Comment=""/>
+    <variable Name="VarEmailAddr" Type="string" Comment=""/>
+    <variable Name="VarCountry" Type="string" Comment=""/>
+    <variable Name="VarCity" Type="string" Comment=""/>
+    <variable Name="VarPostalAreaCode" Type="string" Comment=""/>
+    <variable Name="VarTotalCountRegis" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start">
+      <actions>
+        <action/>
+      </actions>
+      <next_nodes>
+        <next_node Name="decisionSummary"/>
+      </next_nodes>
+    </start>
+    <done Name="done">
+      <actions>
+        <action/>
+      </actions>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="GDPRReviewProcess" ShowInBreadCrumbs="HIDE" Template="GDPRMainScreen.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <!-- var declaration to hold records to be shown on screen -->
+          <TO_DOCVAR AssignToVar="reviewRecordsList">
+            <DATASET/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/MaxRec/@Value = null">
+            <THEN>
+              <SET Var="MaxRec" FromValue="100"/>
+            </THEN>
+            <ELSE>
+              <SET Var="MaxRec" FromValue="{$thisParam/MaxRec/@Value}"/>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SYS_RELOAD'">
+            <THEN>
+              <SET Var="varStartAtRow" FromValue="{ifElse($thisParam/START_COUNT/@Value = null, '0', $thisParam/START_COUNT/@Value)}"/>
+            </THEN>
+            <ELSE>
+              <SET Var="varStartAtRow" FromValue="0"/>
+              <SET DocVar="thisParam" Property="START_COUNT" FromValue="0"/>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="strlen(trim($thisParam/SORT_BY/@Value))!= 0 and ($thisParam/SORT_BY/@Value)!='ID'">
+            <THEN>
+              <SET Var="pSortMainBy" FromValue="{$thisParam/SORT_BY/@Value}"/>
+              <SET Var="pSortMainOrder" FromValue="{$thisParam/SORT_ORDER/@Value}"/>
+            </THEN>
+            <ELSE>
+              <THEN>
+                <SET Var="pSortMainBy" FromValue="GDPR_CASE_ID"/>
+                <SET Var="pSortMainOrder" FromValue="Ascending"/>
+              </THEN>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="strlen(trim($thisParam/SORT_BY/@Value)) != 0">
+            <THEN>
+              <MAKE_INSTANCE_DOCUMENT Name="{$pSortMainBy}" AssignToVar="sortByMainTag"/>
+              <SET DocVar="sortByMainTag" Attribute="Sort" FromValue="{$pSortMainOrder}"/>
+            </THEN>
+          </IF_TEST>
+          <!-- fetch records to show up on the screen -->
+          <TO_DOCVAR AssignToVar="thisParamFilter">
+            <ROOT>
+              <GDPR_CASE_ID Value="{$thisParam/GDPR_CASE_ID/@Value}"/>
+              <GVN_NAME Value="{$thisParam/GVN_NAME/@Value}"/>
+              <MID_NAME Value="{$thisParam/MID_NAME/@Value}"/>
+              <FULL_NAME Value="{$thisParam/FULL_NAME/@Value}"/>
+              <FAMLY_NAME Value="{$thisParam/FAMLY_NAME/@Value}"/>
+              <ADDR_LINE_1_TXT Value="{$thisParam/ADDR_LINE_1_TXT/@Value}"/>
+              <ADDR_LINE_2_TXT Value="{$thisParam/ADDR_LINE_1_TXT/@Value}"/>
+              <ADDR_LINE_3_TXT Value="{$thisParam/ADDR_LINE_3_TXT/@Value}"/>
+              <TERR_NAME Value="{$thisParam/TERR_NAME/@Value}"/>
+              <CITY_NAME Value="{$thisParam/CITY_NAME/@Value}"/>
+              <POSTL_AREA_CODE Value="{$thisParam/POSTL_AREA_CODE/@Value}"/>
+              <SR_NBR Value="{$thisParam/SR_NBR/@Value}"/>
+              <GDPR_CASE_OWNR_CNTCT_NBR Value="{$thisParam/GDPR_CASE_OWNR_CNTCT_NBR/@Value}"/>
+              <GDPR_RQST_CRTN_DATETM Value="{$thisParam/GDPR_RQST_CRTN_DATETM/@Value}"/>
+              <EMAIL_ADDR_TXT Value="{$thisParam/EMAIL_ADDR_TXT/@Value}"/>
+              <FULL_PHONE_NUM Value="{$thisParam/FULL_PHONE_NUM/@Value}"/>
+              <DATA_SRCE_NBR Value="{$thisParam/DATA_SRCE_NBR/@Value}"/>
+              <NAME_SUFFX_TXT Value="{$thisParam/NAME_SUFFX_TXT/@Value}"/>
+              <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+              <NATIONAL_ID_NBR Value="{$thisParam/NATIONAL_ID_NBR/@Value}"/>
+              <GDPR_RQST_FULFLMT_DATETM Value="{$thisParam/GDPR_RQST_FULFLMT_DATETM/@Value}"/>
+              <GDPR_RQST_IDNTY_VFYD_DATETM Value="{$thisParam/GDPR_RQST_IDNTY_VFYD_DATETM/@Value}"/>
+              <GDPR_RQST_TYPE_NAME Value="{$thisParam/GDPR_RQST_TYPE_NAME/@Value}"/>
+              <GDPR_RQST_STATUS_NAME Value="{$thisParam/GDPR_RQST_STATUS_NAME/@Value}"/>
+              <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+              <MKTNG_PGM_DESC Value="{$thisParam/MKTNG_PGM_DESC/@Value}"/>
+              <LAST_MODIFIED_BY Value="{$thisParam/SYS_LAST_MODIFIED_BY/@Value}"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SYS_RELOAD'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="thisParamFilter">
+                <ROOT>
+                  <GDPR_CASE_ID Value="{$thisParam/FILTER_GDPR_CASE_ID/@Value}"/>
+                  <GVN_NAME Value="{$thisParam/FILTER_GVN_NAME/@Value}"/>
+                  <MID_NAME Value="{$thisParam/FILTER_MID_NAME/@Value}"/>
+                  <FAMLY_NAME Value="{$thisParam/FILTER_FAMLY_NAME/@Value}"/>
+                  <FULL_NAME Value="{$thisParam/FILTER_FULL_NAME/@Value}"/>
+                  <ADDR_LINE_1_TXT Value="{$thisParam/FILTER_ADDR_LINE_1_TXT/@Value}"/>
+                  <ADDR_LINE_2_TXT Value="{$thisParam/FILTER_ADDR_LINE_2_TXT/@Value}"/>
+                  <ADDR_LINE_3_TXT Value="{$thisParam/FILTER_ADDR_LINE_3_TXT/@Value}"/>
+                  <TERR_NAME Value="{$thisParam/FILTER_TERR_NAME/@Value}"/>
+                  <SR_NBR Value="{$thisParam/FILTER_SR_NBR/@Value}"/>
+                  <GDPR_CASE_OWNR_CNTCT_NBR Value="{$thisParam/FILTER_GDPR_CASE_OWNR_CNTCT_NBR/@Value}"/>
+                  <POSTL_AREA_CODE Value="{$thisParam/FILTER_POSTL_AREA_CODE/@Value}"/>
+                  <CITY_NAME Value="{$thisParam/FILTER_CITY_NAME/@Value}"/>
+                  <EMAIL_ADDR_TXT Value="{$thisParam/FILTER_EMAIL_ADDR_TXT/@Value}"/>
+                  <FULL_PHONE_NUM Value="{$thisParam/FILTER_FULL_PHONE_NUM/@Value}"/>
+                  <NAME_SUFFX_TXT Value="{$thisParam/FILTER_NAME_SUFFX_TXT/@Value}"/>
+                  <DATA_SRCE_NBR Value="{$thisParam/FILTER_DATA_SRCE_NBR/@Value}"/>
+                  <CNTRY_NAME Value="{$thisParam/FILTER_CNTRY_NAME/@Value}"/>
+                  <MKTNG_PGM_DESC Value="{$thisParam/FILTER_MKTNG_PGM_DESC/@Value}"/>
+                  <REGIS_CNSMR_ID_VAL Value="{$thisParam/FILTER_REGIS_CNSMR_ID_VAL/@Value}"/>
+                  <NATIONAL_ID_NBR Value="{$thisParam/FILTER_NATIONAL_ID_NBR/@Value}"/>
+                  <GDPR_RQST_FULFLMT_DATETM Value="{$thisParam/FILTER_GDPR_RQST_FULFLMT_DATETM/@Value}"/>
+                  <GDPR_RQST_CRTN_DATETM Value="{$thisParam/FILTER_GDPR_RQST_CRTN_DATETM/@Value}"/>
+                  <GDPR_RQST_IDNTY_VFYD_DATETM Value="{$thisParam/FILTER_GDPR_RQST_IDNTY_VFYD_DATETM/@Value}"/>
+                  <GDPR_RQST_TYPE_NAME Value="{$thisParam/FILTER_GDPR_RQST_TYPE_NAME/@Value}"/>
+                  <GDPR_RQST_STATUS_NAME Value="{$thisParam/FILTER_GDPR_RQST_STATUS_NAME/@Value}"/>
+                  <LAST_MODIFIED_BY Value="{$thisParam/FILTER_SYS_LAST_MODIFIED_BY/@Value}"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <FORM_SEARCH_FILTER Value="{$thisParamFilter}" AssignToVar="filter">
+            <GDPR_CASE_ID/>
+            <GVN_NAME/>
+            <MID_NAME/>
+            <FULL_NAME/>
+            <FAMLY_NAME/>
+            <ADDR_LINE_1_TXT/>
+            <ADDR_LINE_2_TXT/>
+            <ADDR_LINE_3_TXT/>
+            <TERR_NAME/>
+            <CITY_NAME/>
+            <SR_NBR/>
+            <GDPR_CASE_OWNR_CNTCT_NBR/>
+            <POSTL_AREA_CODE/>
+            <GDPR_RQST_CRTN_DATETM/>
+            <EMAIL_ADDR_TXT/>
+            <FULL_PHONE_NUM/>
+            <DATA_SRCE_NBR/>
+            <NAME_SUFFX_TXT/>
+            <REGIS_CNSMR_ID_VAL/>
+            <NATIONAL_ID_NBR/>
+            <GDPR_RQST_FULFLMT_DATETM/>
+            <GDPR_RQST_IDNTY_VFYD_DATETM/>
+            <GDPR_RQST_TYPE_NAME/>
+            <GDPR_RQST_STATUS_NAME/>
+            <CNTRY_NAME/>
+            <MKTNG_PGM_DESC/>
+            <LAST_MODIFIED_BY/>
+          </FORM_SEARCH_FILTER>
+          <!-- Added by Reshma Ramesh to empty the filters when clicked on Back -->
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Back'">
+            <THEN>
+              <SET Var="filter" FromValue="{$Empty_Variable}"/>
+            </THEN>
+          </IF_TEST>
+          <GET_DOC_SMART Name="V_GDPR_Review" AssignToVar="reviewCaseSQL_filter" DirtyRead="true" ServiceName="BCM_MASTER" HandleException="true" MaxRows="{$MaxRec}" StartAtRow="{$varStartAtRow}" ReturnRowCount="yes">
+            <TO_XML SelectList="$filter/*/*"/>
+            <SELECT>
+              <GDPR_CASE_ID/>
+              <GVN_NAME/>
+              <MID_NAME/>
+              <FULL_NAME/>
+              <FAMLY_NAME/>
+              <ADDR_LINE_1_TXT/>
+              <ADDR_LINE_2_TXT/>
+              <ADDR_LINE_3_TXT/>
+              <TERR_NAME/>
+              <CITY_NAME/>
+              <SR_NBR/>
+              <GDPR_CASE_OWNR_CNTCT_NBR/>
+              <POSTL_AREA_CODE/>
+              <GDPR_RQST_CRTN_DATETM/>
+              <EMAIL_ADDR_TXT/>
+              <FULL_PHONE_NUM/>
+              <DATA_SRCE_NBR/>
+              <NAME_SUFFX_TXT/>
+              <REGIS_CNSMR_ID_VAL/>
+              <NATIONAL_ID_NBR/>
+              <GDPR_RQST_FULFLMT_DATETM/>
+              <GDPR_RQST_IDNTY_VFYD_DATETM/>
+              <GDPR_RQST_TYPE_NAME/>
+              <GDPR_RQST_STATUS_NAME/>
+              <CNTRY_NAME/>
+              <MKTNG_PGM_DESC/>
+              <LAST_MODIFIED_BY Alias="SYS_LAST_MODIFIED_BY"/>
+            </SELECT>
+            <ORDER_BY>
+              <TO_XML DocVar="sortByMainTag"/>
+            </ORDER_BY>
+          </GET_DOC_SMART>
+          <TO_DOCVAR AssignToVar="reviewCaseSQL">
+            <RESPONSE/>
+          </TO_DOCVAR>
+          <FOR_EACH CurrentElement="currFilter" SelectList="$reviewCaseSQL_filter/V_GDPR_Review">
+            <SET_NAME DocVar="currFilter" FromValue="SQL_RESULT"/>
+            <APPEND_TO_XML DocVar="reviewCaseSQL">
+              <TO_XML DocVar="currFilter"/>
+            </APPEND_TO_XML>
+          </FOR_EACH>
+          <FOR_EACH SelectList="$reviewCaseSQL/SQL_RESULT" CurrentElement="currentCase">
+            <APPEND_TO_XML DocVar="reviewRecordsList">
+              <DATA>
+                <GDPR_CASE_ID Value="{$currentCase/GDPR_CASE_ID/@Value}"/>
+                <GVN_NAME Value="{$currentCase/GVN_NAME/@Value}"/>
+                <MID_NAME Value="{$currentCase/MID_NAME/@Value}"/>
+                <FULL_NAME Value="{$currentCase/FULL_NAME/@Value}"/>
+                <FAMLY_NAME Value="{$currentCase/FAMLY_NAME/@Value}"/>
+                <ADDR_LINE_1_TXT Value="{$currentCase/ADDR_LINE_1_TXT/@Value}"/>
+                <ADDR_LINE_2_TXT Value="{$currentCase/ADDR_LINE_2_TXT/@Value}"/>
+                <ADDR_LINE_3_TXT Value="{$currentCase/ADDR_LINE_3_TXT/@Value}"/>
+                <TERR_NAME Value="{$currentCase/TERR_NAME/@Value}"/>
+                <CITY_NAME Value="{$currentCase/CITY_NAME/@Value}"/>
+                <POSTL_AREA_CODE Value="{$currentCase/POSTL_AREA_CODE/@Value}"/>
+                <GDPR_RQST_CRTN_DATETM Value="{$currentCase/GDPR_RQST_CRTN_DATETM/@Value}"/>
+                <EMAIL_ADDR_TXT Value="{$currentCase/EMAIL_ADDR_TXT/@Value}"/>
+                <FULL_PHONE_NUM Value="{$currentCase/FULL_PHONE_NUM/@Value}"/>
+                <DATA_SRCE_NBR Value="{$currentCase/DATA_SRCE_NBR/@Value}"/>
+                <SR_NBR Value="{$currentCase/SR_NBR/@Value}"/>
+                <GDPR_CASE_OWNR_CNTCT_NBR Value="{$currentCase/GDPR_CASE_OWNR_CNTCT_NBR/@Value}"/>
+                <NAME_SUFFX_TXT Value="{$currentCase/NAME_SUFFX_TXT/@Value}"/>
+                <REGIS_CNSMR_ID_VAL Value="{trim($currentCase/REGIS_CNSMR_ID_VAL/@Value)}"/>
+                <NATIONAL_ID_NBR Value="{$currentCase/NATIONAL_ID_NBR/@Value}"/>
+                <GDPR_RQST_FULFLMT_DATETM Value="{$currentCase/GDPR_RQST_FULFLMT_DATETM/@Value}"/>
+                <GDPR_RQST_IDNTY_VFYD_DATETM Value="{$currentCase/GDPR_RQST_IDNTY_VFYD_DATETM/@Value}"/>
+                <GDPR_RQST_TYPE_NAME Value="{$currentCase/GDPR_RQST_TYPE_NAME/@Value}"/>
+                <CNTRY_NAME Value="{$currentCase/CNTRY_NAME/@Value}"/>
+                <GDPR_RQST_STATUS_NAME Value="{$currentCase/GDPR_RQST_STATUS_NAME/@Value}"/>
+                <MKTNG_PGM_DESC Value="{$currentCase/MKTNG_PGM_DESC/@Value}"/>
+                <SYS_LAST_MODIFIED_BY Value="{$currentCase/SYS_LAST_MODIFIED_BY/@Value}"/>
+              </DATA>
+            </APPEND_TO_XML>
+          </FOR_EACH>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <TO_XML DocVar="reviewRecordsList"/>
+              <TotalRowCount Value="{$reviewCaseSQL_filter/@TotalRowCount}"/>
+              <MaxRec Value="{$MaxRec}"/>
+              <START_COUNT Value="{$thisParam/START_COUNT/@Value}"/>
+            </ROOT>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <REMOVE_CHILDREN ChildName="SORT_BY" DocVar="thisParam"/>
+          <REMOVE_CHILDREN ChildName="SORT_ORDER" DocVar="thisParam"/>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='reviewCaseButton'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ReviewCase" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='requestSummaryButton'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="SummaryCase" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="ReviewCase" ShowInBreadCrumbs="HIDE" Template="ReviewCaseScreen.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <!-- Added by Reshma Ramesh for the population of the top pane -->
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='reviewCaseButton'">
+            <THEN>
+              <REQUEST Name="getReviewSpecialistUser" AssignToVar="UserNames" ServiceName="BCM_MASTER"/>
+              <SET Var="CaseId" FromValue="{substringAfter($thisParam/selectedCaseID/@Value,'GDPR_CASE_ID=')}"/>
+              <SET Var="CaseId" FromValue="{substringBefore($CaseId,'#GDPR_RQST_STATUS_NAME=')}"/>
+              <SET Var="currentGDPRCaseID" FromSelect="trim($CaseId)"/>
+            </THEN>
+            <!-- <ELSE>
+              <REQUEST Name="getReviewSpecialistUser" AssignToVar="UserNames" ServiceName="BCM_MASTER"/>
+              <SET Var="CaseId" FromValue="{substringAfter($thisParam/selectedCaseID/@Value,'GDPR_CASE_ID=')}"/>
+              <SET Var="CaseId" FromValue="{substringBefore($CaseId,'#GDPR_RQST_STATUS_NAME=')}"/>
+              <SET Var="currentGDPRCaseID" FromSelect="trim($CaseId)"/>
+            </ELSE>-->
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/GDPRCASEID/@Value='' or $thisParam/GDPRCASEID/@Value=null">
+            <THEN>
+              <!--EXECUTE_SQL_QUERY Value="locking row for access sel GDPR_CASE_ID,GDPR_RQST_TYPE_CD,GVN_NAME,MID_NAME,FAMLY_NAME,NAME_SUFFX_TXT,FULL_NAME,MKTNG_PGM_NBR,trim(REGIS_CNSMR_ID_VAL),NATIONAL_ID_NBR,ADDR_LINE_1_TXT,ADDR_LINE_2_TXT,ADDR_LINE_3_TXT,CITY_NAME,TERR_NAME,POSTL_AREA_CODE,CNTRY_CODE,GDPR_RQST_FULFLMT_DATETM,GDPR_RQST_CRTN_DATETM,GDPR_RQST_IDNTY_VFYD_DATETM,EMAIL_ADDR_TXT,FULL_PHONE_NUM, DATA_SRCE_NBR,GDPR_CASE_ID,GDPR_RQST_STATUS_CD from MDM.GDPR_RQST where GDPR_CASE_ID = ? AND GDPR_RQST_STATUS_CD &lt;> 'CP' ORDER BY GDPR_CASE_ID ASC;" AssignToVar="reviewCaseDetail">
+                <PARAM Value="{$currentGDPRCaseID}"/>
+              </EXECUTE_SQL_QUERY-->
+              <EXECUTE_SQL_QUERY Value="locking row for access sel A.GDPR_CASE_ID,A.GDPR_RQST_TYPE_CD,A.GVN_NAME,A.MID_NAME,A.FAMLY_NAME, A.NAME_SUFFX_TXT,A.FULL_NAME,A.MKTNG_PGM_NBR,A.REGIS_CNSMR_ID_VAL,A.NATIONAL_ID_NBR,A.ADDR_LINE_1_TXT,A.ADDR_LINE_2_TXT,A.ADDR_LINE_3_TXT,A.CITY_NAME,A.TERR_NAME,A.POSTL_AREA_CODE,A.CNTRY_CODE,A.GDPR_RQST_FULFLMT_DATETM,A.GDPR_RQST_CRTN_DATETM,A.GDPR_RQST_IDNTY_VFYD_DATETM,A.EMAIL_ADDR_TXT,A.FULL_PHONE_NUM, A.DATA_SRCE_NBR,A.GDPR_CASE_ID,A.GDPR_RQST_STATUS_CD ,B.CNTRY_NAME,C.MKTNG_PGM_DESC,D.GDPR_RQST_TYPE_NAME,E.GDPR_RQST_STATUS_NAME from MDM.GDPR_RQST A LEFT JOIN CNTRY B ON A.CNTRY_CODE = B.CNTRY_CODE LEFT  JOIN MKTNG_PGM C ON A.MKTNG_PGM_NBR = C.MKTNG_PGM_NBR LEFT JOIN GDPR_RQST_TYPE D ON A.GDPR_RQST_TYPE_CD= D.GDPR_RQST_TYPE_CD LEFT JOIN GDPR_RQST_STATUS E ON A.GDPR_RQST_STATUS_CD= E.GDPR_RQST_STATUS_CD where A.GDPR_CASE_ID ='{$currentGDPRCaseID}' ORDER BY GDPR_CASE_ID ASC;" AssignToVar="reviewCaseDetail">
+                <!--PARAM Value="{$currentGDPRCaseID}" /-->
+              </EXECUTE_SQL_QUERY>
+            </THEN>
+            <ELSE>
+              <SET Var="currentGDPRCaseID" FromValue="{$thisParam/GDPRCASEID/@Value}"/>
+              <!--<SET Var="GDPR_CASE_ID" FromValue="{$thisParam/GDPRCASEID/@Value}" />-->
+              <TO_DOCVAR AssignToVar="get_reviewCaseDetail">
+                <root>locking	row for access
+sel	A.GDPR_CASE_ID,A.GDPR_RQST_TYPE_CD,A.GVN_NAME,A.MID_NAME,A.FAMLY_NAME,
+A.NAME_SUFFX_TXT,A.FULL_NAME,A.MKTNG_PGM_NBR,A.REGIS_CNSMR_ID_VAL,
+A.NATIONAL_ID_NBR,A.ADDR_LINE_1_TXT,A.ADDR_LINE_2_TXT,A.ADDR_LINE_3_TXT,
+A.CITY_NAME,A.TERR_NAME,A.POSTL_AREA_CODE,A.CNTRY_CODE,A.GDPR_RQST_FULFLMT_DATETM,
+A.GDPR_RQST_CRTN_DATETM,A.GDPR_RQST_IDNTY_VFYD_DATETM,A.EMAIL_ADDR_TXT,
+A.FULL_PHONE_NUM, A.DATA_SRCE_NBR,A.GDPR_CASE_ID,A.GDPR_RQST_STATUS_CD ,
+B.CNTRY_NAME,C.MKTNG_PGM_DESC,D.GDPR_RQST_TYPE_NAME,E.GDPR_RQST_STATUS_NAME
+from	MDM.GDPR_RQST A LEFT JOIN CNTRY B
+ON A.CNTRY_CODE = B.CNTRY_CODE LEFT  JOIN MKTNG_PGM C
+ON A.MKTNG_PGM_NBR = C.MKTNG_PGM_NBR LEFT JOIN GDPR_RQST_TYPE D
+ON A.GDPR_RQST_TYPE_CD= D.GDPR_RQST_TYPE_CD LEFT JOIN GDPR_RQST_STATUS E
+ON A.GDPR_RQST_STATUS_CD= E.GDPR_RQST_STATUS_CD
+where	A.GDPR_CASE_ID = '{$currentGDPRCaseID}'
+AND A.GDPR_RQST_STATUS_CD &lt;> 'CP'
+ORDER BY GDPR_CASE_ID ASC;</root>
+              </TO_DOCVAR>
+              <EXECUTE_SQL_QUERY Value="{$get_reviewCaseDetail/@text}" AssignToVar="reviewCaseDetail"/>
+            </ELSE>
+          </IF_TEST>
+          <!--TO_DOCVAR AssignToVar="selectSysMod">
+            <root>SELECT SYS_LAST_MODIFIED_BY FROM GDPR_RQST
+WHERE GDPR_CASE_ID='{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}';</root>
+          </TO_DOCVAR>
+          <EXECUTE_SQL_QUERY AssignToVar="resSelectSysMod" Value="{$selectSysMod/@text}" /-->
+          <!--TO_DOCVAR AssignToVar="updateSysMod">
+            <root>UPDATE GDPR_RQST SET SYS_LAST_MODIFIED_BY='{$userId}'
+WHERE GDPR_CASE_ID='{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}';</root>
+          </TO_DOCVAR>
+          <EXECUTE_SQL_QUERY AssignToVar="resUpdateSysMod" Value="{$updateSysMod/@text}" /-->
+          <TO_DOCVAR AssignToVar="getStatusName">
+            <root>LOCKING ROW FOR ACCESS
+SEL GDPR_RQST_STATUS_NAME FROM  GDPR_RQST_STATUS
+WHERE GDPR_RQST_STATUS_CD='{$reviewCaseDetail/SQL_RESULT/GDPR_RQST_STATUS_CD/@Value}';</root>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="getTypeName">
+            <root>LOCKING ROW FOR ACCESS
+SEL GDPR_RQST_TYPE_NAME FROM  GDPR_RQST_TYPE
+WHERE GDPR_RQST_TYPE_CD='{$reviewCaseDetail/SQL_RESULT/GDPR_RQST_TYPE_CD/@Value}';</root>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='UpdateContactUs'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="getMarketingName">
+                <root>LOCKING ROW FOR ACCESS
+SEL MKTNG_PGM_DESC FROM  MKTNG_PGM
+WHERE MKTNG_PGM_NBR IS NULL;</root>
+              </TO_DOCVAR>
+            </THEN>
+            <ELSE>
+              <TO_DOCVAR AssignToVar="getMarketingName">
+                <root>LOCKING ROW FOR ACCESS
+SEL MKTNG_PGM_DESC FROM  MKTNG_PGM
+WHERE MKTNG_PGM_NBR='{$reviewCaseDetail/SQL_RESULT/MKTNG_PGM_NBR/@Value}';</root>
+              </TO_DOCVAR>
+            </ELSE>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="getCountryName">
+            <root>LOCKING ROW FOR ACCESS
+SEL CNTRY_NAME FROM  CNTRY
+WHERE CNTRY_CODE='{$reviewCaseDetail/SQL_RESULT/CNTRY_CODE/@Value}';</root>
+          </TO_DOCVAR>
+          <!--EXECUTE_SQL_QUERY AssignToVar="resStatusName" Value="{$getStatusName/@text}"/>
+          <EXECUTE_SQL_QUERY AssignToVar="resTypeName" Value="{$getTypeName/@text}"/>
+          <EXECUTE_SQL_QUERY AssignToVar="resCountryName" Value="{$getCountryName/@text}"/>
+          <EXECUTE_SQL_QUERY AssignToVar="resMktngName" Value="{$getMarketingName/@text}"/-->
+          <TO_DOCVAR AssignToVar="globalVarReviewCaseXML">
+            <ROOT>
+              <TO_XML SelectList="$reviewCaseDetail/*"/>
+              <!--GDPR_RQST_STATUS_NAME Value="{$resStatusName/SQL_RESULT/GDPR_RQST_STATUS_NAME/@Value}"/>
+              <GDPR_RQST_TYPE_NAME Value="{$resTypeName/SQL_RESULT/GDPR_RQST_TYPE_NAME/@Value}"/>
+              <CNTRY_NAME Value="{$resCountryName/SQL_RESULT/CNTRY_NAME/@Value}"/>
+              <MKTNG_PGM_DESC Value="{$resMktngName/SQL_RESULT/MKTNG_PGM_DESC/@Value}"/-->
+              <!--SYS_LAST_MODIFIED_BY Value="{$resSelectSysMod/SQL_RESULT/SYS_LAST_MODIFIED_BY/@Value}"/-->
+            </ROOT>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <TO_XML SelectList="$reviewCaseDetail/*"/>
+              <!--GDPR_RQST_STATUS_NAME Value="{$resStatusName/SQL_RESULT/GDPR_RQST_STATUS_NAME/@Value}"/>
+              <GDPR_RQST_TYPE_NAME Value="{$resTypeName/SQL_RESULT/GDPR_RQST_TYPE_NAME/@Value}"/>
+              <CNTRY_NAME Value="{$resCountryName/SQL_RESULT/CNTRY_NAME/@Value}"/>
+              <MKTNG_PGM_DESC Value="{$resMktngName/SQL_RESULT/MKTNG_PGM_DESC/@Value}"/-->
+              <!--SYS_LAST_MODIFIED_BY Value="{$resSelectSysMod/SQL_RESULT/SYS_LAST_MODIFIED_BY/@Value}"/-->
+              <TO_XML DocVar="pMessage1"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <!-- Code added by Reshma Ramesh for Formation of Consumer Search Individuals screen in the Second pane where GDPR_RQST_STATUS_CD 'NM'-->
+          <IF_TEST Test="($thisParam/BUTTON_ID/@Value='reviewCaseButton' and $reviewCaseDetail/SQL_RESULT/GDPR_RQST_STATUS_CD/@Value='NM') or ($reviewCaseDetail/SQL_RESULT/GDPR_RQST_STATUS_CD/@Value='NM' and ($thisParam/GDPRCASEID/@Value!='' or $thisParam/GDPRCASEID/@Value!=null))">
+            <THEN>
+              <REQUEST Name="getMatchedDomains" ServiceName="BCM_MASTER" AssignToVar="domainValues"/>
+              <TO_DOCVAR AssignToVar="matchedDomainValues">
+                <TO_XML SelectList="$domainValues"/>
+              </TO_DOCVAR>
+              <!--TO_DOCVAR AssignToVar="getLegalEntNbr">
+                <root>LOCKING ROW FOR ACCESS SELECT  A.LEGAL_ENT_NBR FROM LEGAL_ENT A JOIN CNTRY B ON A.LEGAL_ENT_NBR = B.LEGAL_ENT_NBR 
+  where CNTRY_NAME='{$resCountryName/SQL_RESULT/CNTRY_NAME/@Value}';</root>
+              </TO_DOCVAR>
+              <EXECUTE_SQL_QUERY AssignToVar="resLegalEntNbr" Value="{$getLegalEntNbr/@text}"/-->
+              <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT  A.LEGAL_ENT_NBR, A.LEGAL_ENT_NAME FROM LEGAL_ENT A JOIN CNTRY B ON A.LEGAL_ENT_NBR = B.LEGAL_ENT_NBR where CNTRY_NAME='{$reviewCaseDetail/SQL_RESULT/CNTRY_NAME/@Value}'" AssignToVar="ResNew"/>
+              <SET Var="LegalEntVar" FromValue="{$ResNew/SQL_RESULT/LEGAL_ENT_NBR/@Value}"/>
+              <!--GET_DOCUMENT Name="LEGAL_ENT" AssignToVar="legalEntNbr" ServiceName="BCM_MASTER" DirtyRead="true">
+                <LEGAL_ENT_NAME Value="{$thisParam/LEGAL_ENT_NAME/@Value}"/>
+                <SELECT>
+                  <LEGAL_ENT_NBR/>
+                </SELECT>
+              </GET_DOCUMENT-->
+              <REQUEST Name="getProgramIDs" ServiceName="BCM_MASTER" AssignToVar="programIDValues">
+                <SOURCE Value="SEARCH"/>
+                <LEGAL_ENT_NBR Value="{$ResNew/SQL_RESULT/LEGAL_ENT_NBR/@Value}"/>
+              </REQUEST>
+              <!--TO_DOCVAR AssignToVar="allProgramIDs">
+                <MKTNG_PGM/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="programIdsList">
+                <ROOT>
+                  <MKTNG_PGM/>
+                </ROOT>
+              </TO_DOCVAR>
+              <GET_DOCUMENT Name="MKTNG_PGM" ServiceName="BCM_MASTER" AssignToVar="allProgramIDs" DirtyRead="true" ReturnRowCount="yes">
+                <LEGAL_ENT_NBR Value="{$ResNew/SQL_RESULT/LEGAL_ENT_NBR/@Value}"/>
+                <SELECT>
+                  <MKTNG_PGM_NBR/>
+                  <MKTG_PGM_NAME/>
+                </SELECT>
+              </GET_DOCUMENT>
+              <APPEND_TO_XML SelectList="$programIdsList/MKTNG_PGM">
+                <OPTION Id="" Value="All"/>
+              </APPEND_TO_XML-->
+              <!--REQUEST Name="getCountries" ServiceName="BCM_MASTER" AssignToVar="cntryNames"/-->
+              <REQUEST Name="getCountriesList" AssignToVar="cntryNames" ServiceName="BCM_MASTER"/>
+              <EXECUTE_SQL_QUERY AssignToVar="VarNewCntryCode" Value="SELECT CNTRY_CODE from CNTRY WHERE CNTRY_NAME='{$thisParam/CNTRY_CODE/@Value}'"/>
+              <!--REQUEST Name="getStates" AssignToVar="stateNames" ServiceName="BCM_MASTER">
+                <CNTRY_CODE Value="{$VarNewCntryCode/SQL_RESULT/CNTRY_CODE/@Value}" />
+              </REQUEST-->
+              <!--ADD_CHILDREN FromSelect="$consumerDetails" DocVar="thisReturn" /-->
+              <!--REQUEST Name="getContactTypes" ServiceName="BCM_MASTER" AssignToVar="contactTypes" />
+              <REQUEST Name="getDocumentAccessControlList" ServiceName="USER_SECURITY" AssignToVar="assignedActivities">
+                <USER_ID Value="{$UserId}" />
+              </REQUEST-->
+              <FOR_EACH CurrentElement="activity" SelectList="$assignedActivities/UIFORM_ACTIVITIES/*">
+                <IF_TEST Test="$activity/@Value = 'CSREdit' ">
+                  <THEN>
+                    <SET Var="PE_ACCESS" FromValue="EDIT_VIEW"/>
+                    <BREAK/>
+                  </THEN>
+                  <ELSE>
+                    <SET Var="PE_ACCESS" FromValue="VIEW"/>
+                  </ELSE>
+                </IF_TEST>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value !='BACK'">
+            <THEN>
+              <IF_TEST Test="($thisParam/BUTTON_ID/@Value='SEARCH_INDIVIDUAL' or $thisParam/START_COUNT/@Value>=0) and ($userAction!='LOAD_STATES') and ($userAction!='LOAD_PROGRAM_LIST')">
+                <THEN>
+                  <SET_NAME Value="{$thisParam/MKTNG_PGM_NUMBER}" FromValue="MKTNG_PGM_NBR"/>
+                  <SET_NAME Value="{$thisParam/FULL_PHONE_NUMBER}" FromValue="FULL_PHONE_NUM"/>
+                  <GET_DOCUMENT Name="LEGAL_ENT" AssignToVar="legalEntNbr" ServiceName="BCM_MASTER" DirtyRead="true">
+                    <LEGAL_ENT_NAME Value="{$thisParam/LEGAL_ENT_NAME/@Value}"/>
+                    <SELECT>
+                      <LEGAL_ENT_NBR/>
+                    </SELECT>
+                  </GET_DOCUMENT>
+                  <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SEARCH_INDIVIDUAL'">
+                    <THEN>
+                      <REMOVE_CHILDREN ChildName="CNTRY_CODE" DocVar="thisParam"/>
+                      <IF_TEST Test="$VarNewCntryCode/SQL_RESULT/CNTRY_CODE/@Value!= null ">
+                        <THEN>
+                          <APPEND_TO_XML DocVar="thisParam">
+                            <CNTRY_CODE Value="{$VarNewCntryCode/SQL_RESULT/CNTRY_CODE/@Value}"/>
+                          </APPEND_TO_XML>
+                        </THEN>
+                        <ELSE>
+                          <APPEND_TO_XML DocVar="thisParam">
+                            <CNTRY_CODE Value=""/>
+                          </APPEND_TO_XML>
+                        </ELSE>
+                      </IF_TEST>
+                    </THEN>
+                  </IF_TEST>
+                  <SET_CHILD Value="{$thisParam}" FromValue="{$legalEntNbr/LEGAL_ENT/LEGAL_ENT_NBR}"/>
+                  <IF_TEST Test="$userAction='SEARCH_INDIVIDUAL'">
+                    <THEN>
+                      <REQUEST Name="getSearchResuls" AssignToVar="searchResults" ServiceName="BCM_MASTER">
+                        <LEGAL_ENT_NBR Value="{$legalEntNbr/LEGAL_ENT/LEGAL_ENT_NBR/@Value}"/>
+                        <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+                        <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                        <GVN_NAME Value="{$thisParam/GVN_NAME/@Value}"/>
+                        <FAMLY_NAME Value="{$thisParam/FAMLY_NAME/@Value}"/>
+                        <BRTH_DATE Value="{$thisParam/BRTH_DATE/@Value}"/>
+                        <ADDR_LINE_1_TXT Value="{$thisParam/ADDR_LINE_1_TXT/@Value}"/>
+                        <ADDR_LINE_2_TXT Value="{$thisParam/ADDR_LINE_2_TXT/@Value}"/>
+                        <ADDR_LINE_3_TXT Value="{$thisParam/ADDR_LINE_3_TXT/@Value}"/>
+                        <CITY_NAME Value="{$thisParam/CITY_NAME/@Value}"/>
+                        <TERR_CODE Value="{$thisParam/TERR_CODE/@Value}"/>
+                        <!--CNTRY_CODE Value="{$VarNewCntryCode/SQL_RESULT/CNTRY_CODE/@Value}"/-->
+                        <CNTRY_CODE Value="{$thisParam/CNTRY_CODE/@Value}"/>
+                        <POSTL_AREA_CODE Value="{$thisParam/POSTL_AREA_CODE/@Value}"/>
+                        <EMAIL_ADDR_TXT Value="{$thisParam/EMAIL_ADDR_TXT/@Value}"/>
+                        <!--FULL_PHONE_NUM Value="{$reviewCaseDetail/SQL_RESULT/FULL_PHONE_NUM/@Value}" /-->
+                        <FULL_PHONE_NUM Value="{$thisParam/FULL_PHONE_NUM/@Value}"/>
+                        <START_AT_ROW Value="{$thisParam/START_COUNT/@Value}"/>
+                        <LYLTY_ACCT_NUM Value="{$thisParam/LYLTY_ACCT_NUM/@Value}"/>
+                        <NATIONAL_ID_NBR Value="{$thisParam/NATIONAL_ID_NBR/@Value}"/>
+                        <TO_XML SelectList="$contactTypes/*"/>
+                        <TO_XML SelectList="$programIDValues/*"/>
+                      </REQUEST>
+                    </THEN>
+                  </IF_TEST>
+                  <SET Var="terr_cd" FromValue="{$thisParam/TERR_CODE/@Value}"/>
+                  <EXECUTE_SQL_QUERY AssignToVar="terr" Value="sel TERR_NAME from TERR where TERR_CODE='{$terr_cd}' "/>
+                  <SET Var="TERR_NAME" FromValue="{$terr/SQL_RESULT/TERR_NAME/@Value}"/>
+                  <SET Var="cntry_cd" FromValue="{$thisParam/CNTRY_CODE/@Value}"/>
+                  <EXECUTE_SQL_QUERY AssignToVar="cntry" Value="sel CNTRY_NAME from CNTRY where CNTRY_CODE='{$cntry_cd}'"/>
+                  <SET Var="CNTRY_NAME" FromValue="{$cntry/SQL_RESULT/CNTRY_NAME/@Value}"/>
+                  <APPEND_TO_XML DocVar="thisParam">
+                    <TERR_NAME Value="{$TERR_NAME}"/>
+                    <CNTRY_NAME Value="{$CNTRY_NAME}"/>
+                  </APPEND_TO_XML>
+                </THEN>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="pMessage">
+                <_ERRORS/>
+              </TO_DOCVAR>
+              <IF_TEST Test="$searchResults/@TotalRowCount > 500">
+                <THEN>
+                  <APPEND_TO_XML DocVar="pMessage">
+                    <_ERROR Value="The search result contains more than 500 records, Please add few more parameters to search criteria." Severity="ERROR"/>
+                  </APPEND_TO_XML>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$matchedDomainValues/@TotalRowCount=0">
+                <THEN>
+                  <APPEND_TO_XML DocVar="pMessage">
+                    <_ERROR Value="No Matched domains found for the profile." Severity="ERROR"/>
+                  </APPEND_TO_XML>
+                  <APPEND_TO_XML DocVar="matchedDomainValues">
+                    <LEGAL_ENT_NBR Value="None"/>
+                  </APPEND_TO_XML>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$searchResults/message/@Value='3000'">
+                <THEN>
+                  <APPEND_TO_XML DocVar="pMessage">
+                    <_ERROR Value="The current search parameters returns more than 2500 registrations. Please add additional search criteria to narrow down the result set." Severity="ERROR"/>
+                  </APPEND_TO_XML>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SEARCH_INDIVIDUAL'">
+                <THEN>
+                  <REMOVE_CHILDREN ChildName="GIVEN_NAME" DocVar="thisParam"/>
+                </THEN>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <SHOW_CREATE_CONSUMER Value="{$thisParam/SHOW_CREATE_CONSUMER/@Value}"/>
+                  <DROP_DOWNS>
+                    <CNTRY_CODE>
+                      <TO_XML SelectList="$cntryNames/*"/>
+                    </CNTRY_CODE>
+                    <USER_CODE>
+                      <TO_XML SelectList="$UserNames/*"/>
+                    </USER_CODE>
+                  </DROP_DOWNS>
+                  <SPECIALIST Value="{$thisParam/SPECIALIST/@Value}"/>
+                  <LYLTY_ACCT_NUM Value="{$thisParam/LYLTY_ACCT_NUM/@Value}"/>
+                  <TO_XML SelectList="$searchResults"/>
+                  <TO_XML SelectList="$matchedDomainValues/*"/>
+                  <TO_XML SelectList="$programIDValues/*"/>
+                  <!--TO_XML SelectList="$cntryNames/*" /-->
+                  <TO_XML SelectList="$stateNames/*"/>
+                  <TO_XML DocVar="pMessage"/>
+                  <!--LEGAL_ENT_NAME Value="{$reviewCaseDetail/SQL_RESULT/CNTRY_NAME/@Value}" /-->
+                  <LEGAL_ENT_NAME Value="{$ResNew/SQL_RESULT/LEGAL_ENT_NAME/@Value}"/>
+                  <!--CNTRY_CODE Value="{$resCountryName/SQL_RESULT/CNTRY_NAME/@Value}" /-->
+                  <CNTRY_CODE Value="{$CNTRY_NAME}"/>
+                  <MKTNG_PGM_NUMBER Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                  <FULL_PHONE_NUMBER Value="{$reviewCaseDetail/SQL_RESULT/FULL_PHONE_NUM/@Value}"/>
+                  <TO_XML SelectList="$reviewCaseDetail/*"/>
+                  <GVN_NAME Value="{$reviewCaseDetail/SQL_RESULT/GVN_NAME/@Value}"/>
+                  <FAMLY_NAME Value="{$reviewCaseDetail/SQL_RESULT/FAMLY_NAME/@Value}"/>
+                  <EMAIL_ADDR_TXT Value="{$reviewCaseDetail/SQL_RESULT/EMAIL_ADDR_TXT/@Value}"/>
+                  <POSTL_AREA_CODE Value="{$reviewCaseDetail/SQL_RESULT/POSTL_AREA_CODE/@Value}"/>
+                  <ADDR_LINE_1_TXT Value="{$reviewCaseDetail/SQL_RESULT/ADDR_LINE_1_TXT/@Value}"/>
+                  <ADDR_LINE_2_TXT Value="{$reviewCaseDetail/SQL_RESULT/ADDR_LINE_2_TXT/@Value}"/>
+                  <ADDR_LINE_3_TXT Value="{$reviewCaseDetail/SQL_RESULT/ADDR_LINE_3_TXT/@Value}"/>
+                  <REGIS_CNSMR_ID_VAL Value="{$reviewCaseDetail/SQL_RESULT/REGIS_CNSMR_ID_VAL/@Value}"/>
+                  <NATIONAL_ID_NBR Value="{$reviewCaseDetail/SQL_RESULT/NATIONAL_ID_NBR/@Value}"/>
+                  <CITY_NAME Value="{$reviewCaseDetail/SQL_RESULT/CITY_NAME/@Value}"/>
+                  <!--GDPR_RQST_STATUS_NAME Value="{$resStatusName/SQL_RESULT/GDPR_RQST_STATUS_NAME/@Value}" />
+                  <GDPR_RQST_TYPE_NAME Value="{$resTypeName/SQL_RESULT/GDPR_RQST_TYPE_NAME/@Value}" />
+                  <CNTRY_NAME Value="{$resCountryName/SQL_RESULT/CNTRY_NAME/@Value}" />
+                  <MKTNG_PGM_DESC Value="{$resMktngName/SQL_RESULT/MKTNG_PGM_DESC/@Value}" /-->
+                </ROOT>
+              </TO_DOCVAR>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SEARCH_INDIVIDUAL' or $userAction='LOAD_STATES'">
+                <THEN>
+                  <REMOVE_CHILDREN ChildName="GVN_NAME" DocVar="pglFormInput"/>
+                  <REMOVE_CHILDREN ChildName="FAMLY_NAME" DocVar="pglFormInput"/>
+                  <REMOVE_CHILDREN ChildName="EMAIL_ADDR_TXT" DocVar="pglFormInput"/>
+                  <REMOVE_CHILDREN ChildName="POSTL_AREA_CODE" DocVar="pglFormInput"/>
+                  <REMOVE_CHILDREN ChildName="ADDR_LINE_1_TXT" DocVar="pglFormInput"/>
+                  <REMOVE_CHILDREN ChildName="ADDR_LINE_2_TXT" DocVar="pglFormInput"/>
+                  <REMOVE_CHILDREN ChildName="ADDR_LINE_3_TXT" DocVar="pglFormInput"/>
+                  <REMOVE_CHILDREN ChildName="REGIS_CNSMR_ID_VAL" DocVar="pglFormInput"/>
+                  <REMOVE_CHILDREN ChildName="FULL_PHONE_NUMBER" DocVar="pglFormInput"/>
+                  <REMOVE_CHILDREN ChildName="NATIONAL_ID_NBR" DocVar="pglFormInput"/>
+                  <REMOVE_CHILDREN ChildName="CITY_NAME" DocVar="pglFormInput"/>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <GVN_NAME Value="{$thisParam/GVN_NAME/@Value}"/>
+                    <FAMLY_NAME Value="{$thisParam/FAMLY_NAME/@Value}"/>
+                    <EMAIL_ADDR_TXT Value="{$thisParam/EMAIL_ADDR_TXT/@Value}"/>
+                    <POSTL_AREA_CODE Value="{$thisParam/POSTL_AREA_CODE/@Value}"/>
+                    <ADDR_LINE_1_TXT Value="{$thisParam/ADDR_LINE_1_TXT/@Value}"/>
+                    <ADDR_LINE_2_TXT Value="{$thisParam/ADDR_LINE_2_TXT/@Value}"/>
+                    <ADDR_LINE_3_TXT Value="{$thisParam/ADDR_LINE_3_TXT/@Value}"/>
+                    <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+                    <FULL_PHONE_NUMBER Value="{$thisParam/FULL_PHONE_NUM/@Value}"/>
+                    <NATIONAL_ID_NBR Value="{$thisParam/NATIONAL_ID_NBR/@Value}"/>
+                    <CITY_NAME Value="{$thisParam/CITY_NAME/@Value}"/>
+                  </APPEND_TO_XML>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$userAction='SEARCH_INDIVIDUAL'">
+                <THEN>
+                  <CLONE_XML DocVar="thisParam" AssignToVar="thisParamBack"/>
+                  <!--EXECUTE_SQL_QUERY AssignToVar="EndTimeWf" Value="SELECT current_timestamp as EndTime" /-->
+                  <APPEND_TO_XML DocVar="Search">
+                    <End_Time Value="{$workflowName} Search:{$EndTimeWf/SQL_RESULT/EndTime/@Value}, user Id:{$userName}"/>
+                  </APPEND_TO_XML>
+                  <!--PRINT_TO_FILE File="E:\Teradata\MDM\3.05.02\custom\pngrelease3\log\ConsumerSearchIndividual.log" NewFile="no" SameLine="no" Value="{$Search}" /-->
+                </THEN>
+              </IF_TEST>
+              <!--PRINT_TO_FILE File="myFile1.txt" NewFile="yes" SameLine="yes" Value="{$pglFormInput}" Beautify="true" /-->
+            </THEN>
+            <ELSE>
+              <THEN>
+                <SET_NAME Value="{$thisParamBack/MKTNG_PGM_NUMBER}" FromValue="MKTNG_PGM_NBR"/>
+                <SET_NAME Value="{$thisParamBack/FULL_PHONE_NUMBER}" FromValue="FULL_PHONE_NUM"/>
+                <!--GET_DOCUMENT Name="LEGAL_ENT" AssignToVar="legalEntNbr" ServiceName="BCM_MASTER" DirtyRead="true">
+                  <LEGAL_ENT_NAME Value="{$thisParamBack/LEGAL_ENT_NAME/@Value}" />
+                  <SELECT>
+                    <LEGAL_ENT_NBR />
+                  </SELECT>
+                </GET_DOCUMENT-->
+                <SET_CHILD Value="{$thisParamBack}" FromValue="{$legalEntNbr/LEGAL_ENT/LEGAL_ENT_NBR}"/>
+                <!--REQUEST Name="getSearchResuls" AssignToVar="searchResults" ServiceName="BCM_MASTER">
+                  <LEGAL_ENT_NBR Value="{$thisParamBack/LEGAL_ENT_NBR/@Value}" />
+                  <REGIS_CNSMR_ID_VAL Value="{$thisParamBack/REGIS_CNSMR_ID_VAL/@Value}" />
+                  <MKTNG_PGM_NBR Value="{$thisParamBack/MKTNG_PGM_NBR/@Value}" />
+                  <GVN_NAME Value="{$thisParamBack/GVN_NAME/@Value}" />
+                  <FAMLY_NAME Value="{$thisParamBack/FAMLY_NAME/@Value}" />
+                  <BRTH_DATE Value="{$thisParamBack/BRTH_DATE/@Value}" />
+                  <ADDR_LINE_1_TXT Value="{$thisParamBack/ADDR_LINE_1_TXT/@Value}" />
+                  <ADDR_LINE_2_TXT Value="{$thisParamBack/ADDR_LINE_2_TXT/@Value}" />
+                  <ADDR_LINE_3_TXT Value="{$thisParamBack/ADDR_LINE_3_TXT/@Value}" />
+                  <CITY_NAME Value="{$thisParamBack/CITY_NAME/@Value}" />
+                  <TERR_CODE Value="{$thisParamBack/TERR_CODE/@Value}" />
+                  <CNTRY_CODE Value="{$thisParamBack/CNTRY_CODE/@Value}" />
+                  <POSTL_AREA_CODE Value="{$thisParamBack/POSTL_AREA_CODE/@Value}" />
+                  <EMAIL_ADDR_TXT Value="{$thisParamBack/EMAIL_ADDR_TXT/@Value}" />
+                  <FULL_PHONE_NUM Value="{$thisParamBack/FULL_PHONE_NUM/@Value}" />
+                  <START_AT_ROW Value="{$thisParamBack/START_COUNT/@Value}" />
+                  <LYLTY_ACCT_NUM Value="{$thisParamBack/LYLTY_ACCT_NUM/@Value}" />
+                  <NATIONAL_ID_NBR Value="{$thisParamBack/NATIONAL_ID_NBR/@Value}" />
+                  <TO_XML SelectList="$contactTypes/*" />
+                  <TO_XML SelectList="$programIDValues/*" />
+                </REQUEST-->
+                <CLONE_XML AssignToVar="thisParam" DocVar="thisParamBack"/>
+                <TO_DOCVAR AssignToVar="pglFormInput">
+                  <ROOT>
+                    <SHOW_CREATE_CONSUMER Value="{$thisParam/SHOW_CREATE_CONSUMER/@Value}"/>
+                    <TO_XML SelectList="$searchResults"/>
+                    <TO_XML SelectList="$matchedDomainValues/*"/>
+                    <TO_XML SelectList="$programIDValues/*"/>
+                    <TO_XML SelectList="$cntryNames/*"/>
+                    <TO_XML SelectList="$stateNames/*"/>
+                    <TO_XML DocVar="pMessage"/>
+                  </ROOT>
+                </TO_DOCVAR>
+              </THEN>
+            </ELSE>
+          </IF_TEST>
+          <!-- Code added by Reshma Ramesh for formation of lower pane, search result for GDPR_RQST_STATUS_CD 'RR' -->
+          <SET Var="gdprRQSTStatusCD" FromSelect="$reviewCaseDetail/SQL_RESULT/GDPR_RQST_STATUS_CD/@Value"/>
+          <!--<IF_TEST Test="$gdprRQSTStatusCD = 'RR'">-->
+          <IF_TEST Test="1 = 1">
+            <THEN>
+              <IF_TEST Test="strlen(trim($thisParam/SORT_BY/@Value))!= 0 and ($thisParam/SORT_BY/@Value)!='ID'">
+                <THEN>
+                  <SET Var="pSortBy" FromValue="{$thisParam/SORT_BY/@Value}"/>
+                  <SET Var="pSortOrder" FromValue="{$thisParam/SORT_ORDER/@Value}"/>
+                </THEN>
+                <ELSE>
+                  <THEN>
+                    <SET Var="pSortBy" FromValue="REGIS_PRSNA_ID"/>
+                    <SET Var="pSortOrder" FromValue="ASC"/>
+                  </THEN>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$pSortOrder='Descending'">
+                <THEN>
+                  <SET Var="pSortOrder" FromValue="DESC"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$pSortOrder='Ascending'">
+                <THEN>
+                  <SET Var="pSortOrder" FromValue="ASC"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="strlen(trim($thisParam/SORT_BY/@Value)) != 0">
+                <THEN>
+                  <MAKE_INSTANCE_DOCUMENT Name="{$pSortBy}" AssignToVar="sortByTag"/>
+                  <SET DocVar="sortByTag" Attribute="Sort" FromValue="{$thisParam/SORT_ORDER/@Value}"/>
+                </THEN>
+              </IF_TEST>
+              <!-- Code added by Reshma Ramesh for filtering columns using Execute Sql query -->
+              <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+                <TO_XML SelectList="$thisParam/*[name()='FILTER_PROC_IND' or name()='FILTER_REGIS_PRSNA_ID' or name()='FILTER_GDPR_SRCH_TYPE_NAME' or name()='FILTER_MKTNG_PGM_NBR' or name()='FILTER_LEGAL_ENT_NBR' ]"/>
+              </FORM_SEARCH_FILTER>
+              <FOR_EACH SelectList="$filters/FILTER" CurrentElement="currElem">
+                <SET Var="temp" FromValue="{$currElem/@Name}"/>
+                <IF_TEST Test="$currElem/FILTER_REGIS_PRSNA_ID/@MatchBy='EQUAL'">
+                  <THEN>
+                    <SET Var="RegisId" FromValue=" REGIS_PRSNA_ID ='{$currElem/FILTER_REGIS_PRSNA_ID/@Value}'"/>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,'AND',$RegisId)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$currElem/FILTER_MKTNG_PGM_NBR/@MatchBy='EQUAL'">
+                  <THEN>
+                    <SET Var="MarktngId" FromValue=" MKTNG_PGM_NBR ='{$currElem/FILTER_MKTNG_PGM_NBR/@Value}'"/>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,'AND',$MarktngId)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$currElem/FILTER_LEGAL_ENT_NBR/@MatchBy='EQUAL'">
+                  <THEN>
+                    <SET Var="LegalEnt" FromValue=" LEGAL_ENT_NBR ='{$currElem/FILTER_LEGAL_ENT_NBR/@Value}'"/>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,'AND',$LegalEnt)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$temp='FILTER_GDPR_SRCH_TYPE_NAME'">
+                  <THEN>
+                    <IF_TEST Test="$currElem/FILTER_GDPR_SRCH_TYPE_NAME/@MatchBy='EQUAL'">
+                      <THEN>
+                        <SET Var="GdprSearchName" FromValue=" GDPR_SRCH_TYPE_NAME ='{$currElem/FILTER_GDPR_SRCH_TYPE_NAME/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_GDPR_SRCH_TYPE_NAME/@MatchBy='CONTAINS'">
+                      <THEN>
+                        <SET Var="GdprSearchName" FromValue=" GDPR_SRCH_TYPE_NAME like'%{$currElem/FILTER_GDPR_SRCH_TYPE_NAME/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_GDPR_SRCH_TYPE_NAME/@MatchBy='STARTS_WITH'">
+                      <THEN>
+                        <SET Var="GdprSearchName" FromValue=" GDPR_SRCH_TYPE_NAME like'{$currElem/FILTER_GDPR_SRCH_TYPE_NAME/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_GDPR_SRCH_TYPE_NAME/@MatchBy='ENDS_WITH'">
+                      <THEN>
+                        <SET Var="GdprSearchName" FromValue=" GDPR_SRCH_TYPE_NAME like'%{$currElem/FILTER_GDPR_SRCH_TYPE_NAME/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,'AND',$GdprSearchName)}"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <SET Var="VarSearchSql" FromValue="LOCKING ROW FOR ACCESS SEL A.PROC_IND,A.GDPR_SRCH_TYPE_CODE, A.REGIS_PRSNA_ID, B.GDPR_SRCH_TYPE_NAME, A.MKTNG_PGM_NBR, A.LEGAL_ENT_NBR , A.SYS_LAST_MODIFIED_BY FROM MDM.GDPR_SRCH_RSLT A JOIN MDM.GDPR_SRCH_TYPE B ON A.GDPR_SRCH_TYPE_CODE = B.GDPR_SRCH_TYPE_CODE WHERE GDPR_CASE_ID ='{$currentGDPRCaseID}'  "/>
+              <SET Var="tempString1" FromValue="{concat($VarSearchSql,$subFilter)}"/>
+              <IF_TEST Test="$pSortOrder!='' and $pSortBy!=''">
+                <THEN>
+                  <SET Var="SortString" FromValue="ORDER BY {$pSortBy} {$pSortOrder} "/>
+                  <SET Var="tempString1" FromValue="{concat($VarSearchSql,$subFilter,$SortString)}"/>
+                </THEN>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="Qry1">
+                <ROOT>{$tempString1}</ROOT>
+              </TO_DOCVAR>
+              <EXECUTE_SQL_QUERY AssignToVar="searchResultProcIndic" Value="{$Qry1/@text}" MaxRows="{$thisParam/MaxRec/@Value}" StartAtRow="{$thisParam/START_COUNT/@Value}" ReturnRowCount="yes">
+                <!--PARAM Value="{$currentGDPRCaseID}" /-->
+              </EXECUTE_SQL_QUERY>
+              <!-- forming xml struct to show-up on screen -->
+              <TO_DOCVAR AssignToVar="searchResultXML">
+                <DETAILS/>
+              </TO_DOCVAR>
+              <FOR_EACH CurrentElement="currentElementSearch" SelectList="$searchResultProcIndic/SQL_RESULT">
+                <!--SET Var="ifYSelect" FromSelect="ifElse($currentElementSearch/PROC_IND/@Value = 'N','false','true')" />
+                <SET Var="ifNSelect" FromSelect="ifElse($currentElementSearch/PROC_IND/@Value = 'N','true','false')" /-->
+                <IF_TEST Test="$currentElementSearch/PROC_IND/@Value = 'Y'">
+                  <THEN>
+                    <SET Var="PROCESS" FromValue="true"/>
+                  </THEN>
+                  <ELSE>
+                    <SET Var="PROCESS" FromValue="false"/>
+                  </ELSE>
+                </IF_TEST>
+                <!--IF_TEST Test="$currentElementSearch/PROC_IND/@Value = 'N'">
+                  <THEN>
+                    <SET Var="DO_NOT_PROCESS" FromValue="true" />
+                  </THEN>
+                </IF_TEST-->
+                <!--SET Var="ProcessInd" FromSelect="ifElse($currentElementSearch/PROC_IND/@Value = 'Y','true','false')" /-->
+                <SET Var="ProcessInd" FromSelect="ifElse($currentElementSearch/PROC_IND/@Value = 'Y','true','false')"/>
+                <APPEND_TO_XML DocVar="searchResultXML">
+                  <DATA>
+                    <PROC_IND Value="{$ProcessInd/@Value}"/>
+                    <PROCESS Value="{$PROCESS}"/>
+                    <!--DisplayRegisPrsnaHighlight Value="true" /-->
+                    <!--PROCESS_IND Value="{$ProcessInd/@Value}" /-->
+                    <SYS_LAST_MODIFIED_BY Value="{$currentElementSearch/SYS_LAST_MODIFIED_BY/@Value}"/>
+                    <REGIS_PRSNA_ID Value="{$currentElementSearch/REGIS_PRSNA_ID/@Value}"/>
+                    <MKTNG_PGM_NBR Value="{$currentElementSearch/MKTNG_PGM_NBR/@Value}"/>
+                    <LEGAL_ENT_NBR Value="{$currentElementSearch/LEGAL_ENT_NBR/@Value}"/>
+                    <REGIS_PRSNA_ID Value="{$currentElementSearch/REGIS_PRSNA_ID/@Value}"/>
+                    <REGIS_ID Value="{$currentElementSearch/REGIS_PRSNA_ID/@Value}"/>
+                    <GDPR_SRCH_TYPE_CODE Value="{$currentElementSearch/GDPR_SRCH_TYPE_CODE/@Value}"/>
+                    <GDPR_SRCH_TYPE_NAME Value="{$currentElementSearch/GDPR_SRCH_TYPE_NAME/@Value}"/>
+                    <SELECT_Y Value="{$ifYSelect}"/>
+                    <SELECT_N Value="{$ifNSelect}"/>
+                  </DATA>
+                </APPEND_TO_XML>
+              </FOR_EACH>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <TO_XML SelectList="$searchResultXML/*"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <!--IF_TEST Test="$thisParam/BUTTON_ID/@Value='UpdateContactUs'">
+            <THEN>
+              <REMOVE_CHILDREN ChildName="GDPR_RQST_STATUS_CD" DocVar="pglFormInput"/>
+              <REMOVE_CHILDREN ChildName="GDPR_RQST_STATUS_NAME" DocVar="pglFormInput"/>
+              <TO_DOCVAR AssignToVar="getStatusName_CP">
+                <root>LOCKING ROW FOR ACCESS
+SEL GDPR_RQST_STATUS_NAME FROM  GDPR_RQST_STATUS
+WHERE GDPR_RQST_STATUS_CD='CP';</root>
+              </TO_DOCVAR>
+              <EXECUTE_SQL_QUERY AssignToVar="resStatusName_CP" Value="{$getStatusName_CP/@text}"/>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <GDPR_RQST_STATUS_CD Value="CP"/>
+                <SQL_RESULT>
+                  <GDPR_RQST_STATUS_NAME Value="{$resStatusName_CP/SQL_RESULT/GDPR_RQST_STATUS_NAME/@Value}"/>
+                </SQL_RESULT>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST-->
+          <FOR_EACH CurrentElement="CurrSysColour" SelectList="$searchResultXML/DATA">
+            <IF_TEST Test="$CurrSysColour/SYS_LAST_MODIFIED_BY/@Value!= null">
+              <THEN>
+                <APPEND_TO_XML SelectList="$searchResultXML/DATA[REGIS_PRSNA_ID/@Value = $CurrSysColour/REGIS_PRSNA_ID/@Value and MKTNG_PGM_NBR/@Value = $CurrSysColour/MKTNG_PGM_NBR/@Value and LEGAL_ENT_NBR/@Value = $CurrSysColour/LEGAL_ENT_NBR/@Value and GDPR_SRCH_TYPE_NAME/@Value = $CurrSysColour/GDPR_SRCH_TYPE_NAME/@Value ]">
+                  <DisplayRegisPrsnaHighlight Value="true"/>
+                </APPEND_TO_XML>
+                <APPEND_TO_XML DocVar="pglFormInput">
+                  <REGIS_PRSNA_ID Value="{$CurrSysColour/REGIS_PRSNA_ID/@Value}"/>
+                </APPEND_TO_XML>
+              </THEN>
+            </IF_TEST>
+          </FOR_EACH>
+          <!-- Added by Reshma Ramesh formation of GDPR Regis Prnsna container when clicked on the Regis Prsna Hyperlink-->
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='REGIS_PRSNA_ID'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="getRegistrations">
+                <ROOT>LOCKING  ROW FOR ACCESS
+SELECT    DISTINCT A.REGIS_PRSNA_ID, A.MKTNG_PGM_NBR, A.LEGAL_ENT_NBR, A.GVN_NAME,A.MID_NAME,A.FAMLY_NAME,A.FULL_NAME,A.NAME_SUFFX_TXT,A.NATIONAL_ID_NBR,A.REGIS_CNSMR_ID_VAL,A.data_srce_nbr AS DATA_SRCE_NBR,
+B.EMAIL_ADDR_TXT, C.FULL_PHONE_NUM, D.LEGAL_ENT_NAME, E.MKTNG_PGM_DESC
+,F.ADDR_LINE_1_TXT
+, F.ADDR_LINE_2_TXT
+, F.ADDR_LINE_3_TXT
+, F.CITY_NAME
+, F.POSTL_AREA_CODE	
+, F.TERR_NAME
+, F.CNTRY_CODE
+FROM      REGIS_PRSNA A LEFT JOIN REGIS_PRSNA_EMAIL_ADDR B
+ON           A.REGIS_PRSNA_ID=B.REGIS_PRSNA_ID
+AND A.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR
+LEFT JOIN REGIS_PRSNA_PHONE C
+ON           A.REGIS_PRSNA_ID=C.REGIS_PRSNA_ID
+AND A.MKTNG_PGM_NBR=C.MKTNG_PGM_NBR
+LEFT JOIN REGIS_PRSNA_POSTL_ADDR F
+ON           A.REGIS_PRSNA_ID=F.REGIS_PRSNA_ID
+AND A.MKTNG_PGM_NBR=F.MKTNG_PGM_NBR
+LEFT JOIN LEGAL_ENT D
+ON           A.LEGAL_ENT_NBR=D.LEGAL_ENT_NBR
+LEFT JOIN MKTNG_PGM E
+ON           A.MKTNG_PGM_NBR=E.MKTNG_PGM_NBR
+WHERE A.REGIS_PRSNA_ID='{$thisParam/REGIS_PRSNA_ID/@Value}'
+AND A.LEGAL_ENT_NBR='{$thisParam/LEGAL_ENT_NBR/@Value}'
+AND A.MKTNG_PGM_NBR='{$thisParam/MKTNG_PGM_NBR/@Value}'</ROOT>
+              </TO_DOCVAR>
+              <EXECUTE_SQL_QUERY AssignToVar="resRegistrations" ReturnRowCount="yes" Value="{$getRegistrations/@text}" HandleException="true"/>
+              <FOR_EACH CurrentElement="currRegis" SelectList="$resRegistrations/SQL_RESULT">
+                <EXECUTE_SQL_QUERY AssignToVar="Var1CpCntry" Value="select CNTRY_NAME from CNTRY where CNTRY_CODE='{$currRegis/CNTRY_CODE/@Value}' "/>
+                <TO_DOCVAR AssignToVar="pglFormInput">
+                  <DATA>
+                    <TO_XML SelectList="$currRegis/*"/>
+                    <CNTRY_NAME Value="{$Var1CpCntry/SQL_RESULT/CNTRY_NAME/@Value}"/>
+                  </DATA>
+                </TO_DOCVAR>
+              </FOR_EACH>
+              <IF_TEST Test="strlen($currRegis)=0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="pglFormInput">
+                    <DATA>
+                      <TO_XML SelectList="$currRegis/*"/>
+                      <CNTRY_NAME Value="{$Var1CpCntry/SQL_RESULT/CNTRY_NAME/@Value}"/>
+                    </DATA>
+                  </TO_DOCVAR>
+                </THEN>
+              </IF_TEST>
+              <EXECUTE_SQL_QUERY AssignToVar="VarSubjectHistory" Value="SELECT GDPR_RQST.GDPR_CASE_ID,GDPR_RQST.GVN_NAME,GDPR_RQST.MID_NAME,GDPR_RQST.FULL_NAME,GDPR_RQST.FAMLY_NAME,GDPR_RQST.ADDR_LINE_1_TXT,GDPR_RQST.ADDR_LINE_2_TXT,GDPR_RQST.ADDR_LINE_3_TXT,GDPR_RQST.CITY_NAME,GDPR_RQST.TERR_NAME,GDPR_RQST.POSTL_AREA_CODE,GDPR_RQST.GDPR_RQST_CRTN_DATETM,GDPR_RQST.EMAIL_ADDR_TXT,GDPR_RQST.FULL_PHONE_NUM, GDPR_RQST.DATA_SRCE_NBR,GDPR_RQST.NAME_SUFFX_TXT,GDPR_RQST.REGIS_CNSMR_ID_VAL,GDPR_RQST.NATIONAL_ID_NBR,GDPR_RQST.GDPR_RQST_FULFLMT_DATETM,GDPR_RQST.GDPR_RQST_IDNTY_VFYD_DATETM ,GDPR_RQST_TYPE.GDPR_RQST_TYPE_NAME,GDPR_RQST.CNTRY_CODE,GDPR_RQST_STATUS.GDPR_RQST_STATUS_NAME,MKTNG_PGM.MKTNG_PGM_DESC FROM    GDPR_RQST LEFT JOIN GDPR_RQST_TYPE ON  GDPR_RQST.GDPR_RQST_TYPE_CD=GDPR_RQST_TYPE.GDPR_RQST_TYPE_CD LEFT JOIN GDPR_RQST_STATUS ON GDPR_RQST.GDPR_RQST_STATUS_CD=GDPR_RQST_STATUS.GDPR_RQST_STATUS_CD LEFT JOIN MKTNG_PGM ON GDPR_RQST.MKTNG_PGM_NBR=MKTNG_PGM.MKTNG_PGM_NBR JOIN GDPR_SRCH_RSLT ON GDPR_RQST.GDPR_CASE_ID= GDPR_SRCH_RSLT.GDPR_CASE_ID AND GDPR_SRCH_RSLT.PROC_IND= 'Y' WHERE GDPR_SRCH_RSLT.MKTNG_PGM_NBR = '{$thisParam/MKTNG_PGM_NBR/@Value}' AND GDPR_SRCH_RSLT.REGIS_PRSNA_ID= '{$thisParam/REGIS_PRSNA_ID/@Value}' "/>
+              <TO_DOCVAR AssignToVar="SubjectResultXML">
+                <HISTORY_DETAILS/>
+              </TO_DOCVAR>
+              <FOR_EACH CurrentElement="currentElementHistory" SelectList="$VarSubjectHistory/SQL_RESULT">
+                <APPEND_TO_XML DocVar="SubjectResultXML">
+                  <HISTORY>
+                    <GDPR_CASE_ID Value="{$currentElementHistory/GDPR_CASE_ID/@Value}"/>
+                    <GVN_NAME Value="{$currentElementHistory/GVN_NAME/@Value}"/>
+                    <MID_NAME Value="{$currentElementHistory/MID_NAME/@Value}"/>
+                    <FULL_NAME Value="{$currentElementHistory/FULL_NAME/@Value}"/>
+                    <FAMLY_NAME Value="{$currentElementHistory/FAMLY_NAME/@Value}"/>
+                    <ADDR_LINE_1_TXT Value="{$currentElementHistory/ADDR_LINE_1_TXT/@Value}"/>
+                    <ADDR_LINE_2_TXT Value="{$currentElementHistory/ADDR_LINE_2_TXT/@Value}"/>
+                    <ADDR_LINE_3_TXT Value="{$currentElementHistory/ADDR_LINE_3_TXT/@Value}"/>
+                    <TERR_NAME Value="{$currentElementHistory/TERR_NAME/@Value}"/>
+                    <CITY_NAME Value="{$currentElementHistory/CITY_NAME/@Value}"/>
+                    <POSTL_AREA_CODE Value="{$currentElementHistory/POSTL_AREA_CODE/@Value}"/>
+                    <GDPR_RQST_CRTN_DATETM Value="{$currentElementHistory/GDPR_RQST_CRTN_DATETM/@Value}"/>
+                    <EMAIL_ADDR_TXT Value="{$currentElementHistory/EMAIL_ADDR_TXT/@Value}"/>
+                    <MKTNG_PGM_DESC Value="{$currentElementHistory/MKTNG_PGM_DESC/@Value}"/>
+                    <GDPR_RQST_STATUS_NAME Value="{$currentElementHistory/GDPR_RQST_STATUS_NAME/@Value}"/>
+                    <GDPR_RQST_TYPE_NAME Value="{$currentElementHistory/GDPR_RQST_TYPE_NAME/@Value}"/>
+                    <CNTRY_CODE Value="{$currentElementHistory/CNTRY_CODE/@Value}"/>
+                    <FULL_PHONE_NUM Value="{$currentElementHistory/FULL_PHONE_NUM/@Value}"/>
+                    <DATA_SRCE_NBR Value="{$currentElementHistory/DATA_SRCE_NBR/@Value}"/>
+                    <NAME_SUFFX_TXT Value="{$currentElementHistory/NAME_SUFFX_TXT/@Value}"/>
+                    <REGIS_CNSMR_ID_VAL Value="{$currentElementHistory/REGIS_CNSMR_ID_VAL/@Value}"/>
+                    <NATIONAL_ID_NBR Value="{$currentElementHistory/NATIONAL_ID_NBR/@Value}"/>
+                    <GDPR_RQST_FULFLMT_DATETM Value="{$currentElementHistory/GDPR_RQST_FULFLMT_DATETM/@Value}"/>
+                    <GDPR_RQST_IDNTY_VFYD_DATETM Value="{$currentElementHistory/GDPR_RQST_IDNTY_VFYD_DATETM/@Value}"/>
+                    <TEMPORAL_TIME Value="{$currentElementHistory/TEMPORAL_TIME/@Value}"/>
+                  </HISTORY>
+                </APPEND_TO_XML>
+              </FOR_EACH>
+              <IF_TEST Test="strlen($currRegis)!=0">
+                <THEN>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <TO_XML SelectList="$reviewCaseDetail/*"/>
+                    <TO_XML SelectList="$searchResultXML/*"/>
+                    <TO_XML SelectList="$SubjectResultXML/*"/>
+                    <GDPR_SRCH_TYPE_NAME Value="{$thisParam/GDPR_SRCH_TYPE_NAME/@Value}"/>
+                    <DROP_DOWNS>
+                      <USER_CODE>
+                        <TO_XML SelectList="$UserNames/*"/>
+                      </USER_CODE>
+                    </DROP_DOWNS>
+                    <SPECIALIST Value="{$thisParam/SPECIALIST/@Value}"/>
+                    <!--GDPR_RQST_TYPE_NAME Value="{$resTypeName/SQL_RESULT/GDPR_RQST_TYPE_NAME/@Value}" />
+                    <CNTRY_NAME Value="{$resCountryName/SQL_RESULT/CNTRY_NAME/@Value}" />
+                    <MKTNG_PGM_DESC Value="{$resMktngName/SQL_RESULT/MKTNG_PGM_DESC/@Value}" />
+                    <GDPR_RQST_STATUS_NAME Value="{$resStatusName/SQL_RESULT/GDPR_RQST_STATUS_NAME/@Value}" /-->
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <!--DATA-->
+                    <TO_XML SelectList="$reviewCaseDetail/*"/>
+                    <!--CNTRY_NAME Value="{$resCountryName/SQL_RESULT/CNTRY_NAME/@Value}" /-->
+                    <!--/DATA-->
+                    <!--TO_XML SelectList="$searchResultXML/*"/-->
+                    <TO_XML SelectList="$searchResultXML/*"/>
+                    <TO_XML SelectList="$SubjectResultXML/*"/>
+                    <DROP_DOWNS>
+                      <USER_CODE>
+                        <TO_XML SelectList="$UserNames/*"/>
+                      </USER_CODE>
+                    </DROP_DOWNS>
+                    <SPECIALIST Value="{$thisParam/SPECIALIST/@Value}"/>
+                    <GDPR_SRCH_TYPE_NAME Value="{$thisParam/GDPR_SRCH_TYPE_NAME/@Value}"/>
+                    <!--GDPR_RQST_TYPE_NAME Value="{$resTypeName/SQL_RESULT/GDPR_RQST_TYPE_NAME/@Value}" />
+                    <MKTNG_PGM_DESC Value="{$resMktngName/SQL_RESULT/MKTNG_PGM_DESC/@Value}" />
+                    <GDPR_RQST_STATUS_NAME Value="{$resStatusName/SQL_RESULT/GDPR_RQST_STATUS_NAME/@Value}" /-->
+                  </APPEND_TO_XML>
+                </ELSE>
+              </IF_TEST>
+              <!--Added by Reshma Ramesh for the colour population of the details in the top pane -->
+              <FOR_EACH CurrentElement="CurrColour" SelectList="$searchResultXML/DATA">
+                <IF_TEST Test="($thisParam/REGIS_PRSNA_ID/@Value) = ($CurrColour/REGIS_PRSNA_ID/@Value)">
+                  <THEN>
+                    <REMOVE_CHILDREN ChildName="REGIS_PRSNA_ID" DocVar="pglFormInput"/>
+                    <APPEND_TO_XML SelectList="$searchResultXML/DATA[REGIS_PRSNA_ID/@Value = $thisParam/REGIS_PRSNA_ID/@Value and MKTNG_PGM_NBR/@Value = $thisParam/MKTNG_PGM_NBR/@Value and LEGAL_ENT_NBR/@Value = $thisParam/LEGAL_ENT_NBR/@Value and GDPR_SRCH_TYPE_NAME/@Value = $thisParam/GDPR_SRCH_TYPE_NAME/@Value]">
+                      <DisplayRegisPrsnaHighlight Value="true"/>
+                    </APPEND_TO_XML>
+                    <APPEND_TO_XML DocVar="pglFormInput">
+                      <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                    </APPEND_TO_XML>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <IF_TEST Test="upperCase($currRegis/GVN_NAME/@Value) != upperCase($reviewCaseDetail/SQL_RESULT/GVN_NAME/@Value) or lowerCase($currRegis/GVN_NAME/@Value) != lowerCase($reviewCaseDetail/SQL_RESULT/GVN_NAME/@Value)">
+                <THEN>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <DisplayRed Value="true"/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="strlen($currRegis/GVN_NAME/@Value)=0 and strlen($reviewCaseDetail/SQL_RESULT/GVN_NAME/@Value)=0">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayBlank Value="true"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayGreen Value="true"/>
+                      </APPEND_TO_XML>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="upperCase($currRegis/FAMLY_NAME/@Value) != upperCase($reviewCaseDetail/SQL_RESULT/FAMLY_NAME/@Value) or lowerCase($currRegis/FAMLY_NAME/@Value) != lowerCase($reviewCaseDetail/SQL_RESULT/FAMLY_NAME/@Value)">
+                <THEN>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <DisplayFamlyRed Value="true"/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="strlen($currRegis/FAMLY_NAME/@Value)=0 and strlen($reviewCaseDetail/SQL_RESULT/FAMLY_NAME/@Value)=0">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayFamlyBlank Value="true"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayFamlyGreen Value="true"/>
+                      </APPEND_TO_XML>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="upperCase($currRegis/MID_NAME/@Value) != upperCase($reviewCaseDetail/SQL_RESULT/MID_NAME/@Value) or lowerCase($currRegis/MID_NAME/@Value) != lowerCase($reviewCaseDetail/SQL_RESULT/MID_NAME/@Value)">
+                <THEN>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <DisplayMidRed Value="true"/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="strlen($currRegis/MID_NAME/@Value)=0 and strlen($reviewCaseDetail/SQL_RESULT/MID_NAME/@Value)=0">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayMidBlank Value="true"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayMidGreen Value="true"/>
+                      </APPEND_TO_XML>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="upperCase($currRegis/MKTNG_PGM_DESC/@Value) != upperCase($reviewCaseDetail/SQL_RESULT/MKTNG_PGM_DESC/@Value) or lowerCase($currRegis/MKTNG_PGM_DESC/@Value) != lowerCase($reviewCaseDetail/SQL_RESULT/MKTNG_PGM_DESC/@Value)">
+                <THEN>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <DisplayMktngDescRed Value="true"/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="strlen($currRegis/MKTNG_PGM_DESC/@Value)=0 and strlen($reviewCaseDetail/SQL_RESULT/MKTNG_PGM_DESC/@Value)=0">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayMktngDescBlank Value="true"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayMktngDescGreen Value="true"/>
+                      </APPEND_TO_XML>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="upperCase($currRegis/FULL_NAME/@Value) != upperCase($reviewCaseDetail/SQL_RESULT/FULL_NAME/@Value) or lowerCase($currRegis/FULL_NAME/@Value) != lowerCase($reviewCaseDetail/SQL_RESULT/FULL_NAME/@Value)">
+                <THEN>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <DisplayFullRed Value="true"/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="strlen($currRegis/FULL_NAME/@Value)=0 and strlen($reviewCaseDetail/SQL_RESULT/FULL_NAME/@Value)=0">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayFullBlank Value="true"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayFullGreen Value="true"/>
+                      </APPEND_TO_XML>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="upperCase($currRegis/ADDR_LINE_1_TXT/@Value) != upperCase($reviewCaseDetail/SQL_RESULT/ADDR_LINE_1_TXT/@Value) or lowerCase($currRegis/ADDR_LINE_1_TXT/@Value) != lowerCase($reviewCaseDetail/SQL_RESULT/ADDR_LINE_1_TXT/@Value)">
+                <THEN>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <DisplayAdd1Red Value="true"/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="strlen($currRegis/ADDR_LINE_1_TXT/@Value)=0 and strlen($reviewCaseDetail/SQL_RESULT/ADDR_LINE_1_TXT/@Value)=0">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayAdd1Blank Value="true"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayAdd1Green Value="true"/>
+                      </APPEND_TO_XML>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="upperCase($currRegis/ADDR_LINE_2_TXT/@Value) != upperCase($reviewCaseDetail/SQL_RESULT/ADDR_LINE_2_TXT/@Value) or lowerCase($currRegis/ADDR_LINE_2_TXT/@Value) != lowerCase($reviewCaseDetail/SQL_RESULT/ADDR_LINE_2_TXT/@Value)">
+                <THEN>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <DisplayAdd2Red Value="true"/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="strlen($currRegis/ADDR_LINE_2_TXT/@Value)=0 and strlen($reviewCaseDetail/SQL_RESULT/ADDR_LINE_2_TXT/@Value)=0">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayAdd2Blank Value="true"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayAdd2Green Value="true"/>
+                      </APPEND_TO_XML>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="upperCase($currRegis/ADDR_LINE_3_TXT/@Value) != upperCase($reviewCaseDetail/SQL_RESULT/ADDR_LINE_3_TXT/@Value) or lowerCase($currRegis/ADDR_LINE_3_TXT/@Value) != lowerCase($reviewCaseDetail/SQL_RESULT/ADDR_LINE_3_TXT/@Value)">
+                <THEN>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <DisplayAdd3Red Value="true"/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="strlen($currRegis/ADDR_LINE_3_TXT/@Value)=0 and strlen($reviewCaseDetail/SQL_RESULT/ADDR_LINE_3_TXT/@Value)=0">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayAdd3Blank Value="true"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayAdd3Green Value="true"/>
+                      </APPEND_TO_XML>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="upperCase($currRegis/CITY_NAME/@Value) != upperCase($reviewCaseDetail/SQL_RESULT/CITY_NAME/@Value) or lowerCase($currRegis/CITY_NAME/@Value) != lowerCase($reviewCaseDetail/SQL_RESULT/CITY_NAME/@Value)">
+                <THEN>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <DisplayCityRed Value="true"/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="strlen($currRegis/CITY_NAME/@Value)=0 and strlen($reviewCaseDetail/SQL_RESULT/CITY_NAME/@Value)=0">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayCityBlank Value="true"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayCityGreen Value="true"/>
+                      </APPEND_TO_XML>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="upperCase($currRegis/TERR_NAME/@Value) != upperCase($reviewCaseDetail/SQL_RESULT/TERR_NAME/@Value) or lowerCase($currRegis/TERR_NAME/@Value) != lowerCase($reviewCaseDetail/SQL_RESULT/TERR_NAME/@Value)">
+                <THEN>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <DisplayTerrRed Value="true"/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="strlen($currRegis/TERR_NAME/@Value)=0 and strlen($reviewCaseDetail/SQL_RESULT/TERR_NAME/@Value)=0">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayTerrBlank Value="true"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayTerrGreen Value="true"/>
+                      </APPEND_TO_XML>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="($currRegis/POSTL_AREA_CODE/@Value) != ($reviewCaseDetail/SQL_RESULT/POSTL_AREA_CODE/@Value)">
+                <THEN>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <DisplayPostRed Value="true"/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="strlen($currRegis/POSTL_AREA_CODE/@Value)=0 and strlen($reviewCaseDetail/SQL_RESULT/POSTL_AREA_CODE/@Value)=0">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayPostBlank Value="true"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayPostGreen Value="true"/>
+                      </APPEND_TO_XML>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="upperCase($currRegis/EMAIL_ADDR_TXT/@Value) != upperCase($reviewCaseDetail/SQL_RESULT/EMAIL_ADDR_TXT/@Value) or lowerCase($currRegis/EMAIL_ADDR_TXT/@Value) != lowerCase($reviewCaseDetail/SQL_RESULT/EMAIL_ADDR_TXT/@Value)">
+                <THEN>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <DisplayEmailRed Value="true"/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="strlen($currRegis/EMAIL_ADDR_TXT/@Value)=0 and strlen($reviewCaseDetail/SQL_RESULT/EMAIL_ADDR_TXT/@Value)=0">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayEmailBlank Value="true"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayEmailGreen Value="true"/>
+                      </APPEND_TO_XML>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="($currRegis/FULL_PHONE_NUM/@Value) != ($reviewCaseDetail/SQL_RESULT/FULL_PHONE_NUM/@Value)">
+                <THEN>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <DisplayPhoneRed Value="true"/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="strlen($currRegis/FULL_PHONE_NUM/@Value)=0 and strlen($reviewCaseDetail/SQL_RESULT/FULL_PHONE_NUM/@Value)=0">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayPhoneBlank Value="true"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayPhoneGreen Value="true"/>
+                      </APPEND_TO_XML>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="upperCase($currRegis/NAME_SUFFX_TXT/@Value) != upperCase($reviewCaseDetail/SQL_RESULT/NAME_SUFFX_TXT/@Value) or lowerCase($currRegis/NAME_SUFFX_TXT/@Value) != lowerCase($reviewCaseDetail/SQL_RESULT/NAME_SUFFX_TXT/@Value)">
+                <THEN>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <DisplayNameSuffRed Value="true"/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="strlen($currRegis/NAME_SUFFX_TXT/@Value)=0 and strlen($reviewCaseDetail/SQL_RESULT/NAME_SUFFX_TXT/@Value)=0">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayNameSuffBlank Value="true"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayNameSuffGreen Value="true"/>
+                      </APPEND_TO_XML>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="($currRegis/NATIONAL_ID_NBR/@Value) != ($reviewCaseDetail/SQL_RESULT/NATIONAL_ID_NBR/@Value)">
+                <THEN>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <DisplayNationIDRed Value="true"/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="strlen($currRegis/NATIONAL_ID_NBR/@Value)=0 and strlen($reviewCaseDetail/SQL_RESULT/NATIONAL_ID_NBR/@Value)=0">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayNationIDBlank Value="true"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayNationIDGreen Value="true"/>
+                      </APPEND_TO_XML>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="($currRegis/REGIS_CNSMR_ID_VAL/@Value) != ($reviewCaseDetail/SQL_RESULT/REGIS_CNSMR_ID_VAL/@Value)">
+                <THEN>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <DisplayRegisCnsmrRed Value="true"/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="strlen($currRegis/REGIS_CNSMR_ID_VAL/@Value)=0 and strlen($reviewCaseDetail/SQL_RESULT/REGIS_CNSMR_ID_VAL/@Value)=0">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayRegisCnsmrBlank Value="true"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayRegisCnsmrGreen Value="true"/>
+                      </APPEND_TO_XML>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="($currRegis/DATA_SRCE_NBR/@Value) != ($reviewCaseDetail/SQL_RESULT/DATA_SRCE_NBR/@Value)">
+                <THEN>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <DisplayDataSrcRed Value="true"/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="strlen($currRegis/DATA_SRCE_NBR/@Value)=0 and strlen($reviewCaseDetail/SQL_RESULT/DATA_SRCE_NBR/@Value)=0">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayDataSrcBlank Value="true"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayDataSrcGreen Value="true"/>
+                      </APPEND_TO_XML>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+              <!--REMOVE_CHILDREN ChildName="CNTRY_NAME" DocVar="pglFormInput" /-->
+              <IF_TEST Test="upperCase($Var1CpCntry/SQL_RESULT/CNTRY_NAME/@Value) != upperCase($reviewCaseDetail/SQL_RESULT/CNTRY_NAME/@Value) or lowerCase($Var1CpCntry/SQL_RESULT/CNTRY_NAME/@Value) != lowerCase($reviewCaseDetail/SQL_RESULT/CNTRY_NAME/@Value)">
+                <THEN>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <DisplayCountryRed Value="true"/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="strlen($Var1CpCntry/SQL_RESULT/CNTRY_NAME/@Value)=0 and strlen($reviewCaseDetail/SQL_RESULT/CNTRY_NAME/@Value)=0">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayCountryBlank Value="true"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <DisplayCountryGreen Value="true"/>
+                      </APPEND_TO_XML>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='processButton'">
+            <THEN>
+              <EXECUTE_SQL_QUERY AssignToVar="resUpdateProcessRequest" Value="UPDATE GDPR_RQST SET SYS_LAST_MODIFIED_BY='{$userId}' WHERE GDPR_CASE_ID='{$currentGDPRCaseID}'"/>
+              <TO_DOCVAR AssignToVar="getStatusName_PR">
+                <root>LOCKING ROW FOR ACCESS
+SEL GDPR_RQST_STATUS_NAME FROM  GDPR_RQST_STATUS
+WHERE GDPR_RQST_STATUS_CD='PR';</root>
+              </TO_DOCVAR>
+              <EXECUTE_SQL_QUERY AssignToVar="resStatusName_PR" Value="{$getStatusName_PR/@text}"/>
+              <REMOVE_CHILDREN ChildName="GDPR_RQST_STATUS_CD" DocVar="pglFormInput"/>
+              <REMOVE_CHILDREN ChildName="GDPR_RQST_STATUS_NAME" DocVar="pglFormInput"/>
+              <EXECUTE_SQL_QUERY AssignToVar="TotalAllRegis" Value="select count (*) AS TOTAL_COUNT from MDM.GDPR_SRCH_RSLT where GDPR_CASE_ID='{$copy_globalVarReviewCaseXML/SQL_RESULT/GDPR_CASE_ID/@Value}'"/>
+              <!--<SET Var="ProcessCnt" FromValue="{count($FinalSUDCollateDoc/SUD_Collate_Detail)}"/>-->
+              <EXECUTE_SQL_QUERY AssignToVar="ProcessCnt" Value="select count (*) AS PROCESS_COUNT from MDM.GDPR_SRCH_RSLT where GDPR_CASE_ID='{$copy_globalVarReviewCaseXML/SQL_RESULT/GDPR_CASE_ID/@Value}' AND PROC_IND='Y'"/>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <GDPR_RQST_STATUS_CD Value="PR"/>
+                <GDPR_RQST_STATUS_NAME Value="{$resStatusName_PR/SQL_RESULT/GDPR_RQST_STATUS_NAME/@Value}"/>
+                <TOTAL_COUNT Value="{$TotalAllRegis/SQL_RESULT/TOTAL_COUNT/@Value}"/>
+                <PROCESS_COUNT Value="{$ProcessCnt/SQL_RESULT/PROCESS_COUNT/@Value}"/>
+                <DisplayRegistration Value="true"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='DataAccessRequest' and $copy_globalVarReviewCaseXML/SQL_RESULT/GDPR_RQST_STATUS_CD/@Value='PR'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="getStatusName_PA">
+                <root>LOCKING ROW FOR ACCESS
+SEL GDPR_RQST_STATUS_NAME FROM  GDPR_RQST_STATUS
+WHERE GDPR_RQST_STATUS_CD='PA';</root>
+              </TO_DOCVAR>
+              <EXECUTE_SQL_QUERY AssignToVar="resStatusName_PA" Value="{$getStatusName_PA/@text}"/>
+              <REMOVE_CHILDREN ChildName="GDPR_RQST_STATUS_CD" DocVar="pglFormInput"/>
+              <REMOVE_CHILDREN ChildName="GDPR_RQST_STATUS_NAME" DocVar="pglFormInput"/>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <GDPR_RQST_STATUS_CD Value="PA"/>
+                <GDPR_RQST_STATUS_NAME Value="{$resStatusName_PA/SQL_RESULT/GDPR_RQST_STATUS_NAME/@Value}"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='DataDeletionRequest' and $copy_globalVarReviewCaseXML/GDPR_RQST_STATUS_CD/@Value='RA'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="getStatusName_PH">
+                <root>LOCKING ROW FOR ACCESS
+				  SEL GDPR_RQST_STATUS_NAME FROM  GDPR_RQST_STATUS
+				  WHERE GDPR_RQST_STATUS_CD='PH';</root>
+              </TO_DOCVAR>
+              <EXECUTE_SQL_QUERY AssignToVar="resStatusName_PH" Value="{$getStatusName_PH/@text}"/>
+              <REMOVE_CHILDREN ChildName="GDPR_RQST_STATUS_CD" DocVar="pglFormInput"/>
+              <REMOVE_CHILDREN ChildName="GDPR_RQST_STATUS_NAME" DocVar="pglFormInput"/>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <GDPR_RQST_STATUS_CD Value="PH"/>
+                <GDPR_RQST_STATUS_NAME Value="{$resStatusName_PH/SQL_RESULT/GDPR_RQST_STATUS_NAME/@Value}"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <!--SET Var="StatusCode" FromValue="{substringAfter($thisParam/selectedCaseID/@Value,'#GDPR_RQST_STATUS_NAME=')}"/-->
+          <EXECUTE_SQL_QUERY AssignToVar="RequestType" Value="LOCKING ROW FOR ACCESS SEL GDPR_RQST_TYPE_CD FROM GDPR_RQST WHERE GDPR_CASE_ID='{$currentGDPRCaseID}'" HandleException="true"/>
+          <!--<EXECUTE_SQL_QUERY Value="locking row for access sel GDPR_CASE_ID,GVN_NAME,FAMLY_NAME,ADDR_LINE_1_TXT,CITY_NAME,EMAIL_ADDR_TXT,FULL_PHONE_NUM, DATA_SRCE_NBR,GDPR_CASE_ID,GDPR_RQST_STATUS_CD from MDM.GDPR_RQST where GDPR_CASE_ID = ? AND GDPR_RQST_STATUS_CD &lt;> 'CP' ORDER BY GDPR_CASE_ID ASC;" AssignToVar="reviewCaseDetail">
+            <PARAM Value="{$currentGDPRCaseID}"/>
+          </EXECUTE_SQL_QUERY>-->
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='reviewCaseButton' and $reviewCaseDetail/SQL_RESULT/GDPR_RQST_STATUS_CD/@Value='PR' and $RequestType/SQL_RESULT/GDPR_RQST_TYPE_CD/@Value='DH'">
+            <THEN>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <DisplayDataAccess Value="true"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <!-- Set display condition for Update Contact Us Button -->
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='reviewCaseButton' and ($reviewCaseDetail/SQL_RESULT/GDPR_RQST_STATUS_CD/@Value = 'RP' or $reviewCaseDetail/SQL_RESULT/GDPR_RQST_STATUS_CD/@Value = 'NM' )  ">
+            <THEN>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <DisplayContactUs Value="true"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='reviewCaseButton' and $reviewCaseDetail/SQL_RESULT/GDPR_RQST_STATUS_CD/@Value='RA' and $RequestType/SQL_RESULT/GDPR_RQST_TYPE_CD/@Value='DH'">
+            <THEN>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <DisplayDataDeletion Value="true"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="($thisParam/BUTTON_ID/@Value='reviewCaseButton' and $reviewCaseDetail/SQL_RESULT/GDPR_RQST_STATUS_CD/@Value='RR') or ($reviewCaseDetail/SQL_RESULT/GDPR_RQST_STATUS_CD/@Value='RR' and $userAction='REGIS_PRSNA_ID') or  $userAction='SELECT_RETURN' or ($reviewCaseDetail/SQL_RESULT/GDPR_RQST_STATUS_CD/@Value='RR' and $thisParam/BUTTON_ID/@Value='SYS_RELOAD') or ($reviewCaseDetail/SQL_RESULT/GDPR_RQST_STATUS_CD/@Value='RR' and $userAction='PROCESS')">
+            <THEN>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <DisplayProcess Value="true"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <!--<IF_TEST Test="$thisParam/BUTTON_ID/@Value='REGIS_PRSNA_ID' or $thisParam/BUTTON_ID/@Value='SYS_RELOAD' or (($thisParam/GDPRCASEID/@Value!='' or $thisParam/GDPRCASEID/@Value!=null) and $reviewCaseDetail/SQL_RESULT/GDPR_RQST_STATUS_CD/@Value='RR' )">-->
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='REGIS_PRSNA_ID' or $thisParam/BUTTON_ID/@Value='SYS_RELOAD' or (($thisParam/GDPRCASEID/@Value!='' or $thisParam/GDPRCASEID/@Value!=null) ) or $thisParam/BUTTON_ID/@Value='processButton' ">
+            <THEN>
+              <IF_TEST Test="$reviewCaseDetail/SQL_RESULT/GDPR_RQST_STATUS_CD/@Value='NM'">
+                <THEN>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <DisplayGDPRRegisPrsna Value=""/>
+                    <DisplaySearchResult Value=""/>
+                    <DisplaySubjectRights Value=""/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <DisplayGDPRRegisPrsna Value="true"/>
+                    <DisplaySearchResult Value="true"/>
+                    <DisplaySubjectRights Value="true"/>
+                  </APPEND_TO_XML>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='reviewCaseButton' or $userAction='AssignToOther' or $thisParam/BUTTON_ID/@Value='SYS_RELOAD'">
+            <THEN>
+              <REMOVE_CHILDREN ChildName="DisplaySubjectRights" DocVar="pglFormInput"/>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <DisplaySubjectRights Value=""/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='SEARCH_INDIVIDUAL'">
+            <THEN>
+              <EXECUTE_SQL_QUERY AssignToVar="StartTimeWf" Value="SELECT current_timestamp as StartTime"/>
+              <TO_DOCVAR AssignToVar="Search">
+                <Search>
+                  <Start_time Value="{$workflowName} Search:{$StartTimeWf/SQL_RESULT/StartTime/@Value}, user Id:{$userName}"/>
+                </Search>
+              </TO_DOCVAR>
+              <SET Property="SHOW_CREATE_CONSUMER" DocVar="thisParam" FromValue="TRUE"/>
+            </THEN>
+            <ELSE>
+              <!-- Code Added By Reshma Ramesh for Resetting the values -->
+              <IF_TEST Test="$userAction='RESET'">
+                <THEN>
+                  <SET DocVar="thisParam" Property="MKTNG_PGM_NUMBER" FromValue=""/>
+                  <!--SET DocVar="thisParam" Property="REGIS_PRSNA_ID" FromValue="" /-->
+                  <SET DocVar="thisParam" Property="REGIS_CNSMR_ID_VAL" FromValue=""/>
+                  <!--SET DocVar="thisParam" Property="CONSUMER_ID" FromValue="" /-->
+                  <SET DocVar="thisParam" Property="GVN_NAME" FromValue=""/>
+                  <SET DocVar="thisParam" Property="FAMLY_NAME" FromValue=""/>
+                  <SET DocVar="thisParam" Property="BRTH_DATE" FromValue=""/>
+                  <SET DocVar="thisParam" Property="ADDR_LINE_1_TXT" FromValue=""/>
+                  <SET DocVar="thisParam" Property="ADDR_LINE_2_TXT" FromValue=""/>
+                  <SET DocVar="thisParam" Property="ADDR_LINE_3_TXT" FromValue=""/>
+                  <SET DocVar="thisParam" Property="CITY_NAME" FromValue=""/>
+                  <SET DocVar="thisParam" Property="TERR_CODE" FromValue=""/>
+                  <SET DocVar="thisParam" Property="CNTRY_CODE" FromValue=""/>
+                  <SET DocVar="thisParam" Property="POSTL_AREA_CODE" FromValue=""/>
+                  <SET DocVar="thisParam" Property="EMAIL_ADDR_TXT" FromValue=""/>
+                  <SET DocVar="thisParam" Property="FULL_PHONE_NUMBER" FromValue=""/>
+                  <SET DocVar="thisParam" Property="LYLTY_ACCT_NUM" FromValue=""/>
+                  <SET DocVar="thisParam" Property="NATIONAL_ID_NBR" FromValue=""/>
+                  <SET Property="SHOW_CREATE_CONSUMER" DocVar="thisParam" FromValue="FALSE"/>
+                  <SET DocVar="thisParam" Property="START_COUNT" FromValue="-1"/>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <TO_XML SelectList="$thisParam/*"/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_STATES'">
+                    <THEN>
+                      <EXECUTE_SQL_QUERY AssignToVar="VarNewCntryCode" Value="SELECT CNTRY_CODE from CNTRY WHERE CNTRY_NAME='{$thisParam/CNTRY_CODE/@Value}'"/>
+                      <REQUEST Name="getStates" AssignToVar="stateNames" ServiceName="BCM_MASTER">
+                        <CNTRY_CODE Value="{$VarNewCntryCode/SQL_RESULT/CNTRY_CODE/@Value}"/>
+                      </REQUEST>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <TO_XML SelectList="stateNames/*"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_PROGRAM_LIST'">
+                        <THEN>
+                          <REQUEST Name="getMatchedDomains" ServiceName="BCM_MASTER" AssignToVar="domainValues"/>
+                          <REQUEST Name="getProgramIDs" AssignToVar="programIDValues" ServiceName="BCM_MASTER">
+                            <SOURCE Value="SEARCH"/>
+                            <LEGAL_ENT_NBR Value="{$domainValues/LEGAL_ENT[LEGAL_ENT_NAME/@Value=$thisParam/LEGAL_ENT_NAME/@Value]/LEGAL_ENT_NBR/@Value}"/>
+                          </REQUEST>
+                        </THEN>
+                      </IF_TEST>
+                      <APPEND_TO_XML DocVar="pglFormInput">
+                        <TO_XML SelectList="programIDValues/*"/>
+                      </APPEND_TO_XML>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <!-- Code Added by Reshma Ramesh for Multiple records of consumer search individual details to be inserted -->
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SELECT_RETURN'">
+            <THEN>
+              <SET Var="REGIS_PRSNA_ID" FromValue="{$thisParam/selectedIndividualID/@Value}"/>
+              <TO_DOCVAR AssignToVar="SelectedMultiSolutionPort">
+                <ROOT/>
+              </TO_DOCVAR>
+              <APPEND_TO_XML DocVar="SelectedMultiSolutionPort">
+                <TO_XML SelectList="$thisParam/*[name()='selectedIndividualID']"/>
+              </APPEND_TO_XML>
+              <TO_DOCVAR AssignToVar="selectedId">
+                <ID>
+                  <TO_XML SelectList="$SelectedMultiSolutionPort/selectedIndividualID"/>
+                </ID>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="LevelInfoCollateXML">
+                <Manage_Level>
+                  <INPUT>
+                    <TO_XML SelectList="$thisParam/REGIS_PRSNA_ID"/>
+                    <TO_XML SelectList="$thisParam/MKTNG_PGM_NAME"/>
+                    <TO_XML SelectList="$thisParam/MATCHD_CNSMR_PRSNA_ID"/>
+                  </INPUT>
+                  <COLLATE_LIST Value="Level_Info">
+                    <REGIS_PRSNA_ID/>
+                    <MKTNG_PGM_NAME/>
+                    <MATCHD_CNSMR_PRSNA_ID/>
+                  </COLLATE_LIST>
+                </Manage_Level>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="LevelInfoCollateFinalDoc">
+                <ROOT/>
+              </TO_DOCVAR>
+              <COLLATE_XML DocVar="LevelInfoCollateXML" AssignToVar="LevelInfoCollateDoc"/>
+              <FOR_EACH SelectList="$selectedId/*" CurrentElement="currElementNewselect">
+                <APPEND_TO_XML DocVar="LevelInfoCollateFinalDoc">
+                  <TO_XML SelectList="$LevelInfoCollateDoc/Level_Info[REGIS_PRSNA_ID/@Value = $currElementNewselect/@Value ]"/>
+                </APPEND_TO_XML>
+              </FOR_EACH>
+              <FOR_EACH CurrentElement="CurrElemNew" SelectList="$LevelInfoCollateFinalDoc/Level_Info">
+                <IF_TEST Test="$VarGivenName!='' or  $VarFamilyName!='' or $VarPhoneNum!='' or $VarEmailAddr!='' or $VarAddrLine1!='' or $VarAddrLine2!='' or $VarAddrLine3!='' or $VarCity!='' or $VarPostalAreaCode!='' or $VarCountry!='' or $VarregisCnsmrId!='' or $VarNationalID!=''">
+                  <THEN>
+                    <!--SET Var="GdprSearchTypeCode" FromValue="PN"/-->
+                    <EXECUTE_SQL_QUERY AssignToVar="SelectedMktngNbr" Value="LOCKING ROW FOR ACCESS SELECT MKTNG_PGM_NBR FROM MKTNG_PGM where MKTNG_PGM_NAME='{$CurrElemNew/MKTNG_PGM_NAME/@Value}'"/>
+                    <TO_DOCVAR AssignToVar="InsertQry1">
+                      <ROOT>INSERT INTO iCRM_TBL.GDPR_SRCH_RSLT (GDPR_CASE_ID,GDPR_SRCH_TYPE_CODE,
+REGIS_PRSNA_ID,MATCHD_CNSMR_PRSNA_ID,MKTNG_PGM_NBR,LEGAL_ENT_NBR,PROC_IND)
+values	('{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}','MN',
+'{$CurrElemNew/REGIS_PRSNA_ID/@Value}','{$CurrElemNew/MATCHD_CNSMR_PRSNA_ID/@Value}', '{$SelectedMktngNbr/SQL_RESULT/MKTNG_PGM_NBR/@Value}',
+'{$LegalEntVar}','Y');</ROOT>
+                    </TO_DOCVAR>
+                    <EXECUTE_SQL_DML Value="{$InsertQry1/@text}" AssignToVar="varUpdate2"/>
+                    <!--TO_DOCVAR AssignToVar="DeleteQry1">
+                      <ROOT>DELETE FROM iCRM_TBL.GDPR_SRCH_SMRY where GDPR_CASE_ID='{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}' and GDPR_SRCH_TYPE_CODE='PN' ;</ROOT>
+                    </TO_DOCVAR>
+                    <EXECUTE_SQL_QUERY AssignToVar="VarDeleteQry1" Value="{$DeleteQry1/@text}"/>
+                    <TO_DOCVAR AssignToVar="InsertQry2">
+                      <ROOT>INSERT INTO iCRM_TBL.GDPR_SRCH_SMRY (GDPR_CASE_ID,GDPR_SRCH_TYPE_CODE,
+GDPR_SRCH_GRADE)
+values	('{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}','PN',
+'A');</ROOT>
+                    </TO_DOCVAR>
+                    <EXECUTE_SQL_DML Value="{$InsertQry2/@text}" AssignToVar="varUpdate2"/-->
+                  </THEN>
+                </IF_TEST>
+                <!--<IF_TEST Test="$VarEmailAddr!='' and $VarGivenName!=''">
+                  <THEN>
+                    <SET Var="GdprSearchTypeCode" FromValue="EN"/>
+                    <EXECUTE_SQL_QUERY AssignToVar="SelectedMktngNbr" Value="LOCKING ROW FOR ACCESS SELECT MKTNG_PGM_NBR FROM MKTNG_PGM where MKTNG_PGM_NAME='{$CurrElemNew/MKTNG_PGM_NAME/@Value}'"/>
+                    <TO_DOCVAR AssignToVar="InsertQry1">
+                      <ROOT>INSERT INTO iCRM_TBL.GDPR_SRCH_RSLT (GDPR_CASE_ID,GDPR_SRCH_TYPE_CODE,
+REGIS_PRSNA_ID,MKTNG_PGM_NBR,LEGAL_ENT_NBR,PROC_IND)
+values	('{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}','EN',
+'{$CurrElemNew/REGIS_PRSNA_ID/@Value}', '{$SelectedMktngNbr/SQL_RESULT/MKTNG_PGM_NBR/@Value}',
+'{$LegalEntVar}','Y');</ROOT>
+                    </TO_DOCVAR>
+                    <EXECUTE_SQL_DML Value="{$InsertQry1/@text}" AssignToVar="varUpdate2"/>
+                    <TO_DOCVAR AssignToVar="DeleteQry1">
+                      <ROOT>DELETE FROM iCRM_TBL.GDPR_SRCH_SMRY where GDPR_CASE_ID='{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}' and GDPR_SRCH_TYPE_CODE='EN' ;</ROOT>
+                    </TO_DOCVAR>
+                    <EXECUTE_SQL_QUERY AssignToVar="VarDeleteQry1" Value="{$DeleteQry1/@text}"/>
+                    <TO_DOCVAR AssignToVar="InsertQry2">
+                      <ROOT>INSERT INTO iCRM_TBL.GDPR_SRCH_SMRY (GDPR_CASE_ID,GDPR_SRCH_TYPE_CODE,
+GDPR_SRCH_GRADE)
+values	('{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}','EN',
+'A');</ROOT>
+                    </TO_DOCVAR>
+                    <EXECUTE_SQL_DML Value="{$InsertQry2/@text}" AssignToVar="varUpdate2"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$VarEmailAddr!='' and $VarGivenName='' ">
+                  <THEN>
+                    <SET Var="GdprSearchTypeCode" FromValue="E"/>
+                    <EXECUTE_SQL_QUERY AssignToVar="SelectedMktngNbr" Value="LOCKING ROW FOR ACCESS SELECT MKTNG_PGM_NBR FROM MKTNG_PGM where MKTNG_PGM_NAME='{$CurrElemNew/MKTNG_PGM_NAME/@Value}'"/>
+                    <TO_DOCVAR AssignToVar="InsertQry1">
+                      <ROOT>INSERT INTO iCRM_TBL.GDPR_SRCH_RSLT (GDPR_CASE_ID,GDPR_SRCH_TYPE_CODE,
+REGIS_PRSNA_ID,MKTNG_PGM_NBR,LEGAL_ENT_NBR,PROC_IND)
+values	('{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}','E',
+'{$CurrElemNew/REGIS_PRSNA_ID/@Value}', '{$SelectedMktngNbr/SQL_RESULT/MKTNG_PGM_NBR/@Value}',
+'{$LegalEntVar}','Y');</ROOT>
+                    </TO_DOCVAR>
+                    <EXECUTE_SQL_DML Value="{$InsertQry1/@text}" AssignToVar="varUpdate2"/>
+                    <TO_DOCVAR AssignToVar="DeleteQry1">
+                      <ROOT>DELETE FROM iCRM_TBL.GDPR_SRCH_SMRY where GDPR_CASE_ID='{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}' and GDPR_SRCH_TYPE_CODE='E' ;</ROOT>
+                    </TO_DOCVAR>
+                    <EXECUTE_SQL_QUERY AssignToVar="VarDeleteQry1" Value="{$DeleteQry1/@text}"/>
+                    <TO_DOCVAR AssignToVar="InsertQry2">
+                      <ROOT>INSERT INTO iCRM_TBL.GDPR_SRCH_SMRY (GDPR_CASE_ID,GDPR_SRCH_TYPE_CODE,
+GDPR_SRCH_GRADE)
+values	('{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}','E',
+'A');</ROOT>
+                    </TO_DOCVAR>
+                    <EXECUTE_SQL_DML Value="{$InsertQry2/@text}" AssignToVar="varUpdate2"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$VarPhoneNum!='' and $VarGivenName='' ">
+                  <THEN>
+                    <SET Var="GdprSearchTypeCode" FromValue="P"/>
+                    <EXECUTE_SQL_QUERY AssignToVar="SelectedMktngNbr" Value="LOCKING ROW FOR ACCESS SELECT MKTNG_PGM_NBR FROM MKTNG_PGM where MKTNG_PGM_NAME='{$CurrElemNew/MKTNG_PGM_NAME/@Value}'"/>
+                    <TO_DOCVAR AssignToVar="InsertQry1">
+                      <ROOT>INSERT INTO iCRM_TBL.GDPR_SRCH_RSLT (GDPR_CASE_ID,GDPR_SRCH_TYPE_CODE,
+REGIS_PRSNA_ID,MKTNG_PGM_NBR,LEGAL_ENT_NBR,PROC_IND)
+values	('{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}','P',
+'{$CurrElemNew/REGIS_PRSNA_ID/@Value}', '{$SelectedMktngNbr/SQL_RESULT/MKTNG_PGM_NBR/@Value}',
+'{$LegalEntVar}','Y');</ROOT>
+                    </TO_DOCVAR>
+                    <EXECUTE_SQL_DML Value="{$InsertQry1/@text}" AssignToVar="varUpdate2"/>
+                    <TO_DOCVAR AssignToVar="DeleteQry1">
+                      <ROOT>DELETE FROM iCRM_TBL.GDPR_SRCH_SMRY where GDPR_CASE_ID='{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}' and GDPR_SRCH_TYPE_CODE='P' ;</ROOT>
+                    </TO_DOCVAR>
+                    <EXECUTE_SQL_QUERY AssignToVar="VarDeleteQry1" Value="{$DeleteQry1/@text}"/>
+                    <TO_DOCVAR AssignToVar="InsertQry2">
+                      <ROOT>INSERT INTO iCRM_TBL.GDPR_SRCH_SMRY (GDPR_CASE_ID,GDPR_SRCH_TYPE_CODE,
+GDPR_SRCH_GRADE)
+values	('{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}','P',
+'A');</ROOT>
+                    </TO_DOCVAR>
+                    <EXECUTE_SQL_DML Value="{$InsertQry2/@text}" AssignToVar="varUpdate2"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$VarAddrLine1!='' and $VarGivenName!=''">
+                  <THEN>
+                    <SET Var="GdprSearchTypeCode" FromValue="AN"/>
+                    <EXECUTE_SQL_QUERY AssignToVar="SelectedMktngNbr" Value="LOCKING ROW FOR ACCESS SELECT MKTNG_PGM_NBR FROM MKTNG_PGM where MKTNG_PGM_NAME='{$CurrElemNew/MKTNG_PGM_NAME/@Value}'"/>
+                    <TO_DOCVAR AssignToVar="InsertQry1">
+                      <ROOT>INSERT INTO iCRM_TBL.GDPR_SRCH_RSLT (GDPR_CASE_ID,GDPR_SRCH_TYPE_CODE,
+REGIS_PRSNA_ID,MKTNG_PGM_NBR,LEGAL_ENT_NBR,PROC_IND)
+values	('{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}','AN',
+'{$CurrElemNew/REGIS_PRSNA_ID/@Value}', '{$SelectedMktngNbr/SQL_RESULT/MKTNG_PGM_NBR/@Value}',
+'{$LegalEntVar}','Y');</ROOT>
+                    </TO_DOCVAR>
+                    <EXECUTE_SQL_DML Value="{$InsertQry1/@text}" AssignToVar="varUpdate2"/>
+                    <TO_DOCVAR AssignToVar="DeleteQry1">
+                      <ROOT>DELETE FROM iCRM_TBL.GDPR_SRCH_SMRY where GDPR_CASE_ID='{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}' and GDPR_SRCH_TYPE_CODE='AN' ;</ROOT>
+                    </TO_DOCVAR>
+                    <EXECUTE_SQL_QUERY AssignToVar="VarDeleteQry1" Value="{$DeleteQry1/@text}"/>
+                    <TO_DOCVAR AssignToVar="InsertQry2">
+                      <ROOT>INSERT INTO iCRM_TBL.GDPR_SRCH_SMRY (GDPR_CASE_ID,GDPR_SRCH_TYPE_CODE,
+GDPR_SRCH_GRADE)
+values	('{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}','AN',
+'A');</ROOT>
+                    </TO_DOCVAR>
+                    <EXECUTE_SQL_DML Value="{$InsertQry2/@text}" AssignToVar="varUpdate2"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$VarAddrLine1!='' and $VarGivenName=''">
+                  <THEN>
+                    <SET Var="GdprSearchTypeCode" FromValue="A"/>
+                    <EXECUTE_SQL_QUERY AssignToVar="SelectedMktngNbr" Value="LOCKING ROW FOR ACCESS SELECT MKTNG_PGM_NBR FROM MKTNG_PGM where MKTNG_PGM_NAME='{$CurrElemNew/MKTNG_PGM_NAME/@Value}'"/>
+                    <TO_DOCVAR AssignToVar="InsertQry1">
+                      <ROOT>INSERT INTO iCRM_TBL.GDPR_SRCH_RSLT (GDPR_CASE_ID,GDPR_SRCH_TYPE_CODE,
+REGIS_PRSNA_ID,MKTNG_PGM_NBR,LEGAL_ENT_NBR,PROC_IND)
+values	('{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}','A',
+'{$CurrElemNew/REGIS_PRSNA_ID/@Value}', '{$SelectedMktngNbr/SQL_RESULT/MKTNG_PGM_NBR/@Value}',
+'{$LegalEntVar}','Y');</ROOT>
+                    </TO_DOCVAR>
+                    <EXECUTE_SQL_DML Value="{$InsertQry1/@text}" AssignToVar="varUpdate2"/>
+                    <TO_DOCVAR AssignToVar="DeleteQry1">
+                      <ROOT>DELETE FROM iCRM_TBL.GDPR_SRCH_SMRY where GDPR_CASE_ID='{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}' and GDPR_SRCH_TYPE_CODE='A' ;</ROOT>
+                    </TO_DOCVAR>
+                    <EXECUTE_SQL_QUERY AssignToVar="VarDeleteQry1" Value="{$DeleteQry1/@text}"/>
+                    <TO_DOCVAR AssignToVar="InsertQry2">
+                      <ROOT>INSERT INTO iCRM_TBL.GDPR_SRCH_SMRY (GDPR_CASE_ID,GDPR_SRCH_TYPE_CODE,
+GDPR_SRCH_GRADE)
+values	('{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}','A',
+'A');</ROOT>
+                    </TO_DOCVAR>
+                    <EXECUTE_SQL_DML Value="{$InsertQry2/@text}" AssignToVar="varUpdate2"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$VarNationalID!='' and $VarGivenName!=''">
+                  <THEN>
+                    <SET Var="GdprSearchTypeCode" FromValue="NN"/>
+                    <EXECUTE_SQL_QUERY AssignToVar="SelectedMktngNbr" Value="LOCKING ROW FOR ACCESS SELECT MKTNG_PGM_NBR FROM MKTNG_PGM where MKTNG_PGM_NAME='{$CurrElemNew/MKTNG_PGM_NAME/@Value}'"/>
+                    <TO_DOCVAR AssignToVar="InsertQry1">
+                      <ROOT>INSERT INTO iCRM_TBL.GDPR_SRCH_RSLT (GDPR_CASE_ID,GDPR_SRCH_TYPE_CODE,
+REGIS_PRSNA_ID,MKTNG_PGM_NBR,LEGAL_ENT_NBR,PROC_IND)
+values	('{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}','NN',
+'{$CurrElemNew/REGIS_PRSNA_ID/@Value}', '{$SelectedMktngNbr/SQL_RESULT/MKTNG_PGM_NBR/@Value}',
+'{$LegalEntVar}','Y');</ROOT>
+                    </TO_DOCVAR>
+                    <EXECUTE_SQL_DML Value="{$InsertQry1/@text}" AssignToVar="varUpdate2"/>
+                    <TO_DOCVAR AssignToVar="DeleteQry1">
+                      <ROOT>DELETE FROM iCRM_TBL.GDPR_SRCH_SMRY where GDPR_CASE_ID='{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}' and GDPR_SRCH_TYPE_CODE='NN' ;</ROOT>
+                    </TO_DOCVAR>
+                    <EXECUTE_SQL_QUERY AssignToVar="VarDeleteQry1" Value="{$DeleteQry1/@text}"/>
+                    <TO_DOCVAR AssignToVar="InsertQry2">
+                      <ROOT>INSERT INTO iCRM_TBL.GDPR_SRCH_SMRY (GDPR_CASE_ID,GDPR_SRCH_TYPE_CODE,
+GDPR_SRCH_GRADE)
+values	('{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}','NN',
+'A');</ROOT>
+                    </TO_DOCVAR>
+                    <EXECUTE_SQL_DML Value="{$InsertQry2/@text}" AssignToVar="varUpdate2"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$VarNationalID!='' and $VarGivenName=''">
+                  <THEN>
+                    <SET Var="GdprSearchTypeCode" FromValue="N"/>
+                    <EXECUTE_SQL_QUERY AssignToVar="SelectedMktngNbr" Value="LOCKING ROW FOR ACCESS SELECT MKTNG_PGM_NBR FROM MKTNG_PGM where MKTNG_PGM_NAME='{$CurrElemNew/MKTNG_PGM_NAME/@Value}'"/>
+                    <TO_DOCVAR AssignToVar="InsertQry1">
+                      <ROOT>INSERT INTO iCRM_TBL.GDPR_SRCH_RSLT (GDPR_CASE_ID,GDPR_SRCH_TYPE_CODE,
+REGIS_PRSNA_ID,MKTNG_PGM_NBR,LEGAL_ENT_NBR,PROC_IND)
+values	('{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}','N',
+'{$CurrElemNew/REGIS_PRSNA_ID/@Value}', '{$SelectedMktngNbr/SQL_RESULT/MKTNG_PGM_NBR/@Value}',
+'{$LegalEntVar}','Y');</ROOT>
+                    </TO_DOCVAR>
+                    <EXECUTE_SQL_DML Value="{$InsertQry1/@text}" AssignToVar="varUpdate2"/>
+                    <TO_DOCVAR AssignToVar="DeleteQry1">
+                      <ROOT>DELETE FROM iCRM_TBL.GDPR_SRCH_SMRY where GDPR_CASE_ID='{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}' and GDPR_SRCH_TYPE_CODE='N' ;</ROOT>
+                    </TO_DOCVAR>
+                    <EXECUTE_SQL_QUERY AssignToVar="VarDeleteQry1" Value="{$DeleteQry1/@text}"/>
+                    <TO_DOCVAR AssignToVar="InsertQry2">
+                      <ROOT>INSERT INTO iCRM_TBL.GDPR_SRCH_SMRY (GDPR_CASE_ID,GDPR_SRCH_TYPE_CODE,
+GDPR_SRCH_GRADE)
+values	('{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}','N',
+'A');</ROOT>
+                    </TO_DOCVAR>
+                    <EXECUTE_SQL_DML Value="{$InsertQry2/@text}" AssignToVar="varUpdate2"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$VarregisCnsmrId!='' ">
+                  <THEN>
+                    <SET Var="GdprSearchTypeCode" FromValue="RC"/>
+                    <EXECUTE_SQL_QUERY AssignToVar="SelectedMktngNbr" Value="LOCKING ROW FOR ACCESS SELECT MKTNG_PGM_NBR FROM MKTNG_PGM where MKTNG_PGM_NAME='{$CurrElemNew/MKTNG_PGM_NAME/@Value}'"/>
+                    <TO_DOCVAR AssignToVar="InsertQry1">
+                      <ROOT>INSERT INTO iCRM_TBL.GDPR_SRCH_RSLT (GDPR_CASE_ID,GDPR_SRCH_TYPE_CODE,
+REGIS_PRSNA_ID,MKTNG_PGM_NBR,LEGAL_ENT_NBR,PROC_IND)
+values	('{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}','RC',
+'{$CurrElemNew/REGIS_PRSNA_ID/@Value}', '{$SelectedMktngNbr/SQL_RESULT/MKTNG_PGM_NBR/@Value}',
+'{$LegalEntVar}','Y');</ROOT>
+                    </TO_DOCVAR>
+                    <EXECUTE_SQL_DML Value="{$InsertQry1/@text}" AssignToVar="varUpdate2"/>
+                    <TO_DOCVAR AssignToVar="DeleteQry1">
+                      <ROOT>DELETE FROM iCRM_TBL.GDPR_SRCH_SMRY where GDPR_CASE_ID='{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}' and GDPR_SRCH_TYPE_CODE='RC' ;</ROOT>
+                    </TO_DOCVAR>
+                    <EXECUTE_SQL_QUERY AssignToVar="VarDeleteQry1" Value="{$DeleteQry1/@text}"/>
+                    <TO_DOCVAR AssignToVar="InsertQry2">
+                      <ROOT>INSERT INTO iCRM_TBL.GDPR_SRCH_SMRY (GDPR_CASE_ID,GDPR_SRCH_TYPE_CODE,
+GDPR_SRCH_GRADE)
+values	('{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}','RC',
+'A');</ROOT>
+                    </TO_DOCVAR>
+                    <EXECUTE_SQL_DML Value="{$InsertQry2/@text}" AssignToVar="varUpdate2"/>
+                  </THEN>
+                </IF_TEST>-->
+                <!--EXECUTE_SQL_QUERY AssignToVar="SelectedMktngNbr" Value="LOCKING ROW FOR ACCESS SELECT MKTNG_PGM_NBR FROM MKTNG_PGM where MKTNG_PGM_NAME='{$CurrElemNew/MKTNG_PGM_NAME/@Value}'"/>
+                <TO_DOCVAR AssignToVar="InsertQry1">
+                  <ROOT>INSERT INTO iCRM_TBL.GDPR_SRCH_RSLT (GDPR_CASE_ID,GDPR_SRCH_TYPE_CODE,
+REGIS_PRSNA_ID,MKTNG_PGM_NBR,LEGAL_ENT_NBR,PROC_IND)
+values	('{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}','{$GdprSearchTypeCode}',
+'{$CurrElemNew/REGIS_PRSNA_ID/@Value}', '{$SelectedMktngNbr/SQL_RESULT/MKTNG_PGM_NBR/@Value}',
+'{$LegalEntVar}','Y');</ROOT>
+                </TO_DOCVAR>
+                <EXECUTE_SQL_DML Value="{$InsertQry1/@text}" AssignToVar="varUpdate2"/>
+                <TO_DOCVAR AssignToVar="InsertQry2">
+                  <ROOT>INSERT INTO iCRM_TBL.GDPR_SRCH_SMRY (GDPR_CASE_ID,GDPR_SRCH_TYPE_CODE,
+GDPR_SRCH_GRADE)
+values	('{$reviewCaseDetail/SQL_RESULT/GDPR_CASE_ID/@Value}','{$GdprSearchTypeCode}',
+'A');</ROOT>
+                </TO_DOCVAR-->
+                <!--EXECUTE_SQL_DML Value="{$InsertQry2/@text}" AssignToVar="varUpdate2"/-->
+              </FOR_EACH>
+              <EXECUTE_SQL_DML AssignToVar="UpdateStatusForNM" Value="UPDATE MDM.GDPR_RQST SET GDPR_RQST_STATUS_CD = 'RR' WHERE GDPR_CASE_ID ='{$currentGDPRCaseID}'">
+                <!--PARAM Value="{$currentGDPRCaseID}" /-->
+              </EXECUTE_SQL_DML>
+              <EXECUTE_SQL_QUERY AssignToVar="VarToRR" Value="LOCKING ROW FOR ACCESS SELECT GDPR_RQST_STATUS_NAME FROM MDM.GDPR_RQST_STATUS WHERE GDPR_RQST_STATUS_CD ='RR'"/>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <EXECUTE_SQL_QUERY AssignToVar="searchResultProcIndic" Value="LOCKING ROW FOR ACCESS SEL A.PROC_IND, A.REGIS_PRSNA_ID,A.GDPR_SRCH_TYPE_CODE, B.GDPR_SRCH_TYPE_NAME, A.MKTNG_PGM_NBR, A.LEGAL_ENT_NBR FROM MDM.GDPR_SRCH_RSLT A JOIN MDM.GDPR_SRCH_TYPE B ON A.GDPR_SRCH_TYPE_CODE = B.GDPR_SRCH_TYPE_CODE WHERE  GDPR_CASE_ID='{$globalVarReviewCaseXML/SQL_RESULT/GDPR_CASE_ID/@Value}'"/>
+                <!-- forming xml struct to show-up on screen -->
+                <TO_DOCVAR AssignToVar="searchResultXML">
+                  <DETAILS/>
+                </TO_DOCVAR>
+                <FOR_EACH CurrentElement="currentElementSearch" SelectList="$searchResultProcIndic/SQL_RESULT">
+                  <!--SET Var="ifYSelect" FromSelect="ifElse($currentElementSearch/PROC_IND/@Value = 'N','false','true')" />
+<SET Var="ifNSelect" FromSelect="ifElse($currentElementSearch/PROC_IND/@Value = 'N','true','false')" /-->
+                  <!--SET Var="ProcessInd" FromSelect="ifElse($currentElementSearch/PROC_IND/@Value = 'Y','true','false')" /-->
+                  <SET Var="ProcessInd" FromValue="Y"/>
+                  <IF_TEST Test="$ProcessInd/@Value = 'Y'">
+                    <THEN>
+                      <SET Var="PROCESS" FromValue="true"/>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="$ProcessInd/@Value = 'N'">
+                    <THEN>
+                      <SET Var="DO_NOT_PROCESS" FromValue="true"/>
+                    </THEN>
+                  </IF_TEST>
+                  <APPEND_TO_XML DocVar="searchResultXML">
+                    <DATA>
+                      <PROC_IND Value="{$ProcessInd/@Value}"/>
+                      <!--PROC_IND Value="{$ProcessInd/@Value}" /-->
+                      <PROCESS Value="{$PROCESS}"/>
+                      <DO_NOT_PROCESS Value="{$DO_NOT_PROCESS}"/>
+                      <REGIS_PRSNA_ID Value="{$currentElementSearch/REGIS_PRSNA_ID/@Value}"/>
+                      <MKTNG_PGM_NBR Value="{$currentElementSearch/MKTNG_PGM_NBR/@Value}"/>
+                      <LEGAL_ENT_NBR Value="{$currentElementSearch/LEGAL_ENT_NBR/@Value}"/>
+                      <REGIS_PRSNA_ID Value="{$currentElementSearch/REGIS_PRSNA_ID/@Value}"/>
+                      <REGIS_ID Value="{$currentElementSearch/REGIS_PRSNA_ID/@Value}"/>
+                      <GDPR_SRCH_TYPE_NAME Value="{$currentElementSearch/GDPR_SRCH_TYPE_NAME/@Value}"/>
+                      <GDPR_SRCH_TYPE_CODE Value="{$currentElementSearch/GDPR_SRCH_TYPE_CODE/@Value}"/>
+                      <SELECT_Y Value="{$ifYSelect}"/>
+                      <SELECT_N Value="{$ifNSelect}"/>
+                    </DATA>
+                  </APPEND_TO_XML>
+                </FOR_EACH>
+                <!--EXECUTE_SQL_QUERY AssignToVar="VarSubjectHistory" Value="NONSEQUENCED TRANSACTIONTIME SELECT GDPR_RQST.GDPR_CASE_ID,GDPR_RQST_TYPE.GDPR_RQST_TYPE_NAME,GDPR_RQST_STATUS.GDPR_RQST_STATUS_NAME,GDPR_RQST.GVN_NAME,GDPR_RQST.MID_NAME, GDPR_RQST.FAMLY_NAME,GDPR_RQST.NAME_SUFFX_TXT,GDPR_RQST.FULL_NAME, MKTNG_PGM.MKTNG_PGM_DESC,GDPR_RQST.REGIS_CNSMR_ID_VAL,GDPR_RQST.DATA_SRCE_NBR, GDPR_RQST.NATIONAL_ID_NBR,GDPR_RQST.EMAIL_ADDR_TXT,GDPR_RQST.FULL_PHONE_NUM, GDPR_RQST.ADDR_LINE_1_TXT,GDPR_RQST.ADDR_LINE_2_TXT,GDPR_RQST.ADDR_LINE_3_TXT, GDPR_RQST.CITY_NAME,GDPR_RQST.TERR_NAME,GDPR_RQST.POSTL_AREA_CODE, GDPR_RQST.CNTRY_CODE,GDPR_RQST.GDPR_RQST_FULFLMT_DATETM,GDPR_RQST.GDPR_RQST_CRTN_DATETM, GDPR_RQST.GDPR_RQST_IDNTY_VFYD_DATETM FROM    GDPR_RQST LEFT JOIN GDPR_RQST_TYPE ON  GDPR_RQST.GDPR_RQST_TYPE_CD=GDPR_RQST_TYPE.GDPR_RQST_TYPE_CD LEFT JOIN GDPR_RQST_STATUS ON GDPR_RQST.GDPR_RQST_STATUS_CD=GDPR_RQST_STATUS.GDPR_RQST_STATUS_CD LEFT JOIN MKTNG_PGM ON GDPR_RQST.MKTNG_PGM_NBR=MKTNG_PGM.MKTNG_PGM_NBR JOIN GDPR_SRCH_RSLT ON GDPR_RQST.GDPR_CASE_ID= GDPR_SRCH_RSLT.GDPR_CASE_ID AND GDPR_SRCH_RSLT.PROC_IND='Y' WHERE    GDPR_SRCH_RSLT.MKTNG_PGM_NBR = '{$searchResultProcIndic/SQL_RESULT/MKTNG_PGM_NBR/@Value}' AND GDPR_SRCH_RSLT.REGIS_PRSNA_ID='{$searchResultProcIndic/SQL_RESULT/REGIS_PRSNA_ID/@Value}' ">
+                </EXECUTE_SQL_QUERY-->
+                <!--EXECUTE_SQL_QUERY AssignToVar="VarSubjectHistory" Value="NONSEQUENCED TRANSACTIONTIME SELECT GDPR_RQST.GDPR_CASE_ID,GDPR_RQST_TYPE.GDPR_RQST_TYPE_NAME,GDPR_RQST_STATUS.GDPR_RQST_STATUS_NAME,GDPR_RQST.GVN_NAME,GDPR_RQST.MID_NAME, GDPR_RQST.FAMLY_NAME,GDPR_RQST.NAME_SUFFX_TXT,GDPR_RQST.FULL_NAME, MKTNG_PGM.MKTNG_PGM_DESC,GDPR_RQST.REGIS_CNSMR_ID_VAL,GDPR_RQST.DATA_SRCE_NBR, GDPR_RQST.NATIONAL_ID_NBR,GDPR_RQST.EMAIL_ADDR_TXT,GDPR_RQST.FULL_PHONE_NUM, GDPR_RQST.ADDR_LINE_1_TXT,GDPR_RQST.ADDR_LINE_2_TXT,GDPR_RQST.ADDR_LINE_3_TXT, GDPR_RQST.CITY_NAME,GDPR_RQST.TERR_NAME,GDPR_RQST.POSTL_AREA_CODE, GDPR_RQST.CNTRY_CODE,GDPR_RQST.GDPR_RQST_FULFLMT_DATETM,GDPR_RQST.GDPR_RQST_CRTN_DATETM, GDPR_RQST.GDPR_RQST_IDNTY_VFYD_DATETM FROM    GDPR_RQST LEFT JOIN GDPR_RQST_TYPE ON  GDPR_RQST.GDPR_RQST_TYPE_CD=GDPR_RQST_TYPE.GDPR_RQST_TYPE_CD LEFT JOIN GDPR_RQST_STATUS ON GDPR_RQST.GDPR_RQST_STATUS_CD=GDPR_RQST_STATUS.GDPR_RQST_STATUS_CD LEFT JOIN MKTNG_PGM ON GDPR_RQST.MKTNG_PGM_NBR=MKTNG_PGM.MKTNG_PGM_NBR JOIN GDPR_SRCH_RSLT ON GDPR_RQST.GDPR_CASE_ID= GDPR_SRCH_RSLT.GDPR_CASE_ID AND GDPR_SRCH_RSLT.PROC_IND='Y' WHERE    GDPR_SRCH_RSLT.MKTNG_PGM_NBR = '{$searchResultProcIndic/SQL_RESULT/MKTNG_PGM_NBR/@Value}' AND GDPR_SRCH_RSLT.REGIS_PRSNA_ID='{$searchResultProcIndic/SQL_RESULT/REGIS_PRSNA_ID/@Value}' "/-->
+                <TO_DOCVAR AssignToVar="SubjectResultXML">
+                  <HISTORY_DETAILS/>
+                </TO_DOCVAR>
+                <FOR_EACH CurrentElement="currentElementHistory" SelectList="$VarSubjectHistory/SQL_RESULT">
+                  <APPEND_TO_XML DocVar="SubjectResultXML">
+                    <HISTORY>
+                      <GDPR_CASE_ID Value="{$currentElementHistory/GDPR_CASE_ID/@Value}"/>
+                      <GVN_NAME Value="{$currentElementHistory/GVN_NAME/@Value}"/>
+                      <MID_NAME Value="{$currentElementHistory/MID_NAME/@Value}"/>
+                      <FAMLY_NAME Value="{$currentElementHistory/SQL_RESULT/FAMLY_NAME/@Value}"/>
+                      <ADDR_LINE_1_TXT Value="{$currentElementHistory/ADDR_LINE_1_TXT/@Value}"/>
+                      <ADDR_LINE_2_TXT Value="{$currentElementHistory/ADDR_LINE_2_TXT/@Value}"/>
+                      <ADDR_LINE_3_TXT Value="{$currentElementHistory/ADDR_LINE_3_TXT/@Value}"/>
+                      <TERR_NAME Value="{$currentElementHistory/TERR_NAME/@Value}"/>
+                      <CITY_NAME Value="{$currentElementHistory/CITY_NAME/@Value}"/>
+                      <POSTL_AREA_CODE Value="{$currentElementHistory/POSTL_AREA_CODE/@Value}"/>
+                      <GDPR_RQST_CRTN_DATETM Value="{$currentElementHistory/GDPR_RQST_CRTN_DATETM/@Value}"/>
+                      <EMAIL_ADDR_TXT Value="{$currentElementHistory/EMAIL_ADDR_TXT/@Value}"/>
+                      <FULL_PHONE_NUM Value="{$currentElementHistory/FULL_PHONE_NUM/@Value}"/>
+                      <DATA_SRCE_NBR Value="{$currentElementHistory/DATA_SRCE_NBR/@Value}"/>
+                      <NAME_SUFFX_TXT Value="{$currentElementHistory/NAME_SUFFX_TXT/@Value}"/>
+                      <REGIS_CNSMR_ID_VAL Value="{$currentElementHistory/REGIS_CNSMR_ID_VAL/@Value}"/>
+                      <NATIONAL_ID_NBR Value="{$currentElementHistory/NATIONAL_ID_NBR/@Value}"/>
+                      <GDPR_RQST_FULFLMT_DATETM Value="{$currentElementHistory/GDPR_RQST_FULFLMT_DATETM/@Value}"/>
+                      <GDPR_RQST_IDNTY_VFYD_DATETM Value="{$currentElementHistory/GDPR_RQST_IDNTY_VFYD_DATETM/@Value}"/>
+                      <TEMPORAL_TIME Value="{$currentElementHistory/TEMPORAL_TIME/@Value}"/>
+                    </HISTORY>
+                  </APPEND_TO_XML>
+                </FOR_EACH>
+                <DisplaySearchResult Value="true"/>
+                <!--DisplaySubjectRights Value="true"/-->
+              </APPEND_TO_XML>
+              <REMOVE_CHILDREN ChildName="GDPR_RQST_STATUS_NAME" SelectList="$reviewCaseDetail/*"/>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <TO_XML SelectList="$searchResultXML/*"/>
+                <!--TO_XML SelectList="$SubjectResultXML/*"/-->
+                <SQL_RESULT>
+                  <GDPR_RQST_STATUS_NAME Value="{$VarToRR/SQL_RESULT/GDPR_RQST_STATUS_NAME/@Value}"/>
+                </SQL_RESULT>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="($thisParam/BUTTON_ID/@Value='reviewCaseButton' and $reviewCaseDetail/SQL_RESULT/GDPR_RQST_STATUS_CD/@Value='RR')  or ($reviewCaseDetail/SQL_RESULT/GDPR_RQST_STATUS_CD/@Value='RR' and ($thisParam/GDPRCASEID/@Value!='' or $thisParam/GDPRCASEID/@Value!=null)) ">
+            <THEN>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='processButton'">
+                <THEN>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <DisplaySearchResult Value="false"/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <DisplaySearchResult Value="true"/>
+                  </APPEND_TO_XML>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="($thisParam/BUTTON_ID/@Value='reviewCaseButton' and  $reviewCaseDetail/SQL_RESULT/GDPR_RQST_STATUS_CD/@Value='NM' or $thisParam/BUTTON_ID/@Value='LOAD_PROGRAM_LIST' or $thisParam/BUTTON_ID/@Value='LOAD_STATES' or $thisParam/BUTTON_ID/@Value='SEARCH_INDIVIDUAL' or $thisParam/BUTTON_ID/@Value='RESET' ) or ($reviewCaseDetail/SQL_RESULT/GDPR_RQST_STATUS_CD/@Value='NM' and ($thisParam/GDPRCASEID/@Value!='' or $thisParam/GDPRCASEID/@Value!=null)) ">
+            <THEN>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SELECT_RETURN'">
+                <THEN>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <DisplayUploadExcel Value=""/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <DisplayConsumerSearch Value="true"/>
+                    <DisplayUploadExcel Value="true"/>
+                  </APPEND_TO_XML>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='PROCESS'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="ProdCollateXML">
+                <ROOT>
+                  <INPUT>
+                    <TO_XML SelectList="$thisParam/PROC_IND"/>
+                    <TO_XML SelectList="$thisParam/REGIS_ID"/>
+                    <TO_XML SelectList="$thisParam/MKTNG_PGM_NBR"/>
+                    <TO_XML SelectList="$thisParam/LEGAL_ENT_NBR"/>
+                    <TO_XML SelectList="$thisParam/GDPR_SRCH_TYPE_CODE"/>
+                    <TO_XML SelectList="$thisParam/ABC"/>
+                    <TO_XML SelectList="$thisParam/XYZ"/>
+                  </INPUT>
+                  <COLLATE_LIST Value="PROD_Collate_Detail">
+                    <PROC_IND/>
+                    <REGIS_ID/>
+                    <MKTNG_PGM_NBR/>
+                    <LEGAL_ENT_NBR/>
+                    <GDPR_SRCH_TYPE_CODE/>
+                    <ABC/>
+                    <XYZ/>
+                  </COLLATE_LIST>
+                </ROOT>
+              </TO_DOCVAR>
+              <COLLATE_XML Var="ProdCollateXML" AssignToVar="ProdCollateDoc"/>
+              <TO_DOCVAR AssignToVar="ProdSUDCollateDoc">
+                <ROOT/>
+              </TO_DOCVAR>
+              <FOR_EACH SelectList="$thisParam/SelectedProcInd" CurrentElement="currNewElement">
+                <!--SET Var="PROC_IND" FromValue="{substringAfter(substringBefore($currNewElement/@Value,'#'),'PROC_IND=')}" /-->
+                <!--SET Var="REGIS_ID" FromValue="{substringAfter(substringBefore($currNewElement/@Value,'#MKTNG_PGM_NBR='),'REGIS_ID=')}" /-->
+                <SET Var="PROC_IND" FromValue="{substringAfter(substringBefore($currNewElement/@Value,'#REGIS_ID='),'PROC_IND=')}"/>
+                <SET Var="REGIS_ID" FromValue="{substringAfter(substringBefore($currNewElement/@Value,'#MKTNG_PGM_NBR='),'REGIS_ID=')}"/>
+                <SET Var="MKTNG_PGM_NBR" FromValue="{substringAfter(substringBefore($currNewElement/@Value,'#LEGAL_ENT_NBR='),'MKTNG_PGM_NBR=')}"/>
+                <SET Var="LEGAL_ENT_NBR" FromValue="{substringAfter(substringBefore($currNewElement/@Value,'#GDPR_SRCH_TYPE_CODE='),'#LEGAL_ENT_NBR=')}"/>
+                <SET Var="GDPR_SRCH_TYPE_CODE" FromValue="{substringAfter($currNewElement/@Value,'#GDPR_SRCH_TYPE_CODE=')}"/>
+                <APPEND_TO_XML DocVar="ProdSUDCollateDoc">
+                  <TO_XML SelectList="$ProdCollateDoc/PROD_Collate_Detail[PROC_IND/@Value = $PROC_IND and REGIS_ID/@Value = $REGIS_ID and MKTNG_PGM_NBR/@Value = $MKTNG_PGM_NBR and LEGAL_ENT_NBR/@Value = $LEGAL_ENT_NBR and GDPR_SRCH_TYPE_CODE/@Value = $GDPR_SRCH_TYPE_CODE ]"/>
+                </APPEND_TO_XML>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+          <FOR_EACH SelectList="$ProdSUDCollateDoc/PROD_Collate_Detail" CurrentElement="currElemprod">
+            <IF_TEST Test="($currElemprod/PROC_IND/@Value='false'and $currElemprod/XYZ/@Value='') or ($currElemprod/PROC_IND/@Value='false'and $currElemprod/XYZ/@Value='SELECTED')">
+              <THEN>
+                <SET Var="ProcValue" FromValue="Y"/>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="($currElemprod/PROC_IND/@Value='true' and $currElemprod/XYZ/@Value='') or ($currElemprod/PROC_IND/@Value='true'and $currElemprod/XYZ/@Value='Not_SELECTED')">
+              <THEN>
+                <SET Var="ProcValue" FromValue="N"/>
+              </THEN>
+            </IF_TEST>
+            <EXECUTE_SQL_QUERY AssignToVar="VarProdIndUpdate" Value="UPDATE MDM.GDPR_SRCH_RSLT SET PROC_IND = '{$ProcValue}', SYS_LAST_MODIFIED_BY='{$userId}' WHERE REGIS_PRSNA_ID='{$currElemprod/REGIS_ID/@Value}' and MKTNG_PGM_NBR='{$currElemprod/MKTNG_PGM_NBR/@Value}' and GDPR_SRCH_TYPE_CODE='{$currElemprod/GDPR_SRCH_TYPE_CODE/@Value}' and LEGAL_ENT_NBR='{$currElemprod/LEGAL_ENT_NBR/@Value}' and GDPR_CASE_ID='{$currentGDPRCaseID}'"/>
+          </FOR_EACH>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SEARCH_INDIVIDUAL'">
+            <THEN>
+              <SET Var="VarGivenName" FromValue="{$thisParam/GVN_NAME/@Value}"/>
+              <SET Var="VarFamilyName" FromValue="{$thisParam/FAMLY_NAME/@Value}"/>
+              <SET Var="VarPhoneNum" FromValue="{$thisParam/FULL_PHONE_NUMBER/@Value}"/>
+              <SET Var="VarEmailAddr" FromValue="{$thisParam/EMAIL_ADDR_TXT/@Value}"/>
+              <SET Var="VarAddrLine1" FromValue="{$thisParam/ADDR_LINE_1_TXT/@Value}"/>
+              <SET Var="VarAddrLine2" FromValue="{$thisParam/ADDR_LINE_2_TXT/@Value}"/>
+              <SET Var="VarAddrLine3" FromValue="{$thisParam/ADDR_LINE_3_TXT/@Value}"/>
+              <SET Var="VarCity" FromValue="{$thisParam/CITY_NAME/@Value}"/>
+              <SET Var="VarPostalAreaCode" FromValue="{$thisParam/POSTL_AREA_CODE/@Value}"/>
+              <SET Var="VarCountry" FromValue="{$thisParam/CNTRY_CODE/@Value}"/>
+              <SET Var="VarregisCnsmrId" FromValue="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+              <SET Var="VarNationalID" FromValue="{$thisParam/NATIONAL_ID_NBR/@Value}"/>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="getLegalEntNbr">
+            <root>LOCKING ROW FOR ACCESS
+select LEGAL_ENT_NBR from REGIS_PRSNA where REGIS_CNSMR_ID_VAL='{$reviewCaseDetail/SQL_RESULT/REGIS_CNSMR_ID_VAL/@Value}';</root>
+          </TO_DOCVAR>
+          <EXECUTE_SQL_QUERY AssignToVar="resLegalEntNbr" Value="{$getLegalEntNbr/@text}"/>
+          <SET Var="case" FromValue="{$globalVarReviewCaseXML/GDPR_CASE_ID/@Value}"/>
+          <TO_DOCVAR AssignToVar="copy_globalVarReviewCaseXML">
+            <TO_XML DocVar="globalVarReviewCaseXML"/>
+          </TO_DOCVAR>
+          <!-- button action Update Contact Ust -->
+          <IF_TEST Test="$userAction = 'UpdateContactUs'">
+            <THEN>
+              <!-- update status to 'CP' in GDPR_RQST table -->
+              <EXECUTE_SQL_DML AssignToVar="returnContactUsUpdate" Value="UPDATE MDM.GDPR_RQST SET GDPR_RQST_STATUS_CD = 'CP',GVN_NAME=null, MID_NAME=null, FAMLY_NAME=null, NAME_SUFFX_TXT=null, FULL_NAME=null, EMAIL_ADDR_TXT=null,  FULL_PHONE_NUM=null, ADDR_LINE_1_TXT=null, ADDR_LINE_2_TXT=null,ADDR_LINE_3_TXT=null, CITY_NAME=null,TERR_NAME=null,POSTL_AREA_CODE=null,CNTRY_CODE=null,NATIONAL_ID_NBR=null,SYS_LAST_MODIFIED_DATE=CURRENT_timestamp(0) WHERE GDPR_CASE_ID ='{$currentGDPRCaseID}'">
+                <!--PARAM Value="{$currentGDPRCaseID}" /-->
+              </EXECUTE_SQL_DML>
+              <EXECUTE_SQL_QUERY AssignToVar="resUpdateSysModContactUs" Value="UPDATE GDPR_RQST SET SYS_LAST_MODIFIED_BY='{$userId}' WHERE GDPR_CASE_ID='{$currentGDPRCaseID}'"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction = 'UploadExcel'">
+            <THEN>
+              <!--SET Var="REDIRECT_URL" FromValue="{concat('start.x2ps?START_WORKFLOW=ConfigurableWorkflows_RT_T1&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;workflowId=2281&amp;GDPRCASE=',$currentGDPRCaseID/@Value)}" /-->
+              <SET Var="REDIRECT_URL" FromValue="/mdm/start.x2ps?START_WORKFLOW=DocumentUpload&amp;SERVICE_NAME=UI_WORKFLOW&amp;SOLUTION_NAME=MDM&amp;"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction = 'AssignToOther'">
+            <THEN>
+              <EXECUTE_SQL_QUERY AssignToVar="VarUserProfile" Value="SELECT * FROM MDM.USER_PROFILE_T WHERE ID='{$thisParam/SPECIALIST/@Value}'"/>
+              <EXECUTE_SQL_QUERY AssignToVar="ExistsCnt" Value="select * from MDM.CNTCT where SR_NBR='{$VarUserProfile/SQL_RESULT/ID/@Value}'" ReturnRowCount="yes"/>
+              <IF_TEST Test="$ExistsCnt/@TotalRowCount = 0 ">
+                <THEN>
+                  <EXECUTE_SQL_DML AssignToVar="InsertSRNbrCntct" Value="INSERT INTO MDM.CNTCT (SR_NBR,FIRST_NM,LAST_NM,EMAIL_ADDR_TXT,FULL_PHONE_NUM,CNTCT_NBR)SEL B.ID,FIRST_NAME,LAST_NAME,EMAIL_ADDRESS,PHONE,CSum(1,1)+CNTCT_NBR FROM mdm.CONTACT a JOIN MDM.USER_PROFILE_T b ON a.ID=b.CONTACT_ID JOIN (SEL Max(CNTCT_NBR)+1 AS CNTCT_NBR FROM mdm.CNTCT     ) C ON 1=1 WHERE b.ID='{$VarUserProfile/SQL_RESULT/ID/@Value}';"/>
+                </THEN>
+                <ELSE>
+                  <EXECUTE_SQL_DML AssignToVar="returnAssignToOther" Value="UPDATE MDM.GDPR_RQST SET GDPR_CASE_OWNR_CNTCT_NBR = '{$ExistsCnt/SQL_RESULT/CNTCT_NBR/@Value}'  WHERE GDPR_CASE_ID = '{$currentGDPRCaseID}' ">
+                    <!--PARAM Value="{$currentGDPRCaseID}" /-->
+                  </EXECUTE_SQL_DML>
+                </ELSE>
+              </IF_TEST>
+              <EXECUTE_SQL_QUERY AssignToVar="UpdateSRNbr" Value="SELECT * FROM MDM.USER_PROFILE_T WHERE ID='{$thisParam/SPECIALIST/@Value}'"/>
+              <!--<EXECUTE_SQL_DML AssignToVar="returnAssignToOther" Value="UPDATE MDM.GDPR_RQST SET SYS_LAST_MODIFIED_BY = '{$thisParam/SPECIALIST/@Value}' WHERE GDPR_CASE_ID = '{$currentGDPRCaseID}' ">
+             
+              </EXECUTE_SQL_DML>-->
+              <REMOVE_CHILDREN ChildName="DisplaySubjectRights" DocVar="pglFormInput"/>
+            </THEN>
+          </IF_TEST>
+          <!-- button action Data Access Request -->
+          <IF_TEST Test="$userAction = 'DataAccessRequest'">
+            <THEN>
+              <!-- update status to 'PA' in GDPR_RQST table -->
+              <EXECUTE_SQL_DML AssignToVar="returnDataAccessUpdate" Value="UPDATE MDM.GDPR_RQST SET GDPR_RQST_STATUS_CD = 'PA' WHERE GDPR_CASE_ID = '{$currentGDPRCaseID}' AND GDPR_RQST_STATUS_CD = 'PR'">
+                <!--PARAM Value="{$currentGDPRCaseID}" /-->
+              </EXECUTE_SQL_DML>
+              <EXECUTE_SQL_QUERY AssignToVar="resUpdateSysModDataAccess" Value="UPDATE GDPR_RQST SET SYS_LAST_MODIFIED_BY='{$userId}' WHERE GDPR_CASE_ID='{$currentGDPRCaseID}'"/>
+            </THEN>
+          </IF_TEST>
+          <!-- button action Data Deletion Request -->
+          <IF_TEST Test="$userAction = 'DataDeletionRequest'">
+            <THEN>
+              <!-- update status to 'PH' in GDPR_RQST table -->
+              <EXECUTE_SQL_DML AssignToVar="returnDataAccessUpdate" Value="UPDATE MDM.GDPR_RQST SET GDPR_RQST_STATUS_CD = 'PH' WHERE GDPR_CASE_ID = '{$currentGDPRCaseID}' AND GDPR_RQST_STATUS_CD = 'RA'">
+                <!--PARAM Value="{$currentGDPRCaseID}" /-->
+              </EXECUTE_SQL_DML>
+              <EXECUTE_SQL_QUERY AssignToVar="resUpdateSysModDataDeletion" Value="UPDATE GDPR_RQST SET SYS_LAST_MODIFIED_BY='{$userId}' WHERE GDPR_CASE_ID='{$currentGDPRCaseID}'"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='UploadExcel'">
+            <THEN/>
+          </IF_TEST>
+          <!-- Added by Reshma Ramesh for multiple Process Indicator update -->
+          <IF_TEST Test="$userAction='processButton'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="updateStatusCodeforProcess">
+                <ROOT>UPDATE MDM.GDPR_RQST
+SET GDPR_RQST_STATUS_CD = 'PR'                  
+WHERE GDPR_CASE_ID = '{$copy_globalVarReviewCaseXML/SQL_RESULT/GDPR_CASE_ID/@Value}'</ROOT>
+              </TO_DOCVAR>
+              <EXECUTE_SQL_QUERY AssignToVar="resUpdateStatusCodeforProcess" Value="{$updateStatusCodeforProcess/@text}" HandleException="true"/>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <PROC_IND Value="{$thisParam/PROC_IND/@Value}"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='UpdateContactUS'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ReviewCase" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='DataAccessRequest'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ReviewCase" Description="DataAccessRequest"/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='PROCESS'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ReviewCase" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_PROGRAM_LIST'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ReviewCase" Description="Load Program List"/>
+          <next_node Name="ReviewCase" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_STATES'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ReviewCase" Description="Load Program List"/>
+          <next_node Name="ReviewCase" Description=""/>
+          <next_node Name="ReviewCase" Description=""/>
+          <next_node Name="ReviewCase" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='DataDeletionRequest'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ReviewCase" Description="DataDeletionRequest"/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='processButton'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ReviewCase" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='UpdateContactUs'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ReviewCase" Description="DataAccessRequest"/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="GDPRReviewProcess" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='UploadExcel'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='RESET'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ReviewCase" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='REGIS_PRSNA_ID'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ReviewCase" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SEARCH_INDIVIDUAL'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ReviewCase" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ManageOpts'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='VIEW'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='VIEW_CONSUMER_DETAILS'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='create'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SELECT_RETURN'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ReviewCase" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='AssignToOther'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ReviewCase" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Downloadtemplate'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <decision Name="decisionCaseID">
+      <actions>
+        <action/>
+      </actions>
+      <condition Value="$thisParam/GDPRCASEID/@Value='' or $thisParam/GDPRCASEID/@Value=null"/>
+      <if_true>
+        <next_nodes>
+          <next_node Name="GDPRReviewProcess" Description="true"/>
+        </next_nodes>
+      </if_true>
+      <if_false>
+        <next_nodes>
+          <next_node Name="ReviewCase" Description="false"/>
+        </next_nodes>
+      </if_false>
+    </decision>
+    <ui_form2 Name="SummaryCase" ShowInBreadCrumbs="HIDE" Template="SummaryCase.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <!--Prachi: Get The data on first pane -->
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value!='Back' and $thisParam/BUTTON_ID/@Value!='UploadDetails' and $thisParam/BUTTON_ID/@Value!='updateButton'">
+            <THEN>
+              <!-- Setting SFTP Path-->
+              <SET Var="quote" FromValue="'"/>
+              <SET Var="backSlash" FromValue="/"/>
+              <SET Var="FSlash" FromValue="\"/>
+              <SET Var="CaseId1" FromValue="{substringAfter($thisParam/selectedCaseID/@Value,'GDPR_CASE_ID=')}"/>
+              <SET Var="CaseId1" FromValue="{substringBefore($CaseId1,'#GDPR_RQST_STATUS_NAME=')}"/>
+              <SET Var="currentGDPRCaseID1" FromSelect="trim($CaseId1)"/>
+              <EXECUTE_SQL_QUERY AssignToVar="newload" Value="LOCKING ROW FOR ACCESS SELECT GDPR_RQST_STATUS_CD FROM GDPR_RQST WHERE GDPR_CASE_ID='{$currentGDPRCaseID}'"/>
+              <IF_TEST Test="$newload/SQL_RESULT/GDPR_RQST_STATUS_CD/@Value='CP'">
+                <THEN>
+                  <SET Var="currentGDPRCaseID1" FromSelect="trim($currentGDPRCaseID)"/>
+                </THEN>
+              </IF_TEST>
+              <SET Var="sftpPathQuery" FromValue="{concat('SEL SRCH_FLDR_PATH  FROM ICRM_STAGE.GDPR_CASE_REF WHERE TRIM(GDPR_CASE_ID) =',$quote,$currentGDPRCaseID1,$quote,'AND SRCH_FLDR_PATH IS NOT NULL')}"/>
+              <EXECUTE_SQL_QUERY AssignToVar="finalPath" Value="{$sftpPathQuery}"/>
+              <SET Var="pathdetail" FromValue="{$finalPath/SQL_RESULT/SRCH_FLDR_PATH/@Value}"/>
+              <SET Var="caseFolderPath" FromValue="{substringAfter($pathdetail,'/data01/home/pgteraprd/pgftp/GDPR_Case_Master/')}"/>
+              <SET Var="dateFolderPath" FromValue="{substringBefore($caseFolderPath,'/')}"/>
+              <SET Var="SFTPDirPathSynch" FromValue="{concat($backSlash,'data02',$backSlash,'GDPR_Case_Master',$backSlash,trim($caseFolderPath))}"/>
+              <SET Var="filepath" FromValue="{concat('E:',$backSlash,'Teradata',$backSlash,'MDM',$backSlash,'3.05.02',$backSlash,'custom',$backSlash,'pngrelease3',$backSlash,'data',$backSlash,'GDPR',$backSlash,trim($caseFolderPath))}"/>
+              <SET Var="filepathSynch" FromValue="{concat('E:',$FSlash,'Teradata',$FSlash,'MDM',$FSlash,'3.05.02',$FSlash,'custom',$FSlash,'pngrelease3',$FSlash,'data',$FSlash,'GDPR',$FSlash,trim($dateFolderPath),$FSlash,trim($currentGDPRCaseID1))}"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='requestSummaryButton'">
+            <THEN>
+              <!--REQUEST Name="getReviewSpecialistUser" AssignToVar="UserNames" ServiceName="BCM_MASTER"/-->
+              <REMOVE_CHILDREN ChildName="FILTER_GDPR_CASE_ID" DocVar="thisParam"/>
+              <SET Var="CaseId" FromValue="{substringAfter($thisParam/selectedCaseID/@Value,'GDPR_CASE_ID=')}"/>
+              <SET Var="CaseId" FromValue="{substringBefore($CaseId,'#GDPR_RQST_STATUS_NAME=')}"/>
+              <SET Var="currentGDPRCaseID" FromSelect="trim($CaseId)"/>
+              <!-- Prachi: Create directory on MDM server -->
+              <EXECUTE_SHELL_COMMAND Value="del {$filepathSynch}\*.* /s /q" AssignToVar="delAllFiles"/>
+              <EXECUTE_SHELL_COMMAND Value="mkdir -p {$filepathSynch}" AssignToVar="varCreateDir"/>
+              <EXECUTE_SHELL_COMMAND Value="E:\Teradata\MDM\3.05.02\custom\pngrelease3\util\winscp /console /script=E:\Teradata\MDM\3.05.02\custom\pngrelease3\script\ftp1.script /parameter {$filepathSynch} {$SFTPDirPathSynch}" AssignToVar="errStatus" Synchronous="false"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/GDPRCASEID/@Value='' or $thisParam/GDPRCASEID/@Value=null">
+            <THEN>
+              <!--EXECUTE_SQL_QUERY Value="locking row for access sel GDPR_CASE_ID,GDPR_RQST_TYPE_CD,GVN_NAME,MID_NAME,FAMLY_NAME,NAME_SUFFX_TXT,FULL_NAME,MKTNG_PGM_NBR,trim(REGIS_CNSMR_ID_VAL),NATIONAL_ID_NBR,ADDR_LINE_1_TXT,ADDR_LINE_2_TXT,ADDR_LINE_3_TXT,CITY_NAME,TERR_NAME,POSTL_AREA_CODE,CNTRY_CODE,GDPR_RQST_FULFLMT_DATETM,GDPR_RQST_CRTN_DATETM,GDPR_RQST_IDNTY_VFYD_DATETM,EMAIL_ADDR_TXT,FULL_PHONE_NUM, DATA_SRCE_NBR,GDPR_CASE_ID,GDPR_RQST_STATUS_CD from MDM.GDPR_RQST where GDPR_CASE_ID = ? AND GDPR_RQST_STATUS_CD &lt;> 'CP' ORDER BY GDPR_CASE_ID ASC;" AssignToVar="reviewCaseDetail">
+                <PARAM Value="{$currentGDPRCaseID}"/>
+              </EXECUTE_SQL_QUERY-->
+              <EXECUTE_SQL_QUERY Value="locking row for access sel A.GDPR_CASE_ID,A.GDPR_RQST_TYPE_CD,A.GVN_NAME,A.MID_NAME,A.FAMLY_NAME, A.NAME_SUFFX_TXT,A.FULL_NAME,A.MKTNG_PGM_NBR,A.REGIS_CNSMR_ID_VAL,A.NATIONAL_ID_NBR,A.ADDR_LINE_1_TXT,A.ADDR_LINE_2_TXT,A.ADDR_LINE_3_TXT,A.CITY_NAME,A.TERR_NAME,A.POSTL_AREA_CODE,A.CNTRY_CODE,A.GDPR_RQST_FULFLMT_DATETM,A.GDPR_RQST_CRTN_DATETM,A.GDPR_RQST_IDNTY_VFYD_DATETM,A.EMAIL_ADDR_TXT,A.FULL_PHONE_NUM, A.DATA_SRCE_NBR,A.GDPR_CASE_ID,A.GDPR_RQST_STATUS_CD ,B.CNTRY_NAME,C.MKTNG_PGM_DESC,D.GDPR_RQST_TYPE_NAME,E.GDPR_RQST_STATUS_NAME from MDM.GDPR_RQST A LEFT JOIN CNTRY B ON A.CNTRY_CODE = B.CNTRY_CODE LEFT  JOIN MKTNG_PGM C ON A.MKTNG_PGM_NBR = C.MKTNG_PGM_NBR LEFT JOIN GDPR_RQST_TYPE D ON A.GDPR_RQST_TYPE_CD= D.GDPR_RQST_TYPE_CD LEFT JOIN GDPR_RQST_STATUS E ON A.GDPR_RQST_STATUS_CD= E.GDPR_RQST_STATUS_CD where A.GDPR_CASE_ID ='{$currentGDPRCaseID}' ORDER BY GDPR_CASE_ID ASC;" AssignToVar="reviewCaseDetail">
+                <!--PARAM Value="{$currentGDPRCaseID}" /-->
+              </EXECUTE_SQL_QUERY>
+            </THEN>
+            <ELSE>
+              <SET Var="currentGDPRCaseID" FromValue="{$thisParam/GDPRCASEID/@Value}"/>
+              <!--<SET Var="GDPR_CASE_ID" FromValue="{$thisParam/GDPRCASEID/@Value}" />-->
+              <TO_DOCVAR AssignToVar="get_reviewCaseDetail">
+                <root>locking	row for access
+sel	A.GDPR_CASE_ID,A.GDPR_RQST_TYPE_CD,A.GVN_NAME,A.MID_NAME,A.FAMLY_NAME,
+A.NAME_SUFFX_TXT,A.FULL_NAME,A.MKTNG_PGM_NBR,A.REGIS_CNSMR_ID_VAL,
+A.NATIONAL_ID_NBR,A.ADDR_LINE_1_TXT,A.ADDR_LINE_2_TXT,A.ADDR_LINE_3_TXT,
+A.CITY_NAME,A.TERR_NAME,A.POSTL_AREA_CODE,A.CNTRY_CODE,A.GDPR_RQST_FULFLMT_DATETM,
+A.GDPR_RQST_CRTN_DATETM,A.GDPR_RQST_IDNTY_VFYD_DATETM,A.EMAIL_ADDR_TXT,
+A.FULL_PHONE_NUM, A.DATA_SRCE_NBR,A.GDPR_CASE_ID,A.GDPR_RQST_STATUS_CD ,
+B.CNTRY_NAME,C.MKTNG_PGM_DESC,D.GDPR_RQST_TYPE_NAME,E.GDPR_RQST_STATUS_NAME
+from	MDM.GDPR_RQST A LEFT JOIN CNTRY B
+ON A.CNTRY_CODE = B.CNTRY_CODE LEFT  JOIN MKTNG_PGM C
+ON A.MKTNG_PGM_NBR = C.MKTNG_PGM_NBR LEFT JOIN GDPR_RQST_TYPE D
+ON A.GDPR_RQST_TYPE_CD= D.GDPR_RQST_TYPE_CD LEFT JOIN GDPR_RQST_STATUS E
+ON A.GDPR_RQST_STATUS_CD= E.GDPR_RQST_STATUS_CD
+where	A.GDPR_CASE_ID = '{$currentGDPRCaseID}'
+AND A.GDPR_RQST_STATUS_CD &lt;> 'CP'
+ORDER BY GDPR_CASE_ID ASC;</root>
+              </TO_DOCVAR>
+              <EXECUTE_SQL_QUERY Value="{$get_reviewCaseDetail/@text}" AssignToVar="reviewCaseDetail"/>
+            </ELSE>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="getStatusName">
+            <root>LOCKING ROW FOR ACCESS
+SEL GDPR_RQST_STATUS_NAME FROM  GDPR_RQST_STATUS
+WHERE GDPR_RQST_STATUS_CD='{$reviewCaseDetail/SQL_RESULT/GDPR_RQST_STATUS_CD/@Value}';</root>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="getTypeName">
+            <root>LOCKING ROW FOR ACCESS
+SEL GDPR_RQST_TYPE_NAME FROM  GDPR_RQST_TYPE
+WHERE GDPR_RQST_TYPE_CD='{$reviewCaseDetail/SQL_RESULT/GDPR_RQST_TYPE_CD/@Value}';</root>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='UpdateContactUs'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="getMarketingName">
+                <root>LOCKING ROW FOR ACCESS
+SEL MKTNG_PGM_DESC FROM  MKTNG_PGM
+WHERE MKTNG_PGM_NBR IS NULL;</root>
+              </TO_DOCVAR>
+            </THEN>
+            <ELSE>
+              <TO_DOCVAR AssignToVar="getMarketingName">
+                <root>LOCKING ROW FOR ACCESS
+SEL MKTNG_PGM_DESC FROM  MKTNG_PGM
+WHERE MKTNG_PGM_NBR='{$reviewCaseDetail/SQL_RESULT/MKTNG_PGM_NBR/@Value}';</root>
+              </TO_DOCVAR>
+            </ELSE>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="getCountryName">
+            <root>LOCKING ROW FOR ACCESS
+SEL CNTRY_NAME FROM  CNTRY
+WHERE CNTRY_CODE='{$reviewCaseDetail/SQL_RESULT/CNTRY_CODE/@Value}';</root>
+          </TO_DOCVAR>
+          <!-- <IF_TEST Test="$thisParam/BUTTON_ID/@Value='requestSummaryButton' and $reviewCaseDetail/SQL_RESULT/GDPR_RQST_STATUS_CD/@Value='RP'">-->
+          <!--IF_TEST Test="$thisParam/BUTTON_ID/@Value='requestSummaryButton' and ($reviewCaseDetail/SQL_RESULT/GDPR_RQST_STATUS_CD/@Value = 'RP' or $reviewCaseDetail/SQL_RESULT/GDPR_RQST_STATUS_CD/@Value = 'NM')">
+            <THEN>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <DisplayContactUs Value="true" />
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST-->
+          <EXECUTE_SQL_QUERY AssignToVar="VarUpdateDownloadBack" Value="LOCKING ROW FOR ACCESS SELECT GDPR_RQST_STATUS_CD FROM GDPR_RQST WHERE GDPR_CASE_ID='{$currentGDPRCaseID}'"/>
+          <IF_TEST Test="$VarUpdateDownloadBack/SQL_RESULT/GDPR_RQST_STATUS_CD/@Value='CP'">
+            <THEN>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <DisplayContactUs Value="false"/>
+              </APPEND_TO_XML>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='requestSummaryButton' or $thisParam/BUTTON_ID/@Value='updateButton'  or $thisParam/BUTTON_ID/@Value='SYS_RELOAD' or $thisParam/BUTTON_ID/@Value='Back'">
+                <THEN>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <DisplayContactUs Value="true"/>
+                  </APPEND_TO_XML>
+                </THEN>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="globalVarReviewCaseXML">
+            <ROOT>
+              <TO_XML SelectList="$reviewCaseDetail/*"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <!-- Search the path for SFTP Directory -->
+          <!--<SET Var="sftpPathQuery" FromValue="{concat('SEL SRCH_FLDR_PATH  FROM ICRM_STAGE.GDPR_CASE_REF WHERE TRIM(GDPR_CASE_ID) =',$quote,$currentGDPRCaseID,$quote,'AND SRCH_FLDR_PATH IS NOT NULL')}"/>
+          <EXECUTE_SQL_QUERY AssignToVar="finalPath" Value="{$sftpPathQuery}"/>
+          <SET Var="pathdetail" FromValue="{$finalPath/SQL_RESULT/SRCH_FLDR_PATH/@Value}"/>
+          <SET Var="caseFolderPath" FromValue="{substringAfter($pathdetail,'/data01/home/pgteraqa/pgftp/GDPR_Case_Master/')}"/>
+          <SET Var="filepath" FromValue="{concat('E:',$backSlash,'Teradata',$backSlash,'MDM',$backSlash,'3.05.02',$backSlash,'custom',$backSlash,'pngrelease3',$backSlash,'data',$backSlash,'GDPR',$backSlash,trim($caseFolderPath))}"/> -->
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <TO_XML SelectList="$reviewCaseDetail/*"/>
+            <!--    <FEEDBACK_RESULT>
+              <TO_XML SelectList="$feedbackRes/*"/>
+            </FEEDBACK_RESULT>-->
+            <Filepath Value="{$filepath}"/>
+            <AlertGreen Value="{$thisParam/UpdateMsg/@Value}"/>
+            <Filepath1 Value="{$omxContextPath}"/>
+            <custompath Value="{$custompath}"/>
+            <CaseId Value="{$currentGDPRCaseID}"/>
+            <TO_XML DocVar="pMessage1"/>
+          </APPEND_TO_XML>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='requestSummaryButton' or $thisParam/BUTTON_ID/@Value='SYS_RELOAD'">
+            <THEN>
+              <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+                <!--PUT SEARCH CRITRIA HERE-->
+                <TO_XML SelectList="$thisParam/*[name()='FILTER_GDPR_CASE_ID' or name()='FILTER_EXTRACT_ID' or name()='FILTER_GDPR_CASE_RQST_TYPE' or name()='FILTER_CNTRY_CODE' or name()='FILTER_SUPPLIER_QUAD' or name()='FILTER_GDPR_RQST_STATUS_NAME' or name()='FILTER_GDPR_RQST_STATUS_CD' or name()='FILTER_SENT_TIMESTAMP' or name()='FILTER_LOAD_ID' or name()='FILTER_SYS_LAST_MODIFIED_DATE']"/>
+              </FORM_SEARCH_FILTER>
+              <FOR_EACH SelectList="$filters/FILTER" CurrentElement="currElemSum">
+                <SET Var="tempSum" FromValue="{$currElemSum/@Name}"/>
+                <IF_TEST Test="$currElemSum/FILTER_GDPR_CASE_ID/@MatchBy='EQUAL'">
+                  <THEN>
+                    <SET Var="GdprSumId" FromValue=" GDPR_CASE_ID ='{$currElemSum/FILTER_GDPR_CASE_ID/@Value}'"/>
+                    <SET Var="subSumFilter" FromValue="{concat($subSumFilter,'AND',$GdprSumId)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$currElemSum/FILTER_EXTRACT_ID/@MatchBy='EQUAL'">
+                  <THEN>
+                    <SET Var="ExtrtId" FromValue=" EXTRACT_ID ='{$currElemSum/FILTER_EXTRACT_ID/@Value}'"/>
+                    <SET Var="subSumFilter" FromValue="{concat($subSumFilter,'AND',$ExtrtId)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$tempSum='FILTER_GDPR_CASE_RQST_TYPE'">
+                  <THEN>
+                    <IF_TEST Test="$currElemSum/FILTER_GDPR_CASE_RQST_TYPE/@MatchBy='EQUAL'">
+                      <THEN>
+                        <SET Var="GdprCaseRqstType" FromValue=" GDPR_CASE_RQST_TYPE ='{$currElemSum/FILTER_GDPR_CASE_RQST_TYPE/@Value}'"/>
+                        <SET Var="subSumFilter" FromValue="{concat($subSumFilter,'AND',$GdprCaseRqstType)}"/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElemSum/FILTER_GDPR_CASE_RQST_TYPE/@MatchBy='CONTAINS'">
+                      <THEN>
+                        <SET Var="GdprCaseRqstType" FromValue=" GDPR_CASE_RQST_TYPE LIKE '%{$currElemSum/FILTER_GDPR_CASE_RQST_TYPE/@Value}%'"/>
+                        <SET Var="subSumFilter" FromValue="{concat($subSumFilter,'AND',$GdprCaseRqstType)}"/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElemSum/FILTER_GDPR_CASE_RQST_TYPE/@MatchBy='STARTS_WITH'">
+                      <THEN>
+                        <SET Var="GdprCaseRqstType" FromValue=" GDPR_CASE_RQST_TYPE LIKE '{$currElemSum/FILTER_GDPR_CASE_RQST_TYPE/@Value}%'"/>
+                        <SET Var="subSumFilter" FromValue="{concat($subSumFilter,'AND',$GdprCaseRqstType)}"/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElemSum/FILTER_GDPR_CASE_RQST_TYPE/@MatchBy='ENDS_WITH'">
+                      <THEN>
+                        <SET Var="GdprCaseRqstType" FromValue=" GDPR_CASE_RQST_TYPE LIKE '%{$currElemSum/FILTER_GDPR_CASE_RQST_TYPE/@Value}'"/>
+                        <SET Var="subSumFilter" FromValue="{concat($subSumFilter,'AND',$GdprCaseRqstType)}"/>
+                      </THEN>
+                    </IF_TEST>
+                    <SET Var="subSumFilter" FromValue="{concat($subSumFilter,'AND',$GdprCaseRqstType)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$tempSum='FILTER_CNTRY_CODE'">
+                  <THEN>
+                    <IF_TEST Test="$currElemSum/FILTER_CNTRY_CODE/@MatchBy='EQUAL'">
+                      <THEN>
+                        <SET Var="CntryCodeSum" FromValue=" CNTRY_CODE ='{$currElemSum/FILTER_CNTRY_CODE/@Value}'"/>
+                        <SET Var="subSumFilter" FromValue="{concat($subSumFilter,'AND',$CntryCodeSum)}"/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElemSum/FILTER_CNTRY_CODE/@MatchBy='CONTAINS'">
+                      <THEN>
+                        <SET Var="CntryCodeSum" FromValue=" CNTRY_CODE LIKE '%{$currElemSum/FILTER_CNTRY_CODE/@Value}%'"/>
+                        <SET Var="subSumFilter" FromValue="{concat($subSumFilter,'AND',$CntryCodeSum)}"/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElemSum/FILTER_CNTRY_CODE/@MatchBy='STARTS_WITH'">
+                      <THEN>
+                        <SET Var="CntryCodeSum" FromValue=" CNTRY_CODE LIKE '{$currElemSum/FILTER_CNTRY_CODE/@Value}%'"/>
+                        <SET Var="subSumFilter" FromValue="{concat($subSumFilter,'AND',$CntryCodeSum)}"/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$CntryCodeSum/FILTER_CNTRY_CODE/@MatchBy='ENDS_WITH'">
+                      <THEN>
+                        <SET Var="CntryCodeSum" FromValue=" CNTRY_CODE LIKE '%{$currElemSum/FILTER_CNTRY_CODE/@Value}'"/>
+                        <SET Var="subSumFilter" FromValue="{concat($subSumFilter,'AND',$CntryCodeSum)}"/>
+                      </THEN>
+                    </IF_TEST>
+                    <SET Var="subSumFilter" FromValue="{concat($subSumFilter,'AND',$CntryCodeSum)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$tempSum='FILTER_SUPPLIER_QUAD'">
+                  <THEN>
+                    <IF_TEST Test="$currElemSum/FILTER_SUPPLIER_QUAD/@MatchBy='EQUAL'">
+                      <THEN>
+                        <SET Var="SupplierSum" FromValue=" SUPPLIER_QUAD ='{$currElemSum/FILTER_SUPPLIER_QUAD/@Value}'"/>
+                        <SET Var="subSumFilter" FromValue="{concat($subSumFilter,'AND',$SupplierSum)}"/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElemSum/FILTER_SUPPLIER_QUAD/@MatchBy='CONTAINS'">
+                      <THEN>
+                        <SET Var="SupplierSum" FromValue="  SUPPLIER_QUAD LIKE '%{$currElemSum/FILTER_SUPPLIER_QUAD/@Value}%'"/>
+                        <SET Var="subSumFilter" FromValue="{concat($subSumFilter,'AND',$SupplierSum)}"/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElemSum/FILTER_SUPPLIER_QUAD/@MatchBy='STARTS_WITH'">
+                      <THEN>
+                        <SET Var="SupplierSum" FromValue=" SUPPLIER_QUAD LIKE '{$currElemSum/FILTER_SUPPLIER_QUAD/@Value}%'"/>
+                        <SET Var="subSumFilter" FromValue="{concat($subSumFilter,'AND',$SupplierSum)}"/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElemSum/FILTER_SUPPLIER_QUAD/@MatchBy='ENDS_WITH'">
+                      <THEN>
+                        <SET Var="SupplierSum" FromValue=" SUPPLIER_QUAD LIKE '%{$currElemSum/FILTER_SUPPLIER_QUAD/@Value}'"/>
+                        <SET Var="subSumFilter" FromValue="{concat($subSumFilter,'AND',$SupplierSum)}"/>
+                      </THEN>
+                    </IF_TEST>
+                    <SET Var="subSumFilter" FromValue="{concat($subSumFilter,'AND',$SupplierSum)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$tempSum='FILTER_GDPR_RQST_STATUS_CD'">
+                  <THEN>
+                    <IF_TEST Test="$currElemSum/FILTER_GDPR_RQST_STATUS_CD/@MatchBy='EQUAL'">
+                      <THEN>
+                        <SET Var="StatusCodeSum" FromValue=" GDPR_RQST_STATUS_CD ='{$currElemSum/FILTER_GDPR_RQST_STATUS_CD/@Value}'"/>
+                        <SET Var="subSumFilter" FromValue="{concat($subSumFilter,'AND',$StatusCodeSum)}"/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElemSum/FILTER_GDPR_RQST_STATUS_CD/@MatchBy='CONTAINS'">
+                      <THEN>
+                        <SET Var="StatusCodeSum" FromValue="  GDPR_RQST_STATUS_CD='%{$currElemSum/FILTER_GDPR_RQST_STATUS_CD/@Value}%'"/>
+                        <SET Var="subSumFilter" FromValue="{concat($subSumFilter,'AND',$StatusCodeSum)}"/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElemSum/FILTER_GDPR_RQST_STATUS_CD/@MatchBy='STARTS_WITH'">
+                      <THEN>
+                        <SET Var="StatusCodeSum" FromValue=" GDPR_RQST_STATUS_CD ='{$currElemSum/FILTER_GDPR_RQST_STATUS_CD/@Value}%'"/>
+                        <SET Var="subSumFilter" FromValue="{concat($subSumFilter,'AND',$StatusCodeSum)}"/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElemSum/FILTER_GDPR_RQST_STATUS_CD/@MatchBy='ENDS_WITH'">
+                      <THEN>
+                        <SET Var="StatusCodeSum" FromValue=" GDPR_RQST_STATUS_CD ='%{$currElemSum/FILTER_GDPR_RQST_STATUS_CD/@Value}'"/>
+                        <SET Var="subSumFilter" FromValue="{concat($subSumFilter,'AND',$StatusCodeSum)}"/>
+                      </THEN>
+                    </IF_TEST>
+                    <SET Var="subSumFilter" FromValue="{concat($subSumFilter,'AND',$StatusCodeSum)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$currElemSum/FILTER_SENT_TIMESTAMP/@MatchBy='EQUAL'">
+                  <THEN>
+                    <SET Var="BroadcastSum" FromValue=" SENT_TIMESTAMP = to_timestamp('{$currElemSum/FILTER_SENT_TIMESTAMP/@Value}','mm/dd/yyyy hh24:mi:ss')"/>
+                    <SET Var="subSumFilter" FromValue="{concat($subSumFilter,'AND',$BroadcastSum)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$currElemSum/FILTER_SYS_LAST_MODIFIED_DATE/@MatchBy='EQUAL'">
+                  <THEN>
+                    <SET Var="FeedBackSum" FromValue=" SYS_LAST_MODIFIED_DATE =to_timestamp('{$currElemSum/FILTER_SYS_LAST_MODIFIED_DATE/@Value}','mm/dd/yyyy hh24:mi:ss')"/>
+                    <SET Var="subSumFilter" FromValue="{concat($subSumFilter,'AND',$FeedBackSum)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$currElemSum/FILTER_LOAD_ID/@MatchBy='EQUAL'">
+                  <THEN>
+                    <SET Var="LoadTimeSum" FromValue=" LOAD_ID ='{$currElemSum/FILTER_LOAD_ID/@Value}'"/>
+                    <SET Var="subSumFilter" FromValue="{concat($subSumFilter,'AND',$LoadTimeSum)}"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/MaxRec/@Value = null">
+            <THEN>
+              <SET Var="MaxRec" FromValue="10"/>
+            </THEN>
+            <ELSE>
+              <SET Var="MaxRec" FromValue="{$thisParam/MaxRec/@Value}"/>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SYS_RELOAD'">
+            <THEN>
+              <SET Var="varStartAtRow" FromValue="{ifElse($thisParam/START_COUNT/@Value = null, '0', $thisParam/START_COUNT/@Value)}"/>
+            </THEN>
+            <ELSE>
+              <SET Var="varStartAtRow" FromValue="0"/>
+              <SET DocVar="thisParam" Property="START_COUNT" FromValue="0"/>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="strlen(trim($thisParam/SORT_BY/@Value))!= 0 and ($thisParam/SORT_BY/@Value)!='ID'">
+            <THEN>
+              <SET Var="pSortSumBy" FromValue="{$thisParam/SORT_BY/@Value}"/>
+              <SET Var="pSortSumOrder" FromValue="{$thisParam/SORT_ORDER/@Value}"/>
+            </THEN>
+            <ELSE>
+              <THEN>
+                <SET Var="pSortSumBy" FromValue="GDPR_CASE_ID"/>
+                <SET Var="pSortSumOrder" FromValue="ASC"/>
+              </THEN>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$pSortSumOrder='Descending'">
+            <THEN>
+              <SET Var="pSortSumOrder" FromValue="DESC"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$pSortSumOrder='Ascending'">
+            <THEN>
+              <SET Var="pSortSumOrder" FromValue="ASC"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="strlen(trim($thisParam/SORT_BY/@Value)) != 0">
+            <THEN>
+              <MAKE_INSTANCE_DOCUMENT Name="{$pSortSumBy}" AssignToVar="sortSumByTag"/>
+              <SET DocVar="sortSumByTag" Attribute="Sort" FromValue="{$thisParam/SORT_ORDER/@Value}"/>
+            </THEN>
+          </IF_TEST>
+          <REQUEST Name="GetSummaryDetails" ServiceName="BCM_MASTER" AssignToVar="VarSummaryDetails">
+            <MaxRec Value="{$MaxRec}"/>
+            <START_COUNT Value="{$varStartAtRow}"/>
+            <TO_XML SelectList="$filters/FILTER"/>
+            <SORT_ORDER Value="{$pSortSumOrder}"/>
+            <SORT_BY Value="{$pSortSumBy}"/>
+            <FILTER_DETAIL Value="{$subSumFilter}"/>
+            <GDPR_CASE_ID Value="{$currentGDPRCaseID}"/>
+          </REQUEST>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <SUMMARY>
+              <TO_XML SelectList="$VarSummaryDetails/*"/>
+            </SUMMARY>
+          </APPEND_TO_XML>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction = 'UpdateContactUs'">
+            <THEN>
+              <EXECUTE_SQL_DML AssignToVar="returnContactUsUpdate" Value="UPDATE MDM.GDPR_RQST SET GDPR_RQST_STATUS_CD = 'CP',GVN_NAME=null, MID_NAME=null, FAMLY_NAME=null, NAME_SUFFX_TXT=null, FULL_NAME=null, EMAIL_ADDR_TXT=null,  FULL_PHONE_NUM=null, ADDR_LINE_1_TXT=null, ADDR_LINE_2_TXT=null,ADDR_LINE_3_TXT=null, CITY_NAME=null,TERR_NAME=null,POSTL_AREA_CODE=null,CNTRY_CODE=null,NATIONAL_ID_NBR=null,SYS_LAST_MODIFIED_DATE=CURRENT_timestamp(0) WHERE GDPR_CASE_ID ='{$currentGDPRCaseID}'">
+              </EXECUTE_SQL_DML>
+              <EXECUTE_SQL_QUERY AssignToVar="resUpdateSysModContactUs" Value="UPDATE GDPR_RQST SET SYS_LAST_MODIFIED_BY='{$userId}' WHERE GDPR_CASE_ID='{$currentGDPRCaseID}'"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='updateButton'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="UpdateCollateXML">
+                <ROOT>
+                  <INPUT>
+                    <TO_XML SelectList="$thisParam/GDPR_CASE_ID"/>
+                    <!--<TO_XML SelectList="$thisParam/EXTRACT_ID" />-->
+                    <TO_XML SelectList="$thisParam/CNTRY_CODE"/>
+                    <TO_XML SelectList="$thisParam/SUPPLIER_QUAD"/>
+                    <TO_XML SelectList="$thisParam/SENT_TIMESTAMP"/>
+                    <TO_XML SelectList="$thisParam/SYS_LAST_MODIFIED_DATE"/>
+                    <TO_XML SelectList="$thisParam/LOAD_ID"/>
+                    <TO_XML SelectList="$thisParam/GDPR_CASE_RQST_TYPE"/>
+                    <TO_XML SelectList="$thisParam/GDPR_RQST_STATUS_CD"/>
+                  </INPUT>
+                  <COLLATE_LIST Value="Row_Collate_Detail">
+                    <GDPR_CASE_ID/>
+                    <!--<EXTRACT_ID/>-->
+                    <CNTRY_CODE/>
+                    <SUPPLIER_QUAD/>
+                    <SENT_TIMESTAMP/>
+                    <SYS_LAST_MODIFIED_DATE/>
+                    <LOAD_ID/>
+                    <GDPR_CASE_RQST_TYPE/>
+                    <GDPR_RQST_STATUS_CD/>
+                  </COLLATE_LIST>
+                </ROOT>
+              </TO_DOCVAR>
+              <COLLATE_XML Var="UpdateCollateXML" AssignToVar="UpdateCollateDoc"/>
+              <TO_DOCVAR AssignToVar="FinalUpdateCollateDoc">
+                <ROOT/>
+              </TO_DOCVAR>
+              <FOR_EACH CurrentElement="currRec" SelectList="$thisParam/SelectedGdprCasrID">
+                <!--SET Var="GDPR_CASE_ID" FromValue="{$currRec/@Value}" /-->
+                <SET Var="GDPR_CASE_ID" FromValue="{substringAfter(substringBefore($currRec/@Value,'#CNTRY_CODE='),'GDPR_CASE_ID=')}"/>
+                <SET Var="CNTRY_CODE" FromValue="{substringAfter(substringBefore($currRec/@Value,'#SUPPLIER_QUAD'),'#CNTRY_CODE=')}"/>
+                <SET Var="SUPPLIER_QUAD" FromValue="{substringAfter(substringBefore($currRec/@Value,'#GDPR_CASE_RQST_TYPE='),'#SUPPLIER_QUAD=')}"/>
+                <SET Var="GDPR_CASE_RQST_TYPE" FromValue="{substringAfter($currRec/@Value,'#GDPR_CASE_RQST_TYPE=')}"/>
+                <APPEND_TO_XML DocVar="FinalUpdateCollateDoc">
+                  <TO_XML SelectList="$UpdateCollateDoc/Row_Collate_Detail[GDPR_CASE_ID/@Value = $GDPR_CASE_ID and CNTRY_CODE/@Value = $CNTRY_CODE and SUPPLIER_QUAD/@Value = $SUPPLIER_QUAD and GDPR_CASE_RQST_TYPE/@Value = $GDPR_CASE_RQST_TYPE ]"/>
+                </APPEND_TO_XML>
+              </FOR_EACH>
+              <REQUEST ServiceName="BCM_MASTER" Name="EditSummaryDetails" AssignToVar="VarEditSummary">
+                <TO_XML SelectList="$FinalUpdateCollateDoc/*"/>
+              </REQUEST>
+              <IF_TEST Test="$VarEditSummary/@Status='Success'">
+                <THEN>
+                  <APPEND_TO_XML SelectList="$thisParam">
+                    <UpdateMsg Value="Record updated successfully!"/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <APPEND_TO_XML DocVar="thisParam">
+                    <_ERRORS>
+                      <_ERROR Value="Error:Records are not getting saved "/>
+                    </_ERRORS>
+                  </APPEND_TO_XML>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='UploadDetails'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="UploadSummary" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='DownloadCaseDetail'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="SummaryCase" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="GDPRReviewProcess" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='updateButton'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="SummaryCase" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='RESET'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SEARCH_INDIVIDUAL'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SELECT_RETURN'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='processButton'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Return'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='UpdateContactUs'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="SummaryCase" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='UploadDetailstest'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="UploadSummary" ShowInBreadCrumbs="HIDE" Template="UploadSummary.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" Description="UploadSummary">
+      <pre_actions>
+        <action>
+          <SET Var="fSlash" FromValue="/"/>
+          <SET Var="uploadPath" FromValue="{concat($filepath,$fSlash)}"/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <Filepath Value="{$uploadPath}"/>
+              <Message Value="{$thisParam/MSG/@Value}"/>
+              <ErrMessage Value="{$thisParam/ErrorMSG/@Value}"/>
+            </ROOT>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='UploadAction'">
+            <THEN>
+              <SET Var="Slash" FromValue="\"/>
+              <SET Var="sourceFilename" FromValue="{$thisParam/filename/@Value}"/>
+              <SET Var="sourceFilepath" FromValue="E:\Teradata\MDM\3.05.02\web\mdmclient"/>
+              <SET Var="finalFilepath" FromValue="{concat($sourceFilepath,$Slash,$sourceFilename)}"/>
+              <SET Var="destnpath" FromValue="{$filepath}"/>
+              <SET Var="sftpSynchPath" FromValue="{$SFTPDirPathSynch}"/>
+              <SET Var="fileSynchPath" FromValue="{$filepathSynch}"/>
+              <SET Var="shellValue" FromValue="{concat('move ',$finalFilepath,' ',$destnpath)}"/>
+              <EXECUTE_SHELL_COMMAND Value="{$shellValue}" AssignToVar="copyStatus"/>
+              <IF_TEST Test="$copyStatus/@ShellReturnValue = 0">
+                <THEN>
+                  <SET Var="delShellValue" FromValue="{concat('del ',$finalFilepath)}"/>
+                  <EXECUTE_SHELL_COMMAND Value="{$delShellValue}" AssignToVar="delAllFiles"/>
+                  <APPEND_TO_XML SelectList="$thisParam">
+                    <MSG Value="File Uploaded successfully!"/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <APPEND_TO_XML SelectList="$thisParam">
+                    <ErrorMSG Value="Error Uploading File!"/>
+                  </APPEND_TO_XML>
+                </ELSE>
+              </IF_TEST>
+              <EXECUTE_SHELL_COMMAND Value="E:\Teradata\MDM\3.05.02\custom\pngrelease3\util\winscp /console /script=E:\Teradata\MDM\3.05.02\custom\pngrelease3\script\ftpupload.script /parameter {$fileSynchPath} {$sftpSynchPath}" AssignToVar="uploadSynchStatus" Synchronous="false"/>
+              <!-- <EXECUTE_SHELL_COMMAND Value="E:\Teradata\MDM\3.05.02\custom\pngrelease3\util\winscp /console /script=E:\Teradata\MDM\3.05.02\custom\pngrelease3\script\ftpupload.script" AssignToVar="uploadSynchStatus" Synchronous="false"/>-->
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='upload'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="SummaryCase" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Save'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="UploadSummary" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='UploadAction'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="UploadSummary" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <decision Name="decisionSummary">
+      <actions>
+        <action/>
+      </actions>
+      <condition Value="$thisParam/SummaryTab/@Value='True'"/>
+      <if_true>
+        <next_nodes>
+          <next_node Name="SummaryCase" Description="true"/>
+        </next_nodes>
+      </if_true>
+      <if_false>
+        <next_nodes>
+          <next_node Name="decisionCaseID" Description=""/>
+        </next_nodes>
+      </if_false>
+    </decision>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <start font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="230,184" size="732,526">
+        <iconProps iconfile="z1start.gif"/>
+      </start>
+      <done font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="392,259" size="732,526">
+        <iconProps iconfile="z1end.gif"/>
+      </done>
+      <GDPRReviewProcess font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="277,289" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </GDPRReviewProcess>
+      <ReviewCase font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="584,135" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </ReviewCase>
+      <decisionCaseID font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="337,75" size="732,600">
+        <iconProps iconfile="z1decision.gif"/>
+      </decisionCaseID>
+      <SummaryCase font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="844,295" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </SummaryCase>
+      <UploadSummary font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="935,177" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </UploadSummary>
+      <decisionSummary font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="305,384" size="732,600">
+        <iconProps iconfile="z1decision.gif"/>
+      </decisionSummary>
+    </mgcnodes>
+    <mgcconnectors>
+      <start>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="252,229" endpoint="327,384" ctrlRect1="26,423,4,4" ctrlRect2="325,265,4,4" ctrlRect1Dirty="true"/>
+      </start>
+      <GDPRReviewProcess>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="299,289" endpoint="584,157" ctrlRect1="460,100,4,4" ctrlRect2="368,155,4,4" textRect="409,125,15,8" ctrlRect1Dirty="true">
+          <textProps text="ReviewCase"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="322,311" endpoint="844,317" ctrlRect1="491,272,4,4" ctrlRect2="450,315,4,4" textRect="452,291,40,8" ctrlRect1Dirty="true">
+          <textProps text="$userAction ='requestSummaryButton'"/>
+        </nextNodeView>
+      </GDPRReviewProcess>
+      <ReviewCase>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="584,157" endpoint="584,157" ctrlRect1="507,155,4,4" ctrlRect2="507,155,4,4" textRect="502,153,14,8">
+          <textProps text="ContactUs"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="584,157" endpoint="584,157" ctrlRect1="507,155,4,4" ctrlRect2="442,203,4,4" ctrlRect2Dirty="true" textRect="465,177,22,8">
+          <textProps text="DataAccessRequest"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="584,157" endpoint="584,157" ctrlRect1="507,155,4,4" ctrlRect2="366,57,4,4" ctrlRect2Dirty="true" textRect="426,104,24,8">
+          <textProps text="DataDeletionRequest"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="629,157" endpoint="629,157" ctrlRect1="702,155,4,4" ctrlRect2="702,155,4,4" textRect="693,153,22,8">
+          <textProps text="Process Indicator"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="629,157" endpoint="629,157" ctrlRect1="702,155,4,4" ctrlRect2="702,155,4,4" textRect="693,153,22,8">
+          <textProps text="LOAD_PROGRAM_LIST"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="584,157" endpoint="584,157" ctrlRect1="507,155,4,4" ctrlRect2="388,105,4,4" ctrlRect2Dirty="true" textRect="433,128,33,8">
+          <textProps text="$userAction ='processButton'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="584,157" endpoint="584,157" ctrlRect1="507,155,4,4" ctrlRect2="507,155,4,4"/>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="629,157" endpoint="629,157" ctrlRect1="702,155,4,4" ctrlRect2="702,155,4,4" textRect="696,153,16,8">
+          <textProps text="LOAD States"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="629,157" endpoint="629,157" ctrlRect1="702,155,4,4" ctrlRect2="702,155,4,4" textRect="696,153,16,8">
+          <textProps text="Load States"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="584,157" endpoint="584,157" ctrlRect1="199,354,4,4" ctrlRect2="507,155,4,4" ctrlRect1Dirty="true" textRect="351,252,9,8">
+          <textProps text="Back"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="629,157" endpoint="629,157" ctrlRect1="702,155,4,4" ctrlRect2="627,260,4,4" ctrlRect2Dirty="true" textRect="661,205,10,8">
+          <textProps text="Reset"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="606,135" endpoint="606,135" ctrlRect1="604,58,4,4" ctrlRect2="666,15,4,4" ctrlRect2Dirty="true" textRect="626,34,22,8">
+          <textProps text="SearchIndividuals"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="584,157" endpoint="322,311" ctrlRect1="588,143,4,4" ctrlRect2="663,129,4,4" ctrlRect2Dirty="true" textRect="617,134,20,8" ctrlRect1Dirty="true">
+          <textProps text="Select &amp; return"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="584,157" endpoint="584,157" ctrlRect1="507,155,4,4" ctrlRect2="374,278,4,4" ctrlRect2Dirty="true"/>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="629,157" endpoint="629,157" ctrlRect1="702,155,4,4" ctrlRect2="718,47,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="606,180" endpoint="629,157" ctrlRect1="604,253,4,4" ctrlRect2="665,246,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="584,157" endpoint="584,157" ctrlRect1="507,155,4,4" ctrlRect2="350,235,4,4" ctrlRect2Dirty="true"/>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="629,157" endpoint="629,157" ctrlRect1="702,155,4,4" ctrlRect2="702,155,4,4" textRect="694,153,20,8">
+          <textProps text="Assign to Other"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="589,161" endpoint="430,264" ctrlRect1="469,159,4,4" ctrlRect2="428,184,4,4"/>
+      </ReviewCase>
+      <decisionCaseID>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,0" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="359,120" endpoint="299,289" ctrlRect1="357,244,4,4" ctrlRect2="297,160,4,4" textRect="324,200,10,8">
+          <textProps text="true"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="178,0,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="382,97" endpoint="584,157" ctrlRect1="531,95,4,4" ctrlRect2="451,160,4,4" textRect="489,125,9,8" ctrlRect2Dirty="true">
+          <textProps text="false"/>
+        </nextNodeView>
+      </decisionCaseID>
+      <SummaryCase>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="844,317" endpoint="957,177" ctrlRect1="595,218,4,4" ctrlRect2="1019,67,4,4" ctrlRect2Dirty="true" textRect="793,140,33,8" ctrlRect1Dirty="true">
+          <textProps text="$userAction ='UploadDetails'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="844,317" endpoint="844,317" ctrlRect1="611,268,4,4" ctrlRect2="897,415,4,4" ctrlRect2Dirty="true" textRect="737,339,38,8" ctrlRect1Dirty="true">
+          <textProps text="$userAction ='DownloadCaseDetail'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="844,317" endpoint="322,311" ctrlRect1="534,277,4,4" ctrlRect2="425,197,4,4" textRect="465,235,33,8" ctrlRect2Dirty="true" ctrlRect1Dirty="true">
+          <textProps text="Back From Summary"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="844,317" endpoint="844,317" ctrlRect1="767,315,4,4" ctrlRect2="767,315,4,4" textRect="753,313,32,8">
+          <textProps text="$userAction ='updateButton'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="889,317" endpoint="889,317" ctrlRect1="962,315,4,4" ctrlRect2="962,315,4,4" textRect="947,313,35,8">
+          <textProps text="$userAction ='UpdateContactUs'"/>
+        </nextNodeView>
+      </SummaryCase>
+      <UploadSummary>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="935,199" endpoint="844,317" ctrlRect1="866,197,4,4" ctrlRect2="670,296,4,4" textRect="758,244,24,8" ctrlRect2Dirty="true">
+          <textProps text="$userAction ='Back'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="935,199" endpoint="935,199" ctrlRect1="858,197,4,4" ctrlRect2="751,193,4,4" ctrlRect2Dirty="true" textRect="793,193,26,8">
+          <textProps text="$userAction ='Save'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="980,199" endpoint="980,199" ctrlRect1="1053,197,4,4" ctrlRect2="1053,197,4,4" textRect="1039,195,32,8">
+          <textProps text="$userAction ='UploadAction'"/>
+        </nextNodeView>
+      </UploadSummary>
+      <decisionSummary>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,0" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="350,406" endpoint="844,317" ctrlRect1="718,404,4,4" ctrlRect2="471,315,4,4" textRect="591,357,10,8">
+          <textProps text="true"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="178,0,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="327,384" endpoint="337,97" ctrlRect1="241,228,4,4" ctrlRect2="174,53,4,4" ctrlRect2Dirty="true" textRect="205,138,9,8" ctrlRect1Dirty="true">
+          <textProps/>
+        </nextNodeView>
+      </decisionSummary>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+      <action/>
+    </pre_actions>
+    <post_actions>
+      <action/>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

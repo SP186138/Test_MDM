@@ -1,0 +1,47 @@
+<document>
+  <properties>
+    <property Name="CNTCT_NBR" PhysicalName="CNTCT_NBR" Active="true" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="CNTCT_NBR" />
+    </property>
+    <property Name="AGNCY_NBR" PhysicalName="AGNCY_NBR" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="AGNCY_NBR" />
+    </property>
+    <property Name="MKTNG_PGM_NBR" PhysicalName="MKTNG_PGM_NBR" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="MKTNG_PGM_NBR" />
+    </property>
+    <property Name="PRIMARY_CNTCT_IND" PhysicalName="PRIMARY_CNTCT_IND" Required="true" CharSet="LATIN">
+      <default>N</default>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="PRIMARY_CNTCT_IND" />
+    </property>
+  </properties>
+  <keys>
+    <key Active="true" Name="AGNCY_MKTNG_PGM_CNTCT_UPI" PhysicalName="AGNCY_MKTNG_PGM_CNTCT_UPI" Kind="PRIMARY">
+      <property Name="AGNCY_NBR" />
+      <property Name="CNTCT_NBR" />
+      <property Name="MKTNG_PGM_NBR" />
+    </key>
+  </keys>
+  <links>
+    <link Active="true" Name="Link1" PhysicalName="AgncyMKT_NBR_CNTCT_link">
+      <keymap ToPackage="models/pngModel" ToModelUnit="AGNCY_CNTCT.mtt" ToKey="AGNCY_CNTCT_UPI" ReverseLink="true" ReverseLinkName="NBR_cntct" DeleteRule="RESTRICT">
+        <mapping FromProperty="AGNCY_NBR" ToProperty="AGNCY_NBR" />
+        <mapping FromProperty="CNTCT_NBR" ToProperty="CNTCT_NBR" />
+      </keymap>
+    </link>
+    <link Active="true" Name="Link2" PhysicalName="AgncyMKTpgm_nbr_link">
+      <keymap ToPackage="models/pngModel" ToModelUnit="AGNCY_MKTNG_PGM.mtt" ToKey="AGNCY_MKTNG_PGM_UPI" ReverseLink="true" ReverseLinkName="NBR_PGM" DeleteRule="RESTRICT">
+        <mapping FromProperty="AGNCY_NBR" ToProperty="AGNCY_NBR" />
+        <mapping FromProperty="MKTNG_PGM_NBR" ToProperty="MKTNG_PGM_NBR" />
+      </keymap>
+    </link>
+  </links>
+  <docFacets>
+    <mdmWebServiceFacet />
+    <mdmSysTableMapFacet TableClass="MASTER" Source="MASTER" MasterTable="AGNCY_MKTNG_PGM_CNTCT" />
+    <miscFacet PhysicalName="AGNCY_MKTNG_PGM_CNTCT" Active="true" />
+    <mdmConfigFacet SchemaGen="true" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql />
+</document>
+

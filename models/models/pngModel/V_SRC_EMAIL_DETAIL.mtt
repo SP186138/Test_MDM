@@ -1,0 +1,41 @@
+<document IsDocView="true">
+  <properties>
+    <property Name="SOURCE_ID" PhysicalName="SOURCE_ID">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="SOURCE_ID" />
+    </property>
+    <property Name="REQ_MAIL_ID" PhysicalName="REQ_MAIL_ID">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="REQ_MAIL_ID" />
+    </property>
+    <property Name="LOAD_ID" PhysicalName="LOAD_ID">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="LOAD_ID" />
+    </property>
+    <property Name="AGN_CON_MAIL_ID" PhysicalName="AGN_CON_MAIL_ID">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="AGN_CON_MAIL_ID" />
+    </property>
+  </properties>
+  <keys />
+  <links />
+  <docFacets>
+    <mdmWebServiceFacet />
+    <miscFacet Active="true" />
+    <mdmConfigFacet SchemaGen="false" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql OnMDMTables="true" IsSimpleView="true">REPLACE VIEW MDM.V_SRC_EMAIL_DETAIL&#xD;
+AS&#xD;
+LOCKING ROW FOR ACCESS&#xD;
+SELECT DISTINCT A.SOURCE_ID,&#xD;
+A.REQ_MAIL_ID,&#xD;
+A.AGN_CON_MAIL_ID,&#xD;
+B.LOAD_ID&#xD;
+FROM ETL_CTRL.SOURCE_CONTROL A&#xD;
+INNER JOIN ETL_CTRL.LOAD_CONTROL B&#xD;
+ON A.SOURCE_ID = B.SOURCE_ID&#xD;
+AND B.LOAD_TYPE='ETL'&#xD;
+AND B.LOAD_ID IN(SEL LOAD_ID FROM MDM.MDM_LOAD_CONTROL)&#xD;
+INNER JOIN MDM.LOAD_INFO LI&#xD;
+ON B.LOAD_ID = LI.LOAD_ID&#xD;
+AND LI.PROCESS_NAME='Wrapper'&#xD;
+AND LI.STATUS = 'Success';</viewsql>
+</document>
+

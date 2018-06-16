@@ -1,0 +1,1553 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_entry" source="studio.controller:load">
+  <ui:container id="topContainer" inner="true" scrollable="true">
+    <ui:help displayPage="../../bcm/help/Create_Model_Builder_help.htm"/>
+    <ui:header>
+      <ui:link onClick="javascript:onSave()" displayCondition="true">
+        <ui:image src="/btn_saveas_1.gif" displayText="Save Model"/>
+      </ui:link>
+    </ui:header>
+    <ui:step id="tableDetailsStep" displayText="SC_MODEL_DETAILS">
+      <ui:field-group columns="4">		
+        <ui:image src="/bpi_check.gif" id="AlertGreenIconAjax" displayCondition="{string-length($root/ABC/AlertGreen/@Value)!=0}"/>
+        <ui:image src="/cancel.gif" id="AlertRedIconAjax" displayCondition="{string-length($root/ABC/AlertRed/@Value)!=0}"/>
+        <ui:display-field value="{$root/ABC/AlertGreen/@Value}" displayCondition="{string-length($root/ABC/AlertGreen/@Value) != 0}" id="success" name="success" class="requiredIndicatorGreen" style="color:green;"/>
+        <ui:display-field value="{$root/ABC/AlertRed/@Value}" displayCondition="{string-length($root/ABC/AlertRed/@Value) != 0}" id="error" name="error" class="requiredIndicator" style="color:red;"/>
+        <ui:hidden-field id="modelStatus" name="modelStatus" value="{$root/SELF_CONF_MODEL/STATUS/@Value}"/>
+        <ui:hidden-field id="noOfKeys" name="noOfKeys" value="{$root/NO_OF_KEYS/@Value}" />
+        <ui:hidden-field id="noOfProps" name="noOfProps" value="{$root/NO_OF_PROPS/@Value}"/>
+        <ui:hidden-field  id="modelStatusFlag" name="modelStatusFlag" value="{$root/modelGenratedFlag/@Value}" />
+      </ui:field-group>
+      <ui:container id="tableDetailsContainer">
+        <ui:step id="tableStep" displayText="SC_TABLE_NAME">
+          <ui:field-group columns="2" displayCondition="true">
+            <ui:hidden-field id="TabName" name="TabName" unFormat="true" value="TABLE_STEP"/>
+          </ui:field-group>
+          <ui:field-group id="tableGrp" columns="1" width="100px">
+            <ui:hidden-field id="migrateExtendedAttributes" name="migrateExtendedAttributes" value="{$root/ExtendendAtributesmigrated/@Value}" />
+            <ui:hidden-field id="ERROR_TAB_NAME" name="ERROR_TAB_NAME" unFormat="true" value="{$root/ERROR_TAB_NAME/@Value}"/>
+            <ui:entry-field id="TABLE_NAME" name="TABLE_NAME" displayText="SC_TABLE_LOGICAL_NAME" title="SC_TABLE_LOGICAL_NAME_HOV" maxlength="26" size="25" required="true" editable="{$root/modelGenratedFlag/@Value != 'GENERATED'}" unFormat="true" value="{$root/SELF_CONF_MODEL/TABLE_NAME/@Value}" onKeyUp="javascript:checkSpecialChars(this);" onChange="javascript:existingLogicalName();"/>
+            <ui:textarea id="TABLE_DESCRIPTION" name="TABLE_DESCRIPTION" displayText="SC_TABLE_DESCRIPTION" title="SC_TABLE_DESCRIPTION_HOV" inlineEdit="true" rows="1" value="{$root/SELF_CONF_MODEL/TABLE_DESCRIPTION/@Value}" editable="{$root/modelGenratedFlag/@Value != 'GENERATED'}"/>
+            <ui:checkbox id="newFolder" name="newFolder" displayText="SC_CREATE_NEW_FOLDER" title="SC_CREATE_FOLDER_HOV" value="{$root/newFolder/@Value}" defaultValue="false" onClick="showFolderName()"/>
+            <ui:dropdown id="existingFolderName" name="FOLDER_NAME" displayText="SC_FOLDER_NAME" sortable="true" optionSrc="$root/FOLDER_NAME/*" value="{$root/SELF_CONF_MODEL/FOLDER_NAME/@Value}" editable="{$root/modelGenratedFlag/@Value != 'GENERATED'}" selectOne="true" required="true"/>
+            <ui:entry-field id="FOLDER_NAME" name="FOLDER_NAME" maxlength="64" size="40" displayText="SC_FOLDER_NAME" title="SC_FOLDER_NAME_HOV" editable="{$root/modelGenratedFlag/@Value != 'GENERATED'}" unFormat="true" value="{$root/SELF_CONF_MODEL/FOLDER_NAME/@Value}" required="true" onKeyUp="javascript:checkSpecialCharsSpaceSlashAllowed(this);"/>
+            <ui:checkbox id="showAdvanceFacet" name="showAdvanceFacet" displayText="SC_ADVANCED_FACET" title="SC_ADVANCED_FACET_HOV" checkedValue="true" value="{$root/showAdvanceFacet/@Value}" onClick="javascript:showAdvacnedFacet()"/>
+            <ui:checkbox id="migrateExtAttr" name="migrateExtAttr" displayText="SC_MIGRATE_EXT_ATTR" title="SC_MIGRATE_EXT_ATTR" checkedValue="true" displayCondition="{$root/ExtendendAtributesFlag/@Value}" value="{$root/ExtendendAtributesmigrated/@Value}" onClick="javascript:onmigrateExtAttrClicked()" />
+          </ui:field-group>
+        </ui:step>
+      </ui:container>
+      <ui:container id="configFacet" scrollable="true" inner="true">
+        <ui:step id="sysTableDetailsStep" displayText="SC_SYS_TABLE_NAME">
+          <ui:field-group id="sysTableGroup" columns="2">
+            <ui:hidden-field id="TabName" name="TabName" unFormat="true" value="SYS_TABLE_NAME"/>
+            <ui:entry-field id="TABLE_DISPLAY_NAME" name="TABLE_DISPLAY_NAME" maxlength="64" size="35" displayText="SC_TABLE_DISPLAY_NAME" title="SC_TABLE_DISPLAY_NAME_HOV" editable="true" unFormat="true" value="{$root/SELF_CONFIG_FACET_DOC_INFO/MISC_FACET/TABLE_DISPLAY_NAME/@Value}" onKeyUp="javascript:checkSpecialCharsSpaceAllowed(this);"/>
+            <ui:entry-field id="PHYSICAL_NAME" name="PHYSICAL_NAME" displayText="SC_PHYSICAL_NAME" title="SC_PHYSICAL_NAME_HOV" editable="{$root/modelGenratedFlag/@Value != 'GENERATED'}" maxlength="28" size="35" unFormat="true" value="{$root/SELF_CONFIG_FACET_DOC_INFO/MISC_FACET/PHYSICAL_NAME/@Value}" onKeyUp="javascript:checkSpecialChars(this);" onChange="javascript:onChangePhysicalName();"/>
+            <ui:entry-field id="PHYSICAL_IN" name="PHYSICAL_IN" displayText="SC_PHYSICAL_IN" title="SC_PHYSICAL_IN_HOV" editable="{$root/modelGenratedFlag/@Value != 'GENERATED'}" maxlength="32" size="35" unFormat="true" value="{$root/SELF_CONFIG_FACET_DOC_INFO/SYS_ENTRY/PHYSICAL_IN/@Value}" onKeyUp="javascript:checkSpecialChars(this);"/>
+            <ui:entry-field id="PHYSICAL_ERR" name="PHYSICAL_ERR" displayText="SC_PHYSICAL_ERR" title="SC_PHYSICAL_ERR_HOV" maxlength="32" size="35" editable="{$root/modelGenratedFlag/@Value != 'GENERATED'}" unFormat="true" value="{$root/SELF_CONFIG_FACET_DOC_INFO/SYS_ENTRY/PHYSICAL_ERR/@Value}" onKeyUp="javascript:checkSpecialChars(this);"/>
+            <ui:entry-field id="PHYSICAL_MST" name="PHYSICAL_MST" displayText="SC_PHYSICAL_MST" title="SC_PHYSICAL_MST_HOV" maxlength="32" size="35" editable="{$root/modelGenratedFlag/@Value != 'GENERATED'}" unFormat="true" value="{$root/SELF_CONFIG_FACET_DOC_INFO/SYS_ENTRY/PHYSICAL_MST/@Value}" onKeyUp="javascript:checkSpecialChars(this);"/>
+            <ui:entry-field id="PHYSICAL_OUT" name="PHYSICAL_OUT" displayText="SC_PHYSICAL_OUT" title="SC_PHYSICAL_OUT_HOV" maxlength="32" size="35" editable="{$root/modelGenratedFlag/@Value != 'GENERATED'}" unFormat="true" value="{$root/SELF_CONFIG_FACET_DOC_INFO/SYS_ENTRY/PHYSICAL_OUT/@Value}" onKeyUp="javascript:checkSpecialChars(this);"/>
+            <ui:entry-field id="PHYSICAL_NC" name="PHYSICAL_NC" displayText="SC_PHYSICAL_NC" title="SC_PHYSICAL_NC_HOV" maxlength="32" size="35" editable="{$root/modelGenratedFlag/@Value != 'GENERATED'}" unFormat="true" value="{$root/SELF_CONFIG_FACET_DOC_INFO/SYS_ENTRY/PHYSICAL_NC/@Value}" onKeyUp="javascript:checkSpecialChars(this);"/>
+            <ui:entry-field id="PHYSICAL_VER" name="PHYSICAL_VER" displayText="SC_PHYSICAL_VER" title="SC_PHYSICAL_VER_HOV" maxlength="32" size="35" editable="{$root/modelGenratedFlag/@Value != 'GENERATED'}" unFormat="true" value="{$root/SELF_CONFIG_FACET_DOC_INFO/SYS_ENTRY/PHYSICAL_VER/@Value}"/>
+            <ui:dropdown id="SOURCE" name="SOURCE" displayText="SC_SOURCE" title="SC_SOURCE_HOV" value="{$root/SELF_CONFIG_FACET_DOC_INFO/SYS_ENTRY/SOURCE/@Value}" unFormat="true">
+              <ui:option id="MASTER" value="MASTER"/>
+              <ui:option id="BACKEND" value="BACKEND"/>
+              <ui:option id="BOTH" value="BOTH"/>
+            </ui:dropdown>
+            <ui:dropdown id="TABLE_CLASS" name="TABLE_CLASS" displayText="SC_TABLE_CLASS" title="SC_TABLE_CLASS_HOV" value="{$root/SELF_CONFIG_FACET_DOC_INFO/SYS_ENTRY/TABLE_CLASS/@Value}" displayCondition="false">
+              <ui:option id="MASTER" value="MASTER"/>
+              <ui:option id="TRANSACTION" value="TRANSACTION"/>
+              <ui:option id="PLAN" value="PLAN"/>
+            </ui:dropdown>
+          </ui:field-group>
+        </ui:step>
+        <ui:step id="configFacetStep" displayText="SC_CONFIG_FACET">
+          <ui:field-group id="tableAdvanced" columns="1" width="100px">
+            <ui:hidden-field id="TabName" name="TabName" unFormat="true" value="SC_CONFIG_FACET"/>
+            <ui:hidden-field id="mstTabName" name="mstTabName" unFormat="true" value="{$root/SELF_CONFIG_FACET_DOC_INFO/SYS_ENTRY/PHYSICAL_MST/@Value}"/>
+            <ui:checkbox id="IS_AUDIT_ENABLED" name="IS_AUDIT_ENABLED" displayText="SC_AUDIT_TRAIL" checkedValue="TRUE" title="SC_AUDIT_TRAIL_HOV" value="{$root/SELF_CONFIG_FACET_DOC_INFO/MISC_FACET/IS_AUDIT_ENABLED/@Value}" onClick="javascript:checkMstTableName()"/>
+            <ui:checkbox id="IS_NATIVE" name="IS_NATIVE" displayText="SC_IS_NATIVE" title="SC_IS_NATIVE_HOV" checkedValue="TRUE" value="{$root/SELF_CONFIG_FACET_DOC_INFO/CONFIG_FACET/IS_NATIVE/@Value}"/>
+            <ui:checkbox id="SCHEMA_GEN" name="SCHEMA_GEN" displayText="SC_SCHEMA_GEN" title="SC_SCHEMA_GEN_HOV" defaultValue="TRUE" checkedValue="TRUE" disabled="true" value="{$root/SELF_CONFIG_FACET_DOC_INFO/CONFIG_FACET/SCHEMA_GEN/@Value}"/>
+            <ui:checkbox id="IS_HARD_DELETE_ENABLED" name="IS_HARD_DELETE_ENABLED" displayText="SC_IS_HARD_DELETE_ENABLED" checkedValue="TRUE" title="SC_IS_HARD_DELETE_ENABLED_HOV" value="{$root/SELF_CONFIG_FACET_DOC_INFO/CONFIG_FACET/IS_HARD_DELETE_ENABLED/@Value}"/>
+            <ui:checkbox id="IS_APPENDABLE" name="IS_APPENDABLE" displayText="SC_IS_APPENDABLE" title="SC_IS_APPENDABLE_HOV" checkedValue="TRUE" value="{$root/SELF_CONFIG_FACET_DOC_INFO/CONFIG_FACET/IS_APPENDABLE/@Value}"/>
+            <ui:checkbox id="IS_EXTENDABLE" name="IS_EXTENDABLE" displayText="SC_IS_EXTENDABLE" title="SC_IS_EXTENDABLE_HOV" checkedValue="TRUE" value="{$root/SELF_CONFIG_FACET_DOC_INFO/MISC_FACET/IS_EXTENDABLE/@Value}" onClick="javascript:onClickExtendable()"/>
+            <ui:entry-field id="EXT_STR_ATTR_COUNT" name="EXT_STR_ATTR_COUNT" displayText="SC_EXT_STR_ATTR_COUNT" title="SC_EXT_STR_ATTR_COUNT_HOV"  defaultValue="5"  value="{$root/SELF_CONFIG_FACET_DOC_INFO/MISC_FACET/EXT_STR_ATTR_COUNT/@Value}"  onKeyUp="javascript:nonDecimalInteger()"/>			
+            <ui:entry-field id="EXT_DEC_ATTR_COUNT" name="EXT_DEC_ATTR_COUNT" displayText="SC_EXT_DEC_ATTR_COUNT" title="SC_EXT_DEC_ATTR_COUNT_HOV"  value="{$root/SELF_CONFIG_FACET_DOC_INFO/MISC_FACET/EXT_DEC_ATTR_COUNT/@Value}"  onKeyUp="javascript:nonDecimalInteger()"/>
+            <ui:entry-field id="EXT_DATE_ATTR_COUNT" name="EXT_DATE_ATTR_COUNT" displayText="SC_EXT_DATE_ATTR_COUNT" title="SC_EXT_DATE_ATTR_COUNT_HOV" value="{$root/SELF_CONFIG_FACET_DOC_INFO/MISC_FACET/EXT_DATE_ATTR_COUNT/@Value}"  onKeyUp="javascript:nonDecimalInteger()"/>
+            <ui:checkbox id="CACHED" name="CACHED" displayText="SC_CACHED" title="SC_CACHED_HOV" checkedValue="TRUE" value="{$root/SELF_CONFIG_FACET_DOC_INFO/MISC_FACET/CACHED/@Value}"/>
+            <ui:checkbox id="SURROGATE" name="SURROGATE" displayText="SC_SURROGATE" title="SC_SURROGATE_HOV" checkedValue="TRUE" value="{$root/SELF_CONFIG_FACET_DOC_INFO/MISC_FACET/SURROGATE/@Value}" onClick="javascript:onClickSurrogate()"/>
+            <ui:entry-field id="IDPREFIX" name="IDPREFIX" displayText="SC_IDPREFIX" title="SC_IDPREFIX_HOV" value="{$root/SELF_CONFIG_FACET_DOC_INFO/MISC_FACET/IDPREFIX/@Value}"/>
+            <ui:entry-field id="SEQUENCE_NAME" name="SEQUENCE_NAME" displayText="SC_SEQUENCE_NAME" title="SC_SEQUENCE_NAME_HOV" value="{$root/SELF_CONFIG_FACET_DOC_INFO/MISC_FACET/SEQUENCE_NAME/@Value}"/>
+            <ui:checkbox id="IS_TEMPORAL" name="IS_TEMPORAL" displayText="SC_IS_TEMPORAL" title="SC_IS_TEMPORAL" checkedValue="TRUE" value="{$root/SELF_CONFIG_FACET_DOC_INFO/CONFIG_FACET/IS_TEMPORAL/@Value}" onClick="javascript:onClickTemporal()"/>
+            <ui:dropdown id="SELECT_TEMPORAL_TYPE" name="SELECT_TEMPORAL_TYPE" displayText="SC_SELECT_TEMPORAL_TYPE" title="SC_SELECT_TEMPORAL_TYPE_HOV" value="{$root/SELF_CONFIG_FACET_DOC_INFO/TEMPORAL/SELECT_TEMPORAL_TYPE/@Value}">
+              <ui:option id="TEMPORAL_VALID_TIME_DATE" value="TEMPORAL_VALID_TIME_DATE"/>
+              <ui:option id="TEMPORAL_VALID_TIME_TIMESTAMP" value="TEMPORAL_VALID_TIME_TIMESTAMP"/>
+              <ui:option id="TEMPORAL_TRANSACTION_TIME" value="TEMPORAL_TRANSACTION_TIME"/>
+              <ui:option id="BI_TEMPORAL_DATE" value="BI_TEMPORAL_DATE"/>
+              <ui:option id="BI_TEMPORAL_TIMESTAMP" value="BI_TEMPORAL_TIMESTAMP"/>
+            </ui:dropdown>
+            <ui:entry-field id="TRANSACTION_TIME_COLUMN" name="TRANSACTION_TIME_COLUMN" displayText="SC_TRANSACTION_TIME_COLUMN" title="SC_TRANSACTION_TIME_COLUMN_HOV" editable="true" unFormat="true" value="{$root/SELF_CONFIG_FACET_DOC_INFO/TEMPORAL/TRANSACTION_TIME_COLUMN/@Value}"/>
+            <ui:entry-field id="VALIDTIME_COLUMN" name="VALIDTIME_COLUMN" displayText="SC_VALIDTIME_COLUMN" title="SC_VALIDTIME_COLUMN_HOV" editable="true" unFormat="true" value="{$root/SELF_CONFIG_FACET_DOC_INFO/TEMPORAL/VALIDTIME_COLUMN/@Value}"/>
+          </ui:field-group>
+        </ui:step>
+        <ui:step id="MDMwebOperationStep" displayText="SC_MDM_WEB_OPERATION" displayCondition="false">
+          <ui:field-group id="webOperation" columns="1">
+            <ui:hidden-field id="TabName" name="TabName" unFormat="true" value="SC_MDM_WEB_OPERATION"/>
+            <ui:checkbox id="CREATE" name="CREATE" displayText="SC_CREATE" title="SC_CREATE_HOV" checkedValue="TRUE" value="{$root/SELF_CONFIG_FACET_DOC_INFO/WEB_OPERATION/CREATE/@Value}"/>
+            <ui:checkbox id="READ" name="READ" displayText="SC_READ" title="SC_READ_HOV" checkedValue="TRUE" value="{$root/SELF_CONFIG_FACET_DOC_INFO/WEB_OPERATION/READ/@Value}"/>
+            <ui:checkbox id="UPDATE" name="UPDATE" displayText="SC_UPDATE" title="SC_UPDATE_HOV" checkedValue="TRUE" value="{$root/SELF_CONFIG_FACET_DOC_INFO/WEB_OPERATION/UPDATE/@Value}"/>
+            <ui:checkbox id="DELETE" name="DELETE" displayText="SC_DELETE" title="SC_DELETE_HOV" checkedValue="TRUE" value="{$root/SELF_CONFIG_FACET_DOC_INFO/WEB_OPERATION/DELETE/@Value}"/>
+          </ui:field-group>
+        </ui:step>
+      </ui:container>
+      <ui:buttons>
+        <ui:button id="back" name="back" displayText="Back" displayCondition="false"/>
+      </ui:buttons>
+    </ui:step>
+    <ui:step id="selfConfigPropertiesStep" displayText="SC_PROPERTIES">
+      <ui:field-group id="tabNameGr" columns="4">
+		<ui:hidden-field id="fromTemplate" name="fromTemplate" value="{$root/fromTemplate/@Value}"/>
+        <ui:hidden-field id="URL_V" name="URL_V" value="{$root/URL_V/@Value}"/>
+        <ui:hidden-field id="URL_Extend" name="URL_Extend" value="{$root/URL_Extend/@Value}"/>
+        <ui:hidden-field  id="modelStatusFlag" name="modelStatusFlag" value="{$root/modelGenratedFlag/@Value}" />
+        <ui:image src="/bpi_check.gif" id="AlertGreenIconAjax" displayCondition="{string-length($root/ABC/AlertGreen/@Value)!=0}"/>
+        <ui:image src="/cancel.gif" id="AlertRedIconAjax" displayCondition="{string-length($root/ABC/AlertRed/@Value)!=0}"/>
+        <ui:display-field value="{$root/ABC/AlertGreen/@Value}" displayCondition="{string-length($root/ABC/AlertGreen/@Value) != 0}" id="success" name="success" class="requiredIndicatorGreen" style="color:green;"/>
+        <ui:display-field value="{$root/ABC/AlertRed/@Value}" displayCondition="{string-length($root/ABC/AlertRed/@Value) != 0}" id="error" name="error" class="requiredIndicator" style="color:red;"/>
+        <ui:hidden-field id="TabName" name="TabName" unFormat="true" value="PROPERTIES"/>
+        <ui:hidden-field id="ERROR_TAB_NAME" name="ERROR_TAB_NAME" unFormat="true" value="{$root/ERROR_TAB_NAME/@Value}"/>
+        <ui:hidden-field id="modelStatus" name="modelStatus" value="{$root/SELF_CONF_MODEL/STATUS/@Value}"/>
+        <ui:hidden-field id="noOfKeys" name="noOfKeys" value="{$root/NO_OF_KEYS/@Value}" />
+        <ui:hidden-field id="noOfProps" name="noOfProps" value="{$root/NO_OF_PROPS/@Value}" />       
+        <ui:hidden-field id="primaryKeyColumns" name="primaryKeyColumns" value="{$root/primaryKeyColumns/@Value}" />
+        <ui:hidden-field id="migrateExtendedAttributes" name="migrateExtendedAttributes" value="{$root/ExtendendAtributesmigrated/@Value}" />
+      </ui:field-group>
+      <ui:table id="uiTableProperties" displayText="SEARCH_SELF_GEN_PROPERTIES" displayTextNoRecords="SEARCH_SELF_GEN_NO_PROPERTY_FOUND" collapsable="false" doPaging="false" selectable="all" select="$root/SELF_CONF_MOD_PROPTIES" totalRowCount="$root/SELF_CONF_MOD_PROPTIES/@TotalRowCount" startAtRow="$root/startAtRow/@Value" postRowIdAs="SELECTED_ID" configurable="false" maxRows="-1" filter="false" rowId="NAME">
+        <ui:field-group>
+          <ui:entry-field id="NAME" name="NAME" displayText="SC_PROP_NAME" title="SC_PROP_NAME_HOV" unFormat="true" inlineEdit="true" required="true" onKeyUp="javascript:checkSpecialChars(this);" onChange="javascript:checkSameNameExist(this);"/>
+          <ui:dropdown id="DATA_TYPE" name="DATA_TYPE" displayText="DATA_TYPE" title="DATA_TYPE_HOV" required="true" defaultValue="String" onChange="disableLength(this)">
+            <ui:option id="Boolean" value="Boolean"/>
+            <ui:option id="BigInt" value="BigInt"/>
+            <ui:option id="Char" value="Char"/>
+            <ui:option id="Clob" value="Clob"/>
+            <ui:option id="Date" value="Date"/>
+            <ui:option id="Datetime" value="Datetime"/>
+            <ui:option id="Decimal" value="Decimal"/>
+            <ui:option id="Double" value="Double"/>
+            <ui:option id="EncryptedString" value="EncryptedString"/>
+            <ui:option id="File" value="File"/>
+            <ui:option id="Float" value="Float"/>
+            <ui:option id="Integer" value="Integer"/>
+            <ui:option id="PeriodDate" value="PeriodDate"/>
+            <ui:option id="PeriodTimestamp" value="PeriodTimestamp"/>
+            <ui:option id="String" value="String"/>
+            <ui:option id="st_geometry" value="ST_Geometry"/>
+            <ui:option id="Timestamp" value="Timestamp"/>
+            <ui:option id="VarByte" value="VarByte"/>
+            <ui:option id="Xml" value="Xml"/>
+          </ui:dropdown>
+          <ui:entry-field name="LENGTH" id="LENGTH" displayText="SC_PROP_LENGTH" title="SC_PROP_LENGTH_HOV" editable="true" required="true" unFormat="true" inlineEdit="true" onKeyUp="javascript:onlyIntergerUnderscore(this);" size="8"/>
+          <ui:link-field id="ExtendedNameLink" name="ExtendedNameLink" displayText="Extend" title="Extend" targetType="popup" targetName="lotDetailsPopUp" value="EXTEND" style="color: orange;text-decoration: underline;" class="linkColor1" onClick="javascript:onClickExtend(this,event);">
+          </ui:link-field>
+          <ui:hidden-field id="DICT_ID" name="DICT_ID"/>
+          <ui:hidden-field id="DICT_DATA_TYPE_NAME" name="DICT_DATA_TYPE_NAME"/>
+          <ui:checkbox class="unCheckedVal" id="REQUIRED" name="REQUIRED" displayText="SC_PROP_REQUIRED" title="SC_PROP_REQUIRED_HOV" checkedValue="true"/>
+          <ui:dropdown id="CHARACTER_SET" name="CHARACTER_SET" displayText="SC_CHARACTER_SET" title="SC_CHARACTER_SET_HOV" selectOne="true" editable="true" inlineEdit="true">
+            <ui:option id="LATIN" value="LATIN"/>
+            <ui:option id="UNICODE" value="UNICODE"/>
+          </ui:dropdown>
+          <ui:entry-field name="DEFAULT_VALUE" id="DEFAULT_VALUE" displayText="SC_PROP_DEFAULT" title="SC_PROP_DEFAULT_HOV" unFormat="true" editable="true" inlineEdit="true"/>
+          <ui:link-field id="ENUM_VALUE" name="ENUM_VALUE" displayText="Enum" title="SC_ENUM" targetType="popup" targetName="lotDetailsPopUp" value="EDIT" style="color: orange;text-decoration: underline;" class="linkColor" onClick="javascript:onClickLink(this,event);">
+          </ui:link-field>
+          <ui:hidden-field id="ENUM" name="ENUM" unFormat="true"/>
+          <ui:entry-field name="PHYSICAL_NAME" id="PHYSICAL_NAME" displayText="SC_PROP_PHYSICAL_NAME" title="SC_PROP_PHYSICAL_NAME_HOV" editable="true" unFormat="true" inlineEdit="true" onKeyUp="javascript:checkSpecialChars(this);"/>
+          <ui:entry-field id="COLUMN_DISPLAY_NAME" name="COLUMN_DISPLAY_NAME" displayText="SC_COLUMN_DISPLAY_NAME" title="SC_COLUMN_DISPLAY_NAME_HOV" sortable="true" editable="true" unFormat="true" inlineEdit="true"/>
+          <ui:textarea id="DESCRIPTION" name="DESCRIPTION" displayText="SC_DESCRIPTION" title="SC_DESCRIPTION_HOV" inlineEdit="true" rows="1"/>
+          <ui:dropdown id="SOURCE" name="SOURCE" displayText="SC_SOURCE" title="SC_SOURCE_HOV" selectOne="true" unFormat="true">
+            <ui:option id="MASTER" value="MASTER"/>
+            <ui:option id="BACKEND" value="BACKEND"/>	
+          </ui:dropdown>
+          <ui:checkbox class="unCheckedVal" id="EDITABLE" name="EDITABLE" displayText="SC_EDITABLE" title="SC_EDITABLE_HOV" checkedValue="TRUE"/>
+          <ui:checkbox class="unCheckedVal" id="NO_WRAP" name="NO_WRAP" displayText="SC_NO_WRAP" title="SC_NO_WRAP_HOV" checkedValue="TRUE" />
+          <ui:checkbox class="unCheckedVal" id="SORTABLE" name="SORTABLE" displayText="SC_SORTABLE" title="SC_SORTABLE_HOV" checkedValue="TRUE" />
+          <ui:checkbox class="unCheckedVal" id="HIDDEN" name="HIDDEN" displayText="SC_HIDDEN" title="SC_HIDDEN_HOV" checkedValue="TRUE"/>
+          <ui:checkbox class="unCheckedVal" id="SEARCHABLE" name="SEARCHABLE" displayText="SC_SEARCHABLE" title="SC_SEARCHABLE_HOV" checkedValue="TRUE"/>
+          <ui:checkbox class="unCheckedVal" id="I18NIZE" name="I18NIZE" displayText="SC_I18NIZE" title="SC_I18NIZE_HOV" checkedValue="TRUE" />
+          <ui:hidden-field id="SOURCE_TYPE" name="SOURCE_TYPE" displayText="SOURCE_TYPE" title="SC_SOURCE_TYPE_HOV" sortable="true" editable="true"  inlineEdit="true" defaultValue=""/>
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button id="delete" name="delete" displayText="Delete" onClick="javascript:onDelete();" enabledBySelections="true"/>
+          <ui:button id="add" name="add" displayText="Add" onClick="javascript:addRow();"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+    <ui:step id="selfConfigKeysStep" displayText="SC_KEYS">
+      <ui:field-group id="tabNameGr" columns="4">
+        <ui:image src="/bpi_check.gif" id="AlertGreenIconAjax" displayCondition="{string-length($root/ABC/AlertGreen/@Value)!=0}"/>
+        <ui:image src="/cancel.gif" id="AlertRedIconAjax" displayCondition="{string-length($root/ABC/AlertRed/@Value)!=0}"/>
+        <ui:display-field value="{$root/ABC/AlertGreen/@Value}" displayCondition="{string-length($root/ABC/AlertGreen/@Value) != 0}" id="success" name="success" class="requiredIndicatorGreen" style="color:green;"/>
+        <ui:display-field value="{$root/ABC/AlertRed/@Value}" displayCondition="{string-length($root/ABC/AlertRed/@Value) != 0}" id="error" name="error" class="requiredIndicator" style="color:red;"/>
+        <ui:hidden-field id="TabName" name="TabName" unFormat="true" value="KEYS"/>
+        <ui:hidden-field id="ERROR_TAB_NAME" name="ERROR_TAB_NAME" unFormat="true" value="{$root/ERROR_TAB_NAME/@Value}"/>
+        <ui:hidden-field id="modelStatus" name="modelStatus" value="{$root/SELF_CONF_MODEL/STATUS/@Value}"/>
+        <ui:hidden-field  id="modelStatusFlag" name="modelStatusFlag" value="{$root/modelGenratedFlag/@Value}" />
+        <ui:hidden-field id="noOfKeys" name="noOfKeys" value="{$root/NO_OF_KEYS/@Value}" />
+        <ui:hidden-field id="noOfProps" name="noOfProps" value="{$root/NO_OF_PROPS/@Value}" />
+        <ui:hidden-field id="requiredColumns" name="primaryKeyColumns" value="{$root/requiredColumns/@Value}" />
+        <ui:hidden-field id="migrateExtendedAttributes" name="migrateExtendedAttributes" value="{$root/ExtendendAtributesmigrated/@Value}" />
+        
+      </ui:field-group>
+      <ui:table id="uiTableKeys" displayText="SEARCH_SELF_GEN_KEYS" displayTextNoRecords="SEARCH_SELF_GEN_NO_KEYS_FOUND" collapsable="false" doPaging="false" selectable="all" select="$root/SELF_CONF_MOD_KEYS" totalRowCount="$root/SELF_CONF_MOD_KEYS/@TotalRowCount" startAtRow="$root/SELF_CONF_MOD_KEYS/@startAtRow" postRowIdAs="SELECTED_ID" configurable="false" filter="false" maxRows="-1" rowId="NAME">
+        <ui:field-group>
+          <ui:entry-field id="NAME" name="NAME" displayText="SC_KEY_NAME" title="SC_KEY_NAME_HOV" unFormat="true" inlineEdit="true" required="true" onKeyUp="javascript:checkSpecialChars(this);"/>
+          <ui:entry-field id="PHYSICAL_NAME" name="PHYSICAL_NAME" displayText="SC_KEY_PHYSICAL_NAME" title="SC_KEY_PHYSICAL_NAME_HOV" editable="true" unFormat="true" inlineEdit="true" onKeyUp="javascript:checkSpecialCharsSpaceAllowed(this);"/>
+          <ui:dropdown id="KIND" name="KIND" displayText="SC_KEY_KIND" title="SC_KEY_KIND_HOV" unFormat="true" required="true">
+            <ui:option id="PRIMARY" value="PRIMARY"/>
+            <ui:option id="UNIQUE" value="UNIQUE"/>
+            <ui:option id="INDEX" value="INDEX"/>
+            <ui:option id="UNIQUE_INDEX" value="UNIQUE_INDEX"/>
+            <ui:option id="NUPI" value="NUPI"/>
+          </ui:dropdown>
+          <ui:dropdown id="COL_NAME" name="COL_NAME" displayText="SC_AVAILABLE_NAME" title="SC_AVAILABLE_NAME_HOV" optionSrc="$root/COLUMNS/*" sort="true" unFormat="true" size="5" style="width:200px" onChange="javascript:populateColumnValue(this);"/>
+          <ui:entry-field id="COLUMN_NAME" name="COLUMN_NAME" displayText="SC_SEL_COL" title="SC_SEL_COL" editable="true" unFormat="true" inlineEdit="true" required="true" style="width:300px"/>
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button id="delete" name="delete" displayText="Delete" enabledBySelections="true" onClick="javascript:onDelete();"/>
+          <ui:button id="add" name="add" displayText="Add" onClick="javascript:addRow();"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+    <ui:step id="selfConfigLinksStep" displayText="SC_LINKS">
+      <ui:field-group id="tabNameGr" columns="4">
+        <ui:image src="/bpi_check.gif" id="AlertGreenIconAjax" displayCondition="{string-length($root/ABC/AlertGreen/@Value)!=0}"/>
+        <ui:image src="/cancel.gif" id="AlertRedIconAjax" displayCondition="{string-length($root/ABC/AlertRed/@Value)!=0}"/>
+        <ui:display-field value="{$root/ABC/AlertGreen/@Value}" displayCondition="{string-length($root/ABC/AlertGreen/@Value) != 0}" id="success" name="success" class="requiredIndicatorGreen" style="color:green;"/>
+        <ui:display-field value="{$root/ABC/AlertRed/@Value}" displayCondition="{string-length($root/ABC/AlertRed/@Value) != 0}" id="error" name="error" class="requiredIndicator" style="color:red;"/>
+        <ui:hidden-field id="TabName" name="TabName" unFormat="true" value="LINKS"/>
+        <ui:hidden-field id="ERROR_TAB_NAME" name="ERROR_TAB_NAME" unFormat="true" value="{$root/ERROR_TAB_NAME/@Value}"/>
+        <ui:hidden-field id="modelStatus" name="modelStatus" value="{$root/SELF_CONF_MODEL/STATUS/@Value}"/>
+        <ui:hidden-field id="noOfKeys" name="noOfKeys" value="{$root/NO_OF_KEYS/@Value}" />
+        <ui:hidden-field  id="modelStatusFlag" name="modelStatusFlag" value="{$root/modelGenratedFlag/@Value}" />        
+        <ui:hidden-field id="noOfProps" name="noOfProps" value="{$root/NO_OF_PROPS/@Value}" />
+        <ui:hidden-field id="migrateExtendedAttributes" name="migrateExtendedAttributes" value="{$root/ExtendendAtributesmigrated/@Value}" />
+      </ui:field-group>
+      <ui:table id="uiTableLinks" displayText="SEARCH_SELF_GEN_LINKS" displayTextNoRecords="SEARCH_SELF_GEN_NO_LINKS_FOUND" collapsable="false" doPaging="false" selectable="all" select="$root/SELF_CONF_MOD_LINKS" totalRowCount="$root/SELF_CONF_MOD_LINKS/@TotalRowCount" startAtRow="$root/SELF_CONF_MOD_LINKS/@startAtRow" postRowIdAs="SELECTED_ID" configurable="false" maxRows="-1" filter="false" rowId="NAME">
+        <ui:field-group>
+          <ui:entry-field id="NAME" name="NAME" displayText="SC_LINKS_NAME" title="SC_LINKS_NAME_HOV" editable="true" unFormat="true" inlineEdit="true" required="true"/>
+          <ui:dropdown id="FROM_COL_NAME" name="FROM_COL_NAME" displayText="SC_FROM_COLUMN_NAME" title="SC_FROM_COLUMN_NAME_HOV" sort="true" selectOne="true" optionSrc="$root/COLUMNS/*" unFormat="true" required="true" onChange="javascript:onResize();"/>
+          <ui:hidden-field id="FROM_COLUMN_NAME" name="FROM_COLUMN_NAME" displayText="SC_FROM_COLUMN_NAME" title="SC_FROM_COLUMN_NAME_HOV" editable="true" unFormat="true" inlineEdit="true"/>
+          <ui:dropdown id="DOC_NAME" name="DOC_NAME" displayText="SC_TO_DOCUMENT_NAME" title="SC_TO_DOCUMENT_NAME_HOV" selectOne="true" optionSrc="$root/DOCUMENTS/*" unFormat="true" required="true" sort="true" onChange="javascript:onChangSelTableName(this);"/>
+          <ui:hidden-field id="TO_DOCUMENT_NAME" name="TO_DOCUMENT_NAME" displayText="SC_TO_DOCUMENT_NAME" title="SC_TO_DOCUMENT_NAME _HOV" editable="true" unFormat="true" inlineEdit="true"/>
+          <ui:dropdown id="COLS_NAME" name="COLS_NAME" displayText="SC_TO_COLUMN_NAME_NAME" title="SC_TO_COLUMN_NAME_HOV" selectOne="true" unFormat="true" required="true" onChange="javascript:onResize();"/>
+          <ui:hidden-field id="TO_COLUMN_NAME" name="TO_COLUMN_NAME" displayText="SC_TO_COLUMN_NAME_NAME" title="SC_TO_COLUMN_NAME_HOV" editable="true" unFormat="true" inlineEdit="true"/>
+          <ui:entry-field id="PHYSICAL_NAME" name="PHYSICAL_NAME" displayText="SC_LINK_PHYSICAL_NAME" title="SC_LINK_PHYSICAL_NAME_HOV" editable="true" unFormat="true" inlineEdit="true"/>
+          <ui:checkbox class="unCheckedVal" id="REVERSE_LINK" name="REVERSE_LINK" displayText="SC_REVERSE_LINK" title="SC_REVERSE_LINK_HOV" checkedValue="true"/>
+          <ui:entry-field id="REVERSE_LINK_NAME" name="REVERSE_LINK_NAME" displayText="SC_REVERSE_LINK_NAME" title="SC_REVERSE_LINK_NAME_HOV" editable="true" unFormat="true" inlineEdit="true"/>
+          <!--ui:entry-field id="CREATION_DATE" name="CREATION_DATE" displayText="SC_CREATION_DATE" title="SC_CREATION_DATE_HOV" sortable="true" unFormat="true" editable="false"/>
+          <ui:entry-field id="CREATED_BY" name="CREATED_BY" displayText="SC_CREATED_BY_NAME" title="SC_CREATED_BY_HOV" sortable="true" unFormat="true"/-->
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button id="delete" name="delete" displayText="Delete" enabledBySelections="true" onClick="javascript:onDelete();"/>
+          <ui:button id="add" name="add" displayText="Add" onClick="javascript:addRow();"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+    
+var spChar='&amp;#&lt;>\\\&quot;!@$%^())*|}{:&quot;,.;/+=?.';
+var index;
+var linkDocbId;
+var propsNameObj;
+var  tableCount;
+var docNameArr = new Array(); 
+var ready = false;
+var readyCounter =0;
+var  tabName;
+var linkSelectedIndex = 0;
+var tableId;
+    
+    function setEnumValue(enumVal){
+		$($('[name=&quot;ENUM&quot;]')[linkSelectedIndex]).val(enumVal);
+		if(enumVal.length &lt; 4)
+				$($('.linkColor')[linkSelectedIndex]).children().text(&quot;EDIT&quot;);
+    	else
+				$($('.linkColor')[linkSelectedIndex]).children().text(&quot;DEFINED&quot;);
+    }
+        
+function checkSameNameExist(thisObj){    
+    var inValue = thisObj.value;
+	var table = document.getElementById(tableId);
+	var  tableCount = table.rows.length;
+    var count = 0;
+	if(inValue != null &amp;&amp; inValue.length &gt; 0){
+   		 for(var i =0;i &lt; tableCount;i++){
+				var currVa = 	$($('[name=&quot;NAME&quot;]')[i]).val();
+    			if(inValue  === currVa){
+    			count++;
+    			if(count >1){
+					$($('[name=&quot;NAME&quot;]')[i]).val('');
+    				core_alert_jquery(&quot;SAME_NAME_ALREADY_EXIST&quot;);
+    			}
+    		}
+    	}
+    }
+	onResize();
+ }
+    
+function onClickLink(thisOb,event){
+    var id = $(thisOb).prev().children().attr(&quot;id&quot;);
+	var name = $(thisOb).prev().children().attr(&quot;name&quot;);
+	linkSelectedIndex = id.substring(id.length,name.length);
+    var nameId = 'NAME' + linkSelectedIndex;
+	var name = document.getElementById(nameId).value;
+	var status=document.getElementById('modelStatusFlag').value;
+	if(status=='GENERATED')
+		{
+			var primarykeycolumns=document.getElementById('primaryKeyColumns').value;
+			var columns=primarykeycolumns.substr(3);
+			var column =columns.split("_-_");
+			var status=$.inArray(name,column);
+			if(status!=-1)
+			{
+				return false;
+			}
+		}
+    if(name === null || name.length === 0){
+		core_alert_jquery(&quot;Name value is not defined.&quot;);
+    } else {
+    	var url = $('#URL_V').val()+'&amp;ENUM_VALUE='+encodeURIComponent($($('[name=&quot;ENUM&quot;]')[linkSelectedIndex]).val())
+	    window.open(url,'_blank',&quot;height=410, width=800,channelmode=no,directories=no,fullscreen=no,location=no,menubar=no,width=580px; height= 320px;,scrollbars=yes,status=no,titlebar=no,toolbar=no&quot;);
+    }
+
+}
+    
+function markSelectedEnum(){    
+	var table = document.getElementById(tableId);
+	var  tableCount = table.rows.length;
+	for(var i =0;i &lt; tableCount;i++){
+		var currVa = 	$($('[name=&quot;ENUM&quot;]')[i]).val();
+    	if(currVa != null &amp;&amp; currVa.length > 4)
+			$($('.linkColor')[i]).children().text(&quot;DEFINED&quot;);
+    }
+}
+        
+  $(document).ready(function() {
+	
+    ready = true;
+	readyCounter =0;
+	tabName= document.getElementById('TabName').value;
+	if(tabName != null &amp;&amp; typeof(tabName) != &quot;undefined&quot; &amp;&amp; tabName !='TABLE_STEP' ){
+		if(tabName === 'PROPERTIES'){
+			tableId = &quot;uiTableProperties_data&quot;;
+			markExtendedLink();
+    		markSelectedEnum();
+    		disableRequiredIcon();
+    	}
+		else if(tabName === 'KEYS'){
+			tableId = &quot;uiTableKeys_data&quot;;
+			populateTableColumns(tableId);
+    	}
+		else if(tabName === 'LINKS'){
+			tableId = &quot;uiTableLinks_data&quot;;
+			populateTableList(tableId);
+    	}
+    	var table = document.getElementById(tableId);
+		var  tableCount = table.rows.length;
+		index = tableCount-1;
+	}
+});
+    
+function populateColumnValue(thisObj){
+ 		var index = thisObj.id.substr(thisObj.name.length,thisObj.id.length);
+    var keykind=$("#KIND"+index).val();
+        	var colId = thisObj.id;
+    	var colValue = $(&quot;#&quot;+colId).val();
+		var fieldName = &quot;COLUMN_NAME&quot;+index;
+    if(keykind=='PRIMARY')
+    {
+       var reqfields=document.getElementById('requiredColumns').value;
+      var columns=reqfields.substr(3);
+       var column =columns.split("_-_");
+    var sameFlag=false;
+      $.each(colValue, function(i,val) {
+      if ($.inArray(val, column) != -1) {
+    
+document.getElementById(fieldName).value = colValue;
+sameFlag = true;
+}
+  
+});
+  if(sameFlag==false)
+    {
+core_alert_jquery(&quot;PRIMARY_KEY_COLUMNS_REQUIRED&quot;);
+    }
+		}
+ }
+    
+function disableRequiredIcon(){
+	var skipValueArr = [&quot;String&quot;,&quot;EncryptedString&quot;,&quot;VarByte&quot;,&quot;Char&quot;,&quot;Decimal&quot;];
+	var table = document.getElementById(tableId);
+	var  tableCount = table.rows.length;
+	for(var i =0;i &lt; tableCount;i++){
+    	var lengthObj = $('[name=&quot;LENGTH&quot;]');
+		var dataType = 	$($('[name=&quot;DATA_TYPE&quot;]')[i]).val();
+		var typeInded = $.inArray(dataType, skipValueArr);
+		if(typeInded &gt;= 0)
+    			continue;
+        	
+		var lengthValue  = 	$(lengthObj[i]).val();
+		if(typeof lengthValue === 'undefined' || lengthValue === null || lengthValue.length === 0){
+			$(lengthObj[i]).removeAttr(&quot;required&quot;);
+			$(lengthObj[i]).siblings().remove('font');
+			$(lengthObj[i]).attr(&quot;disabled&quot;,true)
+    	}
+	 }
+}    
+            
+function disableLength(thisObj){	    
+
+    var value = thisObj.value;
+	var skipValueArr = [&quot;String&quot;,&quot;EncryptedString&quot;,&quot;VarByte&quot;,&quot;Char&quot;,&quot;Decimal&quot;];
+	var typeInded = $.inArray(value, skipValueArr);
+	var index = thisObj.id.substr(thisObj.name.length,thisObj.id.length);
+	var fieldName = &quot;LENGTH&quot;+index;
+    if(typeInded &lt; 0){
+		document.getElementById(fieldName).value='';
+		document.getElementById(fieldName).setAttribute(&quot;disabled&quot;, &quot;true&quot;);
+		$(&quot;#&quot;+fieldName).removeAttr(&quot;required&quot;);
+		$(&quot;#&quot;+fieldName).siblings().remove('font');
+	}else{
+		if(typeof $(&quot;#&quot;+fieldName).attr(&quot;disabled&quot;) !='undefined' &amp;&amp; $(&quot;#&quot;+fieldName).attr(&quot;disabled&quot;) != null){
+			$(&quot;#&quot;+fieldName).parent().append('&lt;font color=&quot;red&quot;>*&lt;/font>')
+		}
+		$(&quot;#&quot;+fieldName).removeAttr(&quot;disabled&quot;);
+    
+    }
+}
+    
+function onlyIntergerUnderscore(thisobj){
+	var validCase ='1234567890_';
+	var obj=thisobj;
+	var strobj = '';
+	var f=0;
+	for(var i=0;i&lt;obj.value.length;i++)
+	{
+	if(obj.value.charAt(0) ==' ')
+		obj.value = obj.value.trim();
+		
+	if(validCase.indexOf(obj.value.charAt(i)) !=-1)
+	{
+		strobj = strobj + obj.value.charAt(i);
+	}else{
+		f=1;
+		break;
+	}
+	}
+	if(f==1){
+		thisobj.value = strobj;
+	}
+}
+    
+function checkSpecialCharsSpaceSlashAllowed(thisobj){
+var spChar='&amp;#&lt;>\\\&quot;!@$%^())*|}{:&quot;,.;+=?.';
+    
+var obj=thisobj;
+var strobj = '';
+var f=0;
+for(var i=0;i&lt;obj.value.length;i++)
+{
+if(obj.value.charAt(0) ==' ')
+obj.value = obj.value.trim();
+		
+if(spChar.indexOf(obj.value.charAt(i)) !=-1)
+{
+f=1;
+break;
+}else{
+strobj = strobj + obj.value.charAt(i);
+}
+}
+if(f==1){
+thisobj.value = strobj;
+}
+}
+    
+function checkSpecialCharsSpaceAllowed(thisobj){
+
+	var obj=thisobj;
+	var strobj = '';
+	var f=0;
+	for(var i=0;i&lt;obj.value.length;i++)
+	{
+		if(obj.value.charAt(0) ==' ')
+		obj.value = obj.value.trim();
+		
+		if(spChar.indexOf(obj.value.charAt(i)) !=-1)
+		{
+			f=1;
+			break;
+		}else{
+			strobj = strobj + obj.value.charAt(i);
+		}
+	}
+	if(f==1){
+		thisobj.value = strobj;	
+	}
+}
+    
+function checkSpecialChars(thisobj)
+{
+	var obj=thisobj;
+	var strobj = '';
+	var f=0;
+	for(var i=0;i&lt;obj.value.length;i++)
+	{
+		if(obj.value.charAt(i) ==' '){
+            obj.value = obj.value.split(' ').join('');
+		}
+		if(spChar.indexOf(obj.value.charAt(i)) !=-1)
+		{
+			f=1;
+			break;
+			}else{
+			strobj = strobj + obj.value.charAt(i);
+		}
+	}
+	if(f==1){
+		thisobj.value = strobj;
+	}
+}
+    
+function populateTableColumns(tableId){
+	var tableRows = document.getElementById(tableId).rows.length;
+	tableRows = tableRows -1;
+	
+	var columnsNameObj = $(&quot;[name='COL_NAME']&quot;);
+    var colNameObj = $(&quot;[name='COLUMN_NAME']&quot;);
+    
+	for (var j= 0;j&lt;tableRows;j++) {
+	var colName = colNameObj.get(j).value;
+
+	if(colName.indexOf(&quot;,&quot;) >= 0){		
+		var colNameArr = colName.split(&quot;,&quot;);
+		for(var i=0;i&lt;colNameArr.length;i++){
+			var col = colNameArr[i];
+			$(columnsNameObj[j]).val(col);
+		}
+    }else{
+			$(columnsNameObj[j]).val(colName);
+	}
+	}
+    
+}    
+    
+function populateTableList(tableId){
+		var tableRows = document.getElementById(tableId).rows.length;
+		tableRows = tableRows -1;
+		
+		var documentNameObj = $(&quot;[name='TO_DOCUMENT_NAME']&quot;);
+		var tabNameObj = $(&quot;[name='DOC_NAME']&quot;);
+	
+		var fromColumNameObj = $(&quot;[name='FROM_COLUMN_NAME']&quot;);
+		var fromColNameObj = $(&quot;[name='FROM_COL_NAME']&quot;);
+    
+		propsNameObj = $(&quot;[name='COLS_NAME']&quot;);
+
+		for (var j= 0;j&lt;tableRows;j++) {
+			var docName = documentNameObj.get(j).value;
+			$(tabNameObj[j]).val(docName);
+			
+			var colName = fromColumNameObj.get(j).value;
+			$(fromColNameObj[j]).val(colName);
+    
+			linkDocbId = $(tabNameObj[j]).prop(&quot;id&quot;);
+			docNameArr[j] = docName;
+			if(docName != null &amp;&amp; docName.trim().length > 0){
+	    		onChangTableName(docName)
+    		}
+		}
+    
+ }    
+    
+function onChangSelTableName(selectedTab){
+		ready = false;
+		onChangTableName(selectedTab);	
+}
+function onChangTableName(selectedTab){  
+
+    if(typeof selectedTab.value === 'undefined'){
+		var tableName =selectedTab;
+    }
+	else{
+		var tableName = selectedTab.value;
+		linkDocbId = selectedTab.id;   	
+    }
+	var request='&lt;REQUEST Name=&quot;getDocumentPropSelfConfReq&quot;  ServiceName=&quot;BPE_META&quot;>' +
+																'&lt;TabName Value=&quot;' +tableName+ '&quot;/>'+
+																'&lt;/REQUEST>';
+    
+	var xpath=&quot;/RESPONSES/RESPONSE/COLUMNS_NAME&quot;;
+	SendAjaxRequest('BPE_META',request,'callBackChangeTableName',xpath);
+    
+ }   
+	
+function callBackChangeTableName(node)
+{
+	var skipNameArr = [&quot;SOURCE&quot;,&quot;SYS_AUTH_ID&quot;,&quot;CREATED_BY&quot;,&quot;CREATION_DATE&quot;,&quot;SYS_ERR_SEVERITY&quot;,&quot;SYS_ERR_CODE&quot;,&quot;SYS_TYPE&quot;,&quot;LAST_MODIFIED_DATE&quot;,&quot;LAST_MODIFIED_BY&quot;,&quot;ENTITY_STATE&quot;,&quot;SYS_TARGET_ID&quot;];		
+	var selectedId = &quot;COLS_NAME&quot;;	
+    if(linkDocbId != null){
+		var subStr = linkDocbId.substring(linkDocbId.length-1,linkDocbId.length);
+    	
+		var tableName= $(node).attr('Name')
+    	if(typeof docNameArr != 'undefined')
+				readyCounter = docNameArr.indexOf(tableName);
+    	
+    	if(!ready){
+				selectedId = &quot;COLS_NAME&quot;+subStr;
+				readyCounter =0;
+    	  }
+    	   else {
+				selectedId = &quot;COLS_NAME&quot;+readyCounter;
+    	   }
+    }
+	document.getElementById(selectedId).options.length =0;
+	var newOption   = document.createElement('OPTION');
+	newOption.text  = 'Select...';
+	jQuery.each($(node).find('NAME'), function(i, eachOption) {
+		if (eachOption.length != 0) {
+			var newOption   = document.createElement('OPTION');
+    
+			newOption.text  =$(eachOption).attr(&quot;Value&quot;);
+			newOption.value = $(eachOption).attr(&quot;Value&quot;);
+			newOption.title = newOption.text;
+    		var value =newOption.value;
+    	
+		var index = $.inArray(value, skipNameArr);
+		var val = value.substring(0,10);
+		if(!(val === &quot;EXT_ATTRB_&quot;)  &amp;&amp; (index === -1) ){
+			document.getElementById(selectedId).options.add(newOption);
+    	}
+    
+		}
+	});
+    if(ready){
+		var colNameObj = $(&quot;[name='TO_COLUMN_NAME']&quot;);
+		docNameArr[readyCounter] = docNameArr[readyCounter] +"comp";
+		var colName = colNameObj.get(readyCounter).value;
+		$(propsNameObj[readyCounter]).val(colName);
+		readyCounter++;
+    }
+}	
+    
+function onLoad()
+{
+	onLoadSuper();
+	onResize();    
+    var showFlagObj = document.getElementsByName('showAdvanceFacet')[0];
+    if(showFlagObj != null){
+    	var showFacetFlag = showFlagObj.checked;
+		if(!showFacetFlag){
+			$('#configFacet').hide();
+    	}
+    }
+    
+	var showTemporalObj = document.getElementsByName('IS_TEMPORAL')[0];
+	if(showTemporalObj != null){
+			var showTempFlag = showTemporalObj.checked;
+			if(!showTempFlag){
+				hideField(&quot;SELECT_TEMPORAL_TYPE&quot;);
+				$(&quot;[id='TRANSACTION_TIME_COLUMN_td']&quot;).hide();
+				$(&quot;[id='VALIDTIME_COLUMN_td']&quot;).hide();
+				$(&quot;[id='TRANSACTION_TIME_COLUMN_td']&quot;).parent().hide();
+				$(&quot;[id='VALIDTIME_COLUMN_td']&quot;).parent().hide();
+    		}
+    }
+    
+    var showIdPrefixObj = document.getElementsByName('SURROGATE')[0];
+	if(showIdPrefixObj != null){
+		var showIdPrefixFlag = showIdPrefixObj.checked;
+		if(!showIdPrefixFlag){
+			$(&quot;[id='IDPREFIX_td']&quot;).parent().hide();
+			$(&quot;[id='IDPREFIX_td']&quot;).hide();
+			$(&quot;[id='SEQUENCE_NAME_td']&quot;).parent().hide();
+			$(&quot;[id='SEQUENCE_NAME_td']&quot;).hide();
+    	}
+    }
+
+	var showExtAttObj = document.getElementsByName('IS_EXTENDABLE')[0];
+	if(showExtAttObj != null){
+		var showExtAttFlag = showExtAttObj.checked;
+		if(!showExtAttFlag){
+			$(&quot;[id='EXT_DATE_ATTR_COUNT_td']&quot;).parent().hide();
+			$(&quot;[id='EXT_DATE_ATTR_COUNT_td']&quot;).hide();
+			$(&quot;[id='EXT_STR_ATTR_COUNT_td']&quot;).parent().hide();
+			$(&quot;[id='EXT_STR_ATTR_COUNT_td']&quot;).hide();
+			$(&quot;[id='EXT_DEC_ATTR_COUNT_td']&quot;).parent().hide();
+			$(&quot;[id='EXT_DEC_ATTR_COUNT_td']&quot;).hide();
+	}
+}
+	var showFolderObj = document.getElementsByName('newFolder')[0];
+	if(showFolderObj != null){
+		showFolderName();
+  }
+var tab=document.getElementById('TabName').value;
+if(tab=='KEYS')
+{
+var status=document.getElementById('modelStatusFlag').value;
+if(status=='GENERATED')
+{
+var noOfKeys=document.getElementById('noOfKeys').value;
+for(i=0;i&lt;noOfKeys;i++)
+{
+document.getElementsByName('SELECTED_ID')[i].disabled="true";
+var keyKind=$("#KIND"+i).val();
+if(keyKind=='PRIMARY')
+{
+
+$("#NAME"+i).attr("readonly", "readonly");
+$("#PHYSICAL_NAME"+i).attr("readonly", "readonly");
+$("#KIND"+i).attr("disabled", true);
+$("#COL_NAME"+i).attr("disabled", true);
+$("#COLUMN_NAME"+i).attr('readonly', true);
+disableButton('add');
+disableButton('delete');
+}
+}
+}
+}
+		if(tab=='PROPERTIES')
+			{
+			var status=document.getElementById('modelStatusFlag').value;
+			if(status=='GENERATED')
+				{
+					var noOfProps=document.getElementById('noOfProps').value;
+					var primarykeycolumns=document.getElementById('primaryKeyColumns').value;
+ 					var columns=primarykeycolumns.substr(3);
+					var column =columns.split("_-_");
+					for(i=0;i&lt;noOfProps;i++)
+					{
+					var name=$("#NAME"+i).val();
+					var status=$.inArray(name,column);
+						if(status!=-1)
+  						{
+							document.getElementsByName('SELECTED_ID')[i].disabled="true";
+							$("#NAME"+i).attr("readonly", "readonly");
+							$("#DATA_TYPE"+i).attr("disabled", true);
+							$("#LENGTH"+i).attr("readonly", "readonly");
+							document.getElementsByName('REQUIRED')[i].disabled="true";
+							$("#CHARACTER_SET"+i).attr("disabled", true);
+							$("#DEFAULT_VALUE"+i).attr("readonly", "readonly");
+							$("#PHYSICAL_NAME"+i).attr("readonly", "readonly");
+							$("#COLUMN_DISPLAY_NAME"+i).attr("readonly", "readonly");
+							document.getElementsByName('DESCRIPTION')[i].disabled="true"
+							$("#SOURCE"+i).attr("disabled", true);
+							$("#ExtendedNameLink"+i).attr("disabled", true);
+							document.getElementsByName('EDITABLE')[i].disabled="true";
+							document.getElementsByName('NO_WRAP')[i].disabled="true";
+							document.getElementsByName('SORTABLE')[i].disabled="true";
+							document.getElementsByName('HIDDEN')[i].disabled="true";
+							document.getElementsByName('SEARCHABLE')[i].disabled="true";
+							document.getElementsByName('I18NIZE')[i].disabled="true";     
+						}
+					}
+				}
+			}
+} 	
+
+ function onClickTemporal(){
+
+		if(document.getElementsByName('IS_TEMPORAL')[0].checked === true){
+
+			showField(&quot;SELECT_TEMPORAL_TYPE&quot;);
+			$(&quot;[id='TRANSACTION_TIME_COLUMN_td']&quot;).show();
+			$(&quot;[id='VALIDTIME_COLUMN_td']&quot;).show();
+			$(&quot;[id='TRANSACTION_TIME_COLUMN_td']&quot;).parent().show();
+			$(&quot;[id='VALIDTIME_COLUMN_td']&quot;).parent().show();
+    	}else{
+			hideField(&quot;SELECT_TEMPORAL_TYPE&quot;);
+			$(&quot;[id='TRANSACTION_TIME_COLUMN_td']&quot;).hide();
+			$(&quot;[id='VALIDTIME_COLUMN_td']&quot;).hide();
+			$(&quot;[id='TRANSACTION_TIME_COLUMN_td']&quot;).parent().hide();
+			$(&quot;[id='VALIDTIME_COLUMN_td']&quot;).parent().hide();
+    	}
+  }
+  	
+   function showFolderName(){
+
+			if(document.getElementsByName('newFolder')[0].checked === true){
+				$(&quot;[id='FOLDER_NAME_td']&quot;).parent().show();
+				$(&quot;[id='FOLDER_NAME_td']&quot;).show();
+	
+				hideField(&quot;existingFolderName&quot;);
+    			if(document.getElementById(&quot;existingFolderName&quot;) != null)
+					document.getElementById(&quot;existingFolderName&quot;).required = false;
+    
+				if(document.getElementById(&quot;FOLDER_NAME&quot;) != null)    			
+					document.getElementById(&quot;FOLDER_NAME&quot;).required = true;
+    		}else{
+				$(&quot;[id='FOLDER_NAME_td']&quot;).parent().hide();
+				$(&quot;[id='FOLDER_NAME_td']&quot;).hide();
+    
+				showField(&quot;existingFolderName&quot;);
+				if(document.getElementById(&quot;FOLDER_NAME&quot;) != null)
+					document.getElementById(&quot;FOLDER_NAME&quot;).required = false;
+    
+				if(document.getElementById(&quot;existingFolderName&quot;) != null)
+				document.getElementById(&quot;existingFolderName&quot;).required = true;
+    		}
+    }
+    
+    function onClickSurrogate(){
+		if(document.getElementsByName('SURROGATE')[0].checked === true){
+			$(&quot;[id='IDPREFIX_td']&quot;).parent().show();
+			$(&quot;[id='IDPREFIX_td']&quot;).show();
+			$(&quot;[id='SEQUENCE_NAME_td']&quot;).parent().show();
+			$(&quot;[id='SEQUENCE_NAME_td']&quot;).show();
+    	}else{
+			$(&quot;[id='IDPREFIX_td']&quot;).parent().hide();
+			$(&quot;[id='IDPREFIX_td']&quot;).hide();
+			$(&quot;[id='SEQUENCE_NAME_td']&quot;).parent().hide();
+			$(&quot;[id='SEQUENCE_NAME_td']&quot;).hide();
+    	}
+   	}
+	
+function onClickExtendable(){
+	if(document.getElementsByName('IS_EXTENDABLE')[0].checked === true)
+    {
+		$(&quot;[id='EXT_DATE_ATTR_COUNT_td']&quot;).parent().show();
+		$(&quot;[id='EXT_DATE_ATTR_COUNT_td']&quot;).show();
+		$(&quot;[id='EXT_STR_ATTR_COUNT_td']&quot;).parent().show();
+		$(&quot;[id='EXT_STR_ATTR_COUNT_td']&quot;).show();
+		$(&quot;[id='EXT_DEC_ATTR_COUNT_td']&quot;).parent().show();
+		$(&quot;[id='EXT_DEC_ATTR_COUNT_td']&quot;).show();
+		}else{
+		$(&quot;[id='EXT_DATE_ATTR_COUNT_td']&quot;).parent().hide();
+		$(&quot;[id='EXT_DATE_ATTR_COUNT_td']&quot;).hide();
+		$(&quot;[id='EXT_STR_ATTR_COUNT_td']&quot;).parent().hide();
+		$(&quot;[id='EXT_STR_ATTR_COUNT_td']&quot;).hide();
+		$(&quot;[id='EXT_DEC_ATTR_COUNT_td']&quot;).parent().hide();
+		$(&quot;[id='EXT_DEC_ATTR_COUNT_td']&quot;).hide();
+	}
+}    
+
+    function addNewRow(tableId){
+	
+		/*Make searchable dropdowns to normal dropdowns*/    
+		allSelect2s.each(function(i,item){
+		$(item).select2("destroy");
+		});
+
+    	var preObj = $('#'+tableId+' tr:last');
+		var currClassName = preObj.prev().attr('class');
+		var className;
+		if(currClassName === &quot;tableRow1&quot;)
+			className = &quot;tableRow0&quot;;
+		else
+			className = &quot;tableRow1&quot;;
+    
+		$('#'+tableId+' tr:first').clone().find(&quot;input,select,textarea&quot;).each(function()  {
+			this.value = &quot;&quot;
+			$(this).attr({
+				'id': function(_, id) { return this.name + index},
+				'name': function(_, name) { },
+				'value': ''
+			});
+			var name = $(this).attr(&quot;name&quot;);
+           if($(this).attr('readonly') === 'readonly')
+  			{
+				$(this).removeAttr('readonly');
+ 			 }
+			if($(this).attr('disabled') === 'disabled')
+			{
+				$(this).removeAttr('disabled');
+			}
+			if($(this).attr('type') === 'checkbox'){
+				if(name != 'EDITABLE'  &amp;&amp; name != 'SORTABLE' &amp;&amp; name  != 'SEARCHABLE' &amp;&amp; name  != 'NO_WRAP'){
+					$(this).attr('checked',false);
+					if(name === "REQUIRED" || name === "REVERSE_LINK"){
+						$(this).val(&quot;true&quot;);
+    				}
+				}
+				else{
+						$(this).val(&quot;TRUE&quot;);
+				}
+			}
+			if(name === 'SOURCE_TYPE' &amp;&amp; (document.getElementById('modelStatus').value === 'TEMPLATE' ||  (document.getElementById('fromTemplate') != null &amp;&amp; document.getElementById('fromTemplate').value.length >1 ))){
+				$(this).val(&quot;CUSTOM&quot;);
+    		}
+    
+			if(name === 'DATA_TYPE')
+				$(this).val(&quot;String&quot;);
+    
+		}).end().appendTo('#'+tableId);
+		index++;
+		var table = document.getElementById(tableId);
+		tableCount = table.rows.length;
+		
+		insertRowBefore(table.rows[tableCount-2],table.rows[tableCount-1]);    	
+		var newRowId =$('#'+tableId+' tr:first').children(&quot;:first&quot;).children(&quot;:first&quot;).prop(&quot;id&quot;);
+    	var previousObject  = preObj.prev();
+		previousObject.children(&quot;:first&quot;).children(&quot;:first&quot;).prop(&quot;id&quot;,newRowId);
+		previousObject.removeClass(currClassName).addClass(className);
+		
+		 if(tabName === 'PROPERTIES'){
+    		var lengthObj = previousObject.find("#LENGTH_td");
+			if(typeof lengthObj.find("font").val() === "undefined"){
+				lengthObj.children().attr("required","true");
+				lengthObj.children().attr('disabled',false);
+				lengthObj.append('&lt;font color=&quot;red&quot;>*&lt;/font>');
+				previousObject.find('.linkColor').children().css('color','orange');
+    		}
+			previousObject.find("#ENUM_VALUE_td").children().text("EDIT")
+			previousObject.find("#ExtendedNameLink_td").children().text("EXTEND")
+    	}
+    }
+    
+function addRow(){
+ 	var  tabNameObj = document.getElementById('TabName');
+    if(tabNameObj != null){
+    	var tabName = tabNameObj.value;
+    
+    	if(tabName === 'PROPERTIES'){
+			addNewRow(&quot;uiTableProperties_data&quot;);
+    	}
+	    else if(tabName === 'KEYS'){
+			addNewRow(&quot;uiTableKeys_data&quot;);
+    	}
+		else if(tabName === 'LINKS'){
+			addNewRow(&quot;uiTableLinks_data&quot;);
+    	}
+			var ready = false;
+		    enableSelect2();
+			onLoadSuper();
+			onResize();
+    }
+ }
+  
+function onDelete(){
+    var modelStatus=document.getElementById('modelStatusFlag').value;
+    if(modelStatus=='GENERATED' &amp;&amp; tabName === 'PROPERTIES' )
+    {
+     core_confirm_jquery('SC_RT_GENERATED_DELETE_CONFIRM','onDeleteCallback');
+    }
+    else
+    {
+	core_confirm_jquery('SC_RT_DELETE_CONFIRM','onDeleteCallback');
+    }
+}
+function onDeleteCallback(response){
+	if( response === 'yes' ){
+		if($('input[name="SELECTED_ID"]').length === $('input[name=&quot;SELECTED_ID&quot;]:checked').length){
+			var  tabNameObj = document.getElementById('TabName');
+				if(tabNameObj != null){
+					var tabName = tabNameObj.value;		    
+					if(tabName === 'PROPERTIES'){
+						deleteAllAddNewRow(&quot;uiTableProperties_data&quot;);
+					}
+					else if(tabName === 'KEYS'){
+						deleteAllAddNewRow(&quot;uiTableKeys_data&quot;);
+					}
+					else if(tabName === 'LINKS'){
+						deleteAllAddNewRow(&quot;uiTableLinks_data&quot;);
+					}	
+    		   }		
+		}else{
+			$('input[name=&quot;SELECTED_ID&quot;]:checked').parent().parent().remove();
+		}
+enableSelect2();
+onLoadSuper();
+onResize();
+	}
+}
+
+function deleteAllAddNewRow(tableId){
+	/*Make searchable dropdowns to normal dropdowns*/
+	allSelect2s.each(function(i,item){
+		$(item).select2("destroy");
+	});
+    
+	/* Create a copy of first row and Append it at last in table */	
+	$('#'+tableId+' tr:first').clone().find(&quot;input,select&quot;).each(function() {
+		this.value = &quot;&quot;
+		$(this).attr({
+			'id': function(_, id) { return this.name + "0"},
+			'name': function(_, name) { },
+			'value': ''
+		});
+		var name = $(this).attr(&quot;name&quot;);
+		if($(this).attr('type') === 'checkbox'){
+			if(name != 'EDITABLE'  &amp;&amp; name != 'SORTABLE' &amp;&amp; name  != 'SEARCHABLE' &amp;&amp; name  != 'NO_WRAP'){
+			$(this).attr('checked',false);
+				if(name === "REQUIRED" || name === "REVERSE_LINK"){
+					$(this).val(&quot;true&quot;);
+				}
+			}
+		else{
+			$(this).val(&quot;TRUE&quot;);
+			}
+		}
+		if(name === 'DATA_TYPE'){
+			$(this).val(&quot;String&quot;);
+		}
+	}).end().appendTo('#'+tableId);
+    
+
+	index =1;
+	var newRowId =$('#'+tableId+' tr:first').children(&quot;:first&quot;).children(&quot;:first&quot;).prop(&quot;id&quot;);
+    
+	/* Remove all the selected element */
+    $('input[name=&quot;SELECTED_ID&quot;]:checked').parent().parent().remove();
+	
+    var table = document.getElementById(tableId);
+	tableCount = table.rows.length;
+	insertRowBefore(table.rows[tableCount-2],table.rows[tableCount-1]);
+	
+	/* Get the new object and add class type,requied icon and set linkColor */	
+    var preObj = $('#'+tableId+' tr:first');
+	var currClassName =preObj.attr('class');
+	var className = &quot;tableRow1&quot;;
+	preObj.removeClass(currClassName).addClass(className);
+	var previousObject  = preObj;
+	previousObject.children(&quot;:first&quot;).children(&quot;:first&quot;).prop(&quot;id&quot;,newRowId);
+	if(tabName === 'PROPERTIES'){
+		var lengthObj = previousObject.find("#LENGTH_td");
+		if(typeof lengthObj.find("font").val() === "undefined"){
+			lengthObj.children().attr("required","true");
+			lengthObj.children().attr('disabled',false);
+			lengthObj.append('&lt;font color=&quot;red&quot;>*&lt;/font>');
+			previousObject.find('.linkColor').children().css('color','orange');
+		}
+	previousObject.find("#ENUM_VALUE_td").children().text("EDIT")
+	previousObject.find("#ExtendedNameLink_td").children().text("EXTEND")
+	}
+}
+           
+  function showAdvacnedFacet()
+  {
+    if(isValid_tableStep()){
+ 		if(document.getElementsByName('showAdvanceFacet')[0].checked==true){
+			$('#configFacet').show();
+			var statusObj = document.getElementById('modelStatus');
+    			if(statusObj != null){
+    				var status = statusObj.value;
+					if(status === &quot;GENERATED&quot;)	
+							$('#sysTableGroup').hide();
+					document.form.BUTTON_ID.value = 'SYS_TAB';
+					document.form.submit();
+			}
+		}
+		else{
+			$('#configFacet').hide();
+  		}	  
+    }else
+		document.getElementsByName('showAdvanceFacet')[0].checked = false;
+ }
+
+function onTab( tabId, containerId )
+{
+var alertPrefix = &quot;onTab(): &quot;;
+var form = document.forms['form' ];
+  
+if( form != null )
+{
+var selectedStep = containerId + &quot;_SELECTED_STEP&quot;;
+var selectedStepId = containerId + &quot;_STEP_ID&quot;;
+    
+for( i=0; i &lt; form.elements.length; i++ )
+{
+var input = form.elements[i];
+      
+if( input.name == selectedStep )
+{
+input.value = tabId;
+}
+else if( input.name == selectedStepId )
+{
+input.value = tabId;
+}
+else if( input.name == 'BUTTON_ID' )
+{
+input.value = 'SYS_TAB';
+}
+else if( input.name == 'START_COUNT' )
+{
+input.value = 0;
+}
+else if( input.name == 'SYS_ID' )
+{
+if( form.PAGE_SYS_ID != null )
+{
+input.value = form.PAGE_SYS_ID.value;
+}
+}
+}
+
+var funcName = getFunctionName();
+var resp  =funcName();
+var errorTabNameValue =document.getElementById(&quot;ERROR_TAB_NAME&quot;).value;
+    if(tabName === 'KEYS')
+    {
+var status=document.getElementById('modelStatusFlag').value;
+if(status=='GENERATED')
+{
+var noOfKeys=document.getElementById('noOfKeys').value;
+for(i=0;i&lt;noOfKeys;i++)
+{
+var keyKind=$("#KIND"+i).val();
+if(keyKind=='PRIMARY')
+{
+
+$("#NAME"+i).removeAttr("readonly");
+$("#PHYSICAL_NAME"+i).removeAttr("readonly");
+$("#KIND"+i).removeAttr("disabled");
+$("#COL_NAME"+i).removeAttr("disabled");
+$("#COLUMN_NAME"+i).removeAttr("readonly");
+}
+}
+}
+}
+if(tabName === 'PROPERTIES')
+{
+var status=document.getElementById('modelStatusFlag').value;
+var noOfProps=document.getElementById('noOfProps').value;
+if(status=='GENERATED' )
+{
+var primarykeycolumns=document.getElementById('primaryKeyColumns').value;
+var columns=primarykeycolumns.substr(3);
+var column =columns.split("_-_");
+for(i=0;i&lt;noOfProps;i++)
+{
+var name=$("#NAME"+i).val();
+var status=$.inArray(name,column);
+if(status!=-1)
+{
+document.getElementsByName('SELECTED_ID')[i].disabled=false;
+$("#NAME"+i).removeAttr("readonly");
+$("#DATA_TYPE"+i).attr("disabled", false);
+$("#LENGTH"+i).removeAttr("readonly");
+document.getElementsByName('REQUIRED')[i].disabled=false;
+$("#CHARACTER_SET"+i).attr("disabled", false);
+$("#DEFAULT_VALUE"+i).removeAttr("readonly");
+$("#PHYSICAL_NAME"+i).removeAttr("readonly");
+$("#COLUMN_DISPLAY_NAME"+i).removeAttr("readonly");
+document.getElementsByName('DESCRIPTION')[i].disabled=false;
+$("#SOURCE"+i).attr("disabled", false);
+$("#ExtendedNameLink"+i).attr("disabled", false);
+document.getElementsByName('EDITABLE')[i].disabled=false;
+document.getElementsByName('NO_WRAP')[i].disabled=false;
+document.getElementsByName('SORTABLE')[i].disabled=false;
+document.getElementsByName('HIDDEN')[i].disabled=false;
+document.getElementsByName('SEARCHABLE')[i].disabled=false;
+document.getElementsByName('I18NIZE')[i].disabled=false;
+}
+}
+}
+}
+if(tabName === 'TABLE_STEP'){
+		if(isValid_tableStep())
+				form.submit();
+}    
+else if(resp){
+    	if(errorTabNameValue.indexOf(tabName) &gt;= 0){
+			document.getElementById(&quot;ERROR_TAB_NAME&quot;).value = errorTabNameValue.replace(tabName,"");
+    	}
+		form.submit();
+	}
+else{   
+    	
+    		if(errorTabNameValue != null){
+    				var errorTabNameArr = errorTabNameValue.split(&quot;,&quot;);
+    					if(errorTabNameArr.indexOf(tabName) &lt; 0){
+							document.getElementById(&quot;ERROR_TAB_NAME&quot;).value = tabName +&quot;,&quot; + errorTabNameValue;   
+    					}
+    		}
+    		form.submit();
+		}
+ }
+else
+{
+alertPrefix + alert( 'no form!' );
+}
+}
+    
+function existingLogicalName(){
+	var request='&lt;REQUEST Name=&quot;getAllDocNameReq&quot;  ServiceName=&quot;BPE_META&quot;>' +
+	    					'&lt;/REQUEST>';
+    
+var xpath=&quot;/RESPONSES/RESPONSE&quot;;
+SendAjaxRequest('BPE_META',request,'callBackExistingTableName',xpath);
+ }  
+    
+function callBackExistingTableName(node){
+    var tableName = document.getElementById(&quot;TABLE_NAME&quot;).value;
+    
+	jQuery.each($(node).find('DOCUMENT'), function(i, eachOption) {
+	if (eachOption.length != 0) {	
+		var exTableName = $(eachOption).attr(&quot;Value&quot;);
+    	if(exTableName === tableName){
+			core_alert_jquery(&quot;SC_TABLE_WITH_SAME_NAME_EXIST&quot;);
+			document.getElementById(&quot;TABLE_NAME&quot;).value =&quot;&quot;;
+			return false;
+		}		    
+	}
+    });
+}   
+       
+function getFunctionName(){
+	var  tabName = document.getElementById('TabName').value;
+	var funcName;
+        
+	if(tabName === 'TABLE_STEP'){
+		funcName = isValid_tableStep;
+	}	
+	else if(tabName === 'PROPERTIES'){
+		funcName = isValid_selfConfigPropertiesStep;
+		$('.unCheckedVal').find('input').not(':checked').val(&quot;unChecked&quot;).prop(&quot;checked&quot;,true);
+    	var table = document.getElementById(tableId);
+		tableCount = table.rows.length;
+		for(var i =0;i &lt; tableCount;i++){
+			$($('[name=&quot;LENGTH&quot;]')[i]).attr('disabled',false);
+		}
+	}
+	else if(tabName === 'KEYS'){
+		funcName = isValid_selfConfigKeysStep;
+		$('.unCheckedVal').find('input').not(':checked').val(&quot;unChecked&quot;).prop(&quot;checked&quot;,true);
+	}
+	else if(tabName === 'LINKS'){
+		funcName = function(){ return true;};
+		$('.unCheckedVal').find('input').not(':checked').val(&quot;unChecked&quot;).prop(&quot;checked&quot;,true);
+	}
+	else if(tabName === 'FACET_PROPERTIES'){
+		funcName = function(){ return true;};
+		$('.unCheckedVal').find('input').not(':checked').val(&quot;unChecked&quot;).prop(&quot;checked&quot;,true);
+    
+	}else{
+		funcName = &quot;TRUE&quot;;
+	}
+    return funcName;
+}
+
+    function onSave(){
+var  tabName = document.getElementById('TabName').value;
+        if(tabName=='KEYS')
+         {
+            var status=document.getElementById('modelStatusFlag').value;
+            var noOfKeys=document.getElementById('noOfKeys').value;
+            if(status=='GENERATED' )
+             {
+              for(i=0;i&lt;noOfKeys;i++)
+               {
+                 var keyKind=$("#KIND"+i).val();
+                if(keyKind=='PRIMARY')
+                 {
+                $("#NAME"+i).removeAttr("readonly");
+				$("#PHYSICAL_NAME"+i).removeAttr("readonly");
+				$("#KIND"+i).removeAttr("disabled");
+				$("#COL_NAME"+i).removeAttr("disabled");
+				$("#COLUMN_NAME"+i).removeAttr("readonly");
+				//document.getElementsByName('SELECTED_ID')[i].disabled="false";
+
+				}
+               }
+             }
+         }
+     if(tabName=='PROPERTIES')
+      {
+        var status=document.getElementById('modelStatusFlag').value;
+		var noOfProps=document.getElementById('noOfProps').value;
+			if(status=='GENERATED' )
+			{
+				var primarykeycolumns=document.getElementById('primaryKeyColumns').value;
+				var columns=primarykeycolumns.substr(3);
+				var column =columns.split("_-_");
+					for(i=0;i&lt;noOfProps;i++)
+						{
+						var name=$("#NAME"+i).val();
+						var status=$.inArray(name,column);
+						if(status!=-1)
+							{
+							document.getElementsByName('SELECTED_ID')[i].disabled=false;
+							$("#NAME"+i).removeAttr("readonly");
+							$("#DATA_TYPE"+i).attr("disabled", false);
+							$("#LENGTH"+i).removeAttr("readonly");
+							document.getElementsByName('REQUIRED')[i].disabled=false;
+							$("#CHARACTER_SET"+i).attr("disabled", false);
+							$("#DEFAULT_VALUE"+i).removeAttr("readonly");
+							$("#PHYSICAL_NAME"+i).removeAttr("readonly");
+							$("#COLUMN_DISPLAY_NAME"+i).removeAttr("readonly");
+							document.getElementsByName('DESCRIPTION')[i].disabled=false;
+							$("#SOURCE"+i).attr("disabled", false);
+							$("#ExtendedNameLink"+i).attr("disabled", false);
+							document.getElementsByName('EDITABLE')[i].disabled=false;
+							document.getElementsByName('NO_WRAP')[i].disabled=false;
+							document.getElementsByName('SORTABLE')[i].disabled=false;
+							document.getElementsByName('HIDDEN')[i].disabled=false;
+							document.getElementsByName('SEARCHABLE')[i].disabled=false;
+							document.getElementsByName('I18NIZE')[i].disabled=false;
+                            }
+                        }
+              }
+        }
+		var funcName = getFunctionName();
+	    var resp =true;
+		if(funcName() != true){
+				resp =	false;  
+				core_alert_jquery("SC_PLEASE_ENTER_REQUIRED_FIELD");
+		 }
+    
+		var errorTabNameValue =document.getElementById(&quot;ERROR_TAB_NAME&quot;).value;
+		if(resp){
+			var errorTabArr = errorTabNameValue.split(",");
+			var counter=0;
+			for(var i=0;i&lt;errorTabArr.length;i++){
+				var tab = errorTabArr[i];
+				if(tab === tabName){
+					errorTabNameValue = errorTabNameValue.replace(tab,"");
+					counter++;
+				}
+				else if(tab.trim().length === 0){
+					counter++;
+				}else{
+					break;
+				}
+			}
+			if(counter === errorTabArr.length){
+					errorTabNameValue =null;
+			}
+		}
+		if(errorTabNameValue != null &amp;&amp; errorTabNameValue.length &gt; 0){
+					errorTabNameValue= errorTabNameValue.replace("KEYS","Keys");
+					errorTabNameValue= errorTabNameValue.replace("PROPERTIES","Columns");
+					var errorCheck = errorTabNameValue;
+    				if(errorCheck.replace(",","").trim().length === 0){
+						resp = true;
+    				}else{
+						errorTabNameValue = errorTabNameValue
+						errorTabNameValue = errorTabNameValue.substring(0,errorTabNameValue.length-1);
+						var commaStr = errorTabNameValue.substring(0,2);
+						var startlength = commaStr.indexOf(",");
+						if(startlength &gt; -1){
+							errorTabNameValue = errorTabNameValue.substring(startlength,errorTabNameValue.length);
+						}
+						core_alert_jquery(&quot;Please define required field in  : &quot; + errorTabNameValue);
+    					resp = false;
+    				}
+    	}
+    		
+    if(resp){
+		grayOut(true);
+    	if(document.getElementById('modelStatus').value ==='TEMPLATE')
+			document.form.BUTTON_ID.value = 'saveTemplate';
+    	else{
+			document.form.BUTTON_ID.value = 'save';
+    	}
+		document.form.submit();
+    }	
+ }  
+    function onChangePhysicalName(){
+		document.getElementById("PHYSICAL_IN").value ="";
+		document.getElementById("PHYSICAL_ERR").value ="";
+		document.getElementById("PHYSICAL_MST").value ="";
+		document.getElementById("PHYSICAL_OUT").value ="";
+		document.getElementById("PHYSICAL_NC").value ="";
+		document.getElementById("PHYSICAL_VER").value ="";
+    }
+    function checkMstTableName(){
+    	var mstTableName = document.getElementById("mstTabName").value;
+    	if(mstTableName != null &amp;&amp; mstTableName.length &gt; 29){
+			core_alert_jquery("SC_MASTER_TAB_NAME_FOR_AUDIT_ENABLE");
+			document.getElementsByName('IS_AUDIT_ENABLED')[0].checked = false;
+    	}
+    }
+    
+function onClickExtend(thisOb,event){  
+	var id = $(thisOb).prev().children().attr(&quot;id&quot;);
+	var name = $(thisOb).prev().children().attr(&quot;name&quot;);
+	linkSelectedIndex = id.substring(id.length,name.length);
+    var nameId = 'NAME' + linkSelectedIndex;
+	var name = document.getElementById(nameId).value;
+	var status=document.getElementById('modelStatusFlag').value;
+		if(status=='GENERATED')
+			{
+			var primarykeycolumns=document.getElementById('primaryKeyColumns').value;
+     		var columns=primarykeycolumns.substr(3);
+			var column =columns.split("_-_");
+			var status=$.inArray(name,column);
+			if(status!=-1)
+				{
+				return false;
+				}
+			}
+if(name === null || name.length === 0){
+core_alert_jquery(&quot;Name value is not defined.&quot;);
+} else {
+  
+var url = $('#URL_Extend').val();
+window.open(url,'_blank',&quot;height=410, width=800,channelmode=no,directories=no,fullscreen=no,location=no,menubar=no,width=680px; height= 650px;,scrollbars=yes,status=no,titlebar=no,toolbar=no&quot;);
+
+}
+}
+
+function markExtendedLink(){
+var table = document.getElementById(tableId);
+var  tableCount=table.rows.length;
+for(var i =0;i &lt; tableCount;i++){
+if(typeof document.getElementsByName('DICT_DATA_TYPE_NAME')[i]!='undefined' &amp;&amp; document.getElementsByName('DICT_DATA_TYPE_NAME')[i].value !='' ){
+	var extendname = document.getElementsByName('DICT_DATA_TYPE_NAME')[i].value;	
+	$($('[name=&quot;ExtendedNameLink&quot;]')[i]).val(extendname);
+	$($('.linkColor1')[i]).children().text(extendname);
+	}
+   }
+}
+    
+function getDataType(node){
+	if(node.length > 0){
+		var childCount=node[0].children.length;
+		var dataType,datalength,required,characterSet,physicalName,enumValue,defaultValue,description;
+		for (var i=0;i&lt;childCount;i++)
+		{
+			if(node[0].children[i].nodeName=='Required')
+				required=node[0].children[i].getAttribute('Value');
+			else if(node[0].children[i].nodeName=='PhysicalName')
+				physicalName=node[0].children[i].getAttribute('Value');
+			else if(node[0].children[i].nodeName=='CharacterSet')
+				characterSet=node[0].children[i].getAttribute('Value');
+			else if(node[0].children[i].nodeName=='DataType')
+				dataType=node[0].children[i].getAttribute('Value');
+			else if(node[0].children[i].nodeName=='Length')
+				datalength=node[0].children[i].getAttribute('Value');
+			else if(node[0].children[i].nodeName=='Enum')
+				enumValue=node[0].children[i].getAttribute('Value');
+			else if(node[0].children[i].nodeName=='DefaultValue')
+				defaultValue=node[0].children[i].getAttribute('Value');
+		}
+    	// modified when extend
+    
+		$($('[name=&quot;DATA_TYPE&quot;]')[linkSelectedIndex]).val(dataType).trigger('change');
+		$($('[name=&quot;LENGTH&quot;]')[linkSelectedIndex]).val(datalength);
+    	
+		// donn't Modified if value is defined when extend
+    
+    	var physicalObj = $($('[name=&quot;PHYSICAL_NAME&quot;]')[linkSelectedIndex]);
+    	if(physicalObj.val() ==='')
+				physicalObj.val(physicalName);    	
+    	var requiredObj = $($('[name=&quot;REQUIRED&quot;]')[linkSelectedIndex]);    
+			requiredObj.val(required);
+         if(required=="true")
+          {
+		  requiredObj.prop("checked", true);
+          }
+         else
+          {
+		   requiredObj.prop("checked", false);
+          }    	
+    	var charObj = $($('[name=&quot;CHARACTER_SET&quot;]')[linkSelectedIndex]);
+    	if(charObj.val() ==='')
+			charObj.val(characterSet).trigger('change');
+    	var defaultObj = $($('[name=&quot;DEFAULT_VALUE&quot;]')[linkSelectedIndex]);    
+    	if(defaultObj.val() ==='')
+			defaultObj.val(defaultValue);    
+    	if($(enumValue != '' &amp;&amp;  $('.linkColor')[linkSelectedIndex]).children().text() === "EDIT"){
+			$($('[name=&quot;ENUM&quot;]')[linkSelectedIndex]).val(enumValue);
+			$($('.linkColor')[linkSelectedIndex]).children().text(&quot;DEFINED&quot;);
+		}
+	}  
+onLoadSuper();
+onResize();
+}
+
+function deleleExtendedValue(){
+		var id = $($('[name=&quot;DICT_ID&quot;]')[linkSelectedIndex]).val();        
+		var name =	$($('[name=&quot;DICT_DATA_TYPE_NAME&quot;]')[linkSelectedIndex]).val();    	
+		
+    	var request=&quot;&lt;REQUEST Name='getDictProperty' ServiceName='BPE_META' AssignToVar='getProps'>  &lt;dictId Value='&quot;+id+&quot;'/>&lt;dictDataType Value='&quot;+name+&quot;'/>&lt;/REQUEST>&quot;
+		var xpath = &quot;/RESPONSES/RESPONSE/SELF_CONF_DICT_PROPTIES/SELF_CONF_DICT_PROPS&quot;;
+		SendAjaxRequest(&quot;BPE_META&quot;,request,'deleteExtendPropertiesValue',xpath);    	
+    
+		$($('[name=&quot;ExtendedNameLink&quot;]')[linkSelectedIndex]).val("EXTEND");
+		$($('.linkColor1')[linkSelectedIndex]).children().text('EXTEND');
+ }
+    
+function deleteExtendPropertiesValue(node)
+{
+if(node.length > 0){
+var childCount=node[0].children.length;
+var dataType,datalength,required,characterSet,physicalName,enumValue,defaultValue,description;
+for (var i=0;i&lt;childCount;i++)
+{
+	if(node[0].children[i].nodeName=='Required')
+		required=node[0].children[i].getAttribute('Value');
+	else if(node[0].children[i].nodeName=='PhysicalName')
+		physicalName=node[0].children[i].getAttribute('Value');
+	else if(node[0].children[i].nodeName=='CharacterSet')
+		characterSet=node[0].children[i].getAttribute('Value');
+	else if(node[0].children[i].nodeName=='DataType')
+		dataType=node[0].children[i].getAttribute('Value');
+	else if(node[0].children[i].nodeName=='Length')
+		datalength=node[0].children[i].getAttribute('Value');
+	else if(node[0].children[i].nodeName=='Enum')
+		enumValue=node[0].children[i].getAttribute('Value');
+	else if(node[0].children[i].nodeName=='DefaultValue')
+		defaultValue=node[0].children[i].getAttribute('Value');
+}
+if($($('[name=&quot;DATA_TYPE&quot;]')[linkSelectedIndex]).val() === dataType){
+	dataType='String';
+	$($('[name=&quot;DATA_TYPE&quot;]')[linkSelectedIndex]).val(dataType).trigger('change');
+	$($('[name=&quot;LENGTH&quot;]')[linkSelectedIndex]).val('');
+}    	   
+	var physicalObj = $($('[name=&quot;PHYSICAL_NAME&quot;]')[linkSelectedIndex]);
+	if(physicalObj.val() === physicalName)
+		physicalObj.val();
+    
+	var requiredObj = $($('[name=&quot;REQUIRED&quot;]')[linkSelectedIndex]);
+	requiredObj.prop("checked",false);	
+	
+	var charObj = $($('[name=&quot;CHARACTER_SET&quot;]')[linkSelectedIndex]);
+	if(charObj.val() ===characterSet){
+		dataType='LATIN';
+		charObj.val(dataType).trigger('change');
+    }
+	var defaultObj = $($('[name=&quot;DEFAULT_VALUE&quot;]')[linkSelectedIndex]);
+	if(defaultObj.val() ===defaultValue)
+		defaultObj.val('');
+    
+	if($($('.linkColor')[linkSelectedIndex]).children().text() === "DEFINED"){		    
+		if(	$($('[name=&quot;ENUM&quot;]')[linkSelectedIndex]).val() === enumValue){
+			$($('[name=&quot;ENUM&quot;]')[linkSelectedIndex]).val('');	
+			$($('.linkColor')[linkSelectedIndex]).children().text(&quot;EDIT&quot;);    	
+	  }
+}
+$($('[name=&quot;DICT_ID&quot;]')[linkSelectedIndex]).val('');
+$($('[name=&quot;DICT_DATA_TYPE_NAME&quot;]')[linkSelectedIndex]).val('');
+    }
+onLoadSuper();
+onResize();    
+}    
+       
+function setExtendValue(extendVal){
+var abc=extendVal.split(&quot;#&quot;);
+var result1 = abc[abc.length - 1];
+var result2 = abc[abc.length - 2];
+var nametemp=result1.split(&quot;=&quot;);
+var name=nametemp[nametemp.length - 1];
+var idtemp=result2.split(&quot;=&quot;);
+var id=idtemp[idtemp.length - 1];
+$($('[name=&quot;DICT_ID&quot;]')[linkSelectedIndex]).val(id);
+$($('[name=&quot;DICT_DATA_TYPE_NAME&quot;]')[linkSelectedIndex]).val(name);
+$($('[name=&quot;ExtendedNameLink&quot;]')[linkSelectedIndex]).val(name);
+$($('.linkColor1')[linkSelectedIndex]).children().text(name);
+ 
+var request=&quot;&lt;REQUEST Name='getDictProperty' ServiceName='BPE_META' AssignToVar='getProps'>  &lt;dictId Value='&quot;+id+&quot;'/>&lt;dictDataType Value='&quot;+name+&quot;'/>&lt;/REQUEST>&quot;
+var xpath = &quot;/RESPONSES/RESPONSE/SELF_CONF_DICT_PROPTIES/SELF_CONF_DICT_PROPS&quot;;
+SendAjaxRequest(&quot;BPE_META&quot;,request,'getDataType',xpath);
+}
+function onmigrateExtAttrClicked()
+ {
+var isMigrateExtAttrCheckBoxTicked=document.getElementsByName('migrateExtAttr')[0].checked;
+if(isMigrateExtAttrCheckBoxTicked==true )
+{
+core_alert_jquery(&quot;SC_VERIFY_EXTENDED_ATTRIBUTES&quot;);
+return;
+}
+ }
+      </ui:script>
+</ui:page-group>

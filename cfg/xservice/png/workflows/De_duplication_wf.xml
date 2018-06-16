@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="5" ShowInBreadCrumbs="true" Version="1.0" Name="De_duplication_wf" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="De_duplication_wf"/>
+  <nodes>
+    <start Name="start">
+      <actions>
+        <action/>
+      </actions>
+      <next_nodes>
+        <next_node Name="Trillium_Dedup_Rule"/>
+      </next_nodes>
+    </start>
+    <task Name="Trillium_Dedup_Rule">
+      <actions>
+        <action>
+          <REQUEST Name="Trillium_Dedup_Rule" AssignToVar="thisReturn"/>
+        </action>
+      </actions>
+      <next_nodes OutputVar="{thisReturn,xml}">
+        <next_node Name="Trillium_decision"/>
+      </next_nodes>
+    </task>
+    <decision Name="Trillium_decision">
+      <actions>
+        <action>
+          <IF_TEST Test="$thisReturn/Message/@Value ='Trillium Dedup Rule Successful'">
+            <THEN>
+              <SET Var="Trillium" FromValue="Success"/>
+            </THEN>
+            <ELSE>
+              <SET Var="Trillium" FromValue="Failure"/>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </actions>
+      <condition Value="$Trillium='Success'"/>
+      <if_true>
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Done" Description="$Trillium='Success'"/>
+        </next_nodes>
+      </if_true>
+      <if_false>
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Failed_Trillium_Dedup" Description=""/>
+        </next_nodes>
+      </if_false>
+    </decision>
+    <task Name="Failed_Trillium_Dedup">
+      <actions>
+        <action>
+          <!--<REQUEST Name="emailOnErrorNode">
+            <Subject Value="Trillium Dedup Failure" />
+          </REQUEST>-->
+        </action>
+      </actions>
+      <next_nodes/>
+    </task>
+    <done Name="Done">
+      <actions>
+        <action/>
+      </actions>
+      <next_nodes/>
+    </done>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <start location="49,202" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" size="732,526">
+        <iconProps iconfile="z1start.gif"/>
+      </start>
+      <Trillium_Dedup_Rule location="142,201" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" size="732,552">
+        <iconProps iconfile="z1task.gif"/>
+      </Trillium_Dedup_Rule>
+      <Trillium_decision location="251,206" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" size="732,600">
+        <iconProps iconfile="z1decision.gif"/>
+      </Trillium_decision>
+      <Failed_Trillium_Dedup location="368,145" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" size="732,552">
+        <iconProps iconfile="z1task.gif"/>
+      </Failed_Trillium_Dedup>
+      <Done location="457,275" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" size="732,526">
+        <iconProps iconfile="z1end.gif"/>
+      </Done>
+    </mgcnodes>
+    <mgcconnectors>
+      <start>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="87,217" endpoint="147,217" ctrlRect1="130,215,4,4" ctrlRect2="100,215,4,4"/>
+      </start>
+      <Trillium_Dedup_Rule>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="187,223" endpoint="251,228" ctrlRect1="233,221,4,4" ctrlRect2="201,226,4,4"/>
+      </Trillium_Dedup_Rule>
+      <Trillium_decision>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,0" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="296,228" endpoint="457,297" ctrlRect1="414,226,4,4" ctrlRect2="334,295,4,4" textRect="364,258,24,8">
+          <textProps text=""/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="178,0,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="289,213" endpoint="373,169" ctrlRect1="350,211,4,4" ctrlRect2="308,167,4,4"/>
+      </Trillium_decision>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions/>
+    <post_actions/>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

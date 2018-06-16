@@ -1,0 +1,37 @@
+<document>
+  <properties>
+    <property Name="AGNCY_NBR" PhysicalName="AGNCY_NBR" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="AGNCY_NBR" />
+    </property>
+    <property Name="CNTRY_CODE" PhysicalName="CNTRY_CODE" Required="true" CharSet="LATIN">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="CNTRY_CODE" />
+    </property>
+  </properties>
+  <keys>
+    <key Active="true" Name="AGNCY_CNTRY_UPI" PhysicalName="AGNCY_CNTRY_UPI" Kind="PRIMARY">
+      <property Name="AGNCY_NBR" />
+      <property Name="CNTRY_CODE" />
+    </key>
+  </keys>
+  <links>
+    <link Active="true" Name="Link1" PhysicalName="Agncy_nbr_cntry_link">
+      <keymap ToPackage="models/pngModel" ToModelUnit="AGNCY.mtt" ToKey="AGNCY_UPI" ReverseLink="true" ReverseLinkName="Agncy_nbr_cntry" DeleteRule="RESTRICT">
+        <mapping FromProperty="AGNCY_NBR" ToProperty="AGNCY_NBR" />
+      </keymap>
+    </link>
+    <link Active="true" Name="Link2" PhysicalName="Agncy_cntry_code_link1">
+      <keymap ToPackage="models/pngModel" ToModelUnit="CNTRY.mtt" ToKey="CNTRY_UPI" ReverseLink="true" ReverseLinkName="Agncy_cntry_code1" DeleteRule="RESTRICT">
+        <mapping FromProperty="CNTRY_CODE" ToProperty="CNTRY_CODE" />
+      </keymap>
+    </link>
+  </links>
+  <docFacets>
+    <mdmWebServiceFacet />
+    <mdmSysTableMapFacet TableClass="MASTER" Source="MASTER" MasterTable="AGNCY_CNTRY" />
+    <miscFacet PhysicalName="AGNCY_CNTRY" Active="true" />
+    <mdmConfigFacet SchemaGen="true" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql />
+</document>
+

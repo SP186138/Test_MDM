@@ -1,0 +1,38 @@
+<document>
+  <properties>
+    <property Name="SR_NBR" PhysicalName="SR_NBR" CharSet="LATIN">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="SR_NBR" />
+    </property>
+    <property Name="IP_ADDR" PhysicalName="IP_ADDR" Required="true" CharSet="LATIN">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="IP_ADDR" />
+    </property>
+    <property Name="AGNCY_NBR" PhysicalName="AGNCY_NBR" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="AGNCY_NBR" />
+    </property>
+    <property Name="REQSTD_DT" PhysicalName="REQSTD_DT" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="REQSTD_DT" />
+    </property>
+  </properties>
+  <keys>
+    <key Active="true" Name="AGNCY_IP_UPI" PhysicalName="AGNCY_IP_UPI" Kind="PRIMARY">
+      <property Name="AGNCY_NBR" />
+      <property Name="IP_ADDR" />
+    </key>
+  </keys>
+  <links>
+    <link Active="true" Name="Link1" PhysicalName="AgncyIP_nbr_Link">
+      <keymap ToPackage="models/pngModel" ToModelUnit="AGNCY.mtt" ToKey="AGNCY_UPI" ReverseLink="true" ReverseLinkName="Agncy_IP_nbr" DeleteRule="RESTRICT">
+        <mapping FromProperty="AGNCY_NBR" ToProperty="AGNCY_NBR" />
+      </keymap>
+    </link>
+  </links>
+  <docFacets>
+    <mdmWebServiceFacet />
+    <mdmSysTableMapFacet TableClass="MASTER" Source="MASTER" MasterTable="AGNCY_IP" />
+    <miscFacet PhysicalName="AGNCY_IP" Active="true" />
+    <mdmConfigFacet SchemaGen="true" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql />
+</document>
+

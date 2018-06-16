@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <DEFINE_METHOD Name="migrateDataForExcelUploadUpgrade">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="AttrDocBulk">
+          <ROOT/>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT DISTINCT T1.INST_DOC_ID,T1.INST_LINE_ID,T1.INSTANCE_TYPE,T1.INSTANCE_MODE,T2.ID FROM AW_ALERT T1,AW_DOC_INSTANCE T2 WHERE T1.INST_LINE_ID IS NOT NULL AND T1.STATUS='A' AND T1.INST_DOC_ID=T2.ALERTID ORDER BY INSTANCE_TYPE ASC" AssignToVar="UnderApprovalDoc"/>
+        <SET Var="DocumentName1" FromValue=""/>
+        <SET Var="DocumentName" FromValue=""/>
+       <IF_TEST Test="$UnderApprovalDoc/*!=null">
+        <THEN>
+        <FOR_EACH CurrentElement="currElem" SelectList="$UnderApprovalDoc/*">
+          <TO_DOCVAR AssignToVar="AttrDoc">
+            <PARAMS/>
+          </TO_DOCVAR>
+          <SET Var="PreDocName" FromValue="{$DocumentName}"/>
+          <SET Var="DocumentName" FromValue="{$currElem/INSTANCE_TYPE/@Value}"/>
+          <SET Var="LoadId" FromValue="{$currElem/INST_LINE_ID/@Value}"/>
+          <SET Var="DocumentID" FromValue="{$currElem/ID/@Value}"/>
+          <SET Var="AlertID" FromValue="{$currElem/INST_DOC_ID/@Value}"/>
+          <SET Var="ActionType" FromValue="{$currElem/INSTANCE_MODE/@Value}"/>
+          <IF_TEST Test="$ActionType='MASS_UPDATE'">
+            <THEN>
+              <SET Var="ActionType" FromValue="UPDATE"/>
+            </THEN>
+          </IF_TEST>
+          <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT PHY_NAME,PHY_MST FROM SYS_TABLE_MAP WHERE LOG_NAME='{$DocumentName/@Value}'" AssignToVar="PhyName"/>
+          <SET Var="MasterTableName" FromValue="{$PhyName/SQL_RESULT/PHY_MST/@Value}"/>
+          <IF_TEST Test="$DocumentName/@Value!=$DocumentName1/@Value">
+            <THEN>
+              <SET Var="flag" FromValue="1"/>
+              <IF_TEST Test="$DocumentName1/@Value=''">
+                <THEN>
+                  <SET Var="flag" FromValue="0"/>
+                </THEN>
+              </IF_TEST>
+              <SET Var="DocumentName1" FromValue="{$DocumentName}"/>
+              <GET_DOC_PROPERTIES TableName="{$DocumentName}" ServiceName="BCM_MASTER" AssignToVar="DocPropertiesVar"/>
+            </THEN>
+            <ELSE>
+              <SET Var="flag" FromValue="0"/>
+            </ELSE>
+          </IF_TEST>
+          <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT ATTRIBUTEID,ATTRIBUTEVALUE FROM AW_DOC_ATTR WHERE INSTANCEID= '{$DocumentID/@Value}'" AssignToVar="DocAttr"/>
+          <FOR_EACH CurrentElement="currAttr" SelectList="$DocAttr/*">
+            <TO_DOCVAR AssignToVar="tempVar">
+              <TEMP/>
+            </TO_DOCVAR>
+            <FOR_EACH CurrentElement="currColumn" SelectList="$DocPropertiesVar/*/*">
+              <IF_TEST Test="$currAttr/ATTRIBUTEID/@Value = $currColumn/@Name">
+                <THEN>
+                  <SET DocVar="tempVar" Property="{$currColumn/@Name}" FromValue="{$currAttr/ATTRIBUTEVALUE/@Value}"/>
+                </THEN>
+              </IF_TEST>
+            </FOR_EACH>
+            <ADD_CHILDREN DocVar="AttrDoc" FromSelectList="$tempVar/*"/>
+          </FOR_EACH>
+          <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT A.DATA FROM WFL_INSTANCE A, AW_USER_NODES B  WHERE trim(A.ID)=trim(B.WORKFLOW_ID) AND B.INST_DOC_ID ='{$AlertID/@Value}'" AssignToVar="SerialData"/>
+          <SET Var="curData" FromSelect="$SerialData/SQL_RESULT/DATA/@Value"/>
+          <SET Var="tokenName" FromValue="inputXml"/>
+          <NATIVE_FUNCTION ClassName="com.teradata.xservice.approval.WFLInstanceDataParser" MethodName="getVariables" AssignToVar="contextObject">
+            <PARAM Var="curData" Caption="data"/>
+            <PARAM Var="tokenName" Caption="tokenName"/>
+          </NATIVE_FUNCTION>
+          <STRING_TO_XML FromSelect="$contextObject" DocVar="SysWorkflowIdDoc"/>
+          <SET DocVar="AttrDoc" Property="SYS_WORKFLOW_ID" FromValue="{$SysWorkflowIdDoc/DO_DB_PERSIST/@SysWfId}"/>
+          <SET DocVar="AttrDoc" Property="SYS_LOAD_ID" FromValue="{$currElem/INST_LINE_ID/@Value}"/>
+          <IF_TEST Test="$ActionType='DELETE'">
+            <THEN>
+              <SET DocVar="AttrDoc" Property="ENTITY_STATE" FromValue="DELETED"/>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$ActionType='INACTIVE'">
+                <THEN>
+                  <SET DocVar="AttrDoc" Property="ENTITY_STATE" FromValue="INACTIVE"/>
+                </THEN>
+                <ELSE>
+                  <SET DocVar="AttrDoc" Property="ENTITY_STATE" FromValue="ACTIVE"/>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <!--To get all the records with the same document name-->
+          <IF_TEST Test="$flag/@Value='1'">
+            <THEN>
+              <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT PHY_NAME,PHY_MST FROM SYS_TABLE_MAP WHERE LOG_NAME='{$PreDocName/@Value}'" AssignToVar="PhyName"/>
+              <SET Var="LdTableName" FromValue="{concat('LD_',$PhyName/SQL_RESULT/PHY_NAME/@Value)}"/>
+              <TO_DOCVAR AssignToVar="tableDetails">
+                <TABLEDETAILS>
+                  <LogicalName Value="{$PreDocName}"/>
+                  <LoadTableName Value="{$LdTableName}"/>
+                  <PhyTableName Value="{$PhyName/SQL_RESULT/PHY_NAME/@Value}"/>
+                </TABLEDETAILS>
+              </TO_DOCVAR>
+              <NATIVE_FUNCTION ClassName="com.teradata.bcm.xservice.E2E.task.LoadExcelUploadApprovalDataForUpgrade" MethodName="loadExcelUploadApprovalData" AssignToVar="resultLoadVar">
+                <PARAM Var="AttrDocBulk" Caption="data"/>
+                <PARAM Var="tableDetails" Caption="tableDetails"/>
+                <PARAM Var="thisContext" Caption="thisParam"/>
+              </NATIVE_FUNCTION>
+              <TO_DOCVAR AssignToVar="AttrDocBulk">
+                <ROOT/>
+              </TO_DOCVAR>
+              <ADD_CHILDREN DocVar="AttrDocBulk" FromDocVar="AttrDoc"/>
+            </THEN>
+            <ELSE>
+              <ADD_CHILDREN DocVar="AttrDocBulk" FromDocVar="AttrDoc"/>
+            </ELSE>
+          </IF_TEST>
+          <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT * FROM AW_XLS_LD_DETAILS WHERE TABLE_LOG_NAME='{$DocumentName/@Value}' AND SYS_LOAD_ID='{$LoadId/@Value}' AND SYS_APPRL_ACTION='{$ActionType/@Value}'" AssignToVar="recordExist"/>
+          <IF_TEST Test="$recordExist/SQL_RESULT=null">
+            <THEN>
+              <EXECUTE_SQL_QUERY Value="INSERT INTO AW_XLS_LD_DETAILS (LOGICAL_DB,TABLE_LOG_NAME,TABLE_PHY_NAME,SYS_LOAD_ID,SYS_APPRL_ACTION) VALUES ('BCM_MASTER','{$DocumentName}','{$MasterTableName}','{$LoadId}','{$ActionType}')" AssignToVar="insertAwXls"/>
+            </THEN>
+          </IF_TEST>
+          <EXECUTE_SQL_QUERY Value="DEL FROM AW_DOC_INSTANCE WHERE ID='{$DocumentID}'" AssignToVar="delDocInst"/>
+          <EXECUTE_SQL_QUERY Value="DEL FROM AW_DOC_ATTR WHERE INSTANCEID='{$DocumentID}'" AssignToVar="delDocAttr"/>
+        </FOR_EACH>
+        <!--For last set of documents-->
+        <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT PHY_NAME,PHY_MST FROM SYS_TABLE_MAP WHERE LOG_NAME='{$DocumentName/@Value}'" AssignToVar="PhyName"/>
+        <SET Var="LdTableName" FromValue="{concat('LD_',$PhyName/SQL_RESULT/PHY_NAME/@Value)}"/>
+        <TO_DOCVAR AssignToVar="tableDetails">
+          <TABLEDETAILS>
+            <LogicalName Value="{$DocumentName}"/>
+            <LoadTableName Value="{$LdTableName}"/>
+            <PhyTableName Value="{$PhyName/SQL_RESULT/PHY_NAME/@Value}"/>
+          </TABLEDETAILS>
+        </TO_DOCVAR>
+        <NATIVE_FUNCTION ClassName="com.teradata.bcm.xservice.E2E.task.LoadExcelUploadApprovalDataForUpgrade" MethodName="loadExcelUploadApprovalData" AssignToVar="resultLoadVar">
+          <PARAM Var="AttrDocBulk" Caption="data"/>
+          <PARAM Var="tableDetails" Caption="tableDetails"/>
+          <PARAM Var="thisContext" Caption="thisParam"/>
+        </NATIVE_FUNCTION>
+        </THEN>
+       </IF_TEST>    
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

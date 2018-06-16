@@ -1,0 +1,450 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" Id="ConditionalApproval.pgl" version="3">
+<ui:container id="conditionContainer" >
+<ui:step id="conditionStep" displayText="Assignment Approval Rules">
+<ui:help displayPage="../../bcm/help/Assignment_Approval_Rules_help.htm"/>
+<ui:field-group columns="2" width="10%">
+<ui:hidden-field name="ApprovalId" id="ApprovalId" value="{$root/APPROVALS/ApprovalGroupId/@Value}" />
+<ui:image src="/bpi_check.gif" displayCondition="{string-length($root/successFlag/@Value) != 0}"/>
+<ui:display-field id="success" name="success" value="{$root/successMessage/@Value}" displayCondition="{string-length($root/successFlag/@Value) != 0}"/>
+<ui:image src="/cancel.gif" displayCondition="{string-length($root/failureFlag/@Value) != 0}"/>
+<ui:display-field id="error" name="error" value="{$root/failureMessage/@Value}" displayCondition="{string-length($root/failureFlag/@Value) != 0}"/>
+</ui:field-group>
+<ui:table displayCondition="{$root/SetNoPriority/@Value}" postRowIdAs="SelectedConditionalId" id="Approval_Rule_Table" displayTextNoRecords="No Rules found" collapsable="false" displayText="Approval Rules" rowId="RuleId" select="$root/RESPONSE" startAtRow="$root/StartRowCount/@Value" totalRowCount="$root/TotalRowCount/@Value" filter="true" maxRows="$root/maxRows/@Value" doPaging="true" selectable="Single" scrollable="true">
+<ui:field-group>
+<ui:hidden-field id="RuleId_hidden" name="RuleId" displayText="Rule Id" />
+<ui:hidden-field id="Approvers_hidden" name="Approvers" displayText="Assigned Users"  />
+<ui:display-field id="RuleId" name="RuleId" displayText="Rule Id" sortable="true"  dataType="Number" />
+<ui:display-field id="Rule_String" name="Rule_String" displayText="Expression" maxlength="40" sortable="true" onClick="javascript:onShow(this);" />
+<ui:display-field id="User_Type" name="User_Type" displayText=" User Type" sortable="true" />
+<ui:display-field id="Approvers" name="Approvers" displayText="Assigned Users" sortable="true" />
+<ui:hidden-field id="Priority" name="Priority" displayText="Rule Priority" />
+</ui:field-group>
+<ui:buttons>
+<ui:button displayText="Back" id="Back" name="Back"/>
+<ui:button displayText="Set Priority" id="Set_Priority" name="Set_Priority" />
+<ui:button displayText="Assign Approvers" id="Conditional_Approval" name="Conditional_Approval" enabledBySelections="true" emphasized="true" onClick="javascript:onConditional();" />
+<ui:button displayText="Done" id="Done" name="Done" />
+</ui:buttons>
+</ui:table>
+<ui:table displayCondition="{$root/SetPriority/@Value}" postRowIdAs="SelectedPriorityId" id="Approval_Priority_Table" displayTextNoRecords="No Rules found" collapsable="false" displayText="Rule Priority" rowId="RuleId" select="$root/RESPONSE" startAtRow="$root/StartRowCount/@Value" totalRowCount="$root/TotalRowCount/@Value" maxRows="$root/maxRows/@Value" doPaging="true" selectable="Single" scrollable="true">
+<ui:field-group>
+<ui:hidden-field id="RuleId_hidden" name="RuleId" displayText="Rule Id" />
+<ui:display-field id="Priority" name="Priority" displayText="Rule Priority" />
+<ui:display-field id="RuleId" name="RuleId" displayText="Rule Id" />
+<ui:display-field id="Rule_String" name="Rule_String" displayText="Expression" maxlength="40" onClick="javascript:onShow(this);" />
+<ui:display-field id="Approvers" name="Approvers" displayText="Assigned Users" />
+<ui:hidden-field id="Priority_hidden" name="Priority" displayText="Rule Priority" />
+</ui:field-group>
+<ui:buttons>
+<ui:button displayText="Up" id="Up" name="Up" onClick="javascript:moveUp();" enabledBySelections="true" />
+<ui:button displayText="Down" id="Down" name="Down" onClick="javascript:moveDown();" enabledBySelections="true" />
+<ui:button displayText="Done" id="Priority_Cancel" name="Priority_Cancel"/>
+</ui:buttons>
+</ui:table>
+<ui:container id="assignContainer">
+<ui:step id="assignStep" displayText="Assign Approvers">
+<ui:field-group>
+<!--ui:display-field id="RoleType" name="RoleType" displayText="User Type" value="{$root/APPROVALS/ApprovalUserRole/@Value}" /-->
+  <ui:hidden-field id="hideUsers" name="hideUsers" value="{$root/UserStatus/@Value}" />
+<ui:dropdown id="RoleType" name="RoleType" displayText="User Type" onChange="javascript:onChangeUser();" value="{$root/UserType/@Value}">
+  <ui:option id="UserBased" value="User Based" />
+  <ui:option id="UserGroupBased" value="User Group Based" />
+  </ui:dropdown>
+</ui:field-group>
+<ui:grid cellSpacing="8">
+<ui:row>
+<ui:cell valign="left">
+<ui:field-group>
+<ui:display-field name="Available_Approvers" id="Available_Approvers" displayText="Available Approvers" />
+</ui:field-group>
+</ui:cell>
+<ui:cell valign="middle" />
+<ui:cell>
+<ui:field-group>
+<ui:display-field name="Assigned_Approvers" id="Assigned_Approvers" displayText="Assigned Approvers" />
+</ui:field-group>
+</ui:cell>
+</ui:row>
+<!-- </ui:grid>
+<ui:grid>-->
+<ui:row>
+<ui:cell valign="left">
+<ui:field-group>
+<!--<ui:dropdown id="AVAILABLE_ROLES" size="6" style="font:12px;width:125px" optionSrc="$root/AVAILABLE_ROLES/OPTION"/>-->
+<ui:dropdown id="AvailableApprovers" name="AvailableApprovers" size="10" preferredWidth="20" optionSrc="$root/APPROVER_NAMES/OPTION" unFormat="true" />
+</ui:field-group>
+</ui:cell>
+<ui:cell>
+<ui:field-group>
+<ui:button id="DoubleLeft" name="DoubleLeft " displayText="&gt;&gt;" onClick="javascript:addAll();" />
+<ui:button id="Left" name="Left " displayText="&gt;" onClick="javascript:addSelected();" />
+<ui:button id="Right" name="Right " displayText="&lt;" onClick="javascript:removeSelected();" />
+<ui:button id="DoubleRight" name="DoubleRight " displayText="&lt;&lt;" onClick="javascript:removeAll();" />
+</ui:field-group>
+</ui:cell>
+<ui:cell>
+<!--<ui:container inner="true">
+<ui:step id="InnerStep2">-->
+<ui:field-group>
+<!--<ui:dropdown id="ASSIGNED_ROLES" size="6" align="center" style="font:12px;width:125px" headerClass="color:yellow" optionSrc="$root/ASSIGNED_ROLE_TEMPLATES/ROLE_TEMPLATES"/>-->
+<ui:hidden-field id="selColumns" name="selColumns" />
+<ui:dropdown id="AssignedApprovers" name="AssignedApprovers" size="10" align="center" required="true" preferredWidth="20" headerClass="color:yellow" optionSrc="$root/SELECTED_APPROVERS/OPTION" title="Assigned Approvers" unFormat="true" />
+</ui:field-group>
+<!--</ui:step>
+</ui:container>-->
+</ui:cell>
+</ui:row>
+</ui:grid>
+<ui:field-group>
+  <ui:hidden-field id="Priority_Def" name="Priority_Def" displayText="Priority Default" value="{$root/PriorityCount/@Value}" />
+</ui:field-group>
+<ui:buttons>
+  <ui:button id="SaveUsers" name="SaveUsers" displayText="Save Users" onClick="javascript:onSaveUsers();" />
+</ui:buttons>
+</ui:step>
+</ui:container>
+</ui:step>
+</ui:container>
+<ui:script>
+  
+var idSelected='';
+var idSelectedUp='';
+var seqSelected='';
+var seqSelectedUp='';
+  
+$(document.getElementsByName('SelectedConditionalId')).change(function() {
+$("#assignStep").hide();
+$("#assignStep_td").hide();
+});
+
+  
+  function onLoad()
+  {
+  if(document.getElementById('hideUsers').value != 'true'){
+  	$("#assignStep").hide();
+  $("#assignStep_td").hide();
+  }
+  onLoadSuper();
+  onResize();
+  var assgnFlag = false;
+  var selObj = document.getElementsByName('SelectedConditionalId');
+  for(i=0;i&lt;selObj.length;i++){
+    if( document.getElementsByName('Approvers')[i].value != ''){
+     assgnFlag = true;
+     break;
+    }
+   }
+  if(assgnFlag != true){
+   tduiToggleButtonState('Set_Priority','disabled','');
+   }
+  }
+  
+  function onConditional()
+  {
+$("#assignStep").show();
+$("#assignStep_td").show();
+  document.form.BUTTON_ID.value = 'Conditional_Approval';
+  document.form.submit();
+  }
+  
+  function onChangeUser(){
+  if(document.getElementById('RoleType').value == 'UserBased'){
+var request=&quot;&lt;GET_DOCUMENT Name='USER_PROFILE' ServiceName='USER_SECURITY' DirtyRead='true'>&lt;SELECT>&lt;LOGIN_NAME /> &lt;/SELECT>&lt;/GET_DOCUMENT>&quot;;
+var xpath = &quot;/RESPONSES/RESPONSE/USER_PROFILE/LOGIN_NAME&quot;;
+SendAjaxRequest(&quot;USER_SECURITY&quot;,request,'getUsersCallbackForRoleType',xpath);
+  }
+  else
+  if(document.getElementById('RoleType').value == 'UserGroupBased'){
+var request=&quot;&lt;GET_DOCUMENT Name='USER_GRP_PROFILE' ServiceName='USER_SECURITY' DirtyRead='true'>&lt;SELECT>&lt;GRP_NAME /> &lt;/SELECT>&lt;/GET_DOCUMENT>&quot;;
+var xpath = &quot;/RESPONSES/RESPONSE/USER_GRP_PROFILE/GRP_NAME&quot;;
+SendAjaxRequest(&quot;USER_SECURITY&quot;,request,'getUsersCallbackForRoleType',xpath);
+  }
+  }
+  
+  function getUsersCallbackForRoleType(node){
+
+document.form.AvailableApprovers.options.length = 0;
+document.form.AssignedApprovers.options.length = 0;
+var counter_value=0;
+var lenTemp=node.length;
+while (counter_value &lt; lenTemp)
+{
+document.form.AvailableApprovers.options[counter_value]=new Option(node[counter_value].getAttribute('Value'),node[counter_value].getAttribute('Value'), true, false);
+counter_value+=1;
+}
+
+  }
+function selectAll(visible)
+{
+for (var i=(visible.options.length-1); i&gt;=0; i--)
+{
+var o =visible.options[i];
+o.selected=true;
+}
+}
+   
+function addAll()
+{
+var active;
+var visible;
+active=document.getElementById("AvailableApprovers");
+visible=document.getElementById("AssignedApprovers");
+clearAll( active );
+clearAll( visible );
+copyAll( active.options, visible.options );
+}
+function addSelected()
+{
+var active;
+var visible;
+active=document.getElementById("AvailableApprovers");
+visible=document.getElementById("AssignedApprovers");
+copySelected( active.options, visible.options );
+for (var i=(visible.options.length-1); i&gt;=0; i--)
+{
+var o =visible.options[i];
+if (!o.selected)
+{
+o.selected=true;
+}
+}
+    
+}
+function removeAll( )
+{
+var active;
+var visible;
+active=document.getElementById("AvailableApprovers");
+visible=document.getElementById("AssignedApprovers");
+clearAll( active );
+clearAll( visible );
+copyAll( visible.options, active.options );
+}
+
+function removeSelected()
+{
+var active;
+var visible;
+active=document.getElementById("AvailableApprovers");
+visible=document.getElementById("AssignedApprovers");
+copySelected( visible.options, active.options );
+}
+
+function copySelected( from, to )
+{
+var fl = from.length;
+var tl = to.length;
+for( var i = 0; i &lt; fl; ++i ){
+var f = from[ i ];
+if( f.selected ){
+to[ tl ] = new Option( f.text, f.value );
+to[ tl++ ].selected = true;
+}
+}
+deleteSelected( from );
+}
+
+function deleteSelected( x )
+{
+var l = x.length;
+while( --l &gt;= 0 )
+if( x[ l ].selected )
+x[ l ] = null;
+}
+ 
+
+function copyAll( from, to )
+{
+var fl = from.length;
+var tl = to.length;
+for( var i = 0; i &lt; fl; ++i ){
+var f = from[ i ];
+to[ tl ] = new Option( f.text, f.value );
+to[ tl++ ].selected = true;
+}
+from.length = 0;
+}
+
+function clearAll( x )
+{
+x = x.options;
+var l = x.length;
+while( --l &gt;= 0 )
+x[ l ].selected = false;
+}
+ 
+  function onSaveUsers(){
+  
+var visible=document.getElementById(&quot;AssignedApprovers&quot;);
+  if(visible.options.length == 0)
+  {
+  core_alert_jquery('SELECT_USERS');
+  return;
+  }
+for (var i=(visible.options.length-1); i>=0; i--)
+{
+var o =visible.options[i];
+if (!o.selected)
+{
+o.selected=true;
+}
+}  
+  document.form.BUTTON_ID.value = 'SaveUsers';
+  document.form.submit();
+ }
+   
+function moveUp()
+{
+var rootTag='';
+var checkedItems = new Array();
+var checkboxElem = document.getElementsByName('SelectedPriorityId');
+for(var count=0;count&lt;checkboxElem.length;count++){
+if(checkboxElem[count].checked){
+var rootTag =checkboxElem[count].value;
+//var nextRootTag=checkboxElem[count+1].value;
+checkedItems[count]=count;}
+}
+
+if(rootTag!=''){
+var table=document.getElementById('Approval_Priority_Table_data');
+var rowsLength = table.rows.length;
+for(var count=0;count&lt;rowsLength;count++){
+if(checkedItems.contains(count)){
+if(count>0){
+//alert(count);
+//hideField('up');
+idSelected=document.getElementsByName('RuleId')[count].value;
+idSelectedUp=document.getElementsByName('RuleId')[count-1].value;
+seqSelected=document.getElementsByName('Priority')[count].value;
+seqSelectedUp=document.getElementsByName('Priority')[count-1].value;
+//alert(document.getElementsByName('SEQUENCE')[count].value);
+//alert(document.getElementsByName('SEQUENCE')[count-1].value);
+var tempId=document.getElementsByName('RuleId')[count].value;
+document.getElementsByName('RuleId')[count].value=document.getElementsByName('RuleId')[count-1].value;
+document.getElementsByName('RuleId')[count-1].value=tempId;
+//var tempSeq=document.getElementsByName('SEQUENCE')[count].value;
+//document.getElementsByName('SEQUENCE')[count].value=document.getElementsByName('SEQUENCE')[count-1].value;
+//document.getElementsByName('SEQUENCE')[count-1].value=tempSeq;
+for(var count1=0;count1&lt;table.rows[count].cells.length;count1++)
+{
+var tableHeader = document.getElementById("Approval_Priority_Table_header").rows[0].cells[count1].innerHTML.trim();
+if(tableHeader != 'Rule Priority'){
+var temp=table.rows[count].cells[count1].innerHTML;
+table.rows[count].cells[count1].innerHTML=table.rows[count-1].cells[count1].innerHTML;
+table.rows[count-1].cells[count1].innerHTML=temp;
+checkboxElem[count-1].checked=true;
+checkboxElem[count].checked=false;
+checkboxElem[count-1].onclick();
+}
+  }
+setSequenceOrder();
+}
+else{
+//hideField('up');
+}
+
+}
+}
+}
+else{
+core_alert_jquery(&quot;SELECT_FOLDER_MOVE_UP&quot;);
+}
+}
+
+function moveDown()
+{
+var rootTag='';
+var checkedItems = new Array();
+var checkboxElem = document.getElementsByName('SelectedPriorityId');
+for(var count=0;count&lt;checkboxElem.length;count++){
+if(checkboxElem[count].checked){
+var rootTag =checkboxElem[count].value;
+//var nextRootTag=checkboxElem[count+1].value;
+checkedItems[count]=count;}
+}
+if(rootTag!=''){
+var table=document.getElementById('Approval_Priority_Table_data');
+var rowsLength = table.rows.length;
+for(var count=0;count&lt;rowsLength;count++){
+if(checkedItems.contains(count)){
+   
+var maxRows=rowsLength-1;
+if(count&lt;maxRows){
+//hideField('down');
+idSelected=document.getElementsByName('RuleId')[count].value;
+idSelectedUp=document.getElementsByName('RuleId')[count+1].value;
+seqSelected=document.getElementsByName('Priority')[count].value;
+seqSelectedUp=document.getElementsByName('Priority')[count+1].value;
+var tempId=document.getElementsByName('RuleId')[count].value;
+document.getElementsByName('RuleId')[count].value=document.getElementsByName('RuleId')[count+1].value;
+document.getElementsByName('RuleId')[count+1].value=tempId;
+//var tempSeq=document.getElementsByName('SEQUENCE')[count].value;
+//document.getElementsByName('SEQUENCE')[count].value=document.getElementsByName('SEQUENCE')[count+1].value;
+//document.getElementsByName('SEQUENCE')[count+1].value=tempSeq;
+for(var count1=0;count1&lt;table.rows[count].cells.length;count1++)
+{
+  var tableHeader = document.getElementById("Approval_Priority_Table_header").rows[0].cells[count1].innerHTML.trim();
+if(tableHeader != 'Rule Priority'){
+var temp=table.rows[count].cells[count1].innerHTML;
+table.rows[count].cells[count1].innerHTML=table.rows[count+1].cells[count1].innerHTML;
+table.rows[count+1].cells[count1].innerHTML=temp;
+checkboxElem[count+1].checked=true;
+checkboxElem[count].checked=false;
+checkboxElem[count+1].onclick();
+}
+}
+setSequenceOrder();
+}
+else{
+//hideField('down');
+}
+}
+}
+}
+else{
+core_alert_jquery(&quot;SELECT_FOLDER_MOVE_DOWN&quot;);
+}
+}
+
+function setSequenceOrder()
+{
+var service_name = &quot;ADMIN_UI&quot;;
+var request= &quot;&lt;REQUEST Name='setPriorityOrder' ServiceName='ADMIN_UI' AssignToVar='setOrder'>&lt;Selected_Rule Value='&quot;+idSelected+&quot;' />&lt;Swap_Rule Value='&quot;+idSelectedUp+&quot;' />&lt;Selected_Priority Value='&quot;+seqSelected+&quot;' />&lt;Swap_Priority Value='&quot;+seqSelectedUp+&quot;' />&lt;/REQUEST>&quot;
+var xpath = &quot;/RESPONSES/RESPONSE/StatusFlagVal&quot;;
+SendAjaxRequest(service_name,request,'getOrderCallback',xpath);
+}
+
+function getOrderCallback(node)
+{
+var test;
+test=node[0].getAttribute(&quot;Value&quot;);
+
+if(test==&quot;TRUE&quot;)
+{
+//toggleDisplayField('validityChk_td','show');
+//alert(&quot;swapped&quot;)
+//showField('up');
+//showField('down');
+}
+else
+{
+//toggleDisplayField('validityChk_td','hide');
+//alert(&quot;not swapped zzz&quot;)
+}
+}
+  
+Array.prototype.contains = function(obj) {     var i = this.length;     while (i--) {         if (this[i] == obj) {             return true;         }     }     return false; }
+  
+function onShow(value){
+  
+var node = value;
+var ruleString = node.getElementsByTagName('a')[0].title;
+ruleString = ruleString.replace('&quot;','\'');
+showClob(ruleString);
+  
+}
+</ui:script>
+</ui:page-group>
+
+
+

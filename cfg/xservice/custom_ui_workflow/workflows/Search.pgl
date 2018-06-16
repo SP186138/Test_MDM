@@ -1,0 +1,465 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" Id="Node4.pgl">
+  <ui:container id="topContainer" showFavorite="{$root/fromHierarchy/@Value}" scrollable="true">
+    <ui:header>
+      <ui:link onClick="javascript:onShowHistory();" id="ShowHistory" displayCondition="{$root/DATA/IsTemporalTable/@Value}">
+        <ui:image src="{$root/DATA/showHistoryImage/@Value}" displayText="{$root/DATA/showHistoryText/@Value}"/>
+      </ui:link>
+      <ui:link id="downloadTemplate" displayCondition="{$root/downloadTemplate/@Value}" onClick="javascript:templateClick(event)">
+        <ui:image src="/default_template.gif" displayText="Download Template"/>
+      </ui:link>
+      <ui:entry-field id="filterName" name="filterName" value="{$root/filterName/@Value}" displayCondition="{$root/filterDet/@Value='1'}" displayText="Filter Name">
+      </ui:entry-field>
+      <ui:link onClick="javascript:onSaveFilter()" displayCondition="{$root/filterDet/@Value='1'}">
+        <ui:image src="/btn_saveas_1.gif" displayText="Save Filter"/>
+      </ui:link>
+      <ui:link onClick="javascript:onFilter();" id="filterGif">
+        <ui:image src="/filter.gif" displayText="Advanced Filter"/>
+      </ui:link>
+      <ui:link id="whereUsed" displayCondition="{$root/whereUsed/@Value}" onClick="javascript:onWhereUsed();">
+        <ui:image src="/batch_defintion.gif" displayText="Where Used"/>
+      </ui:link>
+    </ui:header>
+    <ui:help displayPage="{$root/DATA/helpPage/@Value}"/>
+    <ui:step id="tempStep" displayText="{$root/DATA/workflowName/@Value}">
+      <ui:field-group displayCondition="{$root/downloadTemplate/@Value}">
+        <ui:hidden-field id="URL_V" name="URL_V" value="{$root/URL_V/@Value}"/>
+      </ui:field-group>
+      <ui:field-group columns="3">
+		<ui:hidden-field id="SELECTED_EXPORT_ID" name="SELECTED_EXPORT_ID"/>
+        <ui:image id="AlertGreenIcon" src="/alert_green_static.gif" displayCondition="{string-length($root/alertGreen/@Value) != 0}" displayText="Success"/>
+        <ui:display-field id="AlertGreen" value="{$root/alertGreen/@Value}" displayCondition="{string-length($root/alertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen"/>
+        <ui:image id="AlertRedIcon" src="/alert_static.gif" displayCondition="{string-length($root/alertRed/@Value) != 0}" displayText="Error"/>
+        <ui:display-field id="AlertRed" value="{$root/alertRed/@Value}" displayCondition="{string-length($root/alertRed/@Value) != 0}" name="error"/>
+        <ui:image id="AlertWarningIcon" src="/warning.gif" displayCondition="{string-length($root/warning/@Value) != 0}" displayText="Error"/>
+        <ui:display-field id="AlertWarning" value="{$root/warning/@Value}" displayCondition="{string-length($root/warning/@Value) != 0}" name="warning"/>
+        <ui:hidden-field name="showHistory" id="showHistory" value="{$root/DATA/showHistory/@Value}"/>
+        <ui:hidden-field name="hideHistory" id="hideHistory" value="{$root/DATA/hideHistory/@Value}"/>
+        <ui:hidden-field id="joinFlag" name="joinFlag" value="{$root/joinFlag/@Value}"/>
+        <ui:hidden-field id="EXPORT_TABLE_ALL_RECORDS" name="EXPORT_TABLE_ALL_RECORDS" value="yes"/>
+        <ui:hidden-field id="TotalRowCount" name="TotalRowCount" value="{$root/totalRowCount/@Value}"/>
+        <ui:hidden-field id="customButtonId" name="customButtonId"/>
+        <ui:hidden-field id="linkUrl" name="linkUrl"/>
+        <ui:hidden-field id="deleteAllVar" name="deleteAllVar"/>
+        <ui:hidden-field id="massUpdateAllVar" name="massUpdateAllVar"/>
+        <ui:hidden-field id="actionButton" name="actionButton" value="{$root/actionButton/@Value}"/>
+      </ui:field-group>
+      <ui:dynamic-pgl select="$root/PGL/*"/>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+var showHistory = document.form.showHistory.value;
+$( document ).ready(function() { 
+$('#crumbs').hide();
+});
+    
+function processLink(url){
+document.getElementById('linkUrl').value = url.href;
+grayOut(true);
+document.form.BUTTON_ID.value = 'tableNode';
+document.form.submit();
+ }
+
+function templateClick(event){ 
+    
+var $img = $('img[src=&quot;'+omxContextPath+'/td/images/default_template.gif&quot;]');
+var offset = $img.offset();
+var pos = (offset.left -60);
+var posTop = (offset.top);
+var div = document.createElement(&quot;div&quot;)
+div.setAttribute('id', 'tempMenu');
+div.setAttribute('class', 'sortMenu');   
+if(typeof $img[0] != 'undefined'  &amp;&amp;  $img[0] !=  null ){
+	div.setAttribute('style','position: fixed; visibility: visible; left:'+ pos+'px; top:'+posTop +'px; ')
+	div.innerHTML  = '&lt;table border=&quot;1&quot; cellspacing=&quot;0&quot; cellpadding=&quot;0&quot;> &lt;tbody>&lt;tr class=&quot;menuUnhighlighted&quot;>&lt;td class=&quot;menuShadow&quot;> &lt;table border=&quot;0&quot; cellspacing=&quot;2&quot; cellpadding=&quot;0&quot;> &lt;tbody>&lt;tr class=&quot;menuUnhighlighted&quot;> &lt;td class=&quot;menuText&quot; nowrap=&quot;yes&quot; colspan=&quot;2&quot;> &lt;a href=&quot;javascript:templateSelected(1)&quot;>&amp;nbsp;&amp;nbsp;Excel&amp;nbsp;&amp;nbsp; &lt;/a> &lt;/td> &lt;/tr> &lt;tr class=&quot;menuUnhighlighted&quot;> &lt;td class=&quot;menuText&quot; nowrap=&quot;yes&quot; colspan=&quot;2&quot;> &lt;a href=&quot;javascript:templateSelected(2)&quot;>&amp;nbsp;&amp;nbsp;XML&amp;nbsp;&amp;nbsp; &lt;/a> &lt;/td> &lt;/tr> &lt;/tbody>&lt;/table> &lt;/td> &lt;/tr> &lt;/tbody>&lt;/table>'
+	document.getElementById('tempStep').parentNode.appendChild(div);
+}
+var templateMenu = document.getElementById('tempMenu');
+$('#tempMenu').show();
+if (event &amp;&amp; event.stopPropagation) {
+event.stopPropagation();
+}
+else if (window.event){
+window.event.cancelBubble = true;
+}
+}
+function onCustomDone(doneButtonId){
+document.getElementById('customButtonId').value =doneButtonId.id;
+grayOut(true);
+document.form.BUTTON_ID.value = 'Done';
+document.form.submit();
+}
+function templateSelected(val) {
+var template='xml';
+if(val==1)
+template='xlsx';
+var url=document.getElementById('URL_V').value+template+'&amp;FORMAT_TYPE='+template;
+$("div[id='tempMenu']").remove()
+var prevAction = document.form.action;
+var prevTarget = document.form.target;
+document.form.target = &quot;hiddenDownloader&quot;;
+document.form.action=url;
+document.form.submitWholePage();
+document.form.target = prevTarget;
+document.form.action= prevAction;
+}
+    
+$('body').click(function(event) {
+$("div[id='tempMenu']").remove()
+if (event &amp;&amp; event.stopPropagation) {
+event.stopPropagation();
+}
+else if (window.event){
+window.event.stopPropagation();
+}
+});
+    
+$( document ).ready(function() {
+
+$(&quot;form&quot;).each(function(){
+if(this.enctype=='multipart/form-data')
+{
+$(this).removeAttr('enctype');
+}
+});
+try {document.getElementsByName('SAVED_SEARCH_NAME')[0].value='default'; } catch(Err) {}
+});
+    
+function onFilter()
+{
+grayOut(true);
+document.form.BUTTON_ID.value = 'advancedFilter';
+document.form.submit();
+}
+    
+function onSaveFilter()
+{
+grayOut(true);
+document.form.BUTTON_ID.value = 'saveFilter';
+document.form.submit();
+}
+
+function onClear()
+{
+grayOut(true);
+for (var i = 0; i&lt;document.form.elements.length; i++)
+{
+var selectedElem = document.form.elements[i];
+if ((selectedElem.name.indexOf('FILTER_') > -1))
+{
+selectedElem.value='';
+}
+}
+document.form.BUTTON_ID.value = 'Clear';
+document.form.action = 'view.x2ps';
+document.form.submit();
+
+}
+       
+function onLoad()
+{
+if(msieversion() == 8 )
+	$('#searchResults_data').html($('#searchResults_data').html().replace(/\&amp;amp/g,"").replace(/\;apos;/g,"'"));
+    
+if(document.getElementById('actionButton').value !="searchRecord")
+{
+	if($('input[name=&quot;ID&quot;]').length != $('input[name=&quot;ID&quot;]:checked').length){
+		$('input[name=&quot;ID&quot;][type=&quot;hidden&quot;]').remove();
+    }
+}
+onLoadSuper();
+onResize();
+}
+function onDelete()
+{
+//if(checkSelectedOne())
+//{
+if($('#searchResults_globalrowselector').prop('checked'))
+{
+core_confirm_jquery(&quot;CONFIGURABLE_RT_ALL_DELETE_CONFIRM&quot;,&quot;onDeleteAllCallback&quot;);
+}
+else
+core_confirm_jquery('CONFIGURABLE_RT_DELETE_CONFIRM','onDeleteCallback');
+//}
+}
+function onDeleteCallback(response)
+{
+if( response == 'yes' )
+{
+document.form.BUTTON_ID.value = 'Delete';
+document.form.deleteAllVar.value='';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+}
+}
+function onDeleteAllCallback(response)
+{
+if( response == 'yes' )
+{
+document.form.BUTTON_ID.value = 'Delete';
+document.form.deleteAllVar.value='DeleteAll';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+}
+else
+{
+document.form.BUTTON_ID.value = 'Delete';
+document.form.deleteAllVar.value='';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+}
+}
+    
+function onMassUpdate()
+{
+//if(checkSelectedOne())
+//{
+if($('#searchResults_globalrowselector').prop('checked'))
+{
+core_confirm_jquery(&quot;CONFIGURABLE_RT_ALL_MASSUPDATE_CONFIRM&quot;,&quot;onMassUpdateAllCallback&quot;);
+}
+else
+core_confirm_jquery('CONFIGURABLE_RT_MASSUPDATE_CONFIRM','onMassUpdateCallback');
+//}
+}
+function onMassUpdateCallback(response)
+{
+if( response == 'yes' )
+{
+document.form.BUTTON_ID.value = 'MassUpdate';
+document.form.massUpdateAllVar.value='';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+}
+}
+function onMassUpdateAllCallback(response)
+{
+if( response == 'yes' )
+{
+document.form.BUTTON_ID.value = 'MassUpdate';
+document.form.massUpdateAllVar.value='MassUpdateAll';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+}
+else
+{
+document.form.BUTTON_ID.value = 'MassUpdate';
+document.form.massUpdateAllVar.value='';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+}
+}
+    
+function onEdit()
+{
+var joinFlag = $("#joinFlag").val();
+var editFlag= true;
+ if(joinFlag === "true"){
+	editFlag = checkSelectedOne()
+}
+if(editFlag){
+document.form.BUTTON_ID.value = 'Edit';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+}
+}
+    
+function onCopy()
+{
+if(checkSelectedOne())
+{
+document.form.BUTTON_ID.value = 'Copy';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+}
+}
+function onWhereUsed()
+{
+if(checkSelectedOne())
+{
+document.form.BUTTON_ID.value = 'whereUsed';
+document.form.submit();
+grayOut(true);
+}
+}
+function checkSelectedOne()
+{
+var selectedRowCount = 0;
+for(i = 0; i &lt; document.form.elements.length; i++)
+{
+if(document.form.elements[i].name == 'ID' &amp;&amp; document.form.elements[i].checked )
+selectedRowCount++;
+}
+if(selectedRowCount > 1)
+{
+core_alert_jquery(&quot;PLEASE_SELECT_ONLY_ONE_TRANSACTION&quot;);
+return false;
+}
+else  if(selectedRowCount ==0)
+{
+core_alert_jquery('PLZ_SELECT_ROW');
+return false;
+}
+else
+{
+return true;
+}
+}
+
+function onShowHistory()
+{
+if((showHistory.indexOf('true')!=-1)||hideHistory.value==&quot;true&quot;){
+if(showHistory === 'false' || checkSelectedOne()) {
+document.form.BUTTON_ID.value = 'ShowHistory';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+}
+} else {
+document.form.BUTTON_ID.value = 'ShowHistory';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+}
+}
+function hideFields(){
+toggleField1('AlertGreenIcon','hide');
+toggleField('AlertGreen','hide');
+toggleField1('AlertRedIcon','hide');
+toggleField('AlertRed','hide');
+toggleField1('AlertWarningIcon','hide');
+toggleField('AlertWarning','hide');
+}
+
+function toggleField1(id,state)
+{
+fieldCell  = document.getElementById(id);
+if(fieldCell!=null){
+fieldRow = fieldCell.parentNode;
+toggleItemVisibility(fieldRow, state);
+
+var i = document.getElementById(id);
+if(i!=null)
+if (state==&quot;hide&quot;)
+{
+i.disabled = true;
+}
+else
+{
+i.disabled = false;
+i.enabled = true;
+}
+}
+}
+function toggleField(id,state)
+{
+fieldCell  = document.getElementById(id + '_td');
+if(fieldCell!=null){
+fieldRow = fieldCell.parentNode;
+toggleItemVisibility(fieldRow, state);
+}
+var i = document.getElementById(id);
+if(i!=null)
+if (state==&quot;hide&quot;)
+{
+i.disabled = true;
+}
+else
+{
+i.disabled = false;
+i.enabled = true;
+}
+}
+    
+var table_export_tableId,table_export_horizontal, table_export_where;
+function table_export(tableId,horizontal, where)
+{
+	table_export_tableId = tableId;
+	table_export_horizontal = table_export_horizontal;
+	table_export_where = where;
+	$('#SELECTED_EXPORT_ID').val('');
+	if($('#searchResults_globalrowselector').prop('checked')){
+		core_confirm_jquery(&quot;Click Yes to export all the records, click No to export current page records.&quot;,&quot;tableExportCallBack&quot;);
+	}
+	else{
+		var obj = $('input[name=&quot;ID&quot;]');
+		var compList = '';
+    	var flag = false;
+		jQuery.each(obj,function(i,eachOption){
+			if($(eachOption).prop('checked')){				
+    			compList += i+',';
+    			flag = true;
+		    }
+		});
+    	if(flag){
+			$('#SELECTED_EXPORT_ID').val(compList);
+			tableExportCallBack("no");
+	    }
+    	else {
+    				core_alert_jquery('PLZ_SELECT_ROW');
+    				return;
+	    }
+	}
+}
+
+
+
+   function onCallCustomButton(url,buttonId)
+{
+	$("*").each(function(){
+		if($(this).attr('name')!=null &amp;&amp; typeof $(this).attr('name')!='undefined' &amp;&amp; $(this).attr('name').indexOf('FILTER_')==0 )
+    			$(this).remove();
+});
+document.form.action = url;
+document.form.BUTTON_ID.value=buttonId;
+document.form.submit();
+}
+
+    
+function exportTablePGL(tableId,EXPORT_ALL)
+    {
+    
+	if(EXPORT_ALL === 'yes'){
+		var numbRecords = document.getElementById('TotalRowCount').value;  
+		if(1000000 &lt; numbRecords)
+    	{
+			core_alert_jquery('PLZ_SELECT_LESS_NO_RECORDS');
+			return;
+		}
+    }
+	var pageId = document.form.PAGE_NAME.value;
+
+	var prevAction = document.form.action;
+	var prevTarget = document.form.target;
+    
+	if(document.form.MAX_ROWS)
+	{
+		var prevMaxRows = document.form.MAX_ROWS.value;
+		var max = page_maxRowsExportable;
+		document.form.MAX_ROWS.value = document.form.RECORD_COUNT.value;
+	}
+
+	document.form.BUTTON_ID.value = "SYS_RELOAD";
+	
+		   
+	document.form.target = "hiddenDownloader";
+	document.form.action=omxContextPath+ "/ConfigUIExportDataServlet?FILTER_ID="+ tableId+"&amp;PAGE_ID="+pageId+"&amp;EXPORT_ALL="+EXPORT_ALL;
+    document.form.submitWholePage();
+
+	document.form.action= prevAction;
+	document.form.target= prevTarget;
+	if(document.form.MAX_ROWS)
+	{
+		document.form.MAX_ROWS.value= prevMaxRows;
+	}
+    
+  }
+</ui:script>
+</ui:page-group>

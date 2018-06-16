@@ -1,0 +1,78 @@
+/***********************************************************************************************************
+SCRIPT:               CNSMR_AFFLTN_STG_INS.BTEQ 
+DESCRIPTION:          This script validates the records received from ETL Staging.
+DEPENDENCY:           
+INPUT:                ETL Staging
+OUTPUT:               MST Staging
+ERRORS:
+SPECIAL INSTRUCTIONS:
+
+CHANGE LOG:
+VERSION              DATE                 AUTHOR                          CHANGES
+1.00                 01/21/2011           TERADATA                        INITIAL VERSION
+2.00                 08/22/2011           TERADATA                        Change OF Failure-BadFile
+3.00                 10/31/2011           TERADATA                        Removal of Deletes as  part of ||elism
+4.00                 03/26/2012		  TERADATA                        Made change in insert to LOAD_INFO to
+                                                                          manipulate LA data
+***********************************************************************************************************/
+
+.logon $TDPID/$TDUSER,$TDPWD
+ 
+.SET ERROROUT STDOUT;
+.SET SESSION CHARSET 'UTF8';
+.SET ERRORLEVEL 3624 SEVERITY 0
+
+INSERT INTO CNSMR_AFFLTN_STG
+(
+MKTNG_PGM_NBR, 
+REGIS_CNSMR_ID_VAL, 
+CNSMR_GRP_NBR, 
+AFFLTN_START_DATE, 
+AFFLTN_END_DATE, 
+RECORD_IND, 
+LOAD_ID, 
+LOAD_TS, 
+MDM_LOAD_IND,
+SYNC_STATUS,
+SYS_TARGET_ID,
+SYS_SOURCE,
+SYS_NC_TYPE,
+SYS_CREATION_DATE
+)
+SELECT 
+STG.MKTNG_PGM_NBR, 
+STG.REGIS_CNSMR_ID_VAL, 
+STG.CNSMR_GRP_NBR, 
+STG.AFFLTN_START_DATE, 
+STG.AFFLTN_END_DATE, 
+STG.RECORD_IND, 
+STG.LOAD_ID, 
+STG.LOAD_TS, 
+STG.MDM_LOAD_IND,
+'VALIDATED',
+b.SOURCE_ID,
+TRIM(CAST(STG.LOAD_ID AS INTEGER)),
+CASE WHEN (STG.RECORD_IND='I')
+THEN 'INSERT'
+ELSE 'UPDATE'
+END,
+STG.LOAD_TS
+FROM $ETL_DB.CNSMR_AFFLTN_STG STG
+INNER JOIN
+LOAD_CONTROL B
+ON
+STG.LOAD_ID = B.LOAD_ID
+AND B.LOAD_TYPE='ETL'
+
+WHERE
+(STG.MKTNG_PGM_NBR ,STG.REGIS_CNSMR_ID_VAL ,STG.LOAD_ID)
+NOT IN
+(SEL MKTNG_PGM_NBR ,REGIS_CNSMR_ID_VAL ,LOAD_ID FROM VALIDATION_ERR_$BTCH GROUP BY 1,2,3)
+AND stg.LOAD_ID IN (SEL LOAD_ID FROM VALIDATION_$BTCH)
+QUALIFY RANK() OVER(PARTITION BY STG.MKTNG_PGM_NBR,STG.REGIS_CNSMR_ID_VAL,b.SOURCE_ID
+ORDER BY STG.LOAD_ID DESC) = 1;
+.IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE
+
+.exit
+
+

@@ -1,0 +1,1698 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="18" ShowInBreadCrumbs="true" Version="1.0" Name="wfAgency" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="wfAgency">
+    <variable Name="alertMsg" Type="xml" Comment=""/>
+    <variable Name="agencyNumber" Type="string" Comment=""/>
+    <variable Name="CNTRY_CODE" Type="string" Comment=""/>
+    <variable Name="CNTRY_NAME" Type="string" Comment=""/>
+    <variable Name="countryNames" Type="xml" Comment=""/>
+    <variable Name="AGNCY_STATUS_CD" Type="string" Comment=""/>
+    <variable Name="AGNCY_STATUS_NM" Type="string" Comment=""/>
+    <variable Name="DATA_CLCTN_TYPE_CD" Type="string" Comment=""/>
+    <variable Name="DATA_CLCTN_TYPE_NM" Type="string" Comment=""/>
+    <variable Name="thisParamCopy" Type="xml" Comment=""/>
+    <variable Name="AGNCY_INTFC_ID" Type="string" Comment=""/>
+    <variable Name="mapMKTNGPGMNBR" Type="string" Comment=""/>
+    <variable Name="mapLEGALENTNBR" Type="string" Comment=""/>
+    <variable Name="Select_Cntct_Nbr" Type="string" Comment=""/>
+    <variable Name="AGNCY_NM" Type="string" Comment=""/>
+    <variable Name="AGNCY_DESC" Type="string" Comment=""/>
+    <variable Name="REQSTD_DT" Type="string" Comment=""/>
+    <variable Name="ACTV_DT" Type="string" Comment=""/>
+    <variable Name="AGNCY_BUS_NM" Type="string" Comment=""/>
+    <variable Name="SR_NBR" Type="string" Comment=""/>
+    <variable Name="DMG_IND" Type="string" Comment=""/>
+    <variable Name="EXTRNL_AGNCY_ID" Type="string" Comment=""/>
+    <variable Name="SPLR_IND" Type="string" Comment=""/>
+    <variable Name="TRNS_IND" Type="string" Comment=""/>
+    <variable Name="GRS_IND" Type="string" Comment=""/>
+    <variable Name="AGNCY_CNSMR_FCNG_NM" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start0">
+      <actions/>
+      <next_nodes>
+        <next_node Name="Agency"/>
+      </next_nodes>
+    </start>
+    <done Name="done1">
+      <actions/>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="Agency" ShowInBreadCrumbs="SHOW" Template="Agency.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Save_and_Return_CNTCT'">
+            <THEN>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <Country_Setup Value="true"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Save_and_Return_CNTCT' or $thisParam/BUTTON_ID/@Value='SaveAndReturn_Country' or $thisParam/BUTTON_ID/@Value='SaveAndReturn_Contact' or $thisParam/BUTTON_ID/@Value='Save_and_Return_IP' or $this/Param/BUTTON_ID/@Value='Save_and_Return_MKTNG' or $thisParam/BUTTON_ID/@Value='Save_and_Return_MKTNG' or $thisParam/BUTTON_ID/@Value='SaveAndReturn_MKTNG_Contact' or $thisParam/BUTTON_ID/@Value='SaveAndReturn_agency_Contact' or $thisParam/BUTTON_ID/@Value='Save_and_Return_INTRFC'">
+            <THEN>
+              <APPEND_TO_XML DocVar="pglFormInput">
+                <Add_Agency_IP Value="true"/>
+                <MKTNG_PGM_STP Value="true"/>
+                <Interface_Setup Value="true"/>
+                <AGNCY_CNTNT_STP Value="true"/>
+                <TO_XML SelectList="$thisParamCopy/*"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="getStatusName">
+            <root>LOCKING ROW FOR ACCESS
+SEL AGNCY_STATUS_CD, AGNCY_STATUS_NM
+FROM AGNCY_STATUS;</root>
+          </TO_DOCVAR>
+          <EXECUTE_SQL_QUERY AssignToVar="statusName" Value="{$getStatusName/@text}"/>
+          <SET_NAME SelectList="$statusName/SQL_RESULT" FromValue="AGNCY_STATUS"/>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <TO_XML SelectList="$statusName/*"/>
+          </APPEND_TO_XML>
+          <SET Var="AGNCY_STATUS_CD" FromValue="{$statusName/AGNCY_STATUS[AGNCY_STATUS_NM/@Value=$thisParam/AGNCY_STATUS_CD/@Value]/AGNCY_STATUS_CD/@Value}"/>
+          <SET Var="AGNCY_STATUS_NM" FromValue="{$thisParam/AGNCY_STATUS_CD/@Value}"/>
+          <IF_TEST Test="$userAction='Save'">
+            <THEN>
+              <CREATE_DOCUMENT_ID Name="AGNCY" AssignToVar="agencyNumber"/>
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="varAgency" DocumentName="AGNCY" ServiceName="BCM_MASTER" HandleException="true">
+                <AGNCY_NBR Value="{$agencyNumber}"/>
+                <AGNCY_NM Value="{$thisParam/AGNCY_NM/@Value}"/>
+                <AGNCY_DESC Value="{$thisParam/AGNCY_DESC/@Value}"/>
+                <AGNCY_BUS_NM Value="{$thisParam/AGNCY_BUS_NM/@Value}"/>
+                <ACTV_DT Value="{$thisParam/ACTV_DT/@Value}"/>
+                <REQSTD_DT Value="{$thisParam/REQSTD_DT/@Value}"/>
+                <AGNCY_STATUS_CD Value="{$AGNCY_STATUS_CD}"/>
+                <SR_NBR Value="{$thisParam/SR_NBR/@Value}"/>
+                <DMG_IND Value="{$thisParam/DMG_IND/@Value}"/>
+                <EXTRNL_AGNCY_ID Value="{$thisParam/EXTRNL_AGNCY_ID/@Value}"/>
+                <RQSTR_CNTCT_NBR Value="{$thisParam/RQSTR_CNTCT_NBR/@Value}"/>
+                <SPLR_IND Value="{$thisParam/SPLR_IND/@Value}"/>
+                <TRNS_IND Value="{$thisParam/TRNS_IND/@Value}"/>
+                <GRS_IND Value="{$thisParam/GRS_IND/@Value}"/>
+                <AGNCY_CNSMR_FCNG_NM Value="{$thisParam/AGNCY_CNSMR_FCNG_NM/@Value}"/>
+                <BUSN_NOTES Value="{$thisParam/BUSN_NOTES/@Value}"/>
+              </DO_DB_PERSIST>
+              <IF_TEST Test="$varAgency/@Status='Success' and $varAgency/VALIDATION_RESULT/@Value='SUCCESS'">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="thisParamCopy">
+                    <TO_XML SelectList="$thisParam"/>
+                  </TO_DOCVAR>
+                  <SET Var="alertGreen" FromValue="Agency with AGENCY NUMBER {$agencyNumber} Created Successfully !!"/>
+                  <SET Var="alertRed" FromValue=""/>
+                  <APPEND_TO_XML DocVar="pglFormInput">
+                    <!--<Country_Setup Value="true"/>-->
+                    <Add_Agency_IP Value="true"/>
+                    <MKTNG_PGM_STP Value="true"/>
+                    <Interface_Setup Value="true"/>
+                    <AGNCY_CNTNT_STP Value="true"/>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$varAgency/@Status='Error' or $varAgency/@Status='ERROR'">
+                    <THEN>
+                      <SET Var="alertGreen" FromValue=""/>
+                      <SET Var="alertRed" FromValue="{$varAgency/@Description}"/>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="$varAgency/VALIDATION_RESULT/@Value='Error' or $varAgency/VALIDATION_RESULT/@Value='ERROR'">
+                    <THEN>
+                      <SET Var="alertGreen" FromValue=""/>
+                      <SET Var="alertRed" FromValue="{$varAgency/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                    </THEN>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="alertMsg">
+                <MSG>
+                  <AlertGreen Value="{$alertGreen/@Value}"/>
+                  <AlertRed Value="{$alertRed/@Value}"/>
+                </MSG>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$alertMsg"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$thisParam/*"/>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <RQSTR_CNTCT_NBR Value="{$Select_Cntct_Nbr}"/>
+            <AGNCY_NM Value="{$AGNCY_NM}"/>
+            <AGNCY_DESC Value="{$AGNCY_DESC}"/>
+            <AGNCY_BUS_NM Value="{$AGNCY_BUS_NM}"/>
+            <ACTV_DT Value="{$ACTV_DT}"/>
+            <REQSTD_DT Value="{$REQSTD_DT}"/>
+            <AGNCY_STATUS_CD Value="{$AGNCY_STATUS_CD}"/>
+            <SR_NBR Value="{$SR_NBR}"/>
+            <DMG_IND Value="{$DMG_IND}"/>
+            <EXTRNL_AGNCY_ID Value="{$EXTRNL_AGNCY_ID}"/>
+            <SPLR_IND Value="{$SPLR_IND}"/>
+            <TRNS_IND Value="{$TRNS_IND}"/>
+            <GRS_IND Value="{$GRS_IND}"/>
+            <AGNCY_CNSMR_FCNG_NM Value="{$AGNCY_CNSMR_FCNG_NM}"/>
+          </APPEND_TO_XML>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="AGNCY_NM" FromValue="{$thisParam/AGNCY_NM/@Value}"/>
+          <SET Var="AGNCY_DESC" FromValue="{$thisParam/AGNCY_DESC/@Value}"/>
+          <SET Var="AGNCY_BUS_NM" FromValue="{$thisParam/AGNCY_BUS_NM/@Value}"/>
+          <SET Var="REQSTD_DT" FromValue="{$thisParam/REQSTD_DT/@Value}"/>
+          <SET Var="ACTV_DT" FromValue="{$thisParam/ACTV_DT/@Value}"/>
+          <SET Var="AGNCY_STATUS_CD" FromValue="{$thisParam/AGNCY_STATUS_CD/@Value}"/>
+          <SET Var="SR_NBR" FromValue="{$thisParam/SR_NBR/@Value}"/>
+          <SET Var="DMG_IND" FromValue="{$thisParam/DMG_IND/@Value}"/>
+          <SET Var="EXTRNL_AGNCY_ID" FromValue="{$thisParam/EXTRNL_AGNCY_ID/@Value}"/>
+          <SET Var="SPLR_IND" FromValue="{$thisParam/SPLR_IND/@Value}"/>
+          <SET Var="TRNS_IND" FromValue="{$thisParam/TRNS_IND/@Value}"/>
+          <SET Var="GRS_IND" FromValue="{$thisParam/GRS_IND/@Value}"/>
+          <SET Var="AGNCY_CNSMR_FCNG_NM" FromValue="{$thisParam/AGNCY_CNSMR_FCNG_NM/@Value}"/>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Excel_Upload'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Save'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Agency" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='select_RQSTR_CNTCT_NBR'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="sub_workflow18" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='AGNCY_CNTNT_STP'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Country_Setup'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ContactCountry" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Add_Agency_IP'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="AgencyIP" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='MKTNG_PGM_STP'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="AgencyMarketingProgram" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Interface_Setup'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="AgencyInterface" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Upload'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="UploadFromTE" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="AgencyContactSetup" Description=""/>
+          <next_node Name="done1" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="AgencyContact" Description="AgencyContact" ShowInBreadCrumbs="SHOW" Template="AgencyContact.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <SET Var="alertGreen" FromValue=""/>
+          <SET Var="alertRed" FromValue=""/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <AGNCY_NBR Value="{$agencyNumber}"/>
+              <CNTRY_CODE Value="{$CNTRY_NAME}"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='select_and_return' and $thisParam/PAGE/@Value='BCM_MASTER.wfAgency.CountryContactLookup.pgl'">
+            <THEN>
+              <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$thisReturn/*"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='Save_Contact'">
+            <THEN>
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="addContact" DocumentName="AGNCY_CNTRY_CNTCT" ServiceName="BCM_MASTER" Source="EXTERNAL" HandleException="true">
+                <AGNCY_NBR Value="{$agencyNumber}"/>
+                <CNTRY_CODE Value="{$CNTRY_CODE}"/>
+                <CNTCT_NBR Value="{$thisParam/CNTCT_NBR/@Value}"/>
+              </DO_DB_PERSIST>
+              <!--<ADD_DOC_SMART AssignToVar="addContact" Name="AGNCY_CNTRY_CNTCT" ServiceName="BCM_MASTER" HandleException="true">
+                <AGNCY_NBR Value="{$agencyNumber}"/>
+                <CNTRY_CODE Value="{$CNTRY_CODE}"/>
+                <CNTCT_NBR Value="{$thisParam/CNTCT_NBR/@Value}"/>
+              </ADD_DOC_SMART>-->
+              <IF_TEST Test="$addContact/@Status='Success'">
+                <THEN>
+                  <IF_TEST Test="$addContact/VALIDATION_RESULT/@Value='SUCCESS'">
+                    <THEN>
+                      <SET Var="alertGreen" FromValue="Country Contact for AGENCY NUMBER {$agencyNumber} and COUNTRY {$CNTRY_NAME} has been setup Successfully!!"/>
+                      <SET Var="alertRed" FromValue=""/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="alertGreen" FromValue=""/>
+                      <SET Var="alertRed" FromValue="{$addContact/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertGreen" FromValue=""/>
+                  <SET Var="alertRed" FromValue="{$addContact/@Description}"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="alertMsg">
+            <MSG>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </MSG>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$alertMsg"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$thisParam/*"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction='SaveAndReturn_Contact'">
+            <THEN>
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="addContact" DocumentName="AGNCY_CNTRY_CNTCT" ServiceName="BCM_MASTER" Source="EXTERNAL" HandleException="true">
+                <AGNCY_NBR Value="{$agencyNumber}"/>
+                <CNTRY_CODE Value="{$CNTRY_CODE}"/>
+                <CNTCT_NBR Value="{$thisParam/CNTCT_NBR/@Value}"/>
+              </DO_DB_PERSIST>
+              <!--<ADD_DOC_SMART AssignToVar="addContact" Name="AGNCY_CNTRY_CNTCT" ServiceName="BCM_MASTER" HandleException="true">
+                <AGNCY_NBR Value="{$agencyNumber}"/>
+                <CNTRY_CODE Value="{$CNTRY_CODE}"/>
+                <CNTCT_NBR Value="{$thisParam/CNTCT_NBR/@Value}"/>
+              </ADD_DOC_SMART>-->
+              <IF_TEST Test="$addContact/@Status='Success'">
+                <THEN>
+                  <IF_TEST Test="$addContact/VALIDATION_RESULT/@Value='SUCCESS'">
+                    <THEN>
+                      <SET Var="alertGreen" FromValue="Country Contact for AGENCY NUMBER {$agencyNumber} and COUNTRY {$CNTRY_NAME} has been setup Successfully!!"/>
+                      <SET Var="alertRed" FromValue=""/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="alertGreen" FromValue=""/>
+                      <SET Var="alertRed" FromValue="{$addContact/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertGreen" FromValue=""/>
+                  <SET Var="alertRed" FromValue="{$addContact/@Description}"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="alertMsg">
+            <MSG>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </MSG>
+          </TO_DOCVAR>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='LinkToContact'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="CountryContactLookup" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Save_Contact'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="AgencyContact" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SaveAndReturn_Contact'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Agency" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="AgencyContactLookup" ShowInBreadCrumbs="SHOW" Template="AgencyContactLookup.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <SET Var="startRow2" FromValue="{$thisParam/START_COUNT/@Value}"/>
+          <TO_DOCVAR AssignToVar="filter">
+            <filter/>
+          </TO_DOCVAR>
+          <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filter">
+            <FILTER_CNTCT_NBR/>
+            <FILTER_FIRST_NM/>
+            <FILTER_LAST_NM/>
+            <FILTER_ADDR_LINE_1_TXT/>
+            <FILTER_ADDR_LINE_2_TXT/>
+            <FILTER_ADDR_LINE_3_TXT/>
+            <FILTER_CITY_NAME/>
+            <FILTER_POSTL_AREA_CODE/>
+            <FILTER_FULL_PHONE_NUM/>
+            <FILTER_EMAIL_ADDR_TXT/>
+            <FILTER_TERR_NAME/>
+            <FILTER_CNTRY_CODE/>
+            <FILTER_SR_NBR/>
+          </FORM_SEARCH_FILTER>
+          <FOR_EACH SelectList="$filter/*/*" CurrentElement="currentSearchColumn">
+            <SET_NAME DocVar="currentSearchColumn" FromValue="{substringAfter($currentSearchColumn/name(),'FILTER_')}"/>
+          </FOR_EACH>
+          <GET_DOC_SMART Name="CNTCT" AssignToVar="getCntctResults" DirtyRead="true" ReturnRowCount="yes" ServiceName="BCM_MASTER" StartAtRow="{$startRow2}">
+            <TO_XML SelectList="$filter/*/*"/>
+            <SELECT>
+              <CNTCT_NBR/>
+              <FIRST_NM/>
+              <LAST_NM/>
+              <ADDR_LINE_1_TXT/>
+              <ADDR_LINE_2_TXT/>
+              <ADDR_LINE_3_TXT/>
+              <CITY_NAME/>
+              <POSTL_AREA_CODE/>
+              <FULL_PHONE_NUM/>
+              <EMAIL_ADDR_TXT/>
+              <TERR_NAME/>
+              <CNTRY_CODE/>
+              <SR_NBR/>
+            </SELECT>
+          </GET_DOC_SMART>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <TO_XML SelectList="$getCntctResults"/>
+              <RowCount Value="{$getCntctResults/@TotalRowCount}"/>
+            </ROOT>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction='select_and_return'">
+            <THEN>
+              <SET Var="CNTCT_NBR_LOOKUP" FromValue="{$thisParam/SELECTED_ID/@Value}"/>
+              <TO_DOCVAR AssignToVar="forSelectReturn">
+                <ROOT>
+                  <CNTCT_NBR Value="{$CNTCT_NBR_LOOKUP}"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="thisReturn">
+                <TO_XML SelectList="$forSelectReturn"/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="forSelectReturn">
+                <TO_XML SelectList="$thisReturn"/>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='cancel'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="AgencyContactSetup" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='select_and_return'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="AgencyContactSetup" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="ContactCountry" ShowInBreadCrumbs="SHOW" Template="ContactCountry.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <SET Var="alertGreen" FromValue=""/>
+          <SET Var="alertRed" FromValue=""/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <AGNCY_NBR Value="{$agencyNumber}"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="getCountryNames">
+            <root>LOCKING ROW FOR ACCESS
+      				SEL CNTRY_CODE, CNTRY_NAME
+      				FROM CNTRY
+      ORDER BY CNTRY_NAME ASC;</root>
+          </TO_DOCVAR>
+          <EXECUTE_SQL_QUERY AssignToVar="countryNames" Value="{$getCountryNames/@text}"/>
+          <SET_NAME SelectList="$countryNames/SQL_RESULT" FromValue="CNTRY"/>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <TO_XML SelectList="$countryNames/*"/>
+          </APPEND_TO_XML>
+          <SET Var="CNTRY_CODE" FromValue="{$countryNames/CNTRY[CNTRY_NAME/@Value=$thisParam/CNTRY_CODE/@Value]/CNTRY_CODE/@Value}"/>
+          <SET Var="CNTRY_NAME" FromValue="{$thisParam/CNTRY_CODE/@Value}"/>
+          <IF_TEST Test="$userAction='Save_Country'">
+            <THEN>
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="addCountry" DocumentName="AGNCY_CNTRY" ServiceName="BCM_MASTER" Source="EXTERNAL" HandleException="true">
+                <AGNCY_NBR Value="{$agencyNumber}"/>
+                <CNTRY_CODE Value="{$CNTRY_CODE}"/>
+              </DO_DB_PERSIST>
+              <!-- <ADD_DOC_SMART AssignToVar="addCountry" Name="AGNCY_CNTRY" ServiceName="BCM_MASTER" HandleException="true">
+                <AGNCY_NBR Value="{$agencyNumber}"/>
+                <CNTRY_CODE Value="{$CNTRY_CODE}"/>
+              </ADD_DOC_SMART>-->
+              <IF_TEST Test="$addCountry/@Status='Success'">
+                <THEN>
+                  <IF_TEST Test="$addCountry/VALIDATION_RESULT/@Value='SUCCESS'">
+                    <THEN>
+                      <SET Var="alertGreen" FromValue="Country for AGENCY NUMBER {$agencyNumber} has been setup Successfully!!"/>
+                      <SET Var="alertRed" FromValue=""/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="alertGreen" FromValue=""/>
+                      <SET Var="alertRed" FromValue="{$addCountry/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertGreen" FromValue=""/>
+                  <SET Var="alertRed" FromValue="{$addCountry/@Description}"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="alertMsg">
+            <MSG>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </MSG>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$alertMsg"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$thisParam/*"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="CNTRY_CODE" FromValue="{$countryNames/CNTRY[CNTRY_NAME/@Value=$thisParam/CNTRY_CODE/@Value]/CNTRY_CODE/@Value}"/>
+          <IF_TEST Test="$userAction='SaveAndReturn_Country'">
+            <THEN>
+              <!--<ADD_DOC_SMART AssignToVar="addCountry" Name="AGNCY_CNTRY" ServiceName="BCM_MASTER" HandleException="true">
+                <AGNCY_NBR Value="{$agencyNumber}"/>
+                <CNTRY_CODE Value="{$CNTRY_CODE}"/>
+              </ADD_DOC_SMART>-->
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="addCountry" DocumentName="AGNCY_CNTRY" ServiceName="BCM_MASTER" Source="EXTERNAL" HandleException="true">
+                <AGNCY_NBR Value="{$agencyNumber}"/>
+                <CNTRY_CODE Value="{$CNTRY_CODE}"/>
+              </DO_DB_PERSIST>
+              <IF_TEST Test="$addCountry/@Status='Success'">
+                <THEN>
+                  <IF_TEST Test="$addCountry/VALIDATION_RESULT/@Value='SUCCESS'">
+                    <THEN>
+                      <SET Var="alertGreen" FromValue="Country for AGENCY NUMBER {$agencyNumber} has been setup Successfully!!"/>
+                      <SET Var="alertRed" FromValue=""/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="alertGreen" FromValue=""/>
+                      <SET Var="alertRed" FromValue="{$addCountry/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertGreen" FromValue=""/>
+                  <SET Var="alertRed" FromValue="{$addCountry/@Description}"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="alertMsg">
+            <MSG>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </MSG>
+          </TO_DOCVAR>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Add_Contact'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="AgencyContact" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Save_Country'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ContactCountry" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SaveAndReturn_Country'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Agency" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="CountryContactLookup" ShowInBreadCrumbs="SHOW" Template="CountryContactLookup.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <SET Var="startRow2" FromValue="{$thisParam/START_COUNT/@Value}"/>
+          <TO_DOCVAR AssignToVar="filter">
+            <filter/>
+          </TO_DOCVAR>
+          <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filter">
+            <FILTER_AGNCY_NBR/>
+            <FILTER_PRMRY_CNTCT_IND/>
+            <FILTER_CNTCT_NBR/>
+          </FORM_SEARCH_FILTER>
+          <FOR_EACH SelectList="$filter/*/*" CurrentElement="currentSearchColumn">
+            <SET_NAME DocVar="currentSearchColumn" FromValue="{substringAfter($currentSearchColumn/name(),'FILTER_')}"/>
+          </FOR_EACH>
+          <GET_DOC_SMART Name="AGNCY_CNTCT" AssignToVar="getContactResults" DirtyRead="true" ReturnRowCount="yes" ServiceName="BCM_MASTER" StartAtRow="{$startRow2}">
+            <TO_XML SelectList="$filter/*/*"/>
+            <AGNCY_NBR Value="{$agencyNumber}"/>
+            <SELECT>
+              <AGNCY_NBR/>
+              <PRMRY_CNTCT_IND/>
+              <CNTCT_NBR/>
+            </SELECT>
+          </GET_DOC_SMART>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <TO_XML SelectList="$getContactResults"/>
+              <RowCount Value="{$getContactResults/@TotalRowCount}"/>
+            </ROOT>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction='select_and_return'">
+            <THEN>
+              <SET Var="CNTCT_NBR_LOOKUP" FromValue="{substringAfter(substringAfter(substringAfter($thisParam/SELECTED_ID/@Value,'AGNCY_NBR='),'PRMRY_CNTCT_IND='),'CNTCT_NBR=')}"/>
+              <TO_DOCVAR AssignToVar="forSelectReturn">
+                <ROOT>
+                  <CNTCT_NBR Value="{$CNTCT_NBR_LOOKUP}"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="thisReturn">
+                <TO_XML SelectList="$forSelectReturn"/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="forSelectReturn">
+                <TO_XML SelectList="$thisReturn"/>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='cancel'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="AgencyContact" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='select_and_return'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="AgencyContact" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="AgencyContactSetup" ShowInBreadCrumbs="SHOW" Template="AgencyContactSetup.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <SET Var="alertGreen" FromValue=""/>
+          <SET Var="alertRed" FromValue=""/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <AGNCY_NBR Value="{$agencyNumber}"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='select_and_return' and $thisParam/PAGE/@Value='BCM_MASTER.wfAgency.AgencyContactLookup.pgl'">
+            <THEN>
+              <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$thisReturn/*"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='Save_agency_Contact'">
+            <THEN>
+              <!-- <ADD_DOC_SMART AssignToVar="addagncyContact" Name="AGNCY_CNTCT" ServiceName="BCM_MASTER" HandleException="true">
+                <AGNCY_NBR Value="{$agencyNumber}"/>
+                <PRMRY_CNTCT_IND Value="{$thisParam/PRMRY_CNTCT_IND/@Value}"/>
+                <CNTCT_NBR Value="{$thisParam/CNTCT_NBR/@Value}"/>
+              </ADD_DOC_SMART>-->
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="addagncyContact" DocumentName="AGNCY_CNTCT" ServiceName="BCM_MASTER" Source="EXTERNAL" HandleException="true">
+                <AGNCY_NBR Value="{$agencyNumber}"/>
+                <PRMRY_CNTCT_IND Value="{$thisParam/PRMRY_CNTCT_IND/@Value}"/>
+                <CNTCT_NBR Value="{$thisParam/CNTCT_NBR/@Value}"/>
+              </DO_DB_PERSIST>
+              <IF_TEST Test="$addagncyContact/@Status='Success'">
+                <THEN>
+                  <IF_TEST Test="$addagncyContact/VALIDATION_RESULT/@Value='SUCCESS'">
+                    <THEN>
+                      <SET Var="alertGreen" FromValue="Agency Contact for AGENCY NUMBER {$agencyNumber} has been setup Successfully!!"/>
+                      <SET Var="alertRed" FromValue=""/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="alertGreen" FromValue=""/>
+                      <SET Var="alertRed" FromValue="{$addagncyContact/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertGreen" FromValue=""/>
+                  <SET Var="alertRed" FromValue="{$addagncyContact/@Description}"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="alertMsg">
+            <MSG>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </MSG>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$alertMsg"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$thisParam/*"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction='SaveAndReturn_agency_Contact'">
+            <THEN>
+              <!--<ADD_DOC_SMART AssignToVar="addagncyContact" Name="AGNCY_CNTCT" ServiceName="BCM_MASTER" HandleException="true">
+                <AGNCY_NBR Value="{$agencyNumber}"/>
+                <PRMRY_CNTCT_IND Value="{$thisParam/PRMRY_CNTCT_IND/@Value}"/>
+                <CNTCT_NBR Value="{$thisParam/CNTCT_NBR/@Value}"/>
+              </ADD_DOC_SMART>-->
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="addagncyContact" DocumentName="AGNCY_CNTCT" ServiceName="BCM_MASTER" Source="EXTERNAL" HandleException="true">
+                <AGNCY_NBR Value="{$agencyNumber}"/>
+                <PRMRY_CNTCT_IND Value="{$thisParam/PRMRY_CNTCT_IND/@Value}"/>
+                <CNTCT_NBR Value="{$thisParam/CNTCT_NBR/@Value}"/>
+              </DO_DB_PERSIST>
+              <IF_TEST Test="$addagncyContact/@Status='Success'">
+                <THEN>
+                  <IF_TEST Test="$addagncyContact/VALIDATION_RESULT/@Value='SUCCESS'">
+                    <THEN>
+                      <SET Var="alertGreen" FromValue="Agency Contact for AGENCY NUMBER {$agencyNumber} has been setup Successfully!!"/>
+                      <SET Var="alertRed" FromValue=""/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="alertGreen" FromValue=""/>
+                      <SET Var="alertRed" FromValue="{$addagncyContact/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertGreen" FromValue=""/>
+                  <SET Var="alertRed" FromValue="{$addagncyContact/@Description}"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="alertMsg">
+            <MSG>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </MSG>
+          </TO_DOCVAR>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='LinkToContact'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="AgencyContactLookup" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Save_Contact'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SaveAndReturn_Contact'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Save_agency_Contact'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="AgencyContactSetup" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SaveAndReturn_agency_Contact'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Agency" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="AgencyIP" ShowInBreadCrumbs="SHOW" Template="AgencyIP.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <SET Var="alertGreen" FromValue=""/>
+          <SET Var="alertRed" FromValue=""/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <AGNCY_NBR Value="{$agencyNumber}"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <IF_TEST Test="$userAction='Save_IP'">
+            <THEN>
+              <!--<ADD_DOC_SMART AssignToVar="addIP" Name="AGNCY_IP" ServiceName="BCM_MASTER" HandleException="true">
+                <AGNCY_NBR Value="{$agencyNumber}"/>
+                <SR_NBR Value="{$thisParam/SR_NBR/@Value}"/>
+                <IP_ADDR Value="{$thisParam/IP_ADDR/@Value}"/>
+                <REQSTD_DT Value="{$thisParam/REQSTD_DT/@Value}"/>
+              </ADD_DOC_SMART>-->
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="addIP" DocumentName="AGNCY_IP" ServiceName="BCM_MASTER" Source="EXTERNAL" HandleException="true">
+                <AGNCY_NBR Value="{$agencyNumber}"/>
+                <SR_NBR Value="{$thisParam/SR_NBR/@Value}"/>
+                <IP_ADDR Value="{$thisParam/IP_ADDR/@Value}"/>
+                <REQSTD_DT Value="{$thisParam/REQSTD_DT/@Value}"/>
+              </DO_DB_PERSIST>
+              <IF_TEST Test="$addIP/@Status='Success'">
+                <THEN>
+                  <IF_TEST Test="$addIP/VALIDATION_RESULT/@Value='SUCCESS'">
+                    <THEN>
+                      <SET Var="alertGreen" FromValue="Agency IP for AGENCY NUMBER {$agencyNumber} has been setup Successfully!!"/>
+                      <SET Var="alertRed" FromValue=""/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="alertGreen" FromValue=""/>
+                      <SET Var="alertRed" FromValue="{$addIP/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertGreen" FromValue=""/>
+                  <SET Var="alertRed" FromValue="{$addIP/@Description}"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="alertMsg">
+            <MSG>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </MSG>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$alertMsg"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$thisParam/*"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction='Save_and_Return_IP'">
+            <THEN>
+              <!--<ADD_DOC_SMART AssignToVar="addIP" Name="AGNCY_IP" ServiceName="BCM_MASTER" HandleException="true">
+                <AGNCY_NBR Value="{$agencyNumber}"/>
+                <SR_NBR Value="{$thisParam/SR_NBR/@Value}"/>
+                <IP_ADDR Value="{$thisParam/IP_ADDR/@Value}"/>
+                <REQSTD_DT Value="{$thisParam/REQSTD_DT/@Value}"/>
+              </ADD_DOC_SMART>-->
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="addIP" DocumentName="AGNCY_IP" ServiceName="BCM_MASTER" Source="EXTERNAL" HandleException="true">
+                <AGNCY_NBR Value="{$agencyNumber}"/>
+                <SR_NBR Value="{$thisParam/SR_NBR/@Value}"/>
+                <IP_ADDR Value="{$thisParam/IP_ADDR/@Value}"/>
+                <REQSTD_DT Value="{$thisParam/REQSTD_DT/@Value}"/>
+              </DO_DB_PERSIST>
+              <IF_TEST Test="$addIP/@Status='Success'">
+                <THEN>
+                  <IF_TEST Test="$addIP/VALIDATION_RESULT/@Value='SUCCESS'">
+                    <THEN>
+                      <SET Var="alertGreen" FromValue="Agency IP for AGENCY NUMBER {$agencyNumber} has been setup Successfully!!"/>
+                      <SET Var="alertRed" FromValue=""/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="alertGreen" FromValue=""/>
+                      <SET Var="alertRed" FromValue="{$addIP/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertGreen" FromValue=""/>
+                  <SET Var="alertRed" FromValue="{$addIP/@Description}"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="alertMsg">
+            <MSG>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </MSG>
+          </TO_DOCVAR>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Save_IP'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="AgencyIP" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Save_and_Return_IP'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Agency" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="AgencyMarketingProgram" ShowInBreadCrumbs="SHOW" Template="AgencyMarketingProgram.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <SET Var="alertGreen" FromValue=""/>
+          <SET Var="alertRed" FromValue=""/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <AGNCY_NBR Value="{$agencyNumber}"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <IF_TEST Test="$userAction='Save_MKTNG'">
+            <THEN>
+              <!-- <ADD_DOC_SMART AssignToVar="addMKTNG" Name="AGNCY_MKTNG_PGM" ServiceName="BCM_MASTER" HandleException="true">
+                <AGNCY_NBR Value="{$agencyNumber}"/>
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                <PREF_SRC_IND Value="{$thisParam/PREF_SRC_IND/@Value}"/>
+                <WEBSITE_REGIS_IND Value="{$thisParam/WEBSITE_REGIS_IND/@Value}"/>
+                <DTC_REGIS_PRIOR_IND Value="{$thisParam/DTC_REGIS_PRIOR_IND/@Value}"/>
+                <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+              </ADD_DOC_SMART>-->
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="addMKTNG" DocumentName="AGNCY_MKTNG_PGM" ServiceName="BCM_MASTER" Source="EXTERNAL" HandleException="true">
+                <AGNCY_NBR Value="{$agencyNumber}"/>
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                <PREF_SRC_IND Value="{$thisParam/PREF_SRC_IND/@Value}"/>
+                <WEBSITE_REGIS_IND Value="{$thisParam/WEBSITE_REGIS_IND/@Value}"/>
+                <DTC_REGIS_PRIOR_IND Value="{$thisParam/DTC_REGIS_PRIOR_IND/@Value}"/>
+                <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+              </DO_DB_PERSIST>
+              <IF_TEST Test="$addMKTNG/@Status='Success'">
+                <THEN>
+                  <IF_TEST Test="$addMKTNG/VALIDATION_RESULT/@Value='SUCCESS'">
+                    <THEN>
+                      <SET Var="alertGreen" FromValue="Agency Marketing Program for AGENCY NUMBER {$agencyNumber} has been setup Successfully!!"/>
+                      <SET Var="alertRed" FromValue=""/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="alertGreen" FromValue=""/>
+                      <SET Var="alertRed" FromValue="{$addMKTNG/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertGreen" FromValue=""/>
+                  <SET Var="alertRed" FromValue="{$addMKTNG/@Description}"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="alertMsg">
+            <MSG>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </MSG>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$alertMsg"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$thisParam/*"/>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <MKTNG_PGM_NBR Value="{$mapMKTNGPGMNBR}"/>
+            <LEGAL_ENT_NBR Value="{$mapLEGALENTNBR}"/>
+          </APPEND_TO_XML>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction='Save_and_Return_MKTNG'">
+            <THEN>
+              <!--<ADD_DOC_SMART AssignToVar="addMKTNG" Name="AGNCY_MKTNG_PGM" ServiceName="BCM_MASTER" HandleException="true">
+                <AGNCY_NBR Value="{$agencyNumber}"/>
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                <PREF_SRC_IND Value="{$thisParam/PREF_SRC_IND/@Value}"/>
+                <WEBSITE_REGIS_IND Value="{$thisParam/WEBSITE_REGIS_IND/@Value}"/>
+                <DTC_REGIS_PRIOR_IND Value="{$thisParam/DTC_REGIS_PRIOR_IND/@Value}"/>
+                <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+              </ADD_DOC_SMART>-->
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="addMKTNG" DocumentName="AGNCY_MKTNG_PGM" ServiceName="BCM_MASTER" Source="EXTERNAL" HandleException="true">
+                <AGNCY_NBR Value="{$agencyNumber}"/>
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                <PREF_SRC_IND Value="{$thisParam/PREF_SRC_IND/@Value}"/>
+                <WEBSITE_REGIS_IND Value="{$thisParam/WEBSITE_REGIS_IND/@Value}"/>
+                <DTC_REGIS_PRIOR_IND Value="{$thisParam/DTC_REGIS_PRIOR_IND/@Value}"/>
+                <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+              </DO_DB_PERSIST>
+              <IF_TEST Test="$addMKTNG/@Status='Success'">
+                <THEN>
+                  <IF_TEST Test="$addMKTNG/VALIDATION_RESULT/@Value='SUCCESS'">
+                    <THEN>
+                      <SET Var="alertGreen" FromValue="Agency Marketing Program for AGENCY NUMBER {$agencyNumber} has been setup Successfully!!"/>
+                      <SET Var="alertRed" FromValue=""/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="alertGreen" FromValue=""/>
+                      <SET Var="alertRed" FromValue="{$addMKTNG/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertGreen" FromValue=""/>
+                  <SET Var="alertRed" FromValue="{$addMKTNG/@Description}"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="alertMsg">
+            <MSG>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </MSG>
+          </TO_DOCVAR>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Save_MKTNG'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="AgencyMarketingProgram" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Save_and_Return_MKTNG'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Agency" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Add_Contact'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ContactMktngPgm" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="sub_workflow17" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="ContactMktngPgm" ShowInBreadCrumbs="SHOW" Template="ContactMktngPgm.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <SET Var="alertGreen" FromValue=""/>
+          <SET Var="alertRed" FromValue=""/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <AGNCY_NBR Value="{$agencyNumber}"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <IF_TEST Test="$userAction='Save_MKTNG_Contact'">
+            <THEN>
+              <!--<ADD_DOC_SMART AssignToVar="addMktngContact" Name="AGNCY_MKTNG_PGM_CNTCT" ServiceName="BCM_MASTER" HandleException="true">
+                <AGNCY_NBR Value="{$agencyNumber}"/>
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                <CNTCT_NBR Value="{$thisParam/CNTCT_NBR/@Value}"/>
+                <PRIMARY_CNTCT_IND Value="{$thisParam/PRIMARY_CNTCT_IND/@Value}"/>
+              </ADD_DOC_SMART>-->
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="addMktngContact" DocumentName="AGNCY_MKTNG_PGM_CNTCT" ServiceName="BCM_MASTER" Source="EXTERNAL" HandleException="true">
+                <AGNCY_NBR Value="{$agencyNumber}"/>
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                <CNTCT_NBR Value="{$thisParam/CNTCT_NBR/@Value}"/>
+                <PRIMARY_CNTCT_IND Value="{$thisParam/PRIMARY_CNTCT_IND/@Value}"/>
+              </DO_DB_PERSIST>
+              <IF_TEST Test="$addMktngContact/@Status='Success'">
+                <THEN>
+                  <IF_TEST Test="$addMktngContact/VALIDATION_RESULT/@Value='SUCCESS'">
+                    <THEN>
+                      <SET Var="alertGreen" FromValue="Agency Marketing Program Contact for AGENCY NUMBER {$agencyNumber} has been setup Successfully!!"/>
+                      <SET Var="alertRed" FromValue=""/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="alertGreen" FromValue=""/>
+                      <SET Var="alertRed" FromValue="{$addMktngContact/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertGreen" FromValue=""/>
+                  <SET Var="alertRed" FromValue="{$addMktngContact/@Description}"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="alertMsg">
+            <MSG>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </MSG>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$alertMsg"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$thisParam/*"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction='SaveAndReturn_MKTNG_Contact'">
+            <THEN>
+              <!--<ADD_DOC_SMART AssignToVar="addMktngContact" Name="AGNCY_MKTNG_PGM_CNTCT" ServiceName="BCM_MASTER" HandleException="true">
+                <AGNCY_NBR Value="{$agencyNumber}"/>
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                <CNTCT_NBR Value="{$thisParam/CNTCT_NBR/@Value}"/>
+                <PRIMARY_CNTCT_IND Value="{$thisParam/PRIMARY_CNTCT_IND/@Value}"/>
+              </ADD_DOC_SMART>-->
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="addMktngContact" DocumentName="AGNCY_MKTNG_PGM_CNTCT" ServiceName="BCM_MASTER" Source="EXTERNAL" HandleException="true">
+                <AGNCY_NBR Value="{$agencyNumber}"/>
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                <CNTCT_NBR Value="{$thisParam/CNTCT_NBR/@Value}"/>
+                <PRIMARY_CNTCT_IND Value="{$thisParam/PRIMARY_CNTCT_IND/@Value}"/>
+              </DO_DB_PERSIST>
+              <IF_TEST Test="$addMktngContact/@Status='Success'">
+                <THEN>
+                  <IF_TEST Test="$addMktngContact/VALIDATION_RESULT/@Value='SUCCESS'">
+                    <THEN>
+                      <SET Var="alertGreen" FromValue="Agency Marketing Program Contact for AGENCY NUMBER {$agencyNumber} has been setup Successfully!!"/>
+                      <SET Var="alertRed" FromValue=""/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="alertGreen" FromValue=""/>
+                      <SET Var="alertRed" FromValue="{$addMktngContact/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertGreen" FromValue=""/>
+                  <SET Var="alertRed" FromValue="{$addMktngContact/@Description}"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="alertMsg">
+            <MSG>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </MSG>
+          </TO_DOCVAR>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='LinkToContact'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Mktng_pgm_contact_Lookup" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Save_MKTNG_Contact'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ContactMktngPgm" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SaveAndReturn_MKTNG_Contact'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Agency" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="Mktng_pgm_contact_Lookup" ShowInBreadCrumbs="SHOW" Template="Mktng_pgm_contact_Lookup.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <SET Var="startRow2" FromValue="{$thisParam/START_COUNT/@Value}"/>
+          <TO_DOCVAR AssignToVar="filter">
+            <filter/>
+          </TO_DOCVAR>
+          <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filter">
+            <FILTER_AGNCY_NBR/>
+            <FILTER_PRMRY_CNTCT_IND/>
+            <FILTER_CNTCT_NBR/>
+          </FORM_SEARCH_FILTER>
+          <FOR_EACH SelectList="$filter/*/*" CurrentElement="currentSearchColumn">
+            <SET_NAME DocVar="currentSearchColumn" FromValue="{substringAfter($currentSearchColumn/name(),'FILTER_')}"/>
+          </FOR_EACH>
+          <GET_DOC_SMART Name="AGNCY_CNTCT" AssignToVar="getContactResults" DirtyRead="true" ReturnRowCount="yes" ServiceName="BCM_MASTER" StartAtRow="{$startRow2}">
+            <TO_XML SelectList="$filter/*/*"/>
+            <AGNCY_NBR Value="{$agencyNumber}"/>
+            <SELECT>
+              <AGNCY_NBR/>
+              <PRMRY_CNTCT_IND/>
+              <CNTCT_NBR/>
+            </SELECT>
+          </GET_DOC_SMART>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <TO_XML SelectList="$getContactResults"/>
+              <RowCount Value="{$getContactResults/@TotalRowCount}"/>
+            </ROOT>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction='select_and_return'">
+            <THEN>
+              <SET Var="CNTCT_NBR_LOOKUP" FromValue="{substringAfter(substringAfter(substringAfter($thisParam/SELECTED_ID/@Value,'AGNCY_NBR='),'PRMRY_CNTCT_IND='),'CNTCT_NBR=')}"/>
+              <TO_DOCVAR AssignToVar="forSelectReturn">
+                <ROOT>
+                  <CNTCT_NBR Value="{$CNTCT_NBR_LOOKUP}"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="thisReturn">
+                <TO_XML SelectList="$forSelectReturn"/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="forSelectReturn">
+                <TO_XML SelectList="$thisReturn"/>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='cancel'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ContactMktngPgm" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='select_and_return'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ContactMktngPgm" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="AgencyInterface" ShowInBreadCrumbs="SHOW" Template="AgencyInterface.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <SET Var="alertGreen" FromValue=""/>
+          <SET Var="alertRed" FromValue=""/>
+          <CREATE_DOCUMENT_ID Name="AGNCY_INTRFC" AssignToVar="AGNCY_INTFC_ID"/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <AGNCY_NBR Value="{$agencyNumber}"/>
+              <AGNCY_INTRFC_NBR Value="{$AGNCY_INTFC_ID}"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="getDataCollectionNames">
+            <root>LOCKING ROW FOR ACCESS
+SEL DATA_CLCTN_TYPE_CD, DATA_CLCTN_TYPE_NM
+FROM DATA_CLCTN_TYPE
+ORDER BY DATA_CLCTN_TYPE_NM ASC;</root>
+          </TO_DOCVAR>
+          <EXECUTE_SQL_QUERY AssignToVar="dataCollectionNames" Value="{$getDataCollectionNames/@text}"/>
+          <SET_NAME SelectList="$dataCollectionNames/SQL_RESULT" FromValue="DATA_CLCTN_TYPE"/>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <TO_XML SelectList="$dataCollectionNames/*"/>
+          </APPEND_TO_XML>
+          <SET Var="DATA_CLCTN_TYPE_CD" FromValue="{$dataCollectionNames/DATA_CLCTN_TYPE[DATA_CLCTN_TYPE_NM/@Value=$thisParam/DATA_CLCTN_TYPE_CD/@Value]/DATA_CLCTN_TYPE_CD/@Value}"/>
+          <SET Var="DATA_CLCTN_TYPE_NM" FromValue="{$thisParam/DATA_CLCTN_TYPE_CD/@Value}"/>
+          <IF_TEST Test="$userAction='Save_INTRFC'">
+            <THEN>
+              <IF_TEST Test="$thisParam/AGNCY_INTRFC_NBR/@Value > 2147483647">
+                <THEN>
+                  <SET Var="alertGreen" FromValue=""/>
+                  <SET Var="alertRed" FromValue="Agency Interface Number is an Integer Field. Maximum Value for this is 2147483647"/>
+                </THEN>
+                <ELSE>
+                  <DO_DB_PERSIST Action="INSERT" AssignToVar="addInterface" DocumentName="AGNCY_INTRFC" ServiceName="BCM_MASTER" Source="EXTERNAL" HandleException="true">
+                    <AGNCY_NBR Value="{$agencyNumber}"/>
+                    <AGNCY_INTRFC_NBR Value="{$AGNCY_INTFC_ID}"/>
+                    <!--<AGNCY_INTRFC_NBR Value="{$thisParam/AGNCY_INTRFC_NBR/@Value}"/>-->
+                    <DATA_CLCTN_TYPE_CD Value="{$DATA_CLCTN_TYPE_CD}"/>
+                    <BRAND_SPLR_LST Value="{$thisParam/BRAND_SPLR_LST/@Value}"/>
+                    <INTRFC_NBR Value="{$thisParam/INTRFC_NBR/@Value}"/>
+                    <PII_DATA_IND Value="{$thisParam/PII_DATA_IND/@Value}"/>
+                    <FREQ_NBR_DAYS Value="{$thisParam/FREQ_NBR_DAYS/@Value}"/>
+                    <ERR_THRSHLD_PCT Value="{$thisParam/ERR_THRSHLD_PCT/@Value}"/>
+                  </DO_DB_PERSIST>
+                  <IF_TEST Test="$addInterface/@Status='Success'">
+                    <THEN>
+                      <IF_TEST Test="$addInterface/VALIDATION_RESULT/@Value='SUCCESS'">
+                        <THEN>
+                          <SET Var="alertGreen" FromValue="Agency Interface  AGENCY NUMBER {$agencyNumber} has been setup Successfully!!"/>
+                          <SET Var="alertRed" FromValue=""/>
+                        </THEN>
+                        <ELSE>
+                          <SET Var="alertGreen" FromValue=""/>
+                          <SET Var="alertRed" FromValue="{$addInterface/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                        </ELSE>
+                      </IF_TEST>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="alertGreen" FromValue=""/>
+                      <SET Var="alertRed" FromValue="{$addInterface/@Description}"/>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="alertMsg">
+            <MSG>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </MSG>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$alertMsg"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$thisParam/*"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction='Save_and_Return_INTRFC'">
+            <THEN>
+              <IF_TEST Test="$thisParam/AGNCY_INTRFC_NBR/@Value > 2147483647">
+                <THEN>
+                  <SET Var="alertGreen" FromValue=""/>
+                  <SET Var="alertRed" FromValue="Agency Interface Number is an Integer Field. Maximum Value for this is 2147483647"/>
+                </THEN>
+                <ELSE>
+                  <DO_DB_PERSIST Action="INSERT" AssignToVar="addInterface" DocumentName="AGNCY_INTRFC" ServiceName="BCM_MASTER" Source="EXTERNAL" HandleException="true">
+                    <AGNCY_NBR Value="{$agencyNumber}"/>
+                    <AGNCY_INTRFC_NBR Value="{$AGNCY_INTFC_ID}"/>
+                    <!--<AGNCY_INTRFC_NBR Value="{$thisParam/AGNCY_INTRFC_NBR/@Value}"/>-->
+                    <DATA_CLCTN_TYPE_CD Value="{$DATA_CLCTN_TYPE_CD}"/>
+                    <BRAND_SPLR_LST Value="{$thisParam/BRAND_SPLR_LST/@Value}"/>
+                    <INTRFC_NBR Value="{$thisParam/INTRFC_NBR/@Value}"/>
+                    <PII_DATA_IND Value="{$thisParam/PII_DATA_IND/@Value}"/>
+                    <FREQ_NBR_DAYS Value="{$thisParam/FREQ_NBR_DAYS/@Value}"/>
+                    <ERR_THRSHLD_PCT Value="{$thisParam/ERR_THRSHLD_PCT/@Value}"/>
+                  </DO_DB_PERSIST>
+                  <IF_TEST Test="$addInterface/@Status='Success'">
+                    <THEN>
+                      <IF_TEST Test="$addInterface/VALIDATION_RESULT/@Value='SUCCESS'">
+                        <THEN>
+                          <SET Var="alertGreen" FromValue="Agency Interface  AGENCY NUMBER {$agencyNumber} has been setup Successfully!!"/>
+                          <SET Var="alertRed" FromValue=""/>
+                        </THEN>
+                        <ELSE>
+                          <SET Var="alertGreen" FromValue=""/>
+                          <SET Var="alertRed" FromValue="{$addInterface/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                        </ELSE>
+                      </IF_TEST>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="alertGreen" FromValue=""/>
+                      <SET Var="alertRed" FromValue="{$addInterface/@Description}"/>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="alertMsg">
+            <MSG>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </MSG>
+          </TO_DOCVAR>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Save_INTRFC'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="AgencyInterface" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Save_and_Return_INTRFC'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Agency" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Add_Contact'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="InterfaceContact" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="InterfaceContact" ShowInBreadCrumbs="SHOW" Template="InterfaceContact.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action/>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <if_cond Value="$userAction ='LinkToContact'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="InterfaceContactLookup" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Save_INTRFC_Contact'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="InterfaceContact" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SaveAndReturn_INTRFC_Contact'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Agency" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="InterfaceContactLookup" ShowInBreadCrumbs="SHOW" Template="InterfaceContactLookup.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <SET Var="startRow2" FromValue="{$thisParam/START_COUNT/@Value}"/>
+          <TO_DOCVAR AssignToVar="filter">
+            <filter/>
+          </TO_DOCVAR>
+          <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filter">
+            <FILTER_AGNCY_NBR/>
+            <FILTER_PRMRY_CNTCT_IND/>
+            <FILTER_CNTCT_NBR/>
+          </FORM_SEARCH_FILTER>
+          <FOR_EACH SelectList="$filter/*/*" CurrentElement="currentSearchColumn">
+            <SET_NAME DocVar="currentSearchColumn" FromValue="{substringAfter($currentSearchColumn/name(),'FILTER_')}"/>
+          </FOR_EACH>
+          <GET_DOC_SMART Name="AGNCY_CNTCT" AssignToVar="getContactResults" DirtyRead="true" ReturnRowCount="yes" ServiceName="BCM_MASTER" StartAtRow="{$startRow2}">
+            <TO_XML SelectList="$filter/*/*"/>
+            <AGNCY_NBR Value="{$agencyNumber}"/>
+            <SELECT>
+              <AGNCY_NBR/>
+              <PRMRY_CNTCT_IND/>
+              <CNTCT_NBR/>
+            </SELECT>
+          </GET_DOC_SMART>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <TO_XML SelectList="$getContactResults"/>
+              <RowCount Value="{$getContactResults/@TotalRowCount}"/>
+            </ROOT>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction='select_and_return'">
+            <THEN>
+              <SET Var="CNTCT_NBR_LOOKUP" FromValue="{substringAfter(substringAfter(substringAfter($thisParam/SELECTED_ID/@Value,'AGNCY_NBR='),'PRMRY_CNTCT_IND='),'CNTCT_NBR=')}"/>
+              <TO_DOCVAR AssignToVar="forSelectReturn">
+                <ROOT>
+                  <CNTCT_NBR Value="{$CNTCT_NBR_LOOKUP}"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="thisReturn">
+                <TO_XML SelectList="$forSelectReturn"/>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="forSelectReturn">
+                <TO_XML SelectList="$thisReturn"/>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='cancel'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="InterfaceContact" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='select_and_return'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="InterfaceContact" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <sub_workflow Name="UploadFromTE" Workflow="//UI_WORKFLOW/UploadFromTE">
+      <pre_actions>
+        <action/>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <input>
+        <action>
+          <TO_DOCVAR AssignToVar="pass">
+            <INPUT>
+              <TABLE_NAME Value="AGNCY_MSTR"/>
+              <SERVICE_NAME Value="BCM_MASTER"/>
+              <DB_NAME Value="MDM"/>
+            </INPUT>
+          </TO_DOCVAR>
+          <TO_XML SelectList="$pass"/>
+        </action>
+      </input>
+      <next_nodes/>
+    </sub_workflow>
+    <sub_workflow Name="sub_workflow17" Workflow="WfSearchMktngLegal">
+      <pre_actions>
+        <TO_DOCVAR AssignToVar="toSubworkflow">
+          <ROOT>
+            <TO_XML SelectList="$thisParam/*"/>
+          </ROOT>
+        </TO_DOCVAR>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="Sel_Mktng_Legal" FromValue="{$thisParam/Select_Legal_MKtng/@Value}"/>
+          <SET Var="abc" FromValue="123"/>
+          <SET Var="mapMKTNGPGMNBR" FromValue="{substringBefore(substringAfter($thisParam/Select_Legal_MKtng/@Value,'MKTNG_PGM_NBR='),'#LEGAL_ENT_NBR')}"/>
+          <SET Var="mapLEGALENTNBR" FromValue="{substringAfter($thisParam/Select_Legal_MKtng/@Value,'LEGAL_ENT_NBR=')}"/>
+        </action>
+      </post_actions>
+      <input>
+        <action>
+          <TO_XML SelectList="$toSubworkflow/*"/>
+        </action>
+      </input>
+      <next_nodes>
+        <next_node Name="AgencyMarketingProgram"/>
+      </next_nodes>
+    </sub_workflow>
+    <sub_workflow Name="sub_workflow18" Workflow="wfSearchRqstrCntct">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="toSubworkflow">
+            <ROOT>
+              <TO_XML SelectList="$thisParam/*"/>
+            </ROOT>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="Select_Cntct_Nbr" FromValue="{$thisParam/Select_Cntct/@Value}"/>
+          <SET Var="abc" FromValue="312"/>
+        </action>
+      </post_actions>
+      <input>
+        <action>
+          <action>
+            <TO_XML SelectList="$toSubworkflow/*"/>
+          </action>
+        </action>
+      </input>
+      <next_nodes>
+        <next_node Name="Agency"/>
+      </next_nodes>
+    </sub_workflow>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <start0 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="-3,161">
+        <iconProps iconfile="z1start.gif"/>
+      </start0>
+      <done1 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="857,145">
+        <iconProps iconfile="z1end.gif"/>
+      </done1>
+      <Agency font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="442,157" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </Agency>
+      <AgencyContact font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="820,23" size="1366,686">
+        <iconProps iconfile="x1age80.gif"/>
+      </AgencyContact>
+      <AgencyContactLookup font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="184,-11" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </AgencyContactLookup>
+      <ContactCountry font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="683,23" size="1366,686">
+        <iconProps iconfile="x1age80.gif"/>
+      </ContactCountry>
+      <CountryContactLookup font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="996,46" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </CountryContactLookup>
+      <AgencyContactSetup font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="230,59" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </AgencyContactSetup>
+      <AgencyIP font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="485,298" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </AgencyIP>
+      <AgencyMarketingProgram font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="110,356" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </AgencyMarketingProgram>
+      <ContactMktngPgm font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="307,343" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </ContactMktngPgm>
+      <Mktng_pgm_contact_Lookup font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="380,455" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </Mktng_pgm_contact_Lookup>
+      <AgencyInterface font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="946,250" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </AgencyInterface>
+      <InterfaceContact font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="887,354" size="1382,702">
+        <iconProps iconfile="x1age80.gif"/>
+      </InterfaceContact>
+      <InterfaceContactLookup font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="764,455" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </InterfaceContactLookup>
+      <UploadFromTE font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="503,15" size="732,628">
+        <iconProps iconfile="z1sub_workflow.gif"/>
+      </UploadFromTE>
+      <sub_workflow17 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="34,475" size="732,628">
+        <iconProps iconfile="z1sub_workflow.gif"/>
+      </sub_workflow17>
+      <sub_workflow18 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="353,14" size="732,628">
+        <iconProps iconfile="z1sub_workflow.gif"/>
+      </sub_workflow18>
+    </mgcnodes>
+    <mgcconnectors>
+      <start0>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="42,183" endpoint="442,179" ctrlRect1="340,181,4,4" ctrlRect2="140,177,4,4"/>
+      </start0>
+      <Agency>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="442,179" endpoint="464,157" ctrlRect1="365,177,4,4" ctrlRect2="431,113,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="464,157" endpoint="275,81" ctrlRect1="462,98,4,4" ctrlRect2="415,79,4,4">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="487,179" endpoint="683,45" ctrlRect1="628,21,4,4" ctrlRect2="585,49,4,4" ctrlRect1Dirty="true" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="464,202" endpoint="507,298" ctrlRect1="462,272,4,4" ctrlRect2="557,188,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="442,179" endpoint="132,356" ctrlRect1="208,177,4,4" ctrlRect2="92,206,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="487,179" endpoint="946,272" ctrlRect1="519,180,4,4" ctrlRect2="875,376,4,4" ctrlRect2Dirty="true" ctrlRect1Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="487,179" endpoint="525,60" ctrlRect1="513,177,4,4" ctrlRect2="523,148,4,4">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="464,157" endpoint="275,81" ctrlRect1="462,98,4,4" ctrlRect2="415,79,4,4">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="480,172" endpoint="862,161" ctrlRect1="764,170,4,4" ctrlRect2="573,159,4,4"/>
+      </Agency>
+      <AgencyContact>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="865,45" endpoint="996,68" ctrlRect1="960,43,4,4" ctrlRect2="990,96,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="842,23" endpoint="842,23" ctrlRect1="840,-54,4,4" ctrlRect2="871,-3,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="820,45" endpoint="464,157" ctrlRect1="745,65,4,4" ctrlRect2="474,163,4,4" ctrlRect2Dirty="true" ctrlRect1Dirty="true">
+          <textProps/>
+        </nextNodeView>
+      </AgencyContact>
+      <AgencyContactLookup>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="206,34" endpoint="252,59" ctrlRect1="218,27,4,4" ctrlRect2="250,38,4,4" ctrlRect1Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="229,11" endpoint="252,59" ctrlRect1="243,9,4,4" ctrlRect2="294,17,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+      </AgencyContactLookup>
+      <ContactCountry>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="728,45" endpoint="820,45" ctrlRect1="795,43,4,4" ctrlRect2="749,43,4,4">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="705,23" endpoint="683,45" ctrlRect1="703,-54,4,4" ctrlRect2="654,25,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="683,45" endpoint="464,157" ctrlRect1="518,43,4,4" ctrlRect2="459,83,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+      </ContactCountry>
+      <CountryContactLookup>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="996,68" endpoint="865,45" ctrlRect1="999,52,4,4" ctrlRect2="962,43,4,4" ctrlRect1Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="1018,46" endpoint="865,45" ctrlRect1="939,-44,4,4" ctrlRect2="978,43,4,4" ctrlRect1Dirty="true">
+          <textProps/>
+        </nextNodeView>
+      </CountryContactLookup>
+      <AgencyContactSetup>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="252,59" endpoint="206,34" ctrlRect1="250,39,4,4" ctrlRect2="204,51,4,4">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="252,59" endpoint="252,59" ctrlRect1="250,-18,4,4" ctrlRect2="307,13,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="275,81" endpoint="442,179" ctrlRect1="397,79,4,4" ctrlRect2="430,184,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+      </AgencyContactSetup>
+      <AgencyIP>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="530,320" endpoint="530,320" ctrlRect1="603,318,4,4" ctrlRect2="578,255,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="507,298" endpoint="464,202" ctrlRect1="505,298,4,4" ctrlRect2="437,207,4,4" ctrlRect2Dirty="true" ctrlRect1Dirty="true">
+          <textProps/>
+        </nextNodeView>
+      </AgencyIP>
+      <AgencyMarketingProgram>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="110,378" endpoint="132,356" ctrlRect1="102,358,4,4" ctrlRect2="42,266,4,4" ctrlRect2Dirty="true" ctrlRect1Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="155,378" endpoint="442,179" ctrlRect1="260,286,4,4" ctrlRect2="224,177,4,4" ctrlRect1Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="155,378" endpoint="307,365" ctrlRect1="182,414,4,4" ctrlRect2="191,363,4,4" ctrlRect1Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="110,378" endpoint="56,475" ctrlRect1="68,376,4,4" ctrlRect2="54,400,4,4"/>
+      </AgencyMarketingProgram>
+      <ContactMktngPgm>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="352,365" endpoint="402,455" ctrlRect1="387,363,4,4" ctrlRect2="400,385,4,4">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="329,343" endpoint="329,343" ctrlRect1="327,266,4,4" ctrlRect2="313,287,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="329,343" endpoint="464,202" ctrlRect1="380,297,4,4" ctrlRect2="419,249,4,4" ctrlRect1Dirty="true" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+      </ContactMktngPgm>
+      <Mktng_pgm_contact_Lookup>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="380,477" endpoint="307,365" ctrlRect1="297,485,4,4" ctrlRect2="314,368,4,4" ctrlRect1Dirty="true" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="402,455" endpoint="329,388" ctrlRect1="391,466,4,4" ctrlRect2="356,417,4,4" ctrlRect2Dirty="true" ctrlRect1Dirty="true">
+          <textProps/>
+        </nextNodeView>
+      </Mktng_pgm_contact_Lookup>
+      <AgencyInterface>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="968,250" endpoint="968,250" ctrlRect1="966,173,4,4" ctrlRect2="944,211,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="946,272" endpoint="487,179" ctrlRect1="943,250,4,4" ctrlRect2="483,185,4,4" ctrlRect2Dirty="true" ctrlRect1Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="946,272" endpoint="909,354" ctrlRect1="917,270,4,4" ctrlRect2="907,290,4,4">
+          <textProps/>
+        </nextNodeView>
+      </AgencyInterface>
+      <InterfaceContact>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="909,399" endpoint="809,477" ctrlRect1="907,455,4,4" ctrlRect2="882,475,4,4">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="932,376" endpoint="932,376" ctrlRect1="1005,374,4,4" ctrlRect2="968,318,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="887,376" endpoint="487,179" ctrlRect1="585,374,4,4" ctrlRect2="785,177,4,4">
+          <textProps/>
+        </nextNodeView>
+      </InterfaceContact>
+      <InterfaceContactLookup>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="786,455" endpoint="887,376" ctrlRect1="798,448,4,4" ctrlRect2="902,375,4,4" ctrlRect2Dirty="true" ctrlRect1Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="786,455" endpoint="887,376" ctrlRect1="784,395,4,4" ctrlRect2="809,374,4,4">
+          <textProps/>
+        </nextNodeView>
+      </InterfaceContactLookup>
+      <sub_workflow17>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="56,475" endpoint="132,356" ctrlRect1="54,385,4,4" ctrlRect2="125,257,4,4" ctrlRect2Dirty="true"/>
+      </sub_workflow17>
+      <sub_workflow18>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="398,36" endpoint="464,157" ctrlRect1="445,34,4,4" ctrlRect2="469,13,4,4" ctrlRect2Dirty="true"/>
+      </sub_workflow18>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions/>
+    <post_actions/>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

@@ -1,0 +1,115 @@
+<document>
+  <documentation>The representation of a consumer or a household. There are three types:&#xD;
+&#xD;
+     REGISTRATION PERSONA, which is built when a consumer registers for a particular MARKETING PROGRAM&#xD;
+&#xD;
+     LEGAL ENTITY PERSONA, which is constructed by P&amp;G from the REGISTRATION PERSONAs for a consumer&#xD;
+&#xD;
+     HOUSEHOLD PERSONA, which is constructed by P&amp;G from the COPRORATE PERSONAs for the consumers in a household.&#xD;
+&#xD;
+A consumer can have several REGISTRATION PERSONAs (one for each MARKETING PROGRAM that she/he has registered for), but only one COPPORATE PERSONA. Likewise, a household has only one HOUSEHOLD PERSONA.</documentation>
+  <properties>
+    <property Name="PRSNA_STATUS_CODE" Required="true">
+      <documentation>The code that P&amp;G assigned to uniquely distinguish the PERSONA STATUS from all others.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="PRSNA_STATUS_CODE" />
+    </property>
+    <property Name="NAME_PREFX_TXT" PhysicalName="NAME_PREFX_TXT" Active="true" CharSet="UNICODE" Type="String_32">
+      <documentation>The title (Mr., Ms., Dr., Rev., etc.) of the consumer represented by the PERSONA.</documentation>
+      <extends />
+    </property>
+    <property Name="GVN_NAME" CharSet="UNICODE">
+      <documentation>The given name of the consumer represented by the PERSONA.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="GVN_NAME" />
+    </property>
+    <property Name="MID_NAME" CharSet="UNICODE">
+      <documentation>The middle name of the consumer represented by the PERSONA.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="MID_NAME" />
+    </property>
+    <property Name="FAMLY_NAME" CharSet="UNICODE">
+      <documentation>The family name of the consumer represented by the PERSONA.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="FAMLY_NAME" />
+    </property>
+    <property Name="NAME_SUFFX_TXT" CharSet="UNICODE">
+      <documentation>The name suffix (Senior, Junior, III, etc.) of the consumer represented by the PERSONA.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="NAME_SUFFX_TXT" />
+    </property>
+    <property Name="FULL_NAME" CharSet="UNICODE">
+      <documentation>The complete name of the consumer represented by the PERSONA.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="FULL_NAME" />
+    </property>
+    <property Name="BRTH_DATE">
+      <documentation>The date when the consumer represented by the PERSONA was born.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="BRTH_DATE" />
+    </property>
+    <property Name="GENDR_IND">
+      <documentation>Indicates whether the consumer represented by the PERSONA is male or female.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="GENDR_IND" />
+    </property>
+    <property Name="LATST_ACTVY_DATE">
+      <documentation>The most recent date when any of the following occurred for the consumer represented by the PERSONA:&#xD;
+     1. Updated her/his registration information.&#xD;
+     2. Was involved in a CONSUMER ACTION.&#xD;
+     3. Was contacted by a MARKETING CAMPAIGN.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="LATST_ACTVY_DATE" />
+    </property>
+    <property Name="NOTE_TXT" CharSet="UNICODE">
+      <documentation>Freeform note pertaining to the consumer represented by the PERSONA.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="NOTE_TXT" />
+    </property>
+    <property Name="CNSMR_USER_NAME" PhysicalName="CNSMR_USER_NAME" Active="true" CharSet="UNICODE" Type="String_20">
+      <documentation>The name that the consumer chose to identify him/herself when logging in to particular WEB SITEs.</documentation>
+      <extends />
+    </property>
+    <property Name="REGIS_DATETM" PhysicalName="REGIS_DATETM" Active="true" Required="false" Type="Timestamp">
+      <documentation>The date when the consumer created the REGISTRATION PERSONA.</documentation>
+      <extends />
+    </property>
+    <property Name="MATCHD_CNSMR_PRSNA_ID" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="MATCHD_CNSMR_PRSNA_ID" />
+    </property>
+    <property Name="HSHLD_PRSNA_ID">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="HSHLD_PRSNA_ID" />
+    </property>
+    <property Name="UNIVERSAL_OPT_OUT">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="UNIVERSAL_OPT_OUT" />
+    </property>
+    <property Name="LEGAL_ENT_NBR" Required="true">
+      <documentation>The number that P&amp;G assigned to uniquely distinguish the LEGAL ENTITY from all others.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="LEGAL_ENT_NBR" />
+    </property>
+    <property Name="HEAD_OF_HSHLD_IND">
+      <documentation>Indicates whether the consumer is the head of the household.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="HEAD_OF_HSHLD_IND" />
+    </property>
+    <property Name="LANG_CODE">
+      <documentation>The code that P&amp;G assigned to uniquely distinguish the LANGUAGE from all others.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="LANG_CODE" />
+    </property>
+  </properties>
+  <keys>
+    <key Active="true" Name="MATCHD_CNSMR_PRSNA_UPI" PhysicalName="MATCHD_CNSMR_PRSNA_UPI" Kind="PRIMARY">
+      <property Name="LEGAL_ENT_NBR" />
+      <property Name="MATCHD_CNSMR_PRSNA_ID" />
+    </key>
+    <key Active="true" Name="MATCHD_CNSMR_PRSNA_IX" PhysicalName="MATCHD_CNSMR_PRSNA_IX" Kind="INDEX">
+      <property Name="LANG_CODE" />
+    </key>
+  </keys>
+  <links>
+    <link Active="true" Name="MATCHD_CNSMR_PRSNA_FK" PhysicalName="MATCHD_CNSMR_PRSNA_FK">
+      <keymap FromKey="MATCHD_CNSMR_PRSNA_IX" ToPackage="models/pngModel" ToModelUnit="LANG.mtt" ToKey="LANG_UPI" ReverseLink="true" ReverseLinkName="R_MATCH_CNSMR_PRSNA" DeleteRule="RESTRICT">
+        <mapping FromProperty="LANG_CODE" ToProperty="LANG_CODE" />
+      </keymap>
+    </link>
+  </links>
+  <docFacets>
+    <mdmWebServiceFacet />
+    <mdmAuthorizationFacet />
+    <mdmSysTableMapFacet TableClass="MASTER" Source="MASTER" MasterTable="MATCHD_CNSMR_PRSNA" />
+    <miscFacet PhysicalName="MATCHD_CNSMR_PRSNA" Active="true" />
+    <mdmConfigFacet SchemaGen="true" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql />
+</document>
+

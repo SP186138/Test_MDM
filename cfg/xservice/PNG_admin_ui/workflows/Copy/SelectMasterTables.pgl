@@ -1,0 +1,29 @@
+<ui:page-group version="3" xmlns:ui="http://www.teradata.com/ui" name="studio.templates.simple_form" source="studio.controller:load">
+  <ui:container scrollable="true" collapsable="true">
+<!--Line added for issue MDM-1937 by Ankur Goyal-->
+    <ui:help displayPage="{$pages:CopyMasterToOutputHelp}" />
+    <ui:step displayText="Copy Master Data to Output Staging" id="selectMasterTables" scrollable="true" editable="false">
+      <!--  <ui:field-group>
+        <ui:checkbox id="SCHEDULE" displayText="Schedule Output" name="SCHEDULE" value="false"/>
+        <ui:entry-field id="EMAIL" name="EMAIL" displayText="E-Mail"/>
+      </ui:field-group> 
+     -->
+      <ui:grid>
+        <ui:row>
+          <ui:cell width="100%" valign="top">
+            <ui:table id="datatable1" name="datatable1" displayText="SELECT MASTER TABLES" rowSrc="$root/RESPONSE/*" displayTextNoRecords="No Record" rowId="PHY_MST" selectable="All" postRowIdAs="SELECTED_ITEM" maxRows="-1" doPaging="false">
+              <ui:field-group>
+                <ui:display-field name="PHY_MST" displayText="Select All" title="CopyMasterDataTableName" unFormat="true"/>
+              </ui:field-group>
+              <ui:buttons>
+                <ui:button id="BACK" name="BACK" displayText="Back" />
+                <ui:button id="COPY" name="COPY" displayText="Copy to Output Staging" enabledBySelections="true" />
+              </ui:buttons>
+            </ui:table>
+          </ui:cell>
+        </ui:row>
+      </ui:grid>
+    </ui:step>
+  </ui:container>
+</ui:page-group>
+

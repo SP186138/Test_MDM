@@ -1,0 +1,23 @@
+<ui:page-group version="3" xmlns:ui="http://www.teradata.com/ui" name="studio.templates.simple_form" source="studio.controller:load">
+  <ui:container id="container" displayText="Confirmation Message" collapsable="false">
+    <ui:step displayText="" id="" editable="true">
+      <!-- bootstrap fields -->
+      <!-- these should even be hidden from templates -->
+      <ui:field-group select="$root">
+        <ui:hidden-field name="EV_NAME" id="EV_NAME"/>
+        <ui:hidden-field name="EV_KEY" id="EV_KEY"/>
+        <ui:hidden-field name="CURRENT_USER_ID" value="{identity-user-id()}" id="CURRENT_USER_ID"/>
+      </ui:field-group>
+      <!-- bootstrap fields done-->
+      <ui:field-group id="leftFields1" columns="2">
+        <ui:image src="/alert_green_static.gif" displayCondition="{$root/MESSAGE/STATUSMSG/@Value = 'Success'}" />
+        <ui:display-field displayText="Workflow Started Successfully! " id="msg" name="msg" editable="false" displayCondition="{$root/MESSAGE/STATUSMSG/@Value = 'Success'}" value="{$root/MESSAGE/ID/@Value}" />
+      </ui:field-group>
+      <ui:field-group id="leftFields2" columns="2">
+        <ui:image src="/alert_static_small.gif" displayCondition="{$root/MESSAGE/STATUSMSG/@Value = 'Error'}" />
+        <ui:display-field displayText="Workflow could not be started!" id="msg" name="msg" editable="false" displayCondition="{$root/MESSAGE/STATUSMSG/@Value = 'Error'}" />
+      </ui:field-group>
+    </ui:step>
+  </ui:container>
+</ui:page-group>
+

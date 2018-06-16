@@ -1,0 +1,166 @@
+<ui:page-group version="3" xmlns:ui="http://www.teradata.com/ui" Id="ui_form29.pgl">
+  <ui:container id="Outer" displayText="Editable Codes">
+    <ui:help displayPage="{$pages: manageCodeMasterHelp}" />
+    <ui:step id="searchS">
+      <!-- <ui:search exportSearch="false" saveSearch="false">-->
+      <ui:field-group id="searchFG" columns="2">
+        <ui:dropdown displayText="Type" id="TYPE" name="TYPE" optionSrc="$root/CODE_MASTER_TYPES/OPTION" />
+        <ui:dropdown displayText="Parent Type" id="PARENT_TYPE" name="PARENT_TYPE" optionSrc="$root/CODE_MASTER_PARENT_VALUES/OPTION" displayCondition="{count($root/CODE_MASTER_PARENT_VALUES/*) &gt; 0}" />
+      </ui:field-group>
+      <ui:field-group id="searchAdv" columns="2">
+        <ui:entry-field displayText="Name" id="searchName" name="searchName" dataType="Text" displayCondition="{string-length($root/AdvancedSearch/@Value) != 0}" />
+        <ui:entry-field displayText="Description" id="searchDesc" name="searchDesc" dataType="Text" displayCondition="{string-length($root/AdvancedSearch/@Value) != 0}" maxlength="1024" />
+      </ui:field-group>
+      <ui:field-group id="searchLink">
+        <ui:link-field name="advancedSearch" id="advancedSearch" value="Advanced Search" onClick="javascript:advancedSearch();" displayCondition="{string-length($root/AdvancedSearch/@Value) = 0}" />
+        <ui:link-field name="simpleSearch" id="simpleSearch" value="Simple Search" onClick="javascript:simpleSearch();" displayCondition="{string-length($root/AdvancedSearch/@Value) != 0}" />
+      </ui:field-group>
+      <ui:buttons>
+        <!--<ui:button displayText="Manage Type" id="manageType" name="manageType" onClick="{$pages:ManageCodemasterType}"/>-->
+        <ui:button displayText="Manage Type" id="manageType" name="manageType" />
+        <ui:divider />
+        <ui:button displayText="Search" id="Search" name="Search" />
+      </ui:buttons>
+      <!--</ui:search>-->
+    </ui:step>
+  </ui:container>
+  <ui:container id="alertCntEditable" displayCondition="{$root/isEditable/@Value = 'false'}">
+    <ui:step id="alertStpEditable">
+      <ui:field-group id="alertFGEditable">
+        <ui:display-field value="This Code Master Type is non-editable." name="alertDisabled" class="requiredIndicator" />
+      </ui:field-group>
+    </ui:step>
+  </ui:container>
+  <ui:container id="OuterAlert" inner="true" displayCondition="{(string-length($root/AlertGreen/@Value) != 0) or (string-length($root/AlertRed/@Value) != 0)}">
+    <ui:step id="StepAlert">
+      <ui:field-group id="leftFields1" columns="3">
+        <ui:image src="/bpi_check.gif" displayCondition="{string-length($root/AlertGreen/@Value) != 0}" />
+        <ui:display-field value="{$root/AlertGreen/@Value}" displayCondition="{string-length($root/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen" />
+      </ui:field-group>
+      <ui:field-group id="leftFields1" columns="3">
+        <ui:image src="/cancel.gif" displayCondition="{string-length($root/AlertRed/@Value) != 0}" />
+        <ui:display-field value="{$root/AlertRed/@Value}" displayCondition="{string-length($root/AlertRed/@Value) != 0}" name="error" class="requiredIndicator" />
+      </ui:field-group>
+    </ui:step>
+  </ui:container>
+  <ui:container id="Outer2">
+    <ui:step id="inner1" displayText="Add New Code Master Value" displayCondition="{$root/isEditable/@Value}">
+      <ui:field-group>
+        <ui:entry-field id="Name" name="Name" displayText="Name" required="true" />
+        <ui:entry-field id="Description" name="Description" displayText="Description" maxlength="1024" />
+        <ui:dropdown displayText="Parent Type" id="PARENT_TYPE_ID" name="PARENT_TYPE_ID" optionSrc="$root/CODE_MASTER_PARENT_VALUES/OPTION" displayCondition="{count($root/CODE_MASTER_PARENT_VALUES/*) &gt; 0}" />
+      </ui:field-group>
+      <ui:buttons>
+        <ui:button name="Add" id="Add" displayText="Add" onClick="javascript:addCodeMasterValue();" />
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:container inner="true">
+    <ui:step id="inner2">
+      <ui:table displayTextNoRecords="No Records found" selectable="All" collapsable="false" scrollable="true" select="$root/CODE_MASTER_VALUES" postRowIdAs="SELECTED_ID" startAtRow="$root/StartRowCount/@Value" totalRowCount="$root/TotalRowCount/@Value" displayCondition="{$root/isEditable/@Value}">
+        <!--<ui:table displayTextNoRecords="No Records found" selectable="All" collapsable="false" scrollable="true" select="$root/CODE_MASTER_VALUES" postRowIdAs="SELECTED_ID">-->
+        <ui:field-group>
+          <ui:hidden-field name="ID" id="ID" />
+          <ui:entry-field name="VALUE_ID" id="VALUE_ID" displayText="Name" dataType="Text" />
+          <ui:entry-field name="DESCRIPTION" id="DESCRIPTION" displayText="Description" dataType="Text" maxlength="1024" />
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button name="Update" id="Update" displayText="Update" onClick="javascript:modifyCodeMasterValues();" enabledBySelections="true" />
+          <ui:divider />
+          <ui:button name="Delete" id="Delete" displayText="Delete" onClick="javascript:deleteCodeMasterValues();" enabledBySelections="true" />
+        </ui:buttons>
+      </ui:table>
+      <ui:table displayTextNoRecords="No Records found" selectable="None" collapsable="false" scrollable="true" select="$root/CODE_MASTER_VALUES" postRowIdAs="SELECTED_ID" startAtRow="$root/StartRowCount/@Value" totalRowCount="$root/TotalRowCount/@Value" displayCondition="{$root/isEditable/@Value='false'}">
+        <ui:field-group>
+          <ui:entry-field name="VALUE_ID" id="VALUE_ID" displayText="Name" dataType="Text" readOnly="true" />
+          <ui:entry-field name="DESCRIPTION" id="DESCRIPTION" displayText="Description" dataType="Text" readOnly="true" />
+        </ui:field-group>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>function advancedSearch()
+		{
+		form.BUTTON_ID.value = "AdvSearch" ;
+				form.submit();	
+                grayOut(true);				
+		}
+		
+		function simpleSearch()
+		{
+		form.BUTTON_ID.value = "SimpleSearch" ;
+				form.submit();	
+                grayOut(true);				
+		}
+		
+		function addCodeMasterValue()
+{ 
+  if(document.form.Name.value.trim() == '')
+	{
+		core_alert_jquery("NAME_SHOULD_NOT_BE_NULL");
+	}
+	else
+	{
+		form.BUTTON_ID.value = "Add" ;
+				form.submit();	
+				grayOut(true);
+	}
+}
+		function deleteCodeMasterValues()
+{		
+ 		
+core_confirm_jquery(&quot;DELETE_CODE_MASTER&quot;,'onDeleteCallback');
+	
+}   
+
+function onDeleteCallback(response) {
+	if(response == 'yes') {
+		form.BUTTON_ID.value ='Delete';
+		form.submit();
+		grayOut(true);
+	}
+} 
+	function modifyCodeMasterValues()
+	{
+		var checkForNull = checkIfAnyFieldsNullValues(document.form);
+		if(checkForNull == false)
+		{
+			form.BUTTON_ID.value = "Update" ;
+			form.submit();
+			grayOut(true);
+		}
+		else
+		{
+			core_alert_jquery("UPDATED_VALUE_SHOULD_NOT_NULL");
+		}
+	}
+
+		function checkIfAnyFieldsNullValues(form)
+{
+	
+	var foundNull = false;
+	if (form.SELECTED_ID[0] == null)
+	{
+		if (form.SELECTED_ID.checked == true &amp;&amp; form.VALUE_ID.value.trim() == '')
+		{
+			foundNull = true;
+		}
+	}
+	else
+	{
+		var count; 
+		var elementsLen = form.SELECTED_ID.length;
+
+		for(count = 0; count &lt; elementsLen; count++)
+		{
+			if(form.SELECTED_ID[count].checked == true &amp;&amp; form.VALUE_ID[count].value.trim() == '')
+			{	
+				foundNull = true;
+				break;
+			}
+		}
+	}
+	
+	return foundNull;
+}</ui:script>
+</ui:page-group>
+

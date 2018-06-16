@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="3" ShowInBreadCrumbs="true" Version="1.0" Name="WfSearchMktngLegal" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="WfSearchMktngLegal"/>
+  <nodes>
+    <start Name="start0">
+      <actions/>
+      <next_nodes>
+        <next_node Name="MarketingPgmLkp"/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="MarketingPgmLkp" ShowInBreadCrumbs="HIDE" Template="MarketingPgmLkp.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$thisParam/MaxRec/@Value='' or $thisParam/MaxRec/@Value=null">
+            <THEN>
+              <SET Var="MaxRec" FromValue="25"/>
+            </THEN>
+            <ELSE>
+              <SET Var="MaxRec" FromValue="{$thisParam/MaxRec/@Value}"/>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="strlen(trim($thisParam/SORT_BY/@Value))!= 0 and ($thisParam/SORT_BY/@Value)!='ID'">
+            <THEN>
+              <SET Var="pSortBy" FromValue="{$thisParam/SORT_BY/@Value}"/>
+              <SET Var="pSortOrder" FromValue="{$thisParam/SORT_ORDER/@Value}"/>
+            </THEN>
+            <ELSE>
+              <THEN>
+                <SET Var="pSortBy" FromValue="MKTNG_PGM_NBR"/>
+                <SET Var="pSortOrder" FromValue="ASC"/>
+              </THEN>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$pSortOrder='Descending'">
+            <THEN>
+              <SET Var="pSortOrder" FromValue="DESC"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$pSortOrder='Ascending'">
+            <THEN>
+              <SET Var="pSortOrder" FromValue="ASC"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="strlen(trim($thisParam/SORT_BY/@Value)) != 0">
+            <THEN>
+              <MAKE_INSTANCE_DOCUMENT Name="{$pSortBy}" AssignToVar="sortByTag"/>
+              <SET DocVar="sortByTag" Attribute="Sort" FromValue="{$thisParam/SORT_ORDER/@Value}"/>
+            </THEN>
+          </IF_TEST>
+          <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+            <!--PUT SEARCH CRITRIA HERE-->
+            <TO_XML SelectList="$thisParam/*[name()='FILTER_MKTNG_PGM_NBR' or name()='FILTER_LEGAL_ENT_NBR' or name()='FILTER_MKTNG_PGM_NAME'  or name()='FILTER_MKTNG_PGM_DESC' or name()='FILTER_MKTNG_PGM_SHORT_NAME' or name()='FILTER_MKTNG_PGM_STATUS' or name()='FILTER_MKTNG_PGM_BUSN_NAME']"/>
+          </FORM_SEARCH_FILTER>
+          <FOR_EACH CurrentElement="currEle2" SelectList="$filters/FILTER">
+            <SET_NAME SelectList="$currEle2/FILTER_MKTNG_PGM_NBR" FromValue="MKTNG_PGM_NBR"/>
+            <SET_NAME SelectList="$currEle2/FILTER_LEGAL_ENT_NBR" FromValue="LEGAL_ENT_NBR"/>
+            <SET_NAME SelectList="$currEle2/FILTER_MKTNG_PGM_NAME" FromValue="MKTNG_PGM_NAME"/>
+            <SET_NAME SelectList="$currEle2/FILTER_MKTNG_PGM_DESC" FromValue="MKTNG_PGM_DESC"/>
+            <SET_NAME SelectList="$currEle2/FILTER_MKTNG_PGM_SHORT_NAME" FromValue="MKTNG_PGM_SHORT_NAME"/>
+            <SET_NAME SelectList="$currEle2/FILTER_MKTNG_PGM_STATUS" FromValue="MKTNG_PGM_STATUS"/>
+            <SET_NAME SelectList="$currEle2/FILTER_MKTNG_PGM_BUSN_NAME" FromValue="MKTNG_PGM_BUSN_NAME"/>
+          </FOR_EACH>
+          <!--<EXECUTE_SQL_QUERY AssignToVar="VarMktngPgm" Value="LOCKING ROW FOR ACCESS SELECT MKTNG_PGM_NBR,LEGAL_ENT_NBR from MKTNG_PGM" ReturnRowCount="yes" />-->
+          <GET_DOC_SMART AssignToVar="VarMktngPgm" Name="MKTNG_PGM" HandleException="true" ReturnRowCount="true" ServiceName="BCM_MASTER" MaxRows="{$MaxRec}" StartAtRow="{$thisParam/START_COUNT/@Value}">
+            <TO_XML SelectList="$filters/FILTER/*"/>
+            <ORDER_BY>
+              <TO_XML DocVar="sortByTag"/>
+            </ORDER_BY>
+          </GET_DOC_SMART>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <TO_XML SelectList="$VarMktngPgm/*"/>
+              <TotalRowCount Value="{$VarMktngPgm/@TotalRowCount}"/>
+              <MaxRec Value="{$MaxRec}"/>
+              <START_COUNT Value="{$thisParam/START_COUNT/@Value}"/>
+            </ROOT>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction ='select_and_return'">
+            <THEN>
+              <APPEND_TO_XML SelectList="$thisReturn">
+                <REMOVE_CHILDREN ChildName="SORT_BY" DocVar="thisParam"/>
+                <TO_XML SelectList="$thisParam/*"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Save'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='cancel'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done2" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='select_and_return'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done2" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done2" Description=""/>
+          <next_node Name="MarketingPgmLkp" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <done Name="done2">
+      <actions/>
+      <next_nodes/>
+    </done>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <start0 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="82,178">
+        <iconProps iconfile="z1start.gif"/>
+      </start0>
+      <MarketingPgmLkp font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="215,298" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </MarketingPgmLkp>
+      <done2 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="469,19">
+        <iconProps iconfile="z1end.gif"/>
+      </done2>
+    </mgcnodes>
+    <mgcconnectors>
+      <start0>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="120,208" endpoint="220,299" ctrlRect1="193,206,4,4" ctrlRect2="218,228,4,4"/>
+      </start0>
+      <MarketingPgmLkp>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="260,320" endpoint="491,64" ctrlRect1="430,318,4,4" ctrlRect2="489,254,4,4" textRect="456,284,11,8">
+          <textProps text="CANCEL"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="237,298" endpoint="491,64" ctrlRect1="281,188,4,4" ctrlRect2="489,131,4,4" ctrlRect1Dirty="true" textRect="376,157,22,8" ctrlRect2Dirty="true">
+          <textProps text="SELECT AND RETURN"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="260,320" endpoint="491,64" ctrlRect1="430,318,4,4" ctrlRect2="489,254,4,4"/>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="237,298" endpoint="237,298" ctrlRect1="235,221,4,4" ctrlRect2="245,213,4,4" ctrlRect2Dirty="true"/>
+      </MarketingPgmLkp>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions/>
+    <post_actions/>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

@@ -1,0 +1,119 @@
+/***********************************************************************************************************
+SCRIPT:               DPEND.BTEQ 
+DESCRIPTION:          THIS SCRIPT LOADS EDW TABLES -- This scripts takes data friom trillium output tables 
+                                                      and loads DPEND
+DEPENDENCY:           
+INPUT:                TRILLIUM OUTPUT CNTRY TABLES
+OUTPUT:               EDW
+ERRORS:
+SPECIAL INSTRUCTIONS:
+
+CHANGE LOG:
+VERSION              DATE                 AUTHOR                          CHANGES
+1.00                 10/31/2011           TERADATA                        INITIAL VERSION
+4.00                 03/26/2012           TERADATA                        1. UPDATE NATIONAL ID INTO REGIS PRSNA 
+                                                                          FROM PRSNA TRT.
+                                                                          2. ADD STATE VALIDATION FOR US
+									  3. ADD OPT OUT MODULE
+R2O                  05/11/2012           TERADATA                        REMOVE ERROR PROCESSING
+4.1                  06/13/2012           TERADATA                        MODULARIZE AND TUNING
+5.1                  04/08/2014           TERADATA                        RELEASE 5.1
+                                                                          1. i60 PROCESSING CHANGES
+***********************************************************************************************************/
+
+.logon $TDPID/$TDUSER,$TDPWD
+
+
+.SET ERROROUT STDOUT;
+.SET SESSION CHARSET 'UTF8';
+.SET ERRORLEVEL 3624 SEVERITY 0
+
+DATABASE $DATABASENAME;
+
+DELETE FROM DPEND WHERE
+(REGIS_PRSNA_ID,MKTNG_PGM_NBR)
+IN
+(
+SELECT 
+TOUT.REGIS_PRSNA_ID,MKTNG_PGM_NBR
+FROM
+TSS_PRSNA_IDS_$CNTRY TOUT);
+.IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE;
+
+INS DPEND
+(
+      REGIS_PRSNA_ID ,
+      DPEND_TYPE_CODE ,
+      DPEND_NAME ,
+      DPEND_GENDR_IND ,
+      DPEND_BRTH_DATE ,
+      MKTNG_PGM_NBR ,
+      LEGAL_ENT_NBR ,
+      DPEND_SEQ_NBR,
+      DPEND_AGE_NBR,
+--      DECEASED_IND,
+      SYS_SOURCE ,
+      SYS_TARGET_ID ,
+      SYS_AUTH_ID ,
+      SYS_CREATED_BY ,
+      SYS_CREATION_DATE ,
+      SYS_LAST_MODIFIED_DATE ,
+      SYS_ENT_STATE ,
+      SYS_LAST_MODIFIED_BY ,
+      SYS_NC_TYPE ,
+      SYS_ERR_CODE ,
+      SYS_ERR_SVRTY,
+      OPTED_DPEND_IND
+)
+SELECT DISTINCT *
+FROM
+(
+SELECT
+      --B.REFERENCE_REGISTRATIONKEY,
+      B.REGIS_PRSNA_ID,
+      A.DPEND_TYPE_CODE,
+      A.DPEND_NAME,
+      A.DPEND_GENDR_IND,
+      A.DPEND_BRTH_DATE,
+      B.MKTNG_PGM_NBR,
+      B.LEGAL_ENT_NBR,
+      A.DPEND_SEQ_NBR,
+      A.DPEND_AGE_NBR,
+--      A.DECEASED_IND,
+      A.SYS_SOURCE,
+      A.SYS_TARGET_ID,
+      A.SYS_AUTH_ID,
+      A.SYS_CREATED_BY ,
+      CAST(CAST(CURRENT_TIMESTAMP AS VARCHAR(19)) AS TIMESTAMP(0)) SYS_CREATION_DATE,
+      CAST(CAST(CURRENT_TIMESTAMP AS VARCHAR(19)) AS TIMESTAMP(0)) SYS_LAST_MODIFIED_DATE,
+      A.SYS_ENT_STATE,
+      A.SYS_LAST_MODIFIED_BY,
+      A.SYS_NC_TYPE,
+      A.SYS_ERR_CODE,
+      A.SYS_ERR_SVRTY,
+      CASE WHEN C.DPEND_TRT_TXT IS NOT NULL AND C.DPEND_TRT_TXT = 'YES'
+           THEN 'Y'
+           ELSE 'N'
+       END OPTED_DPEND_IND
+      
+FROM DPEND_STG A
+INNER JOIN TSS_PRSNA_IDS_$CNTRY B
+	ON	A.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR   
+	AND	A.REGIS_CNSMR_ID_VAL=B.REGIS_CNSMR_ID_VAL
+	AND	A.SYS_SOURCE=B.SYS_SOURCE
+	
+LEFT OUTER JOIN DPEND_TRT_STG C	
+	ON	A.MKTNG_PGM_NBR=C.MKTNG_PGM_NBR   
+	AND	A.REGIS_CNSMR_ID_VAL=C.REGIS_CNSMR_ID_VAL
+	AND	A.SYS_SOURCE=C.SYS_SOURCE
+	AND	A.DPEND_SEQ_NBR=C.DPEND_SEQ_NBR
+	AND C.TRT_NBR IN (513)	
+QUALIFY RANK() OVER (PARTITION BY B.REGIS_PRSNA_ID,A.DPEND_SEQ_NBR  
+ORDER BY A.SYS_SOURCE DESC
+,A.SYS_NC_TYPE DESC
+) = 1
+) A
+;
+.IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE;
+
+.exit

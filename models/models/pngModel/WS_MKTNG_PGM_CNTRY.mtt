@@ -1,0 +1,72 @@
+<document IsDocView="true">
+  <properties>
+    <property Name="MKTNG_PGM_NBR">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="MKTNG_PGM_NBR" />
+    </property>
+    <property Name="MKTNG_PGM_NAME">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="MKTNG_PGM_NAME" />
+    </property>
+    <property Name="LEGAL_ENT_NBR">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="LEGAL_ENT_NBR" />
+    </property>
+    <property Name="LEGAL_ENT_NAME">
+      <extends Package="dictionaries" ModelUnit="pngModel - Copy (2).mdt" Name="LEGAL_ENT_NAME" />
+    </property>
+    <property Name="CNTRY_CODE">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="CNTRY_CODE" />
+    </property>
+    <property Name="CNTRY_NAME">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="CNTRY_NAME" />
+    </property>
+  </properties>
+  <keys />
+  <links />
+  <docFacets>
+    <miscFacet PhysicalName="WS_MKTNG_PGM_CNTRY" Active="true" />
+    <mdmConfigFacet SchemaGen="false" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql OnMDMTables="true" IsSimpleView="true">REPLACE VIEW  MDM.WS_MKTNG_PGM_CNTRY &#xD;
+(MKTNG_PGM_NBR, &#xD;
+ MKTNG_PGM_NAME,&#xD;
+ LEGAL_ENT_NBR,&#xD;
+ LEGAL_ENT_NAME,&#xD;
+ CNTRY_CODE,&#xD;
+ CNTRY_NAME,&#xD;
+ SYS_TARGET_ID,&#xD;
+ SYS_AUTH_ID,&#xD;
+ SYS_SOURCE,&#xD;
+ SYS_CREATED_BY,&#xD;
+ SYS_CREATION_DATE,&#xD;
+ SYS_ENT_STATE,&#xD;
+ SYS_LAST_MODIFIED_BY,&#xD;
+ SYS_LAST_MODIFIED_DATE,&#xD;
+ SYS_NC_TYPE,&#xD;
+ SYS_ERR_CODE,&#xD;
+ SYS_ERR_SVRTY ) &#xD;
+AS   &#xD;
+SELECT &#xD;
+A.MKTNG_PGM_NBR, &#xD;
+A.MKTNG_PGM_NAME,&#xD;
+ B.LEGAL_ENT_NBR,&#xD;
+ B.LEGAL_ENT_NAME,&#xD;
+ C.CNTRY_CODE,&#xD;
+ C.CNTRY_NAME,&#xD;
+NULL (INTEGER)   AS  SYS_TARGET_ID,&#xD;
+NULL (VARCHAR(1000))  AS SYS_AUTH_ID,&#xD;
+NULL (VARCHAR(256))  AS SYS_SOURCE,&#xD;
+NULL (VARCHAR(70))  AS SYS_CREATED_BY,&#xD;
+NULL (TIMESTAMP(0))  AS SYS_CREATION_DATE,&#xD;
+NULL (VARCHAR(25))  AS  SYS_ENT_STATE,&#xD;
+NULL (VARCHAR(70))  AS SYS_LAST_MODIFIED_BY,&#xD;
+NULL (TIMESTAMP(0))  AS SYS_LAST_MODIFIED_DATE, &#xD;
+NULL (VARCHAR(25))  AS SYS_NC_TYPE,&#xD;
+NULL (VARCHAR(10000))  AS SYS_ERR_CODE,&#xD;
+NULL (VARCHAR(30))  AS SYS_ERR_SVRTY   &#xD;
+FROM MDM.MKTNG_PGM A&#xD;
+LEFT JOIN MDM.LEGAL_ENT B&#xD;
+ON A.LEGAL_ENT_NBR=B.LEGAL_ENT_NBR&#xD;
+LEFT JOIN MDM.CNTRY C&#xD;
+ON A.LEGAL_ENT_NBR=C.LEGAL_ENT_NBR;</viewsql>
+</document>
+

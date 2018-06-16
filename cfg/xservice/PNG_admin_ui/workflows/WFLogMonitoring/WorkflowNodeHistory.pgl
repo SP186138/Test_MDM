@@ -1,0 +1,156 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_entry" source="studio.controller:load">
+  <ui:container id="Outer" scrollable="true" displayCondition="{$root/WF_PAGE_TYPE/@Value= 'WorkflowResults'}">
+    <ui:help displayPage="{$pages:WfMonitorLogHelp}"/>
+    <ui:step id="Outer" name="Outer" displayText="Workflow Monitoring">
+      <ui:container inner="true">
+        <ui:step id="Inner1">
+          <ui:field-group columns="2">
+            <ui:hidden-field id="selChildInsId" name="selChildInsId"/>
+            <ui:hidden-field id="selNodeName" name="selNodeName"/>
+            <ui:display-field name="WorkflowName" displayText="Workflow Name" value="{$root/SELECTED_WORKFLOW_DETAILS/SYS_WKFLW_LOG/WFName/@Value}" unFormat="true"/>
+            <ui:display-field name="InstanceId" displayText="Instance ID" value="{$root/SELECTED_WORKFLOW_DETAILS/SYS_WKFLW_LOG/InstanceID/@Value}" unFormat="true"/>
+            <ui:display-field name="ServiceName" displayText="Service Name" value="{$root/SELECTED_WORKFLOW_DETAILS/SYS_WKFLW_LOG/ServiceName/@Value}"/>
+            <ui:display-field name="User" displayText="User" value="{$root/SELECTED_WORKFLOW_DETAILS/SYS_WKFLW_LOG/TriggeredBy/@Value}"/>
+            <ui:display-field name="StartTime" displayText="Start Time" value="{$root/SELECTED_WORKFLOW_DETAILS/SYS_WKFLW_LOG/StartTime/@Value}" dataType="DateTime"/>
+            <ui:display-field name="EndTime" displayText="End Time" value="{$root/SELECTED_WORKFLOW_DETAILS/SYS_WKFLW_LOG/EndTime/@Value}" dataType="DateTime"/>
+            <ui:display-field name="Status" displayText="Status" value="{$root/SELECTED_WORKFLOW_DETAILS/SYS_WKFLW_LOG/Status/@Value}"/>
+            <ui:link-field name="InputParams" displayText="Input Parameters" targetName="catalogPopup" targetType="popup" id="InputParams" value="Show">
+              <ui:url page="{concat($root/WEB_APP_PATH/@Value,'/view.x2ps')}">
+                <POPUP select="$root/popValue/@Value"/>
+                <BUTTON_ID select="'showWorkflowParams'"/>
+                <SELECTED_INSTANCE_ID select="$root/SELECTED_WORKFLOW_DETAILS/SYS_WKFLW_LOG/InstanceID/@Value"/>
+                <PARAM_TYPE select="'INPUT_PARAM'"/>
+              </ui:url>
+            </ui:link-field>
+            <ui:link-field name="OutputParams" displayText="Output Parameters" targetName="catalogPopup" targetType="popup" id="OutputParams" value="Show">
+              <ui:url page="{concat($root/WEB_APP_PATH/@Value,'/view.x2ps')}">
+                <POPUP select="$root/popValue/@Value"/>
+                <BUTTON_ID select="'showWorkflowParams'"/>
+                <SELECTED_INSTANCE_ID select="$root/SELECTED_WORKFLOW_DETAILS/SYS_WKFLW_LOG/InstanceID/@Value"/>
+                <PARAM_TYPE select="'OUTPUT_PARAM'"/>
+              </ui:url>
+            </ui:link-field>
+            <ui:link-field name="ParentWorkflow" displayText="Parent Workflow" id="ParentWorkflow" value="{$root/SELECTED_WORKFLOW_DETAILS/SYS_WKFLW_LOG/ParentWFName/@Value}" displayCondition="{string-length($root/SELECTED_WORKFLOW_DETAILS/SYS_WKFLW_LOG/ParentWFInstanceID/@Value) != 0}">
+              <ui:url page="{concat($root/WEB_APP_PATH/@Value,'/view.x2ps')}">
+                <BUTTON_ID select="'ShowParentWFDetails'"/>
+                <SELECTED_INSTANCE_ID select="$root/SELECTED_WORKFLOW_DETAILS/SYS_WKFLW_LOG/ParentWFInstanceID/@Value"/>
+              </ui:url>
+            </ui:link-field>
+            <ui:hidden-field name="SELECTED_INSTANCE_ID" value="{$root/SELECTED_WORKFLOW_DETAILS/SYS_WKFLW_LOG/InstanceID/@Value}" id="SELECTED_INSTANCE_ID"/>
+          </ui:field-group>
+          <ui:buttons>
+            <ui:button displayText="Restart" id="Restart" name="Restart" displayCondition="{$root/showRestartBtns/@Value!='none'}"/>
+            <ui:divider displayCondition="{$root/showRestartBtns/@Value!='none'}"/>
+            <ui:button displayText="Terminate" id="Terminate" name="Terminate" displayCondition="{$root/showRestartBtns/@Value!='none'}"/>
+            <ui:divider displayCondition="{$root/showRestartBtns/@Value!='none'}"/>
+            <ui:button displayText="Refresh" id="Refresh"/>
+          </ui:buttons>
+        </ui:step>
+      </ui:container>
+      <ui:table id="WorkflowNodeHistory" displayText="Workflow Node Execution History" displayTextNoRecords="No Records Exist" collapsable="false" select="$root/RESULTS" postRowIdAs="SELECTED_INSTANCE_ID" startAtRow="$root/StartRowCount/@Value" totalRowCount="$root/TotalRowCount/@Value" filter="true" exportable="true" doPaging="false">
+        <ui:field-group>
+          <ui:hidden-field id="ChildWFInstanceID" name="ChildWFInstanceID"/>
+          <ui:link-field displayText="Node Name" name="NodeName" id="NodeName" sortable="true" filter="true" unFormat="true">
+            <ui:url page="javascript:drillDown(this)">
+            </ui:url>
+          </ui:link-field>
+          <ui:display-field displayText="Node Type" name="NodeType" id="NodeType" sortable="true" filter="true"/>
+          <ui:display-field name="Status" id="Status" style="align:left" displayText="Status" sortable="true" filter="true"/>
+          <ui:compound-field displayText="Status Legend" id="StatuslegendCmpd">
+            <ui:legend-field color="{HexColorCode/@Value}" id="Statuslegend" name="StatusColorCd"/>
+          </ui:compound-field>
+          <ui:display-field displayText="Start Time" name="StartTime" id="StartTime" sortable="true" filter="false" dataType="DateTime"/>
+          <ui:display-field displayText="End Time" name="EndTime" id="EndTime" sortable="true" filter="false" dataType="DateTime"/>
+          <ui:link-field name="InputParams" displayText="Input Parameters" targetName="catalogPopup" targetType="popup" id="InputParams" value="Show" filter="false">
+            <ui:url page="{concat($root/WEB_APP_PATH/@Value,'/view.x2ps')}">
+              <POPUP select="$root/popValue/@Value"/>
+              <BUTTON_ID select="'showParams'"/>
+              <NodeId select="NodeId/@Value"/>
+              <PARAM_TYPE select="'INPUT_PARAM'"/>
+              <SELECTED_INSTANCE_ID select="$root/SELECTED_INSTANCE_ID/@Value"/>
+            </ui:url>
+          </ui:link-field>
+          <ui:link-field name="OutputParams" displayText="Output Parameters" targetName="catalogPopup" targetType="popup" id="OutputParams" value="Show" filter="false">
+            <ui:url page="{concat($root/WEB_APP_PATH/@Value,'/view.x2ps')}">
+              <POPUP select="$root/popValue/@Value"/>
+              <BUTTON_ID select="'showParams'"/>
+              <NodeId select="NodeId/@Value"/>
+              <PARAM_TYPE select="'OUTPUT_PARAM'"/>
+              <SELECTED_INSTANCE_ID select="$root/SELECTED_INSTANCE_ID/@Value"/>
+            </ui:url>
+          </ui:link-field>
+        </ui:field-group>
+        <ui:buttons id="buttons1" name="buttons1">
+         <ui:button displayText="Back" id="Back" name="Back" displayCondition="{$root/BUTTON_ID/@Value!='ChildWFDetails'}"/>
+         <ui:button displayText="Back" id="BackChild" name="BackChild" displayCondition="{$root/BUTTON_ID/@Value='ChildWFDetails'}"/>
+        </ui:buttons>
+      </ui:table>
+      <ui:script>
+		$(&quot;[id='NodeType_td']&quot;).each(function(i){
+			if($(this).text().trim() != 'sub_workflow'){
+        			var  nodeName =  $($(&quot;[id='NodeName_td']&quot;)[i]).text().trim();
+        			if($(this).text().trim() == 'fork_and' || $(this).text().trim() == 'fork_or' )
+						$($(&quot;[id='NodeName_td']&quot;)[i]).find('a').attr('href',&quot;javascript:drillDown('&quot;+$($(&quot;[id='ChildWFInstanceID']&quot;)[i]).val()+&quot;',true,'&quot;+nodeName+&quot;')&quot;)
+        			else
+       					$($(&quot;[id='NodeName_td']&quot;)[i]).html($($(&quot;[id='NodeName_td']&quot;)[i]).text().trim());
+        		} else {
+					$($(&quot;[id='NodeName_td']&quot;)[i]).find('a').attr('href',&quot;javascript:drillDown('&quot;+$($(&quot;[id='ChildWFInstanceID']&quot;)[i]).val()+&quot;',false,null)&quot;)
+	        }
+		});
+    
+        function drillDown(childInstance,isForkNode,forkNodeName){
+        	$('#selChildInsId').val(childInstance);
+            grayOut(true);
+        	if(isForkNode){
+				$('#selNodeName').val(forkNodeName);
+        		document.form.BUTTON_ID.value = 'ForkNodeLogDetails';
+        	}
+        	else
+        		document.form.BUTTON_ID.value = 'ChildWFDetails';
+            document.form.submit();
+            }
+      </ui:script>
+    </ui:step>
+  </ui:container>
+  <ui:container displayText="Parameters" displayCondition="{$root/WF_PAGE_TYPE/@Value= 'ParamDetails'}">
+    <ui:step id="asd">
+      <ui:field-group>
+        <ui:hidden-field id="SELECTED_INSTANCE_ID" name="SELECTED_INSTANCE_ID" value="{$root/SELECTED_INSTANCE_ID/@Value}"/>
+        <ui:hidden-field id="PARAM_TYPE" name="PARAM_TYPE" value="{$root/PARAM_TYPE/@Value}"/>
+        <ui:hidden-field id="NodeId" name="NodeId" value="{$root/NodeId/@Value}"/>
+        <ui:hidden-field id="PrevButtonId" name="PrevButtonId" value="{$root/PREV_BUTTON_ID/@Value}"/>
+        <ui:div id="ParamXML"/>
+      </ui:field-group>
+      <ui:script language="javascript" type="text/javascript" src="/td/javascript/tdXmlTableDisplay.js"/>
+      <ui:script>
+
+document.write('&lt;link rel=&quot;stylesheet&quot;  type=&quot;text/css&quot;  href=&quot;'+omxContextPath+'/td/css/xml_display.css&quot; />');        
+if(form.PrevButtonId.value=='showWorkflowParams')
+{
+var paramNames=['SELECTED_INSTANCE_ID','PARAM_TYPE'];
+var paramValues=[form.SELECTED_INSTANCE_ID.value,form.PARAM_TYPE.value];
+var requestXMLObj=createRequestXmlObjectTd('getWorkflowParamValueXML','BPE_META',paramNames,paramValues);
+        
+}
+else
+{
+var paramNames=['SELECTED_INSTANCE_ID','PARAM_TYPE','NodeId'];
+var paramValues=[form.SELECTED_INSTANCE_ID.value,form.PARAM_TYPE.value,form.NodeId.value];
+var requestXMLObj=createRequestXmlObjectTd('getWorkflowNodeParamValueXML','BPE_META',paramNames,paramValues);
+}
+        
+var requestXMLStr=serializeXmlTd(requestXMLObj);
+var xpath = &quot;/RESPONSES/RESPONSE/*&quot;;
+SendAjaxRequest('BPE_META',requestXMLStr,'displayParamXML',xpath);
+
+		
+        
+			function displayParamXML(node){
+				//LoadXMLDom('ParamXML',node[0]);
+				buildTableFromXMLDoc('ParamXML',node[0]);
+			}
+        
+	</ui:script>
+    </ui:step>
+  </ui:container>
+</ui:page-group>

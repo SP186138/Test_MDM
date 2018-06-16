@@ -1,0 +1,474 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" name="studio.templates.simple_form" source="studio.controller:load" version="3">
+<ui:container id="topContainer" scrollable="true" type="Tabs">
+<ui:step displayText="CREATE CONTENT ELEMENT" id="collateral" scrollable="true" select="$root">
+<ui:field-group id="leftFields1" columns="3">
+<ui:image src="/bpi_check.gif" displayCondition="{string-length($root/AlertGreen/@Value) != 0}"/>
+<ui:display-field value="{$root/AlertGreen/@Value}" displayCondition="{string-length($root/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen"/>
+<ui:hidden-field id="ACTION_TYPE" name="ACTION_TYPE"/>
+</ui:field-group>
+<ui:field-group>
+<ui:display-field value="{$root/AlertRed/@Value}" displayCondition="{string-length($root/AlertRed/@Value) != 0}" name="error" class="requiredIndicatorRed"/>
+</ui:field-group>
+<ui:field-group id="tableColumns1" columns="2" select="$this">
+<ui:display-field id="CNTNT_ELEM_ID" name="CNTNT_ELEM_ID" displayText="Content Element ID" required="true"/>
+<ui:entry-field id="CNTNT_NAME" name="CNTNT_NAME" displayText="Content Name" required="true"/>
+<ui:dropdown id="LEVEL_IND" name="LEVEL_IND" displayText="Level Indicator" selectOne="true" required="true" onChange="javascript:loadLevel_ind();">
+<ui:option id="Marketing Program Level" value="Marketing Program Level"/>
+<ui:option id="Global Level" value="Global Level"/>
+</ui:dropdown>
+<ui:dropdown id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR" displayText="Matched Domain" optionSrc="$root/LEGAL_ENT/LEGAL_ENT_NAME" required="true" onChange="javascript:loadProgramList()" displayCondition="{$root/DIS_LEGAL_ENT_NBR/@Value='Y'}" select="$root/SQL_RESULT/LEGAL_ENT_NBR" selectOne="true"/>
+<ui:entry-field id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR" displayText="Matched Domain" value="####" displayCondition="{$root/DIS_LEGAL_ENT_NBR/@Value='N'}" editable="false"/>
+<ui:dropdown id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR" displayText="Program Name" optionSrc="$root/MKTNG_PGM/OPTION" selectOne="true" required="true" onChange="javascript:removeInctvNbr()" displayCondition="{$root/DIS_MKTNG_PGM_NBR/@Value='Y'}"/>
+<ui:entry-field id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR" displayText="Program Name" value="####" displayCondition="{$root/DIS_MKTNG_PGM_NBR/@Value='N'}" editable="false"/>
+<ui:entry-field id="CNTNT_SHORT_NAME" name="CNTNT_SHORT_NAME" displayText="Content Short Name" size="30"/>
+<ui:entry-field id="CNTNT_DESC" name="CNTNT_DESC" displayText="Content Description"/>
+<ui:dropdown id="TRGT_PATH_TYPE_CODE" name="TRGT_PATH_TYPE_CODE" displayText="Target Path Type" optionSrc="$root/RESPONSE/TRGT_PATH_TYPE/OPTION" selectOne="true" required="false"/>
+<ui:dropdown id="TRGT_SUB_PATH_TYPE_CODE" name="TRGT_SUB_PATH_TYPE_CODE" displayText="Target Sub Path Type" optionSrc="$root/RESPONSE/TRGT_SUB_PATH_TYPE/OPTION" selectOne="true" required="false"/>
+<ui:dropdown id="TRGT_CNSMR_SEG_CODE" name="TRGT_CNSMR_SEG_CODE" displayText="Target Consumer Seg" optionSrc="$root/RESPONSE/TRGT_CNSMR_SEG/OPTION" selectOne="true"/>
+<ui:dropdown id="CNSMR_ACTN_TYPE_CODE" name="CNSMR_ACTN_TYPE_CODE" displayText="Consumer Action Type" optionSrc="$root/RESPONSE/CNSMR_ACTN_TYPE/OPTION" selectOne="true" required="false"/>
+<ui:dropdown id="CNTNT_ELEM_TYPE_CODE" name="CNTNT_ELEM_TYPE_CODE" displayText="Content Element Type" optionSrc="$root/RESPONSE/CNTNT_ELEM_TYPE/OPTION" selectOne="true" required="true" displayCondition="{$root/DIS_LEGAL_ENT_NBR/@Value='Y'}"/>
+<ui:dropdown id="CNTNT_ELEM_TYPE_CODE" name="CNTNT_ELEM_TYPE_CODE" displayText="Content Element Type" optionSrc="$root/GBL_CNTNT_ELEM/OPTION" selectOne="true" required="true"  displayCondition="{$root/DIS_LEGAL_ENT_NBR/@Value='N'}"/>
+<ui:entry-field id="CNTNT_ACTIVE_START_DATE" name="CNTNT_ACTIVE_START_DATE" displayText="Content Start Date(mm/dd/yyyy)" dataType="Date" required="true"/>
+<ui:entry-field id="CNTNT_ACTIVE_END_DATE" name="CNTNT_ACTIVE_END_DATE" displayText="Content End Date(mm/dd/yyyy)" dataType="Date" required="true" displayCondition="{$root/DIS_LEGAL_ENT_NBR/@Value='Y'}"/>
+<ui:entry-field id="CNTNT_ACTIVE_END_DATE" name="CNTNT_ACTIVE_END_DATE" displayText="Content End Date(mm/dd/yyyy)" dataType="Date" displayCondition="{$root/DIS_LEGAL_ENT_NBR/@Value='N'}"/>
+<ui:entry-field id="INCTV_NBR_T" name="INCTV_NBR_T" displayText="Incentive Number" disabled="true" select="$root/INCTV_NBR">
+<ui:links>
+<ui:link onClick="javascript:openINCTV();">
+<ui:image src="/srch_actv.gif"/>
+</ui:link>
+</ui:links>
+</ui:entry-field>
+<ui:hidden-field id="INCTV_NBR" name="INCTV_NBR"/>
+<ui:entry-field id="ALT_SYS_CNTNT_ID" name="ALT_SYS_CNTNT_ID" displayText="ALT SYS Content Id"/>
+<ui:entry-field id="VIEW_WEB_SITE_URL_TXT" name="VIEW_WEB_SITE_URL_TXT" displayText="View Web Site"/>
+<ui:entry-field id="CNTNT_OWNER_NAME" name="CNTNT_OWNER_NAME" displayText="Content Owner Name"/>
+<ui:entry-field id="CNTNT_PHYS_LOCATION" name="CNTNT_PHYS_LOCATION" displayText="Content Location"/>
+<ui:dropdown id="ENTITY_STATE" name="ENTITY_STATE" displayText="Entity State">
+<ui:option id="ACTIVE" value="ACTIVE"/>
+<ui:option id="INACTIVE" value="INACTIVE"/>
+<ui:option id="NEW" value="NEW"/>
+<ui:option id="DELETED" value="DELETED"/>
+</ui:dropdown>
+<ui:entry-field id="GBL_CNTNT_ELEM_ID" name="GBL_CNTNT_ELEM_ID" displayText="Global Content Element Id" displayCondition="{$root/DIS_GBL_CNTNT_ELEM_ID/@Value='Y'}" disabled="true">
+<ui:links id="linksTrt">
+<ui:link id="linkTrt" onClick="javascript:openLookupId();">
+<ui:image src="/srch_actv.gif"/>
+</ui:link>
+</ui:links>
+</ui:entry-field>
+<ui:entry-field id="GBL_CNTNT_ELEM_ID" name="GBL_CNTNT_ELEM_ID" displayText="Global Content Element Id" value="####" displayCondition="{$root/DIS_GBL_CNTNT_ELEM_ID/@Value='N'}" editable="false"/>
+</ui:field-group>
+<ui:buttons>
+<ui:button id="CANCEL" name="CANCEL" displayText="Return" onClick="javascript:onCancel();"/>
+<ui:divider/>
+<ui:button id="ADD" name="ADD" displayText="Save" emphasized="true" onClick="javascript:on_Save()"  displayCondition="{$root/isDataSteward/@Value='Y'}"/>
+</ui:buttons>
+</ui:step>
+</ui:container>
+<ui:hr/>
+<ui:container id="container3" displayText="Content Item Details" displayCondition="{$root/IS_ITEM_PRESENT/@Value='YES'}">
+<ui:step id="cntntItemstep">
+<ui:table id="cntntItemsTable" displayText="Content Elem Item" rowId="PROD_ITEM_UPC" rowSrc="$root/CNTNT_ELEM_ITEM" scrollable="true" displayTextNoRecords="No Content Items Found" maxRows="-1" doPaging="false">
+<ui:field-group id="tableColumns" select="$root/CNTNT_ELEM_ITEM/*">
+<ui:display-field id="PROD_ITEM_UPC" name="PROD_ITEM_UPC" displayText="Product Item Number"/>
+<ui:display-field displayText="Content Elem Item Name" id="CNTNT_ELEM_ITEM_NAME" name="CNTNT_ELEM_ITEM_NAME"/>
+<ui:display-field displayText="Content Elem Item Quantity" id="CNTNT_ELEM_ITEM_QTY" name="CNTNT_ELEM_ITEM_QTY"/>
+<ui:display-field displayText="Brand Code" id="BRAND_CODE" name="BRAND_CODE"/>
+<ui:display-field displayText="Content Elem Item Description" id="CNTNT_ELEM_ITEM_DESC" name="CNTNT_ELEM_ITEM_DESC"/>
+</ui:field-group>
+</ui:table>
+<!--ui:buttons>
+
+<ui:button id="ADD_MORE_CONTENT_ITEM" displayText="Add  Content Item"/>
+<ui:divider/>
+
+<ui:button id="ADD_MORE_CONTENT_TRT" displayText="Add Content Trait"/>
+</ui:buttons-->
+</ui:step>
+</ui:container>
+<ui:hr/>
+<ui:container id="container4" displayText="Content Trait Details" displayCondition="{$root/IS_TRT_PRESENT/@Value='YES'}">
+<ui:step id="cntntTrtstep">
+<ui:table id="cntntTrtTable" displayText="Content Elem Trt" rowId="CNTNT_ELEM_TRT_SEQ_NBR" rowSrc="$root/CNTNT_ELEM_TRT" scrollable="true" displayTextNoRecords="No Content Traits Found" maxRows="-1" doPaging="false">
+<ui:field-group id="tableColumns" select="$root/CNTNT_ELEM_TRT/*">
+<ui:display-field id="TRT_NBR" name="TRT_NBR" displayText="Trait Number"/>
+<ui:display-field displayText="Content Elem Trt Seq" id="CNTNT_ELEM_TRT_SEQ_NBR" name="CNTNT_ELEM_TRT_SEQ_NBR"/>
+<ui:display-field displayText="Content Elem Trt Text" id="CNTNT_ELEM_TRT_TXT" name="CNTNT_ELEM_TRT_TXT"/>
+<ui:display-field displayText="Content Elem Trt Desc" id="CNTNT_ELEM_TRT_DESC" name="CNTNT_ELEM_TRT_DESC"/>
+</ui:field-group>
+</ui:table>
+<ui:buttons>
+<ui:button id="ADD_MORE_CONTENT_TRT" displayText="Add Content Trait"/>
+<ui:divider/>
+<ui:button id="ADD_MORE_CONTENT_ITEM" displayText="Add  Content Item"/>
+</ui:buttons>
+</ui:step>
+</ui:container>
+<ui:script>
+
+function onCancel(){
+var formchanged=isFormChanged();
+if(formchanged){
+//var cancelMessage = &quot;Modified information will be discarded, Do you want to continue?&quot;;
+core_confirm_jquery( 'Modified information will be discarded, Do you want to continue?','onCancelConfirm' );
+}
+else{
+
+form.BUTTON_ID.value = &quot;CANCEL&quot; ;
+
+form.submit();
+grayOut(true);
+
+}
+}
+function onCancelConfirm(response)
+{ if ( response=='yes' )
+{
+form.BUTTON_ID.value = &quot;CANCEL&quot; ;
+form.submit();
+grayOut(true);}
+else{
+return;
+}
+}
+
+function loadProgramList(){
+
+document.form.BUTTON_ID.value = 'LOAD_PROGRAM_LIST';
+
+document.form.action = 'view.x2ps';
+
+document.form.submit();
+
+}
+
+function openINCTV()
+
+{
+
+
+
+//trapExcelPivotChanges();
+
+
+var pgname=document.getElementById('MKTNG_PGM_NBR').value;
+
+if(pgname=='####')
+{
+core_alert('Cannot select incentive nbr as program name does not have a value ');
+
+return ;
+}
+var isMKTNG_PGM_NBR=document.getElementById('MKTNG_PGM_NBR').options[document.getElementById('MKTNG_PGM_NBR').selectedIndex].value;
+
+
+
+ 
+/*var LEGAL_ENT_NBR=document.getElementById('LEGAL_ENT_NBR').options[document.getElementById('LEGAL_ENT_NBR').selectedIndex].value;*/
+
+
+
+
+
+if(isMKTNG_PGM_NBR=='')
+
+{core_alert('Please select Program Name ');
+
+return ;
+
+}
+
+else
+
+{
+
+document.form.BUTTON_ID.value = 'GET_INCTV_NBR';
+
+document.form.action = 'view.x2ps';
+
+document.form.submit();
+
+/*
+
+var url= 'start.x2ps?START_WORKFLOW=IncentiveMgmt&amp;SERVICE_NAME=BCM_MASTER&amp;SELECT_WF=SearchIncentive&amp;TYPE=Select&amp;MKTNG_PGM_NBR='+isMKTNG_PGM_NBR+'&amp;LEGAL_ENT_NBR='+LEGAL_ENT_NBR+'&amp;SOURCE=CNTNT_ELEM';
+
+disableButtons();
+
+window.open(url,null,'width=800,height=600');
+
+url=url+'BUTTON_ID=SYS_REFRESH';
+
+url=url+'PAGE=BCM_MASTER.IncentiveMgmt.SearchIncentive.pgl';
+
+    
+
+url=url+'&amp;MKTNG_PGM_NBR='+isMKTNG_PGM_NBR+'&amp;LEGAL_ENT_NBR='+LEGAL_ENT_NBR+'&amp;SOURCE=CNTNT_ELEM';
+
+disableButtons();
+
+alert(url);
+
+window.open(url,null,'width=800,height=600');
+
+*/
+
+}
+
+}
+
+
+
+function removeInctvNbr(){
+
+document.getElementById('INCTV_NBR').value='';
+
+}
+
+function isFormChanged() {
+
+var rtnVal = false;
+
+var frm = document.forms[0];
+
+var ele = frm.elements;
+
+for ( i=0; i &lt; ele.length; i++ ) {
+
+if ( ele[i].type.length > 0 ) {
+
+if ( isElementChanged( ele, i ) ) {
+
+rtnVal = true;
+
+break;
+
+}
+
+}
+
+}
+
+return rtnVal;
+
+}
+
+function isElementChanged( ele, i ) {
+
+var isEleChanged = false;
+
+switch ( ele[i].type ) {
+
+case &quot;text&quot; :
+
+if ( ele[i].value != ele[i].defaultValue ){
+
+return true;
+
+}
+
+break;
+
+
+
+case &quot;textarea&quot; :
+
+if ( ele[i].value != ele[i].defaultValue ) return true;
+
+break;
+
+
+
+case &quot;radio&quot; :
+
+val = &quot;&quot;;
+
+if ( ele[i].checked != ele[i].defaultChecked ) return true;
+
+break;
+
+
+
+case &quot;select-one&quot; :
+
+for ( var x =0 ; x &lt; ele[i].length; x++ ) {
+
+if(ele[i].name!='LEGAL_ENT_NBR'){
+
+if(ele[i].value!='' ){
+
+if ( ele[i].options[ x ].selected != ele[i].options[ x ].defaultSelected ){
+
+return true;
+
+}
+
+}
+
+}
+
+}
+
+break;
+
+
+
+case &quot;select-multiple&quot; :
+
+for ( var x =0 ; x &lt; ele[i].length; x++ ) {
+
+if ( ele[i].options[ x ].selected
+
+!= ele[i].options[ x ].defaultSelected )
+
+return true;
+
+}
+
+break;
+
+
+
+case &quot;checkbox&quot; :
+
+if ( ele[i].checked != ele[i].defaultChecked ) return true;
+
+  
+
+default:
+
+return false;
+
+break;
+
+}
+
+}
+  
+
+  
+
+function on_Save(){
+
+var bIsValid = true;
+
+document.form.SUBMIT_AS_XML.value = 'false';
+
+
+
+bIsValid = (isValid_collateral());
+
+	
+
+if( bIsValid == false )
+
+{
+
+validation_alert('collateral');
+
+}
+
+if ( bIsValid == true){
+
+var isFormValid = validateForm();
+
+if(isFormValid){
+
+document.form.BUTTON_ID.value = 'ADD';
+
+document.form.action = 'view.x2ps';
+
+document.form.submit();
+
+}
+
+else return;
+
+}
+
+return;
+
+}
+
+function validateForm(){
+
+var returnVal;
+
+returnVal=CompareDates();
+
+return returnVal;
+
+}
+
+function CompareDates()
+
+{
+
+var str1 = document.getElementById(&quot;CNTNT_ACTIVE_START_DATE&quot;).value;
+
+var str2 = document.getElementById(&quot;CNTNT_ACTIVE_END_DATE&quot;).value;
+
+var mon1  = parseInt(str1.substring(0,2),10);
+
+var dt1 = parseInt(str1.substring(3,5),10);
+
+//var yr1  = parseInt(str1.substring(6,10),10);
+
+var yr1  = parseInt(str1.substr(str1.length-4));
+
+var mon2  = parseInt(str2.substring(0,2),10);
+
+var dt2 = parseInt(str2.substring(3,5),10);
+
+//var yr2  = parseInt(str2.substring(6,10),10);
+
+var yr2  = parseInt(str2.substr(str2.length-4));
+
+var date1 = new Date(yr1, mon1, dt1);
+
+var date2 = new Date(yr2, mon2, dt2);
+
+
+
+if(date2 &lt; date1)
+
+{
+
+core_alert(&quot;End date cannot be earlier than Start date&quot;);
+
+return false;
+
+}
+
+else
+
+{
+
+return true;
+
+}
+
+}
+
+
+function loadLevel_ind() {
+
+document.form.BUTTON_ID.value ='LEVEL_IND';
+
+    
+document.form.action = 'view.x2ps';
+
+document.form.submit();
+
+  
+}
+function openLookupId(){
+
+document.form.BUTTON_ID.value = 'GBL_CNTNT_ID';
+
+document.form.action = 'view.x2ps';
+
+document.form.submit();
+
+}
+</ui:script>
+</ui:page-group>

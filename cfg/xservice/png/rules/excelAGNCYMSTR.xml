@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <DEFINE_METHOD Name="excelAGNCYMSTRRequest">
+    <RULE>
+      <ACTION>
+        <FOR_EACH CurrentElement="currRow" SelectList="$thisParam/AGNCY_MSTR">
+          <CREATE_DOCUMENT_ID Name="AGENCY_NBR" AssignToVar="agencyNum"/>
+          <ADD_DOC_SMART AssignToVar="varAgencyMSTR" Name="AGNCY_MSTR" ServiceName="BCM_MASTER">
+            <ACTV_DT Value="{$currRow/ACTV_DT/@Value}"/>
+            <AGNCY_BUS_NM Value="{$currRow/AGNCY_BUS_NM/@Value}"/>
+            <AGNCY_CNSMR_FCNG_NM Value="{$currRow/AGNCY_CNSMR_FCNG_NM/@Value}"/>
+            <AGNCY_DESC Value="{$currRow/AGNCY_DESC/@Value}"/>
+            <AGNCY_INTRFC_NBR Value="{$currRow/AGNCY_INTRFC_NBR/@Value}"/>
+            <AGNCY_NBR Value="{$agencyNum}"/>
+            <AGNCY_NM Value="{$currRow/AGNCY_NM/@Value}"/>
+            <AGNCY_STATUS_CD Value="{$currRow/AGNCY_STATUS_CD/@Value}"/>
+            <AGNCY_STATUS_NM Value="{$currRow/AGNCY_STATUS_NM/@Value}"/>
+            <BRAND_SPLR_LST Value="{$currRow/BRAND_SPLR_LST/@Value}"/>
+            <BUSN_NOTES Value="{$currRow/BUSN_NOTES/@Value}"/>
+            <CNTCT_NBR Value="{$currRow/CNTCT_NBR/@Value}"/>
+            <CNTRY_CODE Value="{$currRow/CNTRY_CODE/@Value}"/>
+            <DATA_CLCTN_TYPE_CD Value="{$currRow/DATA_CLCTN_TYPE_CD/@Value}"/>
+            <DMG_IND Value="{$currRow/DMG_IND/@Value}"/>
+            <DTC_REGIS_PRIOR_IND Value="{$currRow/DTC_REGIS_PRIOR_IND/@Value}"/>
+            <ERR_THRSHLD_PCT Value="{$currRow/ERR_THRSHLD_PCT/@Value}"/>
+            <EXTRNL_AGNCY_ID Value="{$currRow/EXTRNL_AGNCY_ID/@Value}"/>
+            <FREQ_NBR_DAYS Value="{$currRow/FREQ_NBR_DAYS/@Value}"/>
+            <GRS_IND Value="{$currRow/GRS_IND/@Value}"/>
+            <INTRFC_NBR Value="{$currRow/INTRFC_NBR/@Value}"/>
+            <IP_ADDR Value="{$currRow/IP_ADDR/@Value}"/>
+            <LEGAL_ENT_NBR Value="{$currRow/LEGAL_ENT_NBR/@Value}"/>
+            <LOG_LOAD_ID Value="{$currRow/LOG_LOAD_ID/@Value}"/>
+            <LOG_SOURCE_ID Value="{$currRow/LOG_SOURCE_ID/@Value}"/>
+            <LOG_UPDATE_USER Value="{$currRow/LOG_UPDATE_USER/@Value}"/>
+            <MKTNG_PGM_NBR Value="{$currRow/MKTNG_PGM_NBR/@Value}"/>
+            <PII_DATA_IND Value="{$currRow/PII_DATA_IND/@Value}"/>
+            <PREF_SRC_IND Value="{$currRow/PREF_SRC_IND/@Value}"/>
+            <PRIMARY_CNTCT_IND Value="{$currRow/PRIMARY_CNTCT_IND/@Value}"/>
+            <PRMRY_CNTCT_IND Value="{$currRow/PRMRY_CNTCT_IND/@Value}"/>
+            <REQSTD_DT Value="{$currRow/REQSTD_DT/@Value}"/>
+            <RQSTR_CNTCT_NBR Value="{$currRow/RQSTR_CNTCT_NBR/@Value}"/>
+            <SPLR_IND Value="{$currRow/SPLR_IND/@Value}"/>
+            <SR_NBR Value="{$currRow/SR_NBR/@Value}"/>
+            <TRNS_IND Value="{$currRow/TRNS_IND/@Value}"/>
+            <WEBSITE_REGIS_IND Value="{$currRow/WEBSITE_REGIS_IND/@Value}"/>
+          </ADD_DOC_SMART>
+          <IF_TEST Test="$varAgencyMSTR/@Status='Success'">
+            <THEN>
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="varAgency" DocumentName="AGNCY" ServiceName="BCM_MASTER">
+                <AGNCY_NBR Value="{$agencyNum}"/>
+                <AGNCY_NM Value="{$currRow/AGNCY_NM/@Value}"/>
+                <AGNCY_DESC Value="{$currRow/AGNCY_DESC/@Value}"/>
+                <AGNCY_BUS_NM Value="{$currRow/AGNCY_BUS_NM/@Value}"/>
+                <ACTV_DT Value="{$currRow/ACTV_DT/@Value}"/>
+                <REQSTD_DT Value="{$currRow/REQSTD_DT/@Value}"/>
+                <AGNCY_STATUS_CD Value="{$currRow/AGNCY_STATUS_CD}"/>
+                <SR_NBR Value="{$currRow/SR_NBR/@Value}"/>
+                <DMG_IND Value="{$currRow/DMG_IND/@Value}"/>
+                <EXTRNL_AGNCY_ID Value="{$currRow/EXTRNL_AGNCY_ID/@Value}"/>
+                <RQSTR_CNTCT_NBR Value="{$currRow/RQSTR_CNTCT_NBR/@Value}"/>
+                <SPLR_IND Value="{$currRow/SPLR_IND/@Value}"/>
+                <TRNS_IND Value="{$currRow/TRNS_IND/@Value}"/>
+                <GRS_IND Value="{$currRow/GRS_IND/@Value}"/>
+                <AGNCY_CNSMR_FCNG_NM Value="{$currRow/AGNCY_CNSMR_FCNG_NM/@Value}"/>
+                <BUSN_NOTES Value="{$currRow/BUSN_NOTES/@Value}"/>
+              </DO_DB_PERSIST>
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="varAgencyCountry" DocumentName="AGNCY_CNTRY" ServiceName="BCM_MASTER">
+                <AGNCY_NBR Value="{$agencyNum}"/>
+                <CNTRY_CODE Value="{$currRow/CNTRY_CODE/@Value}"/>
+              </DO_DB_PERSIST>
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="varAgencyCountryContact" DocumentName="AGNCY_CNTRY_CNTCT" ServiceName="BCM_MASTER">
+                <AGNCY_NBR Value="{$agencyNum}"/>
+                <CNTRY_CODE Value="{$currRow/CNTRY_CODE/@Value}"/>
+                <CNTCT_NBR Value="{$currRow/CNTCT_NBR/@Value}"/>
+              </DO_DB_PERSIST>
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="varAgencyContact" DocumentName="AGNCY_CNTCT" ServiceName="BCM_MASTER">
+                <AGNCY_NBR Value="{$agencyNum}"/>
+                <PRMRY_CNTCT_IND Value="{$currRow/PRMRY_CNTCT_IND/@Value}"/>
+                <CNTCT_NBR Value="{$currRow/CNTCT_NBR/@Value}"/>
+              </DO_DB_PERSIST>
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="varAgencyMarketingProgram" DocumentName="AGNCY_MKTNG_PGM" ServiceName="BCM_MASTER">
+                <AGNCY_NBR Value="{$agencyNum}"/>
+                <MKTNG_PGM_NBR Value="{$currRow/MKTNG_PGM_NBR/@Value}"/>
+                <PREF_SRC_IND Value="{$currRow/PREF_SRC_IND/@Value}"/>
+                <WEBSITE_REGIS_IND Value="{$currRow/WEBSITE_REGIS_IND/@Value}"/>
+                <DTC_REGIS_PRIOR_IND Value="{$currRow/DTC_REGIS_PRIOR_IND/@Value}"/>
+                <LEGAL_ENT_NBR Value="{$currRow/LEGAL_ENT_NBR/@Value}"/>
+              </DO_DB_PERSIST>
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="varAgencyMarketingProgramContact" DocumentName="AGNCY_MKTNG_PGM_CNTCT" ServiceName="BCM_MASTER">
+                <AGNCY_NBR Value="{$agencyNum}"/>
+                <MKTNG_PGM_NBR Value="{$currRow/MKTNG_PGM_NBR/@Value}"/>
+                <PRIMARY_CNTCT_IND Value="{$currRow/PRIMARY_CNTCT_IND/@Value}"/>
+                <CNTCT_NBR Value="{$currRow/CNTCT_NBR/@Value}"/>
+              </DO_DB_PERSIST>
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="varAgencyIP" DocumentName="AGNCY_IP" ServiceName="BCM_MASTER">
+                <AGNCY_NBR Value="{$agencyNum}"/>
+                <SR_NBR Value="{$currRow/SR_NBR/@Value}"/>
+                <IP_ADDR Value="{$currRow/IP_ADDR/@Value}"/>
+                <REQSTD_DT Value="{$currRow/REQSTD_DT/@Value}"/>
+              </DO_DB_PERSIST>
+              <!--<ADD_DOC_SMART AssignToVar="varAgencyStatus" Name="AGNCY_STATUS" ServiceName="BCM_MASTER">
+                <AGNCY_STATUS_CD Value="{$currRow/AGNCY_STATUS_CD/@Value}"/>
+                <AGNCY_STATUS_NM Value="{$currRow/AGNCY_STATUS_NM/@Value}"/>
+                <LOG_SOURCE_ID Value="{$currRow/LOG_SOURCE_ID/@Value}"/>
+                <LOG_UPDATE_USER Value="{$currRow/LOG_UPDATE_USER/@Value}"/>
+                <LOG_LOAD_ID Value="{$currRow/LOG_LOAD_ID/@Value}"/>
+              </ADD_DOC_SMART>-->
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="varAgencyInterface" DocumentName="AGNCY_INTRFC" ServiceName="BCM_MASTER">
+                <AGNCY_NBR Value="{$agencyNum}"/>
+                <AGNCY_INTRFC_NBR Value="{$currRow/AGNCY_INTRFC_NBR/@Value}"/>
+                <DATA_CLCTN_TYPE_CD Value="{$currRow/DATA_CLCTN_TYPE_CD/@Value}"/>
+                <BRAND_SPLR_LST Value="{$currRow/BRAND_SPLR_LST/@Value}"/>
+                <INTRFC_NBR Value="{$currRow/INTRFC_NBR/@Value}"/>
+                <PII_DATA_IND Value="{$currRow/PII_DATA_IND/@Value}"/>
+                <FREQ_NBR_DAYS Value="{$currRow/FREQ_NBR_DAYS/@Value}"/>
+                <ERR_THRSHLD_PCT Value="{$currRow/ERR_THRSHLD_PCT/@Value}"/>
+              </DO_DB_PERSIST>
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="varAgencyInterfaceContact" DocumentName="AGNCY_INTRFC_CNTCT" ServiceName="BCM_MASTER">
+                <AGNCY_NBR Value="{$agencyNum}"/>
+                <INTRFC_NBR Value="{$currRow/INTRFC_NBR/@Value}"/>
+                <CNTCT_NBR Value="{$currRow/CNTCT_NBR/@Value}"/>
+                <PRMRY_CNTCT_IND Value="{$currRow/PRMRY_CNTCT_IND/@Value}"/>
+              </DO_DB_PERSIST>
+            </THEN>
+          </IF_TEST>
+        </FOR_EACH>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

@@ -1,0 +1,387 @@
+<ui:page-group version="3" xmlns:ui="http://www.teradata.com/ui" name="studio.templates.simple_form" source="studio.controller:load">
+  <ui:dynamic-pgl select="$root/PGL/*" />
+  <ui:script>
+    function onLoad()
+		{
+			selectMethod();
+				onLoadSuper();
+     scrollHelper();
+     autoCollapseRows();
+		}
+
+		function OnPublish()  {
+    <!-- 
+			This function validates the as much as possible and then calls the submit to move on.
+ -->
+    if (validateEmail()) {
+		             return;
+		    }
+		
+				if (validateSource()) {
+									return;
+		    }
+		    if (validateTable()) {
+								return;
+		    }
+		
+		    if (validateTarget()) {
+								if (method &lt;= 0)  {
+													return;
+								}
+		    }
+		    form.BUTTON_ID.value = "PUBLISH"  ;
+		    form.submit();	
+			grayOut(true);
+		}
+		
+		function validateEmail() {
+    <!--
+				This function validates the email address.
+-->
+    var method = document.form.METHOD.value;
+		      if  (method &gt; 1) {
+				     var emailValue = document.form.email.value;
+	           var regexp = /@/;
+		         var regexp2 = /./;
+		          if (emailValue.length == 1) {
+		 	    					core_alert_jquery("ENTER_EMAIL_ID");
+		      					return true;
+						  }   
+			        var matcher = emailValue.match(regexp);
+		          if (matcher == null) {
+										core_alert_jquery("ENTER_VALID_EMAIL_ID");
+										return true;
+		          }
+		          var matcher2 = emailValue.match(regexp2);
+			         if  (matcher2 == null)  {
+										core_alert_jquery("ENTER_VALID_EMAIL_URL");
+		                 return true;;
+		          }
+		      } 
+		      return false;
+		}
+		
+		function selectMethod() {
+    <!--
+					This function get the method and either turns on or off the different form items based upon what method was choosen
+    -->
+    var method = document.form.METHOD.value;
+		     var count;
+		     var value;
+		if (method == 0) 
+		{
+				     if(document.form.isValidLicense.value == 'true')
+		         {
+							document.form.JMS_QUEUE.value = " ";
+		          document.form.JMS_QUEUE.disabled = true;
+		          document.form.email.value = " ";
+				      document.form.email.disabled = true;
+		          document.form.comma.disabled = true;
+		          document.form.space.disabled = true;
+		          document.form.tab.disabled = true;
+		          document.form.semi.disabled = true;
+		          document.form.other.disabled = true;
+		          document.form.otherBox.disabled = true;
+		         }
+		          if (document.form.targetTableName[0] == null)  {
+											document.form.targetTableName.disabled = false;
+		          } else {		
+		               count = document.form.targetTableName.length;;
+		               for (var i = 0; i &lt; count; i++) {
+		          				document.form.targetTableName[i].disabled =false;
+		               }
+		           }
+		} 
+		else 
+		{
+		          if (method == 1) {
+							document.form.JMS_QUEUE.value = " ";
+		          document.form.JMS_QUEUE.disabled = false;
+		          document.form.email.value = " ";
+				      document.form.email.disabled = true;
+		          document.form.comma.disabled = true;
+		          document.form.space.disabled = true;
+		          document.form.tab.disabled = true;
+		          document.form.semi.disabled = true;
+		          document.form.other.disabled = true;
+		          document.form.otherBox.disabled = true;
+
+		          if (document.form.targetTableName[0] == null) 
+							{
+										    document.form.targetTableName.disabled  = false;
+		          } 
+							else 
+							{ 
+		                    count = document.form.targetTableName.length;
+		                    for (var i = 0; i &lt; count; i++) 
+												{
+		          				       document.form.targetTableName[i].disabled =false;
+		                    }
+		          }
+		} 
+		else
+		 {
+										if (method == 5) {
+    <!-- csv -->
+    document.form.JMS_QUEUE.value = " ";
+		          document.form.JMS_QUEUE.disabled = true;
+		          document.form.email.value = " ";
+				      document.form.email.disabled = false;
+		          document.form.comma.disabled = false;
+		          document.form.space.disabled = false;
+		          document.form.tab.disabled = false;
+		          document.form.semi.disabled = false;
+		          document.form.other.disabled = false;
+		          document.form.otherBox.disabled = false;
+		 }
+		 else 
+		{
+    <!-- excel -->
+    document.form.JMS_QUEUE.value = " ";
+		          document.form.JMS_QUEUE.disabled = true;
+		          document.form.email.value = " ";
+				      document.form.email.disabled = false;
+		          document.form.comma.disabled = true;
+		          document.form.space.disabled = true;
+		          document.form.tab.disabled = true;
+		          document.form.semi.disabled = true;
+		          document.form.other.disabled = true;
+		          document.form.otherBox.disabled = true;		               }
+		               if (document.form.targetTableName[0] == null) {
+											    document.form.targetTableName.disabled = true;
+		               } else {
+		                    count = document.form.targetTableName.length;
+			                    for (var i = 0; i &lt; count; i++)  {
+		               					document.form.targetTableName[i].disabled = true;
+		                    }
+		               }
+		          }		        	
+		     }
+			}
+		
+		function startsWith(input) {
+    <!--
+			This function validates that the database/table names don't start with a number
+-->
+    var startWith = /^[0-9]/;
+		     var matches = input.match(startWith);
+		     if (matches != null) {
+				     return true;	
+		     } 
+		     return false;
+		}
+		
+
+		
+		function specialChars(input) {
+    <!--
+					This function looks for special chars.
+-->
+    var regexp = /^([A-Z]|[a-z]|_|[0-9])+$/g
+		     var matches = regexp.test(input);
+		     return matches;
+		}
+	
+		function validateSource() {
+    <!--
+			This function validates the database source
+-->
+    var database;
+		       var len;
+	         if (document.form.sourceDatabase[0] == null) {
+		             database = document.form.sourceDatabase.value;
+		            if (database.length == 0) {
+						         core_alert_jquery("ENTER_SRC_DB");
+								     return true;
+		            } 
+				        if (startsWith( database)) {
+											core_alert_jquery("REENTER_SRC_DB_NUMERIC");
+											return true;
+		            }
+								if (!specialChars(database)) {
+		                   core_alert_jquery("REENTER_SRC_DB_SPECIAL_CHAR"); 
+											return true;
+		 					 }
+							return false;
+		      }
+	
+	       len = document.form.sourceDatabase.length;
+ 	       for (var i = 0; i &lt; len; i++)  {
+				         database = document.form.sourceDatabase[i].value;
+			           if (database.length == 0) {	     
+						         core_alert_jquery("ENTER_SRC_DB");
+								     return true;
+		            } 
+				        if (startsWith( database)) {
+											core_alert_jquery("REENTER_SRC_DB_NUMERIC");
+											return true;
+		            }
+								if (!specialChars(database)) {
+		                   core_alert_jquery("REENTER_SRC_DB_SPECIAL_CHAR"); 
+											return true;
+		 					 }
+		       }
+					 return false;;
+		}
+		
+		function validateTable() {
+    <!--
+			This function validates the source table names
+-->
+    var len;
+		    var table;
+		    if (document.form.sourceTableName[0] == null) {
+									table = document.form.sourceTableName.value;
+									   if (table.length == 0) {
+								         core_alert_jquery("ENTER_SRC_TABLE");
+							    	     return true;
+		             }	
+			            if (startsWith( table)) {
+											  core_alert_jquery("REENTER_SRC_TBL_NUMERIC");
+											  return true;
+		            }
+								if (!specialChars(table)) {
+		                    core_alert_jquery("REENTER_SRC_TBL_SPCL_CHAR"); 
+											  return true;
+		 					 }		
+		           return false;
+		    }
+		    len = document.form.sourceTableName.length;
+			  for (var i = 0; i &lt; len; i++) {
+						     table = document.form.sourceTableName[i].value;
+							   if (table.length == 0) {
+								    core_alert_jquery("ENTER_SRC_TABLE");
+							    	return true;
+		             }	
+			            if (startsWith( table)) {
+											core_alert_jquery("REENTER_SRC_TBL_NUMERIC");
+											return true;
+		            }
+								if (!specialChars(table)) {
+		                   core_alert_jquery("REENTER_SRC_TBL_SPCL_CHAR"); 
+											return true;
+		 					 }		
+		     }
+				 return false;;
+		}
+		
+		function validateTarget() {
+    <!--
+			This function validate the target table names
+-->
+    var len;
+			  var target;
+		    var method = document.form.METHOD.value;
+		    if (method &lt; 2) {
+			       if (document.form.targetTableName[0] == null) {
+					         target = document.form.targetTableName.value;
+			            if (target.length == 0) {
+						   	 	     core_alert_jquery("ENTER_TARGET_TBL");
+		                   return true;
+		             }
+					       if (startsWith( target)) {
+											core_alert_jquery("REENTER_TARGET_TBL_NUMERIC");
+											return true;
+		            }
+				      	if (!specialChars(target)) {
+		                   core_alert_jquery("REENTER_TARGET_TBL_SPCL_CHAR"); 
+											return true;
+		 				    }
+		         }
+		         len = document.form.targetTableName.length;
+		         for (var i = 0; i &lt; len; i++)  {
+				          target = document.form.targetTableName[i].value;
+			            if (target.length == 0) {
+						   	 	     core_alert_jquery("ENTER_TARGET_TBL");
+		                   return true;
+		             }
+					       if (startsWith( target)) {
+											core_alert_jquery("REENTER_TARGET_TBL_NUMERIC");
+											return true;
+		            }
+				      	if (!specialChars(target)) {
+		                   core_alert_jquery("REENTER_TARGET_TBL_SPCL_CHAR"); 
+											return true;
+		 				    }
+				    }		
+			      return false;
+		    }
+		}
+		
+		function OnBack() {
+					   form.BUTTON_ID.value = "BACK" ;
+		               form.submit();
+					   grayOut(true);
+		    }
+    <!--
+						Code modified for fix of issue MDM-2235 by Kiran G
+						In the below functions  the following code is commented 
+						document.form.delimiterValue.value = ","; since there is no item called 
+					"delimeterValue" in the form.
+       -->
+    function setComma() {
+    <!--
+			This function set the comma radiobutton and turns off all the rest, it then sets the delimiterValue
+-->
+    document.form.comma.checked = true;
+		       document.form.space.checked = false;
+		       document.form.tab.checked = false;
+		       document.form.semi.checked = false;
+		       document.form.other.checked = false;
+		       document.form.otherBox.checked = " ";
+		     // document.form.delimiterValue.value = ",";
+		}
+		
+		function setSpace() {
+    <!--
+			This function set the space radiobutton and turns off all the rest, it then sets the delimiterValue
+-->
+    document.form.comma.checked = false;;
+		       document.form.space.checked = true;
+		       document.form.tab.checked = false;
+		       document.form.semi.checked = false;
+		       document.form.other.checked = false;
+		       document.form.otherBox.checked = " ";
+		     // document.form.delimiterValue.value = " ";
+		}
+		
+		function setTab() {
+    <!--
+			This function set the tab radiobutton and turns off all the rest, it then sets the delimiterValue
+-->
+    document.form.comma.checked = false;;
+		       document.form.space.checked = false;
+		       document.form.tab.checked = true;
+		       document.form.semi.checked = false;
+		       document.form.other.checked = false;
+		       document.form.otherBox.value = " ";		
+		       //document.form.delimiterValue.value = "\t";
+		}
+		
+		function setSemiColon() {
+    <!--
+			This function set the semicolon radiobutton and turns off all the rest, it then sets the delimiterValue
+-->
+    document.form.comma.checked = false;
+		       document.form.space.checked = false;
+		       document.form.tab.checked = false;
+		       document.form.semi.checked = true;
+		       document.form.other.checked = false;
+		       document.form.otherBox.value = " ";	
+		      // document.form.delimiterValue.value = ";";
+		}
+		
+		function setOther() {
+    <!--
+			This function set the other radiobutton and turns off all the rest, it then sets the delimiterValue
+-->
+    document.form.comma.checked = false;
+		       document.form.space.checked = false;
+		       document.form.tab.checked = false;
+		       document.form.semi.checked = false;
+		       document.form.other.checked = true;
+		      // document.form.delimiterValue.value = document.form.otherBox.value;		
+		}
+  </ui:script>
+</ui:page-group>
+

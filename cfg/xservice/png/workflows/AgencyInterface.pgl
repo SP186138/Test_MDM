@@ -1,0 +1,35 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" Id="AgencyInterface.pgl" version="3">
+  <ui:container id="topContainer">
+    <ui:step displayText="AGENCY INTERFACE" id="AGENCY_INTRFC">
+      <ui:validation successMessage="{$root/SuccessMessage/@Value}"/>
+      <ui:field-group>
+        <ui:image src="/bpi_check.gif" displayCondition="{string-length($root/MSG/AlertGreen/@Value) != 0}" id="checkImg"/>
+        <ui:display-field id="success" value="{$root/MSG/AlertGreen/@Value}" displayCondition="{string-length($root/MSG/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen"/>
+        <ui:image src="/cancel.gif" displayCondition="{string-length($root/MSG/AlertRed/@Value) != 0}"/>
+        <ui:display-field value="{$root/MSG/AlertRed/@Value}" displayCondition="{string-length($root/MSG/AlertRed/@Value) != 0}" name="error" class="requiredIndicator"/>
+      </ui:field-group>
+      <ui:field-group id="Create">
+        <ui:field-group id="left fields" columns="3">
+          <ui:display-field id="AGNCY_NBR" displayText="Agency Number" name="AGNCY_NBR"/>
+          <ui:display-field id="AGNCY_INTRFC_NBR" displayText="Agency Interface Number" name="AGNCY_INTRFC_NBR" />
+          <ui:dropdown id="DATA_CLCTN_TYPE_CD" displayText="Data Collection Type Code" name="DATA_CLCTN_TYPE_CD" optionSrc="$root/DATA_CLCTN_TYPE/DATA_CLCTN_TYPE_NM"/>
+          <ui:entry-field id="BRAND_SPLR_LST" displayText="Brand SPLR List" name="BRAND_SPLR_LST"/>
+          <ui:entry-field id="INTRFC_NBR" displayText="Interface Number" name="INTRFC_NBR" required="true"/>
+          <ui:dropdown id="PII_DATA_IND" name="PII_DATA_IND" displayText="PII Data Indicator">
+            <ui:option id="Y" value="Y"/>
+            <ui:option id="N" value="N"/>
+          </ui:dropdown>
+          <ui:entry-field id="FREQ_NBR_DAYS" displayText="Frequency Number Days" name="FREQ_NBR_DAYS" required="true"/>
+          <ui:entry-field id="ERR_THRSHLD_PCT" displayText="Error Threshold Percentage" name="ERR_THRSHLD_PCT" required="true"/>
+        </ui:field-group>
+      </ui:field-group>
+      <ui:buttons id="buttons">
+        <ui:button id="Save_INTRFC" displayText="Save" name="Save_INTRFC" emphasized="true"/>
+        <ui:button id="Save_and_Return_INTRFC" displayText="Save And Return" name="Save_and_Return_INTRFC" emphasized="true"/>
+        <ui:button id="Add_Contact" displayText="Add Contact" name="Add_Contact" emphasized="true" validate="false" displayCondition="{$root/Add_Contact_MKTNG/@Value='true'}"/>
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:container>
+  </ui:container>
+</ui:page-group>

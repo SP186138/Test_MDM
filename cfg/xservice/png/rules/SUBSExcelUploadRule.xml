@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+
+Copyright (c) 2009 by Teradata Corporation.
+
+All Rights Reserved.
+
+Teradata CONFIDENTIAL AND TRADE SECRET
+
+ruleExcelUploadForProjectsSub
+
+-->
+  <DEFINE_METHOD Name="subscriptionOptExcelUpload">
+    <RULE>
+      <ACTION>
+        <EXECUTE_SQL_QUERY AssignToVar="respID" ReturnRowCount="yes" Value="SEL MAX(cast(id as integer))as ID FROM UPLD_PRGS_RPT WHERE TEMPLATE_NAME='EntitySUBSCRPTN_OPTTemplate'"/>
+        <FOR_EACH CurrentElement="currRow" SelectList="$thisParam/SUBSCRPTN_OPT">
+          <SET Var="actionValueOPT" FromValue="INSERT"/>
+          <SET Var="actionValueOPTTYPE" FromValue="INSERT"/>
+          <IF_TEST Test="$currRow/OPERATION/@Value = 'ADD' or $currRow/OPERATION/@Value = 'Add'">
+            <THEN>
+              <GET_DOCUMENT Name="SUBSCRPTN_OPT" AssignToVar="resSubopt">
+                <SELECT>
+                  <SUBSCRPTN_OPT_NAME/>
+                </SELECT>
+                <LEGAL_ENT_NBR Value="{$currRow/LEGAL_ENT_NBR/@Value}"/>
+                <SUBSCRPTN_OPT_NBR Value="{$currRow/SUBSCRPTN_OPT_NBR/@Value}"/>
+                <MKTNG_PGM_NBR Value="{$currRow/MKTNG_PGM_NBR/@Value}"/>
+              </GET_DOCUMENT>
+              <GET_DOCUMENT Name="SUBSCRPTN_OPT_TYPE" AssignToVar="resSuboptType">
+                <SELECT>
+                  <CNTCT_CHANL_TYPE_CODE/>
+                  <CNTCT_POINT_CATEG_CODE/>
+                </SELECT>
+                <LEGAL_ENT_NBR Value="{$currRow/LEGAL_ENT_NBR/@Value}"/>
+                <SUBSCRPTN_OPT_NBR Value="{$currRow/SUBSCRPTN_OPT_NBR/@Value}"/>
+                <MKTNG_PGM_NBR Value="{$currRow/MKTNG_PGM_NBR/@Value}"/>
+                <CNTCT_CHANL_TYPE_CODE Value="{$currRow/CNTCT_CHANL_TYPE_CODE/@Value}"/>
+                <CNTCT_POINT_CATEG_CODE Value="{$currRow/CNTCT_POINT_CATEG_CODE/@Value}"/>
+              </GET_DOCUMENT>
+              <IF_TEST Test="strlen($resSubopt/SUBSCRPTN_OPT/SUBSCRPTN_OPT_NAME/@Value)> 0">
+                <THEN>
+                  <SET Var="actionValueOPT" FromValue="UPDATE"/>
+                </THEN>
+                <ELSE/>
+              </IF_TEST>
+              <IF_TEST Test="strlen($resSuboptType/SUBSCRPTN_OPT_TYPE/CNTCT_CHANL_TYPE_CODE/@Value)> 0">
+                <THEN>
+                  <SET Var="actionValueOPTTYPE" FromValue="UPDATE"/>
+                </THEN>
+                <ELSE/>
+              </IF_TEST>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$currRow/OPERATION/@Value = 'UPDATE' or $currRow/OPERATION/@Value = 'Update'">
+                <THEN>
+                  <SET Var="actionValueOPT" FromValue="UPDATE"/>
+                  <SET Var="actionValueOPTTYPE" FromValue="UPDATE"/>
+                </THEN>
+                <ELSE/>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <DO_DB_PERSIST DocumentName="SUBSCRPTN_OPT" Source="EXTERNAL" Action="{$actionValueOPT}" ServiceName="BCM_MASTER" AssignToVar="subResponse" SysLoadId="{$respID/SQL_RESULT/ID/@Value}" SysWfId="XL_WF1234">
+            <SUBSCRPTN_OPT>
+              <LEGAL_ENT_NBR Value="{$currRow/LEGAL_ENT_NBR/@Value}"/>
+              <MKTNG_PGM_NBR Value="{$currRow/MKTNG_PGM_NBR/@Value}"/>
+              <SUBSCRPTN_OPT_NBR Value="{$currRow/SUBSCRPTN_OPT_NBR/@Value}"/>
+              <SUBSCRPTN_OPT_NAME Value="{$currRow/SUBSCRPTN_OPT_NAME/@Value}"/>
+              <SUBSCRPTN_OPT_STMT_TXT Value="{$currRow/SUBSCRPTN_OPT_STMT_TXT/@Value}"/>
+              <PARNTL_CNSNT_IND Value="{$currRow/PARNTL_CNSNT_IND/@Value}"/>
+            </SUBSCRPTN_OPT>
+          </DO_DB_PERSIST>
+          <IF_TEST Test="$subResponse/VALIDATION_RESULT/ERROR_SEVERITY/@Value='SEVERE_ERROR'">
+            <THEN/>
+            <ELSE>
+              <DO_DB_PERSIST DocumentName="SUBSCRPTN_OPT_TYPE" Source="EXTERNAL" Action="{$actionValueOPTTYPE}" ServiceName="BCM_MASTER" AssignToVar="subOptResponse" SysLoadId="{$respID/SQL_RESULT/ID/@Value}" SysWfId="XL_WF1234">
+                <SUBSCRPTN_OPT_TYPE>
+                  <MKTNG_PGM_NBR Value="{$currRow/MKTNG_PGM_NBR/@Value}"/>
+                  <SUBSCRPTN_OPT_NBR Value="{$currRow/SUBSCRPTN_OPT_NBR/@Value}"/>
+                  <LEGAL_ENT_NBR Value="{$currRow/LEGAL_ENT_NBR/@Value}"/>
+                  <CNTCT_CHANL_TYPE_CODE Value="{$currRow/CNTCT_CHANL_TYPE_CODE/@Value}"/>
+                  <SUBSCRPTN_OPT_FREQ_TXT Value="{$currRow/SUBSCRPTN_OPT_FREQ_TXT/@Value}"/>
+                  <CNTCT_POINT_CATEG_CODE Value="{$currRow/CNTCT_POINT_CATEG_CODE/@Value}"/>
+                </SUBSCRPTN_OPT_TYPE>
+              </DO_DB_PERSIST>
+            </ELSE>
+          </IF_TEST>
+        </FOR_EACH>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

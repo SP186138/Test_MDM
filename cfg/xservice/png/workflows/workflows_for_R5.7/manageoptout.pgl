@@ -1,0 +1,135 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" name="studio.templates.simple_entry" source="studio.controller:load" version="3">
+<ui:container>
+<ui:step id="step1">
+<ui:validation successMessage="{$root/Message/@Value}" anyFieldIsRequired="false"/>
+<ui:container id="topContainer" scrollable="true" type="Tabs">
+<ui:step displayText="SEARCH OPT RECORDS" id="OPT_SEARCH" scrollable="true">
+<ui:field-group id="tableColumns1" columns="2" select="$this">
+<ui:hidden-field id="ACTION_TYPE" name="ACTION_TYPE"/>
+<ui:dropdown id="MKTNG_PGM_NAME" name="MKTNG_PGM_NAME" displayText="Program Name" optionSrc="$root/mktngDetails/SQL_RESULT/MKTNG_PGM_NAME" selectOne="true" disabled="false"/>
+<ui:dropdown id="SUBSCRPTN_OPT_NAME" name="SUBSCRPTN_OPT_NAME" displayText="Subscription Opt Name" optionSrc="$root/subDetails/SQL_RESULT/SUBSCRPTN_OPT_NAME" selectOne="true"/>
+<ui:dropdown id="CNTCT_POINT_TYPE_CODE" name="CNTCT_POINT_TYPE_CODE" displayText="Channel Type" selectOne="true">
+<ui:option value="Email" id="E"/>
+<ui:option value="Phone" id="P"/>
+<ui:option value="Postal" id="A"/>
+</ui:dropdown>
+<ui:dropdown id="LEVEL" name="LEVEL" displayText="Level" selectOne="true" onChange="javascript:loadDetailsIndividual()">
+<ui:option value="House Hold" id="HH"/>
+<ui:option value="Match Consumer" id="MC"/>
+<ui:option value="Registration" id="RG"/>
+</ui:dropdown>
+<ui:display-field id="HOUSE_HOLD_ID" name="HOUSE_HOLD_ID" displayText="House Hold" readOnly="true" value="{$root/House_hold/@Value}"/>
+<ui:dropdown id="MATCHD_CNSMR_PRSNA_ID" name="MATCHD_CNSMR_PRSNA_ID" displayText="Matched Consumer" optionSrc="$root/mtchdDetails/SQL_RESULT/MATCHD_CNSMR_PRSNA_ID" selectOne="true" displayCondition="{$root/varMC1/@Value='Y'}"/>
+<ui:display-field id="MATCHD_CNSMR_PRSNA_ID" name="MATCHD_CNSMR_PRSNA_ID" displayText="Matched Consumer" readOnly="true" value="###" displayCondition="{$root/varMC1/@Value='N'}"/>
+<ui:dropdown id="REGIS_PRSNA_ID" name="REGIS_PRSNA_ID" displayText="Registration" optionSrc="$root/regisDetails/REGIS_PRSNA_ID" selectOne="true" displayCondition="{$root/varRG1/@Value='Y'}"/>
+<ui:display-field id="REGIS_PRSNA_ID" name="REGIS_PRSNA_ID" displayText="Registration" readOnly="true" value="###" displayCondition="{$root/varRG1/@Value='N'}"/>
+</ui:field-group>
+<ui:buttons>
+<!--<ui:button id="RESET" name="RESET" displayText="Reset" onClick="javascript:on_RESET();"/>
+
+<ui:divider/>-->
+<ui:button id="SEARCH" name="SEARCH" displayText="Search" emphasized="true"/>
+</ui:buttons>
+</ui:step>
+</ui:container>
+<ui:table id="tab1" displayText="Manage Opt" displayCondition="{$root/DIS_TYPE/@Value='no'}" rowSrc="$root/SQL_RESULT" selectable="All" postRowIdAs="SELECTED_ITEM" rowId="CNTCT_POINT_TYPE_CODE#MKTNG_PGM_NBR#REGIS_PRSNA_ID#SUBSCRPTN_OPT_NBR#CNTCT_POINT_CATEG_CODE" scrollable="true" displayTextNoRecords="No Records Found" collapsable="true" configurable="true" maxRows="-1">
+<ui:field-group id="tableColumns">
+<ui:display-field name="HSHLD_PRSNA_ID" displayText="House Hold ID"/>
+<ui:display-field name="MATCHD_CNSMR_PRSNA_ID" displayText="Matched Consumer ID"/>
+<ui:display-field name="REGIS_PRSNA_ID" displayText="Regis ID"/>
+<ui:display-field name="GVN_NAME" displayText="First Name"/>
+<ui:display-field name="FAMLY_NAME" displayText="Last Name"/>
+<ui:display-field name="NATIONAL_ID_NBR" displayText="National ID"/>
+<ui:display-field name="MKTNG_PGM_NBR" displayText="Marketing Program Number"/>
+<ui:display-field name="MKTNG_PGM_NAME" displayText="Program Name"/>
+<ui:display-field name="EMAIL_ADDR_TXT_1" displayText="Email"/>
+<ui:display-field name="FULL_PHONE_NUM_1" displayText="Phone"/>
+<ui:display-field name="FULL_ADDRESS" displayText="Postal"/>
+<ui:display-field name="SUBSCRPTN_OPT_NBR" displayText="Subscription Number"/>
+<ui:display-field name="SUBSCRPTN_OPT_NAME" displayText="Subscription Name"/>
+<ui:display-field name="SUBSCRPTN_OPT_IND" displayText="Opt Status"/>
+<ui:display-field name="CNSMR_CHCE_DATETM" displayText="Opt In date"/>
+<ui:display-field name="CNTCT_POINT_TYPE_CODE" displayText="Channel Type"/>
+<ui:display-field name="CNTCT_POINT_TYPE" displayText="Channel Name"/>
+<ui:display-field name="CNTCT_POINT_CATEG_CODE" displayText="Contact Point Category Code"/>
+<ui:display-field name="CNTCT_POINT_CATEG_NAME" displayText="Contact Point Category Name"/>
+</ui:field-group>
+<ui:buttons>
+<ui:button id="OPTOUT" name="OPTOUT" displayText="OPT OUT" enabledBySelections="true" onClick="javascript:OPTOUTConfirm();"/>
+<ui:button id="OPTOUTALL" name="OPTOUTALL" displayText="OPT OUT ALL" enabledBySelections="false" onClick="javascript:OPTOUTALLConfirm();"/>
+</ui:buttons>
+</ui:table>
+<ui:table id="tab11" displayCondition="{$root/DIS_TYPE/@Value='yes'}" displayText="Manage Opt" rowSrc="$root/RESPONSE/V_MATCHD_CNSMR_PRSNA" selectable="All" postRowIdAs="SELECTED_ITEM" rowId="CNTCT_POINT_TYPE_CODE#MKTNG_PGM_NBR#REGIS_PRSNA_ID#SUBSCRPTN_OPT_NBR#CNTCT_POINT_CATEG_CODE" scrollable="true" displayTextNoRecords="No Records Found" collapsable="true" configurable="true" maxRows="-1">
+<ui:field-group id="tableColumns">
+<ui:display-field name="HSHLD_PRSNA_ID" displayText="House Hold ID"/>
+<ui:display-field name="MATCHD_CNSMR_PRSNA_ID" displayText="Matched Consumer ID"/>
+<ui:display-field name="REGIS_PRSNA_ID" displayText="Regis ID"/>
+<ui:display-field name="GVN_NAME" displayText="First Name"/>
+<ui:display-field name="FAMLY_NAME" displayText="Last Name"/>
+<ui:display-field name="NATIONAL_ID_NBR" displayText="National ID"/>
+<ui:display-field name="MKTNG_PGM_NBR" displayText="Marketing Program Number"/>
+<ui:display-field name="MKTNG_PGM_NAME" displayText="Program Name"/>
+<ui:display-field name="EMAIL_ADDR_TXT_1" displayText="Email"/>
+<ui:display-field name="FULL_PHONE_NUM_1" displayText="Phone"/>
+<ui:display-field name="FULL_ADDRESS" displayText="Postal"/>
+<ui:display-field name="SUBSCRPTN_OPT_NBR" displayText="Subscription Number"/>
+<ui:display-field name="SUBSCRPTN_OPT_NAME" displayText="Subscription Name"/>
+<ui:display-field name="SUBSCRPTN_OPT_IND" displayText="Opt Status"/>
+<ui:display-field name="CNSMR_CHCE_DATETM" displayText="Opt In date"/>
+<ui:display-field name="CNTCT_POINT_TYPE_CODE" displayText="Channel Type"/>
+<ui:display-field name="CNTCT_POINT_TYPE" displayText="Channel Name"/>
+<ui:display-field name="CNTCT_POINT_CATEG_CODE" displayText="Contact Point Category Code"/>
+<ui:display-field name="CNTCT_POINT_CATEG_NAME" displayText="Contact Point Category Name"/>
+</ui:field-group>
+<ui:buttons>
+<ui:button id="OPTOUT" name="OPTOUT" displayText="OPT OUT" enabledBySelections="true" onClick="javascript:OPTOUTConfirm();"/>
+<ui:button id="OPTOUTALL" name="OPTOUTALL" displayText="OPT OUT ALL" enabledBySelections="false" onClick="javascript:OPTOUTALLConfirm();"/>
+</ui:buttons>
+</ui:table>
+</ui:step>
+</ui:container>
+<ui:script>
+
+function loadDetailsIndividual(){
+
+document.form.BUTTON_ID.value = 'LOAD_DETAILS_INDIVIDUAL';
+
+document.form.action = 'view.x2ps';
+
+document.form.submit();
+
+}
+
+
+function OPTOUTConfirm(){
+
+if (	core_confirm( 'Do you want to Opt Out the selected records?' )=='yes' )
+{
+
+document.form.BUTTON_ID.value = 'OPTOUT';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+}
+else
+{
+return;
+}
+}
+
+function OPTOUTALLConfirm(){
+if (	core_confirm( 'Do you want to Opt Out all the records from the current page?' )=='yes' )
+{
+form.BUTTON_ID.value = 'OPTOUTALL';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+}
+else
+{
+return;
+}
+}
+
+</ui:script>
+</ui:page-group>

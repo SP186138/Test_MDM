@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+Copyright (c) 2009 by Teradata Corporation.
+All Rights Reserved.
+Teradata CONFIDENTIAL AND TRADE SECRET
+-->
+  <DEFINE_METHOD Name="pngMDMtoEDWPersistRules">
+    <!--**********************************************************************************************************
+*   Module Name	: pngMDMtoEDWPersist
+*		Created Date	: Oct 27, 2011
+*		Created By   	: Kalyana Chakravarthy
+*		Called Functions: Calls TSS_MATCH_STG.bat script that performs survivorship to EDW Golden Copy
+*		Called By Functions:  pngMDMtoEDWPersistTimer
+*		Short Desc	: Rule that invokes MDM stage to EDW Survivorship Rules
+*  		Change Log 		:
+*		DATE							LC						OWNER		DESCRIPTION
+*
+**********************************************************************************************************-->
+    <RULE>
+      <ACTION>
+        <!-- Sets the Status variable so that Tremor Wf is not started when EDWPersist is Running-->
+        <SET Var="EDWPersist_Status" FromValue="Yes" Scope="Global"/>
+        <!-- Call MDM to EDW Survivorship batch Script -->
+        <SET Var="LogFileName" FromValue="{$MDM_Install_Dir}\custom\pngrelease3\log\WrapperLog{$thisParam/CNTRY_NAME/@Value}.txt"/>
+        <PRINT_TO_FILE File="{$LogFileName}" NewFile="no" Value="Start of merge.cmd at {date()} for Load Id {$thisParam/LoadId/@Value} "/>
+        <EXECUTE_SHELL_COMMAND Value="{concat('merge.cmd ',$thisParam/CNTRY_NAME/@Value)}" AssignToVar="EDWPersistResult"/>
+        <PRINT_TO_FILE File="{$LogFileName}" NewFile="no" Value="End of merge.cmd at {date()} for Load Id {$thisParam/LoadId/@Value} "/>
+        <IF_TEST Test="$EDWPersistResult/@ShellReturnValue = 0">
+          <THEN>
+            <!-- Retrieve the email related details and send the email with concatenated list of load ids -->
+            <EXECUTE_SQL_QUERY Value="SEL DISTINCT SOURCE_ID,REQ_MAIL_ID,AGN_CON_MAIL_ID FROM V_SRC_EMAIL_DETAIL WHERE LOAD_ID IN({$thisParam/LoadId/@Value});" AssignToVar="resSrcEmail"/>
+            <TO_DOCVAR AssignToVar="srcdetails">
+              <ROOT>
+                <TO_XML SelectList="$resSrcEmail/*"/>
+              </ROOT>
+            </TO_DOCVAR>
+            <EXECUTE_SQL_QUERY Value="SELECT DISTINCT LOAD_ID FROM ICRM_STAGE.CNTCT_OPTN_CHCE_STG WHERE LOAD_ID IN (SELECT DISTINCT LOAD_ID FROM ERR_PRSNA_STG WHERE LOAD_ID IN({$thisParam/LoadId/@Value})) AND CNTCT_OPTN_IND IN ('N','O');" AssignToVar="resdistinctSourceId"/>
+            <IF_TEST Test="$resdistinctSourceId/SQL_RESULT/LOAD_ID/@Value != NULL">
+              <THEN>
+                <SET Var="Sample" FromValue="1"/>
+                <FOR_EACH SelectList="$resdistinctSourceId/*" CurrentElement="currSource">
+                  <IF_TEST Test="$Sample=1">
+                    <THEN>
+                      <SET Var="LoadId" FromValue="{$currSource/LOAD_ID/@Value}"/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="LoadId" FromValue="{concat($LoadId/@Value,',',$currSource/LOAD_ID/@Value)}"/>
+                    </ELSE>
+                  </IF_TEST>
+                  <SET Var="Sample" FromValue="{int(int($Sample)+1)}"/>
+                </FOR_EACH>
+                <EXECUTE_SHELL_COMMAND Value="{concat('alternatei2optout.cmd ',$thisParam/CNTRY_NAME/@Value,' ',$LoadId)}" AssignToVar="alternatei2optoutResult"/>
+                <IF_TEST Test="$alternatei2optoutResult/@ShellReturnValue != 0">
+                  <THEN>
+                    <SET Var="Description" FromValue="{$alternatei2optoutResult/@ShellReturnValue}"/>
+                    <REQUEST Name="emailOnErrorNode" ServiceName="BCM_MASTER">
+                      <LoadId Value="{$LoadId}"/>
+                      <Subject Value="i2 Alternate Optout Failure"/>
+                      <Short_Description Value="{$Description/@Value}"/>
+                      <Description Value="Following Load Id failed :{$LoadId}"/>
+                      <SubCategory Value="Wrapper Error"/>
+                      <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+                      <PROCESS_NAME Value="{$PROCESS_NAME/@Value}"/>
+                    </REQUEST>
+                  </THEN>
+                </IF_TEST>
+              </THEN>
+              <ELSE>
+              </ELSE>
+            </IF_TEST>
+            <PRINTLN Value="Start Request wrappersuccess {$thisParam/CNTRY_NAME/@Value}"/>
+            <PRINT_TO_FILE File="{$LogFileName}" NewFile="no" Value="Start of wrappersuccess at {date()} for Load Id {$thisParam/LoadId/@Value} "/>
+            <REQUEST Name="wrappersuccess" ServiceName="BCM_MASTER" AssignToVar="reswrapper" Synchronous="no">
+              <BatchId Value="{$thisParam/LoadId/@Value}"/>
+              <TO_XML DocVar="srcdetails"/>
+            </REQUEST>
+            <PRINTLN Value="End Request wrappersuccess {$thisParam/CNTRY_NAME/@Value}"/>
+            <PRINT_TO_FILE File="{$LogFileName}" NewFile="no" Value="End of wrappersuccess at {date()} for Load Id {$thisParam/LoadId/@Value} "/>
+            <!--Release 5.8.1 Additional Notification for Ops for I2 processing when staging number is non zero and the active plus duplicate plus error number is 0 for a specific load id in RPT_LOAD_NBR Start -->
+            <EXECUTE_SQL_QUERY Value="SEL DISTINCT A.LOAD_ID,A.MKTNG_PGM_NBR FROM RPT_LOAD_NBR A LEFT JOIN (SEL A.LOAD_ID,COUNT(*) AS STAGING_NBR FROM ICRM_STAGE.PRSNA_STG A INNER JOIN ETL_CTRL.LOAD_CONTROL B ON A.LOAD_ID=B.LOAD_ID AND B.LOAD_TYPE='ETL' AND A.LOAD_ID IN ({$thisParam/LoadId/@Value}) LEFT JOIN REGIS_PRSNA C ON A.MKTNG_PGM_NBR=C.MKTNG_PGM_NBR AND A.REGIS_CNSMR_ID_VAL=C.REGIS_CNSMR_ID_VAL AND B.SOURCE_ID=C.SYS_TARGET_ID WHERE C.REGIS_PRSNA_ID IS NULL GROUP BY 1) B ON A.LOAD_ID=B.LOAD_ID AND A.STAGING_NBR=B.STAGING_NBR WHERE A.LOAD_ID IN({$thisParam/LoadId/@Value}) AND COALESCE(A.STAGING_NBR,0) > 0 AND COALESCE(ERROR_NBR,0)+COALESCE(ACTIVE_NBR,0)+COALESCE(DUPLICATE_NBR,0)+COALESCE(WEBSITE_REGIS_NBR,0)=0 AND A.LOAD_ID NOT IN (SEL DISTINCT A.LOAD_ID FROM iCRM_STAGE.PRSNA_STG A INNER JOIN ETL_CTRL.LOAD_CONTROL B ON A.LOAD_ID=B.LOAD_ID AND B.LOAD_TYPE='ETL' AND A.LOAD_ID IN ({$thisParam/LoadId/@Value}) AND (A.MKTNG_PGM_NBR,A.REGIS_CNSMR_ID_VAL,B.SOURCE_ID)IN (SEL A.MKTNG_PGM_NBR,A.REGIS_CNSMR_ID_VAL,B.SOURCE_ID FROM iCRM_STAGE.PRSNA_STG A INNER JOIN ETL_CTRL.LOAD_CONTROL B ON A.LOAD_ID=B.LOAD_ID AND B.LOAD_TYPE='ETL' AND A.LOAD_ID IN (SEL LOAD_ID FROM mdm.LOAD_INFO WHERE BATCH_ID IN (SEL BATCH_ID FROM mdm.LOAD_INFO WHERE LOAD_ID IN ({$thisParam/LoadId/@Value}) GROUP BY 1)) AND A.LOAD_ID NOT IN ({$thisParam/LoadId/@Value}))) AND B.STAGING_NBR IS NULL;" AssignToVar="resStagingCnt" ReturnRowCount="yes"/>
+            <IF_TEST Test="$resStagingCnt/@TotalRowCount > 0">
+              <THEN>
+                <FOR_EACH SelectList="$resStagingCnt/SQL_RESULT" CurrentElement="curload">
+                  <SET Var="test_em" FromValue="{$resStagingCnt/SQL_RESULT/LOAD_ID/@Value}"/>
+                  <EXECUTE_SQL_QUERY Value="SEL DISTINCT SOURCE_ID,REQ_MAIL_ID,AGN_CON_MAIL_ID FROM V_SRC_EMAIL_DETAIL WHERE LOAD_ID IN({$curload/LOAD_ID/@Value});" AssignToVar="addNotificationSrc"/>
+                  <TO_DOCVAR AssignToVar="srcdetails1">
+                    <ROOT>
+                      <TO_XML SelectList="$addNotificationSrc/*"/>
+                    </ROOT>
+                  </TO_DOCVAR>
+                  <REQUEST Name="EmailCheckAdditionalForI2Processing" ServiceName="BCM_MASTER">
+                    <BatchId Value="{$curload/LOAD_ID/@Value}"/>
+                    <MKTNG_PGM_NBR Value="{$curload/MKTNG_PGM_NBR/@Value}"/>
+                    <TO_XML DocVar="srcdetails1"/>
+                  </REQUEST>
+                </FOR_EACH>
+              </THEN>
+            </IF_TEST>
+            <!--End Release 5.8.1-->
+            <EXECUTE_SQL_QUERY Value="SELECT DISTINCT LOAD_ID,SYS_TARGET_ID FROM ERR_PRSNA_STG WHERE SYS_ERR_CODE LIKE'%Untranslatable character%' AND LOAD_ID IN({$thisParam/LoadId/@Value});" AssignToVar="resdistinctSourceId"/>
+            <IF_TEST Test="$resdistinctSourceId/SQL_RESULT/SYS_TARGET_ID/@Value != NULL">
+              <THEN>
+                <SET Var="Sample" FromValue="1"/>
+                <FOR_EACH SelectList="$resdistinctSourceId/*" CurrentElement="currSource">
+                  <IF_TEST Test="$Sample=1">
+                    <THEN>
+                      <SET Var="SourceId" FromValue="{$currSource/SYS_TARGET_ID/@Value}"/>
+                      <SET Var="LoadId" FromValue="{$currSource/LOAD_ID/@Value}"/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="SourceId" FromValue="{concat($SourceId/@Value,',',$currSource/SYS_TARGET_ID/@Value)}"/>
+                      <SET Var="LoadId" FromValue="{concat($LoadId/@Value,',',$currSource/LOAD_ID/@Value)}"/>
+                    </ELSE>
+                  </IF_TEST>
+                  <SET Var="Sample" FromValue="{int(int($Sample)+1)}"/>
+                </FOR_EACH>
+                <EXECUTE_SQL_QUERY Value="SEL DISTINCT SOURCE_ID,REQ_MAIL_ID,AGN_CON_MAIL_ID FROM V_SRC_EMAIL_DETAIL WHERE LOAD_ID IN({$LoadId}) AND SOURCE_ID IN({$SourceId});" AssignToVar="resUnSrcEmail"/>
+                <TO_DOCVAR AssignToVar="Unsrcdetails">
+                  <ROOT>
+                    <TO_XML SelectList="$resUnSrcEmail/*"/>
+                  </ROOT>
+                </TO_DOCVAR>
+                <PRINTLN Value="Start Request UntranslatableChar {$thisParam/CNTRY_NAME/@Value}"/>
+                <PRINT_TO_FILE File="{$LogFileName}" NewFile="no" Value="Start of UntranslatableChar at {date()} for Load Id {$thisParam/LoadId/@Value} "/>
+                <REQUEST Name="UntranslatableChar" ServiceName="BCM_MASTER" AssignToVar="resUntransChar" Synchronous="no">
+                  <LOAD_ID Value="{$LoadId}"/>
+                  <TO_XML DocVar="Unsrcdetails"/>
+                  <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+                  <!--<LOAD_ID Value="{$thisParam/LoadId/@Value}"/>-->
+                </REQUEST>
+                <PRINTLN Value="End Request UntranslatableChar {$thisParam/CNTRY_NAME/@Value}"/>
+                <PRINT_TO_FILE File="{$LogFileName}" NewFile="no" Value="End of UntranslatableChar at {date()} for Load Id {$thisParam/LoadId/@Value} "/>
+              </THEN>
+              <ELSE>
+              </ELSE>
+            </IF_TEST>
+            <PRINTLN Value="Start Request mdmstatus {$thisParam/CNTRY_NAME/@Value}"/>
+            <PRINT_TO_FILE File="{$LogFileName}" NewFile="no" Value="Start of mdmstatus.cmd at {date()} for Load Id {$thisParam/LoadId/@Value} "/>
+            <EXECUTE_SHELL_COMMAND Value="{concat('mdmstatus.cmd ',$thisParam/CNTRY_NAME/@Value)}" AssignToVar="resMdmStatus"/>
+            <PRINTLN Value="End Request mdmstatus {$thisParam/CNTRY_NAME/@Value}"/>
+            <PRINT_TO_FILE File="{$LogFileName}" NewFile="no" Value="End of mdmstatus.cmd at {date()} for Load Id {$thisParam/LoadId/@Value} "/>
+            <TO_DOCVAR AssignToVar="thisReturn">
+              <SUCCESS>
+                <Message Value="Wrapper Successful"/>
+              </SUCCESS>
+            </TO_DOCVAR>
+            <!-- Sets back status to NO so that ORIG Wf is free to Run-->
+            <SET Var="EDWPersist_Status" FromValue="No" Scope="Global"/>
+          </THEN>
+          <ELSE>
+            <EXECUTE_SHELL_COMMAND Value="echo Error > MDM_LOAD_CONTROL_{$thisParam/CNTRY_NAME/@Value}.err" AssignToVar="errStatus"/>
+            <MODIFY_DOC_SMART Name="LOAD_INFO" ServiceName="BCM_MASTER">
+              <DOCUMENT_CONTEXT>
+                <PROCESS_NAME Value="Wrapper"/>
+                <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+                <STATUS Value="In Progress"/>
+              </DOCUMENT_CONTEXT>
+              <UPDATE_PROPERTIES>
+                <STATUS Value="Failure"/>
+              </UPDATE_PROPERTIES>
+            </MODIFY_DOC_SMART>
+            <EXECUTE_SQL_QUERY Value="SELECT DISTINCT LOAD_ID FROM ICRM_STAGE.CNTCT_OPTN_CHCE_STG WHERE LOAD_ID IN (SELECT DISTINCT B.LOAD_ID FROM LOAD_CONTROL B INNER JOIN LOAD_INFO LI ON B.LOAD_ID = LI.LOAD_ID AND LI.PROCESS_NAME='Wrapper' AND LI.STATUS ='Failure' AND LI.CNTRY_NAME='{$thisParam/CNTRY_NAME/@Value}' WHERE B.LOAD_TYPE='ETL' AND B.LOAD_ID IN(SEL LOAD_ID FROM MDM_LOAD_CONTROL)) AND CNTCT_OPTN_IND IN ('N','O');" AssignToVar="resdistinctSourceId"/>
+            <IF_TEST Test="$resdistinctSourceId/SQL_RESULT/LOAD_ID/@Value != NULL">
+              <THEN>
+                <SET Var="Sample" FromValue="1"/>
+                <FOR_EACH SelectList="$resdistinctSourceId/*" CurrentElement="currSource">
+                  <IF_TEST Test="$Sample=1">
+                    <THEN>
+                      <SET Var="LoadId" FromValue="{$currSource/LOAD_ID/@Value}"/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="LoadId" FromValue="{concat($LoadId/@Value,',',$currSource/LOAD_ID/@Value)}"/>
+                    </ELSE>
+                  </IF_TEST>
+                  <SET Var="Sample" FromValue="{int(int($Sample)+1)}"/>
+                </FOR_EACH>
+                <EXECUTE_SHELL_COMMAND Value="{concat('alternatei2optout.cmd ',$thisParam/CNTRY_NAME/@Value,'Failure ',$LoadId)}" AssignToVar="alternatei2optoutResult"/>
+                <IF_TEST Test="$alternatei2optoutResult/@ShellReturnValue != 0">
+                  <THEN>
+                    <SET Var="Description" FromValue="{$alternatei2optoutResult/@ShellReturnValue}"/>
+                    <REQUEST Name="emailOnErrorNode" ServiceName="BCM_MASTER">
+                      <LoadId Value="{$LoadId}"/>
+                      <Subject Value="i2 Alternate Optout Failure"/>
+                      <Short_Description Value="{$Description/@Value}"/>
+                      <Description Value="Following Load Id failed :{$LoadId}"/>
+                      <SubCategory Value="Validation Error"/>
+                      <PROCESS_NAME Value="{$PROCESS_NAME/@Value}"/>
+                    </REQUEST>
+                  </THEN>
+                </IF_TEST>
+              </THEN>
+              <ELSE>
+              </ELSE>
+            </IF_TEST>
+            <!-- Call Status Update batch Script which does inserts into ETL_CTRL.LOAD_CONTROL -->
+            <!-- <EXECUTE_SHELL_COMMAND Value="MDM_STATUS.BAT" AssignToVar="resMdmStatus"/> -->
+            <PRINTLN Value="Start Request mdmstatus {$thisParam/CNTRY_NAME/@Value}"/>
+            <PRINT_TO_FILE File="{$LogFileName}" NewFile="no" Value="Start of mdmstatus.cmd at {date()} for Load Id {$thisParam/LoadId/@Value} "/>
+            <EXECUTE_SHELL_COMMAND Value="{concat('mdmstatus.cmd ',$thisParam/CNTRY_NAME/@Value)}" AssignToVar="resMdmStatus"/>
+            <PRINTLN Value="End Request mdmstatus {$thisParam/CNTRY_NAME/@Value}"/>
+            <PRINT_TO_FILE File="{$LogFileName}" NewFile="no" Value="End of mdmstatus.cmd at {date()} for Load Id {$thisParam/LoadId/@Value} "/>
+            <!-- send the email with concatenated list of load ids that failed-->
+            <TO_DOCVAR AssignToVar="thisReturn">
+              <FAILURE>
+                <!--<Message Value="{$result/STD_ERR/LINE[1]/@Value}"/>-->
+                <Message Value="{$resMdmStatus/@ShellReturnValue}"/>
+              </FAILURE>
+            </TO_DOCVAR>
+            <SET Var="Description" FromValue="{$EDWPersistResult/@ShellReturnValue}"/>
+            <PRINTLN Value="Start Request emailOnErrorNode {$thisParam/CNTRY_NAME/@Value}"/>
+            <PRINT_TO_FILE File="{$LogFileName}" NewFile="no" Value="Start of emailOnErrorNode at {date()} for Load Id {$thisParam/LoadId/@Value} "/>
+            <REQUEST Name="emailOnErrorNode" ServiceName="BCM_MASTER">
+              <LoadId Value="{$thisParam/LoadId/@Value}"/>
+              <Subject Value="Wrapper Failure"/>
+              <Short_Description Value="{$Description/@Value}"/>
+              <Description Value="Following Load Id failed :{$thisParam/LoadId/@Value}"/>
+              <SubCategory Value="Wrapper Error"/>
+              <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+              <PROCESS_NAME Value="{$PROCESS_NAME/@Value}"/>
+            </REQUEST>
+            <PRINTLN Value="End Request emailOnErrorNode {$thisParam/CNTRY_NAME/@Value}"/>
+            <PRINT_TO_FILE File="{$LogFileName}" NewFile="no" Value="End of emailOnErrorNode at {date()} for Load Id {$thisParam/LoadId/@Value} "/>
+            <SET Var="EDWPersist_Status" FromValue="No" Scope="Global"/>
+            <!--<SET Var="{concat('previousLoadStatus',$thisParam/CNTRY_NAME/@Value)}" FromValue="Failed" Scope="Global"/>-->
+            <MODIFY_DOC_SMART Name="LOAD_INFO" ServiceName="BCM_MASTER">
+              <DOCUMENT_CONTEXT>
+                <PROCESS_NAME Value="Wrapper"/>
+                <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+                <STATUS Value="In Progress"/>
+              </DOCUMENT_CONTEXT>
+              <UPDATE_PROPERTIES>
+                <STATUS Value="Failure"/>
+              </UPDATE_PROPERTIES>
+            </MODIFY_DOC_SMART>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

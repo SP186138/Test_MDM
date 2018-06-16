@@ -1,0 +1,57 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" name="studio.templates.simple_entry" source="studio.controller:load" version="3">
+  <ui:container id="outerContainer1" name="outerContainer1" scrollable="true">
+    <ui:step id="outerStep1" name="outerStep1" scrollable="true">
+      <ui:container id="searchContainer">
+        <ui:step id="searchStep">
+          <ui:field-group id="searchFG" displayText="Search by" collapsable="true">
+            <ui:field-group columns="3" id="fieldGroups" select="$this">
+              <!--ui:dropdown id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR" displayText="Matching Domain" optionSrc="$root/LEGAL_ENT/OPTION" onChange="javascript:loadProgramList();"/-->
+              <ui:dropdown id="LEGAL_ENT_NAME" name="LEGAL_ENT_NAME" displayText="Matching Domain" optionSrc="$root/LEGAL_ENT/LEGAL_ENT_NAME" onChange="javascript:loadProgramList();" />
+              
+              <ui:dropdown id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR" displayText="Program Name" optionSrc="$root/MKTNG_PGM/OPTION"/>
+            </ui:field-group>
+          </ui:field-group>
+          <ui:buttons>
+            <ui:button id="SEARCH" name="SEARCH" displayText="Search" emphasized="true"/>
+          </ui:buttons>
+        </ui:step>
+      </ui:container>
+      <ui:table id="searchResultsTable" displayText="No. of Registrations at progam level" rowId="MKTNG_PGM_NBR" rowSrc="$root/RESPONSE/V_RPT_DATA_NBR" selectable="Single" scrollable="true" maxRows="10" postRowIdAs="SELECTED_PROGRAM_ID" doPaging="true" totalRowCount="$root/RESPONSE/@TotalRowCount" exportable="true">
+        <ui:field-group id="tableColumns">
+          <ui:hidden-field id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR"/>
+          <ui:display-field id="MKTNG_PGM_NAME" name="MKTNG_PGM_NAME" displayText="Marketing Program" sortable="true"/>
+          <ui:display-field id="LEGAL_ENT_NAME" name="LEGAL_ENT_NAME" displayText="Matching Domain" sortable="true"/>
+          <ui:display-field id="STAGING_NBR" name="STAGING_NBR" displayText="Staging" sortable="true"/>
+          <ui:display-field id="ERROR_NBR" name="ERROR_NBR" displayText="Rejected Registrations" sortable="true"/>
+          <ui:display-field id="ACTIVE_NBR" name="ACTIVE_NBR" displayText="Active" sortable="true"/>
+          <ui:display-field id="DUPLICATE_NBR" name="DUPLICATE_NBR" displayText="Duplicate" sortable="true"/>
+          <ui:display-field id="MTCHD_CNSMR_NBR" name="MTCHD_CNSMR_NBR" displayText="Number of Matched Consumer" sortable="true"/>
+          <ui:display-field id="HSHLD_NBR" name="HSHLD_NBR" displayText="Number of Households" sortable="true"/>
+        </ui:field-group>
+        <ui:buttons id="tableButtons">
+          <ui:button id="Details" name="Details" displayText="Details" enabledBySelections="true"/>
+          <ui:button id="ERROR_SUMMARY" name="ERROR_SUMMARY" displayText="Error Summary" enabledBySelections="true"/>
+        </ui:buttons>
+      </ui:table>
+      <ui:hr/>
+      <ui:table id="Details" displayText="No. of Subscription Opt in/Out at Program Level" rowSrc="$root/RESPONSE/RPT_DATA_NBR_DETAILS/V_RPT_DATA_NBR">
+        <ui:field-group id="tblcolumns">
+          <ui:display-field id="MKTNG_PGM_NAME" name="MKTNG_PGM_NAME" displayText="Marketing Program"/>
+          <ui:display-field id="LEGAL_ENT_NAME" name="LEGAL_ENT_NAME" displayText="Matching Domain"/>
+          <ui:display-field id="POSTAL_OPT_IN" name="POSTAL_OPT_IN" displayText="Postal Opt-Ins"/>
+          <ui:display-field id="POSTAL_OPT_OUT" name="POSTAL_OPT_OUT" displayText="Postal Opt-Outs"/>
+          <ui:display-field id="EMAIL_OPT_IN" name="EMAIL_OPT_IN" displayText="Email Opt-Ins"/>
+          <ui:display-field id="EMAIL_OPT_OUT" name="EMAIL_OPT_OUT" displayText="Email Opt-Outs"/>
+          <ui:display-field id="PHONE_OPT_IN" name="PHONE_OPT_IN" displayText="Mobile Opt-Ins"/>
+          <ui:display-field id="PHONE_OPT_OUT" name="PHONE_OPT_OUT" displayText="Mobile Opt-Outs"/>
+        </ui:field-group>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+function loadProgramList(){
+document.form.BUTTON_ID.value = 'LOAD_PROGRAM_LIST';
+document.form.action = 'view.x2ps';
+document.form.submit();
+}</ui:script>
+</ui:page-group>

@@ -1,0 +1,93 @@
+<document IsDocView="true">
+  <properties>
+    <property Name="REGIS_PRSNA_ID">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="REGIS_PRSNA_ID" />
+    </property>
+    <property Name="SUBSCRPTN_OPT_IND">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="SUBSCRPTN_OPT_IND" />
+    </property>
+    <property Name="CNSMR_CHCE_DATETM">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="CNSMR_CHCE_DATETM" />
+    </property>
+    <property Name="ADDR_LINE_1_TXT">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="ADDR_LINE_1_TXT" />
+    </property>
+    <property Name="ADDR_LINE_2_TXT">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="ADDR_LINE_2_TXT" />
+    </property>
+    <property Name="CITY_NAME">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="CITY_NAME" />
+    </property>
+    <property Name="POSTL_AREA_CODE">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="POSTL_AREA_CODE" />
+    </property>
+    <property Name="CNTRY_CODE">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="CNTRY_CODE" />
+    </property>
+    <property Name="CNTCT_POINT_CATEG_CODE">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="CNTCT_POINT_CATEG_CODE" />
+    </property>
+    <property Name="SUBSCRPTN_OPT_NBR">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="SUBSCRPTN_OPT_NBR" />
+    </property>
+    <property Name="MKTNG_PGM_NBR">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="MKTNG_PGM_NBR" />
+    </property>
+    <property Name="LEGAL_ENT_NBR">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="LEGAL_ENT_NBR" />
+    </property>
+    <property Name="SUBSCRPTN_OPT_NAME">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="SUBSCRPTN_OPT_NAME" />
+    </property>
+    <property Name="SUBSCRPTN_OPT_STMT_TXT">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="SUBSCRPTN_OPT_STMT_TXT" />
+    </property>
+  </properties>
+  <keys />
+  <links />
+  <docFacets>
+    <mdmWebServiceFacet />
+    <miscFacet PhysicalName="V_ADDRESS" DisplayName="V_ADDRESS" Active="true" />
+    <mdmConfigFacet SchemaGen="true" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql OnMDMTables="true" IsSimpleView="true">REPLACE VIEW MDM.V_ADDRESS &#xD;
+	AS LOCKING ROW FOR ACCESS&#xD;
+&#xD;
+	SELECT&#xD;
+	AD.REGIS_PRSNA_ID&#xD;
+	,AD.SUBSCRPTN_OPT_IND&#xD;
+	,AD.CNSMR_CHCE_DATETM&#xD;
+	,COALESCE(AD.ADDR_LINE_1_TXT,'') || COALESCE(AD.ADDR_LINE_2_TXT,'') || COALESCE(AD.CITY_NAME,'') || COALESCE(AD.POSTL_AREA_CODE,'') AS ADDR_LINE_1_TXT&#xD;
+	,AD.ADDR_LINE_2_TXT&#xD;
+	,AD.CITY_NAME&#xD;
+	,AD.POSTL_AREA_CODE&#xD;
+	,AD.CNTRY_CODE&#xD;
+	,AD.CNTCT_POINT_CATEG_CODE&#xD;
+	,AD.SUBSCRPTN_OPT_NBR&#xD;
+	,AD.MKTNG_PGM_NBR&#xD;
+	,AD.LEGAL_ENT_NBR&#xD;
+	,SO.SUBSCRPTN_OPT_NAME&#xD;
+	,SO.SUBSCRPTN_OPT_STMT_TXT&#xD;
+	,NULL (INTEGER)   AS  SYS_TARGET_ID&#xD;
+	,NULL (VARCHAR(25))  AS SYS_AUTH_ID&#xD;
+	,NULL (VARCHAR(25))  AS SYS_SOURCE&#xD;
+	,NULL (VARCHAR(70))  AS SYS_CREATED_BY&#xD;
+	,NULL (TIMESTAMP(0))  AS SYS_CREATION_DATE&#xD;
+	,'ACTIVE'  (VARCHAR(25))  AS  SYS_ENT_STATE&#xD;
+	,NULL (VARCHAR(70))  AS SYS_LAST_MODIFIED_BY&#xD;
+	,NULL (TIMESTAMP(0))  AS SYS_LAST_MODIFIED_DATE&#xD;
+	,NULL (VARCHAR(25))  AS SYS_NC_TYPE&#xD;
+	,NULL (VARCHAR(10000))  AS SYS_ERR_CODE&#xD;
+	,NULL (VARCHAR(30))  AS SYS_ERR_SVRTY                                                           &#xD;
+	FROM MDM.REGIS_PRSNA_POSTL_ADDR AD&#xD;
+	LEFT JOIN&#xD;
+	(SEL * FROM  MDM.SUBSCRPTN_OPT ) SO&#xD;
+	ON&#xD;
+	AD.MKTNG_PGM_NBR=SO.MKTNG_PGM_NBR&#xD;
+	AND &#xD;
+	AD.LEGAL_ENT_NBR=SO.LEGAL_ENT_NBR&#xD;
+	AND&#xD;
+	AD.SUBSCRPTN_OPT_NBR=SO.SUBSCRPTN_OPT_NBR;</viewsql>
+</document>
+

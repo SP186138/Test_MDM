@@ -1,0 +1,111 @@
+/***********************************************************************************************************
+SCRIPT:               TSS_OPTOUT_INPUT.FEXP
+DESCRIPTION:          This script generates the INPUT file for use by Trillium
+DEPENDENCY:           Staging Opt Out table
+INPUT:                
+OUTPUT:               TSS_OPTOUT_INPUT.DAT
+ERRORS:
+SPECIAL INSTRUCTIONS: In case of failure, log table to be dropped and script to restart from top.
+
+CHANGE LOG:
+VERSION              DATE                 AUTHOR                          CHANGES
+1.00                 03/26/2012           TERADATA                        INITIAL VERSION
+5.0                  12/18/2013           TERADATA                        INTEGRATION CHANGES TO USE I2 
+                                                                          TRILLIUM PROJECTS
+5.7                  02/29/2016           TERADATA                        Release 5.7 - Add address to postal repo
+                                                                          in case of external standardization
+***********************************************************************************************************/
+
+.LOGTABLE TSS_OPTOUT_INPUT_LOG;
+
+.BEGIN EXPORT;
+
+.EXPORT OUTFILE $TSS_OPTOUT_INPUT.DAT FORMAT TEXT MODE RECORD;
+
+SELECT 
+CAST(
+	       COALESCE(TRIM(CAST(OPTOUT_ID AS INTEGER)),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(FNAME),'AA')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(LNAME),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(D.ADDR_LINE_1_TXT),TRIM(S_ADD1),'')
+	||'|'||COALESCE(TRIM(D.ADDR_LINE_2_TXT),TRIM(S_ADD2),'')
+	||'|'||COALESCE(TRIM(D.ADDR_LINE_3_TXT),TRIM(S_ADD3),'')
+	||'|'||COALESCE(TRIM(D.STRET_NUM),'')
+	||'|'||COALESCE(TRIM(D.STRET_NAME),'')
+	||'|'||COALESCE(TRIM(D.APT_NUM),'')
+	||'|'||COALESCE(TRIM(D.PO_BOX_NUM),'')
+	||'|'||COALESCE(TRIM(D.CITY_NAME),TRIM(S_CITY),'')
+	||'|'||COALESCE(TRIM(D.POSTL_AREA_CODE),TRIM(S_ZIP),'')
+	||'|'||COALESCE(TRIM(D.TERR_NAME),TRIM(S_STATE),'')
+	||'|'||COALESCE(TRIM(D.CNTRY_CODE),TRIM(S_COUNTRY),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(CAST(CAST(A.LOAD_ID AS INTEGER) AS VARCHAR(20))),'')
+	||'|'||COALESCE(TRIM(D.POSTL_ADDR_ID),'')
+	||'|'||COALESCE(TRIM(CAST(CAST(LOAD_TS AS TIMESTAMP(0)) AS VARCHAR(20))),'')		
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'|'||COALESCE(TRIM(''),'')
+	||'||||'||COALESCE(TRIM(''),'')
+    AS CHAR(750))
+  FROM $DATABASENAME.REG_OPT_OUT_STG A
+  INNER JOIN LOAD_INFO B
+  ON A.LOAD_ID=B.LOAD_ID
+  AND B.PROCESS_NAME='OPTOUT Input'
+  AND B.STATUS = 'In Progress'
+  LEFT JOIN CNTRY_RECODE E
+ON TRIM(A.S_COUNTRY)=E.CNTRY
+LEFT JOIN POSTL_ADDR D
+ON COALESCE(TRIM(A.S_ADD1),'')=D.ORIG_ADDR_LINE_1_TXT
+AND COALESCE(TRIM(A.S_ADD2),'')=D.ORIG_ADDR_LINE_2_TXT
+AND COALESCE(TRIM(A.S_ADD3),'')=D.ORIG_ADDR_LINE_3_TXT
+AND ' '=D.ORIG_STRET_NUM
+AND ' '=D.ORIG_STRET_NAME
+AND ' '=D.ORIG_APT_NUM
+AND ' '=D.ORIG_PO_BOX_NUM
+AND COALESCE(TRIM(A.S_CITY),'')=D.ORIG_CITY_NAME
+AND COALESCE(TRIM(A.S_STATE),'')=D.ORIG_TERR_NAME
+AND COALESCE(TRIM(A.S_ZIP),'')=D.ORIG_POSTL_AREA_CODE
+AND COALESCE(E.CNTRY_RECODE,TRIM(A.S_COUNTRY),'')=D.ORIG_CNTRY_INFO_TXT    
+  WHERE (S_ADD1 IS NOT NULL
+  OR S_ADD2 IS NOT NULL
+  OR S_ADD3 IS NOT NULL)  
+QUALIFY RANK() OVER (PARTITION BY OPTOUT_ID
+ORDER BY D.POSTL_ADDR_ID)=1  
+;
+
+.END EXPORT;
+
+.SET CREATERC TO 0;
+
+.IF &SYSRC > 4 THEN;
+.SET CREATERC TO 1;
+.ELSE;
+.IF &SYSRC <= 4 THEN;
+.SET CREATERC TO 0;
+.ENDIF;
+.ENDIF;
+
+.LOGOFF &CREATERC;

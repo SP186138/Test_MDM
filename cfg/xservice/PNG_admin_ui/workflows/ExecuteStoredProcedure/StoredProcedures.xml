@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="547" ShowInBreadCrumbs="true" Version="1.0" Name="StoredProcedures" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="StoredProcedures">
+    <variable Name="message" Type="string" Comment=""/>
+    <variable Name="name" Type="string" Comment=""/>
+    <variable Name="storedProcedureId" Type="string" Comment=""/>
+    <variable Name="storedProcedureName" Type="string" Comment=""/>
+    <variable Name="storedProcedureParam" Type="string" Comment=""/>
+    <variable Name="alertGreen" Type="string" Comment=""/>
+    <variable Name="alertRed" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="Start">
+      <actions>
+        <action>
+          <PRINTLN Value="Starrt Stored Procedures"/>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Manage Stored Procedures"/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Manage Stored Procedures" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="StoredProcedures.pgl">
+      <pre_actions>
+        <action>
+          <PRINTLN Value="Select Stored Procedure(s)"/>
+          <EXECUTE_SQL_QUERY AssignToVar="tables" Value="SELECT tablename as TableName FROM SYS_DBC_TABLES WHERE TABLE_TYPE IN('MDM','NON_MDM')  and tablekind = 'P' ORDER BY tableName ASC;"/>
+          <EXECUTE_SQL_QUERY AssignToVar="results" Value="SELECT * FROM SYS_STORED_PROCEDURES ORDER BY NAME ASC;"/>
+          <TO_DOCVAR AssignToVar="dummy">
+            <RESULTS>
+              <TO_XML DocVar="results"/>
+            </RESULTS>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <TO_XML DocVar="dummy"/>
+              <TO_XML DocVar="tables"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="alertz">
+            <ABC>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </ABC>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$alertz/*"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="storedProcedureName" FromValue="{$thisParam/DROPDOWN/@Value}"/>
+          <SET Var="storedProcedureParam" FromValue="{$thisParam/PARAMETERS/@Value}"/>
+          <SET Var="storedProcedureId" FromValue="{$thisParam/NAME/@Value}"/>
+          <SET Var="alertRed" FromValue=""/>
+          <SET Var="alertGreen" FromValue=""/>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='EXECUTE'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Execute Stored Procedure" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='DELETE'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Delete Stored Procedure" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ADD'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Add Stored Procedure" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='EDIT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Stored Procedure" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <task Name="Add Stored Procedure">
+      <actions>
+        <action>
+          <!-- add stored procedure -->
+          <PRINTLN Value="Add Stored Procedure to SYS_STORED_PROCEDURE Table."/>
+          <!-- get the next procedureID -->
+          <EXECUTE_SQL_QUERY AssignToVar="id" Value="SEL ZEROIFNULL(PROCEDURE_ID) +1 PROCEDURE_ID FROM   (SEL  MAX(PROCEDURE_ID)  FROM SYS_STORED_PROCEDURES) NAME (PROCEDURE_ID);"/>
+          <SET Var="procedureID" FromValue="{$id/SQL_RESULT/PROCEDURE_ID/@Value}"/>
+          <PRINTLN Value="Next procedure Id {$procedureID}"/>
+          <PRINTLN Value="Stored Procedure Name {$storedProcedureName}"/>
+          <PRINTLN Value="Stored Procedure Params {$storedProcedureParam}"/>
+          <IF_TEST Test="$storedProcedureParam =''">
+            <THEN>
+              <SET Var="params" FromValue=" "/>
+            </THEN>
+          </IF_TEST>
+          <!-- insert into SYS_STORED_PROCEDURE with variables -->
+          <EXECUTE_SQL_DML AssignToVar="result" Value="INSERT INTO SYS_STORED_PROCEDURES(PROCEDURE_ID, NAME, PARAMS) VALUES( {$procedureID}, '{$storedProcedureName}', '{$storedProcedureParam}');" HandleException="true"/>
+          <SET Var="message" FromValue="{$result/@Status}"/>
+          <IF_TEST Test="$result/@Status = 'Success'">
+            <THEN>
+              <SET Var="alertGreen" FromValue="Stored Procedure added successfully."/>
+            </THEN>
+            <ELSE>
+              <SET Var="alertRed" FromValue="{$result/@Description}"/>
+            </ELSE>
+          </IF_TEST>
+          <PRINTLN Value="Result from insert {$message}"/>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Manage Stored Procedures"/>
+      </next_nodes>
+    </task>
+    <task Name="Edit Stored Procedure Parameter">
+      <actions>
+        <action>
+          <PRINTLN Value="Edit Parameters Post-Processing"/>
+          <EXECUTE_SQL_DML AssignToVar="result" Value="UPDATE SYS_STORED_PROCEDURES SET PARAMS='{$thisParam/PARM/@Value}' WHERE PROCEDURE_ID = {$storedProcedureId}; " HandleException="true"/>
+          <SET Var="message" FromValue="{$result/@Status}"/>
+          <IF_TEST Test="$message = 'Success'">
+            <THEN>
+              <SET Var="alertGreen" FromValue="Stored Procedure parameters edited successfully."/>
+            </THEN>
+            <ELSE>
+              <SET Var="alertRed" FromValue="{$result/@Description}"/>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Manage Stored Procedures"/>
+      </next_nodes>
+    </task>
+    <task Name="Delete Stored Procedure">
+      <actions>
+        <action>
+          <PRINTLN Value="Delete Stored Procedures"/>
+          <EXECUTE_SQL_DML AssignToVar="result" Value="DELETE FROM SYS_STORED_PROCEDURES WHERE PROCEDURE_ID = {$storedProcedureId}; " HandleException="true"/>
+          <SET Var="message" FromValue="{$result/@Status}"/>
+          <IF_TEST Test="$message = 'Success'">
+            <THEN>
+              <SET Var="alertGreen" FromValue="Stored Procedure deleted successfully."/>
+            </THEN>
+            <ELSE>
+              <SET Var="alertRed" FromValue="{$result/@Description}"/>
+            </ELSE>
+          </IF_TEST>
+          <PRINTLN Value="Deleted Stored Procedures Status {$message}"/>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Manage Stored Procedures"/>
+      </next_nodes>
+    </task>
+    <task Name="Execute Stored Procedure">
+      <actions>
+        <action>
+          <EXECUTE_SQL_QUERY AssignToVar="results" Value="SELECT * FROM SYS_STORED_PROCEDURES WHERE PROCEDURE_ID = {$storedProcedureId};"/>
+          <SET Var="procedureName" FromValue="{$results/SQL_RESULT/NAME/@Value}"/>
+          <SET Var="params" FromValue="{$results/SQL_RESULT/PARAMS/@Value}"/>
+          <PRINTLN Value="Execute Stored Procedure {$procedureName}"/>
+          <IF_TEST Test="$params = null ">
+            <THEN>
+              <REQUEST ServiceName="ADMIN_UI" Name="execute_proc" AssignToVar="results" HandleException="true">
+                <PROC_NAME Value="{$procedureName}"/>
+              </REQUEST>
+            </THEN>
+            <ELSE>
+              <REQUEST ServiceName="ADMIN_UI" Name="execute_proc_param" AssignToVar="results" HandleException="true">
+                <PROC_NAME Value="{$procedureName}"/>
+                <PARAMS Value="{$params}"/>
+              </REQUEST>
+            </ELSE>
+          </IF_TEST>
+          <SET Var="message" FromValue="{$results/@Status}"/>
+          <IF_TEST Test="$message = 'Success'">
+            <THEN>
+              <SET Var="alertGreen" FromValue="Stored Procedure executed successfully."/>
+            </THEN>
+            <ELSE>
+              <!--Fix for issue MDM-1917 by Ankur Goyal-->
+              <SET Var="alertRed" FromValue="{$results/@Description}"/>
+              <!--SET Var="alertRed" FromValue="Error Executing Stored Procedure"/-->
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Manage Stored Procedures"/>
+      </next_nodes>
+    </task>
+    <ui_form2 Name="Edit Stored Procedure" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="EditParameters.pgl">
+      <pre_actions>
+        <action>
+          <EXECUTE_SQL_QUERY AssignToVar="results" Value="SELECT* FROM SYS_STORED_PROCEDURES WHERE PROCEDURE_ID = {$storedProcedureId};"/>
+          <SET Var="procedureName" FromValue="{$results/SQL_RESULT/NAME/@Value}"/>
+          <SET Var="params" FromValue="{$results/SQL_RESULT/PARAMS/@Value}"/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <NAME Value="{$procedureName}"/>
+              <PARM Value="{$params}"/>
+              <ID Value="{$procedureID}"/>
+            </ROOT>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="param" FromValue="{$pglFormOutput/PARAM/@Value}"/>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='DONE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='EDIT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Stored Procedure Parameter" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='BACK'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Stored Procedures" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='NEXT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Stored Procedure Parameter" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10" compId="MgcDashboard1" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="8" textAttrsKey0="alertGreen : string" textAttrsKey1="alertRed : string" textAttrsKey2="message : string" textAttrsKey3="name : string" textAttrsKey4="param : string" textAttrsKey5="storedProcedureId : string" textAttrsKey6="storedProcedureName : string" textAttrsKey7="storedProcedureParam : string">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="alertRed" Type="string"/>
+      </variables>
+    </mgcdashboard>
+    <mgcnodes>
+      <Start font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="37,244">
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+        <textProps text="Start" font="Verdana,0,9" textColor="80,80,80"/>
+      </Start>
+      <mgcnode Name="Stored Procedures" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="189,243" size="1928,1052">
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+        <textProps text="Stored Procedures" font="Verdana,0,9" textColor="80,80,80"/>
+      </mgcnode>
+      <mgcnode Name="Add Stored Procedure" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="384,84">
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+        <textProps text="Add Stored Procedure" font="Verdana,0,9" textColor="80,80,80"/>
+      </mgcnode>
+      <mgcnode Name="Edit Stored Procedure Parameter" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="573,202">
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+        <textProps text="Edit Stored Procedure Parameter" font="Verdana,0,9" textColor="80,80,80"/>
+      </mgcnode>
+      <mgcnode Name="Delete Stored Procedure" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="380,274">
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+        <textProps text="Delete Stored Procedure" font="Verdana,0,9" textColor="80,80,80"/>
+      </mgcnode>
+      <mgcnode Name="Execute Stored Procedure" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="385,384">
+        <iconProps iconfile="z1task.gif" location="0,0"/>
+        <textProps text="Execute Stored Procedure" font="Verdana,0,9" textColor="80,80,80"/>
+      </mgcnode>
+      <mgcnode Name="Edit Stored Procedure" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="381,207">
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+        <textProps text="Edit Stored Procedure" font="Verdana,0,9" textColor="186,12,12"/>
+      </mgcnode>
+    </mgcnodes>
+    <mgcconnectors>
+      <Start>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="70,81,173" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="69,266" endpoint="189,265" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="157,264,4,4" ctrlRect2="97,263,4,4"/>
+      </Start>
+      <mgcnode Name="Manage Stored Procedures">
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="205,288" endpoint="385,406" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="203,374,4,4" ctrlRect2="233,450,4,4" textRect="195,410,50,8">
+          <textProps text="EXECUTE" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="221,265" endpoint="380,296" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="318,262,4,4" ctrlRect2="322,278,4,4" textRect="302,269,41,7">
+          <textProps text="DELETE" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="205,243" endpoint="384,106" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="267,109,4,4" ctrlRect2="345,143,4,4" textRect="297,125,23,7">
+          <textProps text="ADD" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="221,265" endpoint="381,229" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="339,263,4,4" ctrlRect2="299,241,4,4" textRect="308,251,26,7">
+          <textProps text="EDIT" font="Verdana,0,9"/>
+        </nextNodeView>
+      </mgcnode>
+      <mgcnode Name="Add Stored Procedure">
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="70,81,173" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="384,106" endpoint="205,243" ctrlRect1Dirty="true" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="185,85,4,4" ctrlRect2="203,138,4,4"/>
+      </mgcnode>
+      <mgcnode Name="Edit Stored Procedure Parameter">
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="70,81,173" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="573,224" endpoint="205,243" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="462,173,4,4" ctrlRect2="338,138,4,4"/>
+      </mgcnode>
+      <mgcnode Name="Delete Stored Procedure">
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="70,81,173" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="380,296" endpoint="221,265" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="272,338,4,4" ctrlRect2="267,302,4,4"/>
+      </mgcnode>
+      <mgcnode Name="Execute Stored Procedure">
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="70,81,173" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="385,406" endpoint="205,288" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="248,404,4,4" ctrlRect2="266,370,4,4"/>
+      </mgcnode>
+      <mgcnode Name="Edit Stored Procedure">
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="413,229" endpoint="573,224" ctrlRect1Dirty="true" ctrlRect2Dirty="false" textRectDirty="true" ctrlRect1="457,228,4,4" ctrlRect2="451,222,4,4" textRect="443,224,26,7">
+          <textProps text="EDIT" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="381,229" endpoint="221,265" ctrlRect1Dirty="true" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="235,165,4,4" ctrlRect2="339,263,4,4" textRect="274,212,30,8">
+          <textProps text="BACK" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="413,229" endpoint="573,224" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="531,227,4,4" ctrlRect2="451,222,4,4"/>
+      </mgcnode>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions/>
+    <post_actions/>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

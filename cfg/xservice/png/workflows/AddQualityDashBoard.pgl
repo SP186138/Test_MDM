@@ -1,0 +1,43 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" name="studio.templates.simple_entry" source="studio.controller:load" version="3">
+  <ui:container id="outerContainer1" name="outerContainer1" scrollable="true">
+    <ui:step id="outerStep1" name="outerStep1" scrollable="true">
+      <ui:container id="searchContainer">
+        <ui:step id="searchStep">
+          <ui:field-group id="searchFG" displayText="Search by" collapsable="true">
+            <ui:field-group columns="3" id="fieldGroups" select="$this">
+              <!--ui:dropdown id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR" displayText="Matching Domain" optionSrc="$root/LEGAL_ENT/OPTION" onChange="javascript:loadProgramList();"/-->
+<ui:dropdown id="LEGAL_ENT_NAME" name="LEGAL_ENT_NAME" displayText="Matching Domain" optionSrc="$root/LEGAL_ENT/LEGAL_ENT_NAME" onChange="javascript:loadProgramList();" />
+              <ui:dropdown id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR" displayText="Program Name" optionSrc="$root/MKTNG_PGM/OPTION"/>
+            </ui:field-group>
+          </ui:field-group>
+          <ui:buttons>
+            <ui:button id="SEARCH" name="SEARCH" displayText="Search" emphasized="true"/>
+          </ui:buttons>
+        </ui:step>
+      </ui:container>
+      <ui:table id="searchResultsTable" displayText="% Postal Standardization for Active Registrations" rowId="MKTNG_PGM_NBR" rowSrc="$root/RESPONSE/V_RPT_ADDR_QLTY" scrollable="true" maxRows="10" doPaging="true" totalRowCount="$root/RESPONSE/@TotalRowCount" exportable="true">
+        <ui:field-group id="tableColumns">
+          <ui:hidden-field id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR"/>
+          <ui:display-field id="MKTNG_PGM_NAME" name="MKTNG_PGM_NAME" displayText="Marketing Program" sortable="true"/>
+          <ui:display-field id="LEGAL_ENT_NAME" name="LEGAL_ENT_NAME" displayText="Matching Domain" sortable="true"/>
+          <ui:display-field id="ACTV_RGSTRTN_CNT" name="ACTV_RGSTRTN_CNT" displayText="Active Registrations" sortable="true"/>
+          <ui:display-field id="SUCCESS_PCT" name="SUCCESS_PCT" displayText="Successfully Processed" sortable="true"/>
+          <ui:display-field id="LCLTY_FAIL_PCT" name="LCLTY_FAIL_PCT" displayText="Locality failure" sortable="true"/>
+          <ui:display-field id="UNK_ADDR_PCT" name="UNK_ADDR_PCT" displayText="Unknown Address" sortable="true"/>
+          <ui:display-field id="MULTIPLE_STREET_ADDR_PCT" name="MULTIPLE_STREET_ADDR_PCT" displayText="Multiple Address Found" sortable="true"/>
+          <ui:display-field id="CITY_TERR_FAIL_PCT" name="CITY_TERR_FAIL_PCT" displayText="City/Province Not Found" sortable="true"/>
+          <ui:display-field id="STREET_NAME_FAIL_PCT" name="STREET_NAME_FAIL_PCT" displayText="Street Name Failure" sortable="true"/>
+          <ui:display-field id="HOUSE_NO_FAIL_PCT" name="HOUSE_NO_FAIL_PCT" displayText="House number range failure" sortable="true"/>
+          <ui:display-field id="STREET_COMPT_FAIL_PCT" name="STREET_COMPT_FAIL_PCT" displayText="Street component failure" sortable="true"/>
+          <ui:display-field id="MULTIPLE_STREET_ADDR_PCT" name="MULTIPLE_STREET_ADDR_PCT" displayText="Multiple possible matches to Directory" sortable="true"/>
+        </ui:field-group>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+function loadProgramList(){
+document.form.BUTTON_ID.value = 'LOAD_PROGRAM_LIST';
+document.form.action = 'view.x2ps';
+document.form.submit();
+}</ui:script>
+</ui:page-group>

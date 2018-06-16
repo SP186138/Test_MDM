@@ -1,0 +1,86 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_form" source="studio.controller:load">
+  <ui:container id="Outer" scrollable="true" showFavorite="true">
+    <ui:header>
+    </ui:header>
+    <ui:step id="OuterStep" displayText="MANAGE_DICTIONARY" scrollable="true">
+	 <ui:help displayPage="../../bcm/help/Manage_Dictionary.htm"/>
+      <ui:field-group columns="3">
+        <ui:image src="/bpi_check.gif" id="AlertGreenIconAjax" displayCondition="{string-length($root/ABC/AlertGreen/@Value)!=0}"/>
+        <ui:image src="/cancel.gif" id="AlertRedIconAjax" displayCondition="{string-length($root/ABC/AlertRed/@Value)!=0}"/>
+        <ui:display-field value="{$root/ABC/AlertGreen/@Value}" displayCondition="{string-length($root/ABC/AlertGreen/@Value) != 0}" id="success" name="success" class="requiredIndicatorGreen" style="color:green;"/>
+        <ui:display-field value="{$root/ABC/AlertRed/@Value}" displayCondition="{string-length($root/ABC/AlertRed/@Value) != 0}" id="error" name="error" class="requiredIndicator" style="color:red;"/>
+        <ui:hidden-field name="disableVar" id="disableVar"/>
+      </ui:field-group>
+      <ui:table id="uiTable" displayText="Search Dictionary" scrollable="true" displayTextNoRecords="No Records Found" collapsable="false" doPaging="true" selectable="single" select="$root/DICTMODEL" totalRowCount="$root/totalRowCount/@Value" startAtRow="$root/startAtRow/@Value" postRowIdAs="SELECTED_ID" maxRows="20" filter="true" rowId="Id">
+        <ui:field-group>
+          <ui:hidden-field name="Id" id="Id"  sortable="true" unFormat="true"/>
+          <ui:display-field name="ModelUnit" id="ModelUnit" displayText="SC_DICTIONARY_NAME" sortable="true" title="SC_DICTIONARY_NAME" unFormat="true"/>
+          <ui:display-field name="Description" id="Description" displayText="SC_DICTIONARY_DESCRIPTION" title="SC_DICTIONARY_DESCRIPTION" unFormat="true"/>
+          <ui:display-field name="CREATED_BY" id="CREATED_BY" displayText="SELF_GEN_CREATED_BY" sortable="true" title="SELF_GEN_CREATED_BY_HOV"/>
+          <ui:display-field name="CREATION_DATE" id="CREATION_DATE" displayText="SELF_GEN_CREATION_DATE" sortable="true" title="SELF_GEN_CREATION_DATE_HOV" dataType="DateTime"/>
+          <ui:display-field name="LAST_MODIFIED_BY" id="LAST_MODIFIED_BY" displayText="SELF_GEN_LAST_MODIFIED_BY" sortable="true" title="SELF_GEN_LAST_MODIFIED_BY_HOV"/>
+          <ui:display-field name="LAST_MODIFIED_DATE" id="LAST_MODIFIED_DATE" displayText="SELF_GEN_LAST_MODIFIED_DATE" sortable="true" title="SELF_GEN_LAST_MODIFIED_DATE_HOV" dataType="DateTime"/>
+        </ui:field-group>o
+        <ui:buttons>
+          <ui:button id="Back" name="Back" displayText="Back" emphasized="false"/>
+          <ui:divider/>
+          <ui:button id="Create" name="Create" displayText="DICT_CREATE" emphasized="false"/>
+          <ui:divider/>
+          <ui:button id="Edit" name="Edit" displayText="DICT_EDIT" emphasized="false" enabledBySelections="true" onClick="javascript:onEdit();"/>
+          <ui:divider/>
+          <ui:button id="Delete" name="Delete" displayText="DICT_DELETE" emphasized="false" enabledBySelections="true" onClick="javascript:onDelete();"/>
+        </ui:buttons>
+      </ui:table>
+      <ui:script> 
+function onDelete()
+{
+core_confirm_jquery('SC_DICTIONARY_DELETE_CONFIRM','onDeleteCallback');
+}
+
+function onDeleteCallback(response)
+{
+if( response === 'yes' )
+{
+var selectedRowCount = 0;
+var checkboxElem = document.getElementsByName('SELECTED_ID');
+for(i = 0; i &lt; checkboxElem.length; i++)
+{
+if(checkboxElem[i].checked ){
+selectedRowCount++;
+var dictId=checkboxElem[i].value;
+}
+}
+
+var request=&quot;&lt;GET_DOCUMENT Name='SELF_CONF_DICT_PROPS' ServiceName='BPE_META' AssignToVar='getProps' ReturnRowCount='true'>  &lt;ExtendedId Value='&quot;+dictId+&quot;'/>&lt;/GET_DOCUMENT>&quot;
+var xpath = &quot;/RESPONSES/RESPONSE/SELF_CONF_DICT_PROPS&quot;;
+SendAjaxRequest(&quot;BPE_META&quot;,request,'getModelCount',xpath);
+}
+}
+function getModelCount(node)
+{
+if(node.length > 0){
+core_alert_jquery('SELECTED_DICTIONARY_DELETE');
+return ;
+}
+else
+{
+document.form.BUTTON_ID.value = 'Delete';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+}
+}
+        
+function onEdit()
+{
+document.form.disableVar.value = 'true';
+document.form.BUTTON_ID.value = 'Edit';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+}
+
+      </ui:script>
+    </ui:step>
+  </ui:container>
+</ui:page-group>

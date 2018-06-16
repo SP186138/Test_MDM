@@ -1,0 +1,1863 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="8" ShowInBreadCrumbs="true" Version="1.0" Name="HANDLER" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="HANDLER">
+    <variable Name="hndler_lookup" Type="string" Comment=""/>
+    <variable Name="country_lookup" Type="string" Comment=""/>
+    <variable Name="forselectandretain" Type="xml" Comment=""/>
+    <variable Name="alertz" Type="xml" Comment=""/>
+    <variable Name="varId" Type="string" Comment=""/>
+    <variable Name="thisParamCopy" Type="xml" Comment=""/>
+    <variable Name="thisParamCopy2" Type="xml" Comment=""/>
+    <variable Name="CNTCT_NBR_return" Type="string" Comment=""/>
+    <variable Name="LinkCountry" Type="xml" Comment=""/>
+    <variable Name="CNTCT_ID" Type="string" Comment=""/>
+    <variable Name="Gobal_cntry_hndlt" Type="xml" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start0">
+      <actions/>
+      <next_nodes>
+        <next_node Name="GDPR_HNDLR"/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="GDPR_HNDLR" ShowInBreadCrumbs="HIDE" Template="GDPR_HNDLR.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Save'">
+            <THEN>
+              <CREATE_DOCUMENT_ID Name="GDPR_HNDLR" AssignToVar="varId"/>
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="addHandler" DocumentName="GDPR_HNDLR" ServiceName="BCM_MASTER" HandleException="true">
+                <HNDLR_NM Value="{$thisParam/HNDLR_NM/@Value}"/>
+                <BUS_IND Value="{$thisParam/BUS_IND/@Value}"/>
+                <BUS_SFTP_DIR Value="{$thisParam/BUS_SFTP_DIR/@Value}"/>
+                <HNDLR_ID Value="{$varId}"/>
+              </DO_DB_PERSIST>
+              <IF_TEST Test="$addHandler/@Status='Success' and $addHandler/VALIDATION_RESULT/@Value='SUCCESS'">
+                <THEN>
+                  <SET Var="alertGreen" FromValue="Handler Saved Succesfully...!!"/>
+                  <!--TO_DOCVAR AssignToVar="pglFormInput">
+<Link_HNDLR_CNTRY Value="true" />
+</TO_DOCVAR-->
+                </THEN>
+                <ELSE>
+                  <SET Var="alertRed" FromValue="{$addHandler/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                </ELSE>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="alertz">
+                <Alert>
+                  <AlertGreen Value="{$alertGreen}"/>
+                  <AlertRed Value="{$alertRed}"/>
+                </Alert>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <TO_XML SelectList="$alertz/*"/>
+                  <HNDLR_NM Value="{$thisParam/HNDLR_NM/@Value}"/>
+                  <BUS_IND Value="{$thisParam/BUS_IND/@Value}"/>
+                  <BUS_SFTP_DIR Value="{$thisParam/BUS_SFTP_DIR/@Value}"/>
+                  <Link_HNDLR_CNTRY Value="true"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SaveandReturn'  and $thisParam/PAGE_NAME/@Value='BCM_MASTER.HANDLER.Country_node.pgl'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <TO_XML SelectList="$alertz/*"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Search'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Create'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Edit'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Delete'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Save'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="GDPR_HNDLR" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Link_HNDLR_CNTRY'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Country_Node" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outpuStXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="Country_Node" ShowInBreadCrumbs="HIDE" Template="Country_node.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SaveandReturn'  and $thisParam/PAGE_NAME/@Value='BCM_MASTER.HANDLER.GDPR_Contact.pgl'">
+            <THEN>
+              <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+                <TO_XML SelectList="$thisParam/*[name()='FILTER_HNDLR_ID' or name()='FILTER_HNDLR_NM' or name()='FILTER_CNTRY_NAME' or name()='FILTER_GDPR_RQST_TYPE_NAME' or name()='FILTER_EMAIL_ADDR_TXT' ]"/>
+              </FORM_SEARCH_FILTER>
+              <FOR_EACH SelectList="$filters/FILTER" CurrentElement="currElem">
+                <SET Var="temp" FromValue="{$currElem/@Name}"/>
+                <IF_TEST Test="$currElem/FILTER_HNDLR_ID/@MatchBy='EQUAL'">
+                  <THEN>
+                    <SET Var="HndlrId" FromValue=" A.HNDLR_ID ='{$currElem/FILTER_HNDLR_ID/@Value}'"/>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,'AND',$HndlrId)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$temp='FILTER_HNDLR_NM'">
+                  <THEN>
+                    <IF_TEST Test="$currElem/FILTER_HNDLR_NM/@MatchBy='EQUAL'">
+                      <THEN>
+                        <SET Var="HndlrName" FromValue=" A.HNDLR_NM ='{$currElem/FILTER_HNDLR_NM/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_HNDLR_NM/@MatchBy='CONTAINS'">
+                      <THEN>
+                        <SET Var="HndlrName" FromValue=" A.HNDLR_NM like'%{$currElem/FILTER_HNDLR_NM/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_HNDLR_NM/@MatchBy='STARTS_WITH'">
+                      <THEN>
+                        <SET Var="HndlrName" FromValue=" A.HNDLR_NM like'{$currElem/FILTER_HNDLR_NM/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_HNDLR_NM/@MatchBy='ENDS_WITH'">
+                      <THEN>
+                        <SET Var="HndlrName" FromValue=" A.HNDLR_NM like'%{$currElem/FILTER_HNDLR_NM/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,'AND',$HndlrName)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$temp='FILTER_CNTRY_NAME'">
+                  <THEN>
+                    <IF_TEST Test="$currElem/FILTER_CNTRY_NAME/@MatchBy='EQUAL'">
+                      <THEN>
+                        <SET Var="CntryName" FromValue=" C.CNTRY_NAME ='{$currElem/FILTER_CNTRY_NAME/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_CNTRY_NAME/@MatchBy='CONTAINS'">
+                      <THEN>
+                        <SET Var="CntryName" FromValue=" C.CNTRY_NAME like'%{$currElem/FILTER_CNTRY_NAME/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_CNTRY_NAME/@MatchBy='STARTS_WITH'">
+                      <THEN>
+                        <SET Var="CntryName" FromValue=" C.CNTRY_NAME like'{$currElem/FILTER_CNTRY_NAME/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_CNTRY_NAME/@MatchBy='ENDS_WITH'">
+                      <THEN>
+                        <SET Var="CntryName" FromValue=" C.CNTRY_NAME like'%{$currElem/FILTER_CNTRY_NAME/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,'AND',$CntryName)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$temp='FILTER_GDPR_RQST_TYPE_NAME'">
+                  <THEN>
+                    <IF_TEST Test="$currElem/FILTER_GDPR_RQST_TYPE_NAME/@MatchBy='EQUAL'">
+                      <THEN>
+                        <SET Var="GDPRRequestTypeName" FromValue=" E.GDPR_RQST_TYPE_NAME ='{$currElem/FILTER_GDPR_RQST_TYPE_NAME/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_GDPR_RQST_TYPE_NAME/@MatchBy='CONTAINS'">
+                      <THEN>
+                        <SET Var="GDPRRequestTypeName" FromValue=" E.GDPR_RQST_TYPE_NAME like'%{$currElem/FILTER_GDPR_RQST_TYPE_NAME/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_GDPR_RQST_TYPE_NAME/@MatchBy='STARTS_WITH'">
+                      <THEN>
+                        <SET Var="GDPRRequestTypeName" FromValue=" E.GDPR_RQST_TYPE_NAME like'{$currElem/FILTER_GDPR_RQST_TYPE_NAME/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_GDPR_RQST_TYPE_NAME/@MatchBy='ENDS_WITH'">
+                      <THEN>
+                        <SET Var="GDPRRequestTypeName" FromValue=" E.CNTRY_NAME like'%{$currElem/FILTER_GDPR_RQST_TYPE_NAME/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,'AND',$GDPRRequestTypeName)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$temp='FILTER_EMAIL_ADDR_TXT'">
+                  <THEN>
+                    <IF_TEST Test="$currElem/FILTER_EMAIL_ADDR_TXT/@MatchBy='EQUAL'">
+                      <THEN>
+                        <SET Var="EmailAddrText" FromValue=" G.EMAIL_ADDR_TXT ='{$currElem/FILTER_EMAIL_ADDR_TXT/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_EMAIL_ADDR_TXT/@MatchBy='CONTAINS'">
+                      <THEN>
+                        <SET Var="EmailAddrText" FromValue=" G.EMAIL_ADDR_TXT like'%{$currElem/FILTER_EMAIL_ADDR_TXT/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_EMAIL_ADDR_TXT/@MatchBy='STARTS_WITH'">
+                      <THEN>
+                        <SET Var="EmailAddrText" FromValue=" G.EMAIL_ADDR_TXT like'{$currElem/FILTER_EMAIL_ADDR_TXT/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_EMAIL_ADDR_TXT/@MatchBy='ENDS_WITH'">
+                      <THEN>
+                        <SET Var="EmailAddrText" FromValue=" G.EMAIL_ADDR_TXT like'%{$currElem/FILTER_EMAIL_ADDR_TXT/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,'AND',$EmailAddrText)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$currElem/FILTER_CNTCT_NBR/@MatchBy='EQUAL'">
+                  <THEN>
+                    <SET Var="ContactNbr" FromValue=" F.CNTCT_NBR ='{$currElem/FILTER_CNTCT_NBR/@Value}'"/>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,' AND',$ContactNbr)}"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SYS_RELOAD'">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="varSearchResult">
+                    <root>SEL	A.HNDLR_ID, A.HNDLR_NM, C.CNTRY_NAME, E.GDPR_RQST_TYPE_NAME, F.CNTCT_NBR, G.EMAIL_ADDR_TXT
+FROM GDPR_HNDLR A
+LEFT JOIN  GDPR_HNDLR_CNTRY B
+ON A.HNDLR_ID=B.HNDLR_ID
+LEFT JOIN CNTRY C
+ON B.CNTRY_CODE=C.CNTRY_CODE
+LEFT JOIN GDPR_HNDLR_CNTRY_RQST_AUTH D
+ON A.HNDLR_ID=D.HNDLR_ID AND B.CNTRY_CODE=D.CNTRY_CODE
+LEFT JOIN GDPR_RQST_TYPE E
+ON D.GDPR_RQST_TYPE_CD=E.GDPR_RQST_TYPE_CD
+LEFT JOIN GDPR_HNDLR_CNTRY_CNTCT F
+ON A.HNDLR_ID=F.HNDLR_ID AND B.CNTRY_CODE=F.CNTRY_CODE
+LEFT JOIN CNTCT G
+ON F.CNTCT_NBR=G.CNTCT_NBR
+WHERE A.HNDLR_ID='{$thisParam/HNDLR_ID/@Value}'</root>
+                  </TO_DOCVAR>
+                  <SET Var="tempString1" FromValue="{concat($varSearchResult/@text,$subFilter)}"/>
+                  <!--<TO_DOCVAR AssignToVar="Qry1">
+<ROOT>{$tempString1}</ROOT>
+</TO_DOCVAR>-->
+                  <!--EXECUTE_SQL_QUERY AssignToVar="Linked_Cntry_hndlr" Value="{$varSearchResult/@text}" HandleException="true"/-->
+                  <EXECUTE_SQL_QUERY AssignToVar="Linked_Cntry_hndlr" Value="{$tempString1}" MaxRows="{$thisParam/MaxRec/@Value}" StartAtRow="{$thisParam/START_COUNT/@Value}" ReturnRowCount="yes" HandleException="true"/>
+                </THEN>
+                <ELSE>
+                  <TO_DOCVAR AssignToVar="varSearchResult">
+                    <root>SEL	A.HNDLR_ID, A.HNDLR_NM, C.CNTRY_NAME, E.GDPR_RQST_TYPE_NAME, F.CNTCT_NBR, G.EMAIL_ADDR_TXT
+FROM GDPR_HNDLR A
+LEFT JOIN  GDPR_HNDLR_CNTRY B
+ON A.HNDLR_ID=B.HNDLR_ID
+LEFT JOIN CNTRY C
+ON B.CNTRY_CODE=C.CNTRY_CODE
+LEFT JOIN GDPR_HNDLR_CNTRY_RQST_AUTH D
+ON A.HNDLR_ID=D.HNDLR_ID AND B.CNTRY_CODE=D.CNTRY_CODE
+LEFT JOIN GDPR_RQST_TYPE E
+ON D.GDPR_RQST_TYPE_CD=E.GDPR_RQST_TYPE_CD
+LEFT JOIN GDPR_HNDLR_CNTRY_CNTCT F
+ON A.HNDLR_ID=F.HNDLR_ID AND B.CNTRY_CODE=F.CNTRY_CODE
+LEFT JOIN CNTCT G
+ON F.CNTCT_NBR=G.CNTCT_NBR
+WHERE A.HNDLR_ID='{$thisParam/HNDLR_ID/@Value}'</root>
+                  </TO_DOCVAR>
+                  <EXECUTE_SQL_QUERY AssignToVar="Linked_Cntry_hndlr" Value="{$varSearchResult/@text}" HandleException="true"/>
+                </ELSE>
+              </IF_TEST>
+              <REQUEST Name="getCountries" ServiceName="BCM_MASTER" AssignToVar="CntryNames"/>
+              <!--<EXECUTE_SQL_QUERY AssignToVar="Linked_Cntry_hndlr" Value="SEL CNTRY_NAME, HNDLR_ID FROM GDPR_HNDLR_CNTRY HC INNER JOIN CNTRY C ON C.CNTRY_CODE = HC.CNTRY_CODE WHERE HNDLR_ID ='{$thisParam/HNDLR_ID/@Value}'"/>-->
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <TO_XML SelectList="$alertz/*"/>
+                  <TO_XML SelectList="$CntryNames/*"/>
+                  <HNDLR_ID Value="{$thisParam/HNDLR_ID/@Value}"/>
+                  <TO_XML SelectList="$Linked_Cntry_hndlr/*"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Back'  and $thisParam/PAGE_NAME/@Value='BCM_MASTER.HANDLER.GDPR_Contact.pgl'">
+            <THEN>
+              <REQUEST Name="getCountries" ServiceName="BCM_MASTER" AssignToVar="CntryNames"/>
+              <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+                <TO_XML SelectList="$thisParam/*[name()='FILTER_HNDLR_ID' or name()='FILTER_HNDLR_NM' or name()='FILTER_CNTRY_NAME' or name()='FILTER_GDPR_RQST_TYPE_NAME' or name()='FILTER_EMAIL_ADDR_TXT' ]"/>
+              </FORM_SEARCH_FILTER>
+              <FOR_EACH SelectList="$filters/FILTER" CurrentElement="currElem">
+                <SET Var="temp" FromValue="{$currElem/@Name}"/>
+                <IF_TEST Test="$currElem/FILTER_HNDLR_ID/@MatchBy='EQUAL'">
+                  <THEN>
+                    <SET Var="HndlrId" FromValue=" A.HNDLR_ID ='{$currElem/FILTER_HNDLR_ID/@Value}'"/>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,'AND',$HndlrId)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$temp='FILTER_HNDLR_NM'">
+                  <THEN>
+                    <IF_TEST Test="$currElem/FILTER_HNDLR_NM/@MatchBy='EQUAL'">
+                      <THEN>
+                        <SET Var="HndlrName" FromValue=" A.HNDLR_NM ='{$currElem/FILTER_HNDLR_NM/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_HNDLR_NM/@MatchBy='CONTAINS'">
+                      <THEN>
+                        <SET Var="HndlrName" FromValue=" A.HNDLR_NM like'%{$currElem/FILTER_HNDLR_NM/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_HNDLR_NM/@MatchBy='STARTS_WITH'">
+                      <THEN>
+                        <SET Var="HndlrName" FromValue=" A.HNDLR_NM like'{$currElem/FILTER_HNDLR_NM/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_HNDLR_NM/@MatchBy='ENDS_WITH'">
+                      <THEN>
+                        <SET Var="HndlrName" FromValue=" A.HNDLR_NM like'%{$currElem/FILTER_HNDLR_NM/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,'AND',$HndlrName)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$temp='FILTER_CNTRY_NAME'">
+                  <THEN>
+                    <IF_TEST Test="$currElem/FILTER_CNTRY_NAME/@MatchBy='EQUAL'">
+                      <THEN>
+                        <SET Var="CntryName" FromValue=" C.CNTRY_NAME ='{$currElem/FILTER_CNTRY_NAME/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_CNTRY_NAME/@MatchBy='CONTAINS'">
+                      <THEN>
+                        <SET Var="CntryName" FromValue=" C.CNTRY_NAME like'%{$currElem/FILTER_CNTRY_NAME/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_CNTRY_NAME/@MatchBy='STARTS_WITH'">
+                      <THEN>
+                        <SET Var="CntryName" FromValue=" C.CNTRY_NAME like'{$currElem/FILTER_CNTRY_NAME/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_CNTRY_NAME/@MatchBy='ENDS_WITH'">
+                      <THEN>
+                        <SET Var="CntryName" FromValue=" C.CNTRY_NAME like'%{$currElem/FILTER_CNTRY_NAME/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,'AND',$CntryName)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$temp='FILTER_GDPR_RQST_TYPE_NAME'">
+                  <THEN>
+                    <IF_TEST Test="$currElem/FILTER_GDPR_RQST_TYPE_NAME/@MatchBy='EQUAL'">
+                      <THEN>
+                        <SET Var="GDPRRequestTypeName" FromValue=" E.GDPR_RQST_TYPE_NAME ='{$currElem/FILTER_GDPR_RQST_TYPE_NAME/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_GDPR_RQST_TYPE_NAME/@MatchBy='CONTAINS'">
+                      <THEN>
+                        <SET Var="GDPRRequestTypeName" FromValue=" E.GDPR_RQST_TYPE_NAME like'%{$currElem/FILTER_GDPR_RQST_TYPE_NAME/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_GDPR_RQST_TYPE_NAME/@MatchBy='STARTS_WITH'">
+                      <THEN>
+                        <SET Var="GDPRRequestTypeName" FromValue=" E.GDPR_RQST_TYPE_NAME like'{$currElem/FILTER_GDPR_RQST_TYPE_NAME/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_GDPR_RQST_TYPE_NAME/@MatchBy='ENDS_WITH'">
+                      <THEN>
+                        <SET Var="GDPRRequestTypeName" FromValue=" E.CNTRY_NAME like'%{$currElem/FILTER_GDPR_RQST_TYPE_NAME/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,'AND',$GDPRRequestTypeName)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$temp='FILTER_EMAIL_ADDR_TXT'">
+                  <THEN>
+                    <IF_TEST Test="$currElem/FILTER_EMAIL_ADDR_TXT/@MatchBy='EQUAL'">
+                      <THEN>
+                        <SET Var="EmailAddrText" FromValue=" G.EMAIL_ADDR_TXT ='{$currElem/FILTER_EMAIL_ADDR_TXT/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_EMAIL_ADDR_TXT/@MatchBy='CONTAINS'">
+                      <THEN>
+                        <SET Var="EmailAddrText" FromValue=" G.EMAIL_ADDR_TXT like'%{$currElem/FILTER_EMAIL_ADDR_TXT/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_EMAIL_ADDR_TXT/@MatchBy='STARTS_WITH'">
+                      <THEN>
+                        <SET Var="EmailAddrText" FromValue=" G.EMAIL_ADDR_TXT like'{$currElem/FILTER_EMAIL_ADDR_TXT/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_EMAIL_ADDR_TXT/@MatchBy='ENDS_WITH'">
+                      <THEN>
+                        <SET Var="EmailAddrText" FromValue=" G.EMAIL_ADDR_TXT like'%{$currElem/FILTER_EMAIL_ADDR_TXT/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,'AND',$EmailAddrText)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$currElem/FILTER_CNTCT_NBR/@MatchBy='EQUAL'">
+                  <THEN>
+                    <SET Var="ContactNbr" FromValue=" F.CNTCT_NBR ='{$currElem/FILTER_CNTCT_NBR/@Value}'"/>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,' AND',$ContactNbr)}"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SYS_RELOAD'">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="varSearchResult">
+                    <root>SEL	A.HNDLR_ID, A.HNDLR_NM, C.CNTRY_NAME, E.GDPR_RQST_TYPE_NAME, F.CNTCT_NBR, G.EMAIL_ADDR_TXT
+FROM GDPR_HNDLR A
+LEFT JOIN  GDPR_HNDLR_CNTRY B
+ON A.HNDLR_ID=B.HNDLR_ID
+LEFT JOIN CNTRY C
+ON B.CNTRY_CODE=C.CNTRY_CODE
+LEFT JOIN GDPR_HNDLR_CNTRY_RQST_AUTH D
+ON A.HNDLR_ID=D.HNDLR_ID AND B.CNTRY_CODE=D.CNTRY_CODE
+LEFT JOIN GDPR_RQST_TYPE E
+ON D.GDPR_RQST_TYPE_CD=E.GDPR_RQST_TYPE_CD
+LEFT JOIN GDPR_HNDLR_CNTRY_CNTCT F
+ON A.HNDLR_ID=F.HNDLR_ID AND B.CNTRY_CODE=F.CNTRY_CODE
+LEFT JOIN CNTCT G
+ON F.CNTCT_NBR=G.CNTCT_NBR
+WHERE A.HNDLR_ID='{$thisParam/HNDLR_ID/@Value}'</root>
+                  </TO_DOCVAR>
+                  <SET Var="tempString1" FromValue="{concat($varSearchResult/@text,$subFilter)}"/>
+                  <!--<TO_DOCVAR AssignToVar="Qry1">
+<ROOT>{$tempString1}</ROOT>
+</TO_DOCVAR>-->
+                  <!--EXECUTE_SQL_QUERY AssignToVar="Linked_Cntry_hndlr" Value="{$varSearchResult/@text}" HandleException="true"/-->
+                  <EXECUTE_SQL_QUERY AssignToVar="Linked_Cntry_hndlr" Value="{$tempString1}" MaxRows="{$thisParam/MaxRec/@Value}" StartAtRow="{$thisParam/START_COUNT/@Value}" ReturnRowCount="yes" HandleException="true"/>
+                </THEN>
+                <ELSE>
+                  <TO_DOCVAR AssignToVar="varSearchResult">
+                    <root>SEL	A.HNDLR_ID, A.HNDLR_NM, C.CNTRY_NAME, E.GDPR_RQST_TYPE_NAME, F.CNTCT_NBR, G.EMAIL_ADDR_TXT
+FROM GDPR_HNDLR A
+LEFT JOIN  GDPR_HNDLR_CNTRY B
+ON A.HNDLR_ID=B.HNDLR_ID
+LEFT JOIN CNTRY C
+ON B.CNTRY_CODE=C.CNTRY_CODE
+LEFT JOIN GDPR_HNDLR_CNTRY_RQST_AUTH D
+ON A.HNDLR_ID=D.HNDLR_ID AND B.CNTRY_CODE=D.CNTRY_CODE
+LEFT JOIN GDPR_RQST_TYPE E
+ON D.GDPR_RQST_TYPE_CD=E.GDPR_RQST_TYPE_CD
+LEFT JOIN GDPR_HNDLR_CNTRY_CNTCT F
+ON A.HNDLR_ID=F.HNDLR_ID AND B.CNTRY_CODE=F.CNTRY_CODE
+LEFT JOIN CNTCT G
+ON F.CNTCT_NBR=G.CNTCT_NBR
+WHERE A.HNDLR_ID='{$thisParam/HNDLR_ID/@Value}'</root>
+                  </TO_DOCVAR>
+                  <EXECUTE_SQL_QUERY AssignToVar="Linked_Cntry_hndlr" Value="{$varSearchResult/@text}" HandleException="true"/>
+                </ELSE>
+              </IF_TEST>
+              <REQUEST Name="getCountries" ServiceName="BCM_MASTER" AssignToVar="CntryNames"/>
+              <!-- <EXECUTE_SQL_QUERY AssignToVar="Linked_Cntry_hndlr" Value="SEL CNTRY_NAME, HNDLR_ID FROM GDPR_HNDLR_CNTRY HC INNER JOIN CNTRY C ON C.CNTRY_CODE = HC.CNTRY_CODE WHERE HNDLR_ID ='{$thisParam/HNDLR_ID/@Value}'" />-->
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <TO_XML SelectList="$CntryNames/*"/>
+                  <HNDLR_ID Value="{$thisParam/HNDLR_ID/@Value}"/>
+                  <TO_XML SelectList="$Linked_Cntry_hndlr/*"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SaveandReturn' and $thisParam/PAGE_NAME/@Value='BCM_MASTER.HANDLER.GDPR_REQST.pgl'">
+            <THEN>
+              <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+                <TO_XML SelectList="$thisParam/*[name()='FILTER_HNDLR_ID' or name()='FILTER_HNDLR_NM' or name()='FILTER_CNTRY_NAME' or name()='FILTER_GDPR_RQST_TYPE_NAME' or name()='FILTER_EMAIL_ADDR_TXT' ]"/>
+              </FORM_SEARCH_FILTER>
+              <FOR_EACH SelectList="$filters/FILTER" CurrentElement="currElem">
+                <SET Var="temp" FromValue="{$currElem/@Name}"/>
+                <IF_TEST Test="$currElem/FILTER_HNDLR_ID/@MatchBy='EQUAL'">
+                  <THEN>
+                    <SET Var="HndlrId" FromValue=" A.HNDLR_ID ='{$currElem/FILTER_HNDLR_ID/@Value}'"/>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,'AND',$HndlrId)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$temp='FILTER_HNDLR_NM'">
+                  <THEN>
+                    <IF_TEST Test="$currElem/FILTER_HNDLR_NM/@MatchBy='EQUAL'">
+                      <THEN>
+                        <SET Var="HndlrName" FromValue=" A.HNDLR_NM ='{$currElem/FILTER_HNDLR_NM/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_HNDLR_NM/@MatchBy='CONTAINS'">
+                      <THEN>
+                        <SET Var="HndlrName" FromValue=" A.HNDLR_NM like'%{$currElem/FILTER_HNDLR_NM/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_HNDLR_NM/@MatchBy='STARTS_WITH'">
+                      <THEN>
+                        <SET Var="HndlrName" FromValue=" A.HNDLR_NM like'{$currElem/FILTER_HNDLR_NM/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_HNDLR_NM/@MatchBy='ENDS_WITH'">
+                      <THEN>
+                        <SET Var="HndlrName" FromValue=" A.HNDLR_NM like'%{$currElem/FILTER_HNDLR_NM/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,'AND',$HndlrName)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$temp='FILTER_CNTRY_NAME'">
+                  <THEN>
+                    <IF_TEST Test="$currElem/FILTER_CNTRY_NAME/@MatchBy='EQUAL'">
+                      <THEN>
+                        <SET Var="CntryName" FromValue=" C.CNTRY_NAME ='{$currElem/FILTER_CNTRY_NAME/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_CNTRY_NAME/@MatchBy='CONTAINS'">
+                      <THEN>
+                        <SET Var="CntryName" FromValue=" C.CNTRY_NAME like'%{$currElem/FILTER_CNTRY_NAME/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_CNTRY_NAME/@MatchBy='STARTS_WITH'">
+                      <THEN>
+                        <SET Var="CntryName" FromValue=" C.CNTRY_NAME like'{$currElem/FILTER_CNTRY_NAME/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_CNTRY_NAME/@MatchBy='ENDS_WITH'">
+                      <THEN>
+                        <SET Var="CntryName" FromValue=" C.CNTRY_NAME like'%{$currElem/FILTER_CNTRY_NAME/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,'AND',$CntryName)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$temp='FILTER_GDPR_RQST_TYPE_NAME'">
+                  <THEN>
+                    <IF_TEST Test="$currElem/FILTER_GDPR_RQST_TYPE_NAME/@MatchBy='EQUAL'">
+                      <THEN>
+                        <SET Var="GDPRRequestTypeName" FromValue=" E.GDPR_RQST_TYPE_NAME ='{$currElem/FILTER_GDPR_RQST_TYPE_NAME/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_GDPR_RQST_TYPE_NAME/@MatchBy='CONTAINS'">
+                      <THEN>
+                        <SET Var="GDPRRequestTypeName" FromValue=" E.GDPR_RQST_TYPE_NAME like'%{$currElem/FILTER_GDPR_RQST_TYPE_NAME/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_GDPR_RQST_TYPE_NAME/@MatchBy='STARTS_WITH'">
+                      <THEN>
+                        <SET Var="GDPRRequestTypeName" FromValue=" E.GDPR_RQST_TYPE_NAME like'{$currElem/FILTER_GDPR_RQST_TYPE_NAME/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_GDPR_RQST_TYPE_NAME/@MatchBy='ENDS_WITH'">
+                      <THEN>
+                        <SET Var="GDPRRequestTypeName" FromValue=" E.CNTRY_NAME like'%{$currElem/FILTER_GDPR_RQST_TYPE_NAME/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,'AND',$GDPRRequestTypeName)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$temp='FILTER_EMAIL_ADDR_TXT'">
+                  <THEN>
+                    <IF_TEST Test="$currElem/FILTER_EMAIL_ADDR_TXT/@MatchBy='EQUAL'">
+                      <THEN>
+                        <SET Var="EmailAddrText" FromValue=" G.EMAIL_ADDR_TXT ='{$currElem/FILTER_EMAIL_ADDR_TXT/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_EMAIL_ADDR_TXT/@MatchBy='CONTAINS'">
+                      <THEN>
+                        <SET Var="EmailAddrText" FromValue=" G.EMAIL_ADDR_TXT like'%{$currElem/FILTER_EMAIL_ADDR_TXT/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_EMAIL_ADDR_TXT/@MatchBy='STARTS_WITH'">
+                      <THEN>
+                        <SET Var="EmailAddrText" FromValue=" G.EMAIL_ADDR_TXT like'{$currElem/FILTER_EMAIL_ADDR_TXT/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_EMAIL_ADDR_TXT/@MatchBy='ENDS_WITH'">
+                      <THEN>
+                        <SET Var="EmailAddrText" FromValue=" G.EMAIL_ADDR_TXT like'%{$currElem/FILTER_EMAIL_ADDR_TXT/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,'AND',$EmailAddrText)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$currElem/FILTER_CNTCT_NBR/@MatchBy='EQUAL'">
+                  <THEN>
+                    <SET Var="ContactNbr" FromValue=" F.CNTCT_NBR ='{$currElem/FILTER_CNTCT_NBR/@Value}'"/>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,' AND',$ContactNbr)}"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SYS_RELOAD'">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="varSearchResult">
+                    <root>SEL	A.HNDLR_ID, A.HNDLR_NM, C.CNTRY_NAME, E.GDPR_RQST_TYPE_NAME, F.CNTCT_NBR, G.EMAIL_ADDR_TXT
+FROM GDPR_HNDLR A
+LEFT JOIN  GDPR_HNDLR_CNTRY B
+ON A.HNDLR_ID=B.HNDLR_ID
+LEFT JOIN CNTRY C
+ON B.CNTRY_CODE=C.CNTRY_CODE
+LEFT JOIN GDPR_HNDLR_CNTRY_RQST_AUTH D
+ON A.HNDLR_ID=D.HNDLR_ID AND B.CNTRY_CODE=D.CNTRY_CODE
+LEFT JOIN GDPR_RQST_TYPE E
+ON D.GDPR_RQST_TYPE_CD=E.GDPR_RQST_TYPE_CD
+LEFT JOIN GDPR_HNDLR_CNTRY_CNTCT F
+ON A.HNDLR_ID=F.HNDLR_ID AND B.CNTRY_CODE=F.CNTRY_CODE
+LEFT JOIN CNTCT G
+ON F.CNTCT_NBR=G.CNTCT_NBR
+WHERE A.HNDLR_ID='{$thisParam/HNDLR_ID/@Value}'</root>
+                  </TO_DOCVAR>
+                  <SET Var="tempString1" FromValue="{concat($varSearchResult/@text,$subFilter)}"/>
+                  <!--<TO_DOCVAR AssignToVar="Qry1">
+<ROOT>{$tempString1}</ROOT>
+</TO_DOCVAR>-->
+                  <!--EXECUTE_SQL_QUERY AssignToVar="Linked_Cntry_hndlr" Value="{$varSearchResult/@text}" HandleException="true"/-->
+                  <EXECUTE_SQL_QUERY AssignToVar="Linked_Cntry_hndlr" Value="{$tempString1}" MaxRows="{$thisParam/MaxRec/@Value}" StartAtRow="{$thisParam/START_COUNT/@Value}" ReturnRowCount="yes" HandleException="true"/>
+                </THEN>
+                <ELSE>
+                  <TO_DOCVAR AssignToVar="varSearchResult">
+                    <root>SEL	A.HNDLR_ID, A.HNDLR_NM, C.CNTRY_NAME, E.GDPR_RQST_TYPE_NAME, F.CNTCT_NBR, G.EMAIL_ADDR_TXT
+FROM GDPR_HNDLR A
+LEFT JOIN  GDPR_HNDLR_CNTRY B
+ON A.HNDLR_ID=B.HNDLR_ID
+LEFT JOIN CNTRY C
+ON B.CNTRY_CODE=C.CNTRY_CODE
+LEFT JOIN GDPR_HNDLR_CNTRY_RQST_AUTH D
+ON A.HNDLR_ID=D.HNDLR_ID AND B.CNTRY_CODE=D.CNTRY_CODE
+LEFT JOIN GDPR_RQST_TYPE E
+ON D.GDPR_RQST_TYPE_CD=E.GDPR_RQST_TYPE_CD
+LEFT JOIN GDPR_HNDLR_CNTRY_CNTCT F
+ON A.HNDLR_ID=F.HNDLR_ID AND B.CNTRY_CODE=F.CNTRY_CODE
+LEFT JOIN CNTCT G
+ON F.CNTCT_NBR=G.CNTCT_NBR
+WHERE A.HNDLR_ID='{$thisParam/HNDLR_ID/@Value}'</root>
+                  </TO_DOCVAR>
+                  <EXECUTE_SQL_QUERY AssignToVar="Linked_Cntry_hndlr" Value="{$varSearchResult/@text}" HandleException="true"/>
+                </ELSE>
+              </IF_TEST>
+              <REQUEST Name="getCountries" ServiceName="BCM_MASTER" AssignToVar="CntryNames"/>
+              <!--<EXECUTE_SQL_QUERY AssignToVar="Linked_Cntry_hndlr" Value="SEL CNTRY_NAME, HNDLR_ID FROM GDPR_HNDLR_CNTRY HC INNER JOIN CNTRY C ON C.CNTRY_CODE = HC.CNTRY_CODE WHERE HNDLR_ID ='{$thisParam/HNDLR_ID/@Value}'"/>-->
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <TO_XML SelectList="$alertz/*"/>
+                  <TO_XML SelectList="$CntryNames/*"/>
+                  <HNDLR_ID Value="{$thisParam/HNDLR_ID/@Value}"/>
+                  <TO_XML SelectList="$Linked_Cntry_hndlr/*"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Back' and $thisParam/PAGE_NAME/@Value='BCM_MASTER.HANDLER.GDPR_REQST.pgl'">
+            <THEN>
+              <REQUEST Name="getCountries" ServiceName="BCM_MASTER" AssignToVar="CntryNames"/>
+              <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+                <TO_XML SelectList="$thisParam/*[name()='FILTER_HNDLR_ID' or name()='FILTER_HNDLR_NM' or name()='FILTER_CNTRY_NAME' or name()='FILTER_GDPR_RQST_TYPE_NAME' or name()='FILTER_EMAIL_ADDR_TXT' ]"/>
+              </FORM_SEARCH_FILTER>
+              <FOR_EACH SelectList="$filters/FILTER" CurrentElement="currElem">
+                <SET Var="temp" FromValue="{$currElem/@Name}"/>
+                <IF_TEST Test="$currElem/FILTER_HNDLR_ID/@MatchBy='EQUAL'">
+                  <THEN>
+                    <SET Var="HndlrId" FromValue=" A.HNDLR_ID ='{$currElem/FILTER_HNDLR_ID/@Value}'"/>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,'AND',$HndlrId)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$temp='FILTER_HNDLR_NM'">
+                  <THEN>
+                    <IF_TEST Test="$currElem/FILTER_HNDLR_NM/@MatchBy='EQUAL'">
+                      <THEN>
+                        <SET Var="HndlrName" FromValue=" A.HNDLR_NM ='{$currElem/FILTER_HNDLR_NM/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_HNDLR_NM/@MatchBy='CONTAINS'">
+                      <THEN>
+                        <SET Var="HndlrName" FromValue=" A.HNDLR_NM like'%{$currElem/FILTER_HNDLR_NM/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_HNDLR_NM/@MatchBy='STARTS_WITH'">
+                      <THEN>
+                        <SET Var="HndlrName" FromValue=" A.HNDLR_NM like'{$currElem/FILTER_HNDLR_NM/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_HNDLR_NM/@MatchBy='ENDS_WITH'">
+                      <THEN>
+                        <SET Var="HndlrName" FromValue=" A.HNDLR_NM like'%{$currElem/FILTER_HNDLR_NM/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,'AND',$HndlrName)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$temp='FILTER_CNTRY_NAME'">
+                  <THEN>
+                    <IF_TEST Test="$currElem/FILTER_CNTRY_NAME/@MatchBy='EQUAL'">
+                      <THEN>
+                        <SET Var="CntryName" FromValue=" C.CNTRY_NAME ='{$currElem/FILTER_CNTRY_NAME/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_CNTRY_NAME/@MatchBy='CONTAINS'">
+                      <THEN>
+                        <SET Var="CntryName" FromValue=" C.CNTRY_NAME like'%{$currElem/FILTER_CNTRY_NAME/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_CNTRY_NAME/@MatchBy='STARTS_WITH'">
+                      <THEN>
+                        <SET Var="CntryName" FromValue=" C.CNTRY_NAME like'{$currElem/FILTER_CNTRY_NAME/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_CNTRY_NAME/@MatchBy='ENDS_WITH'">
+                      <THEN>
+                        <SET Var="CntryName" FromValue=" C.CNTRY_NAME like'%{$currElem/FILTER_CNTRY_NAME/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,'AND',$CntryName)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$temp='FILTER_GDPR_RQST_TYPE_NAME'">
+                  <THEN>
+                    <IF_TEST Test="$currElem/FILTER_GDPR_RQST_TYPE_NAME/@MatchBy='EQUAL'">
+                      <THEN>
+                        <SET Var="GDPRRequestTypeName" FromValue=" E.GDPR_RQST_TYPE_NAME ='{$currElem/FILTER_GDPR_RQST_TYPE_NAME/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_GDPR_RQST_TYPE_NAME/@MatchBy='CONTAINS'">
+                      <THEN>
+                        <SET Var="GDPRRequestTypeName" FromValue=" E.GDPR_RQST_TYPE_NAME like'%{$currElem/FILTER_GDPR_RQST_TYPE_NAME/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_GDPR_RQST_TYPE_NAME/@MatchBy='STARTS_WITH'">
+                      <THEN>
+                        <SET Var="GDPRRequestTypeName" FromValue=" E.GDPR_RQST_TYPE_NAME like'{$currElem/FILTER_GDPR_RQST_TYPE_NAME/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_GDPR_RQST_TYPE_NAME/@MatchBy='ENDS_WITH'">
+                      <THEN>
+                        <SET Var="GDPRRequestTypeName" FromValue=" E.CNTRY_NAME like'%{$currElem/FILTER_GDPR_RQST_TYPE_NAME/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,'AND',$GDPRRequestTypeName)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$temp='FILTER_EMAIL_ADDR_TXT'">
+                  <THEN>
+                    <IF_TEST Test="$currElem/FILTER_EMAIL_ADDR_TXT/@MatchBy='EQUAL'">
+                      <THEN>
+                        <SET Var="EmailAddrText" FromValue=" G.EMAIL_ADDR_TXT ='{$currElem/FILTER_EMAIL_ADDR_TXT/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_EMAIL_ADDR_TXT/@MatchBy='CONTAINS'">
+                      <THEN>
+                        <SET Var="EmailAddrText" FromValue=" G.EMAIL_ADDR_TXT like'%{$currElem/FILTER_EMAIL_ADDR_TXT/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_EMAIL_ADDR_TXT/@MatchBy='STARTS_WITH'">
+                      <THEN>
+                        <SET Var="EmailAddrText" FromValue=" G.EMAIL_ADDR_TXT like'{$currElem/FILTER_EMAIL_ADDR_TXT/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_EMAIL_ADDR_TXT/@MatchBy='ENDS_WITH'">
+                      <THEN>
+                        <SET Var="EmailAddrText" FromValue=" G.EMAIL_ADDR_TXT like'%{$currElem/FILTER_EMAIL_ADDR_TXT/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,'AND',$EmailAddrText)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$currElem/FILTER_CNTCT_NBR/@MatchBy='EQUAL'">
+                  <THEN>
+                    <SET Var="ContactNbr" FromValue=" F.CNTCT_NBR ='{$currElem/FILTER_CNTCT_NBR/@Value}'"/>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,' AND',$ContactNbr)}"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SYS_RELOAD'">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="varSearchResult">
+                    <root>SEL	A.HNDLR_ID, A.HNDLR_NM, C.CNTRY_NAME, E.GDPR_RQST_TYPE_NAME, F.CNTCT_NBR, G.EMAIL_ADDR_TXT
+FROM GDPR_HNDLR A
+LEFT JOIN  GDPR_HNDLR_CNTRY B
+ON A.HNDLR_ID=B.HNDLR_ID
+LEFT JOIN CNTRY C
+ON B.CNTRY_CODE=C.CNTRY_CODE
+LEFT JOIN GDPR_HNDLR_CNTRY_RQST_AUTH D
+ON A.HNDLR_ID=D.HNDLR_ID AND B.CNTRY_CODE=D.CNTRY_CODE
+LEFT JOIN GDPR_RQST_TYPE E
+ON D.GDPR_RQST_TYPE_CD=E.GDPR_RQST_TYPE_CD
+LEFT JOIN GDPR_HNDLR_CNTRY_CNTCT F
+ON A.HNDLR_ID=F.HNDLR_ID AND B.CNTRY_CODE=F.CNTRY_CODE
+LEFT JOIN CNTCT G
+ON F.CNTCT_NBR=G.CNTCT_NBR
+WHERE A.HNDLR_ID='{$thisParam/HNDLR_ID/@Value}'</root>
+                  </TO_DOCVAR>
+                  <SET Var="tempString1" FromValue="{concat($varSearchResult/@text,$subFilter)}"/>
+                  <!--<TO_DOCVAR AssignToVar="Qry1">
+<ROOT>{$tempString1}</ROOT>
+</TO_DOCVAR>-->
+                  <!--EXECUTE_SQL_QUERY AssignToVar="Linked_Cntry_hndlr" Value="{$varSearchResult/@text}" HandleException="true"/-->
+                  <EXECUTE_SQL_QUERY AssignToVar="Linked_Cntry_hndlr" Value="{$tempString1}" MaxRows="{$thisParam/MaxRec/@Value}" StartAtRow="{$thisParam/START_COUNT/@Value}" ReturnRowCount="yes" HandleException="true"/>
+                </THEN>
+                <ELSE>
+                  <TO_DOCVAR AssignToVar="varSearchResult">
+                    <root>SEL	A.HNDLR_ID, A.HNDLR_NM, C.CNTRY_NAME, E.GDPR_RQST_TYPE_NAME, F.CNTCT_NBR, G.EMAIL_ADDR_TXT
+FROM GDPR_HNDLR A
+LEFT JOIN  GDPR_HNDLR_CNTRY B
+ON A.HNDLR_ID=B.HNDLR_ID
+LEFT JOIN CNTRY C
+ON B.CNTRY_CODE=C.CNTRY_CODE
+LEFT JOIN GDPR_HNDLR_CNTRY_RQST_AUTH D
+ON A.HNDLR_ID=D.HNDLR_ID AND B.CNTRY_CODE=D.CNTRY_CODE
+LEFT JOIN GDPR_RQST_TYPE E
+ON D.GDPR_RQST_TYPE_CD=E.GDPR_RQST_TYPE_CD
+LEFT JOIN GDPR_HNDLR_CNTRY_CNTCT F
+ON A.HNDLR_ID=F.HNDLR_ID AND B.CNTRY_CODE=F.CNTRY_CODE
+LEFT JOIN CNTCT G
+ON F.CNTCT_NBR=G.CNTCT_NBR
+WHERE A.HNDLR_ID='{$thisParam/HNDLR_ID/@Value}'</root>
+                  </TO_DOCVAR>
+                  <EXECUTE_SQL_QUERY AssignToVar="Linked_Cntry_hndlr" Value="{$varSearchResult/@text}" HandleException="true"/>
+                </ELSE>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <TO_XML SelectList="$CntryNames/*"/>
+                  <HNDLR_ID Value="{$thisParam/HNDLR_ID/@Value}"/>
+                  <TO_XML SelectList="$Linked_Cntry_hndlr/*"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Link_HNDLR_CNTRY'">
+            <THEN>
+              <REQUEST Name="getCountries" ServiceName="BCM_MASTER" AssignToVar="CntryNames"/>
+              <!-- <GET_DOCUMENT Name="GDPR_HNDLR" ServiceName="BCM_MASTER" AssignToVar="gethndlr" ReturnRowCount="yes">
+<SELECT>
+<HNDLR_ID Value="{$varId}" />
+</SELECT>
+<HNDLR_NM Value="{$thisParam/HNDLR_NM/@Value}" />
+<BUS_IND Value="{$thisParam/BUS_IND/@Value}" />
+<BUS_SFTP_DIR Value="{$thisParam/BUS_SFTP_DIR/@Value}" />
+</GET_DOCUMENT>-->
+              <SET Var="thisParamCopy" FromDocVar="thisParam"/>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <TO_XML SelectList="$CntryNames/*"/>
+                  <HNDLR_ID Value="{$varId}"/>
+                  <HNDLR_NM Value="{$thisParam/HNDLR_NM/@Value}"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Save' or $thisParam/BUTTON_ID/@Value='SYS_RELOAD' ">
+            <THEN>
+              <REQUEST Name="getCountries" ServiceName="BCM_MASTER" AssignToVar="CntryNames"/>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Save'">
+                <THEN>
+                  <DO_DB_PERSIST Action="INSERT" AssignToVar="LinkCountry" DocumentName="GDPR_HNDLR_CNTRY" ServiceName="BCM_MASTER" HandleException="true">
+                    <CNTRY_CODE Value="{$thisParam/CNTRY_CODE/@Value}"/>
+                    <HNDLR_ID Value="{$thisParam/HNDLR_ID/@Value}"/>
+                  </DO_DB_PERSIST>
+                </THEN>
+              </IF_TEST>
+              <!--<EXECUTE_SQL_QUERY AssignToVar="Linked_Cntry_hndlr" Value="SEL CNTRY_NAME, HNDLR_ID FROM GDPR_HNDLR_CNTRY HC INNER JOIN CNTRY C ON C.CNTRY_CODE = HC.CNTRY_CODE WHERE HNDLR_ID ='{$thisParam/HNDLR_ID/@Value}'"/>-->
+              <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+                <TO_XML SelectList="$thisParam/*[name()='FILTER_HNDLR_ID' or name()='FILTER_HNDLR_NM' or name()='FILTER_CNTRY_NAME' or name()='FILTER_GDPR_RQST_TYPE_NAME' or name()='FILTER_EMAIL_ADDR_TXT' ]"/>
+              </FORM_SEARCH_FILTER>
+              <FOR_EACH SelectList="$filters/FILTER" CurrentElement="currElem">
+                <SET Var="temp" FromValue="{$currElem/@Name}"/>
+                <IF_TEST Test="$currElem/FILTER_HNDLR_ID/@MatchBy='EQUAL'">
+                  <THEN>
+                    <SET Var="HndlrId" FromValue=" A.HNDLR_ID ='{$currElem/FILTER_HNDLR_ID/@Value}'"/>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,'AND',$HndlrId)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$temp='FILTER_HNDLR_NM'">
+                  <THEN>
+                    <IF_TEST Test="$currElem/FILTER_HNDLR_NM/@MatchBy='EQUAL'">
+                      <THEN>
+                        <SET Var="HndlrName" FromValue=" A.HNDLR_NM ='{$currElem/FILTER_HNDLR_NM/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_HNDLR_NM/@MatchBy='CONTAINS'">
+                      <THEN>
+                        <SET Var="HndlrName" FromValue=" A.HNDLR_NM like'%{$currElem/FILTER_HNDLR_NM/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_HNDLR_NM/@MatchBy='STARTS_WITH'">
+                      <THEN>
+                        <SET Var="HndlrName" FromValue=" A.HNDLR_NM like'{$currElem/FILTER_HNDLR_NM/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_HNDLR_NM/@MatchBy='ENDS_WITH'">
+                      <THEN>
+                        <SET Var="HndlrName" FromValue=" A.HNDLR_NM like'%{$currElem/FILTER_HNDLR_NM/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,'AND',$HndlrName)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$temp='FILTER_CNTRY_NAME'">
+                  <THEN>
+                    <IF_TEST Test="$currElem/FILTER_CNTRY_NAME/@MatchBy='EQUAL'">
+                      <THEN>
+                        <SET Var="CntryName" FromValue=" C.CNTRY_NAME ='{$currElem/FILTER_CNTRY_NAME/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_CNTRY_NAME/@MatchBy='CONTAINS'">
+                      <THEN>
+                        <SET Var="CntryName" FromValue=" C.CNTRY_NAME like'%{$currElem/FILTER_CNTRY_NAME/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_CNTRY_NAME/@MatchBy='STARTS_WITH'">
+                      <THEN>
+                        <SET Var="CntryName" FromValue=" C.CNTRY_NAME like'{$currElem/FILTER_CNTRY_NAME/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_CNTRY_NAME/@MatchBy='ENDS_WITH'">
+                      <THEN>
+                        <SET Var="CntryName" FromValue=" C.CNTRY_NAME like'%{$currElem/FILTER_CNTRY_NAME/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,'AND',$CntryName)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$temp='FILTER_GDPR_RQST_TYPE_NAME'">
+                  <THEN>
+                    <IF_TEST Test="$currElem/FILTER_GDPR_RQST_TYPE_NAME/@MatchBy='EQUAL'">
+                      <THEN>
+                        <SET Var="GDPRRequestTypeName" FromValue=" E.GDPR_RQST_TYPE_NAME ='{$currElem/FILTER_GDPR_RQST_TYPE_NAME/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_GDPR_RQST_TYPE_NAME/@MatchBy='CONTAINS'">
+                      <THEN>
+                        <SET Var="GDPRRequestTypeName" FromValue=" E.GDPR_RQST_TYPE_NAME like'%{$currElem/FILTER_GDPR_RQST_TYPE_NAME/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_GDPR_RQST_TYPE_NAME/@MatchBy='STARTS_WITH'">
+                      <THEN>
+                        <SET Var="GDPRRequestTypeName" FromValue=" E.GDPR_RQST_TYPE_NAME like'{$currElem/FILTER_GDPR_RQST_TYPE_NAME/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_GDPR_RQST_TYPE_NAME/@MatchBy='ENDS_WITH'">
+                      <THEN>
+                        <SET Var="GDPRRequestTypeName" FromValue=" E.CNTRY_NAME like'%{$currElem/FILTER_GDPR_RQST_TYPE_NAME/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,'AND',$GDPRRequestTypeName)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$temp='FILTER_EMAIL_ADDR_TXT'">
+                  <THEN>
+                    <IF_TEST Test="$currElem/FILTER_EMAIL_ADDR_TXT/@MatchBy='EQUAL'">
+                      <THEN>
+                        <SET Var="EmailAddrText" FromValue=" G.EMAIL_ADDR_TXT ='{$currElem/FILTER_EMAIL_ADDR_TXT/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_EMAIL_ADDR_TXT/@MatchBy='CONTAINS'">
+                      <THEN>
+                        <SET Var="EmailAddrText" FromValue=" G.EMAIL_ADDR_TXT like'%{$currElem/FILTER_EMAIL_ADDR_TXT/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_EMAIL_ADDR_TXT/@MatchBy='STARTS_WITH'">
+                      <THEN>
+                        <SET Var="EmailAddrText" FromValue=" G.EMAIL_ADDR_TXT like'{$currElem/FILTER_EMAIL_ADDR_TXT/@Value}%' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$currElem/FILTER_EMAIL_ADDR_TXT/@MatchBy='ENDS_WITH'">
+                      <THEN>
+                        <SET Var="EmailAddrText" FromValue=" G.EMAIL_ADDR_TXT like'%{$currElem/FILTER_EMAIL_ADDR_TXT/@Value}' "/>
+                      </THEN>
+                    </IF_TEST>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,'AND',$EmailAddrText)}"/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="$currElem/FILTER_CNTCT_NBR/@MatchBy='EQUAL'">
+                  <THEN>
+                    <SET Var="ContactNbr" FromValue=" F.CNTCT_NBR ='{$currElem/FILTER_CNTCT_NBR/@Value}'"/>
+                    <SET Var="subFilter" FromValue="{concat($subFilter,' AND',$ContactNbr)}"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SYS_RELOAD'">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="varSearchResult">
+                    <root>SEL	A.HNDLR_ID, A.HNDLR_NM, C.CNTRY_NAME, E.GDPR_RQST_TYPE_NAME, F.CNTCT_NBR, G.EMAIL_ADDR_TXT
+FROM GDPR_HNDLR A
+LEFT JOIN  GDPR_HNDLR_CNTRY B
+ON A.HNDLR_ID=B.HNDLR_ID
+LEFT JOIN CNTRY C
+ON B.CNTRY_CODE=C.CNTRY_CODE
+LEFT JOIN GDPR_HNDLR_CNTRY_RQST_AUTH D
+ON A.HNDLR_ID=D.HNDLR_ID AND B.CNTRY_CODE=D.CNTRY_CODE
+LEFT JOIN GDPR_RQST_TYPE E
+ON D.GDPR_RQST_TYPE_CD=E.GDPR_RQST_TYPE_CD
+LEFT JOIN GDPR_HNDLR_CNTRY_CNTCT F
+ON A.HNDLR_ID=F.HNDLR_ID AND B.CNTRY_CODE=F.CNTRY_CODE
+LEFT JOIN CNTCT G
+ON F.CNTCT_NBR=G.CNTCT_NBR
+WHERE A.HNDLR_ID='{$thisParam/HNDLR_ID/@Value}'</root>
+                  </TO_DOCVAR>
+                  <SET Var="tempString1" FromValue="{concat($varSearchResult/@text,$subFilter)}"/>
+                  <!--<TO_DOCVAR AssignToVar="Qry1">
+<ROOT>{$tempString1}</ROOT>
+</TO_DOCVAR>-->
+                  <!--EXECUTE_SQL_QUERY AssignToVar="Linked_Cntry_hndlr" Value="{$varSearchResult/@text}" HandleException="true"/-->
+                  <EXECUTE_SQL_QUERY AssignToVar="Linked_Cntry_hndlr" Value="{$tempString1}" MaxRows="{$thisParam/MaxRec/@Value}" StartAtRow="{$thisParam/START_COUNT/@Value}" ReturnRowCount="yes" HandleException="true"/>
+                </THEN>
+                <ELSE>
+                  <TO_DOCVAR AssignToVar="varSearchResult">
+                    <root>SEL	A.HNDLR_ID, A.HNDLR_NM, C.CNTRY_NAME, E.GDPR_RQST_TYPE_NAME, F.CNTCT_NBR, G.EMAIL_ADDR_TXT
+FROM GDPR_HNDLR A
+LEFT JOIN  GDPR_HNDLR_CNTRY B
+ON A.HNDLR_ID=B.HNDLR_ID
+LEFT JOIN CNTRY C
+ON B.CNTRY_CODE=C.CNTRY_CODE
+LEFT JOIN GDPR_HNDLR_CNTRY_RQST_AUTH D
+ON A.HNDLR_ID=D.HNDLR_ID AND B.CNTRY_CODE=D.CNTRY_CODE
+LEFT JOIN GDPR_RQST_TYPE E
+ON D.GDPR_RQST_TYPE_CD=E.GDPR_RQST_TYPE_CD
+LEFT JOIN GDPR_HNDLR_CNTRY_CNTCT F
+ON A.HNDLR_ID=F.HNDLR_ID AND B.CNTRY_CODE=F.CNTRY_CODE
+LEFT JOIN CNTCT G
+ON F.CNTCT_NBR=G.CNTCT_NBR
+WHERE A.HNDLR_ID='{$thisParam/HNDLR_ID/@Value}'</root>
+                  </TO_DOCVAR>
+                  <EXECUTE_SQL_QUERY AssignToVar="Linked_Cntry_hndlr" Value="{$varSearchResult/@text}" HandleException="true"/>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$LinkCountry/@Status='Success' and $LinkCountry/VALIDATION_RESULT/@Value='SUCCESS'">
+                <THEN>
+                  <SET Var="alertGreen" FromValue="Country linked Succesfully...!!"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertRed" FromValue="{$LinkCountry/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                </ELSE>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="alertz">
+                <Alert>
+                  <AlertGreen Value="{$alertGreen}"/>
+                  <AlertRed Value="{$alertRed}"/>
+                </Alert>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <TO_XML SelectList="$alertz/*"/>
+                  <TO_XML SelectList="$CntryNames/*"/>
+                  <HNDLR_ID Value="{$thisParam/HNDLR_ID/@Value}"/>
+                  <TO_XML SelectList="$Linked_Cntry_hndlr/*"/>
+                  <HNDLR_NM Value="{$thisParamCopy/HNDLR_NM/@Value}"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SaveandReturn'">
+            <THEN>
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="LinkCountry" DocumentName="GDPR_HNDLR_CNTRY" ServiceName="BCM_MASTER" HandleException="true">
+                <CNTRY_CODE Value="{$thisParam/CNTRY_CODE/@Value}"/>
+                <HNDLR_ID Value="{$thisParam/HNDLR_ID/@Value}"/>
+              </DO_DB_PERSIST>
+              <IF_TEST Test="$LinkCountry/@Status='Success' and $LinkCountry/VALIDATION_RESULT/@Value='SUCCESS'">
+                <THEN>
+                  <SET Var="alertGreen" FromValue="Country linked Succesfully...!!"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertRed" FromValue="{$LinkCountry/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                </ELSE>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="alertz">
+                <Alert>
+                  <AlertGreen Value="{$alertGreen}"/>
+                  <AlertRed Value="{$alertRed}"/>
+                </Alert>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <TO_XML SelectList="$alertz/*"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='SEARCH'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Done'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SaveandReturn'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="GDPR_HNDLR" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Save'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Country_Node" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Addcontact'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Contact_Node" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Add_request_authorization'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="RequestType_node" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="GDPR_HNDLR" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="Contact_Node" ShowInBreadCrumbs="HIDE" Template="GDPR_Contact.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='cancel1'">
+            <THEN>
+              <SET Var="alertGreen" FromValue=""/>
+              <SET Var="alertRed" FromValue=""/>
+              <TO_DOCVAR AssignToVar="alertz">
+                <root/>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='select_and_return'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <TO_XML SelectList="$forselectandretain"/>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='cancel'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <TO_XML SelectList="$forselectandretain"/>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Addcontact'">
+            <THEN>
+              <!--<EXECUTE_SQL_QUERY AssignToVar="Cntry_Name" Value="SEL CNTRY_NAME FROM CNTRY WHERE CNTRY_CODE ='{$thisParam/CNTRY_CODE/@Value}'"/>-->
+              <SET Var="hndler_lookup" FromValue="{$thisParam/HNDLR_ID/@Value}"/>
+              <!-- <SET Var="country_lookup" FromValue="{$Cntry_Name/SQL_RESULT/CNTRY_NAME/@Value}"/>-->
+              <FOR_EACH SelectList="$thisParam/CntryHandlerID" CurrentElement="currElement">
+                <SET Var="country_lookup" FromValue="{substringAfter(substringBefore($currElement/@Value,'#'),'CNTRY_NAME=')}"/>
+              </FOR_EACH>
+              <FOR_EACH SelectList="$thisParam/CntryHandlerID" CurrentElement="currElement">
+                <SET Var="CntryHndlrdisplay" FromValue="{substringAfter(substringBefore($currElement/@Value,'#'),'CNTRY_NAME=')}"/>
+                <TO_DOCVAR AssignToVar="FinalCntryHndlrdisplay">
+                  <CNTRY_NAME Value="{$CntryHndlrdisplay}"/>
+                </TO_DOCVAR>
+              </FOR_EACH>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <TO_XML SelectList="$FinalCntryHndlrdisplay"/>
+                  <!--CNTRY_CODE Value="$FinalCntryHndlrdisplay"/-->
+                  <HNDLR_ID Value="{$thisParam/HNDLR_ID/@Value}"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Save'">
+            <THEN>
+              <EXECUTE_SQL_QUERY AssignToVar="getcntry_code" Value="SEL CNTRY_CODE FROM CNTRY WHERE CNTRY_NAME ='{$thisParam/CNTRY_NAME/@Value}'"/>
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="LinkCountryContact" DocumentName="GDPR_HNDLR_CNTRY_CNTCT" ServiceName="BCM_MASTER" HandleException="true">
+                <HNDLR_ID Value="{$thisParam/HNDLR_ID/@Value}"/>
+                <CNTRY_CODE Value="{$getcntry_code/SQL_RESULT/CNTRY_CODE/@Value}"/>
+                <CNTCT_NBR Value="{$thisParam/CNTCT_NBR/@Value}"/>
+              </DO_DB_PERSIST>
+              <IF_TEST Test="$LinkCountryContact/@Status='Success' and $LinkCountryContact/VALIDATION_RESULT/@Value='SUCCESS'">
+                <THEN>
+                  <SET Var="alertGreen" FromValue="Contact linked Succesfully...!!"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertRed" FromValue="{$LinkCountryContact/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                </ELSE>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="alertz">
+                <Alert>
+                  <AlertGreen Value="{$alertGreen}"/>
+                  <AlertRed Value="{$alertRed}"/>
+                </Alert>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <TO_XML SelectList="$alertz/*"/>
+                  <HNDLR_ID Value="{$thisParam/HNDLR_ID/@Value}"/>
+                  <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+                  <CNTCT_NBR Value="{$thisParam/CNTCT_NBR/@Value}"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='save_and_return' or $thisParam/BUTTON_ID/@Value='cancel1'">
+            <THEN>
+              <REMOVE_CHILDREN ChildName="CNTCT_NBR" DocVar="thisParamCopy2"/>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <TO_XML SelectList="$alertz/*"/>
+                  <TO_XML SelectList="$thisParamCopy2/*"/>
+                  <CNTCT_NBR Value="{$CNTCT_NBR_return}"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SaveandReturn'">
+            <THEN>
+              <EXECUTE_SQL_QUERY AssignToVar="getcntry_code" Value="SEL CNTRY_CODE FROM CNTRY WHERE CNTRY_NAME ='{$thisParam/CNTRY_NAME/@Value}'"/>
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="LinkCountryContact" DocumentName="GDPR_HNDLR_CNTRY_CNTCT" ServiceName="BCM_MASTER" HandleException="true">
+                <HNDLR_ID Value="{$thisParam/HNDLR_ID/@Value}"/>
+                <CNTRY_CODE Value="{$getcntry_code/SQL_RESULT/CNTRY_CODE/@Value}"/>
+                <CNTCT_NBR Value="{$thisParam/CNTCT_NBR/@Value}"/>
+              </DO_DB_PERSIST>
+              <IF_TEST Test="$LinkCountryContact/@Status='Success' and $LinkCountryContact/VALIDATION_RESULT/@Value='SUCCESS'">
+                <THEN>
+                  <SET Var="alertGreen" FromValue="Contact linked Succesfully...!!"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertRed" FromValue="{$LinkCountryContact/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                </ELSE>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="alertz">
+                <Alert>
+                  <AlertGreen Value="{$alertGreen}"/>
+                  <AlertRed Value="{$alertRed}"/>
+                </Alert>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <TO_XML SelectList="$alertz/*"/>
+                  <HNDLR_ID Value="{$thisParam/HNDLR_ID/@Value}"/>
+                  <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+                  <CNTCT_NBR Value="{$thisParam/CNTCT_NBR/@Value}"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='SaveandReturn'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Country_Node" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Save'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Contact_Node" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LinktoContact'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ContactLookup.pgl" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Country_Node" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='AddNewCNTCT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="AddNewContact" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="RequestType_node" ShowInBreadCrumbs="HIDE" Template="GDPR_REQST.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Add_request_authorization'">
+            <THEN>
+              <FOR_EACH SelectList="$thisParam/CntryHandlerID" CurrentElement="currElement">
+                <SET Var="CntryHndlrdisplay" FromValue="{substringAfter(substringBefore($currElement/@Value,'#'),'CNTRY_NAME=')}"/>
+                <TO_DOCVAR AssignToVar="FinalCntryHndlrdisplay">
+                  <CNTRY_NAME Value="{$CntryHndlrdisplay}"/>
+                </TO_DOCVAR>
+              </FOR_EACH>
+              <EXECUTE_SQL_QUERY AssignToVar="Request_Type" Value="SEL GDPR_RQST_TYPE_CD FROM GDPR_RQST_TYPE ORDER BY 1"/>
+              <TO_DOCVAR AssignToVar="Request_TypeNAMES">
+                <Request_TypeNAMES>
+                  <TO_XML SelectList="$Request_Type/*"/>
+                </Request_TypeNAMES>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <HNDLR_ID Value="{$thisParam/HNDLR_ID/@Value}"/>
+                  <TO_XML SelectList="$FinalCntryHndlrdisplay"/>
+                  <TO_XML SelectList="$Request_TypeNAMES"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Save'">
+            <THEN>
+              <EXECUTE_SQL_QUERY AssignToVar="getcntry_code" Value="SEL CNTRY_CODE FROM CNTRY WHERE CNTRY_NAME ='{$thisParam/CNTRY_NAME/@Value}'"/>
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="LinkRequestType" DocumentName="GDPR_HNDLR_CNTRY_RQST_AUTH" ServiceName="BCM_MASTER" HandleException="true">
+                <HNDLR_ID Value="{$thisParam/HNDLR_ID/@Value}"/>
+                <CNTRY_CODE Value="{$getcntry_code/SQL_RESULT/CNTRY_CODE/@Value}"/>
+                <GDPR_RQST_TYPE_CD Value="{$thisParam/GDPR_RQST_TYPE_CD/@Value}"/>
+              </DO_DB_PERSIST>
+              <EXECUTE_SQL_QUERY AssignToVar="Request_Type" Value="SEL GDPR_RQST_TYPE_CD FROM GDPR_RQST_TYPE ORDER BY 1"/>
+              <TO_DOCVAR AssignToVar="Request_TypeNAMES">
+                <Request_TypeNAMES>
+                  <TO_XML SelectList="$Request_Type/*"/>
+                </Request_TypeNAMES>
+              </TO_DOCVAR>
+              <IF_TEST Test="$LinkRequestType/@Status='Success' and $LinkRequestType/VALIDATION_RESULT/@Value='SUCCESS'">
+                <THEN>
+                  <SET Var="alertGreen" FromValue="Request type created Succesfully...!!"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertRed" FromValue="{$LinkRequestType/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                </ELSE>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="alertz">
+                <Alert>
+                  <AlertGreen Value="{$alertGreen}"/>
+                  <AlertRed Value="{$alertRed}"/>
+                </Alert>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <TO_XML SelectList="$alertz/*"/>
+                  <HNDLR_ID Value="{$thisParam/HNDLR_ID/@Value}"/>
+                  <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+                  <TO_XML SelectList="$Request_TypeNAMES"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SaveandReturn'">
+            <THEN>
+              <EXECUTE_SQL_QUERY AssignToVar="getcntry_code" Value="SEL CNTRY_CODE FROM CNTRY WHERE CNTRY_NAME ='{$thisParam/CNTRY_NAME/@Value}'"/>
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="LinkRequestType" DocumentName="GDPR_HNDLR_CNTRY_RQST_AUTH" ServiceName="BCM_MASTER" HandleException="true">
+                <HNDLR_ID Value="{$thisParam/HNDLR_ID/@Value}"/>
+                <CNTRY_CODE Value="{$getcntry_code/SQL_RESULT/CNTRY_CODE/@Value}"/>
+                <GDPR_RQST_TYPE_CD Value="{$thisParam/GDPR_RQST_TYPE_CD/@Value}"/>
+              </DO_DB_PERSIST>
+              <EXECUTE_SQL_QUERY AssignToVar="Request_Type" Value="SEL GDPR_RQST_TYPE_CD FROM GDPR_RQST_TYPE ORDER BY 1"/>
+              <TO_DOCVAR AssignToVar="Request_TypeNAMES">
+                <Request_TypeNAMES>
+                  <TO_XML SelectList="$Request_Type/*"/>
+                </Request_TypeNAMES>
+              </TO_DOCVAR>
+              <IF_TEST Test="$LinkRequestType/@Status='Success' and $LinkRequestType/VALIDATION_RESULT/@Value='SUCCESS'">
+                <THEN>
+                  <SET Var="alertGreen" FromValue="Request type linked Succesfully...!!"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertRed" FromValue="{$LinkRequestType/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                </ELSE>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="alertz">
+                <Alert>
+                  <AlertGreen Value="{$alertGreen}"/>
+                  <AlertRed Value="{$alertRed}"/>
+                </Alert>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <TO_XML SelectList="$alertz/*"/>
+                  <HNDLR_ID Value="{$thisParam/HNDLR_ID/@Value}"/>
+                  <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+                  <GDPR_RQST_TYPE_CD Value="{$thisParam/GDPR_RQST_TYPE_CD/@Value}"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Country_Node" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Save'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="RequestType_node" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SaveandReturn'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Country_Node" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LinktoGDPR_TYPE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done5" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <done Name="done5">
+      <actions/>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="ContactLookup.pgl" ShowInBreadCrumbs="HIDE" Template="ContactLookup.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <SET Var="startRow2" FromValue="{$thisParam/START_COUNT/@Value}"/>
+          <EXECUTE_SQL_QUERY AssignToVar="Cntry_Lookup_code" Value="SEL CNTRY_CODE FROM CNTRY WHERE CNTRY_NAME ='{$thisParam/CNTRY_NAME/@Value}'"/>
+          <IF_TEST Test="strlen(trim($thisParam/SORT_BY/@Value))!= 0 and ($thisParam/SORT_BY/@Value)!='ID'">
+            <THEN>
+              <SET Var="pSortContactBy" FromValue="{$thisParam/SORT_BY/@Value}"/>
+              <SET Var="pSortContactOrder" FromValue="{$thisParam/SORT_ORDER/@Value}"/>
+            </THEN>
+            <ELSE>
+              <THEN>
+                <SET Var="pSortContactBy" FromValue="CNTCT_NBR"/>
+                <SET Var="pSortContactOrder" FromValue="Ascending"/>
+              </THEN>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="strlen(trim($thisParam/SORT_BY/@Value)) != 0">
+            <THEN>
+              <MAKE_INSTANCE_DOCUMENT Name="{$pSortContactBy}" AssignToVar="sortContactByTag"/>
+              <SET DocVar="sortContactByTag" Attribute="Sort" FromValue="{$pSortContactOrder}"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SYS_RELOAD'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="thisParamFilter">
+                <ROOT>
+                  <CNTCT_NBR Value="{$thisParam/FILTER_CNTCT_NBR/@Value}"/>
+                  <FIRST_NM Value="{$thisParam/FILTER_FIRST_NM/@Value}"/>
+                  <LAST_NM Value="{$thisParam/FILTER_LAST_NM/@Value}"/>
+                  <ADDR_LINE_1_TXT Value="{$thisParam/FILTER_ADDR_LINE_1_TXT/@Value}"/>
+                  <ADDR_LINE_2_TXT Value="{$thisParam/FILTER_ADDR_LINE_2_TXT/@Value}"/>
+                  <ADDR_LINE_3_TXT Value="{$thisParam/FILTER_ADDR_LINE_3_TXT/@Value}"/>
+                  <CITY_NAME Value="{$thisParam/FILTER_CITY_NAME/@Value}"/>
+                  <POSTL_AREA_CODE Value="{$thisParam/FILTER_POSTL_AREA_CODE/@Value}"/>
+                  <TERR_NAME Value="{$thisParam/FILTER_TERR_NAME/@Value}"/>
+                  <CNTRY_CODE Value="{$thisParam/FILTER_CNTRY_CODE/@Value}"/>
+                  <FULL_PHONE_NUM Value="{$thisParam/FILTER_FULL_PHONE_NUM/@Value}"/>
+                  <EMAIL_ADDR_TXT Value="{$thisParam/FILTER_EMAIL_ADDR_TXT/@Value}"/>
+                  <SR_NBR Value="{$thisParam/FILTER_SR_NBR/@Value}"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <!--<TO_DOCVAR AssignToVar="filter">
+<filter/>
+</TO_DOCVAR>-->
+              <!--<SET Var="CNTCT_NBR" FromSelect="$thisParam/CNTCT_NBR/@Value"/>
+<SET Var="FIRST_NM" FromSelect="$thisParam/FIRST_NM/@Value"/>
+<SET Var="LAST_NM" FromSelect="$LAST_NM_filterNew/@Value"/>
+<SET Var="ADDR_LINE_1_TXT" FromSelect="$thisParam/ADDR_LINE_1_TXT/@Value"/>
+<SET Var="ADDR_LINE_2_TXT" FromSelect="$thisParam/ADDR_LINE_2_TXT/@Value"/>
+<SET Var="ADDR_LINE_3_TXT" FromSelect="$thisParam/ADDR_LINE_3_TXT/@Value"/>
+<SET Var="CITY_NAME" FromSelect="$thisParam/CITY_NAME/@Value"/>
+<SET Var="POSTL_AREA_CODE" FromSelect="$thisParam/POSTL_AREA_CODE/@Value"/>
+<SET Var="TERR_NAME" FromSelect="$thisParam/TERR_NAME/@Value"/>
+<SET Var="CNTRY_CODE" FromSelect="$thisParam/CNTRY_CODE/@Value"/>
+<SET Var="FULL_PHONE_NUM" FromSelect="$thisParam/FULL_PHONE_NUM/@Value"/>
+<SET Var="EMAIL_ADDR_TXT" FromSelect="$thisParam/EMAIL_ADDR_TXT/@Value"/>
+<SET Var="SR_NBR" FromSelect="$thisParam/SR_NBR/@Value"/>-->
+              <FORM_SEARCH_FILTER Value="{$thisParamFilter}" AssignToVar="filter">
+                <CNTCT_NBR/>
+                <FIRST_NM/>
+                <LAST_NM/>
+                <ADDR_LINE_1_TXT/>
+                <ADDR_LINE_2_TXT/>
+                <ADDR_LINE_3_TXT/>
+                <CITY_NAME/>
+                <POSTL_AREA_CODE/>
+                <TERR_NAME/>
+                <CNTRY_CODE/>
+                <FULL_PHONE_NUM/>
+                <EMAIL_ADDR_TXT/>
+                <SR_NBR/>
+              </FORM_SEARCH_FILTER>
+              <GET_DOC_SMART Name="CNTCT" AssignToVar="getContactResults" DirtyRead="true" StartAtRow="{$startRow2}" ReturnRowCount="yes" HandleException="true">
+                <TO_XML SelectList="$filter/*/*"/>
+                <SELECT>
+                  <CNTCT_NBR/>
+                  <FIRST_NM/>
+                  <LAST_NM/>
+                  <ADDR_LINE_1_TXT/>
+                  <ADDR_LINE_2_TXT/>
+                  <ADDR_LINE_3_TXT/>
+                  <CITY_NAME/>
+                  <POSTL_AREA_CODE/>
+                  <TERR_NAME/>
+                  <CNTRY_CODE/>
+                  <FULL_PHONE_NUM/>
+                  <EMAIL_ADDR_TXT/>
+                  <SR_NBR/>
+                </SELECT>
+                <ORDER_BY>
+                  <TO_XML DocVar="sortContactByTag"/>
+                </ORDER_BY>
+              </GET_DOC_SMART>
+            </THEN>
+            <ELSE>
+              <GET_DOC_SMART Name="CNTCT" AssignToVar="getContactResults" DirtyRead="true" ReturnRowCount="yes" ServiceName="BCM_MASTER" StartAtRow="{$startRow2}">
+                <SELECT>
+                  <CNTCT_NBR/>
+                  <FIRST_NM/>
+                  <LAST_NM/>
+                  <ADDR_LINE_1_TXT/>
+                  <ADDR_LINE_2_TXT/>
+                  <ADDR_LINE_3_TXT/>
+                  <CITY_NAME/>
+                  <POSTL_AREA_CODE/>
+                  <TERR_NAME/>
+                  <CNTRY_CODE/>
+                  <FULL_PHONE_NUM/>
+                  <EMAIL_ADDR_TXT/>
+                  <SR_NBR/>
+                </SELECT>
+                <ORDER_BY>
+                  <TO_XML DocVar="sortContactByTag"/>
+                </ORDER_BY>
+              </GET_DOC_SMART>
+            </ELSE>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <TO_XML SelectList="$getContactResults"/>
+              <RowCount Value="{$getContactResults/@TotalRowCount}"/>
+            </ROOT>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction='select_and_return'">
+            <THEN>
+              <SET Var="CNTCT_NBR_LOOKUP" FromValue="{substringAfter($thisParam/SELECTED_ID/@Value,'CNTCT_NBR=')}"/>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <CNTCT_NBR Value="{$CNTCT_NBR_LOOKUP}"/>
+                  <CNTRY_NAME Value="{$country_lookup}"/>
+                  <HNDLR_ID Value="{$hndler_lookup}"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="forselectandretain">
+                <TO_XML DocVar="pglFormInput"/>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction ='cancel'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <CNTRY_NAME Value="{$country_lookup}"/>
+                  <HNDLR_ID Value="{$hndler_lookup}"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="forselectandretain">
+                <TO_XML DocVar="pglFormInput"/>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='cancel'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Contact_Node" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='select_and_return'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Contact_Node" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="AddNewContact" ShowInBreadCrumbs="HIDE" Template="AddNewContact.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='AddNewCNTCT' or $thisParam/BUTTON_ID/@Value='cancel1'">
+            <THEN>
+              <CREATE_DOCUMENT_ID Name="CNTCT" AssignToVar="CNTCT_ID"/>
+              <SET Var="thisParamCopy2" FromDocVar="thisParam"/>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <CNTCT_NBR Value="{$CNTCT_ID}"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$alertz"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$thisParam/*"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction='save'">
+            <THEN>
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="addCntct" DocumentName="CNTCT" ServiceName="BCM_MASTER" Source="EXTERNAL" HandleException="true">
+                <CNTCT_NBR Value="{$thisParam/CNTCT_NBR/@Value}"/>
+                <FIRST_NM Value="{$thisParam/FIRST_NM/@Value}"/>
+                <LAST_NM Value="{$thisParam/LAST_NM/@Value}"/>
+                <ADDR_LINE_1_TXT Value="{$thisParam/ADDR_LINE_1_TXT/@Value}"/>
+                <ADDR_LINE_2_TXT Value="{$thisParam/ADDR_LINE_2_TXT/@Value}"/>
+                <ADDR_LINE_3_TXT Value="{$thisParam/ADDR_LINE_3_TXT/@Value}"/>
+                <CITY_NAME Value="{$thisParam/CITY_NAME/@Value}"/>
+                <POSTL_AREA_CODE Value="{$thisParam/POSTL_AREA_CODE/@Value}"/>
+                <FULL_PHONE_NUM Value="{$thisParam/FULL_PHONE_NUM/@Value}"/>
+                <EMAIL_ADDR_TXT Value="{$thisParam/EMAIL_ADDR_TXT/@Value}"/>
+                <TERR_NAME Value="{$thisParam/EMAIL_ADDR_TXT/@Value}"/>
+                <CNTRY_CODE Value="{$thisParam/CNTRY_CODE/@Value}"/>
+                <SR_NBR Value="{$thisParam/SR_NBR/@Value}"/>
+              </DO_DB_PERSIST>
+              <SET Var="CNTCT_NBR_return" FromValue="{$thisParam/CNTCT_NBR/@Value}"/>
+              <APPEND_TO_XML DocVar="thisParamCopy2">
+                <CNTCT_NBR Value="{$thisParam/CNTCT_NBR/@Value}"/>
+              </APPEND_TO_XML>
+              <IF_TEST Test="$addCntct/@Status='Success'">
+                <THEN>
+                  <IF_TEST Test="$addCntct/VALIDATION_RESULT/@Value='SUCCESS'">
+                    <THEN>
+                      <SET Var="alertGreen" FromValue="Contact Number has been created Successfully!!"/>
+                      <SET Var="alertRed" FromValue=""/>
+                      <TO_DOCVAR AssignToVar="alertz">
+                        <MSG>
+                          <AlertGreen Value="{$alertGreen/@Value}"/>
+                          <AlertRed Value="{$alertRed/@Value}"/>
+                        </MSG>
+                      </TO_DOCVAR>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="alertGreen" FromValue=""/>
+                      <SET Var="alertRed" FromValue="{$addCntct/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                      <TO_DOCVAR AssignToVar="alertz">
+                        <MSG>
+                          <AlertGreen Value="{$alertGreen/@Value}"/>
+                          <AlertRed Value="{$alertRed/@Value}"/>
+                        </MSG>
+                      </TO_DOCVAR>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertGreen" FromValue=""/>
+                  <SET Var="alertRed" FromValue="{$addCntct/@Description}"/>
+                  <TO_DOCVAR AssignToVar="alertz">
+                    <MSG>
+                      <AlertGreen Value="{$alertGreen/@Value}"/>
+                      <AlertRed Value="{$alertRed/@Value}"/>
+                    </MSG>
+                  </TO_DOCVAR>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction='save_and_return'">
+            <THEN>
+              <SET Var="alertGreen" FromValue=""/>
+              <SET Var="alertRed" FromValue=""/>
+              <DO_DB_PERSIST Action="INSERT" AssignToVar="addCntct" DocumentName="CNTCT" ServiceName="BCM_MASTER" Source="EXTERNAL" HandleException="true">
+                <CNTCT_NBR Value="{$thisParam/CNTCT_NBR/@Value}"/>
+                <FIRST_NM Value="{$thisParam/FIRST_NM/@Value}"/>
+                <LAST_NM Value="{$thisParam/LAST_NM/@Value}"/>
+                <ADDR_LINE_1_TXT Value="{$thisParam/ADDR_LINE_1_TXT/@Value}"/>
+                <ADDR_LINE_2_TXT Value="{$thisParam/ADDR_LINE_2_TXT/@Value}"/>
+                <ADDR_LINE_3_TXT Value="{$thisParam/ADDR_LINE_3_TXT/@Value}"/>
+                <CITY_NAME Value="{$thisParam/CITY_NAME/@Value}"/>
+                <POSTL_AREA_CODE Value="{$thisParam/POSTL_AREA_CODE/@Value}"/>
+                <FULL_PHONE_NUM Value="{$thisParam/FULL_PHONE_NUM/@Value}"/>
+                <EMAIL_ADDR_TXT Value="{$thisParam/EMAIL_ADDR_TXT/@Value}"/>
+                <TERR_NAME Value="{$thisParam/EMAIL_ADDR_TXT/@Value}"/>
+                <CNTRY_CODE Value="{$thisParam/CNTRY_CODE/@Value}"/>
+                <SR_NBR Value="{$thisParam/SR_NBR/@Value}"/>
+              </DO_DB_PERSIST>
+              <SET Var="CNTCT_NBR_return" FromValue="{$thisParam/CNTCT_NBR/@Value}"/>
+              <APPEND_TO_XML DocVar="thisParamCopy2">
+                <CNTCT_NBR Value="{$thisParam/CNTCT_NBR/@Value}"/>
+              </APPEND_TO_XML>
+              <IF_TEST Test="$addCntct/@Status='Success'">
+                <THEN>
+                  <IF_TEST Test="$addCntct/VALIDATION_RESULT/@Value='SUCCESS'">
+                    <THEN>
+                      <SET Var="alertGreen" FromValue="Contact Number has been created Successfully!!"/>
+                      <SET Var="alertRed" FromValue=""/>
+                      <TO_DOCVAR AssignToVar="alertz">
+                        <MSG>
+                          <AlertGreen Value="{$alertGreen/@Value}"/>
+                          <AlertRed Value="{$alertRed/@Value}"/>
+                        </MSG>
+                      </TO_DOCVAR>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="alertGreen" FromValue=""/>
+                      <SET Var="alertRed" FromValue="{$addCntct/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                      <TO_DOCVAR AssignToVar="alertz">
+                        <MSG>
+                          <AlertGreen Value="{$alertGreen/@Value}"/>
+                          <AlertRed Value="{$alertRed/@Value}"/>
+                        </MSG>
+                      </TO_DOCVAR>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertGreen" FromValue=""/>
+                  <SET Var="alertRed" FromValue="{$addCntct/@Description}"/>
+                  <TO_DOCVAR AssignToVar="alertz">
+                    <MSG>
+                      <AlertGreen Value="{$alertGreen/@Value}"/>
+                      <AlertRed Value="{$alertRed/@Value}"/>
+                    </MSG>
+                  </TO_DOCVAR>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='cancel'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='select_and_return'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='save_and_return'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Contact_Node" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='save'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="AddNewContact" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='cancel1'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Contact_Node" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <start0 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="95,221">
+        <iconProps iconfile="z1start.gif"/>
+      </start0>
+      <GDPR_HNDLR font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="220,97" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </GDPR_HNDLR>
+      <Country_Node font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="376,58" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </Country_Node>
+      <Contact_Node font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="301,225" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </Contact_Node>
+      <RequestType_node font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="555,165" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </RequestType_node>
+      <done5 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="737,86">
+        <iconProps iconfile="z1end.gif"/>
+      </done5>
+      <ContactLookup.pgl font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="422,299" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </ContactLookup.pgl>
+      <AddNewContact font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="102,342" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </AddNewContact>
+    </mgcnodes>
+    <mgcconnectors>
+      <start0>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="140,243" endpoint="242,142" ctrlRect1="214,241,4,4" ctrlRect2="240,216,4,4"/>
+      </start0>
+      <GDPR_HNDLR>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="242,97" endpoint="220,119" ctrlRect1="240,20,4,4" ctrlRect2="159,65,4,4" ctrlRect2Dirty="true" textRect="189,40,24,8">
+          <textProps text="$userAction ='Save'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="265,119" endpoint="376,80" ctrlRect1="328,43,4,4" ctrlRect2="290,78,4,4" ctrlRect1Dirty="true" textRect="293,58,36,8">
+          <textProps text="$userAction ='Link_HNDLR_CNTRY'"/>
+        </nextNodeView>
+      </GDPR_HNDLR>
+      <Country_Node>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="376,80" endpoint="265,119" ctrlRect1="399,107,4,4" ctrlRect2="347,117,4,4" ctrlRect1Dirty="true" textRect="359,110,33,8">
+          <textProps text="$userAction ='SaveandReturn'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="421,80" endpoint="398,103" ctrlRect1="494,78,4,4" ctrlRect2="474,120,4,4" ctrlRect2Dirty="true" textRect="474,97,24,8">
+          <textProps text="$userAction ='Save'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="398,103" endpoint="323,225" ctrlRect1="396,192,4,4" ctrlRect2="480,233,4,4" ctrlRect2Dirty="true" textRect="425,210,30,8">
+          <textProps text="$userAction ='Addcontact'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="421,80" endpoint="555,187" ctrlRect1="484,120,4,4" ctrlRect2="452,185,4,4" ctrlRect1Dirty="true" textRect="448,150,45,8">
+          <textProps text="$userAction ='Add_request_authorization'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="376,80" endpoint="265,119" ctrlRect1="292,78,4,4" ctrlRect2="347,117,4,4" textRect="309,95,24,8">
+          <textProps text="$userAction ='Back'"/>
+        </nextNodeView>
+      </Country_Node>
+      <Contact_Node>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="323,225" endpoint="398,103" ctrlRect1="312,157,4,4" ctrlRect2="437,120,4,4" ctrlRect2Dirty="true" textRect="360,136,33,8" ctrlRect1Dirty="true">
+          <textProps text="$userAction ='SaveandReturn'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="301,247" endpoint="301,247" ctrlRect1="224,245,4,4" ctrlRect2="148,282,4,4" ctrlRect2Dirty="true" textRect="176,261,24,8">
+          <textProps text="$userAction ='Save'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="346,247" endpoint="444,299" ctrlRect1="417,245,4,4" ctrlRect2="442,258,4,4" textRect="415,249,33,8">
+          <textProps text="$userAction ='LinktoContact'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="323,225" endpoint="376,80" ctrlRect1="321,115,4,4" ctrlRect2="269,191,4,4" ctrlRect2Dirty="true" textRect="285,151,24,8">
+          <textProps text="$userAction ='Back'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="301,247" endpoint="124,342" ctrlRect1="167,245,4,4" ctrlRect2="122,268,4,4">
+          <textProps/>
+        </nextNodeView>
+      </Contact_Node>
+      <RequestType_node>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="577,165" endpoint="421,80" ctrlRect1="554,131,4,4" ctrlRect2="536,78,4,4" ctrlRect1Dirty="true" textRect="535,102,24,8">
+          <textProps text="$userAction ='Back'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="577,210" endpoint="600,187" ctrlRect1="575,283,4,4" ctrlRect2="554,325,4,4" ctrlRect2Dirty="true" textRect="554,302,24,8">
+          <textProps text="$userAction ='Save'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="577,165" endpoint="421,80" ctrlRect1="655,27,4,4" ctrlRect2="470,102,4,4" ctrlRect1Dirty="true" textRect="548,62,33,8" ctrlRect2Dirty="true">
+          <textProps text="$userAction ='SaveandReturn'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="600,187" endpoint="737,108" ctrlRect1="700,185,4,4" ctrlRect2="632,106,4,4"/>
+      </RequestType_node>
+      <ContactLookup.pgl>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="422,321" endpoint="346,247" ctrlRect1="321,319,4,4" ctrlRect2="401,245,4,4" ctrlRect1Dirty="true" textRect="350,280,26,8">
+          <textProps text="$userAction ='cancel'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="444,299" endpoint="346,247" ctrlRect1="425,284,4,4" ctrlRect2="418,245,4,4" ctrlRect1Dirty="true" textRect="405,262,37,8">
+          <textProps text="$userAction ='select_and_return'"/>
+        </nextNodeView>
+      </ContactLookup.pgl>
+      <AddNewContact>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="124,342" endpoint="301,247" ctrlRect1="174,384,4,4" ctrlRect2="166,245,4,4" ctrlRect1Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="147,364" endpoint="147,364" ctrlRect1="220,362,4,4" ctrlRect2="220,362,4,4">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="124,342" endpoint="301,247" ctrlRect1="160,296,4,4" ctrlRect2="166,245,4,4" ctrlRect1Dirty="true">
+          <textProps/>
+        </nextNodeView>
+      </AddNewContact>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions/>
+    <post_actions/>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

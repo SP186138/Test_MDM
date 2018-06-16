@@ -1,0 +1,2287 @@
+<DOCUMENTS>
+  <!--[toolkit]::models/Toolkit Models/Batch Validation/ClassificationErrorMap.mtt-->
+  <DEFINE_DOCUMENT Name="ClassificationErrorMap" TableName="MST_CLASSIFICATION_ERROR_MAP" TempTable="GT_CLASSIFICATION_ERROR_MAP" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/Batch Validation/ClassificationErrorMap.mtt-->
+    <!--Toolkit::models/Toolkit Models/Batch Validation/ClassificationErrorMap.mtt-->
+    <PROPERTY Name="entityClassificationID" Type="string(200)" ColumnName="ENTITY_CLASSIFICATION_ID" Required="true" />
+    <PROPERTY Name="surrKey" Type="string(200)" ColumnName="SURR_KEY" Required="true" />
+    <PROPERTY Name="errorMessageID" Type="string(200)" ColumnName="ERROR_MESSAGE_ID" Required="true" />
+    <PROPERTY Name="uiAddress" Type="string(1000)" ColumnName="UI_ADDRESS" />
+    <PROPERTY Name="severity" Type="string(10)" ColumnName="SEVERITY" />
+    <UNIQUE PhysicalName="classificationErrorMapPK" PrimaryKey="true">
+      <KEY Property="surrKey" />
+    </UNIQUE>
+    <UNIQUE PhysicalName="classificationErrorMapUK">
+      <KEY Property="entityClassificationID" />
+      <KEY Property="errorMessageID" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="entityClassificationLink" LinkedDocument="EntityClassification">
+      <!--HardLink#Toolkit::models/Toolkit Models/Batch Validation/EntityClassification.mtt [Unique Key] entityClassificationPK-->
+      <MAP_PROPERTY From="entityClassificationID" To="entityClassificationID" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="errorLink" LinkedDocument="ErrorMaster">
+      <!--HardLink#Toolkit::models/Toolkit Models/Batch Validation/ErrorMaster.mtt [Unique Key] errorMasterPK-->
+      <MAP_PROPERTY From="errorMessageID" To="errorMessageID" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <!--reverse links-->
+    <DOCUMENTLINK Name="logDataLink" LinkedDocument="LogErrorData" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/Batch Validation/LogErrorData.mtt [Hard Link] classificationErrorLink-->
+      <MAP_PROPERTY From="surrKey" To="surrKey" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/LRDM/Code_Set.mtt-->
+  <DEFINE_DOCUMENT Name="Code_Set" TableName="MST_CODE_SET" TempTable="GT_CODE_SET" RLS_ENABLED="false" CLS_ENABLED="false" AuditTrail="true" IsExtendable="true">
+    <!--[toolkit]::models/Toolkit Models/LRDM/Code_Set.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Code_Set.mtt-->
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Map_Table_Name" Type="string(30)" ColumnName="Map_Table_Name" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="IS_EDITABLE" Type="boolean" ColumnName="IS_EDITABLE" Default="true" />
+    <PROPERTY Name="IS_PROMOTED" Type="boolean" ColumnName="IS_PROMOTED" Default="true" />
+    <PROPERTY Name="Code_Name" Type="string(30)" ColumnName="NAME" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Parent_Code_Set_Id" Type="int" ColumnName="PARENT_CODE_SET_ID" />
+    <PROPERTY Name="Is_Custom_Map_Table" Type="boolean" ColumnName="Is_Custom_Map_Table" />
+    <PROPERTY Name="Values_Table_Name" Type="string(30)" ColumnName="Values_Table_Name" />
+    <PROPERTY Name="Reference_Desc_Table_Name" Type="string(30)" ColumnName="Reference_Desc_Table_Name" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="CODE_SET_PK" PrimaryKey="true">
+      <KEY Property="Code_Set_Id" />
+    </UNIQUE>
+    <UNIQUE PhysicalName="CODE_SET_UK">
+      <KEY Property="Code_Name" />
+    </UNIQUE>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <!--reverse links-->
+    <DOCUMENTLINK Name="R_Link_Code_Set_Stats" LinkedDocument="Code_Set_Stats" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/LRDM/Code_Set_Stats.mtt [Hard Link] Code_Set_Stats_FK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="R_Link_Domain" LinkedDocument="Domain" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/LRDM/Domain.mtt [Hard Link] Domain_FK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="R_LINK" LinkedDocument="Reference_Code" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/LRDM/Reference_Code.mtt [Hard Link] Reference_Code_FK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/LRDM/Code_Set_Stats.mtt-->
+  <DEFINE_DOCUMENT Name="Code_Set_Stats" TableName="MST_CODE_SET_STATS" TempTable="GT_CODE_SET_STATS" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/LRDM/Code_Set_Stats.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Code_Set_Stats.mtt-->
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="Value_Id_Count" Type="int" ColumnName="Value_Id_Count" Required="true" />
+    <PROPERTY Name="Mapped_Source_Count" Type="int" ColumnName="Mapped_Source_Count" />
+    <PROPERTY Name="Unmapped_Source_Count" Type="int" ColumnName="Unmapped_Source_Count" />
+    <UNIQUE PhysicalName="Code_Set_Stats_Pk" PrimaryKey="true">
+      <KEY Property="Code_Set_Id" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="Code_Set_Stats_FK" LinkedDocument="Code_Set">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Code_Set.mtt [Unique Key] Code_set_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/MDRM/CrossRefRelation.mtt-->
+  <DEFINE_DOCUMENT Name="CrossRefRelation" TableName="MST_XREF_REL" TempTable="GT_XREF_REL" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/MDRM/CrossRefRelation.mtt-->
+    <!--Toolkit::models/Toolkit Models/MDRM/CrossRefRelation.mtt-->
+    <PROPERTY Name="XRefId" Type="int" ColumnName="XREF_ID" Required="true" />
+    <PROPERTY Name="RomId" Type="int" ColumnName="ROM_ID" Required="true" />
+    <PROPERTY Name="ParentMatchColumnList" Type="string(200)" ColumnName="PARENT_MATCH_COL_LIST" />
+    <PROPERTY Name="ChildMatchColumnList" Type="string(200)" ColumnName="CHILD_MATCH_COL_LIST" />
+    <UNIQUE PhysicalName="CrossRefRelationUK" PrimaryKey="true">
+      <KEY Property="RomId" />
+      <KEY Property="XRefId" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="CrossRefFK" LinkedDocument="CrossReference">
+      <!--HardLink#Toolkit::models/Toolkit Models/MDRM/CrossReference.mtt [Unique Key] CrossReferencePK-->
+      <MAP_PROPERTY From="XRefId" To="XRefId" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="RelObjMapFK" LinkedDocument="RelationalObjectMap">
+      <!--HardLink#Toolkit::models/Toolkit Models/MDRM/RelationalObjectMap.mtt [Unique Key] RelationalObjectMapUK-->
+      <MAP_PROPERTY From="RomId" To="RomId" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/MDRM/CrossReference.mtt-->
+  <DEFINE_DOCUMENT Name="CrossReference" TableName="MST_CROSS_REFERENCE" TempTable="GT_CROSS_REFERENCE" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/MDRM/CrossReference.mtt-->
+    <!--Toolkit::models/Toolkit Models/MDRM/CrossReference.mtt-->
+    <PROPERTY Name="XRefId" Type="int" ColumnName="XREF_ID" Required="true" />
+    <PROPERTY Name="XRefName" Type="string(50)" ColumnName="XREF_NAME" />
+    <PROPERTY Name="GoldenRelObjId" Type="int" ColumnName="GOLDEN_RO_ID" />
+    <PROPERTY Name="XRefDecription" Type="string(1000)" ColumnName="XREF_DESCRIPTION" />
+    <UNIQUE PhysicalName="CROSS_REFERENCE_PK" PrimaryKey="true">
+      <KEY Property="XRefId" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="FK_CROSS_REF_REL_OBJ" LinkedDocument="RelationalObject">
+      <!--HardLink#Toolkit::models/Toolkit Models/MDRM/RelationalObject.mtt [Unique Key] RelationalObjectUK-->
+      <MAP_PROPERTY From="GoldenRelObjId" To="RoId" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <!--reverse links-->
+    <DOCUMENTLINK Name="CrossRef_CrossRefRel_FK" LinkedDocument="CrossRefRelation" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/MDRM/CrossRefRelation.mtt [Hard Link] CrossRefFK-->
+      <MAP_PROPERTY From="XRefId" To="XRefId" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/LRDM/Custom_Code_Set_Clm.mtt-->
+  <DEFINE_DOCUMENT Name="Custom_Code_Set_Clm" TableName="MST_CUSTOM_CODE_SET_CLM" TempTable="GT_CUSTOM_CODE_SET_CLM" RLS_ENABLED="false" CLS_ENABLED="false" AuditTrail="true" IsExtendable="true">
+    <!--[toolkit]::models/Toolkit Models/LRDM/Custom_Code_Set_Clm.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Custom_Code_Set_Clm.mtt-->
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="Column_Type" Type="string(256)" ColumnName="Column_Type" Required="true" />
+    <PROPERTY Name="Logical_Column_Name" Type="string(256)" ColumnName="Logical_Column_Name" Required="true" />
+    <PROPERTY Name="Physical_Column_Name" Type="string(256)" ColumnName="Physical_Column_Name" />
+    <PROPERTY Name="Column_Sequence" Type="int" ColumnName="Column_Sequence" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="Cust_Code_Set_Col_Pk" PrimaryKey="true">
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="Column_Type" />
+      <KEY Property="Logical_Column_Name" />
+    </UNIQUE>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/LRDM/Domain.mtt-->
+  <DEFINE_DOCUMENT Name="Domain" TableName="MST_DOMAIN" TempTable="GT_DOMAIN" RLS_ENABLED="false" CLS_ENABLED="false" AuditTrail="true" IsExtendable="true">
+    <!--[toolkit]::models/Toolkit Models/LRDM/Domain.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Domain.mtt-->
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="Domain_Id" Type="int" ColumnName="Domain_Id" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="DOMAIN_PK" PrimaryKey="true">
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="Domain_Id" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="Domain_FK" LinkedDocument="Code_Set">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Code_Set.mtt [Unique Key] Code_set_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <!--reverse links-->
+    <DOCUMENTLINK Name="Domain_FK_HardLink" LinkedDocument="Standard_Map" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/LRDM/Standard_Map.mtt [Hard Link] DomainFk-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="Domain_Id" To="Domain_Id" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/Batch Validation/EntityClassification.mtt-->
+  <DEFINE_DOCUMENT Name="EntityClassification" TableName="MST_ENTITY_CLASSIFICATION" TempTable="GT_ENTITY_CLASSIFICATION" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/Batch Validation/EntityClassification.mtt-->
+    <!--Toolkit::models/Toolkit Models/Batch Validation/EntityClassification.mtt-->
+    <PROPERTY Name="entityClassificationID" Type="string(200)" ColumnName="ENTITY_CLASSIFICATION_ID" Required="true" />
+    <PROPERTY Name="classification" Type="string(200)" ColumnName="CLASSIFICATION" Required="true" />
+    <PROPERTY Name="service" Type="string(200)" ColumnName="SERVICE" Required="true" />
+    <PROPERTY Name="tablename" Type="string(50)" ColumnName="TABLENAME" />
+    <PROPERTY Name="documentName" Type="string(50)" ColumnName="DOCUMENT_NAME" Required="true" />
+    <UNIQUE PhysicalName="entityClassificationPK" PrimaryKey="true">
+      <KEY Property="entityClassificationID" />
+    </UNIQUE>
+    <UNIQUE PhysicalName="entityClassificationUK">
+      <KEY Property="classification" />
+      <KEY Property="service" />
+      <KEY Property="documentName" />
+    </UNIQUE>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <!--reverse links-->
+    <DOCUMENTLINK Name="classMapLink" LinkedDocument="ClassificationErrorMap" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/Batch Validation/ClassificationErrorMap.mtt [Hard Link] entityClassificationLink-->
+      <MAP_PROPERTY From="entityClassificationID" To="entityClassificationID" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/Manage Entity/EntityObject.mtt-->
+  <DEFINE_DOCUMENT Name="EntityObject" TableName="MST_ENTITY_OBJECT" TempTable="GT_ENTITY_OBJECT" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/Manage Entity/EntityObject.mtt-->
+    <!--Toolkit::models/Toolkit Models/Manage Entity/EntityObject.mtt-->
+    <PROPERTY Name="Entity_Id" Type="int" ColumnName="ENTITY_ID" Required="true" />
+    <PROPERTY Name="Entity_Name" Type="string(64)" ColumnName="ENTITY_NAME" CharSet="UNICODE" />
+    <PROPERTY Name="Entity_Description" Type="string(1024)" ColumnName="ENTITY_DESCRIPTION" CharSet="UNICODE" />
+    <PROPERTY Name="Entity_Status" Type="string(20)" ColumnName="ENTITY_STATUS" CharSet="UNICODE" />
+    <PROPERTY Name="Entity_Effective_Start_date" Type="timestamp" ColumnName="ENTITY_EFFECTIVE_START_DATE" />
+    <PROPERTY Name="Entity_Effective_End_date" Type="timestamp" ColumnName="ENTITY_EFFECTIVE_END_DATE" />
+    <UNIQUE PhysicalName="ENTITY_OBJECT_PROP_GRP1" PrimaryKey="true">
+      <KEY Property="Entity_Id" />
+    </UNIQUE>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/Manage Entity/EntityTables.mtt-->
+  <DEFINE_DOCUMENT Name="EntityTables" TableName="MST_ENTITY_TABLES" TempTable="GT_ENTITY_TABLES" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/Manage Entity/EntityTables.mtt-->
+    <!--Toolkit::models/Toolkit Models/Manage Entity/EntityTables.mtt-->
+    <PROPERTY Name="Entity_Id" Type="int" ColumnName="ENTITY_ID" Required="true" />
+    <PROPERTY Name="DbName" Type="string(64)" ColumnName="DB_NAME" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="TableName" Type="string(64)" ColumnName="TABLE_NAME" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="ServiceName" Type="string(32)" ColumnName="SERVICE_NAME" CharSet="UNICODE" />
+    <PROPERTY Name="Table_Type" Type="string(10)" ColumnName="TABLE_TYPE" CharSet="UNICODE" />
+    <PROPERTY Name="Is_Src" Type="boolean" ColumnName="IS_SRC" Required="true" Default="0" />
+    <UNIQUE PhysicalName="ENTITY_TABLES_PROP_GRP1" PrimaryKey="true">
+      <KEY Property="DbName" />
+      <KEY Property="Entity_Id" />
+      <KEY Property="TableName" />
+    </UNIQUE>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/Manage Entity/Entity_Rel_Reference.mtt-->
+  <DEFINE_DOCUMENT Name="Entity_Rel_Reference" TableName="MST_ENTITY_REL_REFERENCE" TempTable="GT_ENTITY_REL_REFERENCE" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/Manage Entity/Entity_Rel_Reference.mtt-->
+    <!--Toolkit::models/Toolkit Models/Manage Entity/Entity_Rel_Reference.mtt-->
+    <PROPERTY Name="Entity_Id" Type="int" ColumnName="ENTITY_ID" Required="true" />
+    <PROPERTY Name="Rel_Entity_Id" Type="int" ColumnName="REL_ENTITY_ID" Required="true" />
+    <UNIQUE PhysicalName="ENTITY_REL_REFERENCE_PROP_GRP1" PrimaryKey="true">
+      <KEY Property="Entity_Id" />
+      <KEY Property="Rel_Entity_Id" />
+    </UNIQUE>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/Batch Validation/ErrorMaster.mtt-->
+  <DEFINE_DOCUMENT Name="ErrorMaster" TableName="MST_ERROR_MASTER" TempTable="GT_ERROR_MASTER" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/Batch Validation/ErrorMaster.mtt-->
+    <!--Toolkit::models/Toolkit Models/Batch Validation/ErrorMaster.mtt-->
+    <PROPERTY Name="errorMessageID" Type="string(200)" ColumnName="ERROR_MESSAGE_ID" Required="true" />
+    <PROPERTY Name="errorMessageText" Type="string(1000)" ColumnName="ERROR_MESSAGE_TEXT" />
+    <UNIQUE PhysicalName="errorMasterPK" PrimaryKey="true">
+      <KEY Property="errorMessageID" />
+    </UNIQUE>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <!--reverse links-->
+    <DOCUMENTLINK Name="classErrorMapLink" LinkedDocument="ClassificationErrorMap" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/Batch Validation/ClassificationErrorMap.mtt [Hard Link] errorLink-->
+      <MAP_PROPERTY From="errorMessageID" To="errorMessageID" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/SyncUp/LastSyncUp.mtt-->
+  <DEFINE_DOCUMENT Name="LastSyncUp" TableName="MST_LAST_SYNC_UP" TempTable="GT_LAST_SYNC_UP" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/SyncUp/LastSyncUp.mtt-->
+    <!--Toolkit::models/Toolkit Models/SyncUp/LastSyncUp.mtt-->
+    <PROPERTY Name="ApplicationName" Type="string(50)" ColumnName="APPLICATION_NAME" />
+    <PROPERTY Name="InstanceID" Type="string(200)" ColumnName="INSTANCE_ID" />
+    <PROPERTY Name="endTime" Type="datetime" ColumnName="END_TIME" />
+    <PROPERTY Name="operationCode" Type="string(50)" ColumnName="OPERATION_CODE" />
+    <PROPERTY Name="operationStatus" Type="string(40)" ColumnName="OPERATION_STATUS" Default="ABORTED">
+      <VALID_VALUES>
+        <OPTION Value="SUCCESS" />
+        <OPTION Value="FAILURE" />
+        <OPTION Value="ABORTED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="startTime" Type="datetime" ColumnName="START_TIME" />
+    <PROPERTY Name="syncUpDate" Type="datetime" ColumnName="SYNC_UP_DATE" />
+    <PROPERTY Name="syncUpID" Type="string(200)" ColumnName="SYNC_UP_ID" Required="true" />
+    <UNIQUE PhysicalName="pk_SYNC_UP" PrimaryKey="true">
+      <KEY Property="syncUpID" />
+    </UNIQUE>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/Batch Validation/LogErrorData.mtt-->
+  <DEFINE_DOCUMENT Name="LogErrorData" TableName="MST_LOG_ERROR_DATA" TempTable="GT_LOG_ERROR_DATA" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/Batch Validation/LogErrorData.mtt-->
+    <!--Toolkit::models/Toolkit Models/Batch Validation/LogErrorData.mtt-->
+    <PROPERTY Name="ID" Type="string(200)" ColumnName="ID" Required="true" />
+    <PROPERTY Name="surrKey" Type="string(200)" ColumnName="SURR_KEY" Required="true" />
+    <PROPERTY Name="primaryKey" Type="string(800)" ColumnName="PRIMARY_KEY" Required="true" />
+    <PROPERTY Name="marked" Type="string(5)" ColumnName="MARKED" Default="False">
+      <VALID_VALUES>
+        <OPTION Value="True" />
+        <OPTION Value="False" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <UNIQUE PhysicalName="logErrorDataPK" PrimaryKey="true">
+      <KEY Property="ID" />
+    </UNIQUE>
+    <UNIQUE PhysicalName="logErrorDataUK">
+      <KEY Property="surrKey" />
+      <KEY Property="primaryKey" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="classificationErrorLink" LinkedDocument="ClassificationErrorMap">
+      <!--HardLink#Toolkit::models/Toolkit Models/Batch Validation/ClassificationErrorMap.mtt [Unique Key] classificationErrorMapPK-->
+      <MAP_PROPERTY From="surrKey" To="surrKey" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/LRDM/MultiTable_Map.mtt-->
+  <DEFINE_DOCUMENT Name="MultiTable_Map" TableName="MST_MULTITABLE_MAP" TempTable="GT_MULTITABLE_MAP" SurrogateKey="true" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/LRDM/MultiTable_Map.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/MultiTable_Map.mtt-->
+    <PROPERTY Name="Map_Table_Name" Type="string(30)" ColumnName="MAP_TABLE_NAME" Required="true" />
+    <PROPERTY Name="Table_Type" Type="string(30)" ColumnName="TABLE_TYPE" />
+    <PROPERTY Name="IS_USED" Type="boolean" ColumnName="IS_USED" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="START_DATE" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="END_DATE" />
+    <PROPERTY Name="Id" Type="int" ColumnName="ID" Required="true" />
+    <UNIQUE PhysicalName="MULTI_TBL_PK" PrimaryKey="true">
+      <KEY Property="Id" />
+    </UNIQUE>
+    <PRIMARY_INDEX PhysicalName="MULTI_TBL_NUPI_KEY">
+      <KEY Property="Map_Table_Name" />
+    </PRIMARY_INDEX>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/Query/QueryExecutionLog.mtt-->
+  <DEFINE_DOCUMENT Name="QueryExecutionLog" TableName="QUERY_EXECUTION_LOG" TempTable="GT_QUERY_EXECUTION_LOG" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/Query/QueryExecutionLog.mtt-->
+    <!--Toolkit::models/Toolkit Models/Query/QueryExecutionLog.mtt-->
+    <PROPERTY Name="queryID" Type="string(200)" ColumnName="QUERY_ID" Required="true" />
+    <PROPERTY Name="executedBy" Type="string(64)" ColumnName="EXECUTED_BY" Required="true" />
+    <PROPERTY Name="runDateTime" Type="datetime" ColumnName="RUN_DATETIME" Required="true" />
+    <PROPERTY Name="result" Type="string(64)" ColumnName="QUERY_RESULT" Required="true" />
+    <PROPERTY Name="numberOfRecord" Type="int" ColumnName="NUMBER_OF_RECORDS" />
+    <PROPERTY Name="errorMessage" Type="string(200)" ColumnName="ERROR_MESSAGE" />
+    <PROPERTY Name="runTime" Type="float" ColumnName="RUN_TIME" />
+    <UNIQUE PhysicalName="QueryExecutionLogUK" PrimaryKey="true">
+      <KEY Property="queryID" />
+      <KEY Property="executedBy" />
+      <KEY Property="runDateTime" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="QueryExecutionLogFK" LinkedDocument="QueryMaster">
+      <!--HardLink#Toolkit::models/Toolkit Models/Query/QueryMaster.mtt [Unique Key] QueryMasterUK-->
+      <MAP_PROPERTY From="queryID" To="queryID" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/Query/QueryMaster.mtt-->
+  <DEFINE_DOCUMENT Name="QueryMaster" TableName="QUERY_MASTER" TempTable="GT_QUERY_MASTER" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/Query/QueryMaster.mtt-->
+    <!--Toolkit::models/Toolkit Models/Query/QueryMaster.mtt-->
+    <PROPERTY Name="queryID" Type="string(200)" ColumnName="QUERY_ID" Required="true" />
+    <PROPERTY Name="queryName" Type="string(50)" ColumnName="QUERY_NAME" Required="true" />
+    <PROPERTY Name="lastExecutedBy" Type="string(64)" ColumnName="LAST_EXECUTED_BY" />
+    <PROPERTY Name="lastResult" Type="string(64)" ColumnName="LAST_RESULT" />
+    <PROPERTY Name="numberOfRuns" Type="int" ColumnName="NUMBER_OF_RUNS" />
+    <PROPERTY Name="lastRunDateTime" Type="datetime" ColumnName="LAST_RUN_DATETIME" />
+    <PROPERTY Name="queryString" Type="Clob" ColumnName="QUERY_STRING" />
+    <PROPERTY Name="lastRunTime" Type="float" ColumnName="LAST_RUN_TIME" />
+    <UNIQUE PhysicalName="QueryMasterUK" PrimaryKey="true">
+      <KEY Property="queryID" />
+    </UNIQUE>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <!--reverse links-->
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/Query/QueryParam.mtt-->
+  <DEFINE_DOCUMENT Name="QueryParam" TableName="QUERY_PARAM" TempTable="GT_QUERY_PARAM" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/Query/QueryParam.mtt-->
+    <!--Toolkit::models/Toolkit Models/Query/QueryParam.mtt-->
+    <PROPERTY Name="queryID" Type="string(200)" ColumnName="QUERY_ID" Required="true" />
+    <PROPERTY Name="parameter" Type="string(100)" ColumnName="PARAMETER_NAME" Required="true" />
+    <PROPERTY Name="description" Type="string(255)" ColumnName="DESCRIPTION" />
+    <PROPERTY Name="dataType" Type="string(32)" ColumnName="DATA_TYPE" Required="true" />
+    <PROPERTY Name="paramValue" Type="string(100)" ColumnName="PARAMETER_VALUE" />
+    <PROPERTY Name="sequence" Type="int" ColumnName="SEQUENCE" Required="true" />
+    <UNIQUE PhysicalName="QueryParamUK" PrimaryKey="true">
+      <KEY Property="queryID" />
+      <KEY Property="parameter" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="QueryParamFK" LinkedDocument="QueryMaster">
+      <!--HardLink#Toolkit::models/Toolkit Models/Query/QueryMaster.mtt [Unique Key] QueryMasterUK-->
+      <MAP_PROPERTY From="queryID" To="queryID" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/LRDM/Reference_Code.mtt-->
+  <DEFINE_DOCUMENT Name="Reference_Code" TableName="MST_REFERENCE_CODE" TempTable="GT_REFERENCE_CODE" RLS_ENABLED="false" CLS_ENABLED="false" AuditTrail="true" IsExtendable="true">
+    <!--[toolkit]::models/Toolkit Models/LRDM/Reference_Code.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Reference_Code.mtt-->
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="VALUE_ID" Type="string(100)" ColumnName="VALUE_ID" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Parent_EDW_Code" Type="int" ColumnName="PARENT_EDW_CODE" />
+    <PROPERTY Name="Parent_Code_Set_Id" Type="int" ColumnName="PARENT_CODE_SET_ID" />
+    <PROPERTY Name="Parent_VALUE_ID" Type="string(100)" ColumnName="PARENT_VALUE_ID" />
+    <PROPERTY Name="Code_Name" Type="string(30)" ColumnName="CODE_NAME" />
+    <PROPERTY Name="Parent_Code_Name" Type="string(30)" ColumnName="PARENT_CODE_NAME" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="REFERENCE_CODE_PK" PrimaryKey="true">
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="EDW_Code" />
+    </UNIQUE>
+    <INDEX PhysicalName="REFERENCE_CODE_UK1" Unique="true">
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="Parent_EDW_Code" />
+      <KEY Property="VALUE_ID" />
+    </INDEX>
+    <DOCUMENTLINK Name="Reference_Code_FK" LinkedDocument="Code_Set">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Code_Set.mtt [Unique Key] Code_set_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <!--reverse links-->
+    <DOCUMENTLINK Name="Reference_Code_LINK" LinkedDocument="Reference_Description" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/LRDM/Reference_Description.mtt [Hard Link] _Reference_Desc_FK2-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="EDW_Code" To="EDW_Code" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/LRDM/Reference_Description.mtt-->
+  <DEFINE_DOCUMENT Name="Reference_Description" TableName="MST_REFERENCE_DESCRIPTION" TempTable="GT_REFERENCE_DESCRIPTION" RLS_ENABLED="false" CLS_ENABLED="false" AuditTrail="true" IsExtendable="true">
+    <!--[toolkit]::models/Toolkit Models/LRDM/Reference_Description.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Reference_Description.mtt-->
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="Language_Id" Type="int" ColumnName="Language_Id" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="REFERENCE_DESC_PK" PrimaryKey="true">
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="EDW_Code" />
+      <KEY Property="Language_Id" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="_Reference_Desc_FK1" LinkedDocument="Valid_Language">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Valid_Language.mtt [Unique Key] Valid_Language_PK-->
+      <MAP_PROPERTY From="Language_Id" To="Language_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="_Reference_Desc_FK2" LinkedDocument="Reference_Code">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Reference_Code.mtt [Unique Key] Reference_Code_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="EDW_Code" To="EDW_Code" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/MDRM/RelationalObjKeyDesc.mtt-->
+  <DEFINE_DOCUMENT Name="RelationalObjKeyDesc" TableName="MST_REL_OBJ_KEY_DESC" TempTable="GT_REL_OBJ_KEY_DESC" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/MDRM/RelationalObjKeyDesc.mtt-->
+    <!--Toolkit::models/Toolkit Models/MDRM/RelationalObjKeyDesc.mtt-->
+    <PROPERTY Name="RokdId" Type="int" ColumnName="ROKD_ID" Required="true" />
+    <PROPERTY Name="RoktId" Type="int" ColumnName="ROKT_ID" Required="true" />
+    <PROPERTY Name="KeyColumnLogicalName" Type="string(1000)" ColumnName="KEY_COL_LOG_NAME" Required="true" />
+    <PROPERTY Name="KeyColumnPhysicalName" Type="string(30)" ColumnName="KEY_COL_PHY_NAME" Required="true" />
+    <PROPERTY Name="KeyDataType" Type="string(15)" ColumnName="KEY_DATA_TYPE" />
+    <PROPERTY Name="DataTypeLength" Type="string(4)" ColumnName="DATA_TYPE_LENGTH" />
+    <PROPERTY Name="DataTypePrecision" Type="string(4)" ColumnName="DATA_TYPE_PRECISION" />
+    <PROPERTY Name="KeyColumnSequence" Type="int" ColumnName="KEY_COL_SEQUENCE" />
+    <UNIQUE PhysicalName="RelationalObjKeyDescUK" PrimaryKey="true">
+      <KEY Property="RokdId" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="RelationalObjKeyDescFK" LinkedDocument="RelationalObjectKeyType">
+      <!--HardLink#Toolkit::models/Toolkit Models/MDRM/RelationalObjectKeyType.mtt [Unique Key] RelationalObjKeyTypeUK-->
+      <MAP_PROPERTY From="RoktId" To="RoktId" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/MDRM/RelationalObjProperties.mtt-->
+  <DEFINE_DOCUMENT Name="RelationalObjProperties" TableName="MST_REL_OBJ_PROPERTIES" TempTable="GT_REL_OBJ_PROPERTIES" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/MDRM/RelationalObjProperties.mtt-->
+    <!--Toolkit::models/Toolkit Models/MDRM/RelationalObjProperties.mtt-->
+    <PROPERTY Name="RopId" Type="int" ColumnName="ROP_ID" Required="true" />
+    <PROPERTY Name="RomId" Type="int" ColumnName="ROM_ID" Required="true" />
+    <PROPERTY Name="Name" Type="string(30)" ColumnName="NAME" />
+    <PROPERTY Name="DisplayName" Type="string(500)" ColumnName="DISPLAY_NAME" />
+    <PROPERTY Name="DataType" Type="string(15)" ColumnName="DATA_TYPE" />
+    <PROPERTY Name="Nullable" Type="char(1)" ColumnName="NULLABLE" />
+    <PROPERTY Name="DataTypeLength" Type="string(4)" ColumnName="DATA_TYPE_LENGTH" />
+    <PROPERTY Name="DataTypePrecision" Type="string(4)" ColumnName="DATA_TYPE_PRECISION" />
+    <PROPERTY Name="RelObjDataValColName" Type="string(30)" ColumnName="RODV_COL_NAME" />
+    <PROPERTY Name="DefaultValue" Type="string(200)" ColumnName="DEFAULT_VALUE" CharSet="UNICODE" />
+    <UNIQUE PhysicalName="RelationalObjPropertiesUK" PrimaryKey="true">
+      <KEY Property="RopId" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="FK_ROM" LinkedDocument="RelationalObjectMap">
+      <!--HardLink#Toolkit::models/Toolkit Models/MDRM/RelationalObjectMap.mtt [Unique Key] RelationalObjectMapUK-->
+      <MAP_PROPERTY From="RomId" To="RomId" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/MDRM/RelationalObject.mtt-->
+  <DEFINE_DOCUMENT Name="RelationalObject" TableName="MST_RELATIONAL_OBJECT" TempTable="GT_RELATIONAL_OBJECT" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/MDRM/RelationalObject.mtt-->
+    <!--Toolkit::models/Toolkit Models/MDRM/RelationalObject.mtt-->
+    <PROPERTY Name="RoId" Type="int" ColumnName="RO_ID" Required="true" />
+    <PROPERTY Name="LogicalTableName" Type="string(64)" ColumnName="MST_TBL_LOG_NAME" />
+    <PROPERTY Name="PhysicalTableName" Type="string(64)" ColumnName="MST_TBL_PHY_NAME" />
+    <PROPERTY Name="ObjectName" Type="string(64)" ColumnName="NAME" />
+    <PROPERTY Name="ObjectDescription" Type="string(1000)" ColumnName="DESCRIPTION" />
+    <PROPERTY Name="PhysicalViewName" Type="string(64)" ColumnName="MST_VIEW_NAME" />
+    <PROPERTY Name="DisplayColumnNames" Type="string(500)" ColumnName="DISPLAY_NAME" />
+    <PROPERTY Name="Url" Type="string(500)" ColumnName="MASTER_DATA_URL" />
+    <PROPERTY Name="UrlParam" Type="string(500)" ColumnName="URL_PARAMETER" />
+    <PROPERTY Name="SortColumnNames" Type="string(500)" ColumnName="SORT_COLUMNS_NAME" />
+    <PROPERTY Name="DisplayColumnLogicalNames" Type="string(500)" ColumnName="DISPLAY_COLUMNS_NAME_LOG" />
+    <PROPERTY Name="SortColumnLogicalNames" Type="string(500)" ColumnName="SORT_COLUMNS_NAME_LOG" />
+    <PROPERTY Name="DisplayColumnLogicalHover" Type="string(500)" ColumnName="DISPLAY_COL_LOG_HOVER" />
+    <PROPERTY Name="DisplayColumnsVersion" Type="string(500)" ColumnName="VER_DISPLAY_NAME" />
+    <PROPERTY Name="SortColumnVersion" Type="string(500)" ColumnName="VER_SORT_COLUMNS_NAME" />
+    <PROPERTY Name="MasterDataURLVersion" Type="string(500)" ColumnName="VER_MASTER_DATA_URL" />
+    <PROPERTY Name="PhysicalTableNameVersion" Type="string(64)" ColumnName="VER_TBL_PHY_NAME" />
+    <PROPERTY Name="PhysicalViewNameVersion" Type="string(64)" ColumnName="VER_VIEW_NAME" />
+    <PROPERTY Name="LogicalTableNameVersion" Type="string(64)" ColumnName="VER_TBL_LOG_NAME" />
+    <PROPERTY Name="DisplayColLogHoverVersion" Type="string(500)" ColumnName="VER_DISPLAY_COL_LOG_HOVER" />
+    <PROPERTY Name="IsNonMdm" Type="char(1)" ColumnName="IS_NON_MDM" />
+    <PROPERTY Name="IsTemporal" Type="char(1)" ColumnName="IS_TEMPORAL" />
+    <PROPERTY Name="TooltipLogicalColumnNames" Type="string(500)" ColumnName="TOOLTIP_COLUMN_LOG_NAME" />
+    <PROPERTY Name="TooltipColumns" Type="string(500)" ColumnName="TOOLTIP_COLUMNS" />
+    <PROPERTY Name="TooltipVersionColumns" Type="string(500)" ColumnName="VER_TOOLTIP_COLUMNS" />
+    <PROPERTY Name="TooltipDisplayName" Type="string(500)" ColumnName="TOOLTIP_DISPLAY_NAME" />
+    <PROPERTY Name="TooltipDisplayNameVersion" Type="string(500)" ColumnName="VER_TOOLTIP_DISPLAY_NAME" />
+    <UNIQUE PhysicalName="RelationalObjectUK" PrimaryKey="true">
+      <KEY Property="RoId" />
+    </UNIQUE>
+    <INDEX PhysicalName="ObjectNameUI" Unique="true">
+      <KEY Property="ObjectName" />
+    </INDEX>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <!--reverse links-->
+    <DOCUMENTLINK Name="RelObjCrossRefFK" LinkedDocument="CrossReference" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/MDRM/CrossReference.mtt [Hard Link] FK_CROSS_REF_REL_OBJ-->
+      <MAP_PROPERTY From="RoId" To="GoldenRelObjId" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="RO_ROID_RL_FK" LinkedDocument="RelationalObjectFilter" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/MDRM/RelationalObjectFilter.mtt [Hard Link] FK_ROID-->
+      <MAP_PROPERTY From="RoId" To="RoId" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="RelObjKeyTypeFK" LinkedDocument="RelationalObjectKeyType" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/MDRM/RelationalObjectKeyType.mtt [Hard Link] RelationalObjKeyTypeFK-->
+      <MAP_PROPERTY From="RoId" To="RoId" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="FK_RO_P" LinkedDocument="RelationalObjectMap" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/MDRM/RelationalObjectMap.mtt [Hard Link] FK_RO_P-->
+      <MAP_PROPERTY From="RoId" To="ParentROId" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="FK_RO_C" LinkedDocument="RelationalObjectMap" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/MDRM/RelationalObjectMap.mtt [Hard Link] FK_RO_C-->
+      <MAP_PROPERTY From="RoId" To="ChildROId" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="FK_TBL_RO_ID" LinkedDocument="RelationalObjectMap" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/MDRM/RelationalObjectMap.mtt [Hard Link] FK_RO_TT-->
+      <MAP_PROPERTY From="RoId" To="TargetTableRelObjId" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/MDRM/RelationalObjectColumnData.mtt-->
+  <DEFINE_DOCUMENT Name="RelationalObjectColumnData" TableName="MST_REL_CLM_OBJ_DATA_VAL" TempTable="GT_REL_CLM_OBJ_DATA_VAL" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/MDRM/RelationalObjectColumnData.mtt-->
+    <!--Toolkit::models/Toolkit Models/MDRM/RelationalObjectColumnData.mtt-->
+    <PROPERTY Name="ColumnRodvId" Type="int" ColumnName="CLM_RODV_ID" Required="true" />
+    <PROPERTY Name="ColumnRomId" Type="int" ColumnName="CLM_ROM_ID" Required="true" />
+    <PROPERTY Name="ParentRokdVal1" Type="string(500)" ColumnName="PARENT_ROKD_VAL1" CharSet="UNICODE" />
+    <PROPERTY Name="ParentRokdVal2" Type="string(500)" ColumnName="PARENT_ROKD_VAL2" CharSet="UNICODE" />
+    <PROPERTY Name="ParentRokdVal3" Type="string(500)" ColumnName="PARENT_ROKD_VAL3" CharSet="UNICODE" />
+    <PROPERTY Name="ParentRokdVal4" Type="string(500)" ColumnName="PARENT_ROKD_VAL4" CharSet="UNICODE" />
+    <PROPERTY Name="ParentRokdVal5" Type="string(500)" ColumnName="PARENT_ROKD_VAL5" CharSet="UNICODE" />
+    <PROPERTY Name="ParentRokdVal6" Type="string(500)" ColumnName="PARENT_ROKD_VAL6" CharSet="UNICODE" />
+    <PROPERTY Name="ParentRokdVal7" Type="string(500)" ColumnName="PARENT_ROKD_VAL7" CharSet="UNICODE" />
+    <PROPERTY Name="ParentRokdVal8" Type="string(500)" ColumnName="PARENT_ROKD_VAL8" CharSet="UNICODE" />
+    <PROPERTY Name="ParentRokdVal9" Type="string(500)" ColumnName="PARENT_ROKD_VAL9" CharSet="UNICODE" />
+    <PROPERTY Name="ParentRokdVal10" Type="string(500)" ColumnName="PARENT_ROKD_VAL10" CharSet="UNICODE" />
+    <PROPERTY Name="ChildRokdVal1" Type="string(500)" ColumnName="CHILD_ROKD_VAL1" CharSet="UNICODE" />
+    <PROPERTY Name="ChildRokdVal2" Type="string(500)" ColumnName="CHILD_ROKD_VAL2" CharSet="UNICODE" />
+    <PROPERTY Name="ChildRokdVal3" Type="string(500)" ColumnName="CHILD_ROKD_VAL3" CharSet="UNICODE" />
+    <PROPERTY Name="ChildRokdVal4" Type="string(500)" ColumnName="CHILD_ROKD_VAL4" CharSet="UNICODE" />
+    <PROPERTY Name="ChildRokdVal5" Type="string(500)" ColumnName="CHILD_ROKD_VAL5" CharSet="UNICODE" />
+    <PROPERTY Name="ChildRokdVal6" Type="string(500)" ColumnName="CHILD_ROKD_VAL6" CharSet="UNICODE" />
+    <PROPERTY Name="ChildRokdVal7" Type="string(500)" ColumnName="CHILD_ROKD_VAL7" CharSet="UNICODE" />
+    <PROPERTY Name="ChildRokdVal8" Type="string(500)" ColumnName="CHILD_ROKD_VAL8" CharSet="UNICODE" />
+    <PROPERTY Name="ChildRokdVal9" Type="string(500)" ColumnName="CHILD_ROKD_VAL9" CharSet="UNICODE" />
+    <PROPERTY Name="ChildRokdVal10" Type="string(500)" ColumnName="CHILD_ROKD_VAL10" CharSet="UNICODE" />
+    <PROPERTY Name="ChildValue" Type="string(15000)" ColumnName="CHILD_VALUE" CharSet="UNICODE" />
+    <PROPERTY Name="WorkflowName" Type="string(500)" ColumnName="WORKFLOW_NAME" />
+    <PROPERTY Name="WorkflowInstanceId" Type="string(500)" ColumnName="WORKFLOW_INSTANCE_ID" />
+    <PROPERTY Name="StartDate" Type="date" ColumnName="START_DATE" />
+    <PROPERTY Name="EndDate" Type="date" ColumnName="END_DATE" />
+    <PROPERTY Name="ApprovedBy" Type="string(200)" ColumnName="APPROVED_BY" />
+    <PROPERTY Name="Comments" Type="string(1000)" ColumnName="Comments" />
+    <PROPERTY Name="Status" Type="string(25)" ColumnName="STATUS" />
+    <PROPERTY Name="ApprovedDate" Type="date" ColumnName="APPROVED_DATE" />
+    <UNIQUE PhysicalName="RELATIONAL_OBJ_COL_DATA_PI" PrimaryKey="true">
+      <KEY Property="ColumnRodvId" />
+    </UNIQUE>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/MDRM/RelationalObjectColumnMap.mtt-->
+  <DEFINE_DOCUMENT Name="RelationalObjectColumnMap" TableName="MST_REL_CLM_OBJ_MAP" TempTable="GT_REL_CLM_OBJ_MAP" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/MDRM/RelationalObjectColumnMap.mtt-->
+    <!--Toolkit::models/Toolkit Models/MDRM/RelationalObjectColumnMap.mtt-->
+    <PROPERTY Name="ColumnRomId" Type="int" ColumnName="CLM_ROM_ID" Required="true" />
+    <PROPERTY Name="ColumnRelationName" Type="string(100)" ColumnName="CLM_REL_NAME" CharSet="UNICODE" />
+    <PROPERTY Name="ColumnRelationType" Type="string(100)" ColumnName="CLM_REL_TYPE" CharSet="UNICODE" />
+    <PROPERTY Name="ParentROId" Type="int" ColumnName="PARENT_RO_ID" Required="true" />
+    <PROPERTY Name="ChildROId" Type="int" ColumnName="CHILD_RO_ID" Required="true" />
+    <PROPERTY Name="ParentROKTId" Type="int" ColumnName="PARENT_ROKT_ID" Required="true" />
+    <PROPERTY Name="CHILD_ROKT_ID" Type="int" ColumnName="CHILD_ROKT_ID" Required="true" />
+    <PROPERTY Name="TargetTableROId" Type="int" ColumnName="TGT_TBL_RO_ID" />
+    <PROPERTY Name="MappingId" Type="int" ColumnName="MAPPING_ID" Required="true" />
+    <PROPERTY Name="TargetTable" Type="string(64)" ColumnName="TARGET_TABLE" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="CrossRefRomId" Type="int" ColumnName="CROSS_REF_ROM_ID" />
+    <PROPERTY Name="SourceService" Type="string(64)" ColumnName="SOURCE_SERVICE" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="SourceDB" Type="string(64)" ColumnName="SOURCE_DB" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Source_Table" Type="string(64)" ColumnName="SOURCE_TABLE" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="TargetColumn" Type="string(64)" ColumnName="TARGET_COLUMN" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="TargetColumnPhysical" Type="string(64)" ColumnName="TARGET_COLUMN_PHY" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="EnablePkUpdt" Type="char(1)" ColumnName="ENABLE_PK_UPDT" />
+    <PROPERTY Name="ColumnSequence" Type="int" ColumnName="COLUMNSEQ" />
+    <PROPERTY Name="SourceColumn" Type="string(64)" ColumnName="SOURCE_COLUMN" CharSet="UNICODE" />
+    <PROPERTY Name="SourceColumnPhysical" Type="string(64)" ColumnName="SOURCE_COLUMN_PHY" CharSet="UNICODE" />
+    <PROPERTY Name="AttributeDetailId" Type="int" ColumnName="ATTRB_DETAIL_ID" />
+    <PROPERTY Name="AttributeType" Type="char(1)" ColumnName="ATTRB_TYPE" CharSet="UNICODE" />
+    <PROPERTY Name="ExtCol1" Type="string(100)" ColumnName="EXT_COL_1" CharSet="UNICODE" />
+    <PROPERTY Name="EctCol2" Type="string(100)" ColumnName="EXT_COL_2" />
+    <PROPERTY Name="PriorityNo" Type="int" ColumnName="PRIORITY_NO" />
+    <PROPERTY Name="PriorityStartTime" Type="timestamp" ColumnName="PRIORITY_START_TM" />
+    <PROPERTY Name="PriorityEndTime" Type="timestamp" ColumnName="PRIORITY_END_TM" />
+    <PROPERTY Name="IsALCREnabled" Type="string(4)" ColumnName="IS_ALCR_ENABLED" CharSet="UNICODE" />
+    <UNIQUE PhysicalName="RELATIONAL_OBJ_COL_MAP_PK" PrimaryKey="true">
+      <KEY Property="ColumnRomId" />
+    </UNIQUE>
+    <PRIMARY_INDEX PhysicalName="RELATIONAL_OBJ_COL_MAPNUPI">
+      <KEY Property="ColumnRelationName" />
+      <KEY Property="ColumnRomId" />
+    </PRIMARY_INDEX>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/MDRM/RelationalObjectData.mtt-->
+  <DEFINE_DOCUMENT Name="RelationalObjectData" TableName="MST_REL_OBJ_DATA_VAL" TempTable="GT_REL_OBJ_DATA_VAL" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/MDRM/RelationalObjectData.mtt-->
+    <!--Toolkit::models/Toolkit Models/MDRM/RelationalObjectData.mtt-->
+    <PROPERTY Name="RovId" Type="int" ColumnName="RODV_ID" Required="true" />
+    <PROPERTY Name="RomId" Type="int" ColumnName="ROM_ID" Required="true" />
+    <PROPERTY Name="ParentRokdVal1" Type="string(500)" ColumnName="PARENT_ROKD_VAL1" CharSet="UNICODE" />
+    <PROPERTY Name="ParentRokdVal2" Type="string(500)" ColumnName="PARENT_ROKD_VAL2" CharSet="UNICODE" />
+    <PROPERTY Name="ParentRokdVal3" Type="string(500)" ColumnName="PARENT_ROKD_VAL3" CharSet="UNICODE" />
+    <PROPERTY Name="ParentRokdVal4" Type="string(500)" ColumnName="PARENT_ROKD_VAL4" CharSet="UNICODE" />
+    <PROPERTY Name="ParentRokdVal5" Type="string(500)" ColumnName="PARENT_ROKD_VAL5" CharSet="UNICODE" />
+    <PROPERTY Name="ChildRokdVal1" Type="string(500)" ColumnName="CHILD_ROKD_VAL1" CharSet="UNICODE" />
+    <PROPERTY Name="ChildRokdVal2" Type="string(500)" ColumnName="CHILD_ROKD_VAL2" CharSet="UNICODE" />
+    <PROPERTY Name="ChildRokdVal3" Type="string(500)" ColumnName="CHILD_ROKD_VAL3" CharSet="UNICODE" />
+    <PROPERTY Name="ChildRokdVal4" Type="string(500)" ColumnName="CHILD_ROKD_VAL4" CharSet="UNICODE" />
+    <PROPERTY Name="ChildRokdVal5" Type="string(500)" ColumnName="CHILD_ROKD_VAL5" CharSet="UNICODE" />
+    <PROPERTY Name="RopValue1" Type="string(200)" ColumnName="ROP_VAL1" CharSet="UNICODE" />
+    <PROPERTY Name="RopValue2" Type="string(200)" ColumnName="ROP_VAL2" CharSet="UNICODE" />
+    <PROPERTY Name="RopValue3" Type="string(200)" ColumnName="ROP_VAL3" CharSet="UNICODE" />
+    <PROPERTY Name="RopValue4" Type="string(200)" ColumnName="ROP_VAL4" CharSet="UNICODE" />
+    <PROPERTY Name="RopValue5" Type="string(200)" ColumnName="ROP_VAL5" CharSet="UNICODE" />
+    <PROPERTY Name="EffectiveStartDate" Type="date" ColumnName="EFFECTIVE_START_DATE" />
+    <PROPERTY Name="EffectiveEndDate" Type="date" ColumnName="EFFECTIVE_END_DATE" />
+    <PROPERTY Name="ApprovedBy" Type="string(200)" ColumnName="APPROVED_BY" />
+    <PROPERTY Name="Comments" Type="string(2000)" ColumnName="COMMENTS" />
+    <PROPERTY Name="Status" Type="string(25)" ColumnName="STATUS" />
+    <PROPERTY Name="ApprovedDate" Type="date" ColumnName="APPROVED_DATE" />
+    <PROPERTY Name="ParentRokdVal6" Type="string(500)" ColumnName="PARENT_ROKD_VAL6" CharSet="UNICODE" />
+    <PROPERTY Name="ParentRokdVal7" Type="string(500)" ColumnName="PARENT_ROKD_VAL7" CharSet="UNICODE" />
+    <PROPERTY Name="ParentRokdVal8" Type="string(500)" ColumnName="PARENT_ROKD_VAL8" CharSet="UNICODE" />
+    <PROPERTY Name="ParentRokdVal9" Type="string(500)" ColumnName="PARENT_ROKD_VAL9" CharSet="UNICODE" />
+    <PROPERTY Name="ParentRokdVal10" Type="string(500)" ColumnName="PARENT_ROKD_VAL10" CharSet="UNICODE" />
+    <PROPERTY Name="ChildRokdVal6" Type="string(500)" ColumnName="CHILD_ROKD_VAL6" CharSet="UNICODE" />
+    <PROPERTY Name="ChildRokdVal7" Type="string(500)" ColumnName="CHILD_ROKD_VAL7" CharSet="UNICODE" />
+    <PROPERTY Name="ChildRokdVal8" Type="string(500)" ColumnName="CHILD_ROKD_VAL8" CharSet="UNICODE" />
+    <PROPERTY Name="ChildRokdVal9" Type="string(500)" ColumnName="CHILD_ROKD_VAL9" CharSet="UNICODE" />
+    <PROPERTY Name="ChildRokdVal10" Type="string(500)" ColumnName="CHILD_ROKD_VAL10" CharSet="UNICODE" />
+    <UNIQUE PhysicalName="RelationalObjectDataUK" PrimaryKey="true">
+      <KEY Property="RovId" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="FK_ROM" LinkedDocument="RelationalObjectMap">
+      <!--HardLink#Toolkit::models/Toolkit Models/MDRM/RelationalObjectMap.mtt [Unique Key] RelationalObjectMapUK-->
+      <MAP_PROPERTY From="RomId" To="RomId" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/MDRM/RelationalObjectFilter.mtt-->
+  <DEFINE_DOCUMENT Name="RelationalObjectFilter" TableName="MST_RO_FILTER" TempTable="GT_RO_FILTER" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/MDRM/RelationalObjectFilter.mtt-->
+    <!--Toolkit::models/Toolkit Models/MDRM/RelationalObjectFilter.mtt-->
+    <PROPERTY Name="FilterId" Type="int" ColumnName="FILTER_ID" Required="true" />
+    <PROPERTY Name="RoId" Type="int" ColumnName="RO_ID" Required="true" />
+    <PROPERTY Name="FilterName" Type="string(30)" ColumnName="FILTER_NAME" />
+    <PROPERTY Name="LogicalFilterCondition" Type="string(10000)" ColumnName="FILTER_CONDITION_LOG" />
+    <PROPERTY Name="FilterCondition" Type="string(10000)" ColumnName="FILTER_CONDITION" />
+    <PROPERTY Name="FilterDescription" Type="string(1000)" ColumnName="DESCRIPTION" />
+    <PROPERTY Name="RomId" Type="int" ColumnName="ROM_ID" />
+    <PROPERTY Name="IsGlobal" Type="char(1)" ColumnName="IS_GLOBAL" />
+    <PROPERTY Name="MdmUserRoleId" Type="string(64)" ColumnName="MDM_APP_USER_ID_OR_ROLE_ID" />
+    <PROPERTY Name="IsActive" Type="char(1)" ColumnName="IS_ACTIVE" />
+    <PROPERTY Name="FilterConditionVersion" Type="string(10000)" ColumnName="VER_FILTER_CONDITION" />
+    <UNIQUE PhysicalName="FILTER_ID_PK" PrimaryKey="true">
+      <KEY Property="FilterId" />
+    </UNIQUE>
+    <INDEX PhysicalName="FilterNameSI" Unique="true">
+      <KEY Property="FilterName" />
+    </INDEX>
+    <INDEX PhysicalName="SI_RO_ID" Unique="true">
+      <KEY Property="RoId" />
+    </INDEX>
+    <DOCUMENTLINK Name="FK_ROID" LinkedDocument="RelationalObject">
+      <!--HardLink#Toolkit::models/Toolkit Models/MDRM/RelationalObject.mtt [Unique Key] RelationalObjectUK-->
+      <MAP_PROPERTY From="RoId" To="RoId" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="FK_ROMID" LinkedDocument="RelationalObjectMap">
+      <!--HardLink#Toolkit::models/Toolkit Models/MDRM/RelationalObjectMap.mtt [Unique Key] RelationalObjectMapUK-->
+      <MAP_PROPERTY From="RomId" To="RomId" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/MDRM/RelationalObjectKeyType.mtt-->
+  <DEFINE_DOCUMENT Name="RelationalObjectKeyType" TableName="MST_REL_OBJ_KEY_TYPE" TempTable="GT_REL_OBJ_KEY_TYPE" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/MDRM/RelationalObjectKeyType.mtt-->
+    <!--Toolkit::models/Toolkit Models/MDRM/RelationalObjectKeyType.mtt-->
+    <PROPERTY Name="RoktId" Type="int" ColumnName="ROKT_ID" Required="true" />
+    <PROPERTY Name="RoId" Type="int" ColumnName="RO_ID" Required="true" />
+    <PROPERTY Name="KeyType" Type="char(1)" ColumnName="KEY_TYPE">
+      <VALID_VALUES>
+        <OPTION Value="P" />
+        <OPTION Value="F" />
+        <OPTION Value="O" />
+        <OPTION Value="S" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="KeyName" Type="string(30)" ColumnName="NAME" />
+    <PROPERTY Name="KeyDescription" Type="string(1000)" ColumnName="DESCRIPTION" />
+    <UNIQUE PhysicalName="RelationalObjKeyTypeUK" PrimaryKey="true">
+      <KEY Property="RoktId" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="RelationalObjKeyTypeFK" LinkedDocument="RelationalObject">
+      <!--HardLink#Toolkit::models/Toolkit Models/MDRM/RelationalObject.mtt [Unique Key] RelationalObjectUK-->
+      <MAP_PROPERTY From="RoId" To="RoId" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <!--reverse links-->
+    <DOCUMENTLINK Name="RelObjKeyDesFK" LinkedDocument="RelationalObjKeyDesc" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/MDRM/RelationalObjKeyDesc.mtt [Hard Link] RelationalObjKeyDescFK-->
+      <MAP_PROPERTY From="RoktId" To="RoktId" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="FK_ROKT_P" LinkedDocument="RelationalObjectMap" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/MDRM/RelationalObjectMap.mtt [Hard Link] FK_ROKT_P-->
+      <MAP_PROPERTY From="RoktId" To="ParentROKTId" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="FK_ROKT_C" LinkedDocument="RelationalObjectMap" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/MDRM/RelationalObjectMap.mtt [Hard Link] FK_ROKT_C-->
+      <MAP_PROPERTY From="RoktId" To="ChildROKTId" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/MDRM/RelationalObjectMap.mtt-->
+  <DEFINE_DOCUMENT Name="RelationalObjectMap" TableName="MST_REL_OBJ_MAP" TempTable="GT_REL_OBJ_MAP" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/MDRM/RelationalObjectMap.mtt-->
+    <!--Toolkit::models/Toolkit Models/MDRM/RelationalObjectMap.mtt-->
+    <PROPERTY Name="RomId" Type="int" ColumnName="ROM_ID" Required="true" />
+    <PROPERTY Name="RelationName" Type="string(50)" ColumnName="REL_NAME" />
+    <PROPERTY Name="RelationType" Type="string(50)" ColumnName="REL_TYPE" />
+    <PROPERTY Name="ParentROId" Type="int" ColumnName="PARENT_RO_ID" Required="true" />
+    <PROPERTY Name="ChildROId" Type="int" ColumnName="CHILD_RO_ID" Required="true" />
+    <PROPERTY Name="ParentROKTId" Type="int" ColumnName="PARENT_ROKT_ID" Required="true" />
+    <PROPERTY Name="ChildROKTId" Type="int" ColumnName="CHILD_ROKT_ID" Required="true" />
+    <PROPERTY Name="TargetTableRelObjId" Type="int" ColumnName="TGT_TBL_RO_ID" />
+    <PROPERTY Name="MapParentColumn1" Type="string(30)" ColumnName="MAP_PARENT_COL1" />
+    <PROPERTY Name="MapParentColumn2" Type="string(30)" ColumnName="MAP_PARENT_COL2" />
+    <PROPERTY Name="MapParentColumn3" Type="string(30)" ColumnName="MAP_PARENT_COL3" />
+    <PROPERTY Name="MapParentColumn4" Type="string(30)" ColumnName="MAP_PARENT_COL4" />
+    <PROPERTY Name="MapParentColumn5" Type="string(30)" ColumnName="MAP_PARENT_COL5" />
+    <PROPERTY Name="MapChildColumn1" Type="string(30)" ColumnName="MAP_CHILD_COL1" />
+    <PROPERTY Name="MapChildColumn2" Type="string(30)" ColumnName="MAP_CHILD_COL2" />
+    <PROPERTY Name="MapChildColumn3" Type="string(30)" ColumnName="MAP_CHILD_COL3" />
+    <PROPERTY Name="MapChildColumn4" Type="string(30)" ColumnName="MAP_CHILD_COL4" />
+    <PROPERTY Name="MapChildColumn5" Type="string(30)" ColumnName="MAP_CHILD_COL5" />
+    <PROPERTY Name="ViewerQuery" Type="string(19000)" ColumnName="RM_VIEWER_QUERY" />
+    <PROPERTY Name="RelationDescription" Type="string(1000)" ColumnName="DESCRIPTION" />
+    <PROPERTY Name="MapParentLogColumn1" Type="string(30)" ColumnName="MAP_PARENT_LOG_COL1" />
+    <PROPERTY Name="MapParentLogColumn2" Type="string(30)" ColumnName="MAP_PARENT_LOG_COL2" />
+    <PROPERTY Name="MapParentLogColumn3" Type="string(30)" ColumnName="MAP_PARENT_LOG_COL3" />
+    <PROPERTY Name="MapParentLogColumn4" Type="string(30)" ColumnName="MAP_PARENT_LOG_COL4" />
+    <PROPERTY Name="MapParentLogColumn5" Type="string(30)" ColumnName="MAP_PARENT_LOG_COL5" />
+    <PROPERTY Name="MapChildLogColumn1" Type="string(30)" ColumnName="MAP_CHILD_LOG_COL1" />
+    <PROPERTY Name="MapChildLogColumn2" Type="string(30)" ColumnName="MAP_CHILD_LOG_COL2" />
+    <PROPERTY Name="MapChildLogColumn3" Type="string(30)" ColumnName="MAP_CHILD_LOG_COL3" />
+    <PROPERTY Name="MapChildLogColumn4" Type="string(30)" ColumnName="MAP_CHILD_LOG_COL4" />
+    <PROPERTY Name="MapChildLogColumn5" Type="string(30)" ColumnName="MAP_CHILD_LOG_COL5" />
+    <PROPERTY Name="RomOrigin" Type="char(1)" ColumnName="ROM_ORIGIN" />
+    <PROPERTY Name="MapParentColumn6" Type="string(30)" ColumnName="MAP_PARENT_COL6" />
+    <PROPERTY Name="MapParentColumn7" Type="string(30)" ColumnName="MAP_PARENT_COL7" />
+    <PROPERTY Name="MapParentColumn8" Type="string(30)" ColumnName="MAP_PARENT_COL8" />
+    <PROPERTY Name="MapParentColumn9" Type="string(30)" ColumnName="MAP_PARENT_COL9" />
+    <PROPERTY Name="MapParentColumn10" Type="string(30)" ColumnName="MAP_PARENT_COL10" />
+    <PROPERTY Name="MapChildColumn6" Type="string(30)" ColumnName="MAP_CHILD_COL6" />
+    <PROPERTY Name="MapChildColumn7" Type="string(30)" ColumnName="MAP_CHILD_COL7" />
+    <PROPERTY Name="MapChildColumn8" Type="string(30)" ColumnName="MAP_CHILD_COL8" />
+    <PROPERTY Name="MapChildColumn9" Type="string(30)" ColumnName="MAP_CHILD_COL9" />
+    <PROPERTY Name="MapChildColumn10" Type="string(30)" ColumnName="MAP_CHILD_COL10" />
+    <PROPERTY Name="MapParentLogColumn6" Type="string(30)" ColumnName="MAP_PARENT_LOG_COL6" />
+    <PROPERTY Name="MapParentLogColumn7" Type="string(30)" ColumnName="MAP_PARENT_LOG_COL7" />
+    <PROPERTY Name="MapParentLogColumn8" Type="string(30)" ColumnName="MAP_PARENT_LOG_COL8" />
+    <PROPERTY Name="MapParentLogColumn9" Type="string(30)" ColumnName="MAP_PARENT_LOG_COL9" />
+    <PROPERTY Name="MapParentLogColumn10" Type="string(30)" ColumnName="MAP_PARENT_LOG_COL10" />
+    <PROPERTY Name="MapChildLogColumn6" Type="string(30)" ColumnName="MAP_CHILD_LOG_COL6" />
+    <PROPERTY Name="MapChildLogColumn7" Type="string(30)" ColumnName="MAP_CHILD_LOG_COL7" />
+    <PROPERTY Name="MapChildLogColumn8" Type="string(30)" ColumnName="MAP_CHILD_LOG_COL8" />
+    <PROPERTY Name="MapChildLogColumn9" Type="string(30)" ColumnName="MAP_CHILD_LOG_COL9" />
+    <PROPERTY Name="MapChildLogColumn10" Type="string(30)" ColumnName="MAP_CHILD_LOG_COL10" />
+    <UNIQUE PhysicalName="RelationalObjectMapUK" PrimaryKey="true">
+      <KEY Property="RomId" />
+    </UNIQUE>
+    <INDEX PhysicalName="RelationNameSI" Unique="true">
+      <KEY Property="RelationName" />
+    </INDEX>
+    <DOCUMENTLINK Name="FK_RO_P" LinkedDocument="RelationalObject">
+      <!--HardLink#Toolkit::models/Toolkit Models/MDRM/RelationalObject.mtt [Unique Key] RelationalObjectUK-->
+      <MAP_PROPERTY From="ParentROId" To="RoId" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="FK_RO_C" LinkedDocument="RelationalObject">
+      <!--HardLink#Toolkit::models/Toolkit Models/MDRM/RelationalObject.mtt [Unique Key] RelationalObjectUK-->
+      <MAP_PROPERTY From="ChildROId" To="RoId" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="FK_RO_TT" LinkedDocument="RelationalObject">
+      <!--HardLink#Toolkit::models/Toolkit Models/MDRM/RelationalObject.mtt [Unique Key] RelationalObjectUK-->
+      <MAP_PROPERTY From="TargetTableRelObjId" To="RoId" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="FK_ROKT_P" LinkedDocument="RelationalObjectKeyType">
+      <!--HardLink#Toolkit::models/Toolkit Models/MDRM/RelationalObjectKeyType.mtt [Unique Key] RelationalObjKeyTypeUK-->
+      <MAP_PROPERTY From="ParentROKTId" To="RoktId" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="FK_ROKT_C" LinkedDocument="RelationalObjectKeyType">
+      <!--HardLink#Toolkit::models/Toolkit Models/MDRM/RelationalObjectKeyType.mtt [Unique Key] RelationalObjKeyTypeUK-->
+      <MAP_PROPERTY From="ChildROKTId" To="RoktId" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <!--reverse links-->
+    <DOCUMENTLINK Name="RelObjMap_CrossRefRel_FK" LinkedDocument="CrossRefRelation" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/MDRM/CrossRefRelation.mtt [Hard Link] RelObjMapFK-->
+      <MAP_PROPERTY From="RomId" To="RomId" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="FK_ROM" LinkedDocument="RelationalObjProperties" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/MDRM/RelationalObjProperties.mtt [Hard Link] FK_ROM-->
+      <MAP_PROPERTY From="RomId" To="RomId" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="ROMID_ROM_RL_FK" LinkedDocument="RelationalObjectData" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/MDRM/RelationalObjectData.mtt [Hard Link] FK_ROM-->
+      <MAP_PROPERTY From="RomId" To="RomId" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="ROM_ROFILTERS_RL_FL" LinkedDocument="RelationalObjectFilter" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/MDRM/RelationalObjectFilter.mtt [Hard Link] FK_ROMID-->
+      <MAP_PROPERTY From="RomId" To="RomId" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/LRDM/Standard_Map.mtt-->
+  <DEFINE_DOCUMENT Name="Standard_Map" TableName="MST_STANDARD_MAP" TempTable="GT_STANDARD_MAP" RLS_ENABLED="false" CLS_ENABLED="false" AuditTrail="true" IsExtendable="true">
+    <!--[toolkit]::models/Toolkit Models/LRDM/Standard_Map.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Standard_Map.mtt-->
+    <PROPERTY Name="Source_Code" Type="string(100)" ColumnName="Source_Code" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Domain_Id" Type="int" ColumnName="Domain_Id" Required="true" />
+    <PROPERTY Name="Code_Set_Id" Type="int" ColumnName="Code_Set_Id" Required="true" />
+    <PROPERTY Name="EDW_Code" Type="int" ColumnName="EDW_Code" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="Source_Code_Value_Id" Type="string(100)" ColumnName="Source_Code_Value_Id" CharSet="UNICODE" />
+    <PROPERTY Name="Other_Description" Type="string(1024)" ColumnName="OTHER_DESCRIPTION" CharSet="UNICODE" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="STANDARD_MAP_PK" PrimaryKey="true">
+      <KEY Property="Ctl_Id" />
+      <KEY Property="Code_Set_Id" />
+      <KEY Property="Source_Code" />
+      <KEY Property="EDW_Code" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="Standard_Map_FK" LinkedDocument="Code_Set">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Code_Set.mtt [Unique Key] Code_set_PK-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+    </DOCUMENTLINK>
+    <DOCUMENTLINK Name="DomainFk" LinkedDocument="Domain">
+      <!--HardLink#Toolkit::models/Toolkit Models/LRDM/Domain.mtt [Unique Key] Domain_Pk-->
+      <MAP_PROPERTY From="Code_Set_Id" To="Code_Set_Id" />
+      <MAP_PROPERTY From="Domain_Id" To="Domain_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/System/SystemProperties.mtt-->
+  <DEFINE_DOCUMENT Name="SystemProperties" TableName="MST_SYS_PROPS" TempTable="GT_SYS_PROPS" SurrogateKey="true" RLS_ENABLED="false" CLS_ENABLED="false" Cache="true">
+    <!--[toolkit]::models/Toolkit Models/System/SystemProperties.mtt-->
+    <!--Toolkit::models/Toolkit Models/System/SystemProperties.mtt-->
+    <PROPERTY Name="propertyName" Type="string(100)" ColumnName="PROPNAME" Required="true" />
+    <PROPERTY Name="propertyValue" Type="string(200)" ColumnName="PROPVALUE" Required="true" />
+    <PROPERTY Name="dataType" Type="string(20)" ColumnName="DATA_TYPE" Required="true" />
+    <PROPERTY Name="description" Type="string(255)" ColumnName="DESCRIPTION" />
+    <PROPERTY Name="type" Type="string(40)" ColumnName="PROPTYPE" />
+    <PROPERTY Name="ID" Type="string(40)" ColumnName="ID" Required="true" />
+    <UNIQUE PhysicalName="SYSTEM_PROP_PK" PrimaryKey="true">
+      <KEY Property="ID" />
+    </UNIQUE>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/LRDM/Valid_Language.mtt-->
+  <DEFINE_DOCUMENT Name="Valid_Language" TableName="MST_VALID_LANGUAGE" TempTable="GT_VALID_LANGUAGE" RLS_ENABLED="false" CLS_ENABLED="false" AuditTrail="true" IsExtendable="true">
+    <!--[toolkit]::models/Toolkit Models/LRDM/Valid_Language.mtt-->
+    <!--Toolkit::models/Toolkit Models/LRDM/Valid_Language.mtt-->
+    <PROPERTY Name="Language_Id" Type="int" ColumnName="Language_Id" Required="true" />
+    <PROPERTY Name="Language_Name" Type="string(30)" ColumnName="LANGUAGE_NAME" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="Description" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Start_Date" Type="date" ColumnName="Start_Date" Required="true" />
+    <PROPERTY Name="End_Date" Type="date" ColumnName="End_Date" Required="true" Default="12/31/9999" />
+    <PROPERTY Name="Record_Deleted_Flag" Type="int" ColumnName="Record_Deleted_Flag" Required="true" Default="0" />
+    <PROPERTY Name="Ctl_Id" Type="int" ColumnName="Ctl_Id" Required="true" />
+    <PROPERTY Name="Process_Name" Type="char(30)" ColumnName="Process_Name" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="Process_Id" Required="true" />
+    <PROPERTY Name="Update_Process_Name" Type="char(30)" ColumnName="Update_Process_Name" />
+    <PROPERTY Name="Update_Process_Id" Type="int" ColumnName="Update_Process_Id" />
+    <PROPERTY Name="EXT_ATTRB_1" ColumnName="EXT_ATTRB_1" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_2" ColumnName="EXT_ATTRB_2" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_3" ColumnName="EXT_ATTRB_3" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_4" ColumnName="EXT_ATTRB_4" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_5" ColumnName="EXT_ATTRB_5" IsExtended="true" Type="string(200)" />
+    <PROPERTY Name="EXT_ATTRB_DATE_1" ColumnName="EXT_ATTRB_DATE_1" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DATE_2" ColumnName="EXT_ATTRB_DATE_2" IsExtended="true" Type="date" />
+    <PROPERTY Name="EXT_ATTRB_DEC_1" ColumnName="EXT_ATTRB_DEC_1" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_2" ColumnName="EXT_ATTRB_DEC_2" IsExtended="true" Type="decimal(18,8)" />
+    <PROPERTY Name="EXT_ATTRB_DEC_3" ColumnName="EXT_ATTRB_DEC_3" IsExtended="true" Type="decimal(18,8)" />
+    <UNIQUE PhysicalName="VALID_LANGUAGE_PK" PrimaryKey="true">
+      <KEY Property="Language_Id" />
+    </UNIQUE>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <!--reverse links-->
+    <DOCUMENTLINK Name="Language_ID_LINK" LinkedDocument="Reference_Description" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/LRDM/Reference_Description.mtt [Hard Link] _Reference_Desc_FK1-->
+      <MAP_PROPERTY From="Language_Id" To="Language_Id" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/System/VersionDetails.mtt-->
+  <DEFINE_DOCUMENT Name="VersionDetails" TableName="MST_VERSION_DETAILS" TempTable="GT_VERSION_DETAILS" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/System/VersionDetails.mtt-->
+    <!--Toolkit::models/Toolkit Models/System/VersionDetails.mtt-->
+    <PROPERTY Name="versionId" Type="int" ColumnName="VERSION_ID" Required="true" />
+    <PROPERTY Name="srcPhyTableName" Type="string(64)" ColumnName="SRC_PHY_TABLE_NAME" Required="true" />
+    <PROPERTY Name="tgtPhyTableName" Type="string(64)" ColumnName="TGT_PHY_TABLE_NAME" Required="true" />
+    <PROPERTY Name="snapshotReqTime" Type="timestamp" ColumnName="SNAPSHOT_REQ_TIME" />
+    <PROPERTY Name="verStatus" Type="string(12)" ColumnName="VER_STATUS">
+      <VALID_VALUES>
+        <OPTION Value="COMPLETED" />
+        <OPTION Value="INPROGRESS" />
+        <OPTION Value="FAILED" />
+        <OPTION Value="PENDING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <UNIQUE PhysicalName="VERSION_DETAILS_PK" PrimaryKey="true">
+      <KEY Property="srcPhyTableName" />
+      <KEY Property="versionId" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="VersionInfoFk" LinkedDocument="VersionInfo">
+      <!--HardLink#Toolkit::models/Toolkit Models/System/VersionInfo.mtt [Unique Key] VersionInfoPk-->
+      <MAP_PROPERTY From="versionId" To="versionId" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/System/VersionInfo.mtt-->
+  <DEFINE_DOCUMENT Name="VersionInfo" TableName="MST_VERSION_INFO" TempTable="GT_VERSION_INFO" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/System/VersionInfo.mtt-->
+    <!--Toolkit::models/Toolkit Models/System/VersionInfo.mtt-->
+    <PROPERTY Name="versionId" Type="int" ColumnName="VERSION_ID" Required="true" />
+    <PROPERTY Name="creationDate" Type="date" ColumnName="CREATION_DATE" Required="true" />
+    <PROPERTY Name="reason" Type="string(200)" ColumnName="REASON" />
+    <UNIQUE PhysicalName="VERSION_INFO_PK" PrimaryKey="true">
+      <KEY Property="versionId" />
+    </UNIQUE>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <!--reverse links-->
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/Manage Processes/Workflow Process/Wf_Next_Nodes.mtt-->
+  <DEFINE_DOCUMENT Name="Wf_Next_Nodes" TableName="WF_NEXT_NODES" TempTable="GT_WF_NEXT_NODES" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/Manage Processes/Workflow Process/Wf_Next_Nodes.mtt-->
+    <!--Toolkit::models/Toolkit Models/Manage Processes/Workflow Process/Wf_Next_Nodes.mtt-->
+    <PROPERTY Name="Node_Id" Type="int" ColumnName="NODE_ID" Required="true" />
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="PROCESS_ID" Required="true" />
+    <PROPERTY Name="Next_Node_Id" Type="int" ColumnName="NEXT_NODE_ID" Required="true" />
+    <PROPERTY Name="Next_Node_Seq" Type="int" ColumnName="NEXT_NODE_SEQ" Required="true" />
+    <PROPERTY Name="Node_Condition" Type="string(1024)" ColumnName="NODE_CONDITION" />
+    <PROPERTY Name="Condition_Desc" Type="string(500)" ColumnName="CONDITION_DESC" CharSet="UNICODE" />
+    <PROPERTY Name="Presentation_Data" Type="string(5000)" ColumnName="PRESENTATION_DATA" />
+    <UNIQUE PhysicalName="WF_NEXT_NODES_PK" PrimaryKey="true">
+      <KEY Property="Next_Node_Id" />
+      <KEY Property="Next_Node_Seq" />
+      <KEY Property="Node_Id" />
+      <KEY Property="Process_Id" />
+    </UNIQUE>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/Manage Processes/Workflow Process/Wf_Params.mtt-->
+  <DEFINE_DOCUMENT Name="Wf_Params" TableName="WF_PARAMS" TempTable="GT_WF_PARAMS" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/Manage Processes/Workflow Process/Wf_Params.mtt-->
+    <!--Toolkit::models/Toolkit Models/Manage Processes/Workflow Process/Wf_Params.mtt-->
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="PROCESS_ID" Required="true" />
+    <PROPERTY Name="Node_Id" Type="int" ColumnName="NODE_ID" />
+    <PROPERTY Name="Param_Type" Type="char(1)" ColumnName="PARAM_TYPE" Required="true" />
+    <PROPERTY Name="Param_Name" Type="string(64)" ColumnName="PARAM_NAME" Required="true" />
+    <PROPERTY Name="Display_Name" Type="string(120)" ColumnName="PARAM_DISP_NAME" CharSet="UNICODE" />
+    <PROPERTY Name="Param_Value" Type="string(10000)" ColumnName="PARAM_VALUE" CharSet="UNICODE" />
+    <PROPERTY Name="Param_Desc" Type="string(200)" ColumnName="PARAM_DESC" CharSet="UNICODE" />
+    <PROPERTY Name="Is_Required" Type="char(1)" ColumnName="IS_REQUIRED" />
+    <PROPERTY Name="Param_Value_Type" Type="string(20)" ColumnName="PARAM_VALUE_TYPE" Default="string" />
+    <PROPERTY Name="Is_Hidden" Type="char(1)" ColumnName="IS_HIDDEN" Default="N" />
+    <PROPERTY Name="Is_Editable" Type="char(1)" ColumnName="IS_EDITABLE" Default="Y" />
+    <UNIQUE PhysicalName="WF_NODE_PARAMS_PK" PrimaryKey="true">
+      <KEY Property="Node_Id" />
+      <KEY Property="Param_Name" />
+      <KEY Property="Param_Type" />
+      <KEY Property="Process_Id" />
+    </UNIQUE>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/Manage Processes/Workflow Process/Wf_Process.mtt-->
+  <DEFINE_DOCUMENT Name="Wf_Process" TableName="WF_PROCESS" TempTable="GT_WF_PROCESS" RLS_ENABLED="false" CLS_ENABLED="false" Cache="true">
+    <!--[toolkit]::models/Toolkit Models/Manage Processes/Workflow Process/Wf_Process.mtt-->
+    <!--Toolkit::models/Toolkit Models/Manage Processes/Workflow Process/Wf_Process.mtt-->
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="PROCESS_ID" Required="true" />
+    <PROPERTY Name="Process_Name" Type="string(64)" ColumnName="PROCESS_NAME" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Process_Template" Type="string(64)" ColumnName="PROCESS_TEMPLATE" CharSet="UNICODE" />
+    <PROPERTY Name="Process_Description" Type="string(1024)" ColumnName="DESCRIPTION" CharSet="UNICODE" />
+    <PROPERTY Name="Notification_Enabled" Type="boolean" ColumnName="NOTIFICATION_ENABLED" />
+    <PROPERTY Name="Notification_Details" Type="string(1000)" ColumnName="NOTIFICATION_DETAILS" CharSet="UNICODE" />
+    <PROPERTY Name="Manage_Auth_Role" Type="string(500)" ColumnName="MANAGE_AUTH_ROLE" />
+    <PROPERTY Name="Execute_Auth_Role" Type="string(500)" ColumnName="EXECUTE_AUTH_ROLE" />
+    <PROPERTY Name="Enable_Queryband" Type="boolean" ColumnName="ENABLE_QUERYBAND" />
+    <PROPERTY Name="Workflow_Template" Type="string(250)" ColumnName="WORKFLOW_TEMPLATE" CharSet="UNICODE" />
+    <PROPERTY Name="Process_Version" Type="int" ColumnName="PROCESS_VERSION" Default="1" />
+    <PROPERTY Name="Effective_Date" Type="date" ColumnName="EFFECTIVE_DATE" />
+    <PROPERTY Name="Is_Dirty" Type="char(1)" ColumnName="IS_DIRTY" />
+    <PROPERTY Name="Service" Type="string(64)" ColumnName="SERVICE" />
+    <PROPERTY Name="Category" Type="string(30)" ColumnName="CATEGORY" Default="Runtime" />
+    <PROPERTY Name="Log_Level" Type="string(30)" ColumnName="LOG_LEVEL" />
+    <PROPERTY Name="Is_Schedulable" Type="string(10)" ColumnName="IS_SCHEDULABLE" />
+    <PROPERTY Name="Is_Favorite" Type="string(10)" ColumnName="IS_FAVORITE" />
+    <UNIQUE PhysicalName="WF_PROCESS_PK" PrimaryKey="true">
+      <KEY Property="Process_Id" />
+    </UNIQUE>
+    <INDEX PhysicalName="WF_PROCESS_USI" Unique="true">
+      <KEY Property="Process_Name" />
+      <KEY Property="Service" />
+    </INDEX>
+    <DOCUMENTLINK Name="wf_workflowsLink" LinkedDocument="Wf_Workflows">
+      <!--HardLink#Toolkit::models/Toolkit Models/Manage Processes/Workflow Process/Wf_Workflows.mtt [Unique Key] WfWorkflowPk-->
+      <MAP_PROPERTY From="Process_Id" To="Process_Id" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/Manage Processes/Workflow Process/Wf_Process_Instance.mtt-->
+  <DEFINE_DOCUMENT Name="Wf_Process_Instance" TableName="WF_PROCESS_INSTANCE" TempTable="GT_WF_PROCESS_INSTANCE" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/Manage Processes/Workflow Process/Wf_Process_Instance.mtt-->
+    <!--Toolkit::models/Toolkit Models/Manage Processes/Workflow Process/Wf_Process_Instance.mtt-->
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="PROCESS_ID" Required="true" />
+    <PROPERTY Name="WfInstance_Id" Type="string(250)" ColumnName="WF_INSTANCE_ID" Required="true" />
+    <PROPERTY Name="Description" Type="string(1024)" ColumnName="DESCRIPTION" CharSet="UNICODE" />
+    <PROPERTY Name="Wf_Start_Date" Type="date" ColumnName="WF_START_DATE" />
+    <PROPERTY Name="Wf_End_Date" Type="date" ColumnName="WF_END_DATE" />
+    <PROPERTY Name="Status" Type="string(24)" ColumnName="STATUS" CharSet="UNICODE" />
+    <UNIQUE PhysicalName="WF_INSTANCE_PK" PrimaryKey="true">
+      <KEY Property="Process_Id" />
+      <KEY Property="WfInstance_Id" />
+    </UNIQUE>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/Manage Processes/Workflow Process/Wf_Process_Nodes.mtt-->
+  <DEFINE_DOCUMENT Name="Wf_Process_Nodes" TableName="WF_PROCESS_NODES" TempTable="GT_WF_PROCESS_NODES" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/Manage Processes/Workflow Process/Wf_Process_Nodes.mtt-->
+    <!--Toolkit::models/Toolkit Models/Manage Processes/Workflow Process/Wf_Process_Nodes.mtt-->
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="PROCESS_ID" Required="true" />
+    <PROPERTY Name="Node_Id" Type="int" ColumnName="NODE_ID" Required="true" />
+    <PROPERTY Name="Node_Name" Type="string(64)" ColumnName="NODE_NAME" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Node_Desc" Type="string(200)" ColumnName="NODE_DESC" CharSet="UNICODE" />
+    <PROPERTY Name="Node_Type" Type="string(30)" ColumnName="NODE_TYPE" />
+    <PROPERTY Name="Node_Sub_Type" Type="string(30)" ColumnName="NODE_SUB_TYPE" />
+    <PROPERTY Name="Node_Input" Type="string(5000)" ColumnName="NODE_INPUT" />
+    <PROPERTY Name="Node_Output" Type="string(5000)" ColumnName="NODE_OUTPUT" />
+    <PROPERTY Name="Presentation_Data" Type="string(5000)" ColumnName="PRESENTATION_DATA" />
+    <UNIQUE PhysicalName="WF_PROCESS_NODES_PK" PrimaryKey="true">
+      <KEY Property="Node_Id" />
+      <KEY Property="Process_Id" />
+    </UNIQUE>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/Manage Processes/Workflow Process/Wf_Process_Status.mtt-->
+  <DEFINE_DOCUMENT Name="Wf_Process_Status" TableName="WF_PROCESS_STATUS" TempTable="GT_WF_PROCESS_STATUS" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/Manage Processes/Workflow Process/Wf_Process_Status.mtt-->
+    <!--Toolkit::models/Toolkit Models/Manage Processes/Workflow Process/Wf_Process_Status.mtt-->
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="PROCESS_ID" Required="true" />
+    <PROPERTY Name="Node_Name" Type="string(64)" ColumnName="NODE_NAME" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Status_Type" Type="char(1)" ColumnName="STATUS_TYPE" />
+    <PROPERTY Name="Condition" Type="string(1024)" ColumnName="STATUS_CONDITION" Required="true" />
+    <PROPERTY Name="Condition_Seq" Type="int" ColumnName="CONDITION_SEQ" Default="0" />
+    <PROPERTY Name="Description" Type="string(500)" ColumnName="STATUS_DESCRIPTION" CharSet="UNICODE" />
+    <PROPERTY Name="True_Status" Type="string(64)" ColumnName="TRUE_STATUS" />
+    <PROPERTY Name="False_Status" Type="string(64)" ColumnName="FALSE_STATUS" />
+    <PROPERTY Name="True_ColorCd" Type="string(50)" ColumnName="TRUE_STATUS_COLOR_CD" />
+    <PROPERTY Name="False_ColorCd" Type="string(50)" ColumnName="FALSE_STATUS_COLOR_CD" />
+    <UNIQUE PhysicalName="WF_STATUS_PK" PrimaryKey="true">
+      <KEY Property="Condition_Seq" />
+      <KEY Property="Node_Name" />
+      <KEY Property="Process_Id" />
+    </UNIQUE>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/Manage Processes/Workflow Process/Wf_Process_Tasks.mtt-->
+  <DEFINE_DOCUMENT Name="Wf_Process_Tasks" TableName="WF_PROCESS_TASKS" TempTable="GT_WF_PROCESS_TASKS" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/Manage Processes/Workflow Process/Wf_Process_Tasks.mtt-->
+    <!--Toolkit::models/Toolkit Models/Manage Processes/Workflow Process/Wf_Process_Tasks.mtt-->
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="PROCESS_ID" Required="true" />
+    <PROPERTY Name="Task_Id" Type="string(250)" ColumnName="TASK_ID" Required="true" />
+    <PROPERTY Name="Task_Node" Type="string(64)" ColumnName="TASK_NODE" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Message" Type="string(500)" ColumnName="MESSAGE" CharSet="UNICODE" />
+    <PROPERTY Name="Status" Type="string(24)" ColumnName="STATUS" CharSet="UNICODE" />
+    <PROPERTY Name="Assigned_By" Type="string(64)" ColumnName="ASSIGNED_BY" CharSet="UNICODE" />
+    <PROPERTY Name="Assigned_To" Type="string(64)" ColumnName="ASSIGNED_TO" CharSet="UNICODE" />
+    <PROPERTY Name="Assigned_Date" Type="date" ColumnName="ASSIGNED_DATE" />
+    <PROPERTY Name="Completion_Date" Type="date" ColumnName="COMPLETION_DATE" />
+    <PROPERTY Name="Locked_By" Type="string(64)" ColumnName="LOCKED_BY" />
+    <UNIQUE PhysicalName="WF_PROCESS_TASKS_PK" PrimaryKey="true">
+      <KEY Property="Process_Id" />
+      <KEY Property="Task_Id" />
+      <KEY Property="Task_Node" />
+    </UNIQUE>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <!--reverse links-->
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/Manage Processes/Workflow Process/Wf_Task_Audit.mtt-->
+  <DEFINE_DOCUMENT Name="Wf_Task_Audit" TableName="WF_TASK_AUDIT" TempTable="GT_WF_TASK_AUDIT" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/Manage Processes/Workflow Process/Wf_Task_Audit.mtt-->
+    <!--Toolkit::models/Toolkit Models/Manage Processes/Workflow Process/Wf_Task_Audit.mtt-->
+    <PROPERTY Name="Task_Id" Type="string(250)" ColumnName="TASK_ID" Required="true" />
+    <PROPERTY Name="Task_Node" Type="string(64)" ColumnName="TASK_NODE" CharSet="UNICODE" Required="true" />
+    <PROPERTY Name="Operation" Type="string(60)" ColumnName="OPERATION" />
+    <PROPERTY Name="Reassign_Comment" Type="string(2000)" ColumnName="REASSIGN_COMMENT" CharSet="UNICODE" />
+    <PROPERTY Name="Reassigned_To" Type="string(70)" ColumnName="REASSIGNED_TO" />
+    <PROPERTY Name="Task_Sequence" Type="int" ColumnName="TASK_SEQUENCE" Required="true" />
+    <UNIQUE PhysicalName="TASK_AUDIT_PK" PrimaryKey="true">
+      <KEY Property="Task_Id" />
+      <KEY Property="Task_Node" />
+      <KEY Property="Task_Sequence" />
+    </UNIQUE>
+    <DOCUMENTLINK Name="WfProcesstasksLink" LinkedDocument="Wf_Process_Tasks">
+      <!--SoftLink#Toolkit::models/Toolkit Models/Manage Processes/Workflow Process/Wf_Process_Tasks.mtt-->
+      <MAP_PROPERTY From="Task_Id" To="Task_Id" />
+      <MAP_PROPERTY From="Task_Node" To="Task_Node" />
+    </DOCUMENTLINK>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+  </DEFINE_DOCUMENT>
+  <!--[toolkit]::models/Toolkit Models/Manage Processes/Workflow Process/Wf_Workflows.mtt-->
+  <DEFINE_DOCUMENT Name="Wf_Workflows" TableName="WF_WORKFLOWS" TempTable="GT_WF_WORKFLOWS" RLS_ENABLED="false" CLS_ENABLED="false">
+    <!--[toolkit]::models/Toolkit Models/Manage Processes/Workflow Process/Wf_Workflows.mtt-->
+    <!--Toolkit::models/Toolkit Models/Manage Processes/Workflow Process/Wf_Workflows.mtt-->
+    <PROPERTY Name="Process_Id" Type="int" ColumnName="PROCESS_ID" Required="true" />
+    <PROPERTY Name="Workflow" Type="Clob" ColumnName="WORKFLOW" />
+    <UNIQUE PhysicalName="WF_WORKFLOW_PK" PrimaryKey="true">
+      <KEY Property="Process_Id" />
+    </UNIQUE>
+    <!--append additional properties-->
+    <PROPERTY Name="SYS_TARGET_ID" ColumnName="SYS_TARGET_ID" Type="int" />
+    <PROPERTY Name="SYS_AUTH_ID" ColumnName="SYS_AUTH_ID" Type="string(1000)" />
+    <PROPERTY Name="SOURCE" ColumnName="SYS_SOURCE" Type="string(256)" Default="BackEnd" />
+    <PROPERTY Name="CREATED_BY" ColumnName="SYS_CREATED_BY" Type="string(70)" />
+    <PROPERTY Name="CREATION_DATE" ColumnName="SYS_CREATION_DATE" Type="datetime" />
+    <PROPERTY Name="ENTITY_STATE" ColumnName="SYS_ENT_STATE" Type="string(25)">
+      <VALID_VALUES>
+        <OPTION Value="ACTIVE" />
+        <OPTION Value="INACTIVE" />
+        <OPTION Value="NEW" />
+        <OPTION Value="DELETED" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <PROPERTY Name="LAST_MODIFIED_BY" ColumnName="SYS_LAST_MODIFIED_BY" Type="string(70)" />
+    <PROPERTY Name="LAST_MODIFIED_DATE" ColumnName="SYS_LAST_MODIFIED_DATE" Type="datetime" />
+    <PROPERTY Name="SYS_TYPE" ColumnName="SYS_NC_TYPE" Type="string(25)" />
+    <PROPERTY Name="SYS_ERR_CODE" ColumnName="SYS_ERR_CODE" Type="string(10000)" />
+    <PROPERTY Name="SYS_ERR_SEVERITY" ColumnName="SYS_ERR_SVRTY" Type="string(30)">
+      <VALID_VALUES>
+        <OPTION Value="SEVERE_ERROR" />
+        <OPTION Value="ERROR" />
+        <OPTION Value="WARNING" />
+      </VALID_VALUES>
+    </PROPERTY>
+    <!--reverse links-->
+    <DOCUMENTLINK Name="r_link1" LinkedDocument="Wf_Process" Referenced="true" DeleteRule="RESTRICT">
+      <!--Toolkit::models/Toolkit Models/Manage Processes/Workflow Process/Wf_Process.mtt [Hard Link] wf_workflowsLink-->
+      <MAP_PROPERTY From="Process_Id" To="Process_Id" />
+    </DOCUMENTLINK>
+  </DEFINE_DOCUMENT>
+</DOCUMENTS>
+

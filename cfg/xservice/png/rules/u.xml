@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <DEFINE_METHOD Name="getNavigation">
+    <RULE>
+      <ACTION>
+	          <REQUEST Name="getDocumentAccessControlList" ServiceName="USER_SECURITY" AssignToVar="assignedActivities">
+            <USER_ID Value="{$UserId}"/>
+  	     </REQUEST>
+
+        <GET_DOCUMENT AssignToVar="userProfiles" Name="USER_PROFILE" ServiceName="USER_SECURITY" ReturnRowCount="yes">
+          <ID Value="{$thisParam/@UserId}"/>
+        </GET_DOCUMENT>
+		<FOR_EACH CurrentElement="activity" SelectList="$assignedActivities/UIFORM_ACTIVITIES/*">
+					<IF_TEST Test="$activity/@Value = 'PnGWfl' ">
+					
+      <!--  <IF_TEST Test="$userProfiles/USER_PROFILE/USER_GRP_ID/@Value ='SU_UGP'"> -->
+          <THEN>
+            <TO_DOCVAR AssignToVar="TempXml">
+              <PAD_ITEM DisplayText="Easy Find CSR Tool">
+                <PAD_ITEM OnClick="/mdm/start.x2ps?START_WORKFLOW=IndividualMgmt&amp;SOLUTION_NAME=MDM&amp;SERVICE_NAME=BCM_MASTER" DisplayText="Search Individuals"/>
+              </PAD_ITEM>
+            </TO_DOCVAR>
+
+			
+            <TO_DOCVAR AssignToVar="navigationXml">
+              <PAD Name="Studio" DisplayText="DATA Mgmt" Scrollable="yes">
+                <TO_XML SelectList="$TempXml"/>
+              </PAD>
+            </TO_DOCVAR>
+            <ADD_CHILDREN DocVar="thisReturn" FromSelect="$navigationXml"/>
+          </THEN>
+        </IF_TEST>
+</FOR_EACH>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

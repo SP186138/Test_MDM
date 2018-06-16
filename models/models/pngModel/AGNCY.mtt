@@ -1,0 +1,81 @@
+<document>
+  <properties>
+    <property Name="AGNCY_NBR" PhysicalName="AGNCY_NBR" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="AGNCY_NBR" />
+    </property>
+    <property Name="AGNCY_NM" PhysicalName="AGNCY_NM" Required="true" CharSet="LATIN">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="AGNCY_NM" />
+    </property>
+    <property Name="AGNCY_DESC" PhysicalName="AGNCY_DESC" Required="false" CharSet="LATIN">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="AGNCY_DESC" />
+    </property>
+    <property Name="AGNCY_BUS_NM" PhysicalName="AGNCY_BUS_NM" Required="true" CharSet="LATIN">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="AGNCY_BUS_NM" />
+    </property>
+    <property Name="ACTV_DT" PhysicalName="ACTV_DT" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="ACTV_DT" />
+    </property>
+    <property Name="REQSTD_DT" PhysicalName="REQSTD_DT" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="REQSTD_DT" />
+    </property>
+    <property Name="AGNCY_STATUS_CD" PhysicalName="AGNCY_STATUS_CD" Required="true" CharSet="LATIN">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="AGNCY_STATUS_CD" />
+    </property>
+    <property Name="SR_NBR" PhysicalName="SR_NBR" CharSet="LATIN">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="SR_NBR" />
+    </property>
+    <property Name="DMG_IND" PhysicalName="DMG_IND" Required="true" CharSet="LATIN">
+      <default>N</default>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="DMG_IND" />
+    </property>
+    <property Name="EXTRNL_AGNCY_ID" PhysicalName="EXTRNL_AGNCY_ID" CharSet="LATIN">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="EXTRNL_AGNCY_ID" />
+    </property>
+    <property Name="RQSTR_CNTCT_NBR" PhysicalName="RQSTR_CNTCT_NBR" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="RQSTR_CNTCT_NBR" />
+    </property>
+    <property Name="SPLR_IND" Required="true" CharSet="LATIN">
+      <default>N</default>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="SPLR_IND" />
+    </property>
+    <property Name="TRNS_IND" PhysicalName="TRNS_IND" Required="true" CharSet="LATIN">
+      <default>N</default>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="TRNS_IND" />
+    </property>
+    <property Name="GRS_IND" PhysicalName="GRS_IND" Required="true" CharSet="LATIN">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="GRS_IND" />
+    </property>
+    <property Name="AGNCY_CNSMR_FCNG_NM" PhysicalName="AGNCY_CNSMR_FCNG_NM" CharSet="LATIN">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="AGNCY_CNSMR_FCNG_NM" />
+    </property>
+    <property Name="BUSN_NOTES" PhysicalName="BUSN_NOTES" CharSet="LATIN">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="BUSN_NOTES" />
+    </property>
+  </properties>
+  <keys>
+    <key Active="true" Name="AGNCY_UPI" PhysicalName="AGNCY_UPI" Kind="PRIMARY">
+      <property Name="AGNCY_NBR" />
+    </key>
+  </keys>
+  <links>
+    <link Active="true" Name="Link1" PhysicalName="Agncy_Status_link1">
+      <keymap ToPackage="models/pngModel" ToModelUnit="AGNCY_STATUS.mtt" ToKey="AGNCY_STATUS_UPI" ReverseLink="true" ReverseLinkName="Agncy_status" DeleteRule="RESTRICT">
+        <mapping FromProperty="AGNCY_STATUS_CD" ToProperty="AGNCY_STATUS_CD" />
+      </keymap>
+    </link>
+    <link Active="true" Name="Link2" PhysicalName="Agncy_rqst_NBR_Link">
+      <keymap ToPackage="models/pngModel" ToModelUnit="CNTCT.mtt" ToKey="CNTCT_UPI" ReverseLink="true" ReverseLinkName="Agncy_rqst_nbr" DeleteRule="RESTRICT">
+        <mapping FromProperty="RQSTR_CNTCT_NBR" ToProperty="CNTCT_NBR" />
+      </keymap>
+    </link>
+  </links>
+  <docFacets>
+    <mdmWebServiceFacet />
+    <mdmSysTableMapFacet TableClass="MASTER" Source="MASTER" MasterTable="AGNCY" />
+    <miscFacet PhysicalName="AGNCY" Active="true" SurrogateKey="true" />
+    <mdmConfigFacet SchemaGen="true" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql />
+</document>
+

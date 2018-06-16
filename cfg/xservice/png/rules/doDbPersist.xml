@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+ 	 Copyright (c) 2009 by Teradata Corporation. 
+	 All Rights Reserved. 
+	 Teradata CONFIDENTIAL AND TRADE SECRET 
+ -->
+  <DEFINE_METHOD Name="doDbPersist">
+    <RULE>
+      <ACTION>
+        <DO_DB_PERSIST DocumentName="MKTNG_PGM" Action="INSERT" Source="EXTERNAL" isBulkRequest="false">
+          <MKTNG_PGM_NAME Value="TestMDM341"/>
+          <MKTNG_PGM_NBR Value="9999"/>
+          <LEGAL_ENT_NBR Value="1"/>
+          <MKTNG_PGM_DESC Value="Test"/>
+          <MKTNG_PGM_SHORT_NAME Value="Test"/>
+          <MKTNG_PGM_STATUS Value="Test"/>
+        </DO_DB_PERSIST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="addGEOC_REGN">
+    <RULE>
+      <ACTION>
+        <ADD_DOC_SMART Name="GEOC_REGN" ServiceName="BCM_MASTER">
+          <GEOC_REGN_CODE Value="{$thisParam/GEOC_REGN_CODE/@Value}"/>
+          <GEOC_REGN_NAME Value="{$thisParam/GEOC_REGN_NAME/@Value}"/>
+          <GEOC_REGN_NAME_NTV Value="{$thisParam/GEOC_REGN_NAME_NTV/@Value}"/>
+          <GEOC_REGN_SHORT_NAME Value="{$thisParam/GEOC_REGN_SHORT_NAME/@Value}"/>
+          <GEOC_REGN_DESC Value="{$thisParam/GEOC_REGN_DESC/@Value}"/>
+        </ADD_DOC_SMART>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="modifyGEOC_REGN">
+    <RULE>
+      <ACTION>
+        <MODIFY_DOC_SMART Name="GEOC_REGN" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <GEOC_REGN_CODE Value="{$thisParam/GEOC_REGN_CODE/@Value}"/>
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <GEOC_REGN_NAME Value="{$thisParam/GEOC_REGN_NAME/@Value}"/>
+            <GEOC_REGN_NAME_NTV Value="{$thisParam/GEOC_REGN_NAME_NTV/@Value}"/>
+            <GEOC_REGN_SHORT_NAME Value="{$thisParam/GEOC_REGN_SHORT_NAME/@Value}"/>
+            <GEOC_REGN_DESC Value="{$thisParam/GEOC_REGN_DESC/@Value}"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOC_SMART>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

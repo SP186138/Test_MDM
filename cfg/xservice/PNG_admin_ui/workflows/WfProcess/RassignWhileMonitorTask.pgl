@@ -1,0 +1,97 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" Id="RassignWhileMonitorTask.pgl" version="3">
+  <ui:container id="reassigncontainer" inner="false" scrollable="true">
+    <ui:help displayPage="{$pages:WfTaskDetailsHelp}"/>
+    <ui:step id="reassignstep" displayText="Reassign Task">
+      <ui:validation id="reassignvalidation"/>
+      <ui:field-group id="alert_fields" columns="4">
+        <ui:image src="/bpi_check.gif" id="AlertGreenIconAjax"/>
+        <ui:image src="/cancel.gif" id="AlertRedIconAjax"/>
+        <ui:display-field id="alertValue" value=""/>
+      </ui:field-group>
+      <ui:container id="reassignContainerinner" inner="true">
+        <ui:step id="reassignStepinner" displayText="Task reassignment details">
+          <ui:field-group id="hiddenFileds">
+            <ui:hidden-field id="execStatus" name="execStatus" value="{$root/exec_status/@Value}"/>
+            <ui:hidden-field id="WfTaskNode" name="WfTaskNode" value="{$root/task_node/@Value}"/>
+            <ui:hidden-field id="WfProcessId" name="WfProcessId" value="{$root/process_id/@Value}"/>
+            <ui:hidden-field id="WfProcessName" name="WfProcessName" value="{$root/process_name/@Value}"/>
+            <ui:hidden-field id="WfTaskId" name="WfTaskId" value="{$root/task_id/@Value}"/>
+          </ui:field-group>
+          <ui:field-group id="taskdetailsmeta">
+            <ui:field-space/>
+            <ui:display-field id="WfProcessIdDisp" name="WfProcessIdDisp" displayText="Workflow Id" value="{$root/TASK_DETAILS/ProcessId/@Value}"/>
+            <ui:display-field id="WfTaskIdDisp" name="WfTaskIdDisp" displayText="Instance Id" value="{$root/TASK_DETAILS/TaskWfId/@Value}"/>
+            <ui:display-field id="locked_by" name="locked_by" displayText="Presently Assigned To" value="{$root/TASK_DETAILS/LockedBy/@Value}"/>
+            <ui:field-space/>
+            <ui:dropdown id="ReassignUser" name="ReassignUser" displayText="Select User to Reassign" optionSrc="$root/MDM_USERS/USER" required="true" selectOne="true" title="Select the user to which the task will be reassigned to." value="{$root/reassigned_to/@Value}"/>
+            <ui:textarea id="ReassignComment" name="ReassignComment" displayText="Comments" rows="5" columns="50" value="{$root/reassign_comment/@Value}" required="true"/>
+            <ui:checkbox id="NotifyUser" name="NotifyUser" checkedValue="Y" defaultValue="Y" displayText="Send Email Notification" value="{$root/notify_user/@Value}"/>
+            <ui:field-space/>
+          </ui:field-group>
+        </ui:step>
+      </ui:container>
+      <ui:buttons>
+        <ui:button id="Back" name="Back" displayText="Back" onClick="javascript:onBack();"/>
+        <ui:divider/>
+        <ui:button id="ReassignTask" name="ReassignTask" displayText="Reassign Task"/>
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+function onLoad()
+{
+onLoadSuper();
+var execStatus=document.getElementById('execStatus').value;
+if(execStatus==='Success')
+{
+showSuccessAlertFields('Task reassigned successfully.');
+}
+else{
+hideAlertFields();
+}
+onResize();
+}
+function onBack()
+{
+document.form.BUTTON_ID.value = 'Back';
+document.form.submit();
+grayOut(true);
+}
+function hideAlertFields()
+{
+toggleField('AlertGreenIconAjax','hide');
+toggleField('AlertRedIconAjax','hide');
+toggleField('alertValue_td','hide');
+}
+function showSuccessAlertFields(msg)
+{
+toggleField('AlertGreenIconAjax','show');
+toggleField('AlertRedIconAjax','hide');
+toggleField('alertValue_td','show');
+document.getElementById('alertValue_td').innerHTML=msg;
+}
+function showFailureAlertFields(msg)
+{
+toggleField('AlertGreenIconAjax','hide');
+toggleField('AlertRedIconAjax','show');
+toggleField('alertValue_td','show');
+document.getElementById('alertValue_td').innerHTML=msg;
+}
+function toggleField(id,state)
+{
+fieldCell  = document.getElementById(id);
+fieldRow = fieldCell.parentNode;
+toggleItemVisibility(fieldRow, state);
+var i = document.getElementById(id);
+if (state=='hide')
+{
+i.disabled = true;
+}
+else
+{
+i.disabled = false;
+i.enabled = true;
+}
+}
+</ui:script>
+</ui:page-group>

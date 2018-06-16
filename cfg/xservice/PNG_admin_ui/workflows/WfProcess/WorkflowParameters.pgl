@@ -1,0 +1,264 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" Id="ManageParameters.pgl">
+  <ui:container id="outerContainer" inner="false" scrollable="true">
+    <ui:step id="outerStep" displayText="Manage Parameters">
+      <ui:help displayPage="{$pages:WfManageParametersHelp}"/>
+      <ui:validation/>
+      <ui:div id="datalistDiv"/>
+      <ui:field-group id="hiddenFieldsGroup">
+        <ui:hidden-field id="paramAction" value="{$root/Param_Action/@Value}" name="paramAction"/>
+        <ui:hidden-field id="status" value="{$root/status/@Value}" name="status"/>
+        <ui:hidden-field id="status_msg" value="{$root/status_msg/@Value}" name="status_msg"/>
+        <ui:hidden-field id="Navigated_From" name="Navigated_From" value="{$root/Navigated_From/@Value}"/>
+        <ui:hidden-field id="Process_Id" name="Process_Id" value="{$root/Selected_Process_Id/@Value}"/>
+        <ui:hidden-field id="SaveBtn_Id" name="SaveBtn_Id" value="{$root/SaveBtn_DisplayText/@Value}"/>
+      </ui:field-group>
+      <ui:field-group columns="4" id="alertFieldGroup">
+        <ui:image src="/bpi_check.gif" id="AlertGreenIconAjax"/>
+        <ui:image src="/cancel.gif" id="AlertRedIconAjax"/>
+        <ui:display-field id="alertValue" value="{$root/status_msg/@Value}" name="alertValueDisp"/>
+      </ui:field-group>
+      <ui:container id="processDetailsContainer" inner="true">
+        <ui:step id="processDetailsStep">
+          <ui:field-group id="processDetailsGroup" columns="2">
+            <ui:display-field id="ProcessName" name="ProcessName" displayText="WF_PROCESS_NAME" value="{$root/PROCESS_DISP_DETAILS/Process_Name/@Value}"/>
+            <ui:display-field id="ProcessEntity" name="ProcessEntity" displayText="WF_PROCESS_CAT" value="{$root/PROCESS_DISP_DETAILS/Process_Template/@Value}"/>
+            <ui:display-field id="ProcessDescription" name="ProcessDescription" displayText="WF_PROCESS_DESC" value="{$root/PROCESS_DISP_DETAILS/Process_Description/@Value}" unFormat="true" maxlength="60"/>
+          </ui:field-group>
+        </ui:step>
+      </ui:container>
+      <ui:container id="AddParamaterContainer" inner="true">
+        <ui:step id="innerAddParamStep" displayText="Parameter Details">
+          <ui:field-group columns="2" id="detailsFg">
+            <ui:entry-field id="ParamName" name="ParamName" displayText="Parameter Name" value="{$root/EDIT_PARAMETERS/Param_Name/@Value}" required="true" editable="{$root/SaveBtn_DisplayText/@Value='Add Parameter'}" maxlength="64" size="38"/>
+            <ui:entry-field id="ParamDispName" name="ParamDispName" displayText="Display Name" value="{$root/EDIT_PARAMETERS/Display_Name/@Value}" required="true" maxlength="120" size="38"/>
+            <ui:textarea id="ParamDesc" name="ParamDesc" displayText="Parameter Description" value="{$root/EDIT_PARAMETERS/Param_Desc/@Value}" columns="40" maxlength="200"/>
+            <ui:dropdown id="ParamType" name="ParamType" displayText="Parameter Type" defaultValue="string" title="Paramater type" value="{$root/EDIT_PARAMETERS/Param_Value_Type/@Value}" onChange="javascript:onParamTypeChange(this.value)">
+              <ui:option id="datetime" value="datetime"/>
+              <ui:option id="string" value="string"/>
+              <ui:option id="textarea" value="text area"/>
+            </ui:dropdown>
+            <ui:entry-field id="ParamValue" name="ParamValue" displayText="Parameter Value" value="{$root/EDIT_PARAMETERS/Param_Value/@Value}" maxlength="10000" size="38"/>
+            <ui:field-space id="paramval_space"/>
+            <ui:entry-field id="ParamValueDt" name="ParamValueDt" displayText="Parameter Value" value="{$root/EDIT_PARAMETERS/Param_Value_dt/@Value}" dataType="DateTime"/>
+            <ui:field-space id="paramval_space"/>
+          </ui:field-group>
+          <ui:hr id="paramconfig_ruler"/>
+          <ui:field-group id="papramValueConfig" columns="3">
+            <ui:checkbox id="Required" name="Required" displayText="Is Required" checkedValue="Y" defaultValue="N" value="{$root/EDIT_PARAMETERS/Is_Required/@Value}" title="Enabling this will require any instance of workflow to be provided with this parameter before execution"/>
+            <ui:checkbox id="Editable" name="Editable" displayText="Is Editable" checkedValue="Y" defaultValue="Y" value="{$root/EDIT_PARAMETERS/Is_Editable/@Value}" title="Enabling this will make the parameter at runtime to be editable"/>
+            <ui:checkbox id="Hidden" name="Hidden" displayText="Is Hidden" checkedValue="Y" defaultValue="N" value="{$root/EDIT_PARAMETERS/Is_Hidden/@Value}" title="Enabling this will hide this parameter from execution UIs"/>
+            <ui:field-space/>
+          </ui:field-group>
+          <ui:buttons id="mainBtnGrp">
+            <ui:button id="Back" name="Back" displayText="Back"/>
+            <ui:divider/>
+            <ui:button id="SaveParam" name="SaveParam" displayText="{$root/SaveBtn_DisplayText/@Value}" emphasized="true" onClick="javascript:on_SaveParam();"/>
+          </ui:buttons>
+        </ui:step>
+      </ui:container>
+      <ui:table id="wfParamsTbl" displayTextNoRecords="No parameter defined" displayText="WF_NODE_PROCESS_PARAMETERS" rowId="Param_Name" doPaging="false" exportable="true" collapsable="false" maxRows="-1" selectable="Single" postRowIdAs="SELECTED_PARAM_NAME" rowSrc="$root/PARAMETERS/*" select="$root/PARAMETERS/*" startAtRow="$root/StartRowCount/@Value" totalRowCount="$root/TotalRowCount/@Value" scrollable="true">
+        <ui:field-group id="tblFieldGrp">
+          <ui:display-field id="Param_Name" name="Param_Name" displayText="Parameter Name" sortable="true"/>
+          <ui:display-field id="Display_Name" name="Display_Name" displayText="Display Name" sortable="true"/>
+          <ui:display-field id="Param_Value" name="Param_Value" displayText="Parameter Value" sortable="true"/>
+          <ui:display-field id="Param_Desc" name="Param_Desc" displayText="Description" unFormat="true" maxlength="20"/>
+          <ui:display-field id="Param_Value_Type" name="Param_Value_Type" displayText="Type" sortable="true"/>
+          <ui:display-field id="Is_Required" name="Is_Required" displayText="Is Required" sortable="true"/>
+          <ui:display-field id="Is_Editable" name="Is_Editable" displayText="Is Editable" sortable="true"/>
+          <ui:display-field id="Is_Hidden" name="Is_Hidden" displayText="Is Hidden" sortable="true"/>
+        </ui:field-group>
+        <ui:buttons id="btnGroup">
+          <ui:button id="EditParam" name="EditParam" displayText="Edit" enabledBySelections="true"/>
+          <ui:divider/>
+          <ui:button id="DeleteParam" name="DeleteParam" displayText="Delete" enabledBySelections="true"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+function createDataList()
+{
+var divElem = document.getElementById('datalistDiv');
+var dataList = document.createElement('datalist');
+dataList.setAttribute('id','wfVariables');
+var option = document.createElement('option');
+option.setAttribute('value','$AssignedBy');
+dataList.appendChild(option);
+option1 = document.createElement('option');
+option1.setAttribute('value','$AssignedTo');
+dataList.appendChild(option1);
+divElem.appendChild(dataList);
+var paraName = document.getElementById('ParamName');
+paraName.setAttribute('list','wfVariables');
+paraName.setAttribute('autocomplete','off');
+}
+    
+function onLoad()
+{
+//createDataList();
+var status = document.getElementById('status').value;
+if(status === 'Success'){
+showSuccessAlertFields();
+var timeout = 5000;
+}
+else if(status === 'Error'){
+showFailureAlertFields();
+var timeout = 10000;
+}
+else{
+hideAlertFields();
+}
+setTimeout(hideAlertFields,timeout);
+onParamTypeChange(document.getElementById('ParamType').value);
+onResize();
+onLoadSuper();
+}
+function on_SaveParam()
+{
+var paramName=document.form.ParamName.value;
+var paramNameTrim = trimString(paramName);
+if(isValid_innerAddParamStep()){
+if( /\s/g.test(paramNameTrim))
+{
+core_alert_jquery('WF_PARAMETER_NAME_CANNOT_HAVE_WHITE_SPACE')
+return;
+}
+if(containsSpecialChars(paramName))
+{
+return;
+}
+var isHidden = document.form.Hidden.checked;
+var isRequired = document.form.Required.checked;
+var isEditable = document.form.Editable.checked;
+if(isHidden &amp;&amp; isRequired){
+core_alert_jquery('WF_REQUIRED_PARAM_CANNOT_HIDDEN')
+return;
+}
+if(!isEditable &amp;&amp; isRequired){
+if(!document.getElementById('ParamValue').value){
+core_alert_jquery('REQUIRED_AND_NON_EDITABLED_PARAM_MUST_HAVE_PARAM_VALUE')
+return;
+}
+}
+if(document.getElementById('SaveBtn_Id').value==='Add Parameter')
+checkUniqueName();
+else{
+document.form.BUTTON_ID.value = 'SaveParam';
+document.form.submit();
+grayOut(true);
+}
+}
+}
+function on_Back()
+{
+document.form.BUTTON_ID.value = 'Back';
+document.form.submit();
+grayOut(true);
+}
+function on_DeleteParam()
+{
+core_confirm_jquery('WF_DELETE_SELECTED_PARAM_ALERT','onDeleteParamCallback');
+
+}
+function onDeleteParamCallback(response)
+{
+if(response == 'yes'){
+document.form.BUTTON_ID.value = 'DeleteParam';
+document.form.submit();
+grayOut(true);
+}
+}
+function hideAlertFields()
+{
+toggleAlertField('AlertGreenIconAjax','hide');
+toggleAlertField('AlertRedIconAjax','hide');
+toggleAlertField('alertValue_td','hide');
+}
+function showSuccessAlertFields()
+{
+toggleAlertField('AlertGreenIconAjax','show');
+toggleAlertField('AlertRedIconAjax','hide');
+toggleAlertField('alertValue_td','show');
+}
+function showFailureAlertFields()
+{
+toggleAlertField('AlertGreenIconAjax','hide');
+toggleAlertField('AlertRedIconAjax','show');
+toggleAlertField('alertValue_td','show');
+}
+function toggleAlertField(id,state)
+{
+fieldCell  = document.getElementById(id);
+fieldRow = fieldCell.parentNode;
+toggleItemVisibility(fieldRow, state);
+var i = document.getElementById(id);
+if (state=='hide'){
+i.disabled = true;
+}
+else{
+i.disabled = false;
+i.enabled = true;
+}
+}
+function containsSpecialChars(checkStr)
+{
+var status=false;
+var spChars = &quot;!@#$`%^&amp;*()+=-[]\\\';,./{}|\&quot;:&lt;>?~&quot;;
+var strlength= checkStr.length;
+for (var i = 0; i &lt; checkStr.length; i++)
+{
+if (spChars.indexOf(checkStr.charAt(i)) != -1)
+{
+if(checkStr.charAt(i)=='+')
+core_alert_jquery (&quot;Attribute Name should not contain special character %2B  &quot; +&quot;.&quot;);
+else
+core_alert_jquery (&quot;Attribute Name should not contain special character  &quot; + escape(checkStr.charAt(i))+&quot;.&quot;);
+status=true;
+}
+}
+return status;
+}
+function checkUniqueName()
+{
+var paramName = document.getElementById('ParamName').value;
+var childAttrbArray=[&quot;Document&quot;,&quot;ServiceName&quot;];
+var childValueArray=[&quot;Wf_Params&quot;,&quot;BCM_MASTER&quot;];
+var requestDoc=createRequestXmlObjectTd('checkUniqueAttributeEntry','BCM_MASTER',childAttrbArray,childValueArray);
+var attrbTagArray=[&quot;Name&quot;,&quot;Value&quot;];
+requestDoc=addXmlTagAttrbTd(requestDoc,&quot;Unique_Attribute&quot;,attrbTagArray,[&quot;Param_Name&quot;,paramName]);
+    
+var processId = document.getElementById('Process_Id').value;
+addXMLChildrenTD(requestDoc,'CONTEXT',['Process_Id','Param_Type'],[processId,'W']);
+    
+var request= serializeXmlTd(requestDoc);
+var xpath = &quot;/RESPONSES/RESPONSE/IsUnique&quot;;
+SendAjaxRequest('BCM_MASTER',request,'checkUniqueNameCallBack',xpath);
+}
+    
+function checkUniqueNameCallBack(node)
+{
+var result = node[0].getAttribute('Value');
+if(result=='no')
+{
+core_alert_jquery('WF_DUPLICATE_PARAM_NAME_ALERT');
+return false;
+}
+else{
+document.form.BUTTON_ID.value = 'SaveParam';
+document.form.submit();
+grayOut(true);
+}
+}
+
+function onParamTypeChange(type){
+if(type==='datetime'){
+toggleAlertField('ParamValueDt_td','show');
+toggleAlertField('ParamValue_td','hide');
+}
+else{
+toggleAlertField('ParamValueDt_td','hide');
+toggleAlertField('ParamValue_td','show');
+}
+}
+</ui:script>
+</ui:page-group>

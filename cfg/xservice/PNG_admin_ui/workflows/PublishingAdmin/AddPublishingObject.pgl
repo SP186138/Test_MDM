@@ -1,0 +1,23 @@
+<ui:page-group version="3" xmlns:ui="http://www.teradata.com/ui" name="studio.templates.simple_form" source="studio.controller:load">
+  <ui:container id="topContainer" scrollable="true">
+<!--Line added for issue MDM-1937 by Ankur Goyal-->
+    <ui:help displayPage="{$pages:publicationObjectsHelp}" />
+    <ui:step displayText="Add Publication Object" id="basicControls">
+      <ui:field-group>
+        <ui:display-field id="SERVICE" name="SERVICE" displayText="Service" select="$root/SERVICE" title="PublicationObjectService"/>
+        <ui:display-field id="NAME" name="NAME" displayText="Name" select="$root/NAME" title="PublicationObjectName"/>
+        <ui:display-field id="DESCRIPTION" name="DESCRIPTION" displayText="Description" select="$root/DESCRIPTION" title="PublicationObjectDescription"/>
+      </ui:field-group>
+      <ui:table id="tableServices" name="tableServices" displayText="Service Documents" rowSrc="$root/DOCLIST/LINE" scrollable="true" selectable="All" postRowIdAs="SELECTED_ID" rememberSelections="true" maxRows="-1">
+        <ui:field-group id="tableColumns">
+          <ui:display-field name="ID" id="ID" displayText="Service Documents" title="PublicationObjectServiceDocuments"/>
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button id="BACK" name="BACK" displayText="Back" />
+          <ui:button id="ADD" name="ADD" displayText="Add" enabledBySelections="true" />
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+</ui:page-group>
+

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+ 	 Copyright (c) 2009 by Teradata Corporation. 
+	 All Rights Reserved. 
+	 Teradata CONFIDENTIAL AND TRADE SECRET 
+ -->
+  <DEFINE_METHOD Name="startTimerForValidation">
+    <RULE>
+      <ACTION>
+        <START_TIMER>
+          <IDENTIFIED_BY>
+            <NAME Value="TIMER_FOR_VALIDATION"/>
+          </IDENTIFIED_BY>
+          <CALLBACK_DATE Value="{incrDate(date(), duration(0, 0, 3, 0))}"/>
+          <CALLBACK_DURATION Value="{duration(0,0,3,0)}"/>
+          <CALLBACK_ACTIONS>
+            <EXECUTE_SQL_QUERY Value="Sel LOAD_ID from MDM_LOAD_CONTROL" AssignToVar="resMdmLoadControl" ReturnRowCount="yes"/>
+            <IF_TEST Test="$resMdmLoadControl/@TotalRowCount != 0">
+              <THEN>
+                <GET_DOCUMENT Name="LOAD_INFO" AssignToVar="respLoadInfo" ServiceName="BCM_MASTER" DirtyRead="yes" MaxRows="1">
+                  <ORDER_BY>
+                    <PROCESS_START_TIME Sort="Descending"/>
+                  </ORDER_BY>
+                </GET_DOCUMENT>
+                <FOR_EACH SelectList="$respLoadInfo/LOAD_INFO" CurrentElement="currElement">
+                  <IF_TEST Test="$currElement/PROCESS_NAME/@Value='Wrapper' and $currElement/STATUS/@Value='Success'">
+                    <THEN>
+                     <START_WORKFLOW>
+                      <TEMPLATE Value="Main_wf"/>
+                     </START_WORKFLOW>
+                    </THEN>
+                    <ELSE>
+                      <IF_TEST Test="$currElement/STATUS/@Value='Failed'">
+                        <THEN>
+                         <REQUEST Name="emailOnPreviousLoadInFailedState"/>
+                        </THEN>
+                        <ELSE>
+                        </ELSE>
+                      </IF_TEST>
+                    </ELSE>
+                  </IF_TEST>
+                </FOR_EACH>
+              </THEN>
+              <ELSE>
+              </ELSE>
+            </IF_TEST>
+          </CALLBACK_ACTIONS>
+        </START_TIMER>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

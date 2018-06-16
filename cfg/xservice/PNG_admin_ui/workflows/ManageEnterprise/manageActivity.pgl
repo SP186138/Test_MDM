@@ -1,0 +1,111 @@
+<ui:page-group version="3" xmlns:ui="http://www.teradata.com/ui" id="ManageActivity.pgl">
+  <ui:container showFavorite="true" scrollable="true" >
+    <!--Line added for issue MDM-1937 by Ankur Goyal-->
+    <ui:header>
+      <ui:link id="downloadTemplate" onClick="javascript:templateClick(event)">
+        <ui:image src="/default_template.gif" displayText="Download Template"/>
+      </ui:link>
+    </ui:header>
+    <ui:help displayPage="{$pages: manageActivityHelp}" />
+    <ui:step id="Outermost" displayText="Manage Activities">
+      <ui:field-group id="leftFields1" columns="3">
+        <ui:image src="/bpi_check.gif" displayCondition="{string-length($root/AlertGreen/@Value) != 0}" />
+        <ui:display-field value="{$root/AlertGreen/@Value}" displayCondition="{string-length($root/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen" />
+      </ui:field-group>
+      <ui:container id="container1" name="container1" displayText="">
+        <ui:step id="Outer" name="Outer" displayText="Activity Search">
+          <ui:field-group id="searchFldGroup">
+            <ui:entry-field displayText="Activity Id" id="ID" name="ID" onKeyDown="javascript:test();" title="ManageActivityId"/>
+            <ui:entry-field displayText="Activity Name" name="NAME" id="NAME" onKeyDown="javascript:test();" title="ManageActivityName"/>
+            <ui:dropdown displayText="Activity Type" id="ACTIVITY_TYPE" name="ACTIVITY_TYPE" selectOne="true" onChange="javascript:test();" title="ManageActivityType">
+              <ui:option value="Admin" />
+              <ui:option value="MenuForm" />
+              <ui:option value="UIForm" />
+            </ui:dropdown>
+          </ui:field-group>
+          <ui:buttons>
+			<ui:button name="Clear" id="Clear" displayText="Clear" onClick="{$pages:ManageActivity}" />
+            <ui:divider />            
+            <ui:button id="SEARCH" name="SEARCH" emphasized="true" displayText="Search" />
+          </ui:buttons>
+        </ui:step>
+      </ui:container>
+      <ui:table id="searchTable" displayText="Search Results" rowSrc="$root/ITEM_RESULTS/*" selectedId="ROWID" postRowIdAs="ROWID" displayTextNoRecords="no Record Found" rowId="ID"  doPaging="true" maxRows="$root/maxRows/@Value" totalRowCount="$root/TotalRowCount/@Value" startAtRow="$root/StartRowCount/@Value" configurable="true">
+        <ui:field-group>
+          <ui:display-field displayText="Activity Id" name="ID" id="ID" unFormat="true" sortable="true" title="ManageActivityId"/>
+          <ui:display-field displayText="Activity Name" id="NAME" name="NAME" unFormat="true" sortable="true" title="ManageActivityName"/>
+          <ui:display-field displayText="Activity Type" id="ACTIVITY_TYPE" name="ACTIVITY_TYPE" sortable="true" title="ManageActivityType"/>
+        </ui:field-group>
+        <ui:buttons id="buttons1" name="buttons1">
+          <ui:button id="upload" name="upload" displayText="Upload Excel"/>
+          <ui:divider/>
+          <ui:button id="add_activity" name="add_activity" displayText="Create Activity" />
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+   function onLoad()
+    {
+       onLoadSuper();
+       scrollHelper();
+       onResize();  
+    }
+   function test()
+					{
+								if (event.keyCode == 13) 
+					{
+		document.form.BUTTON_ID.value='SEARCH';
+	
+document.form.submit();
+grayOut(true);
+				}
+					}
+	function templateClick(event) {
+		var $img = $('img[src=&quot;'+omxContextPath+'/td/images/default_template.gif&quot;]');
+		var offset = $img.offset();
+		var pos = (offset.left -155);
+		var posTop = (offset.top);
+		var div = document.createElement(&quot;div&quot;)
+		div.setAttribute('id', 'tempMenu');
+		div.setAttribute('class', 'sortMenu');
+    
+		if(typeof $img[0] != 'undefined'  &amp;&amp;  $img[0] !=  null ){
+			div.setAttribute('style','position: fixed; visibility: visible; left:'+ pos+'px; top:'+posTop +'px; ')
+			div.innerHTML  = '&lt;table border=&quot;1&quot; cellspacing=&quot;0&quot; cellpadding=&quot;0&quot;> &lt;tbody>&lt;tr class=&quot;menuUnhighlighted&quot;>&lt;td class=&quot;menuShadow&quot;> &lt;table border=&quot;k0&quot; cellspacing=&quot;2&quot; cellpadding=&quot;0&quot;> &lt;tbody>&lt;tr class=&quot;menuUnhighlighted&quot;> &lt;td class=&quot;menuText&quot; nowrap=&quot;yes&quot; colspan=&quot;2&quot;> &lt;a href=&quot;javascript:templateSelected(1)&quot;>&amp;nbsp;&amp;nbsp;Activity Template&amp;nbsp;&amp;nbsp; &lt;/a> &lt;/td> &lt;/tr> &lt;tr class=&quot;menuUnhighlighted&quot;> &lt;td class=&quot;menuText&quot; nowrap=&quot;yes&quot; colspan=&quot;2&quot;> &lt;a href=&quot;javascript:templateSelected(2)&quot;>&amp;nbsp;&amp;nbsp;Activity data&amp;nbsp;&amp;nbsp; &lt;/a> &lt;/td> &lt;/tr>&lt;tr class=&quot;menuUnhighlighted&quot;> &lt;td class=&quot;menuText&quot; nowrap=&quot;yes&quot; colspan=&quot;2&quot;> &lt;a href=&quot;javascript:templateSelected(3)&quot;>&amp;nbsp;&amp;nbsp;Left Nav - Activity data&amp;nbsp;&amp;nbsp; &lt;/a> &lt;/td> &lt;/tr> &lt;/tbody>&lt;/table> &lt;/td> &lt;/tr> &lt;/tbody>&lt;/table>'
+			document.getElementById('Outermost').parentNode.appendChild(div);
+		}
+    
+		var templateMenu = document.getElementById('tempMenu');
+		$('#tempMenu').show();
+		if (event &amp;&amp; event.stopPropagation) {
+			event.stopPropagation();
+		}
+		else if (window.event){
+			window.event.cancelBubble = true;
+		}
+	}
+    
+	function templateSelected(val) {
+		if(val==1)
+			var url=omxContextPath+"/bcm/framework/userManagementUpload/downloadUserTemplate.jsp?&amp;entityName=ACTIVITIES&amp;OUTPUT_FILE=UserActivity_UploadTemplate.xlsx&amp;FORMAT_TYPE=xlsx";
+    	else if(val==2)
+			var url=omxContextPath+"/bcm/framework/userManagementUpload/downloadUserManagementData.jsp?&amp;entityName=ACTIVITY_DATA&amp;OUTPUT_FILE=UserActivity_Data.xlsx&amp;FORMAT_TYPE=xlsx";
+    	else if(val==3)
+			var url=omxContextPath+"/bcm/framework/userManagementUpload/downloadUserManagementData.jsp?&amp;entityName=LEFT_NAV_DATA&amp;OUTPUT_FILE=LeftNavActivity_Data.xlsx&amp;FORMAT_TYPE=xlsx";
+		$("div[id='tempMenu']").remove()
+		var prevAction = document.form.action;
+		var prevTarget = document.form.target;
+		document.form.target = &quot;hiddenDownloader&quot;;
+		document.form.action=url;
+		document.form.submitWholePage();
+		document.form.target = prevTarget;
+		document.form.action= prevAction;
+	}
+    
+	$('body').click(function(event) {
+		$("div[id='tempMenu']").remove()
+	});
+  </ui:script>
+</ui:page-group>
+

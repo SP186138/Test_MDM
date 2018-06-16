@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+<!--
+    Document   : tk_bcmOutputStagingRule.xml
+    Updated by : Rosmon Sidhik for making web-services available thru API_DOC
+    Updated on : 20-04-2005
+-->
+  <DEFINE_INIT>
+    <RULE>
+      <ACTION>
+        <NATIVE_FUNCTION ClassName="com.teradata.bcm.xcore.tool.BcmUtil" MethodName="initializeForms">
+          <PARAM Var="thisContext"/>
+        </NATIVE_FUNCTION>
+
+        <!--NATIVE_FUNCTION ClassName="com.teradata.bcm.xservice.bcmmaster.staging.output.task.ServiceParamUtil" MethodName="getServiceParam" AssignToVar="intervalSnap1">
+          <PARAM Var="thisContext"/>
+          <PARAM Value="intervalSnap"/>
+        </NATIVE_FUNCTION>
+        <NATIVE_FUNCTION ClassName="com.teradata.bcm.xservice.bcmmaster.staging.output.task.ServiceParamUtil" MethodName="getServiceParam" AssignToVar="procUpdate1">
+          <PARAM Var="thisContext"/>
+          <PARAM Value="procUpdate"/>
+        </NATIVE_FUNCTION-->
+        <!--EXEC_PROC Name="start_job">
+          <time1 Type="IN" Value="{$intervalSnap1}" DataType="string"/>
+          <procName Type="IN" Value="{$procUpdate1}" DataType="string"/>
+        </EXEC_PROC>
+       <IF_TEST Test="($res/_RESULT/@Value='ERROR') ">
+            <THEN>
+              <RAISE_ERROR Value="ERROR starting DB_JOB procedure from bcmOutputStaging service."/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="($res/_RESULT/@Value='SUCCESS') ">
+              <THEN>
+                  <PRINTLN Value="DO_JOB Procedure started successfully from bcmOutputStaging service ."/>
+              </THEN>
+        </IF_TEST-->
+     </ACTION>
+    </RULE>
+  </DEFINE_INIT>
+  <DEFINE_METHOD Name="resetStartJob">
+    <API_DOC>
+      <INPUT>
+	  <REQUEST Name="resetStartJob">
+	    <PROC_UPDATE Value="UPDATE_SNAPSHOT"/>
+	    <INTERVAL_SNAP Value="2"/>
+	  </REQUEST>
+      </INPUT>
+      <OUTPUT>
+        <ON_SUCCESS>
+          <RESPONSE Status="Success">
+          </RESPONSE>
+        </ON_SUCCESS>
+      </OUTPUT>
+    </API_DOC>
+    <RULE>
+      <ACTION>
+        <!--IF_TEST Test="($thisParam/PROC_UPDATE/@Value=null) ">
+          <THEN>
+            <NATIVE_FUNCTION ClassName="com.teradata.bcm.xservice.bcmmaster.staging.output.task.ServiceParamUtil" MethodName="getServiceParam" AssignToVar="procUpdate1">
+              <PARAM Var="thisContext"/>
+              <PARAM Value="procUpdate"/>
+            </NATIVE_FUNCTION>
+            <PRINTLN Value="WENT IN"/>
+          </THEN>
+          <ELSE>
+            <SET Var="procUpdate1" FromValue="{$thisParam/PROC_UPDATE/@Value}"/>
+          </ELSE>
+        </IF_TEST>
+        <IF_TEST Test="($thisParam/INTERVAL_SNAP/@Value=null)">
+          <THEN>
+            <NATIVE_FUNCTION ClassName="com.teradata.bcm.xservice.bcmmaster.staging.output.task.ServiceParamUtil" MethodName="getServiceParam" AssignToVar="intervalSnap1">
+              <PARAM Var="thisContext"/>
+              <PARAM Value="intervalSnap"/>
+            </NATIVE_FUNCTION>
+            <PRINTLN Value="WENT IN"/>
+          </THEN>
+          <ELSE>
+            <SET Var="intervalSnap1" FromValue="{$thisParam/INTERVAL_SNAP/@Value}"/>
+          </ELSE>
+        </IF_TEST>
+        <EXEC_PROC Name="start_job">
+          <time1 Type="IN" Value="{$intervalSnap1}" DataType="string"/>
+          <procName Type="IN" Value="{$procUpdate1}" DataType="string"/>
+        </EXEC_PROC-->
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <!--
+  <REQUEST Name="refeshOutBoundTables" UserId="user_1"/>
+    -->
+  <DEFINE_METHOD Name="refeshOutBoundTablesWrapper">
+    <API_DOC>
+      <INPUT>
+        <REQUEST Name="refeshOutBoundTables" UserId="user_1"/>
+      </INPUT>
+      <OUTPUT>
+        <ON_SUCCESS>
+          <RESPONSE Status="Success">
+          </RESPONSE>
+        </ON_SUCCESS>
+      </OUTPUT>
+    </API_DOC>
+    <PRINTLN Value="{$thisParam}"/>
+    <TO_DOCVAR AssignToVar="alertDoc">
+      <ALERT>
+        <USER_ID Value="{$thisParam/@UserId}"/>
+      </ALERT>
+    </TO_DOCVAR>
+    <RAISE_MSG_EVENT Name="SynchronizationStartedEvent" Select="$alertDoc"/>
+    <REQUEST Name="refeshOutBoundTables" Synchronous="no" UserId="{$thisParam/@UserId}"/>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="refeshOutBoundTables">
+    <API_DOC>
+      <INPUT>
+        <REQUEST Name="refeshOutBoundTables" Synchronous="no" UserId="{$thisParam/@UserId}"/>
+      </INPUT>
+      <OUTPUT>
+        <ON_SUCCESS>
+          <RESPONSE Status="Success">
+          </RESPONSE>
+        </ON_SUCCESS>
+      </OUTPUT>
+    </API_DOC>
+    <EXEC_PROC Name="UPDATE_SNAPSHOT"/>
+    <TO_DOCVAR AssignToVar="alertDoc">
+      <ALERT>
+        <USER_ID Value="{$thisParam/@UserId}"/>
+      </ALERT>
+    </TO_DOCVAR>
+    <RAISE_MSG_EVENT Name="SynchronizationEndedEvent" Select="$alertDoc"/>
+  </DEFINE_METHOD>
+</DOCUMENTS>

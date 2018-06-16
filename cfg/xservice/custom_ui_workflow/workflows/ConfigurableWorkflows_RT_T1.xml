@@ -1,0 +1,2098 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="44" ShowInBreadCrumbs="true" Version="1.0" Name="ConfigurableWorkflows_RT_T1" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="ConfigurableWorkflows_RT_T1">
+    <variable Name="workflowName" Type="string" Comment=""/>
+    <variable Name="configurableWorkflow" Type="xml" Comment=""/>
+    <variable Name="tableConfig" Type="xml" Comment=""/>
+    <variable Name="defaultSearch" Type="boolean" Comment=""/>
+    <variable Name="workflowId" Type="string" Comment=""/>
+    <variable Name="parentRowId" Type="string" Comment=""/>
+    <variable Name="joinMechanism" Type="string" Comment=""/>
+    <variable Name="timeFormat" Type="string" Comment=""/>
+    <variable Name="dateFormat" Type="string" Comment=""/>
+    <variable Name="checkIsRegistered" Type="boolean" Comment=""/>
+    <variable Name="showHistory" Type="boolean" Comment=""/>
+    <variable Name="IsTemporalTable" Type="boolean" Comment=""/>
+    <variable Name="IsValidTimeTemporalTable" Type="boolean" Comment=""/>
+    <variable Name="IsTransactionTimeTemporalTable" Type="boolean" Comment=""/>
+    <variable Name="maxRows" Type="int" Comment=""/>
+    <variable Name="workflowAvailable" Type="boolean" Comment=""/>
+    <variable Name="searchPaginateStartBackup" Type="string" Comment=""/>
+    <variable Name="EVENT_ID" Type="string" Comment=""/>
+    <variable Name="IDLIST" Type="xml" Comment=""/>
+    <variable Name="thisParamBackUp" Type="xml" Comment=""/>
+    <variable Name="tempType" Type="string" Comment=""/>
+    <variable Name="filterDetails" Type="xml" Comment=""/>
+    <variable Name="filterEdit" Type="string" Comment=""/>
+    <variable Name="filterSelected" Type="string" Comment=""/>
+    <variable Name="autoGenFlag" Type="string" Comment=""/>
+    <variable Name="rowIdFormatted" Type="xml" Comment=""/>
+    <variable Name="backUpSearchPGL" Type="xml" Comment=""/>
+    <variable Name="backUpResultPGL" Type="xml" Comment=""/>
+    <variable Name="backUpFreezeCol" Type="xml" Comment=""/>
+    <variable Name="fromHierarchy" Type="string" Comment=""/>
+    <variable Name="idValue" Type="string" Comment=""/>
+    <variable Name="backUpthisParam" Type="xml" Comment=""/>
+    <variable Name="hierarchyAction" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="Start">
+      <actions>
+        <action>
+          <TO_DOCVAR AssignToVar="backUpSearchPGL">
+            <SEARCH_PGL/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="backUpResultPGL">
+            <RESULT_PGL/>
+          </TO_DOCVAR>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Generate Srch PGL"/>
+      </next_nodes>
+    </start>
+    <done Name="Done">
+      <actions>
+        <ADD_CHILDREN DocVar="thisReturn" FromDocVar="thisParam"/>
+        <action/>
+      </actions>
+      <next_nodes/>
+    </done>
+    <task Name="Generate Srch PGL">
+      <actions>
+        <action>
+          <!--
+  Get list of tables involved and save in pipeline
+  Get all search params, and construct the dynamic pgl and Save in pipeline
+  Get all results params, and construct the dynamic pgl and Save in pipeline
+  -->
+          <IF_TEST Test="$thisParam/*/*!=null">
+            <THEN>
+              <TO_DOCVAR AssignToVar="thisParam">
+                <TO_XML SelectList="$thisParam/*"/>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <SET Var="dateFormat" FromValue="MM/dd/yyyy"/>
+          <SET Var="timeFormat" FromValue="MM/dd/yyyy HH:mm:ss"/>
+          <IF_TEST Test="$thisParam/showHistory/@Value='true' or $thisParam/showHistory/@Value='false'">
+            <THEN>
+              <SET Var="showHistory" FromValue="{$thisParam/showHistory/@Value}"/>
+            </THEN>
+            <ELSE>
+              <SET Var="showHistory" FromValue="true"/>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="strlen($thisParam/workflowId/@Value)>0">
+            <THEN>
+              <SET Var="workflowId" FromValue="{$thisParam/workflowId/@Value}"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="strlen($thisParam/EVENT_ID/@Value)>0">
+            <THEN>
+              <SET Var="EVENT_ID" FromValue="{$thisParam/EVENT_ID/@Value}"/>
+            </THEN>
+          </IF_TEST>
+          <GET_DOCUMENT AssignToVar="configurableWorkflow" Name="configurableWorkflow" ServiceName="USER_SECURITY" ReturnRowCount="yes" DirtyRead="true">
+            <workflowId Value="{$workflowId}"/>
+          </GET_DOCUMENT>
+          <SET Var="autoGenFlag" FromValue="{$configurableWorkflow/*/autoGenFlag/@Value}"/>
+          <IF_TEST Test="$configurableWorkflow/@TotalRowCount>0">
+            <THEN>
+              <SET Var="workflowAvailable" FromValue="true"/>
+            </THEN>
+            <ELSE>
+              <SET Var="workflowAvailable" FromValue="false"/>
+            </ELSE>
+          </IF_TEST>
+          <SET Var="tempType" FromValue="{$configurableWorkflow/configurableWorkflow/templateType/@Value}"/>
+          <SET Var="joinMechanism" FromValue="{$configurableWorkflow/configurableWorkflow/joinMechanism/@Value}"/>
+          <SET Var="workflowName" FromValue="{$configurableWorkflow/configurableWorkflow/workflowName/@Value}"/>
+          <SET Var="workflowId" FromValue="{$configurableWorkflow/configurableWorkflow/workflowId/@Value}"/>
+          <REQUEST Name="getTableConfig" ServiceName="UI_WORKFLOW" AssignToVar="tableConfig" HandleException="true">
+            <workflowId Value="{$workflowId}"/>
+          </REQUEST>
+          <GET_DOCUMENT AssignToVar="searchConfig" Name="cwSearchResultsConfigAttr" ServiceName="USER_SECURITY" ReturnRowCount="yes" DirtyRead="true">
+            <workflowId Value="{$thisParam/workflowId/@Value}"/>
+            <!--<attributeName Value="resultTable"/>-->
+            <container Value="search"/>
+            <fieldType Value="container"/>
+            <propName Value="defaultSearch"/>
+            <SELECT>
+              <propValue/>
+            </SELECT>
+          </GET_DOCUMENT>
+          <IF_TEST Test="$searchConfig/cwSearchResultsConfigAttr/propValue/@Value='true'">
+            <THEN>
+              <SET Var="defaultSearch" FromValue="true"/>
+            </THEN>
+            <ELSE>
+              <SET Var="defaultSearch" FromValue="false"/>
+            </ELSE>
+          </IF_TEST>
+          <REQUEST Name="checkIsTemporal" AssignToVar="checkIsTemporalInvolved" HandleException="true">
+            <workflowId Value="{$workflowId}"/>
+          </REQUEST>
+          <SET Var="IsTemporalTable" FromValue="{$checkIsTemporalInvolved/IsTemporalTable/@Value}"/>
+          <SET Var="IsValidTimeTemporalTable" FromValue="{$checkIsTemporalInvolved/IsValidTimeTemporalTable/@Value}"/>
+          <SET Var="IsTransactionTimeTemporalTable" FromValue="{$checkIsTemporalInvolved/IsTransactionTimeTemporalTable/@Value}"/>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Search"/>
+      </next_nodes>
+    </task>
+    <ui_form2 Name="Search" ShowInBreadCrumbs="SHOW" Template="Search.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$thisParam/PARAMETERS/BUTTON_ID/@Value = 'Delete'">
+            <THEN>
+              <REMOVE_CHILDREN ChildName="ID" SelectList="$thisParam/*"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value ='cancel'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="thisParam">
+                <TO_XML SelectList="$backUpthisParam/*"/>
+              </TO_DOCVAR>
+            </THEN>
+            <ELSE>
+              <TO_DOCVAR AssignToVar="backUpthisParam">
+                <ROOT/>
+              </TO_DOCVAR>
+              <ADD_CHILDREN DocVar="backUpthisParam" FromDocVar="thisParam"/>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$autoGenFlag='true'">
+            <THEN>
+              <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT DISPLAY_NAME FROM LEFT_NAV_STRUCTURE WHERE PAGE_NAME='{$workflowName/@Value}'" AssignToVar="workDisplayName"/>
+              <SET Var="workflowOrgName" FromValue="{$workDisplayName/SQL_RESULT/DISPLAY_NAME/@Value}"/>
+            </THEN>
+            <ELSE>
+              <SET Var="workflowOrgName" FromValue="{$workflowName}"/>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Clear'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="filterDetails">
+                <FILTER_DETAILS/>
+              </TO_DOCVAR>
+              <REMOVE_CHILDREN ChildName="ID" DocVar="thisParam"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/node_id/@Value='massUpdate'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="alertUpdatedVals">
+                <TO_XML SelectList="$thisParam/ALERT_VALS/*"/>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/PARAMETERS/BUTTON_ID/@Value='Delete'">
+            <THEN>
+              <IF_TEST Test="trim($thisParam/alertRed/@Value)!=null and trim($thisParam/PARAMETERS/alertRed/@Value)!=null">
+                <THEN>
+                  <SET Var="alertRed" FromValue="{$thisParam/PARAMETERS/alertRed/@Value} and {$thisParam/alertRed/@Value}"/>
+                  <SET Var="alertGreen" FromValue=""/>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="trim($thisParam/alertRed/@Value)!=null">
+                    <THEN>
+                      <SET Var="alertRed" FromValue="{$thisParam/alertRed/@Value}"/>
+                      <SET Var="alertGreen" FromValue=""/>
+                    </THEN>
+                    <ELSE>
+                      <IF_TEST Test="trim($thisParam/PARAMETERS/alertRed/@Value)!=null">
+                        <THEN>
+                          <SET Var="alertRed" FromValue="{$thisParam/PARAMETERS/alertRed/@Value}"/>
+                          <SET Var="alertGreen" FromValue=""/>
+                        </THEN>
+                        <ELSE>
+                          <SET Var="alertGreen" FromValue="{$thisParam/alertGreen/@Value}"/>
+                          <SET Var="alertRed" FromValue=""/>
+                        </ELSE>
+                      </IF_TEST>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+              <REMOVE_CHILDREN ChildName="_RESULT" DocVar="thisParam"/>
+            </THEN>
+            <ELSE>
+              <SET Var="alertRedVar" FromValue="{$thisParam/ADDITIONAL_PARAMETERS/alertRed/@Value}"/>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/*/*!=null">
+            <THEN>
+              <TO_DOCVAR AssignToVar="thisParam">
+                <TO_XML SelectList="$thisParam/*"/>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="strlen($alertRedVar) > 0 ">
+            <THEN>
+              <SET Property="alertRed" FromValue="{$alertRedVar}" DocVar="thisParam"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$alertUpdatedVals/massUp/@Value='true'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="thisParam">
+                <PARAMETERS>
+                  <workflowId Value="{$workflowId}"/>
+                </PARAMETERS>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'Clear' and $thisParam/showHistory/@Value = 'false'">
+            <THEN>
+              <SET Property="BUTTON_ID" DocVar="thisParam" FromValue="ShowHistory"/>
+              <SET DocVar="thisParam" Property="hideHistory" FromValue="true"/>
+              <SET Var="showHistory" FromValue="true"/>
+              <SET Var="clearHistorty" FromValue="true"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='ShowHistory'">
+            <THEN>
+              <REMOVE_CHILDREN ChildName="START_COUNT" DocVar="thisParam"/>
+              <SET DocVar="thisParam" Property="START_COUNT" FromValue="0"/>
+            </THEN>
+          </IF_TEST>
+          <SET Var="maxRows" FromValue="{$tableConfig/maxRows/@Value}"/>
+          <IF_TEST Test="$maxRows &lt; 10 or $maxRows = null">
+            <THEN>
+              <SET Var="maxRows" FromValue="10"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/EXPORT_ALL/@Value='yes'">
+            <THEN>
+              <SET Var="maxRows" FromValue="{$thisParam/MAX_ROWS/@Value}"/>
+              <REMOVE_CHILDREN ChildName="START_COUNT" DocVar="thisParam"/>
+            </THEN>
+          </IF_TEST>
+          <REQUEST Name="checkIsRegistered" AssignToVar="registerCheck" HandleException="true">
+            <workflowId Value="{$workflowId}"/>
+          </REQUEST>
+          <IF_TEST Test="$thisParam/showHistory/@Value ='false' and $thisParam/BUTTON_ID/@Value ='SYS_RELOAD'">
+            <THEN>
+              <!--SET DocVar="thisParam" Property="showHistory" FromValue="true"/>
+              <SET Var="showHistory" FromValue="true"/-->
+              <SET DocVar="thisParam" Property="ID" FromValue="{$idValue/@Value}"/>
+            </THEN>
+          </IF_TEST>
+          <SET Var="checkIsRegistered" FromValue="{$registerCheck/DOCUMENTS_REGISTERED/@Value}"/>
+          <IF_TEST Test="$checkIsRegistered and $workflowAvailable">
+            <THEN>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Save' or $thisParam/BUTTON_ID/@Value='Back'">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="thisParam">
+                    <ROOT>
+                      <alertGreen Value="{$thisParam/alertGreen/@Value}"/>
+                      <warning Value="{$thisParam/warning/@Value}"/>
+                      <SET Var="stringLength" FromValue="{strlen($thisParam/alertRed/@Value)}"/>
+                      <IF_TEST Test="($stringLength > 112)">
+                        <THEN>
+                          <SET Var="break" FromValue="false"/>
+                          <SET Var="firstPos" FromValue="0"/>
+                          <SET Var="lastPos" FromValue="113"/>
+                          <SET Var="resVal" FromValue=""/>
+                          <WHILE Condition="$break != 'true'">
+                            <IF_TEST Test="($stringLength &lt; $lastPos)">
+                              <THEN>
+                                <SET Var="break" FromValue="true"/>
+                                <SET Var="lastPos" FromValue="{$stringLength}"/>
+                              </THEN>
+                            </IF_TEST>
+                            <SET Var="resVal" FromValue="{$resVal}{subString($thisParam/alertRed/@Value,$firstPos,$lastPos)}&lt;/BR>"/>
+                            <SET Var="firstPos" FromValue="{$lastPos}"/>
+                            <SET Var="lastPos" FromValue="{sum($lastPos+113)}"/>
+                          </WHILE>
+                        </THEN>
+                        <ELSE>
+                          <SET Var="resVal" FromValue="{$thisParam/alertRed/@Value}"/>
+                        </ELSE>
+                      </IF_TEST>
+                      <alertRed Value="{$resVal}"/>
+                    </ROOT>
+                  </TO_DOCVAR>
+                  <REMOVE_CHILDREN ChildName="START_COUNT" DocVar="thisParam"/>
+                  <SET DocVar="thisParam" Property="START_COUNT" FromValue="{$searchPaginateStartBackup/@Value}"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Delete'">
+                <THEN>
+                  <REMOVE_CHILDREN ChildName="START_COUNT" DocVar="thisParam"/>
+                </THEN>
+              </IF_TEST>
+              <SET Var="searchPaginateStartBackup" FromValue="{int(ifElse($thisParam/START_COUNT/@Value = null, 0, $thisParam/START_COUNT/@Value))}"/>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <SAMPLE_XML>
+                  <TO_XML SelectList="$thisParam/*"/>
+                  <PGL/>
+                  <DATA/>
+                </SAMPLE_XML>
+              </TO_DOCVAR>
+              <IF_TEST Test="$thisParam/@SessionID != null">
+                <THEN>
+                  <REMOVE_DOCUMENT Name="CONFIGURE_TABLE" ServiceName="BPE_UI">
+                    <USER_ID Select="$userId"/>
+                    <TABLE_ID Value="UI_WORKFLOW.ConfigurableWorkflows_RT_T1.Search.pgl.searchResults"/>
+                    <FAVORITE_ID Value="default"/>
+                  </REMOVE_DOCUMENT>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$backUpSearchPGL/RESPONSE/@Status = null">
+                <THEN>
+                  <REQUEST Name="constructPGL" ServiceName="UI_WORKFLOW" AssignToVar="genPGL">
+                    <container Value="search"/>
+                    <workflowId Value="{$workflowId}"/>
+                    <joinMechanism Value="{$joinMechanism}"/>
+                  </REQUEST>
+                  <ADD_CHILDREN DocVar="backUpSearchPGL" FromDocVar="genPGL"/>
+                </THEN>
+                <ELSE>
+                  <TO_DOCVAR AssignToVar="genPGL">
+                    <RESPONSE>
+                      <TO_XML SelectList="$backUpSearchPGL/*/*"/>
+                    </RESPONSE>
+                  </TO_DOCVAR>
+                </ELSE>
+              </IF_TEST>
+              <!--workflowid is not persisted in save search and create fav, adding workflowid as hidden field-->
+              <APPEND_TO_XML SelectList="$genPGL">
+                <ui:hidden-field xmlns:ui="http://www.teradata.com/ui" displayText="workflowId" id="workflowId" name="workflowId" value="{$workflowId}"/>
+              </APPEND_TO_XML>
+              <GET_DOCUMENT AssignToVar="cwSearchResultsTables" Name="cwSearchResultsTables" ServiceName="USER_SECURITY" ReturnRowCount="yes" DirtyRead="true">
+                <workflowId Value="{$workflowId}"/>
+                <ORDER_BY>
+                  <tableRank Sort="Ascending"/>
+                </ORDER_BY>
+              </GET_DOCUMENT>
+              <SET Var="parentRowId" FromValue=""/>
+              <SET Var="keyRowId" FromValue=""/>
+              <IF_TEST Test="($thisParam/BUTTON_ID/@Value='search_button' or $thisParam/BUTTON_ID/@Value='save_search_button' or $thisParam/BUTTON_ID/@Value='SYS_RELOAD' or $thisParam/BUTTON_ID/@Value='Clear') and strlen($thisParam/SELECTED_EXPORT_ID/@Value)=0">
+                <THEN>
+                  <SET Var="actionButton" FromValue="searchRecord"/>
+                  <SET DocVar="pglFormInput" Property="actionButton" FromValue="{$actionButton/Value}"/>
+                </THEN>
+              </IF_TEST>
+              <GET_DOCUMENT AssignToVar="defaultMultiSort" Name="cwSearchResultsConfigAttr" ServiceName="USER_SECURITY" DirtyRead="true" ReturnRowCount="true">
+                <workflowId Value="{$workflowId}"/>
+                <container Value="result"/>
+                <AND>
+                  <OR>
+                    <fieldType Value="defaultSortColumn1"/>
+                    <fieldType Value="defaultSortColumn2"/>
+                    <fieldType Value="defaultSortColumn3"/>
+                  </OR>
+                </AND>
+                <ORDER_BY>
+                  <fieldType Sort="Ascending"/>
+                </ORDER_BY>
+              </GET_DOCUMENT>
+              <IF_TEST Test="$defaultMultiSort/@TotalRowCount != 0 and strlen($thisParam/MULTISORT_XML/@Value)=0">
+                <THEN>
+                  <SET Var="quotes" FromValue="'"/>
+                  <SET Var="MULTISORT_XML" FromValue="&lt;ORDER_BY>&lt;"/>
+                  <FOR_EACH SelectList="$defaultMultiSort/*" CurrentElement="currDefalutSort">
+                    <SET Var="MULTISORT_XML" FromValue="{concat($MULTISORT_XML,$currDefalutSort/attributeName/@Value,' Sort=',$quotes,$currDefalutSort/propName/@Value,$quotes,' />&lt;')}"/>
+                  </FOR_EACH>
+                  <SET Var="MULTISORT_XML" FromValue="{concat($MULTISORT_XML,'/ORDER_BY>')}"/>
+                  <SET Property="MULTISORT_XML" DocVar="thisParam" FromValue="{$MULTISORT_XML}"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$cwSearchResultsTables/@TotalRowCount='1' and $cwSearchResultsTables/cwSearchResultsTables/serviceName/@Value='BCM_MASTER' and ends-with($cwSearchResultsTables/cwSearchResultsTables/tableName/@Value,'AT')='false'">
+                <THEN>
+                  <SET Var="filt_EntityState" FromValue="{'FILTER_'}{$cwSearchResultsTables/cwSearchResultsTables/tableName/@Value}{'.ENTITY_STATE'}"/>
+                  <SET Var="count" FromValue="0"/>
+                  <FOR_EACH CurrentElement="currElem" SelectList="$thisParam/*">
+                    <IF_TEST Test="$currElem/name() = $filt_EntityState/@Value">
+                      <THEN>
+                        <SET Var="count" FromValue="1"/>
+                        <BREAK/>
+                      </THEN>
+                    </IF_TEST>
+                  </FOR_EACH>
+                  <IF_TEST Test="$count/@Value != '1' or $thisParam/BUTTON_ID/@Value ='Clear' or $clearHistorty/@Value = 'true'">
+                    <THEN>
+                      <SET DocVar="pglFormInput" Property="{$filt_EntityState/@Value}" FromValue="ACTIVE"/>
+                      <SET DocVar="thisParam" Property="{$filt_EntityState/@Value}" FromValue="ACTIVE"/>
+                    </THEN>
+                  </IF_TEST>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$defaultSearch='true' or $thisParam/BUTTON_ID/@Value='search_button' or $thisParam/BUTTON_ID/@Value='save_search_button' or $thisParam/BUTTON_ID/@Value='SYS_RELOAD' or $thisParam/BUTTON_ID/@Value='ShowHistory' or $thisParam/BUTTON_ID/@Value='createFavourite' or $thisParam/BUTTON_ID/@Value ='Clear'">
+                <THEN>
+                  <IF_TEST Test="$cwSearchResultsTables/@TotalRowCount='1' and $joinMechanism!='Explicit Join'">
+                    <THEN>
+                      <REQUEST Name="getTableData" ServiceName="UI_WORKFLOW" AssignToVar="tableData" HandleException="true">
+                        <workflowId Value="{$workflowId}"/>
+                        <maxRows Value="{$maxRows}"/>
+                        <actionButton Value="{$actionButton}"/>
+                        <PARAMS>
+                          <showHistory Value="{$showHistory}"/>
+                          <IsTemporalTable Value="{$IsTemporalTable}"/>
+                          <TO_XML SelectList="$thisParam/*"/>
+                          <TO_XML SelectList="$tableConfig/*"/>
+                          <SRVC_NAME Value="{$cwSearchResultsTables/cwSearchResultsTables/serviceName/@Value}"/>
+                        </PARAMS>
+                        <TO_XML DocVar="filterDetails"/>
+                      </REQUEST>
+                      <SET Var="parentRowId" FromValue="{$tableConfig/rowId/@Value}"/>
+                      <IF_TEST Test="count($tableConfig/rowId)>1">
+                        <THEN>
+                          <FOR_EACH SelectList="$tableConfig/rowId" CurrentElement="params">
+                            <SET Var="keyRowId" FromValue="{$params/@Value}#{$keyRowId}"/>
+                          </FOR_EACH>
+                        </THEN>
+                        <ELSE>
+                          <SET Var="keyRowId" FromValue="{$tableConfig/rowId/@Value}"/>
+                        </ELSE>
+                      </IF_TEST>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="parentRowId" FromValue="{$cwSearchResultsTables/cwSearchResultsTables[1]/tableName/@Value}"/>
+                      <FOR_EACH SelectList="$tableConfig/rowId" CurrentElement="params">
+                        <IF_TEST Test="(substringBefore($params/@Value,'.')=$parentRowId)">
+                          <THEN>
+                            <SET Var="parentRowId" FromValue="{$params/@Value}"/>
+                          </THEN>
+                        </IF_TEST>
+                        <IF_TEST Test="$keyRowId/@Value != '' and $keyRowId/@Value !=null ">
+                          <THEN>
+                            <SET Var="keyRowId" FromValue="{$params/@Value}#{$keyRowId}"/>
+                          </THEN>
+                          <ELSE>
+                            <SET Var="keyRowId" FromValue="{$params/@Value}"/>
+                          </ELSE>
+                        </IF_TEST>
+                      </FOR_EACH>
+                      <IF_TEST Test="$joinMechanism='Explicit Join'">
+                        <THEN>
+                          <REQUEST Name="getExplicitJoinTableData" ServiceName="UI_WORKFLOW" AssignToVar="tableData" HandleException="true">
+                            <maxRows Value="{$maxRows}"/>
+                            <workflowId Value="{$workflowId}"/>
+                            <showHistory Value="{$showHistory}"/>
+                            <actionButton Value="{$actionButton}"/>
+                            <IsTemporalTable Value="{$IsTemporalTable}"/>
+                            <IsValidTimeTemporalTable Value="{$IsValidTimeTemporalTable}"/>
+                            <IsTransactionTimeTemporalTable Value="{$IsTransactionTimeTemporalTable}"/>
+                            <PARAMS>
+                              <parentRowId Value="{$parentRowId}"/>
+                              <TO_XML SelectList="$thisParam/*"/>
+                              <TO_XML SelectList="$tableConfig/*"/>
+                              <cwSearchResultsTables>
+                                <TO_XML SelectList="$cwSearchResultsTables"/>
+                              </cwSearchResultsTables>
+                            </PARAMS>
+                            <TO_XML DocVar="filterDetails"/>
+                          </REQUEST>
+                        </THEN>
+                        <ELSE>
+                          <REQUEST Name="getMultipleTableData" ServiceName="UI_WORKFLOW" AssignToVar="tableData" HandleException="true">
+                            <workflowId Value="{$workflowId}"/>
+                            <actionButton Value="{$actionButton}"/>
+                            <maxRows Value="{$maxRows}"/>
+                            <PARAMS>
+                              <showHistory Value="{$showHistory}"/>
+                              <parentRowId Value="{$parentRowId}"/>
+                              <TO_XML SelectList="$thisParam/*"/>
+                              <TO_XML SelectList="$tableConfig/*"/>
+                              <cwSearchResultsTables>
+                                <TO_XML SelectList="$cwSearchResultsTables"/>
+                              </cwSearchResultsTables>
+                            </PARAMS>
+                            <TO_XML DocVar="filterDetails"/>
+                          </REQUEST>
+                        </ELSE>
+                      </IF_TEST>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+              </IF_TEST>
+              <REQUEST Name="getCustomButtons" ServiceName="UI_WORKFLOW" AssignToVar="customButtons" HandleException="true">
+                <workflowId Value="{$workflowId}"/>
+                <tableConfig>
+                  <TO_XML SelectList="$tableConfig/*"/>
+                </tableConfig>
+              </REQUEST>
+              <IF_TEST Test="$tempType='Non Tabbed'">
+                <THEN>
+                  <APPEND_TO_XML SelectList="$pglFormInput/PGL">
+                    <ui:search xmlns:ui="http://www.teradata.com/ui" displayText="Search Items" saveSearch="true" exportSearch="false" action="Search" collapsed="{$defaultSearch}" clearSearch="true">
+                      <ui:field-group columns="2">
+                        <TO_XML SelectList="$genPGL/*"/>
+                      </ui:field-group>
+                    </ui:search>
+                  </APPEND_TO_XML>
+                  <SET Var="filter" FromValue="false"/>
+                </THEN>
+                <ELSE>
+                  <APPEND_TO_XML SelectList="$pglFormInput/PGL">
+                    <ui:field-group xmlns:ui="http://www.teradata.com/ui" columns="2">
+                      <ui:hidden-field displayText="workflowId" id="workflowId" name="workflowId" value="{$workflowId}"/>
+                    </ui:field-group>
+                  </APPEND_TO_XML>
+                  <SET Var="filter" FromValue="true"/>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$cwSearchResultsTables/@TotalRowCount='1' and $cwSearchResultsTables/cwSearchResultsTables/serviceName/@Value!='nonMDM'">
+                <THEN>
+                  <SET Var="singleTable" FromValue="true"/>
+                  <REQUEST Name="getLinks" ServiceName="BPE_META" AssignToVar="linkValues">
+                    <SERVICE Value="{$cwSearchResultsTables/cwSearchResultsTables/serviceName/@Value}"/>
+                    <DOCUMENT Value="{$cwSearchResultsTables/cwSearchResultsTables/tableName/@Value}"/>
+                  </REQUEST>
+                  <EXECUTE_SQL_QUERY AssignToVar="toPropCols" Value="locking row for access sel * from  CW_SEARCH_RESULTS_CFG_ATTR where CONTAINER='create_edit'  and prop_name='ToProperty' and WORKFLOW_ID = {$workflowId/@Value} "/>
+                </THEN>
+                <ELSE>
+                  <SET Var="singleTable" FromValue="false"/>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$singleTable='true'">
+                <THEN>
+                  <IF_TEST Test="$configurableWorkflow/configurableWorkflow/serviceName/@Value='Audit'">
+                    <THEN>
+                      <SET Var="tableName" FromValue="{$cwSearchResultsTables/cwSearchResultsTables/tableName/@Value}"/>
+                      <IF_TEST Test="strlen($tableName)-indexOf($tableName/@Value,'_AT')=3">
+                        <THEN>
+                          <SET Var="tableName" FromValue="{subString($tableName,0,indexOf($tableName/@Value,'_AT'))}"/>
+                        </THEN>
+                      </IF_TEST>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="tableName" FromValue="{$cwSearchResultsTables/cwSearchResultsTables/tableName/@Value}"/>
+                    </ELSE>
+                  </IF_TEST>
+                  <REQUEST Name="getValidValue" AssignToVar="validLookUpTableData">
+                    <tabName Value="{$tableName/@Value}"/>
+                    <SRVC_NAME Value="{$cwSearchResultsTables/cwSearchResultsTables/serviceName/@Value}"/>
+                  </REQUEST>
+                </THEN>
+                <ELSE>
+                  <TO_DOCVAR AssignToVar="validLookUpTableData">
+                    <RESPONSE Status="Success"/>
+                  </TO_DOCVAR>
+                  <FOR_EACH SelectList="$cwSearchResultsTables/cwSearchResultsTables" CurrentElement="currTable">
+                    <IF_TEST Test="$currTable/serviceName/@Value!='nonMDM'">
+                      <THEN>
+                        <REQUEST Name="getValidValue" AssignToVar="validLookUpTableData_1">
+                          <tabName Value="{$currTable/tableName/@Value}"/>
+                          <SRVC_NAME Value="{$currTable/serviceName/@Value}"/>
+                        </REQUEST>
+                        <IF_TEST Test="$configurableWorkflow/*/joinMechanism/@Value='Explicit Join'">
+                          <THEN>
+                            <GET_DOCUMENT AssignToVar="serchResultColums" Name="cwSearchResultsColumns" ServiceName="USER_SECURITY" ReturnRowCount="yes" DirtyRead="true">
+                              <container Value="result"/>
+                              <workflowId Value="{$workflowId}"/>
+                            </GET_DOCUMENT>
+                            <FOR_EACH CurrentElement="currWf" SelectList="$validLookUpTableData_1/*">
+                              <SET Var="validColName" FromValue="{substringAfter($currWf/name(),'.')}"/>
+                              <SET Var="phyColName" FromValue="{$serchResultColums/cwSearchResultsColumns[columnName/@Value=$validColName and tableName/@Value=$currTable/tableName/@Value and dbName/@Value=$currTable/dbName/@Value and tableNamePhy/@Value=$currTable/tableNamePhy/@Value]/columnNamePhy/@Value}"/>
+                              <SET Var="tagName" FromValue="{$currTable/dbName/@Value}.{$currTable/tableNamePhy/@Value}.{$phyColName}"/>
+                              <SET_NAME DocVar="currWf" FromValue="{$tagName}"/>
+                            </FOR_EACH>
+                          </THEN>
+                        </IF_TEST>
+                        <APPEND_CHILDREN DocVar="validLookUpTableData" FromDocVar="validLookUpTableData_1"/>
+                      </THEN>
+                    </IF_TEST>
+                  </FOR_EACH>
+                </ELSE>
+              </IF_TEST>
+              <APPEND_TO_XML SelectList="$pglFormInput/PGL">
+                <IF_TEST Test="$backUpResultPGL/RESPONSE/@Status = null">
+                  <THEN>
+                    <REQUEST Name="constructPGL" ServiceName="UI_WORKFLOW" AssignToVar="genPGLResult">
+                      <container Value="result"/>
+                      <webuiContextPath Value="{$webuiContextPath}"/>
+                      <workflowId Value="{$workflowId}"/>
+                      <joinMechanism Value="{$joinMechanism}"/>
+                      <singleTable Value="{$singleTable}"/>
+                      <serviceNameVar Value="{$configurableWorkflow/configurableWorkflow/serviceName/@Value}"/>
+                      <LINK_VALUES>
+                        <TO_XML DocVar="linkValues"/>
+                      </LINK_VALUES>
+                      <PROP_COLS>
+                        <TO_XML DocVar="toPropCols"/>
+                      </PROP_COLS>
+                      <TABLE_DETAILS>
+                        <TO_XML DocVar="cwSearchResultsTables"/>
+                      </TABLE_DETAILS>
+                      <LOOK_UP_DATA>
+                        <TO_XML SelectList="$validLookUpTableData/*"/>
+                      </LOOK_UP_DATA>
+                      <TO_XML SelectList="$tableConfig/*"/>
+                    </REQUEST>
+                    <ADD_CHILDREN DocVar="backUpResultPGL" FromDocVar="genPGLResult"/>
+                  </THEN>
+                  <ELSE>
+                    <TO_DOCVAR AssignToVar="genPGLResult">
+                      <RESPONSE>
+                        <TO_XML SelectList="$backUpResultPGL/*/*"/>
+                      </RESPONSE>
+                    </TO_DOCVAR>
+                  </ELSE>
+                </IF_TEST>
+                <SET_NAME DocVar="validLookUpTableData" FromValue="LOOK_UP_DATA_FILTER"/>
+                <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="validLookUpTableData"/>
+                <IF_TEST Test="($thisParam/HIERARCHY_ACTION/@Value != null and $thisParam/HIERARCHY_ACTION/@Value != '') or $hierarchyAction/@Value = 'true'">
+                  <THEN>
+                    <SET Var="hierarchyAction" FromValue="true"/>
+                    <SET Var="displayCreate" FromValue="false"/>
+                    <SET Var="displayEdit" FromValue="false"/>
+                    <SET Var="displayDelete" FromValue="false"/>
+                    <SET Var="displayMasspdate" FromValue="false"/>
+                    <SET Var="displayCopy" FromValue="false"/>
+                    <SET Var="displayUpload" FromValue="false"/>
+                    <IF_TEST Test="$actionButton = null or $actionButton = ''">
+                      <THEN>
+                        <SET Var="actionButton" FromValue="searchRecord"/>
+                        <SET DocVar="pglFormInput" Property="actionButton" FromValue="{$actionButton/Value}"/>
+                      </THEN>
+                    </IF_TEST>
+                  </THEN>
+                  <ELSE>
+                    <SET Var="displayCreate" FromValue="{ifElse($tableConfig/createButton/@Value = null, 'false', $tableConfig/createButton/@Value)}"/>
+                    <SET Var="displayEdit" FromValue="{ifElse($tableConfig/editButton/@Value = null, 'false', $tableConfig/editButton/@Value)}"/>
+                    <SET Var="displayDelete" FromValue="{ifElse($tableConfig/deleteButton/@Value = null, 'false', $tableConfig/deleteButton/@Value)}"/>
+                    <SET Var="displayMasspdate" FromValue="{ifElse($tableConfig/massUpdateButton/@Value = null, 'false', $tableConfig/massUpdateButton/@Value)}"/>
+                    <SET Var="displayCopy" FromValue="{ifElse($tableConfig/copyButton/@Value = null, 'false', $tableConfig/copyButton/@Value)}"/>
+                    <SET Var="displayUpload" FromValue="{ifElse($tableConfig/uploadButton/@Value = null, 'true', $tableConfig/uploadButton/@Value)}"/>
+                  </ELSE>
+                </IF_TEST>
+              </APPEND_TO_XML>
+              <REQUEST Name="CheckUserActivity" ServiceName="UI_WORKFLOW" AssignToVar="activitiesVals" HandleException="true">
+                <TABLE_DETAILS>
+                  <TO_XML SelectList="$cwSearchResultsTables"/>
+                </TABLE_DETAILS>
+                <USER_ID Value="{$userId}"/>
+              </REQUEST>
+              <IF_TEST Test="$displayCopy='true'">
+                <THEN>
+                  <SET Var="displayCopy" FromValue="{$activitiesVals/canCreate/@Value}"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$displayCreate='true'">
+                <THEN>
+                  <SET Var="displayCreate" FromValue="{$activitiesVals/canCreate/@Value}"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$displayEdit='true'">
+                <THEN>
+                  <SET Var="displayEdit" FromValue="{$activitiesVals/canEdit/@Value}"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$displayMasspdate='true'">
+                <THEN>
+                  <SET Var="displayMasspdate" FromValue="{$activitiesVals/canEdit/@Value}"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$displayDelete='true'">
+                <THEN>
+                  <SET Var="displayDelete" FromValue="{$activitiesVals/canDelete/@Value}"/>
+                </THEN>
+              </IF_TEST>
+              <SET Var="tabName" FromValue="{$cwSearchResultsTables/cwSearchResultsTables/tableName/@Value}"/>
+              <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT LOG_NAME FROM SYS_DOCVIEW_MAP WHERE LOG_NAME='{$tabName/@Value}'" ReturnRowCount="yes" AssignToVar="checkIsView"/>
+              <IF_TEST Test="$cwSearchResultsTables/@TotalRowCount='1' and (($cwSearchResultsTables/cwSearchResultsTables/serviceName/@Value='BCM_MASTER' and starts-with($tabName/@Value,'error_')='false') or $cwSearchResultsTables/cwSearchResultsTables/serviceName/@Value='nonMDM') and $checkIsView/@TotalRowCount='0' and $displayUpload='true'">
+                <THEN>
+                  <SET Var="upLoad" FromValue="true"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="upLoad" FromValue="false"/>
+                </ELSE>
+              </IF_TEST>
+              <SET Var="tableLength" FromValue="{strlen($tabName)}"/>
+              <IF_TEST Test="$tableData/@TotalRowCount!=null and $tableData/@TotalRowCount!='0' and $tableLength>='4' and subString($tabName,int($tableLength/@Value - 3),$tableLength)='_AT' and ($joinMechanism/@Value='Document Links' or $joinMechanism/@Value='No Link')">
+                <THEN>
+                  <APPEND_TO_XML SelectList="$pglFormInput/PGL">
+                    <ui:table xmlns:ui="http://www.teradata.com/ui" defaultFreeze="true" id="searchResults" filter="{$filter}" multiSort="true" displayText="Search Results" rowId="{$keyRowId}" rowSrc="$root/DATA/LINE/*" scrollable="true" selectable="All" collapsable="true" exportable="true" maxRows="{$maxRows}" startAtRow="{$tableData/@StartRowCount}" totalRowCount="{$tableData/@TotalRowCount}" rememberSelections="true" configurable="true">
+                      <ui:field-group>
+                        <TO_XML SelectList="$genPGLResult/*"/>
+                      </ui:field-group>
+                      <ui:buttons>
+                        <ui:button id="Clear" name="Clear" displayText="Clear" displayCondition="{$filter}" onClick="javascript:onClear();"/>
+                      </ui:buttons>
+                    </ui:table>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$tableData/@TotalRowCount!=null and $tableData/@TotalRowCount!='0'">
+                    <THEN>
+                      <IF_TEST Test="$tableName='INCTV' or $tableName='CNTNT_ELEM'">
+                        <THEN>
+                          <APPEND_TO_XML SelectList="$pglFormInput/PGL">
+                            <ui:table xmlns:ui="http://www.teradata.com/ui" defaultFreeze="true" id="searchResults" filter="{$filter}" multiSort="true" displayText="Search Results" rowId="{$keyRowId}" rowSrc="$root/DATA/LINE/*" scrollable="true" selectable="All" collapsable="true" exportable="true" maxRows="{$maxRows}" startAtRow="{$tableData/@StartRowCount}" totalRowCount="{$tableData/@TotalRowCount}" rememberSelections="true" configurable="true">
+                              <ui:field-group>
+                                <TO_XML SelectList="$genPGLResult/*"/>
+                              </ui:field-group>
+                              <ui:buttons>
+                                <ui:button id="upload" name="upload" displayText="Upload Excel"/>
+                                <ui:button id="Clear" name="Clear" displayText="Clear" displayCondition="{$filter}" onClick="javascript:onClear();"/>
+                                <ui:button id="Edit" name="Edit" displayText="Edit" displayCondition="{$displayEdit and $showHistory}" enabledBySelections="true" onClick="javascript:onEdit();"/>
+                              </ui:buttons>
+                            </ui:table>
+                          </APPEND_TO_XML>
+                        </THEN>
+                        <ELSE>
+                          <IF_TEST Test="$tableName='GDPR_SRCH_RSLT'">
+                            <THEN>
+                              <APPEND_TO_XML SelectList="$pglFormInput/PGL">
+                                <ui:table xmlns:ui="http://www.teradata.com/ui" defaultFreeze="true" id="searchResults" filter="{$filter}" multiSort="true" displayText="Search Results" rowId="{$keyRowId}" rowSrc="$root/DATA/LINE/*" scrollable="true" selectable="All" collapsable="true" exportable="true" maxRows="{$maxRows}" startAtRow="{$tableData/@StartRowCount}" totalRowCount="{$tableData/@TotalRowCount}" rememberSelections="true" configurable="true">
+                                  <ui:field-group>
+                                    <TO_XML SelectList="$genPGLResult/*"/>
+                                  </ui:field-group>
+                                  <ui:buttons>
+                                    <ui:button id="upload" name="upload" displayText="Upload Excel"/>
+                                    <ui:button id="Clear" name="Clear" displayText="Clear" displayCondition="{$filter}" onClick="javascript:onClear();"/>
+                                  </ui:buttons>
+                                </ui:table>
+                              </APPEND_TO_XML>
+                              <!--IF_TEST Test="$thisParam/BUTTON_ID/@Value='upload' and $tableName='GDPR_SRCH_RSLT'">
+                                <THEN>
+                                  <SET Var="REDIRECT_URL" FromValue="http://143.16.92.24:8080/mdm/bcm/framework/login.jsp?REDIRECT_PAGE=GDPRReview&amp;GDPRCASEID=$VarCase/@Value"/>
+                                  <REQUEST AssignToVar="UploadVar" Name="CustomUploadSearchResult" ServiceName="BCM_MASTER"/>
+                                </THEN>
+                              </IF_TEST-->
+                            </THEN>
+                            <ELSE>
+                              <IF_TEST Test="$tableName='MKTNG_PGM'">
+                                <THEN>
+                                  <APPEND_TO_XML SelectList="$pglFormInput/PGL">
+                                    <ui:table xmlns:ui="http://www.teradata.com/ui" defaultFreeze="true" id="searchResults" filter="{$filter}" multiSort="true" displayText="Search Results" rowId="{$keyRowId}" rowSrc="$root/DATA/LINE/*" scrollable="true" selectable="All" collapsable="true" exportable="true" maxRows="{$maxRows}" startAtRow="{$tableData/@StartRowCount}" totalRowCount="{$tableData/@TotalRowCount}" rememberSelections="true" configurable="true">
+                                      <ui:field-group>
+                                        <TO_XML SelectList="$genPGLResult/*"/>
+                                      </ui:field-group>
+                                      <ui:buttons>
+                                        <!--<ui:button id="upload" name="upload" displayText="Upload Excel" displayCondition="{$upLoad and ($displayDelete or $displayEdit or $displayCreate) and $showHistory}"/>-->
+                                        <ui:button id="Clear" name="Clear" displayText="Clear" displayCondition="{$filter}" onClick="javascript:onClear();"/>
+                                        <!-- <ui:button id="Delete" name="Delete" displayText="Delete" displayCondition="{$displayDelete and $showHistory}" enabledBySelections="true" onClick="javascript:onDelete();"/>-->
+                                        <ui:button id="Edit" name="Edit" displayText="Edit" displayCondition="{$displayEdit and $showHistory}" enabledBySelections="true" onClick="javascript:onEdit();"/>
+                                        <!--<ui:button id="MassUpdate" name="MassUpdate" displayText="Mass Update" displayCondition="{$displayMasspdate and $showHistory}" enabledBySelections="true" onClick="javascript:onMassUpdate()"/>
+                                        <ui:button id="Copy" name="Copy" displayText="Copy" displayCondition="{$displayCopy and $showHistory}" enabledBySelections="true" onClick="javascript:onCopy();"/>-->
+                                        <ui:button id="Create" name="Create" displayText="Create" displayCondition="{$displayCreate and $showHistory}"/>
+                                        <TO_XML SelectList="$customButtons/*"/>
+                                      </ui:buttons>
+                                    </ui:table>
+                                  </APPEND_TO_XML>
+                                </THEN>
+                                <ELSE>
+                                  <APPEND_TO_XML SelectList="$pglFormInput/PGL">
+                                    <ui:table xmlns:ui="http://www.teradata.com/ui" defaultFreeze="true" id="searchResults" filter="{$filter}" multiSort="true" displayText="Search Results" rowId="{$keyRowId}" rowSrc="$root/DATA/LINE/*" scrollable="true" selectable="All" collapsable="true" exportable="true" maxRows="{$maxRows}" startAtRow="{$tableData/@StartRowCount}" totalRowCount="{$tableData/@TotalRowCount}" rememberSelections="true" configurable="true">
+                                      <ui:field-group>
+                                        <TO_XML SelectList="$genPGLResult/*"/>
+                                      </ui:field-group>
+                                      <ui:buttons>
+                                        <ui:button id="upload" name="upload" displayText="Upload Excel" displayCondition="{$upLoad and ($displayDelete or $displayEdit or $displayCreate) and $showHistory}"/>
+                                        <ui:button id="Clear" name="Clear" displayText="Clear" displayCondition="{$filter}" onClick="javascript:onClear();"/>
+                                        <!--<ui:button id="Delete" name="Delete" displayText="Delete" displayCondition="{$displayDelete and $showHistory}" enabledBySelections="true" onClick="javascript:onDelete();"/>-->
+                                        <ui:button id="Edit" name="Edit" displayText="Edit" displayCondition="{$displayEdit and $showHistory}" enabledBySelections="true" onClick="javascript:onEdit();"/>
+                                        <!--<ui:button id="MassUpdate" name="MassUpdate" displayText="Mass Update" displayCondition="{$displayMasspdate and $showHistory}" enabledBySelections="true" onClick="javascript:onMassUpdate()"/>
+                                        <ui:button id="Copy" name="Copy" displayText="Copy" displayCondition="{$displayCopy and $showHistory}" enabledBySelections="true" onClick="javascript:onCopy();"/>-->
+                                        <ui:button id="Create" name="Create" displayText="Create" displayCondition="{$displayCreate and $showHistory}"/>
+                                        <TO_XML SelectList="$customButtons/*"/>
+                                      </ui:buttons>
+                                    </ui:table>
+                                  </APPEND_TO_XML>
+                                </ELSE>
+                              </IF_TEST>
+                            </ELSE>
+                          </IF_TEST>
+                        </ELSE>
+                      </IF_TEST>
+                    </THEN>
+                    <ELSE>
+                      <IF_TEST Test="$tableLength>='4' and subString($tabName,int($tableLength/@Value - 3),$tableLength)='_AT'">
+                        <THEN>
+                          <APPEND_TO_XML SelectList="$pglFormInput/PGL">
+                            <ui:table xmlns:ui="http://www.teradata.com/ui" defaultFreeze="true" id="searchResults" filter="{$filter}" multiSort="true" displayText="Search Results" rowId="{$keyRowId}" rowSrc="$root/DATA/LINE/*" scrollable="true" selectable="All" collapsable="true" exportable="true" maxRows="{$maxRows}" startAtRow="{$tableData/@StartRowCount}" totalRowCount="{$tableData/@TotalRowCount}" rememberSelections="true" configurable="true">
+                              <ui:field-group>
+                                <TO_XML SelectList="$genPGLResult/*"/>
+                              </ui:field-group>
+                              <ui:buttons>
+                                <ui:button id="Clear" name="Clear" displayText="Clear" displayCondition="{$filter}" onClick="javascript:onClear();"/>
+                              </ui:buttons>
+                            </ui:table>
+                          </APPEND_TO_XML>
+                        </THEN>
+                        <ELSE>
+                          <APPEND_TO_XML SelectList="$pglFormInput/PGL">
+                            <ui:table xmlns:ui="http://www.teradata.com/ui" id="searchResults" multiSort="true" displayText="Search Results" rowId="{$keyRowId}" rowSrc="$root/DATA/LINE/*" scrollable="true" selectable="All" collapsable="true" exportable="true" maxRows="{$maxRows}" startAtRow="{$tableData/@StartRowCount}" totalRowCount="{$tableData/@TotalRowCount}" rememberSelections="true" filter="{$filter}">
+                              <ui:field-group>
+                                <TO_XML SelectList="$genPGLResult/*"/>
+                              </ui:field-group>
+                              <ui:buttons>
+                                <ui:button id="upload" name="upload" displayText="Upload Excel" displayCondition="{$upLoad and $displayCreate and $showHistory}"/>
+                                <ui:button id="Clear" name="Clear" displayText="Clear" displayCondition="{$filter}" onClick="javascript:onClear();"/>
+                                <ui:button id="Create" name="Create" displayText="Create" displayCondition="{$displayCreate and $showHistory}"/>
+                              </ui:buttons>
+                            </ui:table>
+                          </APPEND_TO_XML>
+                        </ELSE>
+                      </IF_TEST>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+              <REQUEST Name="getLookupData" ServiceName="UI_WORKFLOW" AssignToVar="lookupData">
+                <workflowId Value="{$workflowId}"/>
+              </REQUEST>
+              <IF_TEST Test="$showHistory='true'">
+                <THEN>
+                  <SET Var="showHistoryImage" FromValue="/temporal_showHistory.png"/>
+                  <SET Var="showHistoryText" FromValue="Show History"/>
+                  <SET Var="hideHistory" FromValue="false"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="showHistoryImage" FromValue="/temporal_hideHistory.png"/>
+                  <SET Var="showHistoryText" FromValue="Hide History"/>
+                  <SET Var="hideHistory" FromValue="true"/>
+                </ELSE>
+              </IF_TEST>
+              <!--REQUEST Name="formatTableData" AssignToVar="tableData" ServiceName="UI_WORKFLOW">
+                <TABLE_DATA>
+                  <TO_XML SelectList="$tableData/*"/>
+                </TABLE_DATA>
+                <JOIN_COND Value="{$joinMechanism}"/>
+                <TABLE_LIST>
+                  <TO_XML SelectList="$cwSearchResultsTables/*"/>
+                </TABLE_LIST>
+              </REQUEST-->
+              <TO_DOCVAR AssignToVar="booleanValues">
+                <BOOLEAN_VALUE>
+                  <VALID_VALUE Value="TRUE"/>
+                  <VALID_VALUE Value="FALSE"/>
+                </BOOLEAN_VALUE>
+              </TO_DOCVAR>
+              <APPEND_TO_XML Select="$pglFormInput/DATA">
+                <showHistory Value="{$showHistory}"/>
+                <showHistoryImage Value="{$showHistoryImage}"/>
+                <showHistoryText Value="{$showHistoryText}"/>
+                <IsTemporalTable Value="{$IsTemporalTable}"/>
+                <hideHistory Value="{$hideHistory}"/>
+                <workflowName Value="{$workflowOrgName}"/>
+                <TO_XML SelectList="$tableConfig/*"/>
+                <LOOKUP_DATA>
+                  <TO_XML SelectList="$lookupData/*/*"/>
+                </LOOKUP_DATA>
+                <LINE>
+                  <TO_XML SelectList="$tableData/*"/>
+                </LINE>
+                <TO_XML SelectList="$booleanValues"/>
+              </APPEND_TO_XML>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$registerCheck/tableName/@Value!=null">
+                <THEN>
+                  <SET Var="alertRed" FromValue="The table(s) {$registerCheck/tableName/@Value} is/are unregistered, Cannot display UI."/>
+                </THEN>
+                <ELSE>
+                  <SET Var="alertRed" FromValue="Configured UI is deleted, Cannot display UI."/>
+                </ELSE>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <SAMPLE_XML>
+                  <alertRed Value="{$alertRed}"/>
+                  <TO_XML SelectList="$thisParam/*"/>
+                  <PGL/>
+                  <DATA/>
+                </SAMPLE_XML>
+              </TO_DOCVAR>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="strlen($alertUpdatedVals/alertGreen/@Value)!=0 or strlen($alertUpdatedVals/alertRed/@Value)!=0">
+            <THEN>
+              <SET DocVar="pglFormInput" Property="alertRed" FromValue="{$alertUpdatedVals/alertRed/@Value}"/>
+              <SET DocVar="pglFormInput" Property="alertGreen" FromValue="{$alertUpdatedVals/alertGreen/@Value}"/>
+              <TO_DOCVAR AssignToVar="alertUpdatedVals">
+                <RESPONSE/>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <SET Property="filterDet" FromValue="{$filterDetails/@TotalRowCount}" DocVar="pglFormInput"/>
+          <GET_DOCUMENT Name="cwAdvancedFilter" ServiceName="USER_SECURITY" AssignToVar="filterValues">
+            <workflowId Value="{$filterDetails/workflowId/@Value}"/>
+            <sequence Value="{$filterDetails/sequence/@Value}"/>
+          </GET_DOCUMENT>
+          <SET Property="filterName" FromValue="{$filterValues/cwAdvancedFilter/filterName/@Value}" DocVar="pglFormInput"/>
+          <IF_TEST Test="$cwSearchResultsTables/@TotalRowCount='1' and ($cwSearchResultsTables/cwSearchResultsTables/serviceName/@Value='BCM_MASTER' or $cwSearchResultsTables/cwSearchResultsTables/serviceName/@Value='BCM_INPUT_STAGING')">
+            <THEN>
+              <IF_TEST Test="($tableLength>='4' and subString($tabName,int($tableLength/@Value - 3),$tableLength)='_AT') or starts-with($tabName/@Value,'error_')='true'">
+                <THEN>
+                  <SET Property="whereUsed" FromValue="false" DocVar="pglFormInput"/>
+                </THEN>
+                <ELSE>
+                  <SET Property="whereUsed" FromValue="true" DocVar="pglFormInput"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+            <ELSE>
+              <SET Property="whereUsed" FromValue="false" DocVar="pglFormInput"/>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$showHistory = 'false'">
+            <THEN>
+              <REMOVE_CHILDREN DocVar="pglFormInput" ChildName="ID"/>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="ID"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="strlen($backUpFreezeCol/FREEZE_COLUMN_INDEX/@Value)!=0">
+            <THEN>
+              <REMOVE_CHILDREN DocVar="thisParam" ChildName="FREEZE_COLUMN_INDEX"/>
+              <APPEND_CHILDREN DocVar="thisParam" FromDocVar="backUpFreezeCol"/>
+              <REMOVE_CHILDREN DocVar="pglFormInput" ChildName="FREEZE_COLUMN_INDEX"/>
+              <APPEND_CHILDREN DocVar="pglFormInput" FromDocVar="backUpFreezeCol"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/HIDEBUTTONS/@Value ='true' or $fromHierarchy/@Value = 'false'">
+            <THEN>
+              <SET Var="fromHierarchy" FromValue="false"/>
+            </THEN>
+            <ELSE>
+              <SET Var="fromHierarchy" FromValue="true"/>
+            </ELSE>
+          </IF_TEST>
+          <SET Property="fromHierarchy" FromValue="{$fromHierarchy/@Value}" DocVar="pglFormInput"/>
+          <IF_TEST Test="$cwSearchResultsTables/@TotalRowCount > '1'">
+            <THEN>
+              <SET Property="joinFlag" FromValue="true" DocVar="pglFormInput"/>
+            </THEN>
+          </IF_TEST>
+          <FOR_EACH SelectList="$pglFormInput/DATA" CurrentElement="currHelp">
+            <SET DocVar="currHelp" Property="helpPage" FromValue="{concat($webuiContextPath,'/',$currHelp/helpPage/@Value)}"/>
+          </FOR_EACH>
+          <SET DocVar="pglFormInput" Property="totalRowCount" FromValue="{$tableData/@TotalRowCount}"/>
+          <IF_TEST Test="$cwSearchResultsTables/@TotalRowCount='1' and ($cwSearchResultsTables/cwSearchResultsTables/serviceName/@Value='BCM_MASTER' or $cwSearchResultsTables/cwSearchResultsTables/serviceName/@Value='BCM_INPUT_STAGING' or $cwSearchResultsTables/cwSearchResultsTables/serviceName/@Value='nonMDM')">
+            <THEN>
+              <SET Property="downloadTemplate" FromValue="true" DocVar="pglFormInput"/>
+              <SET Var="dbName" FromValue="{$cwSearchResultsTables/cwSearchResultsTables/dbName/@Value}"/>
+              <SET Var="url" FromValue="{$webuiContextPath}/bcm/framework/configurableUI/downloadTemplate.jsp?&amp;workflowId={$workflowId}&amp;serviceName={$cwSearchResultsTables/cwSearchResultsTables/serviceName/@Value}&amp;dbName={$dbName}&amp;tableName={$cwSearchResultsTables/cwSearchResultsTables/tableName/@Value}&amp;OUTPUT_FILE={$cwSearchResultsTables/cwSearchResultsTables/tableName/@Value}Template."/>
+              <SET Property="URL_V" FromValue="{$url}" DocVar="pglFormInput"/>
+              <SET Property="ConfigUI_TableName" FromValue="{ifElse($cwSearchResultsTables/cwSearchResultsTables/serviceName/@Value!='nonMDM',$cwSearchResultsTables/cwSearchResultsTables/tableName/@Value,concat($dbName,'.',$cwSearchResultsTables/cwSearchResultsTables/tableName/@Value))}" DocVar="pglFormInput"/>
+              <SET Property="ConfigUI_ServiceName" FromValue="{$cwSearchResultsTables/cwSearchResultsTables/serviceName/@Value}" DocVar="pglFormInput"/>
+              <SET Property="ConfigUI_WorkflowId" FromValue="{$workflowId}" DocVar="pglFormInput"/>
+              <SET Property="ConfigUI_autoGenFlag" FromValue="{$autoGenFlag}" DocVar="pglFormInput"/>
+            </THEN>
+            <ELSE>
+              <SET Property="downloadTemplate" FromValue="false" DocVar="pglFormInput"/>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="strlen($alertRed) > 0 ">
+            <THEN>
+              <SET DocVar="pglFormInput" Property="alertRed" FromValue="{$alertRed}"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="strlen($alertGreen) > 0 ">
+            <THEN>
+              <SET DocVar="pglFormInput" Property="alertGreen" FromValue="{$alertGreen}"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SYS_FREEZE'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="backUpFreezeCol">
+                <ROOT>
+                  <FREEZE_COLUMN_INDEX Value="{$thisParam/FREEZE_COLUMN_INDEX/@Value}"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <SET Var="linkUrl" FromValue="{$thisParam/linkUrl/@Value}"/>
+          <NATIVE_FUNCTION ClassName="java.net.URLDecoder" MethodName="decode" AssignToVar="linkUrl">
+            <PARAM Value="{$linkUrl}"/>
+            <PARAM Value="UTF-8"/>
+          </NATIVE_FUNCTION>
+          <SET Var="linkUrl" FromValue="{strReplaceAll($linkUrl,'%','_-_')}"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='tableNode'">
+            <THEN>
+              <SET Var="countField" FromValue="0"/>
+              <WHILE Condition="contains($linkUrl,'=')">
+                <IF_TEST Test="$countField = '0'">
+                  <THEN>
+                    <SET Var="FieldName" FromValue="{substringBefore(substringAfter($linkUrl,'START_WORKFLOW=TableEditorUIWf&amp;'),'=')}"/>
+                    <SET Var="linkUrl" FromValue="{substringAfter($linkUrl,concat($FieldName,'='))}"/>
+                    <SET Var="FieldValue" FromValue="{substringBefore($linkUrl,'&amp;')}"/>
+                    <SET Property="{$FieldName}" FromValue="{$FieldValue}" DocVar="thisParam"/>
+                    <SET Var="countField" FromValue="1"/>
+                  </THEN>
+                  <ELSE>
+                    <SET Var="FieldName" FromValue="{substringBefore($linkUrl,'=')}"/>
+                    <SET Var="linkUrl" FromValue="{substringAfter($linkUrl,concat($FieldName,'='))}"/>
+                    <SET Var="FieldValue" FromValue="{substringBefore($linkUrl,'&amp;')}"/>
+                    <SET Property="{$FieldName}" FromValue="{$FieldValue}" DocVar="thisParam"/>
+                  </ELSE>
+                </IF_TEST>
+                <SET Var="linkUrl" FromValue="{substringAfter($linkUrl,concat($FieldValue,'&amp;'))}"/>
+              </WHILE>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SYS_UNFREEZE'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="backUpFreezeCol">
+                <ROOT>
+                  <FREEZE_COLUMN_INDEX Value="0"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='saveFilter'">
+            <THEN>
+              <REMOVE_DOCUMENT Name="cwAdvancedFilter" ServiceName="USER_SECURITY">
+                <workflowId Value="{$filterDetails/workflowId/@Value}"/>
+                <sequence Value="{$filterDetails/sequence/@Value}"/>
+              </REMOVE_DOCUMENT>
+              <IF_TEST Test="strlen($thisParam/filterName/@Value)>1">
+                <THEN>
+                  <ADD_DOCUMENT Name="cwAdvancedFilter" ServiceName="USER_SECURITY" AssignToVar="addPageResult">
+                    <workflowId Value="{$filterDetails/workflowId/@Value}"/>
+                    <sequence Value="{$filterDetails/sequence/@Value}"/>
+                    <filterName Value="{$thisParam/filterName/@Value}"/>
+                    <display_Expression Value="{$filterDetails/display_Expression/@Value}"/>
+                    <executable_Expression Value="{$filterDetails/executable_Expression/@Value}"/>
+                  </ADD_DOCUMENT>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Edit' or $thisParam/BUTTON_ID/@Value='MassUpdate' or $thisParam/BUTTON_ID/@Value='Delete'">
+            <THEN>
+              <GET_DOCUMENT AssignToVar="cwSearchResultsTables" Name="cwSearchResultsTables" ServiceName="USER_SECURITY" ReturnRowCount="yes" DirtyRead="true">
+                <workflowId Value="{$workflowId}"/>
+                <ORDER_BY>
+                  <tableRank Sort="Ascending"/>
+                </ORDER_BY>
+              </GET_DOCUMENT>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Edit'">
+                <THEN>
+                  <IF_TEST Test="$cwSearchResultsTables/@TotalRowCount='1' and $cwSearchResultsTables/cwSearchResultsTables/serviceName/@Value='BCM_MASTER'">
+                    <THEN>
+                      <TO_DOCVAR AssignToVar="completeColVals">
+                        <Column/>
+                      </TO_DOCVAR>
+                      <FOR_EACH CurrentElement="curAttr" SelectList="$thisParam/ID">
+                        <TO_DOCVAR AssignToVar="keyColVals">
+                          <RECORD/>
+                        </TO_DOCVAR>
+                        <IF_TEST Test="contains(string($curAttr/@Value),'#')">
+                          <THEN>
+                            <SET Var="rowCols" FromValue="{strSplit($curAttr/@Value,'#')}"/>
+                            <FOR_EACH CurrentElement="curRow" SelectList="$rowCols/*">
+                              <SET DocVar="keyColVals" FromValue="{substringAfter($curRow/@Value,'=')}" Property="{substringAfter(substringBefore($curRow/@Value,'='),'.')}"/>
+                            </FOR_EACH>
+                          </THEN>
+                          <ELSE>
+                            <IF_TEST Test="$rowCols/cwSearchResultsConfigAttr/attributeName/@Value = null">
+                              <THEN>
+                                <GET_DOCUMENT Name="cwSearchResultsConfigAttr" ServiceName="USER_SECURITY" AssignToVar="rowCols" DirtyRead="true" ReturnRowCount="yes">
+                                  <workflowId Value="{$workflowId}"/>
+                                  <container Value="result"/>
+                                  <fieldType Value="table"/>
+                                  <propName Value="rowId"/>
+                                  <SELECT>
+                                    <attributeName/>
+                                  </SELECT>
+                                </GET_DOCUMENT>
+                              </THEN>
+                            </IF_TEST>
+                            <SET DocVar="keyColVals" FromValue="{$curAttr/@Value}" Property="{substringAfter($rowCols/cwSearchResultsConfigAttr/attributeName/@Value,'.')}"/>
+                          </ELSE>
+                        </IF_TEST>
+                        <ADD_CHILDREN DocVar="completeColVals" FromDocVar="keyColVals"/>
+                      </FOR_EACH>
+                      <REQUEST Name="CheckPendingApproval" ServiceName="ADMIN_UI" HandleException="true" AssignToVar="appStatus">
+                        <TO_XML DocVar="completeColVals"/>
+                        <DocumentName>
+                          <TABLE_NAME Value="{$cwSearchResultsTables/cwSearchResultsTables/tableName/@Value}"/>
+                          <SERVICE_NAME Value="{$cwSearchResultsTables/cwSearchResultsTables/serviceName/@Value}"/>
+                        </DocumentName>
+                        <DocumentOperation Value="UPDATE"/>
+                      </REQUEST>
+                      <IF_TEST Test="$appStatus/@Value!='0'">
+                        <THEN>
+                          <SET Var="userAction" FromValue="appCheck"/>
+                          <SET Var="pglFormOutput" Property="alertRed" FromValue="Selected Record(s) is Pending Approval."/>
+                        </THEN>
+                      </IF_TEST>
+                    </THEN>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$thisParam/massUpdateAllVar/@Value='MassUpdateAll' or $thisParam/deleteAllVar/@Value='DeleteAll'">
+                    <THEN>
+                      <SET Property="START_COUNT" FromValue="0" DocVar="thisParam"/>
+                      <REQUEST Name="fetchTableIds" ServiceName="UI_WORKFLOW" AssignToVar="IDDoc">
+                        <TO_XML SelectList="$thisParam/*"/>
+                        <TO_XML SelectList="$cwSearchResultsTables/*"/>
+                        <tableConfig>
+                          <TO_XML SelectList="$tableConfig/*"/>
+                        </tableConfig>
+                        <workflowId Value="{$workflowId}"/>
+                        <joinMechanism Value="{$joinMechanism}"/>
+                      </REQUEST>
+                      <IF_TEST Test="$IDDoc/*/* != null">
+                        <THEN>
+                          <REMOVE_CHILDREN ChildName="ID" DocVar="thisParam"/>
+                          <ADD_CHILDREN DocVar="thisParam" FromSelectList="$IDDoc/*/*"/>
+                        </THEN>
+                      </IF_TEST>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="$thisParam/BUTTON_ID/@Value='MassUpdate'">
+                    <THEN>
+                      <SET Var="documentOperation" FromValue="MASS_UPDATE"/>
+                      <SET Var="actionNameType" FromValue="updated"/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="documentOperation" FromValue="DELETE"/>
+                      <SET Var="actionNameType" FromValue="deleted"/>
+                    </ELSE>
+                  </IF_TEST>
+                  <IF_TEST Test="$cwSearchResultsTables/@TotalRowCount='1' and $cwSearchResultsTables/cwSearchResultsTables/serviceName/@Value='BCM_MASTER' and starts-with($cwSearchResultsTables/cwSearchResultsTables/tableName/@Value,'error_')='false'">
+                    <THEN>
+                      <REQUEST Name="checkSelectedIdInPendingApproval" ServiceName="UI_WORKFLOW" AssignToVar="getApprovalIdResp">
+                        <TO_XML SelectList="$cwSearchResultsTables/*"/>
+                        <TO_XML SelectList="$thisParam/*"/>
+                        <workflowId Value="{$workflowId}"/>
+                        <DocumentOperation Value="{$documentOperation}"/>
+                      </REQUEST>
+                      <IF_TEST Test="$getApprovalIdResp/SEND_APPROVAL_IDs != null or $getApprovalIdResp/NOT_SEND_APPROVAL_IDs != null">
+                        <THEN>
+                          <IF_TEST Test="int(count($getApprovalIdResp/SEND_APPROVAL_IDs/ID))=1 and int(count($getApprovalIdResp/NOT_SEND_APPROVAL_IDs/ID))=0">
+                            <THEN>
+                              <SET Var="userAction" FromValue="appCheck"/>
+                              <SET Var="pglFormOutput" Property="alertRed" FromValue="Selected Record(s) is Pending Approval"/>
+                            </THEN>
+                            <ELSE>
+                              <IF_TEST Test="int(count($getApprovalIdResp/SEND_APPROVAL_IDs/ID))>0">
+                                <THEN>
+                                  <SET Var="pglFormOutput" Property="alertRed" FromValue="Some Record(s) is in Pending Approval can't be {$actionNameType},Please refer log."/>
+                                </THEN>
+                              </IF_TEST>
+                              <IF_TEST Test="int(count($getApprovalIdResp/NOT_SEND_APPROVAL_IDs/ID)) != 0">
+                                <THEN>
+                                  <REMOVE_CHILDREN ChildName="ID" DocVar="thisParam"/>
+                                  <ADD_CHILDREN DocVar="thisParam" FromSelectList="$getApprovalIdResp/NOT_SEND_APPROVAL_IDs/*"/>
+                                </THEN>
+                                <ELSE>
+                                  <SET Var="userAction" FromValue="appCheck"/>
+                                  <SET Var="pglFormOutput" Property="alertRed" FromValue="Selected Record(s) is Pending Approval."/>
+                                </ELSE>
+                              </IF_TEST>
+                            </ELSE>
+                          </IF_TEST>
+                        </THEN>
+                      </IF_TEST>
+                    </THEN>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='search_button'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Search" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Clear'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Search" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Create'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Create_sub_wf" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Edit'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit_sub_wf" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Delete'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Delete_sub_wf" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Export'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Export" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Done'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Done" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Copy'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Copy_workflow30" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='MassUpdate'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="mass_update_wf" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ShowHistory'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="ShowHistorySwitch" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='advancedFilter' or $userAction ='saveFilter'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="decision" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='saveFilter'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='whereUsed'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Where Used" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='upload'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="sub_workflow39" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='appCheck'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Search" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='tableNode'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="linkTableEditor" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Search" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <task Name="Export">
+      <actions>
+        <action/>
+      </actions>
+      <next_nodes>
+        <next_node Name="Search"/>
+      </next_nodes>
+    </task>
+    <task Name="ShowHistorySwitch">
+      <actions>
+        <action>
+          <IF_TEST Test="$showHistory='true'">
+            <THEN>
+              <SET Var="showHistory" FromValue="false"/>
+              <SET Var="idValue" FromValue="{$thisParam/ID/@Value}"/>
+            </THEN>
+            <ELSE>
+              <SET Var="showHistory" FromValue="true"/>
+              <SET Var="idValue" FromValue=""/>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Search"/>
+      </next_nodes>
+    </task>
+    <sub_workflow Name="Create_sub_wf" Workflow="ConfigUI_Create">
+      <pre_actions>
+        <action/>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <input>
+        <action>
+          <TO_DOCVAR AssignToVar="temp">
+            <ROOT>
+              <EVENT_ID Value="{$EVENT_ID}"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="thisParam" FromSelectList="$temp/*"/>
+          <TO_XML DocVar="thisParam"/>
+        </action>
+      </input>
+      <next_nodes>
+        <next_node Name="Search"/>
+      </next_nodes>
+    </sub_workflow>
+    <sub_workflow Name="Edit_sub_wf" Workflow="ConfigUI_Edit">
+      <pre_actions>
+        <action/>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <input>
+        <action>
+          <TO_DOCVAR AssignToVar="temp">
+            <ROOT>
+              <EVENT_ID Value="{$EVENT_ID}"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="thisParam" FromSelectList="$temp/*"/>
+          <ADD_CHILDREN DocVar="thisParam" FromDocVar="backUpPGL"/>
+          <ADD_CHILDREN DocVar="thisParam" FromDocVar="backUpResultPGL"/>
+          <TO_XML DocVar="thisParam"/>
+        </action>
+      </input>
+      <next_nodes>
+        <next_node Name="Search"/>
+      </next_nodes>
+    </sub_workflow>
+    <sub_workflow Name="Delete_sub_wf" Workflow="ConfigUI_Delete">
+      <pre_actions>
+        <action/>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <input>
+        <action>
+          <TO_DOCVAR AssignToVar="temp">
+            <ROOT>
+              <EVENT_ID Value="{$EVENT_ID}"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="thisParam" FromSelectList="$temp/*"/>
+          <TO_XML DocVar="thisParam"/>
+        </action>
+      </input>
+      <next_nodes>
+        <next_node Name="Search"/>
+      </next_nodes>
+    </sub_workflow>
+    <sub_workflow Name="Copy_workflow30" Workflow="ConfigUI_Copy">
+      <pre_actions>
+        <action/>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <input>
+        <action>
+          <TO_DOCVAR AssignToVar="temp">
+            <ROOT>
+              <EVENT_ID Value="{$EVENT_ID}"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="thisParam" FromSelectList="$temp/*"/>
+          <TO_XML DocVar="thisParam"/>
+        </action>
+      </input>
+      <next_nodes>
+        <next_node Name="Search"/>
+      </next_nodes>
+    </sub_workflow>
+    <sub_workflow Name="mass_update_wf" Workflow="ConfigUI_MassUpdate">
+      <pre_actions>
+        <action/>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <input>
+        <action>
+          <TO_DOCVAR AssignToVar="temp">
+            <ROOT>
+              <EVENT_ID Value="{$EVENT_ID}"/>
+              <joinMechanism Value="{$joinMechanism}"/>
+              <wfName Value="{$workflowName}"/>
+              <autoGenFlag Value="{$autoGenFlag}"/>
+            </ROOT>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="thisParam" FromSelectList="$temp/*"/>
+          <TO_XML DocVar="thisParam"/>
+        </action>
+      </input>
+      <next_nodes>
+        <next_node Name="Search"/>
+      </next_nodes>
+    </sub_workflow>
+    <decision Name="decision">
+      <actions>
+        <action>
+          <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS sel * from cw_advanced_filter where workflowid = {$configurableWorkflow/configurableWorkflow/workflowId/@Value} and sequence&lt;>-1 ; " AssignToVar="filterExp" ReturnRowCount="yes"/>
+        </action>
+      </actions>
+      <condition Value="$filterExp/@TotalRowCount!='0'"/>
+      <if_true>
+        <next_nodes>
+          <next_node Name="Saved Filters" Description=""/>
+        </next_nodes>
+      </if_true>
+      <if_false>
+        <next_nodes>
+          <next_node Name="Configure Advanced Filter" Description=""/>
+        </next_nodes>
+      </if_false>
+    </decision>
+    <ui_form2 Name="Saved Filters" ShowInBreadCrumbs="SHOW" Template="filterDetails.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <GET_DOCUMENT Name="cwAdvancedFilter" ServiceName="USER_SECURITY" AssignToVar="filterValues" DirtyRead="true">
+            <workflowId Value="{$configurableWorkflow/configurableWorkflow/workflowId/@Value}"/>
+            <sequence Value="-1" MatchBy="NOT_EQUAL"/>
+          </GET_DOCUMENT>
+          <SET_NAME DocVar="filterValues" FromValue="FILTER_VALUES"/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <XML_TO_STRING FromDocVar="filterValues" DocVar="filterValuesVar"/>
+          <SET FromValue="{strReplaceAll($filterValuesVar,'-_-',' ')}" Var="filterValuesVar"/>
+          <STRING_TO_XML FromDocVar="filterValuesVar" DocVar="filterValues"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="filterValues"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='DeleteFilter'">
+            <THEN>
+              <SET Property="AlertGreen" DocVar="pglFormInput" FromValue="Filter deleted successfully"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='saveFilter'">
+            <THEN>
+              <SET Property="AlertGreen" DocVar="pglFormInput" FromValue="Filter saved successfully"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='DeleteFilter'">
+            <THEN>
+              <REMOVE_DOCUMENT Name="cwAdvancedFilter" ServiceName="USER_SECURITY">
+                <workflowId Value="{$configurableWorkflow/configurableWorkflow/workflowId/@Value}"/>
+                <sequence Value="{$thisParam/SELECTED_ID/@Value}"/>
+              </REMOVE_DOCUMENT>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='applyFilterAndReturn'">
+            <THEN>
+              <GET_DOCUMENT Name="cwAdvancedFilter" ServiceName="USER_SECURITY" AssignToVar="filterValues" DirtyRead="true">
+                <workflowId Value="{$configurableWorkflow/configurableWorkflow/workflowId/@Value}"/>
+                <sequence Value="{$thisParam/SELECTED_ID/@Value}"/>
+              </GET_DOCUMENT>
+              <TO_DOCVAR AssignToVar="filterDetails">
+                <FILTER_DETAILS TotalRowCount="1">
+                  <TO_XML SelectList="$filterValues/*/*"/>
+                </FILTER_DETAILS>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='SEARCH'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Done'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='delPriority'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Cancel'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Search" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Create'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Configure Advanced Filter" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Edit'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Configure Advanced Filter" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='DeleteFilter'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Saved Filters" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='applyFilterAndReturn'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Search" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="Configure Advanced Filter" ShowInBreadCrumbs="SHOW" Template="AdvancedFilter.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Edit'">
+            <THEN>
+              <SET Var="filterEdit" FromValue="true"/>
+            </THEN>
+            <ELSE>
+              <SET Var="filterEdit" FromValue="false"/>
+            </ELSE>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$filterEdit='true'">
+            <THEN>
+              <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS sel * from cw_advanced_filter where workflowid = {$configurableWorkflow/configurableWorkflow/workflowId/@Value} and sequence={$thisParam/SELECTED_ID/@Value} " AssignToVar="filterExp"/>
+              <SET Var="filterSelected" FromValue="{$thisParam/SELECTED_ID/@Value}"/>
+            </THEN>
+            <ELSE>
+              <TO_DOCVAR AssignToVar="filterExp">
+                <ROOT/>
+              </TO_DOCVAR>
+            </ELSE>
+          </IF_TEST>
+          <SET_NAME DocVar="filterExp" FromValue="FILTER_EXPRESSION"/>
+          <REQUEST Name="createAdvancedFilterObject" ServiceName="UI_WORKFLOW" AssignToVar="createAdFilter">
+            <WF_ID Value="{$configurableWorkflow/configurableWorkflow/workflowId/@Value}"/>
+            <JOIN_COND Value="{$configurableWorkflow/configurableWorkflow/joinMechanism/@Value}"/>
+          </REQUEST>
+          <TO_DOCVAR AssignToVar="dynPgl">
+            <DYNAMIC_PGL>
+              <ui:script xmlns:ui="http://www.teradata.com/ui">var allPropsVar={$createAdFilter/ENTIRE_DETAILS/@Value};</ui:script>
+              <ui:script xmlns:ui="http://www.teradata.com/ui">var tableDetVar={$createAdFilter/TABLE_DETAILS/@Value};</ui:script>
+              <ui:script xmlns:ui="http://www.teradata.com/ui">var joinCond='{$configurableWorkflow/configurableWorkflow/joinMechanism/@Value}';</ui:script>
+            </DYNAMIC_PGL>
+          </TO_DOCVAR>
+          <SET_NAME DocVar="tabDet" FromValue="tTables"/>
+          <SET Property="URL_V" FromValue="{concat($webuiContextPath,'/bcm/help/Config_Advanced_Filter.htm')}" DocVar="pglFormInput"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="tabDet"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="dynPgl"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="filterExp"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Apply_And_Return'">
+            <THEN>
+              <IF_TEST Test="strlen($thisParam/displayFilterExp/@Value)>1">
+                <THEN>
+                  <IF_TEST Test="$filterEdit='true'">
+                    <THEN>
+                      <TO_DOCVAR AssignToVar="filterDetails">
+                        <FILTER_DETAILS TotalRowCount="1">
+                          <workflowId Value="{$configurableWorkflow/configurableWorkflow/workflowId/@Value}"/>
+                          <sequence Value="{$filterSelected}"/>
+                          <display_Expression Value="{$thisParam/displayFilterExp/@Value}"/>
+                          <executable_Expression Value="{$thisParam/orgFilterExp/@Value}"/>
+                        </FILTER_DETAILS>
+                      </TO_DOCVAR>
+                    </THEN>
+                    <ELSE>
+                      <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS select COALESCE(max(SEQUENCE),'0') as seq from cw_advanced_filter where WORKFLOWID={$configurableWorkflow/configurableWorkflow/workflowId/@Value}" AssignToVar="seqVal"/>
+                      <TO_DOCVAR AssignToVar="filterDetails">
+                        <FILTER_DETAILS TotalRowCount="1">
+                          <workflowId Value="{$configurableWorkflow/configurableWorkflow/workflowId/@Value}"/>
+                          <sequence Value="{int($seqVal/*/*/@Value + 1)}"/>
+                          <display_Expression Value="{$thisParam/displayFilterExp/@Value}"/>
+                          <executable_Expression Value="{$thisParam/orgFilterExp/@Value}"/>
+                        </FILTER_DETAILS>
+                      </TO_DOCVAR>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='SEARCH'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Done'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Cancel'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Search" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Apply_And_Return'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Search" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='AND'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='or'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='oB'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='cB'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='button_table'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='null'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="Where Used" ShowInBreadCrumbs="SHOW" Template="whereUsed.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <GET_DOCUMENT AssignToVar="cwSearchResultsTables" Name="cwSearchResultsTables" ServiceName="USER_SECURITY" ReturnRowCount="yes" DirtyRead="true">
+            <workflowId Value="{$workflowId}"/>
+            <ORDER_BY>
+              <tableRank Sort="Ascending"/>
+            </ORDER_BY>
+          </GET_DOCUMENT>
+          <REQUEST Name="getLinks" ServiceName="BPE_META" AssignToVar="linkValues">
+            <SERVICE Value="{$cwSearchResultsTables/cwSearchResultsTables/serviceName/@Value}"/>
+            <DOCUMENT Value="{$cwSearchResultsTables/cwSearchResultsTables/tableName/@Value}"/>
+          </REQUEST>
+          <TO_DOCVAR AssignToVar="whereUsed">
+            <WHERE_USED/>
+          </TO_DOCVAR>
+          <FOR_EACH CurrentElement="currElm" SelectList="$linkValues/*">
+            <TO_DOCVAR AssignToVar="tempWhere">
+              <TEMP>
+                <Document_Name Value="{$currElm/@LinkedDocument}"/>
+                <From_Property Value="{$currElm/MAP_PROPERTY/@From}"/>
+                <To_Property Value="{$currElm/MAP_PROPERTY/@To}"/>
+              </TEMP>
+            </TO_DOCVAR>
+            <ADD_CHILDREN DocVar="whereUsed" FromDocVar="tempWhere"/>
+          </FOR_EACH>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="whereUsed"/>
+          <SET DocVar="pglFormInput" Property="Links_Page" FromValue="{$configurableWorkflow/configurableWorkflow/workflowName/@Value} Links Page"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='whereUsed'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="rowIdXML">
+                <OR/>
+              </TO_DOCVAR>
+              <FOR_EACH SelectList="$thisParam/ID" CurrentElement="curID">
+                <IF_TEST Test="contains($curID/@Value,'#')">
+                  <THEN>
+                    <IF_TEST Test="contains($curID/@Value,'#')">
+                      <THEN>
+                        <SET Var="tempRowId" FromValue="{strSplit($curID/@Value,'#')}"/>
+                      </THEN>
+                    </IF_TEST>
+                    <TO_DOCVAR AssignToVar="rowIdAndXML">
+                      <AND/>
+                    </TO_DOCVAR>
+                    <FOR_EACH SelectList="$tempRowId/*" CurrentElement="curElem">
+                      <SET Var="temp" FromValue="{strSplit($curElem/@Value,'=')}"/>
+                      <SET Var="ConfigDataType" FromValue="{$cwSearchResultsColumns/cwSearchResultsColumns[concat(dbName/@Value,'.',tableNamePhy/@Value,'.',columnNamePhy/@Value)=$temp/TOKEN[1]/@Value]/dataType/@Value}"/>
+                      <SET Var="rowId" FromValue="&lt;{$temp/TOKEN[1]/@Value} Value= '{$temp/TOKEN[2]/@Value}'  DataType='{$ConfigDataType}'/>"/>
+                      <STRING_TO_XML DocVar="tempRowIdXML" FromValue="{string($rowId/@Value)}"/>
+                      <ADD_CHILDREN DocVar="rowIdAndXML" FromVar="tempRowIdXML"/>
+                    </FOR_EACH>
+                  </THEN>
+                  <ELSE>
+                    <GET_DOCUMENT AssignToVar="rowIDLogical" Name="cwSearchResultsConfigAttr" ServiceName="USER_SECURITY" ReturnRowCount="yes" DirtyRead="true">
+                      <workflowId Value="{$workflowId}"/>
+                      <container Value="result"/>
+                      <fieldType Value="table"/>
+                      <propName Value="rowId"/>
+                    </GET_DOCUMENT>
+                    <TO_DOCVAR AssignToVar="rowIdAndXML">
+                      <AND/>
+                    </TO_DOCVAR>
+                    <IF_TEST Test="contains($curID/@Value,$rowIDLogical/cwSearchResultsConfigAttr/attributeName/@Value)">
+                      <THEN>
+                        <SET Var="temp" FromValue="{strSplit($curID/@Value,'=')}"/>
+                        <SET Var="rowId" FromValue="&lt;{$temp/TOKEN[1]/@Value} Value= '{$temp/TOKEN[2]/@Value}'/>"/>
+                      </THEN>
+                      <ELSE>
+                        <SET Var="rowId" FromValue="{$rowIDLogical/cwSearchResultsConfigAttr/attributeName/@Value}"/>
+                        <SET Var="rowId" FromValue="&lt;{substringAfter($rowId,'.')} Value= '{$curID/@Value}'/>"/>
+                      </ELSE>
+                    </IF_TEST>
+                    <STRING_TO_XML DocVar="tempRowIdXML" FromValue="{string($rowId/@Value)}"/>
+                    <ADD_CHILDREN DocVar="rowIdAndXML" FromVar="tempRowIdXML"/>
+                  </ELSE>
+                </IF_TEST>
+                <ADD_CHILDREN DocVar="rowIdXML" FromVar="rowIdAndXML"/>
+              </FOR_EACH>
+              <TO_DOCVAR AssignToVar="rowIdFormatted">
+                <ROW_ID/>
+              </TO_DOCVAR>
+              <FOR_EACH CurrentElement="curAttr" SelectList="$rowIdXML/AND/*">
+                <TO_DOCVAR AssignToVar="temp">
+                  <TEMP Value="{$curAttr/@Value}"/>
+                </TO_DOCVAR>
+                <SET_NAME DocVar="temp" FromValue="{concat('F_',substringAfter($curAttr/name(),'.'))}"/>
+                <ADD_CHILDREN DocVar="rowIdFormatted" FromDocVar="temp"/>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='toPage'">
+            <THEN>
+              <GET_DOCUMENT AssignToVar="cwSearchResultsTables" Name="cwSearchResultsTables" ServiceName="USER_SECURITY" ReturnRowCount="yes" DirtyRead="true">
+                <workflowId Value="{$workflowId}"/>
+                <ORDER_BY>
+                  <tableRank Sort="Ascending"/>
+                </ORDER_BY>
+              </GET_DOCUMENT>
+              <!--GET_DOC_PROPERTIES TableName="{$thisParam/selectedTabName/@Value}" ServiceName="{$cwSearchResultsTables/cwSearchResultsTables/serviceName/@Value}" AssignToVar="propVar" />
+              <TO_DOCVAR AssignToVar="propID">
+                <PROPS />
+              </TO_DOCVAR>
+              <FOR_EACH CurrentElement="curAttr" SelectList="$propVar/DOCUMENT/PROPERTY">
+                <IF_TEST Test="strlen($curAttr/@ToProperty)!=0">
+                  <THEN>
+                    <TO_DOCVAR AssignToVar="temp">
+                      <ROOT Value="{$rowIdFormatted/*[name()=$curAttr/@ToProperty]/@Value}" />
+                    </TO_DOCVAR>
+                    <SET_NAME DocVar="temp" FromValue="F_{$curAttr/@Name}" />
+                    <ADD_CHILDREN DocVar="propID" FromDocVar="temp" />
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <ADD_CHILDREN DocVar="thisParam" FromDocVar="propID" /-->
+              <ADD_CHILDREN DocVar="thisParam" FromDocVar="cwSearchResultsTables"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='SEARCH'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Done'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Cancel'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Search" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='toPage'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="table_editor37" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <table_editor Name="table_editor37" DocumentServiceName="{$thisParam/RESPONSE/cwSearchResultsTables/serviceName/@Value}" DocumentName="{$thisParam/selectedTabName/@Value}">
+      <pre_actions>
+        <action/>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <input>
+        <action>
+          <TO_XML SelectList="$rowIdFormatted/*"/>
+        </action>
+      </input>
+      <config_parameters>
+        <CreateAction Value="yes"/>
+        <CopyAction Value="yes"/>
+        <EditAction Value="yes"/>
+        <DeleteAction Value="yes"/>
+        <ExportAction Value="yes"/>
+        <AdvancedFilterAction Value="yes"/>
+        <CancelAction Value="yes"/>
+        <SelectAndReturnAction Value="no"/>
+        <IsMultiSelect Value="yes"/>
+        <ResultsPageSize Value="10"/>
+        <SortByProp Value=""/>
+        <SortOrder Value=""/>
+      </config_parameters>
+      <next_nodes>
+        <next_node Name="Where Used"/>
+      </next_nodes>
+    </table_editor>
+    <sub_workflow Name="sub_workflow39" Workflow="UploadFromTE">
+      <pre_actions>
+        <action>
+          <GET_DOCUMENT AssignToVar="cwSearchResultsTables" Name="cwSearchResultsTables" ServiceName="USER_SECURITY" ReturnRowCount="yes" DirtyRead="true">
+            <workflowId Value="{$workflowId}"/>
+            <ORDER_BY>
+              <tableRank Sort="Ascending"/>
+            </ORDER_BY>
+          </GET_DOCUMENT>
+          <TO_DOCVAR AssignToVar="tName">
+            <INPUT>
+              <TABLE_NAME Value="{$cwSearchResultsTables/cwSearchResultsTables/tableName/@Value}"/>
+              <SERVICE_NAME Value="{$cwSearchResultsTables/cwSearchResultsTables/serviceName/@Value}"/>
+              <DB_NAME Value="{$cwSearchResultsTables/cwSearchResultsTables/dbName/@Value}"/>
+            </INPUT>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <input>
+        <action>
+          <TO_XML DocVar="tName"/>
+        </action>
+      </input>
+      <next_nodes>
+        <next_node Name="Search" Description="Done"/>
+      </next_nodes>
+    </sub_workflow>
+    <table_editor Name="linkTableEditor" DocumentServiceName="{$thisParam/DOC_SERVICE_NAME/@Value}" DocumentName="{$thisParam/DOCUMENT_NAME/@Value}" InputVar="{thisParam,xml}">
+      <pre_actions>
+        <action/>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <input>
+        <action>
+          <TO_DOCVAR AssignToVar="outputVar">
+            <PARAMETERS/>
+          </TO_DOCVAR>
+          <FOR_EACH SelectList="$thisParam/*" CurrentElement="currParam">
+            <IF_TEST Test="starts-with($currParam/name(),'F_')">
+              <THEN>
+                <CLONE_XML DocVar="currParam" AssignToVar="filterParam"/>
+                <SET_NAME DocVar="filterParam" FromValue="{substringAfter($currParam/name(),'F_')}"/>
+                <ADD_CHILDREN DocVar="outputVar" FromDocVar="filterParam"/>
+              </THEN>
+            </IF_TEST>
+          </FOR_EACH>
+          <APPEND_CHILDREN DocVar="outputVar" FromDocVar="thisParam"/>
+          <TO_XML SelectList="$thisParam/*"/>
+        </action>
+      </input>
+      <config_parameters>
+        <CreateAction Value="yes"/>
+        <CopyAction Value="yes"/>
+        <EditAction Value="yes"/>
+        <DeleteAction Value="yes"/>
+        <ExportAction Value="yes"/>
+        <AdvancedFilterAction Value="yes"/>
+        <CancelAction Value="yes"/>
+        <SelectAndReturnAction Value="no"/>
+        <IsMultiSelect Value="yes"/>
+        <ResultsPageSize Value="10"/>
+        <SortByProp Value=""/>
+        <SortOrder Value=""/>
+      </config_parameters>
+      <next_nodes>
+        <next_node Name="Search"/>
+      </next_nodes>
+    </table_editor>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="-58,-4"/>
+    <mgcnodes>
+      <Start font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="62,246" size="732,534">
+        <iconProps iconfile="z1start.gif"/>
+      </Start>
+      <Done font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="597,245" size="732,534">
+        <iconProps iconfile="z1end.gif"/>
+      </Done>
+      <mgcnode Name="Generate Srch PGL" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="174,246" size="1024,706">
+        <iconProps iconfile="z1task.gif"/>
+      </mgcnode>
+      <Search font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="288,246" size="1280,984">
+        <iconProps iconfile="x1age80.gif"/>
+      </Search>
+      <Export font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="276,402" size="744,627">
+        <iconProps iconfile="z1task.gif"/>
+      </Export>
+      <ShowHistorySwitch font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="366,401" size="1600,838">
+        <iconProps iconfile="z1task.gif"/>
+      </ShowHistorySwitch>
+      <Create_sub_wf font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="338,67" size="744,709">
+        <iconProps iconfile="z1sub_workflow.gif"/>
+      </Create_sub_wf>
+      <Edit_sub_wf font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="117,403" size="744,709">
+        <iconProps iconfile="z1sub_workflow.gif"/>
+      </Edit_sub_wf>
+      <Delete_sub_wf font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="403,67" size="744,709">
+        <iconProps iconfile="z1sub_workflow.gif"/>
+      </Delete_sub_wf>
+      <Copy_workflow30 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="266,67" size="744,709">
+        <iconProps iconfile="z1sub_workflow.gif"/>
+      </Copy_workflow30>
+      <mass_update_wf font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="209,403" size="744,709">
+        <iconProps iconfile="z1sub_workflow.gif"/>
+      </mass_update_wf>
+      <decision font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="469,399" size="744,679">
+        <iconProps iconfile="z1decision.gif"/>
+      </decision>
+      <mgcnode Name="Saved Filters" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="469,510" size="1920,1040">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <mgcnode Name="Configure Advanced Filter" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="568,510" size="1920,1040">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <mgcnode Name="Where Used" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="498,69" size="1920,1040">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <table_editor37 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="607,69" size="744,683">
+        <iconProps iconfile="TableEditor32x32.gif"/>
+      </table_editor37>
+      <sub_workflow39 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="730,72" size="744,709">
+        <iconProps iconfile="z1sub_workflow.gif"/>
+      </sub_workflow39>
+      <linkTableEditor font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="191,68" size="744,683">
+        <iconProps iconfile="TableEditor32x32.gif"/>
+      </linkTableEditor>
+    </mgcnodes>
+    <mgcconnectors>
+      <Start>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="107,268" endpoint="174,268" ctrlRect1="154,266,4,4" ctrlRect2="121,266,4,4"/>
+      </Start>
+      <mgcnode Name="Generate Srch PGL">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="219,268" endpoint="288,268" ctrlRect1="268,266,4,4" ctrlRect2="234,266,4,4"/>
+      </mgcnode>
+      <Search>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="310,246" endpoint="288,268" ctrlRect1="308,169,4,4" ctrlRect2="186,181,4,4" ctrlRect2Dirty="true" textRect="244,173,11,8">
+          <textProps text="Search"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="333,268" endpoint="333,268" ctrlRect1="406,266,4,4" ctrlRect2="373,317,4,4" ctrlRect2Dirty="true" textRect="386,289,10,8">
+          <textProps text="Clear"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="310,246" endpoint="342,112" ctrlRect1="308,144,4,4" ctrlRect2="310,122,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="288,268" endpoint="139,403" ctrlRect1="175,266,4,4" ctrlRect2="132,349,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="310,246" endpoint="425,112" ctrlRect1="308,144,4,4" ctrlRect2="415,99,4,4" ctrlRect2Dirty="true" textRect="350,119,26,8">
+          <textProps text="$userAction ='Delete'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="310,291" endpoint="298,402" ctrlRect1="308,371,4,4" ctrlRect2="351,325,4,4" textRect="326,346,11,8" ctrlRect2Dirty="true">
+          <textProps text="Export"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="333,268" endpoint="597,267" ctrlRect1="529,266,4,4" ctrlRect2="397,265,4,4" textRect="461,263,9,8">
+          <textProps text="Done"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="310,246" endpoint="288,112" ctrlRect1="308,144,4,4" ctrlRect2="204,157,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="310,291" endpoint="231,403" ctrlRect1="308,373,4,4" ctrlRect2="229,317,4,4" textRect="263,343,15,8">
+          <textProps text="MassUpdate"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="310,291" endpoint="388,401" ctrlRect1="308,371,4,4" ctrlRect2="428,338,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="333,268" endpoint="469,421" ctrlRect1="433,266,4,4" ctrlRect2="365,419,4,4" textRect="392,340,19,8">
+          <textProps text="advancedFilter"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="333,268" endpoint="498,91" ctrlRect1="454,266,4,4" ctrlRect2="372,89,4,4" textRect="401,175,29,8">
+          <textProps text="$userAction ='whereUsed'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="333,268" endpoint="730,94" ctrlRect1="628,266,4,4" ctrlRect2="430,92,4,4">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="326,278" endpoint="326,278" ctrlRect1="399,276,4,4" ctrlRect2="399,276,4,4"/>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="310,246" endpoint="213,113" ctrlRect1="308,145,4,4" ctrlRect2="187,166,4,4" ctrlRect2Dirty="true" textRect="242,153,14,8">
+          <textProps text="tableNode"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="326,278" endpoint="326,278" ctrlRect1="399,276,4,4" ctrlRect2="399,276,4,4"/>
+      </Search>
+      <Export>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="298,402" endpoint="310,291" ctrlRect1="310,368,4,4" ctrlRect2="308,373,4,4" ctrlRect1Dirty="true"/>
+      </Export>
+      <ShowHistorySwitch>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="388,401" endpoint="310,291" ctrlRect1="446,319,4,4" ctrlRect2="308,372,4,4" ctrlRect1Dirty="true"/>
+      </ShowHistorySwitch>
+      <Create_sub_wf>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="360,112" endpoint="310,246" ctrlRect1="360,152,4,4" ctrlRect2="308,143,4,4" ctrlRect1Dirty="true"/>
+      </Create_sub_wf>
+      <Edit_sub_wf>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="139,403" endpoint="288,268" ctrlRect1="80,260,4,4" ctrlRect2="235,312,4,4" ctrlRect1Dirty="true" textRect="275,393,16,8" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+      </Edit_sub_wf>
+      <Delete_sub_wf>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="425,112" endpoint="310,246" ctrlRect1="425,129,4,4" ctrlRect2="327,250,4,4" ctrlRect1Dirty="true" ctrlRect2Dirty="true"/>
+      </Delete_sub_wf>
+      <Copy_workflow30>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="288,112" endpoint="310,246" ctrlRect1="306,180,4,4" ctrlRect2="315,253,4,4" ctrlRect1Dirty="true" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+      </Copy_workflow30>
+      <mass_update_wf>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="231,403" endpoint="310,291" ctrlRect1="201,311,4,4" ctrlRect2="235,349,4,4" ctrlRect2Dirty="true" ctrlRect1Dirty="true"/>
+      </mass_update_wf>
+      <decision>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,0" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="491,444" endpoint="491,510" ctrlRect1="489,491,4,4" ctrlRect2="489,458,4,4">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="178,0,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="514,421" endpoint="590,510" ctrlRect1="569,419,4,4" ctrlRect2="588,441,4,4"/>
+      </decision>
+      <mgcnode Name="Saved Filters">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="491,510" endpoint="310,291" ctrlRect1="489,345,4,4" ctrlRect2="308,454,4,4" textRect="395,397,11,8">
+          <textProps text="Cancel"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="514,532" endpoint="568,532" ctrlRect1="552,530,4,4" ctrlRect2="525,530,4,4" textRect="535,528,11,8">
+          <textProps text="Create"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="514,532" endpoint="568,532" ctrlRect1="579,477,4,4" ctrlRect2="564,511,4,4" textRect="569,492,9,8" ctrlRect1Dirty="true" ctrlRect2Dirty="true">
+          <textProps text="Edit"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="514,532" endpoint="514,532" ctrlRect1="587,530,4,4" ctrlRect2="533,587,4,4" ctrlRect2Dirty="true" textRect="554,556,17,8">
+          <textProps text="DeleteFilter"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="491,510" endpoint="310,291" ctrlRect1="489,345,4,4" ctrlRect2="308,454,4,4">
+          <textProps/>
+        </nextNodeView>
+      </mgcnode>
+      <mgcnode Name="Configure Advanced Filter">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="590,510" endpoint="333,268" ctrlRect1="588,327,4,4" ctrlRect2="524,266,4,4" textRect="553,294,11,8">
+          <textProps text="Cancel"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="590,510" endpoint="333,268" ctrlRect1="474,393,4,4" ctrlRect2="524,266,4,4" textRect="491,327,21,8" ctrlRect1Dirty="true">
+          <textProps text="Apply_And_Return"/>
+        </nextNodeView>
+      </mgcnode>
+      <mgcnode Name="Where Used">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="498,91" endpoint="333,268" ctrlRect1="468,119,4,4" ctrlRect2="455,266,4,4" ctrlRect1Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="543,91" endpoint="607,91" ctrlRect1="589,89,4,4" ctrlRect2="557,89,4,4">
+          <textProps/>
+        </nextNodeView>
+      </mgcnode>
+      <table_editor37>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="629,69" endpoint="543,91" ctrlRect1="601,55,4,4" ctrlRect2="576,39,4,4" ctrlRect1Dirty="true" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+      </table_editor37>
+      <sub_workflow39>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="730,94" endpoint="333,268" ctrlRect1="595,133,4,4" ctrlRect2="629,266,4,4" ctrlRect1Dirty="true" textRect="610,197,9,8">
+          <textProps text="Done"/>
+        </nextNodeView>
+      </sub_workflow39>
+      <linkTableEditor>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="213,113" endpoint="310,246" ctrlRect1="104,228,4,4" ctrlRect2="308,144,4,4" ctrlRect1Dirty="true" textRect="203,184,11,8">
+          <textProps text="cancel"/>
+        </nextNodeView>
+      </linkTableEditor>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+      <action/>
+    </pre_actions>
+    <post_actions>
+      <action/>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

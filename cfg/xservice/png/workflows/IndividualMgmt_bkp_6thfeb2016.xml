@@ -1,0 +1,2246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="46" ShowInBreadCrumbs="true" Version="1.0" Name="IndividualMgmt" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="IndividualMgmt">
+    <variable Name="LEGAL_ENT_NBR" Type="string" Comment=""/>
+    <variable Name="PRSNA_ID" Type="string" Comment=""/>
+    <variable Name="PROGRAM_ID" Type="string" Comment=""/>
+    <variable Name="CONSUMER_ID" Type="string" Comment=""/>
+    <variable Name="matchedDomainValues" Type="xml" Comment=""/>
+    <variable Name="PROGRAM_NAME" Type="string" Comment=""/>
+    <variable Name="PROGRAM_ID_CHANGED" Type="string" Comment=""/>
+    <variable Name="p_Message" Type="xml" Comment=""/>
+    <variable Name="emailTypes" Type="xml" Comment=""/>
+    <variable Name="phoneTypes" Type="xml" Comment=""/>
+    <variable Name="consumerDetails" Type="xml" Comment="This is to keep the header information being same for all tabs"/>
+    <variable Name="PHONEDETAILS" Type="xml" Comment=""/>
+    <variable Name="EMAILDETAILS" Type="xml" Comment=""/>
+    <variable Name="programIDValues" Type="xml" Comment=""/>
+    <variable Name="cntryNames" Type="xml" Comment=""/>
+    <variable Name="stateNames" Type="xml" Comment=""/>
+    <variable Name="PARENTAL_CNTRL" Type="string" Comment=""/>
+    <variable Name="PE_ACCESS" Type="string" Comment=""/>
+    <variable Name="contactTypes" Type="xml" Comment=""/>
+    <variable Name="loyaltyAcctDetails" Type="xml" Comment=""/>
+    <variable Name="loyaltyCurrTransDetails" Type="xml" Comment=""/>
+    <variable Name="SOCIALDETAILS" Type="xml" Comment=""/>
+    <variable Name="socialTypes" Type="xml" Comment=""/>
+    <variable Name="dataForSummaryTab" Type="xml" Comment=""/>
+    <variable Name="communicationsResults" Type="xml" Comment=""/>
+    <variable Name="dataSourceDetails" Type="xml" Comment=""/>
+    <variable Name="selectedPrsnaId" Type="string" Comment=""/>
+    <variable Name="selectedMatchCnsmrId" Type="string" Comment=""/>
+    <variable Name="isOpen" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start2">
+      <actions>
+        <action>
+          <SET Property="SHOW_CREATE_CONSUMER" DocVar="thisParam" FromValue="FALSE"/>
+          <REQUEST Name="getMatchedDomains" ServiceName="BCM_MASTER" AssignToVar="domainValues"/>
+          <TO_DOCVAR AssignToVar="matchedDomainValues">
+            <TO_XML SelectList="$domainValues"/>
+          </TO_DOCVAR>
+          <REQUEST Name="getProgramIDs" ServiceName="BCM_MASTER" AssignToVar="programIDValues">
+            <SOURCE Value="SEARCH"/>
+            <LEGAL_ENT_NBR Value="{$domainValues/LEGAL_ENT/LEGAL_ENT_NBR/@Value}"/>
+          </REQUEST>
+          <REQUEST Name="getCountries" ServiceName="BCM_MASTER" AssignToVar="cntryNames"/>
+          <REQUEST Name="getContactTypes" ServiceName="BCM_MASTER" AssignToVar="contactTypes"/>
+          <REQUEST Name="getDocumentAccessControlList" ServiceName="USER_SECURITY" AssignToVar="assignedActivities">
+            <USER_ID Value="{$UserId}"/>
+          </REQUEST>
+          <FOR_EACH CurrentElement="activity" SelectList="$assignedActivities/UIFORM_ACTIVITIES/*">
+            <IF_TEST Test="$activity/@Value = 'CSREdit' ">
+              <THEN>
+                <SET Var="PE_ACCESS" FromValue="EDIT_VIEW"/>
+                <BREAK/>
+              </THEN>
+              <ELSE>
+                <SET Var="PE_ACCESS" FromValue="VIEW"/>
+              </ELSE>
+            </IF_TEST>
+          </FOR_EACH>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="SearchIndividuals"/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="SearchIndividuals" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="HIDE" Template="SearchIndividuals.pgl">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pMessage">
+            <_ERRORS/>
+          </TO_DOCVAR>
+          <IF_TEST Test="($thisParam/SHOW_CREATE_CONSUMER/@Value='TRUE' or $thisParam/START_COUNT/@Value>=0) and ($userAction!='LOAD_STATES') and ($userAction!='LOAD_PROGRAM_LIST')">
+            <THEN>
+              <SET_NAME Value="{$thisParam/MKTNG_PGM_NUMBER}" FromValue="MKTNG_PGM_NBR"/>
+              <SET_NAME Value="{$thisParam/FULL_PHONE_NUMBER}" FromValue="FULL_PHONE_NUM"/>
+              <GET_DOCUMENT Name="LEGAL_ENT" AssignToVar="legalEntNbr" ServiceName="BCM_MASTER" DirtyRead="true">
+                <LEGAL_ENT_NAME Value="{$thisParam/LEGAL_ENT_NAME/@Value}"/>
+                <SELECT>
+                  <LEGAL_ENT_NBR/>
+                </SELECT>
+              </GET_DOCUMENT>
+              <SET_CHILD Value="{$thisParam}" FromValue="{$legalEntNbr/LEGAL_ENT/LEGAL_ENT_NBR}"/>
+              <REQUEST Name="getSearchResuls" AssignToVar="searchResults" ServiceName="BCM_MASTER">
+                <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                <GVN_NAME Value="{$thisParam/GVN_NAME/@Value}"/>
+                <FAMLY_NAME Value="{$thisParam/FAMLY_NAME/@Value}"/>
+                <BRTH_DATE Value="{$thisParam/BRTH_DATE/@Value}"/>
+                <ADDR_LINE_1_TXT Value="{$thisParam/ADDR_LINE_1_TXT/@Value}"/>
+                <ADDR_LINE_2_TXT Value="{$thisParam/ADDR_LINE_2_TXT/@Value}"/>
+                <ADDR_LINE_3_TXT Value="{$thisParam/ADDR_LINE_3_TXT/@Value}"/>
+                <CITY_NAME Value="{$thisParam/CITY_NAME/@Value}"/>
+                <TERR_CODE Value="{$thisParam/TERR_CODE/@Value}"/>
+                <CNTRY_CODE Value="{$thisParam/CNTRY_CODE/@Value}"/>
+                <POSTL_AREA_CODE Value="{$thisParam/POSTL_AREA_CODE/@Value}"/>
+                <EMAIL_ADDR_TXT Value="{$thisParam/EMAIL_ADDR_TXT/@Value}"/>
+                <FULL_PHONE_NUM Value="{$thisParam/FULL_PHONE_NUM/@Value}"/>
+                <START_AT_ROW Value="{$thisParam/START_COUNT/@Value}"/>
+                <LYLTY_ACCT_NUM Value="{$thisParam/LYLTY_ACCT_NUM/@Value}"/>
+                <NATIONAL_ID_NBR Value="{$thisParam/NATIONAL_ID_NBR/@Value}"/>
+                <TO_XML SelectList="$contactTypes/*"/>
+                <TO_XML SelectList="$programIDValues/*"/>
+              </REQUEST>
+              <!--GET_DOCUMENT Name="V_REGIS_PRSNA" ServiceName="BCM_MASTER" AssignToVar="searchResults" ReturnRowCount="yes" DirtyRead="yes" MaxRows="-1" StartAtRow="{$startRow}">
+<TO_XML SelectList="$filterList/*"/>
+<SELECT>
+<MKTNG_PGM_NBR/>
+<REGIS_PRSNA_ID/>
+<REGIS_CNSMR_ID_VAL/>
+<LEGAL_ENT_NBR/>
+<MKTNG_PGM_NBR/>
+<MKTNG_PGM_NAME/>
+<LEGAL_ENT_NBR/>
+<MATCHD_CNSMR_PRSNA_ID/>
+<FULL_NAME/>
+<FULL_ADDRESS/>
+<EMAIL_ADDR_TXT/>
+<FULL_PHONE_NUM/>
+</SELECT>
+</GET_DOCUMENT-->
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$searchResults/@TotalRowCount > 500">
+            <THEN>
+              <APPEND_TO_XML DocVar="pMessage">
+                <_ERROR Value="The search result contains more than 500 records, Please add few more parameters to search criteria." Severity="ERROR"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$matchedDomainValues/@TotalRowCount=0">
+            <THEN>
+              <APPEND_TO_XML DocVar="pMessage">
+                <_ERROR Value="No Matched domains found for the profile." Severity="ERROR"/>
+              </APPEND_TO_XML>
+              <APPEND_TO_XML DocVar="matchedDomainValues">
+                <LEGAL_ENT_NBR Value="None"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$searchResults/message/@Value='3000'">
+            <THEN>
+              <APPEND_TO_XML DocVar="pMessage">
+                <_ERROR Value="The current search parameters returns more than 2500 registrations. Please add additional search criteria to narrow down the result set." Severity="ERROR"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <SHOW_CREATE_CONSUMER Value="{$thisParam/SHOW_CREATE_CONSUMER/@Value}"/>
+              <TO_XML SelectList="$searchResults"/>
+              <TO_XML SelectList="$matchedDomainValues/*"/>
+              <TO_XML SelectList="$programIDValues/*"/>
+              <TO_XML SelectList="$cntryNames/*"/>
+              <TO_XML SelectList="$stateNames/*"/>
+              <TO_XML DocVar="pMessage"/>
+              <LEGAL_ENT_NAME Value="{$thisParam/LEGAL_ENT_NAME/@Value}"/>
+              <MKTNG_PGM_NUMBER Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+              <FULL_PHONE_NUMBER Value="{$thisParam/FULL_PHONE_NUM/@Value}"/>
+              <!--RowCount Value="{$searchResults/@TotalRowCount}" /-->
+            </ROOT>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction='SEARCH_INDIVIDUAL'">
+            <THEN>
+              <SET Property="SHOW_CREATE_CONSUMER" DocVar="thisParam" FromValue="TRUE"/>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$userAction='RESET'">
+                <THEN>
+                  <SET DocVar="thisParam" Property="MKTNG_PGM_NUMBER" FromValue=""/>
+                  <!--SET DocVar="thisParam" Property="REGIS_PRSNA_ID" FromValue="" /-->
+                  <SET DocVar="thisParam" Property="REGIS_CNSMR_ID_VAL" FromValue=""/>
+                  <!--SET DocVar="thisParam" Property="CONSUMER_ID" FromValue="" /-->
+                  <SET DocVar="thisParam" Property="GVN_NAME" FromValue=""/>
+                  <SET DocVar="thisParam" Property="FAMLY_NAME" FromValue=""/>
+                  <SET DocVar="thisParam" Property="BRTH_DATE" FromValue=""/>
+                  <SET DocVar="thisParam" Property="ADDR_LINE_1_TXT" FromValue=""/>
+                  <SET DocVar="thisParam" Property="ADDR_LINE_2_TXT" FromValue=""/>
+                  <SET DocVar="thisParam" Property="ADDR_LINE_3_TXT" FromValue=""/>
+                  <SET DocVar="thisParam" Property="CITY_NAME" FromValue=""/>
+                  <SET DocVar="thisParam" Property="TERR_CODE" FromValue=""/>
+                  <SET DocVar="thisParam" Property="CNTRY_CODE" FromValue=""/>
+                  <SET DocVar="thisParam" Property="POSTL_AREA_CODE" FromValue=""/>
+                  <SET DocVar="thisParam" Property="EMAIL_ADDR_TXT" FromValue=""/>
+                  <SET DocVar="thisParam" Property="FULL_PHONE_NUMBER" FromValue=""/>
+                  <SET DocVar="thisParam" Property="LYLTY_ACCT_NUM" FromValue=""/>
+                  <SET DocVar="thisParam" Property="NATIONAL_ID_NBR" FromValue=""/>
+                  <SET Property="SHOW_CREATE_CONSUMER" DocVar="thisParam" FromValue="FALSE"/>
+                  <SET DocVar="thisParam" Property="START_COUNT" FromValue="-1"/>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_STATES'">
+                    <THEN>
+                      <REQUEST Name="getStates" AssignToVar="stateNames" ServiceName="BCM_MASTER">
+                        <CNTRY_CODE Value="{$thisParam/CNTRY_CODE/@Value}"/>
+                      </REQUEST>
+                    </THEN>
+                    <ELSE>
+                      <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_PROGRAM_LIST'">
+                        <THEN>
+                          <!--GET_DOCUMENT Name="LEGAL_ENT" AssignToVar="legalEntNbr" ServiceName="BCM_MASTER" DirtyRead="true">
+<LEGAL_ENT_NAME Value="{$thisParam/LEGAL_ENT_NAME/@Value}"/>
+<SELECT>
+<LEGAL_ENT_NBR/>
+</SELECT>
+</GET_DOCUMENT-->
+                          <REQUEST Name="getMatchedDomains" ServiceName="BCM_MASTER" AssignToVar="domainValues"/>
+                          <REQUEST Name="getProgramIDs" AssignToVar="programIDValues" ServiceName="BCM_MASTER">
+                            <SOURCE Value="SEARCH"/>
+                            <LEGAL_ENT_NBR Value="{$domainValues/LEGAL_ENT[LEGAL_ENT_NAME/@Value=$thisParam/LEGAL_ENT_NAME/@Value]/LEGAL_ENT_NBR/@Value}"/>
+                          </REQUEST>
+                        </THEN>
+                      </IF_TEST>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <!-- Added by Ruchi-->
+          <SET Var="selectedPrsnaId" FromValue="{substringBefore($thisParam/selectedIndividualID/@Value, '#')}"/>
+          <SET Var="selectedPrsnaId" FromValue="{substringAfter($selectedPrsnaId, '=')}"/>
+          <SET Var="selectedMatchCnsmrId" FromValue="{substringAfter($thisParam/selectedIndividualID/@Value, '#')}"/>
+          <SET Var="selectedMatchCnsmrId" FromValue="{substringAfter($selectedMatchCnsmrId, '=')}"/>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='CREATE_NEW_CONSUMER'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='SAVE_SEARCH'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SEARCH_INDIVIDUAL'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="SearchIndividuals" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='VIEW_CONSUMER_DETAILS'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Edit Registration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='RESET'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="SearchIndividuals" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='search_button'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Clear'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='CANCEL'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='UNNIVERSAL_OPT_OUT'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SAVE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SYNC_ADDRESS'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='DELETE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='PROGRAM_OPT_OUT'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_STATES'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="SearchIndividuals" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_PROGRAM_LIST'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="SearchIndividuals" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ManageOpts'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="manageOpt" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='VIEW'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="View Consumer Details" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='create'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="sub_workflow45" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="Edit Registration" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="HIDE" Template="ViewConsumerDetails.pgl">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="($thisParam/outerContainer_SELECTED_STEP/@Value='outerStep1' or $thisParam/BUTTON_ID/@Value='VIEW_CONSUMER_DETAILS' or $thisParam/BUTTON_ID/@Value='LOAD_PROGRAM') and ($userAction!='LOAD_STATES')">
+            <THEN>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='VIEW_CONSUMER_DETAILS' or $thisParam/BUTTON_ID/@Value='LOAD_PROGRAM'">
+                <THEN>
+                  <!-- Added by Ruchi-->
+                  <GET_DOCUMENT AssignToVar="tempRes" DirtyRead="true" Name="V_REGIS_PRSNA" ReturnRowCount="yes" ServiceName="BCM_MASTER">
+                    <SELECT>
+                      <REGIS_PRSNA_ID/>
+                      <MKTNG_PGM_NBR/>
+                      <LEGAL_ENT_NBR/>
+                      <MATCHD_CNSMR_PRSNA_ID/>
+                      <MKTNG_PGM_NAME/>
+                    </SELECT>
+                    <REGIS_PRSNA_ID Value="{$selectedPrsnaId}"/>
+                  </GET_DOCUMENT>
+                  <!-- changed by Ruchi - thisparam to tempRes-->
+                  <SET Var="PRSNA_ID" FromValue="{$tempRes/V_REGIS_PRSNA/REGIS_PRSNA_ID/@Value}"/>
+                  <SET Var="PROGRAM_ID" FromValue="{$tempRes/V_REGIS_PRSNA/MKTNG_PGM_NBR/@Value}"/>
+                  <SET Var="LEGAL_ENT_NBR" FromValue="{$tempRes/V_REGIS_PRSNA/LEGAL_ENT_NBR/@Value}"/>
+                  <SET Var="CONSUMER_ID" FromValue="{$tempRes/V_REGIS_PRSNA/MATCHD_CNSMR_PRSNA_ID/@Value}"/>
+                  <SET Var="PROGRAM_NAME" FromValue="{$tempRes/V_REGIS_PRSNA/MKTNG_PGM_NAME/@Value}"/>
+                  <REQUEST Name="getEmailTypes" ServiceName="BCM_MASTER" AssignToVar="emailTypes"/>
+                  <REQUEST Name="getPhoneTypes" ServiceName="BCM_MASTER" AssignToVar="phoneTypes"/>
+                  <REQUEST Name="getSocialTypes" ServiceName="BCM_MASTER" AssignToVar="socialTypes"/>
+                  <REQUEST Name="getProgramIDs" ServiceName="BCM_MASTER" AssignToVar="programIDValues">
+                    <SOURCE Value="PII_DETAILS"/>
+                    <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                    <MATCHD_CNSMR_PRSNA_ID Value="{$CONSUMER_ID}"/>
+                    <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+                  </REQUEST>
+                  <REQUEST Name="getConsumerDetails" ServiceName="BCM_MASTER" AssignToVar="consumerDetails">
+                    <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                    <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                    <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+                    <TO_XML SelectList="$contactTypes/*"/>
+                  </REQUEST>
+                  <REQUEST Name="getStates" AssignToVar="stateNames" ServiceName="BCM_MASTER">
+                    <CNTRY_CODE Value="{$consumerDetails/CONSUMER_DETAILS/CNTRY_CODE/@Value}"/>
+                  </REQUEST>
+                  <!--COmmented by Debashish-->
+                  <!--REQUEST Name="getDataSourceDetails" ServiceName="BCM_MASTER" AssignToVar="dataSourceDetails">
+<LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+<REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+<MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+</REQUEST-->
+                </THEN>
+              </IF_TEST>
+              <SET Var="emailStartRow" FromValue="{$thisParam/START_COUNT/@Value}"/>
+              <REQUEST Name="getEmailDetails" ServiceName="BCM_MASTER" AssignToVar="EMAILDETAILS">
+                <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+                <EMAIL_START_ROW Value="{$emailStartRow}"/>
+                <MAX_ROWS Value="3"/>
+                <TO_XML SelectList="$emailTypes/*"/>
+                <TO_XML SelectList="$contactTypes/*"/>
+              </REQUEST>
+              <SET Var="phoneStartRow" FromValue="{$thisParam/PhoneTable_START_COUNT/@Value}"/>
+              <REQUEST Name="getPhoneDetails" ServiceName="BCM_MASTER" AssignToVar="PHONEDETAILS">
+                <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+                <PHONE_START_ROW Value="{$phoneStartRow}"/>
+                <MAX_ROWS Value="3"/>
+                <TO_XML SelectList="$phoneTypes/*"/>
+                <TO_XML SelectList="$contactTypes/*"/>
+              </REQUEST>
+              <SET Var="socialStartRow" FromValue="{$thisParam/SocialTable_START_COUNT/@Value}"/>
+              <REQUEST Name="getSocialDetails" ServiceName="BCM_MASTER" AssignToVar="SOCIALDETAILS">
+                <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+                <PHONE_START_ROW Value="{$socialStartRow}"/>
+                <MAX_ROWS Value="3"/>
+                <TO_XML SelectList="$socialTypes/*"/>
+                <TO_XML SelectList="$contactTypes/*"/>
+              </REQUEST>
+              <SET Var="otherStartRow" FromValue="{$thisParam/OTHER_PROGRAMS_START_COUNT/@Value}"/>
+              <IF_TEST Test="count($programIDValues/MKTNG_PGM/OPTION)>1">
+                <THEN>
+                  <GET_DOCUMENT Name="REGIS_PRSNA" AssignToVar="otherRegisPrsnaIds" ServiceName="BCM_MASTER" DirtyRead="true" ReturnRowCount="true" MaxRows="5" StartAtRow="{$otherStartRow}">
+                    <MATCHD_CNSMR_PRSNA_ID Value="{$CONSUMER_ID}"/>
+                    <MKTNG_PGM_NBR Value="{$PROGRAM_ID}" MatchBy="NOT_EQUAL"/>
+                    <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                    <SELECT>
+                      <REGIS_PRSNA_ID/>
+                      <MKTNG_PGM_NBR/>
+                      <LEGAL_ENT_NBR/>
+                    </SELECT>
+                  </GET_DOCUMENT>
+                </THEN>
+                <ELSE>
+                  <TO_DOCVAR AssignToVar="otherRegisPrsnaIds">
+                    <ROOT TotalRowCount="0"/>
+                  </TO_DOCVAR>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$otherRegisPrsnaIds/@TotalRowCount > 0">
+                <THEN>
+                  <!--SET_NAME SelectList="$otherRegisPrsnaIds/*" FromValue="AND"/>
+<GET_DOCUMENT Name="V_REGIS_PRSNA" ServiceName="BCM_MASTER" AssignToVar="otherResultsRaw" ReturnRowCount="true" DirtyRead="true" MaxRows="5" StartAtRow="{$otherStartRow}">
+<OR>
+<TO_XML SelectList="$otherRegisPrsnaIds/*"/>
+</OR>
+</GET_DOCUMENT-->
+                  <TO_DOCVAR AssignToVar="otherResultsRaw">
+                    <ROOT/>
+                  </TO_DOCVAR>
+                  <FOR_EACH SelectList="$otherRegisPrsnaIds/REGIS_PRSNA" CurrentElement="curElement">
+                    <GET_DOCUMENT Name="V_REGIS_PRSNA" ServiceName="BCM_MASTER" AssignToVar="otherResultsTemp" DirtyRead="true">
+                      <REGIS_PRSNA_ID Value="{$curElement/REGIS_PRSNA_ID/@Value}"/>
+                      <MKTNG_PGM_NBR Value="{$curElement/MKTNG_PGM_NBR/@Value}"/>
+                      <LEGAL_ENT_NBR Value="{$curElement/LEGAL_ENT_NBR/@Value}"/>
+                    </GET_DOCUMENT>
+                    <APPEND_TO_XML SelectList="$otherResultsRaw">
+                      <TO_XML SelectList="$otherResultsTemp/*"/>
+                    </APPEND_TO_XML>
+                  </FOR_EACH>
+                </THEN>
+                <ELSE>
+                  <TO_DOCVAR AssignToVar="otherResultsRaw">
+                    <ROOT TotalRowCount="0"/>
+                  </TO_DOCVAR>
+                </ELSE>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="otherResults">
+                <OTHER_RESULTS TotalRowCount="{$otherRegisPrsnaIds/@TotalRowCount}"/>
+              </TO_DOCVAR>
+              <SET FromValue="1" Var="i"/>
+              <FOR_EACH SelectList="$otherResultsRaw/V_REGIS_PRSNA" CurrentElement="currElement">
+                <SET Var="M_ID" FromValue="{$currElement/MKTNG_PGM_NBR/@Value}"/>
+                <SET Var="P_ID" FromValue="{$currElement/REGIS_PRSNA_ID/@Value}"/>
+                <TO_DOCVAR AssignToVar="M_P_ID">
+                  <CHILD_DOC>
+                    <PROGRAM_PRSNA_ID Value="{concat($M_ID/@Value,'|',$P_ID/@Value)}"/>
+                  </CHILD_DOC>
+                </TO_DOCVAR>
+                <APPEND_CHILDREN DocVar="currElement" FromDocVar="M_P_ID"/>
+                <SET FromValue="{int($i+1)}" Var="i"/>
+                <APPEND_TO_XML DocVar="otherResults">
+                  <V_REGIS_PRSNA>
+                    <TO_XML SelectList="$currElement/*"/>
+                  </V_REGIS_PRSNA>
+                </APPEND_TO_XML>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/outerContainer_SELECTED_STEP/@Value='outerStep2'">
+            <THEN>
+              <GET_DOCUMENT Name="DPEND" ServiceName="BCM_MASTER" AssignToVar="babyResults" DirtyRead="true">
+                <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+                <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+              </GET_DOCUMENT>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/outerContainer_SELECTED_STEP/@Value='outerStep3'">
+            <THEN>
+              <!--GET_DOCUMENT Name="PET" ServiceName="BCM_MASTER" AssignToVar="petResults" DirtyRead="true">
+<REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+<MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+<LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+</GET_DOCUMENT-->
+              <!-- Removed above stmt for adding pet type and breed details as a new requiremnt in release 4.1 -->
+              <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT P.REGIS_PRSNA_ID, P.MKTNG_PGM_NBR, P.PET_SEQ_NBR, P.PET_TYPE_CODE, P.PET_BREED_CODE,P.PET_NAME, P.PET_GENDR_IND, P.PET_BRTH_DATE, P.PET_AGE_NBR, P.DECEASED_IND, P.LEGAL_ENT_NBR, PT.PET_TYPE_NAME, PB.PET_BREED_NAME, PBS.BREED_SIZE_NAME From MDM.PET P LEFT JOIN PET_TYPE PT ON P.PET_TYPE_CODE  = PT.PET_TYPE_CODE LEFT JOIN PET_BREED PB ON P.PET_BREED_CODE  = PB.PET_BREED_CODE LEFT JOIN PET_BREED_SIZE PBS ON PB.BREED_SIZE_CODE  = PBS.BREED_SIZE_CODE WHERE REGIS_PRSNA_ID = {$PRSNA_ID} AND MKTNG_PGM_NBR = {$PROGRAM_ID} AND LEGAL_ENT_NBR = {$LEGAL_ENT_NBR};" AssignToVar="petResults"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/outerContainer_SELECTED_STEP/@Value='outerStep4'">
+            <THEN>
+              <!--REQUEST Name="getProgramNames" AssignToVar="programNames">
+<MATCHD_CNSMR_PRSNA_ID Value="{$CONSUMER_ID}"/>
+<LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+</REQUEST-->
+              <REQUEST Name="getSubscriprionsDropdownList" ServiceName="BCM_MASTER" AssignToVar="SubscriprionsDropdownList">
+                <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+                <TO_XML SelectList="$contactTypes/*"/>
+              </REQUEST>
+              <SET_NAME SelectList="$SubscriprionsDropdownList/RESPONSE/REGIS_PRSNA_PHONE/FULL_PHONE_NUM" FromValue="FULL_PHONE_NUMBER"/>
+              <IF_TEST Test="$thisParam/PROGRAM_ID_CHANGED/@Value!='TRUE'">
+                <!--This will be executed when the tab appears for the first time(not when the program ID drop down value changes) -->
+                <THEN>
+                  <SET Property="MKTNG_PGM_NBR" DocVar="thisParam" FromValue="{$PROGRAM_ID}"/>
+                  <!--SET Property="MKTNG_PGM_NAME" DocVar="programNames" FromValue="{$PROGRAM_NAME}" /-->
+                  <SET Var="PROGRAM_ID_CHANGED" FromValue="{$PROGRAM_ID}"/>
+                </THEN>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="WHERE_CLAUSE">
+                <WHERE_CLAUSE>
+                  <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                  <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                </WHERE_CLAUSE>
+              </TO_DOCVAR>
+              <REQUEST Name="getEmailSubscriptions" AssignToVar="emailResults" ServiceName="BCM_MASTER">
+                <TO_XML SelectList="$WHERE_CLAUSE/*"/>
+                <TO_XML SelectList="$contactTypes/*"/>
+              </REQUEST>
+              <REQUEST Name="getPhoneSubscriptions" AssignToVar="phoneResults" ServiceName="BCM_MASTER">
+                <TO_XML SelectList="$WHERE_CLAUSE/*"/>
+                <TO_XML SelectList="$contactTypes/*"/>
+              </REQUEST>
+              <SET_NAME SelectList="$phoneResults/V_PHONE/FULL_PHONE_NUM" FromValue="FULL_PHONE_NUMBER"/>
+              <SET_NAME SelectList="$phoneResults/V_PHONE_EDITABLE/V_PHONE/FULL_PHONE_NUM" FromValue="FULL_PHONE_NUMBER"/>
+              <REQUEST Name="getPostalSubscriptions" AssignToVar="postalResults" ServiceName="BCM_MASTER">
+                <TO_XML SelectList="$WHERE_CLAUSE/*"/>
+                <TO_XML SelectList="$contactTypes/*"/>
+              </REQUEST>
+              <REQUEST Name="getSocialSubscriptions" AssignToVar="socialResults" ServiceName="BCM_MASTER">
+                <TO_XML SelectList="$WHERE_CLAUSE/*"/>
+                <TO_XML SelectList="$contactTypes/*"/>
+              </REQUEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/outerContainer_SELECTED_STEP/@Value='outerStep5'">
+            <THEN>
+              <GET_DOCUMENT Name="V_COMMUNICATIONS" ServiceName="BCM_MASTER" AssignToVar="communicationsResults" DirtyRead="yes">
+                <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                <!--MATCHD_CNSMR_PRSNA_ID Value="{$CONSUMER_ID}" /-->
+                <!--Coomented above line, find the details in CHG0030794 -->
+              </GET_DOCUMENT>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/outerContainer_SELECTED_STEP/@Value='outerStep6'">
+            <THEN>
+              <GET_DOCUMENT Name="MATCHD_CNSMR_PRSNA" ServiceName="BCM_MASTER" AssignToVar="householdDetails" DirtyRead="true">
+                <MATCHD_CNSMR_PRSNA_ID Value="{$consumerDetails/CONSUMER_DETAILS/MATCHD_CNSMR_PRSNA_ID/@Value}"/>
+                <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                <SELECT>
+                  <HSHLD_PRSNA_ID/>
+                </SELECT>
+              </GET_DOCUMENT>
+              <GET_DOCUMENT Name="MATCHD_CNSMR_PRSNA" ServiceName="BCM_MASTER" AssignToVar="allHouseholdConsumerDetails" DirtyRead="true">
+                <HSHLD_PRSNA_ID Value="{$householdDetails/MATCHD_CNSMR_PRSNA/HSHLD_PRSNA_ID/@Value}"/>
+                <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                <SELECT>
+                  <MATCHD_CNSMR_PRSNA_ID/>
+                </SELECT>
+              </GET_DOCUMENT>
+              <TO_DOCVAR AssignToVar="HHOLDDETAILS">
+                <A/>
+              </TO_DOCVAR>
+              <!--FOR_EACH SelectList="$allHouseholdConsumerDetails/MATCHD_CNSMR_PRSNA" CurrentElement="currElement"-->
+              <GET_DOCUMENT Name="V_MATCHD_CNSMR_PRSNA_DTL" ServiceName="BCM_MASTER" AssignToVar="HHOLDDETAILS" DirtyRead="true">
+                <!--MATCHD_CNSMR_PRSNA_ID Value="{$currElement/MATCHD_CNSMR_PRSNA_ID/@Value}"/-->
+                <OR>
+                  <TO_XML SelectList="$allHouseholdConsumerDetails/MATCHD_CNSMR_PRSNA/MATCHD_CNSMR_PRSNA_ID"/>
+                </OR>
+                <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                <MATCHD_CNSMR_PRSNA_ID Value="{$CONSUMER_ID}" MatchBy="NOT_EQUAL"/>
+              </GET_DOCUMENT>
+              <!--APPEND_TO_XML DocVar="HHOLDDETAILS">
+<TO_XML SelectList="$hHDetails/V_MATCHD_CNSMR_PRSNA_DTL"/>
+</APPEND_TO_XML-->
+              <!--/FOR_EACH-->
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/outerContainer_SELECTED_STEP/@Value='outerStep7' or ($thisParam/BUTTON_ID/@Value='VIEW_CONSUMER_DETAILS' and $PE_ACCESS!='EDIT_VIEW')">
+            <THEN>
+              <GET_DOCUMENT Name="DPEND" ServiceName="BCM_MASTER" AssignToVar="babyResults" DirtyRead="true">
+                <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+                <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+              </GET_DOCUMENT>
+              <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT DS.DATA_SRCE_NBR AS  DATA_ORIGIN_SOURCE_NBR,DS.DATA_SRCE_NAME AS DATA_ORIGIN_SRCE_NAME ,DS.DATA_SOURCE_DESC AS DATA_ORIGIN_SOURCE_DESC,WS.WEB_SITE_URL_TXT AS DATA_ORIGIN_WEB_SITE_URL_TXT,RP.DATA_OP_SRCE_NAME AS DATA_OPT_ORIGIN_SRCE_NAME,DS2.DATA_SRCE_NBR AS  DATA_SOURCE_NBR,DS2.DATA_SRCE_NAME AS DATA_SRCE_NAME ,DS2.DATA_SOURCE_DESC AS DATA_SOURCE_DESC,WS2.WEB_SITE_URL_TXT AS WEB_SITE_URL_TXT,RP.REGIS_PRSNA_ID ,RP.MKTNG_PGM_NBR FROM MDM.REGIS_PRSNA RP LEFT JOIN MDM.DATA_SRCE DS ON RP.DATA_ORIGIN_SRCE_NBR=DS.DATA_SRCE_NBR LEFT JOIN MDM.WEB_SITE WS ON DS.DATA_SRCE_NBR= WS.DATA_SRCE_NBR LEFT JOIN MDM.DATA_SRCE DS2 ON RP.DATA_SRCE_NBR=DS2.DATA_SRCE_NBR LEFT JOIN MDM.WEB_SITE WS2 ON DS2.DATA_SRCE_NBR= WS2.DATA_SRCE_NBR WHERE REGIS_PRSNA_ID IN {$PRSNA_ID} AND RP.MKTNG_PGM_NBR = {$PROGRAM_ID} GROUP BY 1,2,3,4,5,6,7,8,9,10,11;" AssignToVar="OrigDataSrceResults"/>
+              <TO_DOCVAR AssignToVar="OrigDataSrce">
+                <ERESULTS>
+                  <ORIGDATASRCE>
+                    <DATA_SRCE_NAME Value="{$OrigDataSrceResults/SQL_RESULT/DATA_SRCE_NAME/@Value}"/>
+                    <DATA_SOURCE_DESC Value="{$OrigDataSrceResults/SQL_RESULT/DATA_SOURCE_DESC/@Value}"/>
+                    <WEB_SITE_URL_TXT Value="{$OrigDataSrceResults/SQL_RESULT/WEB_SITE_URL_TXT/@Value}"/>
+                    <DATA_ORIGIN_SRCE_NAME Value="{$OrigDataSrceResults/SQL_RESULT/DATA_ORIGIN_SRCE_NAME/@Value}"/>
+                    <DATA_ORIGIN_SOURCE_DESC Value="{$OrigDataSrceResults/SQL_RESULT/DATA_ORIGIN_SOURCE_DESC/@Value}"/>
+                    <DATA_ORIGIN_WEB_SITE_URL_TXT Value="{$OrigDataSrceResults/SQL_RESULT/DATA_ORIGIN_WEB_SITE_URL_TXT/@Value}"/>
+                    <DATA_OPT_ORIGIN_SRCE_NAME Value="{$OrigDataSrceResults/SQL_RESULT/DATA_OPT_ORIGIN_SRCE_NAME/@Value}"/>
+                  </ORIGDATASRCE>
+                </ERESULTS>
+              </TO_DOCVAR>
+              <!--GET_DOCUMENT Name="PET" ServiceName="BCM_MASTER" AssignToVar="petResults" DirtyRead="true">
+<REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+<MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+<LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+</GET_DOCUMENT-->
+              <!-- Removed above stmt for adding pet type and breed details as a new requiremnt in release 4.1 -->
+              <EXECUTE_SQL_QUERY Value="SELECT P.REGIS_PRSNA_ID, P.MKTNG_PGM_NBR, P.PET_SEQ_NBR, P.PET_TYPE_CODE, P.PET_BREED_CODE,P.PET_NAME, P.PET_GENDR_IND, P.PET_BRTH_DATE, P.PET_AGE_NBR, P.DECEASED_IND, P.LEGAL_ENT_NBR, PT.PET_TYPE_NAME, PB.PET_BREED_NAME, PBS.BREED_SIZE_NAME From MDM.PET P LEFT JOIN PET_TYPE PT ON P.PET_TYPE_CODE  = PT.PET_TYPE_CODE LEFT JOIN PET_BREED PB ON P.PET_BREED_CODE  = PB.PET_BREED_CODE LEFT JOIN PET_BREED_SIZE PBS ON PB.BREED_SIZE_CODE  = PBS.BREED_SIZE_CODE WHERE REGIS_PRSNA_ID = {$PRSNA_ID} AND MKTNG_PGM_NBR = {$PROGRAM_ID} AND LEGAL_ENT_NBR = {$LEGAL_ENT_NBR};" AssignToVar="petResults"/>
+              <REQUEST Name="getSubscriptionsSummary" AssignToVar="subscriptionsSummary">
+                <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+                <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                <TO_XML SelectList="$contactTypes/*"/>
+              </REQUEST>
+              <REQUEST Name="getEmailDetails" ServiceName="BCM_MASTER" AssignToVar="EMAILDETAILS">
+                <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+                <EMAIL_START_ROW Value="0"/>
+                <MAX_ROWS Value="10"/>
+                <TO_XML SelectList="$emailTypes/*"/>
+                <TO_XML SelectList="$contactTypes/*"/>
+              </REQUEST>
+              <REQUEST Name="getPhoneDetails" ServiceName="BCM_MASTER" AssignToVar="PHONEDETAILS">
+                <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+                <PHONE_START_ROW Value="0"/>
+                <MAX_ROWS Value="10"/>
+                <TO_XML SelectList="$phoneTypes/*"/>
+                <TO_XML SelectList="$contactTypes/*"/>
+              </REQUEST>
+              <REQUEST Name="getSocialDetails" ServiceName="BCM_MASTER" AssignToVar="SOCIALDETAILS">
+                <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+                <PHONE_START_ROW Value="0"/>
+                <MAX_ROWS Value="10"/>
+                <TO_XML SelectList="$socialTypes/*"/>
+                <TO_XML SelectList="$contactTypes/*"/>
+              </REQUEST>
+              <GET_DOCUMENT Name="V_SAMPLE" ServiceName="BCM_MASTER" AssignToVar="sampleResults" DirtyRead="yes">
+                <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+              </GET_DOCUMENT>
+              <GET_DOCUMENT Name="V_COMMUNICATIONS" ServiceName="BCM_MASTER" AssignToVar="communicationsResults" DirtyRead="yes">
+                <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                <!--MATCHD_CNSMR_PRSNA_ID Value="{$CONSUMER_ID}" /-->
+                <!--Coomented above line, find the details in CHG0030794 -->
+              </GET_DOCUMENT>
+              <GET_DOCUMENT Name="V_CAMPAIGN" ServiceName="BCM_MASTER" AssignToVar="campaignDetails" DirtyRead="true" ReturnRowCount="true">
+                <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+              </GET_DOCUMENT>
+              <GET_DOCUMENT Name="V_LEGACY_CAMPAIGN" ServiceName="BCM_MASTER" AssignToVar="legacyCampaignDetails" DirtyRead="true" ReturnRowCount="true" Distinct="false">
+                <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                <!--Commented by Debashish-->
+                <!--MKTNG_PGM_NBR Value="{$PROGRAM_ID}" /-->
+              </GET_DOCUMENT>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/outerContainer_SELECTED_STEP/@Value='outerStep8'">
+            <THEN>
+              <GET_DOCUMENT Name="V_SAMPLE" ServiceName="BCM_MASTER" AssignToVar="sampleResults" DirtyRead="yes">
+                <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+              </GET_DOCUMENT>
+              <!--GET_DOCUMENT Name="V_COUPON_REDEEMED" ServiceName="BCM_MASTER" AssignToVar="couponResults" DirtyRead="yes">
+                <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+              </GET_DOCUMENT-->
+              <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SEL * FROM V_COUPON_REDEEMED WHERE LEGAL_ENT_NBR = {$LEGAL_ENT_NBR} AND REGIS_PRSNA_ID = {$PRSNA_ID} AND MKTNG_PGM_NBR = {$PROGRAM_ID};" AssignToVar="couponResults1"/>
+              <TO_DOCVAR AssignToVar="couponResults3">
+                <V_COUPON_REDEEMED/>
+              </TO_DOCVAR>
+              <ADD_CHILDREN DocVar="couponResults3" FromSelectList="$couponResults1/*"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/outerContainer_SELECTED_STEP/@Value='outerStep9' and $consumerDetails/CONSUMER_DETAILS/LYLTY_ACCT_NUM/@Value != null">
+            <THEN>
+              <IF_TEST Test="$consumerDetails/CONSUMER_DETAILS/LYLTY_PGM_NBR/@Value != null">
+                <THEN>
+                  <SET Var="lyltyProgramNumber" FromValue=" LYLTY_PGM_NBR = {$consumerDetails/CONSUMER_DETAILS/LYLTY_PGM_NBR/@Value} "/>
+                </THEN>
+                <ELSE>
+                  <SET Var="lyltyProgramNumber" FromValue=" LYLTY_PGM_NBR is null "/>
+                </ELSE>
+              </IF_TEST>
+              <EXECUTE_SQL_QUERY AssignToVar="loyaltyAcctDetails" Value="SEL * FROM LYLTY_ACCT_DETAILS WHERE LYLTY_ACCT_NUM = '{$consumerDetails/CONSUMER_DETAILS/LYLTY_ACCT_NUM/@Value}' and {$lyltyProgramNumber} and MKTNG_PGM_NBR= {$PROGRAM_ID}"/>
+              <SET_NAME Value="{$loyaltyAcctDetails/SQL_RESULT}" FromValue="LYLTY_ACCT_DETAILS"/>
+              <SET Property="LYLTY_ACCT_NUM" DocVar="loyaltyAcctDetails" FromValue="{$consumerDetails/CONSUMER_DETAILS/LYLTY_ACCT_NUM/@Value}"/>
+              <SET Property="LYLTY_PGM_NBR" DocVar="loyaltyAcctDetails" FromValue="{$consumerDetails/CONSUMER_DETAILS/LYLTY_PGM_NBR/@Value}"/>
+              <EXECUTE_SQL_QUERY AssignToVar="loyaltyCurrTransDetails" Value="SEL * FROM CURR_LYLTY_TRANS_DATA WHERE LYLTY_ACCT_NUM = '{$consumerDetails/CONSUMER_DETAILS/LYLTY_ACCT_NUM/@Value}' and {$lyltyProgramNumber} and MKTNG_PGM_NBR= {$PROGRAM_ID}"/>
+              <SET_NAME SelectList="$loyaltyCurrTransDetails/SQL_RESULT" FromValue="CURR_LYLTY_TRANS_DATA"/>
+              <!--SET_NAME Value="{$loyaltyCurrTransDetails/SQL_RESULT}" FromValue="CURR_LYLTY_TRANS_DATA" /-->
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/outerContainer_SELECTED_STEP/@Value='outerStep10'">
+            <THEN>
+              <REQUEST AssignToVar="campaignDetails" Name="getCampaignDetails" ServiceName="BCM_MASTER">
+                <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+                <START_AT_ROW Value="{$thisParam/START_COUNT/@Value}"/>
+              </REQUEST>
+              <!--EXECUTE_SQL_QUERY AssignToVar="campaignDetails" Value=" SEL * FROM CNSMR_PROMOTION A INNER JOIN CAMPAIGN B ON A.CAMPAIGN_ID = B.CAMPAIGN_ID AND A.MKTNG_PGM_NBR = B.MKTNG_PGM_NBR INNER JOIN MKTNG_PGM C ON A.MKTNG_PGM_NBR = C.MKTNG_PGM_NBR WHERE A.REGIS_PRSNA_ID = {$PRSNA_ID} and A.MKTNG_PGM_NBR= {$PROGRAM_ID}"/>
+<SET_NAME SelectList="$campaignDetails/*" FromValue="V_CAMPAIGN"/-->
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/outerContainer_SELECTED_STEP/@Value='outerStep11'">
+            <THEN>
+              <REQUEST AssignToVar="legacyCampaignDetails" Name="getLegacyCampaignDetails" ServiceName="BCM_MASTER">
+                <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                <!--MKTNG_PGM_NBR Value="{$PROGRAM_ID}" /-->
+                <START_AT_ROW Value="{$thisParam/START_COUNT/@Value}"/>
+              </REQUEST>
+              <!--EXECUTE_SQL_QUERY AssignToVar="legacyCampaignDetails" Value=" SEL A.REGIS_PRSNA_ID, E.MKTNG_PGM_NAME,B.NAME AS CAMPAIGN_NAME,A.SELECTION_DTTM AS SELECTION_DATE,G.NAME AS CAMPAIGN_CHANNEL FROM TRM_LEAD_DB.LH_REALIZED_LEAD  A INNER JOIN TRM_META_DB.CM_COMMUNICATION B ON A.COMMUNICATION_ID = B.COMMUNICATION_ID INNER JOIN TRM_META_DB.EX_COMMUNICATION C ON A.COMMUNICATION_ID = C.COMMUNICATION_ID INNER JOIN MKTNG_PGM E ON C.MKTNG_PGM_NBR = E.MKTNG_PGM_NBR INNER JOIN   TRM_META_DB.CM_COMM_PACKAGE  F ON A.COMMUNICATION_ID = F.COMMUNICATION_ID INNER JOIN TRM_META_DB.CM_CHANNEL_CLASS G   ON F.CHANNEL_CLASS_ID = G.CHANNEL_CLASS_ID WHERE A.REGIS_PRSNA_ID = {$PRSNA_ID} and C.MKTNG_PGM_NBR= {$PROGRAM_ID}"/>
+<SET_NAME SelectList="$legacyCampaignDetails/*" FromValue="V_LEGACY_CAMPAIGN"/-->
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <TO_XML SelectList="$consumerDetails/*"/>
+              <TO_XML SelectList="$OrigDataSrce/*"/>
+              <TO_XML SelectList="$EMAILDETAILS/*"/>
+              <TO_XML SelectList="$PHONEDETAILS/*"/>
+              <TO_XML SelectList="$SOCIALDETAILS/*"/>
+              <TO_XML SelectList="$otherResults/*"/>
+              <OtherRowCount Value="{$otherResults/@TotalRowCount}"/>
+              <TO_XML SelectList="$babyResults/*"/>
+              <TO_XML SelectList="$petResults/*"/>
+              <TO_XML SelectList="$SubscriprionsDropdownList/*"/>
+              <TO_XML SelectList="$emailResults/*"/>
+              <TO_XML SelectList="$phoneResults/*"/>
+              <TO_XML SelectList="$postalResults/*"/>
+              <TO_XML SelectList="$socialResults/*"/>
+              <TO_XML SelectList="$communicationsResults/*"/>
+              <TO_XML SelectList="$HHOLDDETAILS/*"/>
+              <TO_XML SelectList="$subscriptionsSummary/*"/>
+              <TO_XML SelectList="$sampleResults/*"/>
+              <TO_XML SelectList="$couponResults3"/>
+              <TO_XML SelectList="$cntryNames/*"/>
+              <TO_XML SelectList="$stateNames/*"/>
+              <TO_XML SelectList="$programIDValues/*"/>
+              <TO_XML SelectList="$loyaltyAcctDetails/*"/>
+              <TO_XML SelectList="$loyaltyCurrTransDetails/*"/>
+              <TO_XML SelectList="$campaignDetails"/>
+              <TO_XML SelectList="$legacyCampaignDetails"/>
+              <TO_XML SelectList="$dataSourceDetails/*"/>
+            </ROOT>
+          </TO_DOCVAR>
+          
+	            <TO_DOCVAR AssignToVar="dataForSummaryTab">
+            <root>
+              <TO_XML SelectList="$pglFormInput/*"/>
+            </root>
+          </TO_DOCVAR>
+          <!--TO_DOCVAR AssignToVar="EMAILDETAILS">
+<A/>
+</TO_DOCVAR>
+<FOR_EACH SelectList="$emailResults/REGIS_PRSNA_EMAIL_ADDR" CurrentElement="thisFilter">
+<REQUEST Name="getAttributeValues" AssignToVar="emailTypeValues">
+<AV_CODE Value="{$thisFilter/CNTCT_POINT_CATEG_CODE/@Value}"/>
+</REQUEST>
+<APPEND_TO_XML SelectList="$EMAILDETAILS">
+<EMAILDETAILS>
+<EMAIL_TYPE Value="{$emailTypeValues/ATTRIBUTE_VALUES/AV_DESCRIPTION/@Value}"/>
+<EMAIL_ADDR_TXT Value="{$thisFilter/EMAIL_ADDR_TXT/@Value}" Type="{$emailTypeValues/ATTRIBUTE_VALUES/AV_DESCRIPTION/@Value}"/>
+</EMAILDETAILS>
+</APPEND_TO_XML>
+</FOR_EACH>
+<GET_DOCUMENT Name="REGIS_PRSNA_PHONE" ServiceName="BCM_MASTER" AssignToVar="phoneResults" ReturnRowCount="yes" DirtyRead="yes">
+<REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+<MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+<LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+</GET_DOCUMENT>
+<TO_DOCVAR AssignToVar="PHONEDETAILS">
+<A/>
+</TO_DOCVAR-->
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction ='SAVE'">
+            <THEN>
+              <IF_TEST Test="$thisParam/outerContainer_SELECTED_STEP/@Value='outerStep1'">
+                <THEN>
+                  <IF_TEST Test="$thisParam/IS_PROFILE_CHANGED/@Value='true'">
+                    <THEN>
+                      <REQUEST Name="updateRegisPrsnaInfo" ServiceName="BCM_MASTER" AssignToVar="updateResults">
+                        <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                        <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                        <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+                        <MATCHD_CNSMR_PRSNA_ID Value="{$CONSUMER_ID}"/>
+                        <DR_MRMRS Value="{$thisParam/NAME_PREFX_TXT/@Value}"/>
+                        <DR_FIRST_NAME Value="{$thisParam/GVN_NAME/@Value}"/>
+                        <DR_MIDDLE_NAME Value="{$thisParam/MID_NAME/@Value}"/>
+                        <DR_LAST_NAME Value="{$thisParam/FAMLY_NAME/@Value}"/>
+                        <DR_NAME_SUFFIX Value="{$thisParam/NAME_SUFFX_TXT/@Value}"/>
+                        <BRTH_DATE Value="{$thisParam/BRTH_DATE/@Value}"/>
+                        <DR_NAME_GENDER Value="{$thisParam/GENDR_IND/@Value}"/>
+                      </REQUEST>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="$thisParam/IS_ADDRESS_CHANGED/@Value='true'">
+                    <THEN>
+                      <REQUEST Name="updateRegisPrsnaPostal" ServiceName="BCM_MASTER" AssignToVar="updateRegisPrsnaPostalResult">
+                        <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                        <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+                        <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                        <ADDR_LINE_1_TXT Value="{$thisParam/ADDR_LINE_1_TXT/@Value}"/>
+                        <ADDR_LINE_2_TXT Value="{$thisParam/ADDR_LINE_2_TXT/@Value}"/>
+                        <ADDR_LINE_3_TXT Value="{$thisParam/ADDR_LINE_3_TXT/@Value}"/>
+                        <CITY_NAME Value="{$thisParam/CITY_NAME/@Value}"/>
+                        <TERR_CODE Value="{$thisParam/TERR_CODE/@Value}"/>
+                        <CNTRY_CODE Value="{$thisParam/CNTRY_CODE/@Value}"/>
+                        <POSTL_AREA_CODE Value="{$thisParam/POSTL_AREA_CODE/@Value}"/>
+                      </REQUEST>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="$thisParam/IS_EMAIL_CHANGED/@Value='true'">
+                    <THEN>
+                      <TO_DOCVAR AssignToVar="EMAIL_LIST">
+                        <EMAIL>
+                          <INPUT>
+                            <TO_XML SelectList="$thisParam/EMAIL_CODE"/>
+                            <TO_XML SelectList="$thisParam/EMAIL_ADDR_TXT"/>
+                          </INPUT>
+                          <COLLATE_LIST Value="EMAIL_DETAILS">
+                            <EMAIL_CODE/>
+                            <EMAIL_ADDR_TXT/>
+                          </COLLATE_LIST>
+                        </EMAIL>
+                      </TO_DOCVAR>
+                      <COLLATE_XML DocVar="EMAIL_LIST" AssignToVar="collateEmails"/>
+                      <FOR_EACH SelectList="$collateEmails/EMAIL_DETAILS" CurrentElement="currElement">
+                        <REQUEST Name="updateRegisPrsnaEmail" ServiceName="BCM_MASTER" AssignToVar="updateRegisPrsnaEmailResult">
+                          <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                          <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+                          <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                          <CNTCT_POINT_CATEG_CODE Value="{$currElement/EMAIL_CODE/@Value}"/>
+                          <EMAIL_ADDR_TXT Value="{$currElement/EMAIL_ADDR_TXT/@Value}"/>
+                        </REQUEST>
+                      </FOR_EACH>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="$thisParam/IS_PHONE_CHANGED/@Value='true'">
+                    <THEN>
+                      <TO_DOCVAR AssignToVar="PHONE_LIST">
+                        <PHONE>
+                          <INPUT>
+                            <TO_XML SelectList="$thisParam/PHONE_CODE"/>
+                            <TO_XML SelectList="$thisParam/FULL_PHONE"/>
+                          </INPUT>
+                          <COLLATE_LIST Value="PHONE_DETAILS">
+                            <PHONE_CODE/>
+                            <FULL_PHONE/>
+                          </COLLATE_LIST>
+                        </PHONE>
+                      </TO_DOCVAR>
+                      <COLLATE_XML DocVar="PHONE_LIST" AssignToVar="collatePhones"/>
+                      <FOR_EACH SelectList="$collatePhones/PHONE_DETAILS" CurrentElement="currElement">
+                        <REQUEST Name="updateRegisPrsnaPhone" ServiceName="BCM_MASTER" AssignToVar="updateRegisPrsnaPhoneResult">
+                          <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                          <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+                          <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                          <CNTCT_POINT_CATEG_CODE Value="{$currElement/PHONE_CODE/@Value}"/>
+                          <FULL_PHONE_NUM Value="{$currElement/FULL_PHONE/@Value}"/>
+                        </REQUEST>
+                      </FOR_EACH>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="$thisParam/IS_SOCIAL_CHANGED/@Value='true'">
+                    <THEN>
+                      <TO_DOCVAR AssignToVar="SOCIAL_LIST">
+                        <SOCIAL>
+                          <INPUT>
+                            <TO_XML SelectList="$thisParam/SOCIAL_CODE"/>
+                            <TO_XML SelectList="$thisParam/SOCIAL_NETWK"/>
+                          </INPUT>
+                          <COLLATE_LIST Value="SOCIAL_DETAILS">
+                            <SOCIAL_CODE/>
+                            <SOCIAL_NETWK/>
+                          </COLLATE_LIST>
+                        </SOCIAL>
+                      </TO_DOCVAR>
+                      <COLLATE_XML DocVar="SOCIAL_LIST" AssignToVar="collateSocials"/>
+                      <FOR_EACH SelectList="$collateSocials/SOCIAL_DETAILS" CurrentElement="currElement">
+                        <REQUEST Name="updateRegisPrsnaSocial" ServiceName="BCM_MASTER" AssignToVar="updateRegisPrsnaSocialResult">
+                          <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                          <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+                          <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                          <CNTCT_POINT_CATEG_CODE Value="{$currElement/SOCIAL_CODE/@Value}"/>
+                          <SOCIAL_NETWK_ACCT_ID_VAL Value="{$currElement/SOCIAL_NETWK/@Value}"/>
+                        </REQUEST>
+                      </FOR_EACH>
+                    </THEN>
+                  </IF_TEST>
+                  <!--To update the pipeline variable "consumerDetails" as the values in it got changed by above update statements-->
+                  <REQUEST Name="getConsumerDetails" ServiceName="BCM_MASTER" AssignToVar="consumerDetails">
+                    <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                    <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                    <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+                  </REQUEST>
+                  <!--IF_TEST Test="$updateResults/@Status='Success'">
+<THEN>
+<TO_DOCVAR AssignToVar="pglFormInput">
+<ROOT>
+<Message Value="SAVED"/>
+</ROOT>
+</TO_DOCVAR>
+</THEN>
+<ELSE>
+<ROOT>
+<Message Value="NOT SAVED"/>
+</ROOT>
+</ELSE>
+</IF_TEST-->
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/outerContainer_SELECTED_STEP/@Value='outerStep2'">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="BABY_LIST">
+                    <BABY>
+                      <INPUT>
+                        <TO_XML SelectList="$thisParam/DPEND_SEQ_NBR"/>
+                        <TO_XML SelectList="$thisParam/DPEND_NAME"/>
+                        <TO_XML SelectList="$thisParam/DPEND_BRTH_DATE"/>
+                        <TO_XML SelectList="$thisParam/DPEND_GENDR_IND"/>
+                        <TO_XML SelectList="$thisParam/DECEASED_IND"/>
+                      </INPUT>
+                      <COLLATE_LIST Value="BABY_DETAILS">
+                        <DPEND_SEQ_NBR/>
+                        <DPEND_NAME/>
+                        <DPEND_BRTH_DATE/>
+                        <DPEND_GENDR_IND/>
+                        <DECEASED_IND/>
+                      </COLLATE_LIST>
+                    </BABY>
+                  </TO_DOCVAR>
+                  <COLLATE_XML DocVar="BABY_LIST" AssignToVar="collateBabies"/>
+                  <FOR_EACH SelectList="$collateBabies/BABY_DETAILS" CurrentElement="currElement">
+                    <IF_TEST Test="$currElement/DPEND_BRTH_DATE/@Value=''">
+                      <THEN>
+                        <TO_DOCVAR AssignToVar="BIRTH_DATE">
+                          <BIRTH_DATE>
+                            <DPEND_BRTH_DATE/>
+                          </BIRTH_DATE>
+                        </TO_DOCVAR>
+                      </THEN>
+                      <ELSE>
+                        <TO_DOCVAR AssignToVar="BIRTH_DATE">
+                          <BIRTH_DATE>
+                            <DPEND_BRTH_DATE Value="{$currElement/DPEND_BRTH_DATE/@Value}"/>
+                          </BIRTH_DATE>
+                        </TO_DOCVAR>
+                      </ELSE>
+                    </IF_TEST>
+                    <SET Var="record_num" FromValue="One"/>
+                    <FOR_EACH SelectList="$thisParam/SEQ" CurrentElement="currentElement">
+                      <IF_TEST Test="$currentElement/@Value=$currElement/DPEND_SEQ_NBR/@Value">
+                        <THEN>
+                          <IF_TEST Test="$record_num = 'One'">
+                            <THEN>
+                              <REQUEST Name="updateRegisPrsnaForTemporal" AssignToVar="updateRegisPrsnaForTemporalResult" ServiceName="BCM_MASTER">
+                                <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                                <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+                                <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                              </REQUEST>
+                              <SET Var="record_num" FromValue="Two"/>
+                            </THEN>
+                          </IF_TEST>
+                          <MODIFY_DOC_SMART Name="DPEND" ServiceName="BCM_MASTER">
+                            <DOCUMENT_CONTEXT>
+                              <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                              <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+                              <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                              <DPEND_SEQ_NBR Value="{$currElement/DPEND_SEQ_NBR/@Value}"/>
+                            </DOCUMENT_CONTEXT>
+                            <UPDATE_PROPERTIES>
+                              <DPEND_NAME Value="{$currElement/DPEND_NAME/@Value}"/>
+                              <TO_XML SelectList="$BIRTH_DATE/*"/>
+                              <DPEND_GENDR_IND Value="{$currElement/DPEND_GENDR_IND/@Value}"/>
+                              <DECEASED_IND Value="{$currElement/DECEASED_IND/@Value}"/>
+                            </UPDATE_PROPERTIES>
+                          </MODIFY_DOC_SMART>
+                        </THEN>
+                      </IF_TEST>
+                    </FOR_EACH>
+                  </FOR_EACH>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/outerContainer_SELECTED_STEP/@Value='outerStep3'">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="PET_LIST">
+                    <PET>
+                      <INPUT>
+                        <TO_XML SelectList="$thisParam/PET_SEQ_NBR"/>
+                        <TO_XML SelectList="$thisParam/PET_NAME"/>
+                        <TO_XML SelectList="$thisParam/PET_BRTH_DATE"/>
+                        <TO_XML SelectList="$thisParam/PET_GENDR_IND"/>
+                        <TO_XML SelectList="$thisParam/DECEASED_IND"/>
+                      </INPUT>
+                      <COLLATE_LIST Value="PET_DETAILS">
+                        <PET_SEQ_NBR/>
+                        <PET_NAME/>
+                        <PET_BRTH_DATE/>
+                        <PET_GENDR_IND/>
+                        <DECEASED_IND/>
+                      </COLLATE_LIST>
+                    </PET>
+                  </TO_DOCVAR>
+                  <COLLATE_XML DocVar="PET_LIST" AssignToVar="collatePets"/>
+                  <FOR_EACH SelectList="$collatePets/PET_DETAILS" CurrentElement="currElement">
+                    <IF_TEST Test="$currElement/PET_BRTH_DATE/@Value=''">
+                      <THEN>
+                        <TO_DOCVAR AssignToVar="BIRTH_DATE">
+                          <BIRTH_DATE>
+                            <PET_BRTH_DATE/>
+                          </BIRTH_DATE>
+                        </TO_DOCVAR>
+                      </THEN>
+                      <ELSE>
+                        <TO_DOCVAR AssignToVar="BIRTH_DATE">
+                          <BIRTH_DATE>
+                            <PET_BRTH_DATE Value="{$currElement/PET_BRTH_DATE/@Value}"/>
+                          </BIRTH_DATE>
+                        </TO_DOCVAR>
+                      </ELSE>
+                    </IF_TEST>
+                    <SET Var="record_num" FromValue="One"/>
+                    <FOR_EACH SelectList="$thisParam/SEQ" CurrentElement="currentElement">
+                      <IF_TEST Test="$currentElement/@Value=$currElement/PET_SEQ_NBR/@Value">
+                        <THEN>
+                          <IF_TEST Test="$record_num ='One'">
+                            <THEN>
+                              <REQUEST Name="updateRegisPrsnaForTemporal" AssignToVar="updateRegisPrsnaForTemporalResult" ServiceName="BCM_MASTER">
+                                <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                                <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+                                <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                              </REQUEST>
+                              <SET Var="record_num" FromValue="Two"/>
+                            </THEN>
+                          </IF_TEST>
+                          <MODIFY_DOC_SMART Name="PET" ServiceName="BCM_MASTER">
+                            <DOCUMENT_CONTEXT>
+                              <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                              <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+                              <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                              <PET_SEQ_NBR Value="{$currElement/PET_SEQ_NBR/@Value}"/>
+                            </DOCUMENT_CONTEXT>
+                            <UPDATE_PROPERTIES>
+                              <PET_NAME Value="{$currElement/PET_NAME/@Value}"/>
+                              <TO_XML SelectList="$BIRTH_DATE/*"/>
+                              <PET_GENDR_IND Value="{$currElement/PET_GENDR_IND/@Value}"/>
+                              <DECEASED_IND Value="{$currElement/DECEASED_IND/@Value}"/>
+                            </UPDATE_PROPERTIES>
+                          </MODIFY_DOC_SMART>
+                        </THEN>
+                      </IF_TEST>
+                    </FOR_EACH>
+                  </FOR_EACH>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/outerContainer_SELECTED_STEP/@Value='outerStep4'">
+                <THEN>
+                  <SET_NAME Value="{$thisParam/MKTNG_PGM}" FromValue="MKTNG_PGM_NBR"/>
+                  <SET_NAME SelectList="$thisParam/FULL_PHONE_NUMBER" FromValue="FULL_PHONE_NUM"/>
+                  <REQUEST Name="saveSubscriptions" ServiceName="BCM_MASTER" AssignToVar="saveSubscriptionsResults">
+                    <TO_XML SelectList="$thisParam/*"/>
+                    <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                  </REQUEST>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction ='SYNC_ADDRESS'">
+            <THEN>
+              <FOR_EACH SelectList="$thisParam/PROGRAM_AND_PRSNA_ID" CurrentElement="currElement">
+                <SET Var="M_ID" FromValue="{substringBefore($currElement/@Value, '|')}"/>
+                <SET Var="P_ID" FromValue="{substringAfter($currElement/@Value, '|')}"/>
+                <REQUEST Name="updateRegisPrsnaPostal" ServiceName="BCM_MASTER" AssignToVar="updateRegisPrsnaPostalResult">
+                  <REGIS_PRSNA_ID Value="{$P_ID}"/>
+                  <MKTNG_PGM_NBR Value="{$M_ID}"/>
+                  <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                  <ADDR_LINE_1_TXT Value="{$thisParam/ADDR_LINE_1_TXT/@Value}"/>
+                  <ADDR_LINE_2_TXT Value="{$thisParam/ADDR_LINE_2_TXT/@Value}"/>
+                  <ADDR_LINE_3_TXT Value="{$thisParam/ADDR_LINE_3_TXT/@Value}"/>
+                  <CITY_NAME Value="{$thisParam/CITY_NAME/@Value}"/>
+                  <TERR_CODE Value="{$thisParam/TERR_CODE/@Value}"/>
+                  <POSTL_AREA_CODE Value="{$thisParam/POSTL_AREA_CODE/@Value}"/>
+                </REQUEST>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction ='UNNIVERSAL_OPT_OUT'">
+            <THEN>
+              <REQUEST AssignToVar="uniOptOutResult" Name="doUniversalOptOut" ServiceName="BCM_MASTER">
+                <MATCHD_CNSMR_PRSNA_ID Value="{$thisParam/MATCHD_CNSMR_PRSNA_ID/@Value}"/>
+                <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+              </REQUEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction ='DELETE'">
+            <THEN>
+              <IF_TEST Test="$thisParam/outerContainer_SELECTED_STEP/@Value='outerStep2'">
+                <THEN>
+                  <SET Var="count" FromValue="2"/>
+                  <FOR_EACH SelectList="$thisParam/SEQ" CurrentElement="currElement">
+                    <IF_TEST Test="$count=1">
+                      <THEN>
+                        <REQUEST Name="updateRegisPrsnaForTemporal" AssignToVar="updateRegisPrsnaForTemporalResult" ServiceName="BCM_MASTER">
+                          <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                          <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+                          <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                        </REQUEST>
+                        <SET Var="count" FromValue="2"/>
+                      </THEN>
+                    </IF_TEST>
+                    <REMOVE_DOCUMENT Name="DPEND" ServiceName="BCM_MASTER">
+                      <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                      <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+                      <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                      <DPEND_SEQ_NBR Value="{$currElement/@Value}"/>
+                    </REMOVE_DOCUMENT>
+                  </FOR_EACH>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/outerContainer_SELECTED_STEP/@Value='outerStep3'">
+                <THEN>
+                  <SET Var="count" FromValue="1"/>
+                  <FOR_EACH SelectList="$thisParam/SEQ" CurrentElement="currElement">
+                    <IF_TEST Test="$count=1">
+                      <THEN>
+                        <REQUEST Name="updateRegisPrsnaForTemporal" AssignToVar="updateRegisPrsnaForTemporalResult" ServiceName="BCM_MASTER">
+                          <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                          <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+                          <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                        </REQUEST>
+                        <SET Var="count" FromValue="2"/>
+                      </THEN>
+                    </IF_TEST>
+                    <REMOVE_DOCUMENT Name="PET" ServiceName="BCM_MASTER">
+                      <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                      <MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+                      <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                      <PET_SEQ_NBR Value="{$currElement/@Value}"/>
+                    </REMOVE_DOCUMENT>
+                  </FOR_EACH>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <!--IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_PROGRAM_ID'">
+<THEN>
+<GET_DOCUMENT Name="MKTNG_PGM" AssignToVar="programID" DirtyRead="true" ServiceName="BCM_MASTER">
+<MKTNG_PGM_NAME Value="{$thisParam/MKTNG_PGM_NAME/@Value}" />
+<SELECT>
+<MKTNG_PGM_NBR />
+</SELECT>
+</GET_DOCUMENT>
+<SET Property="MKTNG_PGM_NBR" DocVar="thisParam" FromValue="{$programID/MKTNG_PGM/MKTNG_PGM_NBR/@Value}" />
+<SET Property="PROGRAM_ID_CHANGED" DocVar="thisParam" FromValue="TRUE" />
+<SET Var="PROGRAM_ID_CHANGED" FromValue="{$programID/MKTNG_PGM/MKTNG_PGM_NBR/@Value}" />
+<SET Var="PROGRAM_NAME" FromValue="{$thisParam/MKTNG_PGM_NAME/@Value}" />
+<REQUEST Name="getSubscriprionsDropdownList" ServiceName="BCM_MASTER" AssignToVar="SubscriprionsDropdownList">
+<LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}" />
+<REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}" />
+<MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}" />
+</REQUEST>
+</THEN>
+</IF_TEST-->
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='EMAIL_OPT_OUT' or $thisParam/BUTTON_ID/@Value='PHONE_OPT_OUT' or $thisParam/BUTTON_ID/@Value='POSTAL_OPT_OUT' or $thisParam/BUTTON_ID/@Value='SOCIAL_OPT_OUT'">
+            <THEN>
+              <SET Property="MKTNG_PGM_NAME" DocVar="thisParam" FromValue="{$PROGRAM_NAME}"/>
+              <SET Property="outerContainer_SELECTED_STEP" DocVar="thisParam" FromValue="outerStep4"/>
+              <IF_TEST Test="$PROGRAM_ID!=$PROGRAM_ID_CHANGED">
+                <THEN>
+                  <SET Property="PROGRAM_ID_CHANGED" DocVar="thisParam" FromValue="TRUE"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='EMAIL_OPT_OUT'">
+                <THEN>
+                  <FOR_EACH SelectList="$thisParam/CHECKED_EMAIL_SUBSCRPTN" CurrentElement="currentElement">
+                    <SET Var="OPT_NBR" FromValue="{substringBefore($currentElement/@Value, '|')}"/>
+                    <REQUEST AssignToVar="EmailSubscriptionOptOutResult" Name="doEmailSubscriptionOptOut" ServiceName="BCM_MASTER">
+                      <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                      <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                      <MKTNG_PGM_NBR Value="{$PROGRAM_ID_CHANGED}"/>
+                      <SUBSCRPTN_OPT_NBR Value="{$OPT_NBR}"/>
+                    </REQUEST>
+                  </FOR_EACH>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='PHONE_OPT_OUT'">
+                <THEN>
+                  <FOR_EACH SelectList="$thisParam/CHECKED_PHONE_SUBSCRPTN" CurrentElement="currentElement">
+                    <SET Var="OPT_NBR" FromValue="{substringBefore($currentElement/@Value, '|')}"/>
+                    <REQUEST AssignToVar="PhoneSubscriptionOptOutResult" Name="doPhoneSubscriptionOptOut" ServiceName="BCM_MASTER">
+                      <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                      <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                      <MKTNG_PGM_NBR Value="{$PROGRAM_ID_CHANGED}"/>
+                      <SUBSCRPTN_OPT_NBR Value="{$OPT_NBR}"/>
+                    </REQUEST>
+                  </FOR_EACH>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='POSTAL_OPT_OUT'">
+                <THEN>
+                  <FOR_EACH SelectList="$thisParam/CHECKED_POSTAL_SUBSCRPTN" CurrentElement="currentElement">
+                    <SET Var="OPT_NBR" FromValue="{substringBefore($currentElement/@Value, '|')}"/>
+                    <REQUEST AssignToVar="PostalSubscriptionOptOutResult" Name="doPostalSubscriptionOptOut" ServiceName="BCM_MASTER">
+                      <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                      <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                      <MKTNG_PGM_NBR Value="{$PROGRAM_ID_CHANGED}"/>
+                      <SUBSCRPTN_OPT_NBR Value="{$OPT_NBR}"/>
+                    </REQUEST>
+                  </FOR_EACH>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SOCIAL_OPT_OUT'">
+                <THEN>
+                  <FOR_EACH SelectList="$thisParam/CHECKED_SOCIAL_SUBSCRPTN" CurrentElement="currentElement">
+                    <SET Var="OPT_NBR" FromValue="{substringBefore($currentElement/@Value, '|')}"/>
+                    <REQUEST AssignToVar="SocialSubscriptionOptOutResult" Name="doSocialSubscriptionOptOut" ServiceName="BCM_MASTER">
+                      <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                      <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                      <MKTNG_PGM_NBR Value="{$PROGRAM_ID_CHANGED}"/>
+                      <SUBSCRPTN_OPT_NBR Value="{$OPT_NBR}"/>
+                    </REQUEST>
+                  </FOR_EACH>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='UNI_EMAIL_OPT_OUT' or $thisParam/BUTTON_ID/@Value='UNI_PHONE_OPT_OUT' or $thisParam/BUTTON_ID/@Value='UNI_POSTL_OPT_OUT' or $thisParam/BUTTON_ID/@Value='UNI_SOCIAL_OPT_OUT'">
+            <THEN>
+              <SET Property="outerContainer_SELECTED_STEP" DocVar="thisParam" FromValue="outerStep4"/>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='UNI_EMAIL_OPT_OUT'">
+                <THEN>
+                  <REQUEST AssignToVar="uniEmailOptOutResult" Name="doUniversalEmailOptOut" ServiceName="BCM_MASTER">
+                    <MATCHD_CNSMR_PRSNA_ID Value="{$CONSUMER_ID}"/>
+                    <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                  </REQUEST>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='UNI_PHONE_OPT_OUT'">
+                <THEN>
+                  <REQUEST AssignToVar="uniPhoneOptOutResult" Name="doUniversalPhoneOptOut" ServiceName="BCM_MASTER">
+                    <MATCHD_CNSMR_PRSNA_ID Value="{$CONSUMER_ID}"/>
+                    <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                  </REQUEST>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='UNI_POSTL_OPT_OUT'">
+                <THEN>
+                  <REQUEST AssignToVar="uniPostlOptOutResult" Name="doUniversalPostlOptOut" ServiceName="BCM_MASTER">
+                    <MATCHD_CNSMR_PRSNA_ID Value="{$CONSUMER_ID}"/>
+                    <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                  </REQUEST>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='UNI_SOCIAL_OPT_OUT'">
+                <THEN>
+                  <REQUEST AssignToVar="uniSocialOptOutResult" Name="doUniversalSocialOptOut" ServiceName="BCM_MASTER">
+                    <MATCHD_CNSMR_PRSNA_ID Value="{$CONSUMER_ID}"/>
+                    <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                  </REQUEST>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction ='PROGRAM_OPT_OUT'">
+            <THEN>
+              <REQUEST AssignToVar="progOptOutResult" Name="doProgramOptOut" ServiceName="BCM_MASTER">
+                <REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+                <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                <MKTNG_PGM_NBR Value="{$PROGRAM_ID_CHANGED}"/>
+              </REQUEST>
+              <SET Property="PROGRAM_ID_CHANGED" DocVar="thisParam" FromValue="TRUE"/>
+              <SET Property="MKTNG_PGM_NBR" DocVar="thisParam" FromValue="{$PROGRAM_ID_CHANGED}"/>
+              <SET Property="MKTNG_PGM_NAME" DocVar="thisParam" FromValue="{$PROGRAM_NAME}"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_STATES'">
+            <THEN>
+              <REQUEST Name="getStates" AssignToVar="stateNames" ServiceName="BCM_MASTER">
+                <CNTRY_CODE Value="{$thisParam/CNTRY_CODE/@Value}"/>
+              </REQUEST>
+              <!--This will keep the form values same after changing the country field-->
+              <TO_DOCVAR AssignToVar="consumerDetailsCopy">
+                <TO_XML SelectList="$consumerDetails/*"/>
+              </TO_DOCVAR>
+              <SET DocVar="consumerDetailsCopy" Property="GVN_NAME" FromValue="{$thisParam/GVN_NAME/@Value}"/>
+              <SET DocVar="consumerDetailsCopy" Property="MID_NAME" FromValue="{$thisParam/MID_NAME/@Value}"/>
+              <SET DocVar="consumerDetailsCopy" Property="FAMLY_NAME" FromValue="{$thisParam/FAMLY_NAME/@Value}"/>
+              <SET DocVar="consumerDetailsCopy" Property="BRTH_DATE" FromValue="{$thisParam/BRTH_DATE/@Value}"/>
+              <SET DocVar="consumerDetailsCopy" Property="GENDR_IND" FromValue="{$thisParam/GENDR_IND/@Value}"/>
+              <SET DocVar="consumerDetailsCopy" Property="ADDR_LINE_1_TXT" FromValue="{$thisParam/ADDR_LINE_1_TXT/@Value}"/>
+              <SET DocVar="consumerDetailsCopy" Property="ADDR_LINE_2_TXT" FromValue="{$thisParam/ADDR_LINE_2_TXT/@Value}"/>
+              <SET DocVar="consumerDetailsCopy" Property="ADDR_LINE_3_TXT" FromValue="{$thisParam/ADDR_LINE_3_TXT/@Value}"/>
+              <SET DocVar="consumerDetailsCopy" Property="CITY_NAME" FromValue="{$thisParam/CITY_NAME/@Value}"/>
+              <SET DocVar="consumerDetailsCopy" Property="TERR_CODE" FromValue="{$thisParam/TERR_CODE/@Value}"/>
+              <SET DocVar="consumerDetailsCopy" Property="CNTRY_CODE" FromValue="{$thisParam/CNTRY_CODE/@Value}"/>
+              <SET DocVar="consumerDetailsCopy" Property="POSTL_AREA_CODE" FromValue="{$thisParam/POSTL_AREA_CODE/@Value}"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_PROGRAM'">
+            <THEN>
+              <GET_DOCUMENT Name="REGIS_PRSNA" AssignToVar="regisPrsnaID" ServiceName="BCM_MASTER" DirtyRead="true">
+                <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NAME/@Value}"/>
+                <MATCHD_CNSMR_PRSNA_ID Value="{$CONSUMER_ID}"/>
+                <PRSNA_STATUS_CODE Value="AC"/>
+                <SELECT>
+                  <REGIS_PRSNA_ID/>
+                </SELECT>
+              </GET_DOCUMENT>
+              <SET DocVar="thisParam" Property="PRSNA_ID" FromValue="{$regisPrsnaID/REGIS_PRSNA/REGIS_PRSNA_ID/@Value}"/>
+              <SET DocVar="thisParam" Property="PROGRAM_ID" FromValue="{$thisParam/MKTNG_PGM_NAME/@Value}"/>
+              <SET DocVar="thisParam" Property="CONSUMER_ID" FromValue="{$CONSUMER_ID}"/>
+              <SET DocVar="thisParam" Property="LEGAL_ENT_NBR" FromValue="{$LEGAL_ENT_NBR}"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='BACK'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='CANCEL'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Registration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SAVE_CHANGES'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Cancel'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Submit'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='RESET_SEARCH'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SAVE_SEARCH'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SEARCH_INDIVIDUAL'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SEARCH_PROMOTIONS'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='UNNIVERSAL_OPT_OUT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Registration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SAVE'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Registration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='DELETE'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Registration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='PROGRAM_OPT_OUT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Registration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SYNC_ADDRESS'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Registration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='OPT_OUT'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='EMAIL_OPT_OUT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Registration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='PHONE_OPT_OUT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Registration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='POSTAL_OPT_OUT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Registration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_STATES'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Registration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_PROGRAM'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Registration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='UNI_EMAIL_OPT_OUT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Registration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='UNI_PHONE_OPT_OUT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Registration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='UNI_POSTL_OPT_OUT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Registration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SOCIAL_OPT_OUT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Registration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='UNI_SOCIAL_OPT_OUT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Registration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Print'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Node43" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='VIEW_CONSUMER_DETAILS'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Registration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='PII_DETAILS'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Registration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='BABIES'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Registration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='PET'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Registration" Description=""/>
+          <next_node Name="Edit Registration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SUSBSCRPTN'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Registration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='COMMUNICATION'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Registration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOYALTY'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Registration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='FULFILLMENT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Registration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SUMMARY'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Registration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='HOUSEHOLD'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Registration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='CAMPAIGN'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Registration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LEGACY'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Edit Registration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="Node43" ShowInBreadCrumbs="HIDE" Template="Summary_print.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <TO_XML SelectList="$dataForSummaryTab/*"/>
+            </ROOT>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <if_cond Value="$userAction ='DONE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Print2'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="View Consumer Details" ShowInBreadCrumbs="SHOW" Template="ViewConsumer.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <!-- chnaged by ruchi - removed PE_ACCESS check-->
+          <IF_TEST Test="$thisParam/outerContainer_SELECTED_STEP/@Value='outerStep7' or ($thisParam/BUTTON_ID/@Value='VIEW' )">
+            <THEN>
+              <!-- Added by Ruchi-->
+              <GET_DOCUMENT AssignToVar="tempRes" DirtyRead="true" Name="V_REGIS_PRSNA" ReturnRowCount="yes" ServiceName="BCM_MASTER">
+                <SELECT>
+                  <REGIS_PRSNA_ID/>
+                  <MKTNG_PGM_NBR/>
+                  <LEGAL_ENT_NBR/>
+                  <MATCHD_CNSMR_PRSNA_ID/>
+                  <MKTNG_PGM_NAME/>
+                </SELECT>
+                <REGIS_PRSNA_ID Value="{$selectedPrsnaId}"/>
+              </GET_DOCUMENT>
+              <!-- changed by Ruchi - thisparam to tempRes-->
+              <SET Var="PRSNA_ID" FromValue="{$tempRes/V_REGIS_PRSNA/REGIS_PRSNA_ID/@Value}"/>
+              <SET Var="PROGRAM_ID" FromValue="{$tempRes/V_REGIS_PRSNA/MKTNG_PGM_NBR/@Value}"/>
+              <SET Var="LEGAL_ENT_NBR" FromValue="{$tempRes/V_REGIS_PRSNA/LEGAL_ENT_NBR/@Value}"/>
+              <SET Var="CONSUMER_ID" FromValue="{$tempRes/V_REGIS_PRSNA/MATCHD_CNSMR_PRSNA_ID/@Value}"/>
+              <SET Var="PROGRAM_NAME" FromValue="{$tempRes/V_REGIS_PRSNA/MKTNG_PGM_NAME/@Value}"/>
+              <!-- <REQUEST Name="getConsumerDetails" ServiceName="BCM_MASTER" AssignToVar="consumerDetails">
+<LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}" />
+<REGIS_PRSNA_ID Value="{$PRSNA_ID}" />
+<MKTNG_PGM_NBR Value="{$PROGRAM_ID}" />
+<TO_XML SelectList="$contactTypes/*" />
+</REQUEST>
+<REQUEST Name="getStates" AssignToVar="stateNames" ServiceName="BCM_MASTER">
+<CNTRY_CODE Value="{$consumerDetails/CONSUMER_DETAILS/CNTRY_CODE/@Value}" />
+</REQUEST>-->
+              <!--Commented by Debashish-->
+              <!--REQUEST Name="getDataSourceDetails" ServiceName="BCM_MASTER" AssignToVar="dataSourceDetails">
+<LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+<REGIS_PRSNA_ID Value="{$PRSNA_ID}"/>
+<MKTNG_PGM_NBR Value="{$PROGRAM_ID}"/>
+</REQUEST-->
+              <!--<EXECUTE_SQL_QUERY Value="SELECT DS.DATA_SRCE_NBR,DS.DATA_SRCE_NAME,DS.DATA_SOURCE_DESC,WS.WEB_SITE_URL_TXT FROM MDM.DATA_SRCE DS INNER JOIN MDM.WEB_SITE WS ON DS.DATA_SRCE_NBR=WS.DATA_SRCE_NBR WHERE DS.DATA_SRCE_NBR IN {$consumerDetails/DATA_ORIGIN_SRCE_NBR/@Value};" AssignToVar="OrigDataSrceResults" />-->
+              <SET Var="otherStartRow" FromValue="{$thisParam/OTHER_PROGRAMS_START_COUNT/@Value}"/>
+              <GET_DOCUMENT Name="REGIS_PRSNA" AssignToVar="otherRegisPrsnaIds" ServiceName="BCM_MASTER" DirtyRead="true" ReturnRowCount="true" StartAtRow="{$otherStartRow}">
+                <MATCHD_CNSMR_PRSNA_ID Value="{$CONSUMER_ID}"/>
+                <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR}"/>
+                <SELECT>
+                  <REGIS_PRSNA_ID/>
+                  <MKTNG_PGM_NBR/>
+                  <LEGAL_ENT_NBR/>
+                </SELECT>
+              </GET_DOCUMENT>
+              <IF_TEST Test="$otherRegisPrsnaIds/@TotalRowCount > 0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="otherResultsRaw">
+                    <ROOT/>
+                  </TO_DOCVAR>
+                  <!--FOR_EACH SelectList="$otherRegisPrsnaIds/REGIS_PRSNA" CurrentElement="curElement"-->
+                  <GET_DOCUMENT Name="V_REGIS_PRSNA" ServiceName="BCM_MASTER" AssignToVar="otherResultsTemp" DirtyRead="true">
+                    <!--REGIS_PRSNA_ID Value="{$otherRegisPrsnaIds/REGIS_PRSNA/REGIS_PRSNA_ID/@Value}" /-->
+                    <OR>
+                      <TO_XML SelectList="$otherRegisPrsnaIds/REGIS_PRSNA/REGIS_PRSNA_ID"/>
+                    </OR>
+                    <OR>
+                      <TO_XML SelectList="$otherRegisPrsnaIds/REGIS_PRSNA/MKTNG_PGM_NBR"/>
+                    </OR>
+                    <!--MKTNG_PGM_NBR Value="{$otherRegisPrsnaIds/REGIS_PRSNA/MKTNG_PGM_NBR/@Value}"/-->
+                  </GET_DOCUMENT>
+                  <TO_DOCVAR AssignToVar="WHERE_CLAUSE">
+                    <WHERE_CLAUSE>
+                      <TO_XML SelectList="$otherRegisPrsnaIds/REGIS_PRSNA/REGIS_PRSNA_ID"/>
+                      <TO_XML SelectList="$otherRegisPrsnaIds/REGIS_PRSNA/MKTNG_PGM_NBR"/>
+                      <!--<MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}" />-->
+                      <!--MKTNG_PGM_NBR Value="{$otherRegisPrsnaIds/REGIS_PRSNA/MKTNG_PGM_NBR/@Value}"/-->
+                      <LEGAL_ENT_NBR Value="{$otherRegisPrsnaIds/REGIS_PRSNA/LEGAL_ENT_NBR/@Value}"/>
+                    </WHERE_CLAUSE>
+                  </TO_DOCVAR>
+                  <!--- Added by Usha-->
+                  <REQUEST Name="ViewConsumerEMAIL" AssignToVar="ViewEMAILResults" ServiceName="BCM_MASTER">
+                    <TO_XML SelectList="$WHERE_CLAUSE/*"/>
+                    <TO_XML SelectList="$contactTypes/*"/>
+                    <TO_XML SelectList="$emailTypes/*"/>
+                  </REQUEST>
+                  <!--<REQUEST Name="getEmailSubscriptions" AssignToVar="emailResults" ServiceName="BCM_MASTER">
+<TO_XML SelectList="$WHERE_CLAUSE/*"/>
+<TO_XML SelectList="$contactTypes/*"/>
+</REQUEST>-->
+                  <!-- <REQUEST Name="getPhoneSubscriptions" AssignToVar="phoneResults" ServiceName="BCM_MASTER">
+<TO_XML SelectList="$WHERE_CLAUSE/*"/>
+<TO_XML SelectList="$contactTypes/*"/>
+</REQUEST>-->
+                  <REQUEST Name="ViewConsumerPHONE" AssignToVar="ViewPHONEResults" ServiceName="BCM_MASTER">
+                    <TO_XML SelectList="$WHERE_CLAUSE/*"/>
+                    <TO_XML SelectList="$contactTypes/*"/>
+                    <TO_XML SelectList="$phonetypes/*"/>
+                  </REQUEST>
+                  <SET_NAME SelectList="$ViewPHONEResults/REGIS_PRSNA_PHONE/FULL_PHONE_NUM" FromValue="FULL_PHONE_NUMBER"/>
+                  <!-- <REQUEST Name="getPostalSubscriptions" AssignToVar="postalResults" ServiceName="BCM_MASTER">
+<TO_XML SelectList="$WHERE_CLAUSE/*"/>
+<TO_XML SelectList="$contactTypes/*"/>
+</REQUEST>-->
+                  <REQUEST Name="ViewConsumerADDRESS" AssignToVar="ViewADDRESSResults" ServiceName="BCM_MASTER">
+                    <TO_XML SelectList="$WHERE_CLAUSE/*"/>
+                    <TO_XML SelectList="$contactTypes/*"/>
+                  </REQUEST>
+                  <!--        <REQUEST Name="getSocialSubscriptions" AssignToVar="socialResults" ServiceName="BCM_MASTER">
+<TO_XML SelectList="$WHERE_CLAUSE/*"/>
+<TO_XML SelectList="$contactTypes/*"/>
+</REQUEST> -->
+                  <REQUEST Name="ViewConsumerSOCIAL" AssignToVar="ViewSOCIALResults" ServiceName="BCM_MASTER">
+                    <TO_XML SelectList="$WHERE_CLAUSE/*"/>
+                    <TO_XML SelectList="$contactTypes/*"/>
+                    <TO_XML SelectList="$socialtypes/*"/>
+                  </REQUEST>
+                  <GET_DOCUMENT Name="DPEND" ServiceName="BCM_MASTER" AssignToVar="babyResults" DirtyRead="true">
+                    <OR>
+                      <TO_XML SelectList="$WHERE_CLAUSE/REGIS_PRSNA_ID"/>
+                    </OR>
+                    <OR>
+                      <TO_XML SelectList="$WHERE_CLAUSE/MKTNG_PGM_NBR"/>
+                    </OR>
+                    <!--MKTNG_PGM_NBR Value="{$otherRegisPrsnaIds/REGIS_PRSNA/MKTNG_PGM_NBR/@Value}" /-->
+                    <LEGAL_ENT_NBR Value="{$otherRegisPrsnaIds/REGIS_PRSNA/LEGAL_ENT_NBR/@Value}"/>
+                  </GET_DOCUMENT>
+                  <SET Var="whereTemp" FromValue=""/>
+                  <SET Var="whereTemp1" FromValue=""/>
+                  <FOR_EACH CurrentElement="cur" SelectList="$WHERE_CLAUSE/REGIS_PRSNA_ID">
+                    <SET Var="whereTemp" FromValue="{concat($whereTemp,$cur/@Value,',')}"/>
+                  </FOR_EACH>
+                  <FOR_EACH CurrentElement="cur" SelectList="$WHERE_CLAUSE/MKTNG_PGM_NBR">
+                    <SET Var="whereTemp1" FromValue="{concat($whereTemp1,$cur/@Value,',')}"/>
+                  </FOR_EACH>
+                  <SET Var="whereTemp" FromValue="{concat('(',subString($whereTemp,0,int(strlen($whereTemp)-1)),')')}"/>
+                  <SET Var="whereTemp1" FromValue="{concat('(',subString($whereTemp1,0,int(strlen($whereTemp1)-1)),')')}"/>
+                  <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT P.REGIS_PRSNA_ID, P.MKTNG_PGM_NBR, P.PET_SEQ_NBR, P.PET_TYPE_CODE, P.PET_BREED_CODE,P.PET_NAME, P.PET_GENDR_IND, P.PET_BRTH_DATE, P.PET_AGE_NBR, P.DECEASED_IND, P.LEGAL_ENT_NBR, PT.PET_TYPE_NAME, PB.PET_BREED_NAME, PBS.BREED_SIZE_NAME From MDM.PET P LEFT JOIN PET_TYPE PT ON P.PET_TYPE_CODE  = PT.PET_TYPE_CODE LEFT JOIN PET_BREED PB ON P.PET_BREED_CODE  = PB.PET_BREED_CODE LEFT JOIN PET_BREED_SIZE PBS ON PB.BREED_SIZE_CODE  = PBS.BREED_SIZE_CODE WHERE REGIS_PRSNA_ID IN {$whereTemp} AND MKTNG_PGM_NBR IN {$whereTemp1} AND LEGAL_ENT_NBR = {$WHERE_CLAUSE/LEGAL_ENT_NBR/@Value};" AssignToVar="petResults"/>
+                  <SET_NAME SelectList="$petResults/SQL_RESULT" FromValue="PET_RESULT"/>
+                  <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT DS.DATA_SRCE_NBR AS  DATA_ORIGIN_SOURCE_NBR,DS.DATA_SRCE_NAME AS DATA_ORIGIN_SRCE_NAME ,DS.DATA_SOURCE_DESC AS DATA_ORIGIN_SOURCE_DESC,WS.WEB_SITE_URL_TXT AS DATA_ORIGIN_WEB_SITE_URL_TXT,RP.DATA_OP_SRCE_NAME AS DATA_OPT_ORIGIN_SRCE_NAME,DS2.DATA_SRCE_NBR AS  DATA_SOURCE_NBR,DS2.DATA_SRCE_NAME AS DATA_SRCE_NAME ,DS2.DATA_SOURCE_DESC AS DATA_SOURCE_DESC,WS2.WEB_SITE_URL_TXT AS WEB_SITE_URL_TXT,RP.REGIS_PRSNA_ID ,RP.MKTNG_PGM_NBR FROM MDM.REGIS_PRSNA RP LEFT JOIN MDM.DATA_SRCE DS ON RP.DATA_ORIGIN_SRCE_NBR=DS.DATA_SRCE_NBR LEFT JOIN MDM.WEB_SITE WS ON DS.DATA_SRCE_NBR= WS.DATA_SRCE_NBR LEFT JOIN MDM.DATA_SRCE DS2 ON RP.DATA_SRCE_NBR=DS2.DATA_SRCE_NBR LEFT JOIN MDM.WEB_SITE WS2 ON DS2.DATA_SRCE_NBR= WS2.DATA_SRCE_NBR WHERE REGIS_PRSNA_ID IN {$whereTemp} AND RP.MKTNG_PGM_NBR IN {$whereTemp1} GROUP BY 1,2,3,4,5,6,7,8,9,10,11;" AssignToVar="OrigDataSrceResults"/>
+                  <SET_NAME SelectList="$OrigDataSrceResults/SQL_RESULT" FromValue="DATA_ORIGIN"/>
+                  <GET_DOCUMENT Name="V_SAMPLE" ServiceName="BCM_MASTER" AssignToVar="sampleResults" DirtyRead="yes">
+                    <OR>
+                      <TO_XML SelectList="$WHERE_CLAUSE/REGIS_PRSNA_ID"/>
+                    </OR>
+                    <OR>
+                      <TO_XML SelectList="$WHERE_CLAUSE/MKTNG_PGM_NBR"/>
+                    </OR>
+                    <!--MKTNG_PGM_NBR Value="{$otherRegisPrsnaIds/REGIS_PRSNA/MKTNG_PGM_NBR/@Value}" /-->
+                    <LEGAL_ENT_NBR Value="{$otherRegisPrsnaIds/REGIS_PRSNA/LEGAL_ENT_NBR/@Value}"/>
+                  </GET_DOCUMENT>
+                  <GET_DOCUMENT Name="V_COMMUNICATIONS" ServiceName="BCM_MASTER" AssignToVar="communicationsResults" DirtyRead="yes">
+                    <OR>
+                      <!--REGIS_PRSNA_ID Value="{$curElement/REGIS_PRSNA_ID/@Value}" /-->
+                      <TO_XML SelectList="$otherRegisPrsnaIds/REGIS_PRSNA/REGIS_PRSNA_ID"/>
+                    </OR>
+                  </GET_DOCUMENT>
+                  <GET_DOCUMENT Name="V_CAMPAIGN" ServiceName="BCM_MASTER" AssignToVar="campaignDetails" DirtyRead="true" ReturnRowCount="true">
+                    <OR>
+                      <!--REGIS_PRSNA_ID Value="{$curElement/REGIS_PRSNA_ID/@Value}" /-->
+                      <TO_XML SelectList="$otherRegisPrsnaIds/REGIS_PRSNA/REGIS_PRSNA_ID"/>
+                    </OR>
+                    <OR>
+                      <TO_XML SelectList="$WHERE_CLAUSE/MKTNG_PGM_NBR"/>
+                    </OR>
+                    <!--MKTNG_PGM_NBR Value="{$otherRegisPrsnaIds/REGIS_PRSNA/MKTNG_PGM_NBR/@Value}" /-->
+                  </GET_DOCUMENT>
+                  <GET_DOCUMENT Name="V_LEGACY_CAMPAIGN" ServiceName="BCM_MASTER" AssignToVar="legacyCampaignDetails" DirtyRead="true" ReturnRowCount="true" Distinct="false">
+                    <OR>
+                      <!--REGIS_PRSNA_ID Value="{$curElement/REGIS_PRSNA_ID/@Value}" /-->
+                      <TO_XML SelectList="$otherRegisPrsnaIds/REGIS_PRSNA/REGIS_PRSNA_ID"/>
+                    </OR>
+                    <!--Commented by Debashish-->
+                    <!--OR>
+<TO_XML SelectList="$WHERE_CLAUSE/MKTNG_PGM_NBR" />
+</OR-->
+                    <!--MKTNG_PGM_NBR Value="{$otherRegisPrsnaIds/REGIS_PRSNA/MKTNG_PGM_NBR/@Value}" /-->
+                  </GET_DOCUMENT>
+                  <FOR_EACH CurrentElement="curr" SelectList="$otherResultsTemp/V_REGIS_PRSNA">
+                    <APPEND_TO_XML SelectList="$curr">
+                      <TO_XML SelectList="$ViewEMAILResults/EMAIL_RESULTS[REGIS_PRSNA_ID/@Value=$curr/REGIS_PRSNA_ID/@Value]"/>
+                      <TO_XML SelectList="$ViewPHONEResults/PHONE_RESULTS[REGIS_PRSNA_ID/@Value=$curr/REGIS_PRSNA_ID/@Value]"/>
+                      <TO_XML SelectList="$ViewADDRESSResults/ADDRESS_RESULTS[REGIS_PRSNA_ID/@Value=$curr/REGIS_PRSNA_ID/@Value]"/>
+                      <TO_XML SelectList="$ViewSOCIALResults/SOCIAL_RESULTS[REGIS_PRSNA_ID/@Value=$curr/REGIS_PRSNA_ID/@Value]"/>
+                      <TO_XML SelectList="$babyResults/DPEND[REGIS_PRSNA_ID/@Value=$curr/REGIS_PRSNA_ID/@Value]"/>
+                      <TO_XML SelectList="$petResults/PET_RESULT[REGIS_PRSNA_ID/@Value=$curr/REGIS_PRSNA_ID/@Value]"/>
+                      <TO_XML SelectList="$sampleResults/V_SAMPLE[REGIS_PRSNA_ID/@Value=$curr/REGIS_PRSNA_ID/@Value]"/>
+                      <TO_XML SelectList="$communicationsResults/V_COMMUNICATIONS[REGIS_PRSNA_ID/@Value=$curr/REGIS_PRSNA_ID/@Value]"/>
+                      <TO_XML SelectList="$campaignDetails/V_CAMPAIGN[REGIS_PRSNA_ID/@Value=$curr/REGIS_PRSNA_ID/@Value]"/>
+                      <TO_XML SelectList="$legacyCampaignDetails/V_LEGACY_CAMPAIGN[REGIS_PRSNA_ID/@Value=$curr/REGIS_PRSNA_ID/@Value]"/>
+                      <TO_XML SelectList="$OrigDataSrceResults/DATA_ORIGIN[REGIS_PRSNA_ID/@Value=$curr/REGIS_PRSNA_ID/@Value]"/>
+                    </APPEND_TO_XML>
+                  </FOR_EACH>
+                  <APPEND_TO_XML SelectList="$otherResultsRaw">
+                    <TO_XML SelectList="$otherResultsTemp/*"/>
+                  </APPEND_TO_XML>
+                  <!--/FOR_EACH-->
+                </THEN>
+                <ELSE>
+                  <TO_DOCVAR AssignToVar="otherResultsRaw">
+                    <ROOT TotalRowCount="0"/>
+                  </TO_DOCVAR>
+                </ELSE>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="otherResults">
+                <OTHER_RESULTS TotalRowCount="{$otherRegisPrsnaIds/@TotalRowCount}"/>
+              </TO_DOCVAR>
+              <SET FromValue="1" Var="i"/>
+              <TO_DOCVAR AssignToVar="inXml">
+                <SAMPLE_XML>
+                  <PGL/>
+                  <DATA/>
+                </SAMPLE_XML>
+              </TO_DOCVAR>
+              <FOR_EACH SelectList="$otherResultsRaw/V_REGIS_PRSNA" CurrentElement="currElement">
+                <SET Attribute="Index" DocVar="currElement" FromValue="{int($i)}"/>
+                <IF_TEST Test="$i &lt;= $otherRegisPrsnaIds/@TotalRowCount">
+                  <THEN>
+                    <APPEND_TO_XML SelectList="$inXml/PGL">
+                      <!-- <SET Attribute="Index" DocVar="currElement" FromValue="{int($i)}"/>-->
+                      <ui:field-group xmlns:ui="http://www.teradata.com/ui" id="Reg{int($i)}" scrollable="true">
+                        <ui:display-field displayText="" value="Registration {int($i)}" align="right" id="Reg_{int($i)}"/>
+                      </ui:field-group>
+                      <ui:table xmlns:ui="http://www.teradata.com/ui" id="pdf_PII_Details_{int($i)}" displayText="PII Details" scrollable="true" maxRows="-1" rowSrc="$root/V_REGIS_PRSNA[@Index={$i}]" doPaging="false" width="100%">
+                        <ui:field-group id="PII_DetailsColumns">
+                          <ui:display-field displayText="Program Name" name="MKTNG_PGM_NAME" id="MKTNG_PGM_NAME"/>
+                          <ui:display-field displayText="Persona ID" name="REGIS_PRSNA_ID" id="REGIS_PRSNA_ID"/>
+                          <ui:display-field id="GVN_NAME" name="GVN_NAME" displayText="First Name"/>
+                          <ui:display-field id="FAMLY_NAME" name="FAMLY_NAME" displayText="Last Name"/>
+                          <ui:display-field displayText="User Name" name="CNSMR_USER_NAME" id="CNSMR_USER_NAME"/>
+                          <ui:display-field id="NATIONAL_ID_NBR" name="NATIONAL_ID_NBR" displayText="National ID"/>
+                          <ui:choose-field name="GENDR_IND_FIELD" displayText="Gender">
+                            <ui:when test="GENDR_IND/@Value='M'">
+                              <ui:display-field name="GENDR_IND" id="GENDR_IND" displayText="Gender" value="Male"/>
+                            </ui:when>
+                            <ui:when test="GENDR_IND/@Value='F'">
+                              <ui:display-field name="GENDR_IND" id="GENDR_IND" displayText="Gender" value="Female"/>
+                            </ui:when>
+                            <ui:otherwise>
+                              <ui:display-field name="GENDR_IND" id="GENDR_IND" displayText="Gender" value="Other"/>
+                            </ui:otherwise>
+                          </ui:choose-field>
+                          <ui:display-field id="BRTH_DATE" name="BRTH_DATE" displayText="DOB"/>
+                        </ui:field-group>
+                      </ui:table>
+                      <ui:table xmlns:ui="http://www.teradata.com/ui" id="Origin_Table_{int($i)}" displayText="Data Origin" scrollable="true" maxRows="-1" rowSrc="$root/V_REGIS_PRSNA[@Index={$i}]/DATA_ORIGIN" width="100%">
+                        <ui:field-group id="Origin_TableColumns">
+                          <ui:display-field id="DATA_SOURCE_NAME" name="DATA_SRCE_NAME" displayText="Source Name"/>
+                          <ui:display-field id="DATA_SOURCE_DESC" name="DATA_SOURCE_DESC" displayText="Source Description"/>
+                          <ui:display-field id="DATA_ORIGIN_SOURCE_NAME" name="DATA_ORIGIN_SRCE_NAME" displayText="Data Origin Source Name"/>
+                          <ui:display-field id="DATA_ORIGIN_SOURCE_DESC" name="DATA_ORIGIN_SOURCE_DESC" displayText="Data Origin Source Description"/>
+                          <ui:display-field id="DATA_OPT_ORIGIN_SOURCE_NAME" name="DATA_OPT_ORIGIN_SRCE_NAME" displayText="Data Opt Origin Source Name"/>
+                        </ui:field-group>
+                      </ui:table>
+                      <ui:table xmlns:ui="http://www.teradata.com/ui" id="Email_Subscriptions_{int($i)}" displayText="Email Subscriptions" scrollable="true" rowSrc="$root/V_REGIS_PRSNA[@Index={$i}]/EMAIL_RESULTS" doPaging="false" rowId="SUBSCRPTN_OPT_NBR_IND" width="100%" maxRows="-1">
+                        <ui:field-group id="tableColumns1">
+                          <ui:hidden-field name="MKTNG_PGM_NBR" id="MKTNG_PGM_NBR"/>
+                          <ui:hidden-field name="REGIS_PRSNA_ID" id="REGIS_PRSNA_ID"/>
+                          <ui:hidden-field name="SUBSCRPTN_OPT_IND" id="SUBSCRPTN_OPT_IND"/>
+                          <ui:hidden-field name="SUBSCRPTN_OPT_NBR" id="SUBSCRPTN_OPT_NBR"/>
+                          <ui:hidden-field name="SUBSCRPTN_OPT_NBR_IND" id="SUBSCRPTN_OPT_NBR_IND"/>
+                          <ui:hidden-field name="CNTCT_POINT_CATEG_CODE" id="CNTCT_POINT_CATEG_CODE"/>
+                          <ui:display-field displayText="Subscription Id" name="SUBSCRPTN_OPT_NBR" id="SUBSCRPTN_OPT_NBR"/>
+                          <ui:display-field displayText="Subscription Text" name="SUBSCRPTN_OPT_NAME" id="SUBSCRPTN_OPT_NAME"/>
+                          <!-- <ui:display-field displayText="Frequency" name="SUBSCRPTN_OPT_FREQ_TXT" id="SUBSCRPTN_OPT_FREQ_TXT"/>-->
+                          <!--                  <ui:display-field displayText="Subscription Opt Indicator" name="SUBSCRPTN_OPT_IND" id="SUBSCRPTN_OPT_IND"/>-->
+                          <ui:choose-field name="SUBSCRPTN_OPT_IND" displayText="Subscription Opt Indicator">
+                            <ui:when test="SUBSCRPTN_OPT_IND/@Value='I'">
+                              <ui:display-field name="SUBSCRPTN_OPT_IND" id="SUBSCRPTN_OPT_IND" displayText="Subscription Opt Indicator" value="Opt In"/>
+                            </ui:when>
+                            <ui:when test="SUBSCRPTN_OPT_IND/@Value='O'">
+                              <ui:display-field name="SUBSCRPTN_OPT_IND" id="SUBSCRPTN_OPT_IND" displayText="Subscription Opt Indicator" value="Opt Out"/>
+                            </ui:when>
+                          </ui:choose-field>
+                          <ui:display-field displayText="TimeStamp" name="CNSMR_CHCE_DATETM" id="CNSMR_CHCE_DATETM"/>
+                          <ui:display-field displayText="Existing Email" name="EMAIL_ADDR_TXT" id="EMAIL_ADDR_TXT"/>
+                          <ui:display-field displayText="Email Type" name="EMAIL_TYPE" id="EMAIL_TYPE"/>
+                        </ui:field-group>
+                      </ui:table>
+                      <ui:table xmlns:ui="http://www.teradata.com/ui" id="Phone_Subscriptions_{int($i)}" displayText="Phone Subscriptions" scrollable="true" rowSrc="$root/V_REGIS_PRSNA[@Index={$i}]/PHONE_RESULTS" doPaging="false" rowId="SUBSCRPTN_OPT_NBR_IND" postRowIdAs="CHECKED_PHONE_SUBSCRPTN" width="100%" maxRows="-1">
+                        <ui:field-group id="tableColumns1">
+                          <ui:hidden-field name="MKTNG_PGM_NBR" id="MKTNG_PGM_NBR"/>
+                          <ui:hidden-field name="REGIS_PRSNA_ID" id="REGIS_PRSNA_ID"/>
+                          <ui:hidden-field name="SUBSCRPTN_OPT_IND" id="SUBSCRPTN_OPT_IND"/>
+                          <ui:hidden-field name="SUBSCRPTN_OPT_NBR" id="SUBSCRPTN_OPT_NBR"/>
+                          <ui:hidden-field name="SUBSCRPTN_OPT_NBR_IND" id="SUBSCRPTN_OPT_NBR_IND"/>
+                          <ui:hidden-field name="CNTCT_POINT_CATEG_CODE" id="CNTCT_POINT_CATEG_CODE"/>
+                          <ui:display-field displayText="Subscription Id" name="SUBSCRPTN_OPT_NBR" id="SUBSCRPTN_OPT_NBR"/>
+                          <ui:display-field displayText="Subscription Text" name="SUBSCRPTN_OPT_NAME" id="SUBSCRPTN_OPT_NAME"/>
+                          <!--<ui:display-field displayText="Frequency" name="SUBSCRPTN_OPT_FREQ_TXT" id="SUBSCRPTN_OPT_FREQ_TXT"/>-->
+                          <!--                  <ui:display-field displayText="Subscription Opt Indicator" name="SUBSCRPTN_OPT_IND" id="SUBSCRPTN_OPT_IND"/>-->
+                          <ui:choose-field name="SUBSCRPTN_OPT_IND" displayText="Subscription Opt Indicator">
+                            <ui:when test="SUBSCRPTN_OPT_IND/@Value='I'">
+                              <ui:display-field name="SUBSCRPTN_OPT_IND" id="SUBSCRPTN_OPT_IND" displayText="Subscription Opt Indicator" value="Opt In"/>
+                            </ui:when>
+                            <ui:when test="SUBSCRPTN_OPT_IND/@Value='O'">
+                              <ui:display-field name="SUBSCRPTN_OPT_IND" id="SUBSCRPTN_OPT_IND" displayText="Subscription Opt Indicator" value="Opt Out"/>
+                            </ui:when>
+                          </ui:choose-field>
+                          <ui:display-field displayText="TimeStamp" name="CNSMR_CHCE_DATETM" id="CNSMR_CHCE_DATETM"/>
+                          <ui:display-field displayText=" Phone Number" name="FULL_PHONE_NUM" id="FULL_PHONE_NUM"/>
+                          <ui:display-field displayText="Phone Type" name="PHONE_TYPE" id="PHONE_TYPE"/>
+                        </ui:field-group>
+                      </ui:table>
+                      <ui:table xmlns:ui="http://www.teradata.com/ui" id="Postal_Subscriptions_{int($i)}" displayText="Postal Subscriptions" scrollable="true" rowSrc="$root/V_REGIS_PRSNA[@Index={$i}]/ADDRESS_RESULTS" doPaging="false" rowId="SUBSCRPTN_OPT_NBR_IND" postRowIdAs="CHECKED_EMAIL_SUBSCRPTN" width="100%" maxRows="-1">
+                        <ui:field-group id="tableColumns1">
+                          <ui:hidden-field name="MKTNG_PGM_NBR" id="MKTNG_PGM_NBR"/>
+                          <ui:hidden-field name="REGIS_PRSNA_ID" id="REGIS_PRSNA_ID"/>
+                          <ui:hidden-field name="SUBSCRPTN_OPT_IND" id="SUBSCRPTN_OPT_IND"/>
+                          <ui:hidden-field name="SUBSCRPTN_OPT_NBR" id="SUBSCRPTN_OPT_NBR"/>
+                          <ui:hidden-field name="SUBSCRPTN_OPT_NBR_IND" id="SUBSCRPTN_OPT_NBR_IND"/>
+                          <ui:hidden-field name="CNTCT_POINT_CATEG_CODE" id="CNTCT_POINT_CATEG_CODE"/>
+                          <ui:display-field displayText="Subscription Id" name="SUBSCRPTN_OPT_NBR" id="SUBSCRPTN_OPT_NBR"/>
+                          <ui:display-field displayText="Subscription Text" name="SUBSCRPTN_OPT_NAME" id="SUBSCRPTN_OPT_NAME"/>
+                          <!--<ui:display-field displayText="Frequency" name="SUBSCRPTN_OPT_FREQ_TXT" id="SUBSCRPTN_OPT_FREQ_TXT"/>-->
+                          <!--                  <ui:display-field displayText="Subscription Opt Indicator" name="SUBSCRPTN_OPT_IND" id="SUBSCRPTN_OPT_IND"/>-->
+                          <ui:choose-field name="SUBSCRPTN_OPT_IND" displayText="Subscription Opt Indicator">
+                            <ui:when test="SUBSCRPTN_OPT_IND/@Value='I'">
+                              <ui:display-field name="SUBSCRPTN_OPT_IND" id="SUBSCRPTN_OPT_IND" displayText="Subscription Opt Indicator" value="Opt In"/>
+                            </ui:when>
+                            <ui:when test="SUBSCRPTN_OPT_IND/@Value='O'">
+                              <ui:display-field name="SUBSCRPTN_OPT_IND" id="SUBSCRPTN_OPT_IND" displayText="Subscription Opt Indicator" value="Opt Out"/>
+                            </ui:when>
+                          </ui:choose-field>
+                          <ui:display-field displayText="TimeStamp" name="CNSMR_CHCE_DATETM" id="CNSMR_CHCE_DATETM"/>
+                          <ui:display-field displayText="Address" name="ADDR_LINE_1_TXT" id="ADDR_LINE_1_TXT"/>
+                          <ui:display-field displayText="City" name="CITY_NAME" id="CITY_NAME"/>
+                          <ui:display-field displayText="Address Type" name="ADDRESS_TYPE" id="ADDRESS_TYPE"/>
+                        </ui:field-group>
+                      </ui:table>
+                      <ui:table xmlns:ui="http://www.teradata.com/ui" id="Social_Subscriptions_{int($i)}" displayText="Social Subscriptions" scrollable="true" rowSrc="$root/V_REGIS_PRSNA[@Index={$i}]/SOCIAL_RESULTS" doPaging="false" rowId="SUBSCRPTN_OPT_NBR_IND" postRowIdAs="CHECKED_SOCIAL_SUBSCRPTN" width="100%" maxRows="-1">
+                        <ui:field-group id="tableColumns1">
+                          <ui:hidden-field name="MKTNG_PGM_NBR" id="MKTNG_PGM_NBR"/>
+                          <ui:hidden-field name="REGIS_PRSNA_ID" id="REGIS_PRSNA_ID"/>
+                          <ui:hidden-field name="SUBSCRPTN_OPT_IND" id="SUBSCRPTN_OPT_IND"/>
+                          <ui:hidden-field name="SUBSCRPTN_OPT_NBR" id="SUBSCRPTN_OPT_NBR"/>
+                          <ui:hidden-field name="SUBSCRPTN_OPT_NBR_IND" id="SUBSCRPTN_OPT_NBR_IND"/>
+                          <ui:hidden-field name="CNTCT_POINT_CATEG_CODE" id="CNTCT_POINT_CATEG_CODE"/>
+                          <ui:display-field displayText="Subscription Id" name="SUBSCRPTN_OPT_NBR" id="SUBSCRPTN_OPT_NBR"/>
+                          <ui:display-field displayText="Subscription Text" name="SUBSCRPTN_OPT_NAME" id="SUBSCRPTN_OPT_NAME"/>
+                          <!--<ui:display-field displayText="Frequency" name="SUBSCRPTN_OPT_FREQ_TXT" id="SUBSCRPTN_OPT_FREQ_TXT"/>-->
+                          <!--                  <ui:display-field displayText="Subscription Opt Indicator" name="SUBSCRPTN_OPT_IND" id="SUBSCRPTN_OPT_IND"/>-->
+                          <ui:choose-field name="SUBSCRPTN_OPT_IND" displayText="Subscription Opt Indicator">
+                            <ui:when test="SUBSCRPTN_OPT_IND/@Value='I'">
+                              <ui:display-field name="SUBSCRPTN_OPT_IND" id="SUBSCRPTN_OPT_IND" displayText="Subscription Opt Indicator" value="Opt In"/>
+                            </ui:when>
+                            <ui:when test="SUBSCRPTN_OPT_IND/@Value='O'">
+                              <ui:display-field name="SUBSCRPTN_OPT_IND" id="SUBSCRPTN_OPT_IND" displayText="Subscription Opt Indicator" value="Opt Out"/>
+                            </ui:when>
+                          </ui:choose-field>
+                          <ui:display-field displayText="TimeStamp" name="CNSMR_CHCE_DATETM" id="CNSMR_CHCE_DATETM"/>
+                          <ui:display-field displayText="Existing Social" name="SOCIAL_NETWK_ACCT_ID_VAL" id="SOCIAL_NETWK_ACCT_ID_VAL"/>
+                          <ui:display-field displayText="Social Type" name="AV_DESCRIPTION" id="AV_DESCRIPTION"/>
+                        </ui:field-group>
+                      </ui:table>
+                      <ui:table xmlns:ui="http://www.teradata.com/ui" id="Depend_Table_{int($i)}" displayText="Babies" maxRows="-1" rowSrc="$root/V_REGIS_PRSNA[@Index={$i}]/DPEND">
+                        <ui:field-group id="Depend_TableColumns">
+                          <ui:display-field displayText="Name" id="DPEND_NAME" name="DPEND_NAME"/>
+                          <ui:display-field displayText="Date Of Birth" id="DPEND_BRTH_DATE" name="DPEND_BRTH_DATE" dataType="Date"/>
+                          <ui:choose-field name="DPEND_GENDR_IND_FIELD" displayText="Gender">
+                            <ui:when test="DPEND_GENDR_IND/@Value='M'">
+                              <ui:display-field displayText="Gender" name="DPEND_GENDR_IND" id="DPEND_GENDR_IND" value="Male"/>
+                            </ui:when>
+                            <ui:when test="DPEND_GENDR_IND/@Value='F'">
+                              <ui:display-field displayText="Gender" name="DPEND_GENDR_IND" id="DPEND_GENDR_IND" value="Female"/>
+                            </ui:when>
+                            <ui:otherwise>
+                              <ui:display-field displayText="Gender" name="DPEND_GENDR_IND" id="DPEND_GENDR_IND" value="Other"/>
+                            </ui:otherwise>
+                          </ui:choose-field>
+                          <ui:choose-field name="DECEASED_IND_FIELD" displayText="Deceased" size="25%">
+                            <ui:when test="DECEASED_IND/@Value='Y'">
+                              <ui:display-field displayText="Deceased" name="DECEASED_IND" id="DECEASED_IND" value="Yes"/>
+                            </ui:when>
+                            <ui:when test="DECEASED_IND/@Value='N'">
+                              <ui:display-field displayText="Deceased" name="DECEASED_IND" id="DECEASED_IND" value="No"/>
+                            </ui:when>
+                            <ui:otherwise>
+                              <ui:display-field displayText="Deceased" name="DECEASED_IND" id="DECEASED_IND"/>
+                            </ui:otherwise>
+                          </ui:choose-field>
+                          <ui:choose-field name="PREF_DPEND_IND_FIELD" displayText="Prefered">
+                            <ui:when test="PREF_DPEND_IND/@Value='Y'">
+                              <ui:display-field displayText="Prefered" name="PREF_DPEND_IND" id="PREF_DPEND_IND" value="Yes"/>
+                            </ui:when>
+                            <ui:when test="PREF_DPEND_IND/@Value='N'">
+                              <ui:display-field displayText="Prefered" name="PREF_DPEND_IND" id="PREF_DPEND_IND" value="No"/>
+                            </ui:when>
+                            <ui:otherwise>
+                              <ui:display-field displayText="Prefered" name="PREF_DPEND_IND" id="PREF_DPEND_IND"/>
+                            </ui:otherwise>
+                          </ui:choose-field>
+                        </ui:field-group>
+                      </ui:table>
+                      <ui:table xmlns:ui="http://www.teradata.com/ui" id="Pet_Table{int($i)}" displayText="Pets" maxRows="-1" rowSrc="$root/V_REGIS_PRSNA[@Index={$i}]/PET_RESULT">
+                        <ui:field-group id="Pet_TableColumns">
+                          <ui:display-field displayText="Name" id="PET_NAME" name="PET_NAME"/>
+                          <ui:display-field displayText="Type" id="PET_TYPE_NAME" name="PET_TYPE_NAME"/>
+                          <ui:display-field displayText="Breed" id="PET_BREED_NAME" name="PET_BREED_NAME"/>
+                          <ui:display-field displayText="Size" id="BREED_SIZE_NAME" name="BREED_SIZE_NAME"/>
+                          <ui:display-field displayText="Date Of Birth" id="PET_BRTH_DATE" name="PET_BRTH_DATE" dataType="Date"/>
+                          <ui:choose-field name="DPEND_GENDR_IND_FIELD" displayText="Gender">
+                            <ui:when test="PET_GENDR_IND/@Value='M'">
+                              <ui:display-field displayText="Gender" name="PET_GENDR_IND" id="PET_GENDR_IND" value="Male"/>
+                            </ui:when>
+                            <ui:when test="PET_GENDR_IND/@Value='F'">
+                              <ui:display-field displayText="Gender" name="PET_GENDR_IND" id="PET_GENDR_IND" value="Female"/>
+                            </ui:when>
+                            <ui:otherwise>
+                              <ui:display-field displayText="Gender" name="PET_GENDR_IND" id="PET_GENDR_IND" value="Other"/>
+                            </ui:otherwise>
+                          </ui:choose-field>
+                          <ui:choose-field name="DECEASED_IND_FIELD" displayText="Deceased">
+                            <ui:when test="DECEASED_IND/@Value='Y'">
+                              <ui:display-field displayText="Deceased" name="DECEASED_IND" id="DECEASED_IND" value="Yes"/>
+                            </ui:when>
+                            <ui:when test="DECEASED_IND/@Value='N'">
+                              <ui:display-field displayText="Deceased" name="DECEASED_IND" id="DECEASED_IND" value="No"/>
+                            </ui:when>
+                            <ui:otherwise>
+                              <ui:display-field displayText="Deceased" name="DECEASED_IND" id="DECEASED_IND"/>
+                            </ui:otherwise>
+                          </ui:choose-field>
+                        </ui:field-group>
+                      </ui:table>
+                      <ui:table xmlns:ui="http://www.teradata.com/ui" id="Communications_Table_{int($i)}" displayText="Communications" maxRows="-1" rowSrc="$root/V_REGIS_PRSNA[@Index={$i}]/V_COMMUNICATIONS">
+                        <ui:field-group id="Communications_TableColumns">
+                          <ui:display-field displayText="Mode" id="CHANNEL_NAME" name="CHANNEL_NAME"/>
+                          <ui:display-field displayText="Date" id="CONTACT_DTTM" name="CONTACT_DTTM"/>
+                          <ui:display-field displayText="Communication Name" id="COMMUNICATION_NAME" name="COMMUNICATION_NAME"/>
+                          <ui:display-field displayText="Communication Details" id="CHANNEL_INSTANCE_NAME" name="CHANNEL_INSTANCE_NAME"/>
+                          <ui:display-field displayText="Lead Key" id="LEAD_KEY_ID" name="LEAD_KEY_ID"/>
+                        </ui:field-group>
+                      </ui:table>
+                      <ui:table xmlns:ui="http://www.teradata.com/ui" id="Coupons_Table_{int($i)}" displayText="Coupons" maxRows="-1" scrollable="true" rowSrc="$root/V_REGIS_PRSNA[@Index={$i}]/FULFILLMENT_COUPONS" displayTextNoRecords="No Coupons found">
+                        <ui:field-group id="Coupons_TableColumns">
+                          <ui:display-field displayText="Action Id" id="ACTION_ID" name="ACTION_ID"/>
+                          <ui:display-field displayText="Date" dataType="Date" id="DATE" name="DATE"/>
+                          <ui:display-field displayText="Reaction Type" id="REACTION_TYPE" name="REACTION_TYPE"/>
+                          <ui:display-field displayText="Reaction" id="REACTION" name="REACTION"/>
+                          <ui:display-field displayText="Details" id="DETAILS" name="DETAILS"/>
+                          <ui:display-field displayText="Channel" id="CHANNEL" name="CHANNEL"/>
+                        </ui:field-group>
+                      </ui:table>
+                      <ui:table xmlns:ui="http://www.teradata.com/ui" id="Samples_Table_{int($i)}" displayText="Samples" maxRows="-1" scrollable="true" rowSrc="$root/V_REGIS_PRSNA[@Index={$i}]/V_SAMPLE" displayTextNoRecords="No Samples found">
+                        <ui:field-group id="Samples_TableColumns">
+                          <ui:display-field displayText="Action Number" id="CNSMR_ACTN_ID" name="CNSMR_ACTN_ID"/>
+                          <ui:display-field displayText="Ship Date" id="SHIPPED_DATE" name="SHIPPED_DATE"/>
+                          <ui:display-field displayText="Courier URL" id="COURIER_URL" name="COURIER_URL"/>
+                          <ui:display-field displayText="Status" id="ORDER_STATUS" name="ORDER_STATUS"/>
+                          <ui:display-field displayText="Brand Name" id="BRAND_NAME" name="BRAND_NAME"/>
+                          <ui:display-field displayText="Incentive Name" id="INCTV_NAME" name="INCTV_NAME"/>
+                          <ui:display-field displayText="Tracking number" id="TRACKING_NBR" name="TRACKING_NBR"/>
+                        </ui:field-group>
+                      </ui:table>
+                      <ui:table xmlns:ui="http://www.teradata.com/ui" id="History_Table_{int($i)}" name="History_Table" displayText="Campaign History" displayTextNoRecords="No Records Found" collapsable="true" rowSrc="$root/V_REGIS_PRSNA[@Index={$i}]/V_LEGACY_CAMPAIGN" doPaging="false" maxRows="-1" sortBy="SELECTION_DATE" sortOrder="Descending">
+                        <ui:field-group id="Capmaign_TableColumns">
+                          <ui:display-field name="MKTNG_PGM_NAME" displayText="Marketing Program"/>
+                          <ui:display-field name="CAMPAIGN_NAME" displayText="Campaign Name"/>
+                          <ui:display-field name="SELECTION_DATE" displayText="Selection Date"/>
+                          <ui:display-field name="CAMPAIGN_CHANNEL" displayText="Campaign Channel"/>
+                        </ui:field-group>
+                      </ui:table>
+                      <ui:table xmlns:ui="http://www.teradata.com/ui" id="Legacy_History_Table_{int($i)}" name="Legacy_History_Table" displayText="Legacy Campaign History" displayTextNoRecords="No Records Found" collapsable="true" rowSrc="$root/V_REGIS_PRSNA[@Index={$i}]/V_CAMPAIGN_NEW" doPaging="false" maxRows="-1">
+                        <ui:field-group id="Legacy_Capmaign_TableColumns">
+                          <ui:hidden-field name="CAMPAIGN_ID" id="CAMPAIGN_ID"/>
+                          <ui:display-field name="MKTNG_PGM_DESC" displayText="Marketing Program"/>
+                          <ui:display-field name="PROMOTION_EMAIL_ADDR_TXT" displayText="Promotion email address"/>
+                          <ui:display-field name="CAMPAIGN_NAME" displayText="Campaign name"/>
+                          <ui:display-field name="CAMPAIGN_EXEC_DATE" displayText="Campaign exec date"/>
+                        </ui:field-group>
+                      </ui:table>
+                    </APPEND_TO_XML>
+                    <APPEND_TO_XML DocVar="otherResults">
+                      <TO_XML SelectList="$currElement"/>
+                    </APPEND_TO_XML>
+                    <SET FromValue="{int($i+1)}" Var="i"/>
+                  </THEN>
+                  <ELSE/>
+                </IF_TEST>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <TO_XML SelectList="$consumerDetails/*"/>
+              <TO_XML SelectList="$otherResults/*"/>
+              <!--TO_XML SelectList="$otherResultsRaw/*" /-->
+              <TO_XML SelectList="$inXml/*"/>
+              <isOpen Value="{$isOpen}"/>
+              <!--TO_XML SelectList="$currElement" /-->
+            </ROOT>
+          </TO_DOCVAR>
+
+          <TO_DOCVAR AssignToVar="dataForSummaryTab">
+            <root>
+              <TO_XML SelectList="$pglFormInput/*"/>
+            </root>
+          </TO_DOCVAR>
+          <PRINTLN DocVar="pglFormInput"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction ='Print'">
+            <THEN>
+              <SET Var="AccDate" FromValue="{date()}"/>
+              <EXECUTE_SQL_QUERY AssignToVar="legalEntName" ReturnRowCount="yes" Value="LOCKING ROW FOR ACCESS SEL legal_ent_name as LENAME FROM legal_ent WHERE legal_ent_nbr={$LEGAL_ENT_NBR};"/>
+              <ADD_DOC_SMART Name="MATCHD_CNSMR_WF_USAGE_LOG" ServiceName="BCM_MASTER" AssignToVar="matchedUsageLog">
+                <MATCHD_CNSMR_PRSNA_ID Value="{$CONSUMER_ID/@Value}"/>
+                <LEGAL_ENT_NAME Value="{$legalEntName/SQL_RESULT/LENAME/@Value}"/>
+                <ACCESSED_DATE Value="{$AccDate}"/>
+                <ACCESSED_BY Value="{$userId}"/>
+              </ADD_DOC_SMART>
+              <PRINT_TO_FILE File="E:\Teradata\MDM\3.05.02\custom\pngrelease3\bin\index3.html" NewFile="yes" SameLine="yes" Value="{$thisParam/HTML_CODE/@Value}" Beautify="false"/>
+              <NATIVE_FUNCTION ClassName="utf8write" MethodName="convertHtml" AssignToVar="responseClass">
+                <PARAM Value="{$thisParam/HTML_CODE/@Value}"/>
+                <PARAM Value="E:\Teradata\MDM\3.05.02\custom\pngrelease3\bin\index3.html"/>
+              </NATIVE_FUNCTION>
+              <NATIVE_FUNCTION ClassName="App4PdfConsumer" MethodName="convertHtmltoPDF" AssignToVar="responseClass">
+                <PARAM Value="index3.html"/>
+                <PARAM Value="consumer.pdf"/>
+              </NATIVE_FUNCTION>
+              <SET Var="isOpen" FromValue="true"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Print'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="View Consumer Details" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <sub_workflow Name="manageOpt" Workflow="manageoptout">
+      <pre_actions>
+        <action/>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <input>
+        <Match_Consumer_Id Value="{$selectedMatchCnsmrId}"/>
+      </input>
+      <next_nodes/>
+    </sub_workflow>
+    <sub_workflow Name="sub_workflow45" Workflow="Create_opt_out_found">
+      <pre_actions>
+        <action/>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <input>
+        <TO_XML SelectList="$thisParam/*"/>
+      </input>
+      <next_nodes/>
+    </sub_workflow>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="14,387" compId="MgcDashboard1" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="1" textAttrsKey0="codeMasterValues : xml">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="codeMasterValues" Type="xml"/>
+      </variables>
+    </mgcdashboard>
+    <mgcnodes>
+      <start2 font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="34,278" size="732,534">
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+        <textProps text="start2" font="Verdana,0,9" textColor="80,80,80"/>
+      </start2>
+      <SearchIndividuals font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="248,270" size="1364,724">
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+        <textProps text="SearchIndividuals" font="Verdana,0,9" textColor="80,80,80"/>
+      </SearchIndividuals>
+      <mgcnode Name="Edit Registration" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="485,332" size="1364,724">
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+        <textProps text="ViewConsumerDetails" font="Verdana,0,9" textColor="80,80,80"/>
+      </mgcnode>
+      <Node43 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="292,486" size="950,724">
+        <iconProps iconfile="x1age80.gif"/>
+      </Node43>
+      <mgcnode Name="View Consumer Details" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="207,538" size="1364,724">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <manageOpt font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="107,87" size="732,628">
+        <iconProps iconfile="z1sub_workflow.gif"/>
+      </manageOpt>
+      <sub_workflow45 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="495,610" size="732,628">
+        <iconProps iconfile="z1sub_workflow.gif"/>
+      </sub_workflow45>
+    </mgcnodes>
+    <mgcconnectors>
+      <start2>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="70,81,173" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="79,300" endpoint="248,292" ctrlRect1Dirty="true" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="101,297,4,4" ctrlRect2="119,290,4,4"/>
+      </start2>
+      <SearchIndividuals>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="248,292" endpoint="248,292" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="225,256,4,4" ctrlRect2="-34,187,4,4" textRect="-5,219,205,9">
+          <textProps text="[$userAction ='SEARCH_INDIVIDUAL']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="293,292" endpoint="485,354" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="435,290,4,4" ctrlRect2="339,352,4,4" textRect="271,319,237,9">
+          <textProps text="[$userAction ='VIEW_CONSUMER_DETAILS']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="248,292" endpoint="248,292" ctrlRect1="67,385,4,4" ctrlRect2="52,349,4,4" ctrlRect2Dirty="true" textRect="56,365,10,8" ctrlRect1Dirty="true">
+          <textProps text="[$userAction='RESET']"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="270,270" endpoint="270,270" ctrlRect1="268,193,4,4" ctrlRect2="136,56,4,4" ctrlRect2Dirty="true" textRect="189,122,31,8">
+          <textProps text="$userAction ='LOAD_STATES'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="293,292" endpoint="293,292" ctrlRect1="378,274,4,4" ctrlRect2="35,603,4,4" ctrlRect2Dirty="true" ctrlRect1Dirty="true" textRect="190,436,37,8">
+          <textProps text="$userAction ='LOAD_PROGRAM_LIST'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="270,270" endpoint="129,132" ctrlRect1="268,165,4,4" ctrlRect2="127,234,4,4">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="270,315" endpoint="229,538" ctrlRect1="268,479,4,4" ctrlRect2="264,453,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="270,315" endpoint="517,610" ctrlRect1="268,533,4,4" ctrlRect2="515,386,4,4">
+          <textProps/>
+        </nextNodeView>
+      </SearchIndividuals>
+      <mgcnode Name="Edit Registration">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="530,354" endpoint="530,354" ctrlRect1="603,352,4,4" ctrlRect2="1181,83,4,4" ctrlRect2Dirty="true" textRect="881,215,26,8">
+          <textProps text="$userAction ='CANCEL'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="530,354" endpoint="530,354" ctrlRect1="603,352,4,4" ctrlRect2="978,-75,4,4" ctrlRect2Dirty="true" textRect="773,136,38,8">
+          <textProps text="$userAction ='UNNIVERSAL_OPT_OUT'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="485,354" endpoint="485,354" ctrlRect1="508,447,4,4" ctrlRect2="297,522,4,4" ctrlRect2Dirty="true" ctrlRect1Dirty="true" textRect="392,482,24,8">
+          <textProps text="$userAction ='SAVE'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="530,354" endpoint="507,332" ctrlRect1="688,282,4,4" ctrlRect2="591,162,4,4" ctrlRect2Dirty="true" ctrlRect1Dirty="true" textRect="628,220,26,8">
+          <textProps text="$userAction ='DELETE'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="485,354" endpoint="485,354" ctrlRect1="408,352,4,4" ctrlRect2="128,521,4,4" ctrlRect2Dirty="true" textRect="253,434,35,8">
+          <textProps text="$userAction ='PROGRAM_OPT_OUT'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="507,332" endpoint="485,354" ctrlRect1="516,268,4,4" ctrlRect2="375,232,4,4" ctrlRect2Dirty="true" textRect="431,248,32,8" ctrlRect1Dirty="true">
+          <textProps text="$userAction ='SYNC_ADDRESS'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="530,354" endpoint="530,354" ctrlRect1="835,509,4,4" ctrlRect2="852,553,4,4" ctrlRect2Dirty="true" textRect="829,529,33,8" ctrlRect1Dirty="true">
+          <textProps text="$userAction ='EMAIL_OPT_OUT'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="507,332" endpoint="507,332" ctrlRect1="505,255,4,4" ctrlRect2="458,77,4,4" ctrlRect2Dirty="true" textRect="467,164,33,8">
+          <textProps text="$userAction ='PHONE_OPT_OUT'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="530,354" endpoint="530,354" ctrlRect1="603,352,4,4" ctrlRect2="1171,544,4,4" ctrlRect2Dirty="true" textRect="872,446,34,8">
+          <textProps text="$userAction ='POSTAL_OPT_OUT'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="507,377" endpoint="507,377" ctrlRect1="603,469,4,4" ctrlRect2="307,639,4,4" ctrlRect2Dirty="true" textRect="442,552,31,8" ctrlRect1Dirty="true">
+          <textProps text="$userAction ='LOAD_STATES'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="485,354" endpoint="485,354" ctrlRect1="408,352,4,4" ctrlRect2="458,330,4,4" ctrlRect2Dirty="true" textRect="419,339,32,8">
+          <textProps text="$userAction ='LOAD_PROGRAM'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="530,354" endpoint="530,354" ctrlRect1="603,352,4,4" ctrlRect2="1225,120,4,4" ctrlRect2Dirty="true" textRect="898,234,37,8">
+          <textProps text="$userAction ='UNI_EMAIL_OPT_OUT'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="507,332" endpoint="507,332" ctrlRect1="505,255,4,4" ctrlRect2="593,98,4,4" ctrlRect2Dirty="true" textRect="533,174,37,8">
+          <textProps text="$userAction ='UNI_PHONE_OPT_OUT'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="507,332" endpoint="507,332" ctrlRect1="505,255,4,4" ctrlRect2="551,159,4,4" ctrlRect2Dirty="true" textRect="512,205,37,8">
+          <textProps text="$userAction ='UNI_POSTL_OPT_OUT'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="507,332" endpoint="485,354" ctrlRect1="266,45,4,4" ctrlRect2="107,14,4,4" ctrlRect2Dirty="true" ctrlRect1Dirty="true" textRect="171,27,34,8">
+          <textProps text="$userAction ='SOCIAL_OPT_OUT'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="530,354" endpoint="530,354" ctrlRect1="603,352,4,4" ctrlRect2="537,396,4,4" ctrlRect2Dirty="true" textRect="553,372,38,8">
+          <textProps text="$userAction ='UNI_SOCIAL_OPT_OUT'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="485,354" endpoint="337,508" ctrlRect1="372,352,4,4" ctrlRect2="446,506,4,4" textRect="399,427,25,8">
+          <textProps text="$userAction ='Print'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="507,377" endpoint="530,354" ctrlRect1="505,450,4,4" ctrlRect2="702,569,4,4" ctrlRect2Dirty="true" textRect="585,507,41,8">
+          <textProps text="$userAction ='VIEW_CONSUMER_DETAILS'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="530,354" endpoint="530,354" ctrlRect1="603,352,4,4" ctrlRect2="603,352,4,4" textRect="590,350,31,8">
+          <textProps text="$userAction ='PII_DETAILS'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="530,354" endpoint="530,354" ctrlRect1="603,352,4,4" ctrlRect2="603,352,4,4" textRect="592,350,26,8">
+          <textProps text="$userAction ='BABIES'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="530,354" endpoint="530,354" ctrlRect1="603,352,4,4" ctrlRect2="603,352,4,4" textRect="594,350,23,8">
+          <textProps text="$userAction ='PET'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="530,354" endpoint="530,354" ctrlRect1="603,352,4,4" ctrlRect2="603,352,4,4" textRect="594,350,23,8">
+          <textProps text="$userAction ='PET'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="507,332" endpoint="507,332" ctrlRect1="505,255,4,4" ctrlRect2="581,196,4,4" textRect="530,223,30,8" ctrlRect2Dirty="true">
+          <textProps text="$userAction ='SUSBSCRPTN'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="530,354" endpoint="530,354" ctrlRect1="603,352,4,4" ctrlRect2="603,352,4,4" textRect="589,350,33,8">
+          <textProps text="$userAction ='COMMUNICATION'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="530,354" endpoint="530,354" ctrlRect1="603,352,4,4" ctrlRect2="603,352,4,4" textRect="592,350,27,8">
+          <textProps text="$userAction ='LOYALTY'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="530,354" endpoint="530,354" ctrlRect1="603,352,4,4" ctrlRect2="603,352,4,4" textRect="590,350,31,8">
+          <textProps text="$userAction ='FULFILLMENT'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="530,354" endpoint="530,354" ctrlRect1="603,352,4,4" ctrlRect2="603,352,4,4" textRect="592,350,27,8">
+          <textProps text="$userAction ='SUMMARY'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="530,354" endpoint="530,354" ctrlRect1="603,352,4,4" ctrlRect2="603,352,4,4" textRect="591,350,29,8">
+          <textProps text="$userAction ='HOUSEHOLD'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="530,354" endpoint="530,354" ctrlRect1="603,352,4,4" ctrlRect2="603,352,4,4" textRect="591,350,28,8">
+          <textProps text="$userAction ='CAMPAIGN'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="530,354" endpoint="530,354" ctrlRect1="603,352,4,4" ctrlRect2="603,352,4,4" textRect="592,350,26,8">
+          <textProps text="$userAction ='LEGACY'"/>
+        </nextNodeView>
+      </mgcnode>
+      <mgcnode Name="View Consumer Details">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="229,538" endpoint="229,538" ctrlRect1="227,461,4,4" ctrlRect2="284,10,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+      </mgcnode>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+      <action/>
+    </pre_actions>
+    <post_actions>
+      <action/>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

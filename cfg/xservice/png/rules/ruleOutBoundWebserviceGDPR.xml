@@ -1,0 +1,828 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+ 	 Copyright (c) 2009 by Teradata Corporation. 
+
+	 All Rights Reserved. 
+
+	 Teradata CONFIDENTIAL AND TRADE SECRET 
+
+ -->
+  <DEFINE_METHOD Name="WS_OUT_GDPR_GRS" Access="public">
+    <API_DOC>
+      <INPUT>
+      </INPUT>
+      <OUTPUT>
+      </OUTPUT>
+    </API_DOC>
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="getEmailID">
+          <ROOT>
+
+
+LOCKING ROW FOR ACCESS
+SEL DISTINCT  d.MKTNG_PGM_NBR, d. SOURCE_ID,d.REGIS_CNSMR_ID_VAL,d.GDPR_CASE_ID, b.GDPR_RQST_TYPE_CD,b.CNTRY_CODE,c.GDPR_RQST_TYPE_NAME
+FROM      MDM.GDPR_SRCH_RSLT a  JOIN MDM.GDPR_RQST b
+ON TRIM(a.GDPR_CASE_ID) = TRIM(b.GDPR_CASE_ID)
+AND a.PROC_IND='Y'
+AND b.GDPR_RQST_TYPE_CD IN ('DE')
+AND b.GDPR_RQST_STATUS_CD IN ('RP')
+JOIN MDM.GDPR_RQST_TYPE c
+ON b.GDPR_RQST_TYPE_CD =  c.GDPR_RQST_TYPE_CD
+JOIN MDM.DELETE_REGIS_RUN_LOG_HIST d
+ON a.MKTNG_PGM_NBR=D.MKTNG_PGM_NBR
+AND a.REGIS_PRSNA_ID = d.REGIS_PRSNA_ID
+AND   a.GDPR_CASE_ID NOT IN (SEL GDPR_CASE_ID FROM ICRM_STAGE_TBL.GDPR_BRODCAST_HIST WHERE GDPR_RQST_STATUS_CD IN ('Completed','No Match')
+            AND SUPPLIER_QUAD='GRS')
+UNION
+SEL DISTINCT D.MKTNG_PGM_NBR, D.DATA_SRCE_NBR,D.REGIS_CNSMR_ID_VAL,d.GDPR_CASE_ID, d.GDPR_RQST_TYPE_CD,d.CNTRY_CODE,e.GDPR_RQST_TYPE_NAME
+FROM MDM.GDPR_RQST D JOIN MDM.GDPR_RQST_TYPE e
+ON d.GDPR_RQST_TYPE_CD =  e.GDPR_RQST_TYPE_CD
+WHERE D.GDPR_RQST_TYPE_CD IN ('DE')
+AND D.GDPR_RQST_STATUS_CD IN ('NM')
+AND D.MKTNG_PGM_NBR IS NOT NULL
+AND D.DATA_SRCE_NBR IS NOT NULL
+AND D.REGIS_CNSMR_ID_VAL IS NOT NULL
+AND   d.GDPR_CASE_ID NOT IN (SEL GDPR_CASE_ID FROM ICRM_STAGE_TBL.GDPR_BRODCAST_HIST
+WHERE GDPR_RQST_STATUS_CD IN ('Completed','No Match')
+AND SUPPLIER_QUAD='GRS')
+
+
+</ROOT>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY AssignToVar="resEmailID" ReturnRowCount="yes" Value="{$getEmailID/@text}"/>
+        <IF_TEST Test="count($resEmailID/*)>0">
+          <THEN>
+            <EXECUTE_SQL_QUERY AssignToVar="Props" Value="locking row for access sel UPPER(ENV_NM),GRS_RESOURCE_URL,GRS_ENDPOINT,EMAIL_SUFFIX from GDPR_PROPS Where ENV_NM='GRS'"/>
+            <SET Var="RESOURCE_URL" FromValue="{$Props/SQL_RESULT/GRS_RESOURCE_URL/@Value}"/>
+            <EXECUTE_SQL_QUERY AssignToVar="AMP1" Value="sel substr('0026'xc,2,1) as A"/>
+            <FOR_EACH CurrentElement="cur" SelectList="$resEmailID/SQL_RESULT">
+              <TO_DOCVAR AssignToVar="tmp">
+                <ROOT>
+                  <RESOURCE_URL Value="{concat($Props/SQL_RESULT/GRS_RESOURCE_URL/@Value,$cur/REGIS_CNSMR_ID_VAL/@Value)}"/>
+                  <GRS_ENDPOINT Value="{$Props/SQL_RESULT/GRS_ENDPOINT/@Value}"/>
+                  <consumerId Value="{$cur/REGIS_CNSMR_ID_VAL/@Value}"/>
+                  <mpId Value="{$cur/MKTNG_PGM_NBR/@Value}"/>
+                  <sourceId Value="{$cur/SOURCE_ID/@Value}"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <EXECUTE_SQL_QUERY AssignToVar="respBroadcast" ReturnRowCount="yes" Value="INSERT INTO ICRM_STAGE_TBL.GDPR_BRODCAST_HIST (EXTRACT_ID,GDPR_CASE_ID,GDPR_CASE_RQST_TYPE,CNTRY_CODE,SUPPLIER_QUAD,SENT_TIMESTAMP,SYS_LAST_MODIFIED_DATE,LOAD_ID,GDPR_RQST_STATUS_CD) Values({$thisParam/LoadId/@Value},'{$cur/GDPR_CASE_ID/@Value}','{$cur/GDPR_RQST_TYPE_NAME/@Value}','{$cur/CNTRY_CODE/@Value}','GRS',current_timestamp(0),current_timestamp(0),{$thisParam/LoadId/@Value},'In Progress') "/>
+              <IF_TEST Test="count($Props/SQL_RESULT/test)>0">
+                <THEN>
+                  <SET Var="test" FromValue="true"/>
+                </THEN>
+                <ELSE>
+                  <START_WORKFLOW ServiceName="BCM_MASTER" AssignToVar="startWfResponse" IsQbEnabled="false" QbIdentifier="WfProcessUI">
+                    <TEMPLATE Value="OUTBOUND_GRS"/>
+                    <ADDITIONAL_PARAMETERS>
+                      <TO_XML SelectList="$cur/*"/>
+                      <TO_XML SelectList="$tmp/*"/>
+                    </ADDITIONAL_PARAMETERS>
+                  </START_WORKFLOW>
+                  <SET Var="test" FromValue="{$startWfResponse/Success1/@Value ='true'}"/>
+                  <SET Var="Code" FromValue="{$startWfResponse/Code/@Value}"/>
+                  <SET Var="Message" FromValue="{$startWfResponse/Message/@Value}"/>
+                  <SET Var="Codetest" FromValue="{substringAfter($startWfResponse/Code/@Value,'NOT' )}"/>
+                </ELSE>
+              </IF_TEST>
+              <IF_TEST Test="$test='true'">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="insertResultsQuery">
+                    <ROOT>
+                                           
+
+UPDATE ICRM_STAGE_TBL.GDPR_BRODCAST_HIST SET GDPR_RQST_STATUS_CD = 'Completed' WHERE GDPR_RQST_STATUS_CD='In Progress' AND SUPPLIER_QUAD='GRS' AND LOAD_ID= {$thisParam/LoadId/@Value}      
+
+
+</ROOT>
+                  </TO_DOCVAR>
+                  <APPEND_TO_XML DocVar="thisReturn">
+                    <ROOT>
+                      <Response Status="Success">
+                        <GRS_DELETION_PROCESS Status="Success"/>
+                        <GDPR_CASE_ID Value="{$cur/GDPR_CASE_ID/@Value}"/>
+                        <REGIS_CNSMR_ID_VAL Value="{$cur/REGIS_CNSMR_ID_VAL/@Value}"/>
+                        <Code Value="{$Code}"/>
+                        <Message Value="{$Message}"/>
+                      </Response>
+                    </ROOT>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$test!='true' and strlen($Codetest)=0">
+                    <THEN>
+                      <TO_DOCVAR AssignToVar="insertResultsQuery">
+                        <ROOT>
+                      	
+                      
+UPDATE ICRM_STAGE_TBL.GDPR_BRODCAST_HIST SET GDPR_RQST_STATUS_CD = 'Failure' WHERE GDPR_RQST_STATUS_CD='In Progress' AND SUPPLIER_QUAD='GRS' AND LOAD_ID= {$thisParam/LoadId/@Value}  
+
+</ROOT>
+                      </TO_DOCVAR>
+                      <APPEND_TO_XML DocVar="thisReturn">
+                        <ROOT>
+                          <Response Status="Failure">
+                            <GRS_DELETION_PROCESS Status="Failed"/>
+                            <GDPR_CASE_ID Value="{$cur/GDPR_CASE_ID/@Value}"/>
+                            <REGIS_CNSMR_ID_VAL Value="{$cur/REGIS_CNSMR_ID_VAL/@Value}"/>
+                            <Code Value="{$Code}"/>
+                            <Message Value="{$Message}"/>
+                            <ERROR Value="{$result/@Description}"/>
+                          </Response>
+                        </ROOT>
+                      </APPEND_TO_XML>
+                    </THEN>
+                    <ELSE>
+                      <IF_TEST Test="$startWfResponse/Success1/@Value='false' and strlen($Codetest)>0">
+                        <THEN>
+                          <TO_DOCVAR AssignToVar="insertResultsQuery">
+                            <ROOT>
+                      	
+UPDATE ICRM_STAGE_TBL.GDPR_BRODCAST_HIST SET GDPR_RQST_STATUS_CD = 'No Match' WHERE GDPR_RQST_STATUS_CD='In Progress' AND SUPPLIER_QUAD='GRS' AND LOAD_ID= {$thisParam/LoadId/@Value}
+  
+
+</ROOT>
+                          </TO_DOCVAR>
+                          <APPEND_TO_XML DocVar="thisReturn">
+                            <ROOT>
+                              <Response Status="No Match">
+                                <GDPR_CASE_ID Value="{$cur/GDPR_CASE_ID/@Value}"/>
+                                <REGIS_CNSMR_ID_VAL Value="{$cur/REGIS_CNSMR_ID_VAL/@Value}"/>
+                                <GRS_DELETION_PROCESS Status="No Match Found"/>
+                                <Code Value="{$startWfResponse/Code/@Value}"/>
+                                <Message Value="{$startWfResponse/Message/@Value}"/>
+                                <ERROR Value="{$result/@Description}"/>
+                              </Response>
+                            </ROOT>
+                          </APPEND_TO_XML>
+                        </THEN>
+                      </IF_TEST>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="a">
+                <ROOT>
+                  <a Value="{$insertResultsQuery/@text}"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <EXECUTE_SQL_QUERY AssignToVar="result" ReturnRowCount="yes" Value="{$a/a/@Value}"/>
+            </FOR_EACH>
+          </THEN>
+          <ELSE>
+            <APPEND_TO_XML DocVar="thisReturn">
+              <ROOT>
+                <Response Status="Success">
+                  <GRS_DELETION_PROCESS Status="skipped"/>
+                </Response>
+              </ROOT>
+            </APPEND_TO_XML>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="WS_OUT_GDPR_DMC_EMAIL" Access="public">
+    <API_DOC>
+      <INPUT>
+      </INPUT>
+      <OUTPUT>
+      </OUTPUT>
+    </API_DOC>
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="getEmailID">
+          <ROOT>
+LOCKING ROW FOR ACCESS
+
+SEL       DISTINCT  EMAIL_ADDR_TXT,d.MKTNG_PGM_NBR,a.REGIS_PRSNA_ID,d.SOURCE_ID,d.REGIS_CNSMR_ID_VAL,b.CNTRY_CODE,
+
+b.GDPR_CASE_ID,b.GDPR_RQST_TYPE_CD,b.GDPR_RQST_STATUS_CD,
+
+c.GDPR_RQST_TYPE_NAME,
+
+DMC_CONTACT_ID,
+
+d.SR_NBR
+
+FROM      MDM.GDPR_SRCH_RSLT a  JOIN MDM.GDPR_RQST b
+
+ON TRIM(a.GDPR_CASE_ID) = TRIM(b.GDPR_CASE_ID)
+
+AND a.PROC_IND='Y'
+
+AND b.GDPR_RQST_TYPE_CD IN ('DE')
+
+AND b.GDPR_RQST_STATUS_CD IN ('RP')
+
+JOIN MDM.GDPR_RQST_TYPE c
+
+ON b.GDPR_RQST_TYPE_CD =  c.GDPR_RQST_TYPE_CD
+
+JOIN MDM.DELETE_REGIS_RUN_LOG_HIST d
+
+ON a.MKTNG_PGM_NBR=D.MKTNG_PGM_NBR
+
+AND a.REGIS_PRSNA_ID = d.REGIS_PRSNA_ID
+
+LEFT JOIN RT_DMC_CONTACT e
+
+ON a.REGIS_PRSNA_ID = e.REGIS_PRSNA_ID
+
+WHERE DMC_CONTACT_ID IS NOT NULL
+
+AND E.ATTRIBUTE_SCHEMA_ID IN (552,553,554)
+AND   b.GDPR_CASE_ID NOT IN (SEL GDPR_CASE_ID FROM ICRM_STAGE_TBL.GDPR_BRODCAST_HIST WHERE GDPR_RQST_STATUS_CD IN ('Completed','No Match')
+AND SUPPLIER_QUAD='DMCE')
+
+
+
+</ROOT>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY AssignToVar="resEmailID" ReturnRowCount="yes" Value="{$getEmailID/@text}"/>
+        <IF_TEST Test="count($resEmailID/*)>0">
+          <THEN>
+            <EXECUTE_SQL_QUERY AssignToVar="Props" Value="locking row for access sel UPPER(ENV_NM),RESOURCE_URL,ENDPOINT,EMAIL_SUFFIX,EMAIL_RTTM_SUFFIX from GDPR_PROPS Where ENV_NM='GRS'"/>
+            <SET Var="RESOURCE_URL" FromValue="{$Props/SQL_RESULT/RESOURCE_URL/@Value}"/>
+            <SET Var="count" FromValue="0"/>
+            <FOR_EACH CurrentElement="cur" SelectList="$resEmailID/*">
+              <TO_DOCVAR AssignToVar="tmp">
+                <ROOT>
+                  <RESOURCE_URL Value="{concat('/',$Props/SQL_RESULT/RESOURCE_URL/@Value,'/api/rest/v7/user/deleteByEmail')}"/>
+                  <ENDPOINT Value="{$Props/SQL_RESULT/ENDPOINT/@Value}"/>
+                  <consumerId Value="{$cur/REGIS_CNSMR_ID_VAL/@Value}"/>
+                  <mpId Value="{$cur/MKTNG_PGM_NBR/@Value}"/>
+                  <sourceId Value="{$cur/SOURCE_ID/@Value}"/>
+                  <EMAIL_Id Value="{concat($cur/DMC_CONTACT_ID/@Value, $Props/SQL_RESULT/EMAIL_SUFFIX/@Value)}"/>
+                  <!--<EMAIL_Id Value="{concat($cur/SOURCE_ID/@Value,'_',$cur/MKTNG_PGM_NBR/@Value,'_',$cur/REGIS_CNSMR_ID_VAL/@Value, $Props/SQL_RESULT/EMAIL_RTTM_SUFFIX/@Value)}"/>-->
+                </ROOT>
+              </TO_DOCVAR>
+              <EXECUTE_SQL_QUERY AssignToVar="respBroadcast1" ReturnRowCount="yes" Value="INSERT INTO ICRM_STAGE_TBL.GDPR_BRODCAST_HIST (EXTRACT_ID,GDPR_CASE_ID,GDPR_CASE_RQST_TYPE,CNTRY_CODE,SUPPLIER_QUAD,SENT_TIMESTAMP,SYS_LAST_MODIFIED_DATE,LOAD_ID,GDPR_RQST_STATUS_CD) Values({$thisParam/LoadId/@Value},'{$cur/GDPR_CASE_ID/@Value}','{$cur/GDPR_RQST_TYPE_NAME/@Value}','{$cur/CNTRY_CODE/@Value}','DMCE',current_timestamp(0),current_timestamp(0),{$thisParam/LoadId/@Value},'In Progress') "/>
+              <START_WORKFLOW ServiceName="BCM_MASTER" AssignToVar="startWfResponse" IsQbEnabled="false" QbIdentifier="WfProcessUI" HandleException="true">
+                <TEMPLATE Value="OUTBOUND_DMC"/>
+                <ADDITIONAL_PARAMETERS>
+                  <TO_XML SelectList="$cur/*"/>
+                  <TO_XML SelectList="$tmp/*"/>
+                </ADDITIONAL_PARAMETERS>
+              </START_WORKFLOW>
+              <SET Var="test1" FromValue="{contains($startWfResponse/Response/@Value,'error')}"/>
+              <SET Var="test" FromValue="{$startWfResponse/@Status='Success'}"/>
+              <TO_DOCVAR AssignToVar="tmp">
+                <ROOT>
+                  <RESOURCE_URL Value="{concat('/',$Props/SQL_RESULT/RESOURCE_URL/@Value,'/api/rest/v7/user/deleteByEmail')}"/>
+                  <ENDPOINT Value="{$Props/SQL_RESULT/ENDPOINT/@Value}"/>
+                  <consumerId Value="{$cur/REGIS_CNSMR_ID_VAL/@Value}"/>
+                  <mpId Value="{$cur/MKTNG_PGM_NBR/@Value}"/>
+                  <sourceId Value="{$cur/SOURCE_ID/@Value}"/>
+                  <EMAIL_Id Value="{concat($cur/SOURCE_ID/@Value,'_',$cur/MKTNG_PGM_NBR/@Value,'_',$cur/REGIS_CNSMR_ID_VAL/@Value, $Props/SQL_RESULT/EMAIL_RTTM_SUFFIX/@Value)}"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <START_WORKFLOW ServiceName="BCM_MASTER" AssignToVar="startWfResponse" IsQbEnabled="false" QbIdentifier="WfProcessUI">
+                <TEMPLATE Value="OUTBOUND_DMC"/>
+                <ADDITIONAL_PARAMETERS>
+                  <TO_XML SelectList="$cur/*"/>
+                  <TO_XML SelectList="$tmp/*"/>
+                </ADDITIONAL_PARAMETERS>
+              </START_WORKFLOW>
+              <SET Var="test2" FromValue="{contains($startWfResponse/Response/@Value,'error')}"/>
+              <SET Var="test3" FromValue="{$startWfResponse/@Status='Success'}"/>
+              <IF_TEST Test="$test='true' and $test1 != 'true' and $test3='true' and $test2 != 'true'">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="insertResultsQuery">
+                    <ROOT>
+                                        
+                                            
+UPDATE ICRM_STAGE_TBL.GDPR_BRODCAST_HIST SET GDPR_RQST_STATUS_CD = 'Completed' WHERE GDPR_RQST_STATUS_CD='In Progress' AND SUPPLIER_QUAD='DMCE' AND LOAD_ID= {$thisParam/LoadId/@Value}                      
+                      
+
+  
+
+ 
+
+
+
+
+
+</ROOT>
+                  </TO_DOCVAR>
+                  <APPEND_TO_XML DocVar="thisReturn">
+                    <ROOT>
+                      <Response Status="Success">
+                        <DMC_DELETION_PROCESS Status="Success"/>
+                        <GDPR_CASE_ID Value="{$cur/GDPR_CASE_ID/@Value}"/>
+                        <REGIS_PRSNA_ID Value="{$cur/REGIS_PRSNA_ID/@Value}"/>
+                        <EMAIL_ADDR_TXT Value="{$cur/EMAIL_ADDR_TXT/@Value}"/>
+                        <GDPR_RQST_TYPE_NAME Value="{$cur/GDPR_RQST_TYPE_NAME/@Value}"/>
+                      </Response>
+                    </ROOT>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <TO_DOCVAR AssignToVar="insertResultsQuery">
+                    <ROOT>
+                     
+UPDATE ICRM_STAGE_TBL.GDPR_BRODCAST_HIST SET GDPR_RQST_STATUS_CD = 'Failure' WHERE GDPR_RQST_STATUS_CD='In Progress' AND SUPPLIER_QUAD='DMCE' AND LOAD_ID= {$thisParam/LoadId/@Value}
+
+</ROOT>
+                  </TO_DOCVAR>
+                  <APPEND_TO_XML DocVar="thisReturn">
+                    <ROOT>
+                      <Response Status="Failure">
+                        <GDPR_CASE_ID Value="{$cur/GDPR_CASE_ID/@Value}"/>
+                        <REGIS_PRSNA_ID Value="{$cur/REGIS_PRSNA_ID/@Value}"/>
+                        <EMAIL_ADDR_TXT Value="{$cur/EMAIL_ADDR_TXT/@Value}"/>
+                        <GDPR_RQST_TYPE_NAME Value="{$cur/GDPR_RQST_TYPE_NAME/@Value}"/>
+                        <DMC_DELETION_PROCESS Status="Failed"/>
+                        <ERROR Value="{$result/@Description}"/>
+                      </Response>
+                    </ROOT>
+                  </APPEND_TO_XML>
+                </ELSE>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="a">
+                <ROOT>
+                  <a Value="{$insertResultsQuery/@text}"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <EXECUTE_SQL_QUERY AssignToVar="result" ReturnRowCount="yes" Value="{$a/a/@Value}"/>
+              <SET Var="count" FromValue="{$count+1}"/>
+            </FOR_EACH>
+          </THEN>
+          <ELSE>
+            <APPEND_TO_XML DocVar="thisReturn">
+              <ROOT>
+                <Response Status="Success">
+                  <DMC_DELETION_PROCESS Status="skipped"/>
+                </Response>
+              </ROOT>
+            </APPEND_TO_XML>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="WS_OUT_GDPR_DMC_EMAIL2" Access="public">
+    <API_DOC>
+      <INPUT>
+      </INPUT>
+      <OUTPUT>
+      </OUTPUT>
+    </API_DOC>
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="getEmailID">
+          <ROOT>
+LOCKING ROW FOR ACCESS
+
+SEL       DISTINCT  b.EMAIL_ADDR_TXT,f.CNTCT_POINT_CATEG_CODE,FULL_PHONE_NUM,d.MKTNG_PGM_NBR,a.REGIS_PRSNA_ID,d.SOURCE_ID,d.REGIS_CNSMR_ID_VAL,b.CNTRY_CODE,
+
+b.GDPR_CASE_ID,b.GDPR_RQST_TYPE_CD,b.GDPR_RQST_STATUS_CD,
+
+c.GDPR_RQST_TYPE_NAME,
+
+d.SR_NBR
+
+FROM      MDM.GDPR_SRCH_RSLT a  JOIN MDM.GDPR_RQST b
+
+ON TRIM(a.GDPR_CASE_ID) = TRIM(b.GDPR_CASE_ID)
+
+AND a.PROC_IND='Y'
+
+AND b.GDPR_RQST_TYPE_CD IN ('DE')
+
+AND b.GDPR_RQST_STATUS_CD IN ('RP')
+
+JOIN MDM.GDPR_RQST_TYPE c
+
+ON b.GDPR_RQST_TYPE_CD =  c.GDPR_RQST_TYPE_CD
+
+JOIN MDM.DELETE_REGIS_RUN_LOG_HIST d
+
+ON a.MKTNG_PGM_NBR=D.MKTNG_PGM_NBR
+
+AND a.REGIS_PRSNA_ID = d.REGIS_PRSNA_ID
+
+LEFT JOIN CNTCT_POINT_CATEG F
+ON 1=1
+AND F. CNTCT_POINT_TYPE_CODE IN ('E','P')
+WHERE   b.GDPR_CASE_ID NOT IN (SEL GDPR_CASE_ID FROM ICRM_STAGE_TBL.GDPR_BRODCAST_HIST WHERE GDPR_RQST_STATUS_CD IN ('Completed','No Match')
+AND SUPPLIER_QUAD='DMCE2')
+
+
+
+</ROOT>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY AssignToVar="resEmailID" ReturnRowCount="yes" Value="{$getEmailID/@text}"/>
+        <IF_TEST Test="count($resEmailID/*)>0">
+          <THEN>
+            <EXECUTE_SQL_QUERY AssignToVar="Props" Value="locking row for access sel UPPER(ENV_NM),RESOURCE_URL,DMCE2_ENDPOINT,DMCE2_EMAIL_SUFFIX from GDPR_PROPS Where ENV_NM='GRS'"/>
+            <SET Var="RESOURCE_URL" FromValue="{$Props/SQL_RESULT/RESOURCE_URL/@Value}"/>
+            <SET Var="count" FromValue="0"/>
+            <FOR_EACH CurrentElement="cur" SelectList="$resEmailID/*">
+              <TO_DOCVAR AssignToVar="tmp">
+                <ROOT>
+                  <RESOURCE_URL Value="{concat('/',$Props/SQL_RESULT/RESOURCE_URL/@Value,'/api/rest/v7/user/deleteByEmail')}"/>
+                  <ENDPOINT Value="{$Props/SQL_RESULT/DMCE2_ENDPOINT/@Value}"/>
+                  <consumerId Value="{$cur/REGIS_CNSMR_ID_VAL/@Value}"/>
+                  <mpId Value="{$cur/MKTNG_PGM_NBR/@Value}"/>
+                  <sourceId Value="{$cur/SOURCE_ID/@Value}"/>
+                  <!--<EMAIL_Id Value="{concat($cur/DMC_CONTACT_ID/@Value, $Props/SQL_RESULT/EMAIL_SUFFIX/@Value)}"/>-->
+                  <EMAIL_Id Value="{concat(trim($cur/REGIS_PRSNA_ID/@Value),trim($cur/CNTCT_POINT_CATEG_CODE/@Value),$Props/SQL_RESULT/DMCE2_EMAIL_SUFFIX/@Value)}"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <EXECUTE_SQL_QUERY AssignToVar="respBroadcast1" ReturnRowCount="yes" Value="INSERT INTO ICRM_STAGE_TBL.GDPR_BRODCAST_HIST (EXTRACT_ID,GDPR_CASE_ID,GDPR_CASE_RQST_TYPE,CNTRY_CODE,SUPPLIER_QUAD,SENT_TIMESTAMP,SYS_LAST_MODIFIED_DATE,LOAD_ID,GDPR_RQST_STATUS_CD) Values({$thisParam/LoadId/@Value},'{$cur/GDPR_CASE_ID/@Value}','{$cur/GDPR_RQST_TYPE_NAME/@Value}','{$cur/CNTRY_CODE/@Value}','DMCE2',current_timestamp(0),current_timestamp(0),{$thisParam/LoadId/@Value},'In Progress') "/>
+              <START_WORKFLOW ServiceName="BCM_MASTER" AssignToVar="startWfResponse" IsQbEnabled="false" QbIdentifier="WfProcessUI">
+                <TEMPLATE Value="OUTBOUND_DMC"/>
+                <ADDITIONAL_PARAMETERS>
+                  <TO_XML SelectList="$cur/*"/>
+                  <TO_XML SelectList="$tmp/*"/>
+                </ADDITIONAL_PARAMETERS>
+              </START_WORKFLOW>
+              <SET Var="test1" FromValue="{contains($startWfResponse/Response/@Value,'error')}"/>
+              <SET Var="test" FromValue="{$startWfResponse/@Status='Success'}"/>
+              <IF_TEST Test="$test='true' and $test1 != 'true' ">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="insertResultsQuery">
+                    <ROOT>
+                                        
+                                            
+UPDATE ICRM_STAGE_TBL.GDPR_BRODCAST_HIST SET GDPR_RQST_STATUS_CD = 'Completed' WHERE GDPR_RQST_STATUS_CD='In Progress' AND SUPPLIER_QUAD='DMCE2' AND LOAD_ID= {$thisParam/LoadId/@Value}                      
+
+</ROOT>
+                  </TO_DOCVAR>
+                  <APPEND_TO_XML DocVar="thisReturn">
+                    <ROOT>
+                      <Response Status="Success">
+                        <DMC_DELETION_PROCESS Status="Success"/>
+                        <GDPR_CASE_ID Value="{$cur/GDPR_CASE_ID/@Value}"/>
+                        <REGIS_PRSNA_ID Value="{$cur/REGIS_PRSNA_ID/@Value}"/>
+                        <EMAIL_ADDR_TXT Value="{$cur/EMAIL_ADDR_TXT/@Value}"/>
+                        <GDPR_RQST_TYPE_NAME Value="{$cur/GDPR_RQST_TYPE_NAME/@Value}"/>
+                      </Response>
+                    </ROOT>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <TO_DOCVAR AssignToVar="insertResultsQuery">
+                    <ROOT>
+                     
+UPDATE ICRM_STAGE_TBL.GDPR_BRODCAST_HIST SET GDPR_RQST_STATUS_CD = 'Failure' WHERE GDPR_RQST_STATUS_CD='In Progress' AND SUPPLIER_QUAD='DMCE2' AND LOAD_ID= {$thisParam/LoadId/@Value}
+
+</ROOT>
+                  </TO_DOCVAR>
+                  <APPEND_TO_XML DocVar="thisReturn">
+                    <ROOT>
+                      <Response Status="Failure">
+                        <GDPR_CASE_ID Value="{$cur/GDPR_CASE_ID/@Value}"/>
+                        <REGIS_PRSNA_ID Value="{$cur/REGIS_PRSNA_ID/@Value}"/>
+                        <EMAIL_ADDR_TXT Value="{$cur/EMAIL_ADDR_TXT/@Value}"/>
+                        <GDPR_RQST_TYPE_NAME Value="{$cur/GDPR_RQST_TYPE_NAME/@Value}"/>
+                        <DMC_DELETION_PROCESS Status="Failed"/>
+                        <ERROR Value="{$result/@Description}"/>
+                      </Response>
+                    </ROOT>
+                  </APPEND_TO_XML>
+                </ELSE>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="a">
+                <ROOT>
+                  <a Value="{$insertResultsQuery/@text}"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <EXECUTE_SQL_QUERY AssignToVar="result" ReturnRowCount="yes" Value="{$a/a/@Value}"/>
+              <SET Var="count" FromValue="{$count+1}"/>
+            </FOR_EACH>
+          </THEN>
+          <ELSE>
+            <APPEND_TO_XML DocVar="thisReturn">
+              <ROOT>
+                <Response Status="Success">
+                  <DMC_DELETION_PROCESS Status="skipped"/>
+                </Response>
+              </ROOT>
+            </APPEND_TO_XML>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="WS_OUT_GDPR_DMC_PHONE" Access="public">
+    <API_DOC>
+      <INPUT>
+      </INPUT>
+      <OUTPUT>
+      </OUTPUT>
+    </API_DOC>
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="getPhoneID">
+          <ROOT>
+
+LOCKING ROW FOR ACCESS
+SEL DISTINCT  FULL_PHONE_NUM,d.MKTNG_PGM_NBR,a.REGIS_PRSNA_ID,FULL_PHONE_NUM,d.SOURCE_ID,d.REGIS_CNSMR_ID_VAL,b.CNTRY_CODE,
+
+b.GDPR_CASE_ID,b.GDPR_RQST_TYPE_CD,b.GDPR_RQST_STATUS_CD,
+
+c.GDPR_RQST_TYPE_NAME,
+
+DMC_CONTACT_ID,
+
+d.SR_NBR
+
+FROM      MDM.GDPR_SRCH_RSLT a  JOIN MDM.GDPR_RQST b
+
+ON TRIM(a.GDPR_CASE_ID) = TRIM(b.GDPR_CASE_ID)
+
+AND a.PROC_IND='Y'
+
+AND b.GDPR_RQST_TYPE_CD IN ('DE')
+
+AND b.GDPR_RQST_STATUS_CD IN ('RP')
+
+JOIN MDM.GDPR_RQST_TYPE c
+
+ON b.GDPR_RQST_TYPE_CD =  c.GDPR_RQST_TYPE_CD
+
+JOIN MDM.DELETE_REGIS_RUN_LOG_HIST d
+
+ON a.MKTNG_PGM_NBR=D.MKTNG_PGM_NBR
+
+AND a.REGIS_PRSNA_ID = d.REGIS_PRSNA_ID
+
+LEFT JOIN RT_DMC_CONTACT e
+
+ON a.REGIS_PRSNA_ID = e.REGIS_PRSNA_ID
+
+WHERE DMC_CONTACT_ID IS NOT NULL
+
+AND E.ATTRIBUTE_SCHEMA_ID IN (1587,1590)
+AND   b.GDPR_CASE_ID NOT IN (SEL GDPR_CASE_ID FROM ICRM_STAGE_TBL.GDPR_BRODCAST_HIST WHERE GDPR_RQST_STATUS_CD IN ('Completed','No Match')
+AND SUPPLIER_QUAD='DMCP')
+
+
+
+</ROOT>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY AssignToVar="resEmailID" ReturnRowCount="yes" Value="{$getPhoneID/@text}"/>
+        <IF_TEST Test="count($resEmailID/*)>0">
+          <THEN>
+            <EXECUTE_SQL_QUERY AssignToVar="Props" Value="locking row for access sel UPPER(ENV_NM),ENDPOINT,RESOURCE_URL,PHONE_PREFIX from GDPR_PROPS Where ENV_NM='GRS'"/>
+            <SET Var="RESOURCE_URL" FromValue="{$Props/SQL_RESULT/RESOURCE_URL/@Value}"/>
+            <FOR_EACH CurrentElement="cur" SelectList="$resEmailID/*">
+              <TO_DOCVAR AssignToVar="tmp">
+                <ROOT>
+                  <RESOURCE_URL Value="{concat('/',$Props/SQL_RESULT/RESOURCE_URL/@Value,'/api/rest/v7/user/deleteByMobileNumber')}"/>
+                  <ENDPOINT Value="{$Props/SQL_RESULT/ENDPOINT/@Value}"/>
+                  <EMAIL_Id Value="{concat($Props/SQL_RESULT/PHONE_PREFIX/@Value,$cur/DMC_CONTACT_ID/@Value)}"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <SET Var="RESOURCE_URL1" FromValue="{concat('/',$Props/SQL_RESULT/RESOURCE_URL/@Value,'/api/rest/v7/user/deleteByMobileNumber')}"/>
+              <SET Var="ENDPOINT1" FromValue="{$Props/SQL_RESULT/ENDPOINT/@Value}"/>
+              <SET Var="EMAIL_Id1" FromValue="{concat($Props/SQL_RESULT/PHONE_PREFIX/@Value,$cur/DMC_CONTACT_ID/@Value)}"/>
+              <EXECUTE_SQL_QUERY AssignToVar="respBroadcast2" ReturnRowCount="yes" Value="INSERT INTO ICRM_STAGE_TBL.GDPR_BRODCAST_HIST (EXTRACT_ID,GDPR_CASE_ID,GDPR_CASE_RQST_TYPE,CNTRY_CODE,SUPPLIER_QUAD,SENT_TIMESTAMP,SYS_LAST_MODIFIED_DATE,LOAD_ID,GDPR_RQST_STATUS_CD) Values({$thisParam/LoadId/@Value},'{$cur/GDPR_CASE_ID/@Value}','{$cur/GDPR_RQST_TYPE_NAME/@Value}','{$cur/CNTRY_CODE/@Value}','DMCP',current_timestamp(0),current_timestamp(0),{$thisParam/LoadId/@Value},'In Progress') "/>
+              <EXECUTE_SHELL_COMMAND Value="E:\Teradata\MDM\3.05.02\custom\pngrelease3\bin\DMCP.cmd $RESOURCE_URL1 $ENDPOINT1 $EMAIL_Id1" AssignToVar="startWfResponse"/>
+              <SET Var="test1" FromValue="{contains($startWfResponse/Response/@Value,'error')}"/>
+              <SET Var="test" FromValue="{$startWfResponse/@Status='Success'}"/>
+              <IF_TEST Test="$startWfResponse/@ShellReturnValue = 0">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="insertResultsQuery">
+                    <ROOT>
+                                          
+UPDATE ICRM_STAGE_TBL.GDPR_BRODCAST_HIST SET GDPR_RQST_STATUS_CD = 'Completed' WHERE GDPR_RQST_STATUS_CD='In Progress' AND SUPPLIER_QUAD='DMCP' AND LOAD_ID= {$thisParam/LoadId/@Value}                      
+</ROOT>
+                  </TO_DOCVAR>
+                  <APPEND_TO_XML DocVar="thisReturn">
+                    <ROOT>
+                      <Response Status="Success">
+                        <DMC_DELETION_PROCESS Status="Success"/>
+                        <GDPR_CASE_ID Value="{$cur/GDPR_CASE_ID/@Value}"/>
+                        <REGIS_PRSNA_ID Value="{$cur/REGIS_PRSNA_ID/@Value}"/>
+                        <FULL_PHONE_NUM Value="{$cur/FULL_PHONE_NUM/@Value}"/>
+                        <GDPR_RQST_TYPE_NAME Value="{$cur/GDPR_RQST_TYPE_NAME/@Value}"/>
+                      </Response>
+                    </ROOT>
+                  </APPEND_TO_XML>
+                </THEN>
+                <ELSE>
+                  <TO_DOCVAR AssignToVar="insertResultsQuery">
+                    <ROOT>
+                                           
+UPDATE ICRM_STAGE_TBL.GDPR_BRODCAST_HIST SET GDPR_RQST_STATUS_CD = 'Failure' WHERE GDPR_RQST_STATUS_CD='In Progress' AND SUPPLIER_QUAD='DMCP' AND LOAD_ID= {$thisParam/LoadId/@Value}
+                                                            
+</ROOT>
+                  </TO_DOCVAR>
+                  <APPEND_TO_XML DocVar="thisReturn">
+                    <ROOT>
+                      <Response Status="Failure">
+                        <GDPR_CASE_ID Value="{$cur/GDPR_CASE_ID/@Value}"/>
+                        <REGIS_PRSNA_ID Value="{$cur/REGIS_PRSNA_ID/@Value}"/>
+                        <FULL_PHONE_NUM Value="{$cur/FULL_PHONE_NUM/@Value}"/>
+                        <GDPR_RQST_TYPE_NAME Value="{$cur/GDPR_RQST_TYPE_NAME/@Value}"/>
+                        <DMC_DELETION_PROCESS Status="Failed"/>
+                        <ERROR Value="{$result/@Description}"/>
+                      </Response>
+                    </ROOT>
+                  </APPEND_TO_XML>
+                </ELSE>
+              </IF_TEST>
+              <TO_DOCVAR AssignToVar="a">
+                <ROOT>
+                  <a Value="{$insertResultsQuery/@text}"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <EXECUTE_SQL_QUERY AssignToVar="result" ReturnRowCount="yes" Value="{$a/a/@Value}"/>
+            </FOR_EACH>
+          </THEN>
+          <ELSE>
+            <APPEND_TO_XML DocVar="thisReturn">
+              <ROOT>
+                <Response Status="Success">
+                  <DMC_DELETION_PROCESS Status="skipped"/>
+                </Response>
+              </ROOT>
+            </APPEND_TO_XML>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="WS_OUT_GDPR_EXT_SYS" Access="public">
+    <API_DOC>
+      <INPUT>
+      </INPUT>
+      <OUTPUT>
+      </OUTPUT>
+    </API_DOC>
+    <RULE>
+      <ACTION>
+        <EXECUTE_SQL_QUERY AssignToVar="Props" Value="locking row for access sel UPPER(ENV_NM),RESOURCE_URL,ENDPOINT,EMAIL_SUFFIX,MIME_TYPE,HOST,AUTHORZATION from GDPR_PROPS Where ENV_NM NOT IN ('GRS','DEV','SIT','UAT')"/>
+        <SET Var="RESOURCE_URL" FromValue="{$Props/SQL_RESULT/RESOURCE_URL/@Value}"/>
+        <EXECUTE_SQL_QUERY AssignToVar="AMP1" Value="sel substr('0026'xc,2,1) as A"/>
+        <IF_TEST Test="count($Props/SQL_RESULT)>0">
+          <THEN>
+            <FOR_EACH CurrentElement="cur" SelectList="$Props/SQL_RESULT">
+              <TO_DOCVAR AssignToVar="tmp">
+                <ROOT>
+                  <RESOURCE_URL Value="{$cur/RESOURCE_URL/@Value}"/>
+                  <ENDPOINT Value="{$cur/ENDPOINT/@Value}"/>
+                  <MIME_TYPE Value="{$cur/MIME_TYPE/@Value}"/>
+                  <HOST Value="{$cur/HOST/@Value}"/>
+                  <AUTHORIZATION Value="{$cur/AUTHORZATION/@Value}"/>
+                  <ENV_NM Value="{$cur/ENV_NM/@Value}"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <TO_DOCVAR AssignToVar="getExtSysID">
+                <ROOT>
+LOCKING ROW FOR ACCESS
+SEL DISTINCT  d.MKTNG_PGM_NBR, d.LEGAL_ENT_NBR,d. SOURCE_ID,a.REGIS_PRSNA_ID,d.REGIS_CNSMR_ID_VAL,d.GDPR_CASE_ID, b.GDPR_RQST_TYPE_CD,b.CNTRY_CODE,c.GDPR_RQST_TYPE_NAME
+FROM      MDM.GDPR_SRCH_RSLT a  JOIN MDM.GDPR_RQST b
+ON a.GDPR_CASE_ID = b.GDPR_CASE_ID
+AND a.PROC_IND='Y'
+AND b.GDPR_RQST_TYPE_CD IN ('DE')
+AND b.GDPR_RQST_STATUS_CD IN ('RP')
+JOIN MDM.GDPR_RQST_TYPE c
+ON b.GDPR_RQST_TYPE_CD =  c.GDPR_RQST_TYPE_CD
+JOIN MDM.DELETE_REGIS_RUN_LOG_HIST d
+ON a.MKTNG_PGM_NBR=D.MKTNG_PGM_NBR
+AND a.REGIS_PRSNA_ID = d.REGIS_PRSNA_ID
+AND   a.GDPR_CASE_ID NOT IN (SEL GDPR_CASE_ID FROM ICRM_STAGE_TBL.GDPR_BRODCAST_HIST WHERE GDPR_RQST_STATUS_CD IN ('Completed','No Match')
+AND SUPPLIER_QUAD='{$cur/ENV_NM/@Value}')
+UNION
+SEL DISTINCT D.MKTNG_PGM_NBR, F.LEGAL_ENT_NBR,D.DATA_SRCE_NBR,NULL REGIS_PRSNA_ID,D.REGIS_CNSMR_ID_VAL,d.GDPR_CASE_ID, d.GDPR_RQST_TYPE_CD,d.CNTRY_CODE,e.GDPR_RQST_TYPE_NAME
+FROM MDM.GDPR_RQST D JOIN MDM.GDPR_RQST_TYPE e
+ON d.GDPR_RQST_TYPE_CD =  e.GDPR_RQST_TYPE_CD
+JOIN MDM.MKTNG_PGM f
+ON f.MKTNG_PGM_NBR=D.MKTNG_PGM_NBR
+LEFT JOIN MDM.GDPR_SRCH_RSLT G
+ON D.GDPR_CASE_ID = G.GDPR_CASE_ID
+WHERE D.GDPR_RQST_TYPE_CD IN ('DE')
+AND D.GDPR_RQST_STATUS_CD IN ('NM')
+AND D.MKTNG_PGM_NBR IS NOT NULL
+AND D.DATA_SRCE_NBR IS NOT NULL
+AND D.REGIS_CNSMR_ID_VAL IS NOT NULL
+AND   d.GDPR_CASE_ID NOT IN (SEL GDPR_CASE_ID FROM ICRM_STAGE_TBL.GDPR_BRODCAST_HIST
+WHERE GDPR_RQST_STATUS_CD IN ('Completed','No Match')
+AND SUPPLIER_QUAD='{$cur/ENV_NM/@Value}'
+)
+</ROOT>
+              </TO_DOCVAR>
+              <EXECUTE_SQL_QUERY AssignToVar="resExtSysID" ReturnRowCount="yes" Value="{$getExtSysID/@text}"/>
+              <IF_TEST Test="count($resExtSysID/SQL_RESULT/test)>0">
+                <THEN>
+                  <SET Var="test" FromValue="true"/>
+                </THEN>
+                <ELSE>
+                  <FOR_EACH CurrentElement="currec" SelectList="$resExtSysID/SQL_RESULT">
+                    <EXECUTE_SQL_QUERY AssignToVar="respBroadcast" ReturnRowCount="yes" Value="INSERT INTO ICRM_STAGE_TBL.GDPR_BRODCAST_HIST (EXTRACT_ID,GDPR_CASE_ID,GDPR_CASE_RQST_TYPE,CNTRY_CODE,SUPPLIER_QUAD,SENT_TIMESTAMP,SYS_LAST_MODIFIED_DATE,LOAD_ID,GDPR_RQST_STATUS_CD) Values({$thisParam/LoadId/@Value},'{$currec/GDPR_CASE_ID/@Value}','{$currec/GDPR_RQST_TYPE_NAME/@Value}','{$currec/CNTRY_CODE/@Value}','{$cur/ENV_NM/@Value}',current_timestamp(0),current_timestamp(0),{$thisParam/LoadId/@Value},'In Progress'); "/>
+                    <TO_DOCVAR AssignToVar="tmp1">
+                      <ROOT>
+                        <REGIS_CNSMR_ID_VAL Value="{$currec/REGIS_CNSMR_ID_VAL/@Value}"/>
+                        <MKTNG_PGM_NBR Value="{$currec/MKTNG_PGM_NBR/@Value}"/>
+                        <SOURCE_ID Value="{$currec/SOURCE_ID/@Value}"/>
+                        <CNTRY_CODE Value="{$currec/CNTRY_CODE/@Value}"/>
+                        <REGIS_PRSNA_ID Value="{$currec/REGIS_PRSNA_ID/@Value}"/>
+                        <LEGAL_ENT_NBR Value="{$currec/LEGAL_ENT_NBR/@Value}"/>
+                      </ROOT>
+                    </TO_DOCVAR>
+                    <START_WORKFLOW ServiceName="BCM_MASTER" AssignToVar="startWfResponse" IsQbEnabled="false" QbIdentifier="WfProcessUI" HandleException="true">
+                      <TEMPLATE Value="OUTBOUND_EXT_SYS"/>
+                      <ADDITIONAL_PARAMETERS>
+                        <TO_XML SelectList="$tmp/*"/>
+                        <TO_XML SelectList="$tmp1/*"/>
+                      </ADDITIONAL_PARAMETERS>
+                    </START_WORKFLOW>
+                    <SET Var="rep" FromValue="{$startWfResponse/Response/@Value}"/>
+                    <SET Var="test1" FromValue="{contains($rep/RESPONSE/STATUS/@Value,'Completed')}"/>
+                    <SET Var="test2" FromValue="{contains($rep/RESPONSE/STATUS/@Value,'Failure')}"/>
+                    <SET Var="test3" FromValue="{contains($rep/RESPONSE/STATUS/@Value,'No Match')}"/>
+                    <!--<SET Var="test" FromValue="{$rep/RESPONSE/STATUS/@Value}='Completed'}"/>-->
+                    <!--<SET Var="RESSTATUS" FromValue="{substringAfter(substringBefore($rep,'&lt;/STATUS;&gt;'),'&lt;STATUS;&gt;')}"/>
+              <SET Var="RESSTATUS1" FromValue="{$RESSTATUS}"/>-->
+                    <IF_TEST Test="$test1 = 'true'">
+                      <THEN>
+                        <TO_DOCVAR AssignToVar="insertResultsQuery">
+                          <ROOT>
+UPDATE ICRM_STAGE_TBL.GDPR_BRODCAST_HIST SET GDPR_RQST_STATUS_CD = 'Completed' WHERE GDPR_RQST_STATUS_CD='In Progress' AND SUPPLIER_QUAD='{$cur/ENV_NM/@Value}' AND LOAD_ID= {$thisParam/LoadId/@Value}      
+</ROOT>
+                        </TO_DOCVAR>
+                        <APPEND_TO_XML DocVar="thisReturn">
+                          <ROOT>
+                            <Response Status="Success">
+                              <EXT_SYS_DELETION_PROCESS Status="Success"/>
+                              <GDPR_CASE_ID Value="{$currec/GDPR_CASE_ID/@Value}"/>
+                              <REGIS_CNSMR_ID_VAL Value="{$currec/REGIS_CNSMR_ID_VAL/@Value}"/>
+                              <Code Value="{$Code}"/>
+                              <Message Value="{$Message}"/>
+                            </Response>
+                          </ROOT>
+                        </APPEND_TO_XML>
+                      </THEN>
+                      <ELSE>
+                        <IF_TEST Test="$test2 = 'true'or $startWfResponse/@Status='Error'">
+                          <THEN>
+                            <TO_DOCVAR AssignToVar="insertResultsQuery">
+                              <ROOT>
+                      	
+                      
+UPDATE ICRM_STAGE_TBL.GDPR_BRODCAST_HIST SET GDPR_RQST_STATUS_CD = 'Failure' WHERE GDPR_RQST_STATUS_CD='In Progress' AND SUPPLIER_QUAD='{$cur/ENV_NM/@Value}' AND LOAD_ID= {$thisParam/LoadId/@Value}  
+
+</ROOT>
+                            </TO_DOCVAR>
+                            <APPEND_TO_XML DocVar="thisReturn">
+                              <ROOT>
+                                <Response Status="Failure">
+                                  <EXT_SYS_DELETION_PROCESS Status="Failed"/>
+                                  <GDPR_CASE_ID Value="{$currec/GDPR_CASE_ID/@Value}"/>
+                                  <REGIS_CNSMR_ID_VAL Value="{$currec/REGIS_CNSMR_ID_VAL/@Value}"/>
+                                  <Code Value="{$Code}"/>
+                                  <Message Value="{$Message}"/>
+                                  <ERROR Value="{$result/@Description}"/>
+                                </Response>
+                              </ROOT>
+                            </APPEND_TO_XML>
+                          </THEN>
+                          <ELSE>
+                            <IF_TEST Test="$test3 = 'true'">
+                              <THEN>
+                                <TO_DOCVAR AssignToVar="insertResultsQuery">
+                                  <ROOT>
+                      	
+UPDATE ICRM_STAGE_TBL.GDPR_BRODCAST_HIST SET GDPR_RQST_STATUS_CD = 'No Match' WHERE GDPR_RQST_STATUS_CD='In Progress' AND SUPPLIER_QUAD='{$cur/ENV_NM/@Value}' AND LOAD_ID= {$thisParam/LoadId/@Value}
+  
+</ROOT>
+                                </TO_DOCVAR>
+                                <APPEND_TO_XML DocVar="thisReturn">
+                                  <ROOT>
+                                    <Response Status="No Match">
+                                      <GDPR_CASE_ID Value="{$currec/GDPR_CASE_ID/@Value}"/>
+                                      <REGIS_CNSMR_ID_VAL Value="{$currec/REGIS_CNSMR_ID_VAL/@Value}"/>
+                                      <EXT_SYS_DELETION_PROCESS Status="No Match Found"/>
+                                      <Code Value="{$startWfResponse/Code/@Value}"/>
+                                      <Message Value="{$startWfResponse/Message/@Value}"/>
+                                      <ERROR Value="{$result/@Description}"/>
+                                    </Response>
+                                  </ROOT>
+                                </APPEND_TO_XML>
+                              </THEN>
+                            </IF_TEST>
+                          </ELSE>
+                        </IF_TEST>
+                      </ELSE>
+                    </IF_TEST>
+                    <TO_DOCVAR AssignToVar="a">
+                      <ROOT>
+                        <a Value="{$insertResultsQuery/@text}"/>
+                      </ROOT>
+                    </TO_DOCVAR>
+                    <EXECUTE_SQL_QUERY AssignToVar="result" ReturnRowCount="yes" Value="{$a/a/@Value}"/>
+                  </FOR_EACH>
+                </ELSE>
+              </IF_TEST>
+            </FOR_EACH>
+          </THEN>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

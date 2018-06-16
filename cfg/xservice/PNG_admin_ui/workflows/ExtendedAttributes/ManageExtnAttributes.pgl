@@ -1,0 +1,74 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" Id="ui_form221.pgl">
+  <ui:container id="Outer" showFavorite="true" scrollable="true">
+    <ui:step id="OuterStep" displayText="Manage Extended Attributes">
+      <ui:help displayPage="{$pages:ManageExtendedAttributesHelp}"/>
+      <ui:field-group columns="3">
+        <ui:image src="/bpi_check.gif" displayCondition="{string-length($root/AlertGreen/@Value) != 0}"/>
+        <ui:display-field value="{$root/AlertGreen/@Value}" displayCondition="{string-length($root/AlertGreen/@Value) != 0}" name="success" class="requiredIndicatorGreen"/>
+        <ui:display-field value="{$root/AlertRed/@Value}" displayCondition="{string-length($root/AlertRed/@Value) != 0}" name="error" class="requiredIndicator"/>
+        <ui:hidden-field id="EXPORT_TABLE_ALL_RECORDS" name="EXPORT_TABLE_ALL_RECORDS" value="yes"/>
+        <ui:hidden-field id="HierTable" name="HierTable" displayText="HierTable" value="{$root/HierTable/@Value}"/>
+      </ui:field-group>
+      <ui:container inner="true">
+        <ui:step id="Inner1">
+          <ui:field-group>
+            <ui:dropdown id="objects" name="objects" displayText="OBJECTS" codeSet="objects" selectOne="true">
+              <ui:option value="OBJECT_TABLE" id="OBJECT_TABLE"/>
+              <ui:option value="OBJECT_CODESET" id="OBJECT_CODESET"/>
+              <ui:option value="OBJECT_HIERARCHY" id="OBJECT_HIERARCHY"/>
+            </ui:dropdown>
+            <ui:dropdown id="DOCUMENT_NAME" name="DOCUMENT_NAME" displayText="Table Name" optionSrc="$root/OPTIONS/*" selectAll="true" title="ManageExtendedAttributesTableName" unFormat="true" parentCodeSet="objects"/>
+          </ui:field-group>
+          <ui:buttons>
+            <ui:button name="clear" id="clear" displayText="Clear" onClick="javascript:clearSearch();"/>
+            <ui:divider/>
+            <ui:button name="search" id="search" displayText="Search" emphasized="true"/>
+          </ui:buttons>
+        </ui:step>
+      </ui:container>
+      <ui:table id="ExtAttrSearchResult" displayText="Search Results" displayTextNoRecords="No Records Exist" rowId="ATTRIBUTE_NAME" collapsable="false" select="$root/QUERY_RESULTS" postRowIdAs="SELECTED_ID" startAtRow="$root/StartRowCount/@Value" selectable="{$root/selectableVar/@Value}" totalRowCount="$root/TotalRowCount/@Value" maxRows="$root/maxRows/@Value" configurable="true" exportable="true">
+        <ui:field-group>
+          <ui:hidden-field id="Id" name="Id"/>
+          <ui:display-field name="DOCUMENT_NAME" id="DOCUMENT_NAME" displayText="ManageExtendedAttributesTableName" sortable="true" title="ManageExtendedAttributesTableNameHover" unFormat="true"/>
+          <ui:display-field name="ATTRIBUTE_LOGICAL_NAME" id="ATTRIBUTE_LOGICAL_NAME" displayText="ManageExtendedAttributesLogicalName" sortable="true" title="ManageExtendedAttributesLogicalNameHover" unFormat="true"/>
+          <ui:display-field name="ATTRIBUTE_NAME" id="ATTRIBUTE_NAME" displayText="ManageExtendedAttributesPhysicalName" sortable="true" title="ManageExtendedAttributesPhysicalNameHover" unFormat="true"/>
+          <ui:display-field name="ATTRIBUTE_DATA_TYPE" id="ATTRIBUTE_DATA_TYPE" displayText="ManageExtendedAttributesDataType" sortable="true" title="ManageExtendedAttributesDataTypeHover"/>
+          <ui:display-field name="DESCRIPTION" id="DESCRIPTION" displayText="ManageExtendedAttributesDescription" title="ManageExtendedAttributesDescriptionHover" sortable="true" maxlength="60" unFormat="true"/>
+          <ui:display-field name="VALID_VALUE_TYPE" id="VALID_VALUE_TYPE" displayText="ManageExtendedAttributesValidValueType" sortable="true" title="ManageExtendedAttributesValidValueTypeHover" unFormat="true"/>
+          <ui:display-field name="CODE_SET_NAME" id="CODE_SET_NAME" displayText="ManageExtendedAttributesCodeSetName" sortable="true" title="ManageExtendedAttributesCodeSetNameHover" unFormat="true"/>
+          <ui:display-field name="REFERENCE_TABLE" id="REFERENCE_TABLE" displayText="ManageExtendedAttributesReferenceTableName" sortable="true" title="ManageExtendedAttributesReferenceTableNameHover" unFormat="true"/>
+          <ui:display-field name="REFERENCE_PROPERTY" id="REFERENCE_PROPERTY" displayText="ManageExtendedAttributesReferenceProperty" sortable="true" title="ManageExtendedAttributesReferencePropertyHover" unFormat="true"/>
+          <ui:display-field name="ATTRIBUTE_DEFAULT_VALUE" id="ATTRIBUTE_DEFAULT_VALUE" displayText="ManageExtendedAttributesDefaultValue" sortable="true" title="ManageExtendedAttributesDefaultValueHover" unFormat="true"/>
+          <ui:display-field name="ATTRIBUTE_IS_REQUIRED" id="ATTRIBUTE_IS_REQUIRED" displayText="ManageExtendedAttributesIsRequired" sortable="true" title="ManageExtendedAttributesIsRequiredHover"/>
+          <ui:display-field name="ATTRIBUTE_PRECISION" id="ATTRIBUTE_PRECISION" displayText="ManageExtendedAttributesPrecision" sortable="true" title="ManageExtendedAttributesPrecisionHover"/>
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button id="Delete" name="Delete" displayText="Delete" displayCondition="{$root/HierTable/@Value}"/>
+          <ui:button id="Create" name="Create" displayText="Create New"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+    document.getElementById('objects').onchange();
+    
+    function onLoad(){
+    
+    if(document.getElementById('HierTable').value == 'true')
+    {
+    document.getElementById('DOCUMENT_NAME').options[0] = null;
+      document.getElementById('DOCUMENT_NAME').length = 1;
+    }
+    
+    }
+    function clearSearch()
+    {
+			disableButtons();
+			document.form.DOCUMENT_NAME.selectedIndex=0;
+			document.form.BUTTON_ID.value = 'clear';
+			document.form.action = 'view.x2ps';
+			document.form.submit();
+			grayOut(true);
+    }
+  </ui:script>
+</ui:page-group>

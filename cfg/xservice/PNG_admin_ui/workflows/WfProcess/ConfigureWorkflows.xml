@@ -1,0 +1,687 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="7" ShowInBreadCrumbs="true" Version="1.0" Name="ConfigureWorkflows" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="ConfigureWorkflows">
+    <variable Name="RedirectTo" Type="string" Comment=""/>
+    <variable Name="ConfigAction" Type="string" Comment=""/>
+    <variable Name="Status" Type="string" Comment=""/>
+    <variable Name="StatusMsg" Type="string" Comment=""/>
+    <variable Name="SelectedProcessId" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start">
+      <actions>
+        <action>
+          <SET Var="RedirectTo" FromValue=""/>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Redirect"/>
+      </next_nodes>
+    </start>
+    <done Name="done">
+      <actions>
+        <action/>
+      </actions>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="Configure Workflows" Description="Configure Workflows" ShowInBreadCrumbs="SHOW" Template="ViewWorkflows.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="filterXml">
+            <FILTERS/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="orderByXml">
+            <ORDER_BY/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="workflowMaster">
+            <WORKFLOW_RESULTS/>
+          </TO_DOCVAR>
+          <IF_TEST Test="($thisParam/BUTTON_ID/@Value='SYS_REFRESH') or ($thisParam/BUTTON_ID/@Value='Back')">
+            <THEN>
+              <SET Var="Status" FromValue=""/>
+              <SET Var="StatusMsg" FromValue=""/>
+            </THEN>
+          </IF_TEST>
+          <SET Var="sortOrder" FromValue="{ifElse($thisParam/SORT_ORDER/@Value = null, 'Descending', $thisParam/SORT_ORDER/@Value)}"/>
+          <SET Var="sortBy" FromValue="{ifElse(($thisParam/SORT_BY/@Value = null) or($thisParam/SORT_BY/@Value = 'ID') , 'LAST_MODIFIED_BY', $thisParam/SORT_BY/@Value)}"/>
+          <SET Var="paginateStart" FromValue="{(ifElse($thisParam/START_COUNT/@Value = null,'0', $thisParam/START_COUNT/@Value))}"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SYS_RELOAD'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="sortByColumn">
+                <TEMP/>
+              </TO_DOCVAR>
+              <SET_NAME DocVar="sortByColumn" FromValue="{$sortBy}"/>
+              <SET Attribute="Sort" DocVar="sortByColumn" FromValue="{$sortOrder}"/>
+              <ADD_CHILDREN DocVar="orderByXml" FromDocVar="sortByColumn"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/innerAction/@Value = 'Filter' or $thisParam/BUTTON_ID/@Value='createFavourite' or $thisParam/BUTTON_ID/@Value='SYS_RELOAD'">
+            <THEN>
+              <SET DocVar="thisParam" Property="START_COUNT" FromValue="0"/>
+              <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filterXml">
+                <FILTER_Notification_Details/>
+                <FILTER_Process_Name/>
+                <FILTER_Category/>
+                <FILTER_Service/>
+                <FILTER_Process_Template/>
+                <FILTER_Log_Level/>
+                <FILTER_Is_Schedulable/>
+                <FILTER_Is_Favorite/>
+                <FILTER_Notification_Enabled/>
+                <FILTER_CREATED_BY/>
+                <FILTER_CREATION_DATE/>
+                <FILTER_LAST_MODIFIED_BY/>
+                <FILTER_LAST_MODIFIED_DATE/>
+                <FILTER_Process_Description/>
+                <FILTER_ENTITY_STATE/>
+              </FORM_SEARCH_FILTER>
+              <FOR_EACH SelectList="$filterXml/*/*" CurrentElement="currentSearchColumn">
+                <SET_NAME DocVar="currentSearchColumn" FromValue="{substringAfter($currentSearchColumn/name(),'FILTER_')}"/>
+                <IF_TEST Test="substringAfter($currentSearchColumn/name(),'FILTER_')='Service'">
+                  <THEN>
+                    <SET Attribute="Value" DocVar="currentSearchColumn" FromValue="{ifElse($currentSearchColumn/@Value='MASTER','BCM_MASTER',$currentSearchColumn/@Value)}"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+          <GET_DOC_SMART Name="Wf_Process" ServiceName="BCM_MASTER" AssignToVar="workflowSearch" DirtyRead="true" MaxRows="12" ReturnRowCount="yes" StartAtRow="{$paginateStart}">
+            <TO_XML SelectList="$filterXml/*/*"/>
+            <AND>
+              <Category Value="System" MatchBy="NOT_EQUAL"/>
+              <Category Value="Runtime" MatchBy="NOT_EQUAL"/>
+            </AND>
+            <ORDER_BY>
+              <TO_XML SelectList="$orderByXml/*"/>
+              <LAST_MODIFIED_DATE Sort="Descending"/>
+              <CREATION_DATE Sort="Descending"/>
+            </ORDER_BY>
+          </GET_DOC_SMART>
+          <ADD_CHILDREN DocVar="workflowMaster" FromSelectList="$workflowSearch/*"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="workflowMaster"/>
+          <IF_TEST Test="($thisParam/BUTTON_ID/@Value='Remove')">
+            <THEN>
+              <SET DocVar="pglFormInput" Property="status" FromValue="{$Status}"/>
+              <SET DocVar="pglFormInput" Property="status_msg" FromValue="{$StatusMsg}"/>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="page">
+            <ABC>
+              <StartRowCount Value="{$paginateStart}"/>
+              <TotalRowCount Value="{$workflowSearch/@TotalRowCount}"/>
+              <PaginateMaxRows Value="12"/>
+            </ABC>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$page/*"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Back'">
+            <THEN>
+              <SET Property="SELECTED_PROCESS_ID" FromValue="{$SelectedProcessId}" DocVar="thisParam"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="ConfigAction" FromValue="{$thisParam/BUTTON_ID/@Value}"/>
+          <SET Var="SelectedProcessId" FromValue="{$thisParam/SELECTED_PROCESS_ID/@Value}"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Remove'">
+            <THEN>
+              <REMOVE_DOCUMENT Name="Wf_Process" ServiceName="BCM_MASTER" AssignToVar="removeResp" HandleException="true">
+                <Process_Id Value="{$SelectedProcessId}"/>
+              </REMOVE_DOCUMENT>
+              <SET Var="Status" FromValue="{ifElse($removeResp/@Status='Success','Success','Failure')}"/>
+              <SET Var="StatusMsg" FromValue="{ifElse($Status='Success','WFL_REMOVED_SUCCESSFULLY',$removeResp/@Description)}"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Configure'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Save Configuration" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Remove'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Configure Workflows" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Add'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Save Configuration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ManageLogLevel'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Log Levels" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="Save Configuration" Description="Save Configuration" ShowInBreadCrumbs="SHOW" Template="ConfigureWorkflow.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <IF_TEST Test="($ConfigAction='Configure') or ($thisParam/BUTTON_ID/@Value='Save' and $Status='Success')">
+            <THEN>
+              <SET DocVar="pglFormInput" Property="action_type" FromValue="existing_wf"/>
+              <GET_DOC_SMART Name="Wf_Process" ServiceName="BCM_MASTER" AssignToVar="processDoc" DirtyRead="true">
+                <Process_Id Value="{$SelectedProcessId}"/>
+              </GET_DOC_SMART>
+              <TO_DOCVAR AssignToVar="configResult">
+                <CONFIGURE_PARAMS>
+                  <Service Value="{$processDoc/Wf_Process/Service/@Value}"/>
+                  <Workflow_Name Value="{$processDoc/Wf_Process/Process_Name/@Value}"/>
+                  <Business_Entity Value="{$processDoc/Wf_Process/Process_Template/@Value}"/>
+                  <Description Value="{$processDoc/Wf_Process/Process_Description/@Value}"/>
+                  <Category Value="{$processDoc/Wf_Process/Category/@Value}"/>
+                  <Log_Level Value="{$processDoc/Wf_Process/Log_Level/@Value}"/>
+                  <Is_Schedulable Value="{$processDoc/Wf_Process/Is_Schedulable/@Value}"/>
+                  <Is_Favorite Value="{$processDoc/Wf_Process/Is_Favorite/@Value}"/>
+                </CONFIGURE_PARAMS>
+              </TO_DOCVAR>
+              <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="configResult"/>
+              <SET Property="wfProcessId" FromValue="{$SelectedProcessId}" DocVar="pglFormInput"/>
+            </THEN>
+          </IF_TEST>
+          <!-- ServiceNames -->
+          <REQUEST Name="getServices" ServiceName="BCM_MASTER" AssignToVar="allSrvcs"/>
+          <XML_SORT SortKey="@Value" SortOrder="Ascending" DataType="string" AssignToVar="allSrvcs">
+            <TO_XML SelectList="$allSrvcs/*"/>
+          </XML_SORT>
+          <TO_DOCVAR AssignToVar="serviceNames">
+            <SERVICE_NAMES>
+              <TO_XML SelectList="$allSrvcs/*"/>
+            </SERVICE_NAMES>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="serviceNames"/>
+          <!-- get business entities -->
+          <REQUEST Name="getWfProcessTemplates" ServiceName="BCM_MASTER" UserId="{$userId}" AssignToVar="bussEntityList"/>
+          <TO_DOCVAR AssignToVar="workflowDomains">
+            <BUSINESS_ENTITY_LIST>
+              <TO_XML SelectList="$bussEntityList/*"/>
+            </BUSINESS_ENTITY_LIST>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="workflowDomains"/>
+          <SET Property="ConfigAction" FromValue="{$ConfigAction}" DocVar="pglFormInput"/>
+          <IF_TEST Test="($thisParam/BUTTON_ID/@Value='Save')">
+            <THEN>
+              <SET DocVar="pglFormInput" Property="status" FromValue="{$Status}"/>
+              <SET DocVar="pglFormInput" Property="status_msg" FromValue="{$StatusMsg}"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$Status='Failure'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="configResult">
+                <CONFIGURE_PARAMS>
+                  <Service Value="{$thisParam/SelectService/@Value}"/>
+                  <Workflow_Name Value="{$thisParam/SelectWorkflow/@Value}"/>
+                  <Business_Entity Value="{$thisParam/BusinessEntity/@Value}"/>
+                  <Description Value="{$thisParam/WFDesc/@Value}"/>
+                  <Category Value="{$thisParam/Category/@Value}"/>
+                  <Log_Level Value="{$thisParam/Log_Level/@Value}"/>
+                  <Is_Schedulable Value="{$thisParam/IsSchedulable/@Value}"/>
+                  <Is_Favorite Value="{$thisParam/IsFavorite/@Value}"/>
+                </CONFIGURE_PARAMS>
+              </TO_DOCVAR>
+              <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="configResult"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="actionType" FromValue="{$thisParam/BUTTON_ID/@Value}"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Save'">
+            <THEN>
+              <IF_TEST Test="$ConfigAction='Add'">
+                <THEN>
+                  <GET_DOCUMENT Name="Wf_Process" ServiceName="BCM_MASTER" AssignToVar="checkDupe" DirtyRead="true">
+                    <Service Value="{$thisParam/SelectService/@Value}"/>
+                    <Process_Name Value="{$thisParam/SelectWorkflow/@Value}"/>
+                  </GET_DOCUMENT>
+                  <IF_TEST Test="count($checkDupe/*)>0">
+                    <THEN>
+                      <SET Var="Status" FromValue="Failure"/>
+                      <SET Var="StatusMsg" FromValue="{ifElse($checkDupe/Wf_Process/Category/@Value='System','SELECTED_WKF_BELONGS_TO_SYS_CATEGORY_CANNOT_ADD_SYS_WKFS','WkF_SAME_NAME_AND_SERVICE_ALREADY_EXISTS')}"/>
+                    </THEN>
+                    <ELSE>
+                      <REQUEST Name="getWorkflowProcessId" ServiceName="BCM_MASTER" AssignToVar="wfProcessId"/>
+                      <ADD_DOC_SMART Name="Wf_Process" AssignToVar="saveResponse" ServiceName="BCM_MASTER" HandleException="true">
+                        <Process_Id Value="{$wfProcessId/WorkflowProcesId/@Value}"/>
+                        <Service Value="{$thisParam/SelectService/@Value}"/>
+                        <Process_Name Value="{$thisParam/SelectWorkflow/@Value}"/>
+                        <Process_Template Value="{$thisParam/BusinessEntity/@Value}"/>
+                        <Process_Description Value="{$thisParam/WFDesc/@Value}"/>
+                        <Category Value="{$thisParam/Category/@Value}"/>
+                        <Log_Level Value="{$thisParam/LogLevel/@Value}"/>
+                        <Is_Schedulable Value="{ifElse($thisParam/IsSchedulable/@Value='Yes','Yes','No')}"/>
+                        <Is_Favorite Value="{ifElse($thisParam/IsFavorite/@Value='Yes','Yes','No')}"/>
+                      </ADD_DOC_SMART>
+                      <SET Var="Status" FromValue="{ifElse($saveResponse/@Status='Success','Success','Failure')}"/>
+                      <SET Var="StatusMsg" FromValue="{ifElse($Status='Success','WKF_ADDED_SUCCESSFULLY',$saveResponse/@Description)}"/>
+                      <SET Var="SelectedProcessId" FromValue="{ifElse($Status='Success',$wfProcessId/WorkflowProcesId/@Value,$SelectedProcessId)}"/>
+                    </ELSE>
+                  </IF_TEST>
+                </THEN>
+                <ELSE>
+                  <MODIFY_DOC_SMART Name="Wf_Process" AssignToVar="saveResponse" ServiceName="BCM_MASTER" HandleException="true">
+                    <DOCUMENT_CONTEXT>
+                      <Process_Id Value="{$thisParam/wfProcessId/@Value}"/>
+                    </DOCUMENT_CONTEXT>
+                    <UPDATE_PROPERTIES>
+                      <Process_Template Value="{$thisParam/BusinessEntity/@Value}"/>
+                      <Process_Description Value="{$thisParam/WFDesc/@Value}"/>
+                      <Category Value="{$thisParam/Category/@Value}"/>
+                      <Log_Level Value="{$thisParam/LogLevel/@Value}"/>
+                      <Is_Schedulable Value="{ifElse($thisParam/IsSchedulable/@Value='Yes','Yes','No')}"/>
+                      <Is_Favorite Value="{ifElse($thisParam/IsFavorite/@Value='Yes','Yes','No')}"/>
+                    </UPDATE_PROPERTIES>
+                  </MODIFY_DOC_SMART>
+                  <SET Var="Status" FromValue="{ifElse($saveResponse/@Status='Success','Success','Failure')}"/>
+                  <SET Var="StatusMsg" FromValue="{ifElse($Status='Success','WKF_CONFIG_UPDATED_SUCCESSFULLY',$saveResponse/@Description)}"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Configure Workflows" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Save'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Save Configuration" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='WfParams'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Parameters" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <decision Name="Redirect">
+      <actions>
+        <action/>
+      </actions>
+      <condition Value="$RedirectTo = 'Add'"/>
+      <if_true>
+        <next_nodes>
+          <next_node Name="Save Configuration" Description=""/>
+        </next_nodes>
+      </if_true>
+      <if_false>
+        <next_nodes>
+          <next_node Name="Configure Workflows" Description=""/>
+        </next_nodes>
+      </if_false>
+    </decision>
+    <ui_form2 Name="Manage Log Levels" Description="Manage Log Levels" ShowInBreadCrumbs="SHOW" Template="ManageLogLevels.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <REQUEST Name="getWfProcessTemplates" ServiceName="BCM_MASTER" UserId="{$userId}" AssignToVar="bussEntityList"/>
+          <TO_DOCVAR AssignToVar="workflowDomains">
+            <BUSINESS_ENTITY_LIST>
+              <TO_XML SelectList="$bussEntityList/*"/>
+            </BUSINESS_ENTITY_LIST>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="workflowDomains"/>
+          <IF_TEST Test="($thisParam/BUTTON_ID/@Value='setBeoLogLevel') or ($thisParam/BUTTON_ID/@Value='setCatLogLevel')">
+            <THEN>
+              <TO_DOCVAR AssignToVar="configResult">
+                <CONFIGURE_PARAMS>
+                  <Business_Entity Value="{$thisParam/BusinessEntity/@Value}"/>
+                  <BeoLogLevel Value="{$thisParam/BeoLogLevel/@Value}"/>
+                  <Category Value="{$thisParam/Category/@Value}"/>
+                  <CatLogLevel Value="{$thisParam/CatLogLevel/@Value}"/>
+                </CONFIGURE_PARAMS>
+              </TO_DOCVAR>
+              <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="configResult"/>
+              <SET DocVar="pglFormInput" Property="status" FromValue="{$Status}"/>
+              <SET DocVar="pglFormInput" Property="status_msg" FromValue="{$StatusMsg}"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='setBeoLogLevel'">
+            <THEN>
+              <MODIFY_DOCUMENT Name="Wf_Process" ServiceName="BCM_MASTER" AssignToVar="logLevelResp">
+                <DOCUMENT_CONTEXT>
+                  <Process_Template Value="{$thisParam/BusinessEntity/@Value}"/>
+                </DOCUMENT_CONTEXT>
+                <UPDATE_PROPERTIES>
+                  <Log_Level Value="{$thisParam/BeoLogLevel/@Value}"/>
+                </UPDATE_PROPERTIES>
+              </MODIFY_DOCUMENT>
+              <SET Var="Status" FromValue="{ifElse($logLevelResp/@Status='Success','Success','Failure')}"/>
+              <SET Var="logLevel" FromValue="{ifElse($thisParam/BeoLogLevel/@Value='None','Disabled',$thisParam/BeoLogLevel/@Value)}"/>
+              <SET Var="StatusMsg" FromValue="{ifElse($Status='Success',concat('Selected business entity log level updated successfully to ',$logLevel,'.'),$logLevelResp/@Description)}"/>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$thisParam/BUTTON_ID/@Value='setCatLogLevel'">
+                <THEN>
+                  <MODIFY_DOCUMENT Name="Wf_Process" ServiceName="BCM_MASTER" AssignToVar="logLevelResp">
+                    <DOCUMENT_CONTEXT>
+                      <Category Value="{$thisParam/Category/@Value}"/>
+                    </DOCUMENT_CONTEXT>
+                    <UPDATE_PROPERTIES>
+                      <Log_Level Value="{$thisParam/CatLogLevel/@Value}"/>
+                    </UPDATE_PROPERTIES>
+                  </MODIFY_DOCUMENT>
+                  <SET Var="Status" FromValue="{ifElse($logLevelResp/@Status='Success','Success','Failure')}"/>
+                  <SET Var="logLevel" FromValue="{ifElse($thisParam/CatLogLevel/@Value='None','Disabled',$thisParam/CatLogLevel/@Value)}"/>
+                  <SET Var="StatusMsg" FromValue="{ifElse($Status='Success',concat('Selected workflow category log level updated successfully to ',$logLevel,'.'),$logLevelResp/@Description)}"/>
+                </THEN>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Configure Workflows" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Save'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='setBeoLogLevel'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Log Levels" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='setCatLogLevel'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Log Levels" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="Manage Parameters" Description="Manage workflow parameters" ShowInBreadCrumbs="SHOW" Template="WorkflowParameters.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="orderByXml">
+            <ORDER_BY/>
+          </TO_DOCVAR>
+          <SET DocVar="pglFormInput" Property="Navigated_From" FromValue="{$NavigateParamsFrom}"/>
+          <SET Var="sortOrder" FromValue="{ifElse($thisParam/SORT_ORDER/@Value = null, 'Descending', $thisParam/SORT_ORDER/@Value)}"/>
+          <SET Var="sortBy" FromValue="{ifElse(($thisParam/SORT_BY/@Value = null) or($thisParam/SORT_BY/@Value = 'ID') , 'LAST_MODIFIED_BY', $thisParam/SORT_BY/@Value)}"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SYS_RELOAD'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="sortByColumn">
+                <TEMP/>
+              </TO_DOCVAR>
+              <SET_NAME DocVar="sortByColumn" FromValue="{$sortBy}"/>
+              <SET Attribute="Sort" DocVar="sortByColumn" FromValue="{$sortOrder}"/>
+              <ADD_CHILDREN DocVar="orderByXml" FromDocVar="sortByColumn"/>
+            </THEN>
+          </IF_TEST>
+          <REQUEST Name="getWfProcessParams" AssignToVar="wfParams" ServiceName="BCM_MASTER">
+            <ProcessId Value="{$SelectedProcessId}"/>
+            <TO_XML SelectList="$orderByXml"/>
+          </REQUEST>
+          <TO_DOCVAR AssignToVar="allParameters">
+            <PARAMETERS>
+              <TO_XML SelectList="$wfParams/RESPONSE/*"/>
+            </PARAMETERS>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="allParameters"/>
+          <SET DocVar="pglFormInput" Property="SaveBtn_DisplayText" FromValue="Add Parameter"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='EditParam'">
+            <THEN>
+              <GET_DOC_SMART Name="Wf_Params" ServiceName="BCM_MASTER" DirtyRead="true" AssignToVar="paramDetails">
+                <Process_Id Value="{$SelectedProcessId}"/>
+                <Node_Id Value="0"/>
+                <Param_Name Value="{$thisParam/SELECTED_PARAM_NAME/@Value}"/>
+                <Param_Type Value="W"/>
+              </GET_DOC_SMART>
+              <TO_DOCVAR AssignToVar="wfParamDetails">
+                <EDIT_PARAMETERS>
+                  <TO_XML SelectList="$paramDetails/Wf_Params/*"/>
+                </EDIT_PARAMETERS>
+              </TO_DOCVAR>
+              <IF_TEST Test="$wfParamDetails/Param_Value_Type/@Value='datetime'">
+                <THEN>
+                  <SET Property="Param_Value_dt" DocVar="wfParamDetails" FromValue="{$wfParamDetails/Param_Value/@Value}"/>
+                </THEN>
+              </IF_TEST>
+              <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="wfParamDetails"/>
+              <SET DocVar="pglFormInput" Property="SaveBtn_DisplayText" FromValue="Update Parameter"/>
+              <SET DocVar="pglFormInput" Property="Param_Action" FromValue="Edit"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="($thisParam/BUTTON_ID/@Value='SYS_REFRESH') or ($thisParam/BUTTON_ID/@Value='Back') or ($thisParam/BUTTON_ID/@Value = 'DefineParams') or ($thisParam/BUTTON_ID/@Value='EditParam') or ($thisParam/BUTTON_ID/@Value='SYS_RELOAD')">
+            <THEN>
+              <SET Var="Status" FromValue=""/>
+              <SET Var="StatusMsg" FromValue=""/>
+            </THEN>
+          </IF_TEST>
+          <SET DocVar="pglFormInput" Property="status" FromValue="{$Status}"/>
+          <SET DocVar="pglFormInput" Property="status_msg" FromValue="{$StatusMsg}"/>
+          <SET DocVar="pglFormInput" Property="Selected_Process_Id" FromValue="{$SelectedProcessId}"/>
+          <!-- add process Details -->
+          <GET_DOCUMENT Name="Wf_Process" AssignToVar="selectedProcessDetails" DirtyRead="true" ServiceName="BCM_MASTER">
+            <Process_Id Value="{$SelectedProcessId}"/>
+            <SELECT>
+              <Process_Name/>
+              <Process_Template/>
+              <Process_Description/>
+            </SELECT>
+          </GET_DOCUMENT>
+          <TO_DOCVAR AssignToVar="processDispDetails">
+            <PROCESS_DISP_DETAILS>
+              <TO_XML SelectList="$selectedProcessDetails/Wf_Process/*"/>
+            </PROCESS_DISP_DETAILS>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromDocVar="processDispDetails"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction ='SaveParam'">
+            <THEN>
+              <SET Var="paramValue" FromValue="{ifElse($thisParam/ParamType/@Value='datetime',$thisParam/ParamValueDt/@Value,$thisParam/ParamValue/@Value)}"/>
+              <IF_TEST Test="$thisParam/paramAction/@Value ='Edit'">
+                <THEN>
+                  <MODIFY_DOC_SMART Name="Wf_Params" AssignToVar="response" ServiceName="BCM_MASTER">
+                    <DOCUMENT_CONTEXT>
+                      <Process_Id Value="{$SelectedProcessId}"/>
+                      <Param_Type Value="W"/>
+                      <Node_Id Value="0"/>
+                      <Param_Name Value="{$thisParam/ParamName/@Value}"/>
+                    </DOCUMENT_CONTEXT>
+                    <UPDATE_PROPERTIES>
+                      <Param_Value Value="{$paramValue}"/>
+                      <Display_Name Value="{$thisParam/ParamDispName/@Value}"/>
+                      <Param_Desc Value="{$thisParam/ParamDesc/@Value}"/>
+                      <Is_Required Value="{ifElse($thisParam/Required/@Value='Y','Y','N')}"/>
+                      <Is_Editable Value="{ifElse($thisParam/Editable/@Value='Y','Y','N')}"/>
+                      <Is_Hidden Value="{ifElse($thisParam/Hidden/@Value='Y','Y','N')}"/>
+                      <Param_Value_Type Value="{$thisParam/ParamType/@Value}"/>
+                    </UPDATE_PROPERTIES>
+                  </MODIFY_DOC_SMART>
+                  <SET Var="Status" FromValue="{$response/@Status}"/>
+                  <SET Var="StatusMsg" FromValue="{ifElse($Status='Success','WORKFLOW_PARAMETER_UPDATED_SUCCESSFULLY','WORKFLOW_PARAMETER_NOT_UPDATED_SUCCESSFULLY')}"/>
+                </THEN>
+                <ELSE>
+                  <REQUEST Name="saveWfProcessParam" AssignToVar="response" ServiceName="BCM_MASTER">
+                    <ProcessId Value="{$SelectedProcessId}"/>
+                    <NodeId Value="0"/>
+                    <ParamType Value="W"/>
+                    <ParamName Value="{$thisParam/ParamName/@Value}"/>
+                    <Display_Name Value="{$thisParam/ParamDispName/@Value}"/>
+                    <Description Value="{$thisParam/ParamDesc/@Value}"/>
+                    <ParamValue Value="{$paramValue}"/>
+                    <IsRequired Value="{ifElse($thisParam/Required/@Value='Y','Y','N')}"/>
+                    <IsEditable Value="{ifElse($thisParam/Editable/@Value='Y','Y','N')}"/>
+                    <IsHidden Value="{ifElse($thisParam/Hidden/@Value='Y','Y','N')}"/>
+                    <ParamValueType Value="{$thisParam/ParamType/@Value}"/>
+                  </REQUEST>
+                  <SET Var="Status" FromValue="{$response/@Status}"/>
+                  <SET Var="StatusMsg" FromValue="{ifElse($Status='Success','WORKFLOW_PARAMETER_SAVED_SUCCESSFULLY','WORKFLOW_PARAMETER_NOT_SAVED_CHECK_LOGS')}"/>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction ='DeleteParam'">
+            <THEN>
+              <REMOVE_DOCUMENT Name="Wf_Params" ServiceName="BCM_MASTER" AssignToVar="delResponse" HandleException="true">
+                <Process_Id Value="{$SelectedProcessId}"/>
+                <Node_Id Value="0"/>
+                <Param_Name Value="{$thisParam/SELECTED_PARAM_NAME/@Value}"/>
+                <Param_Type Value="W"/>
+              </REMOVE_DOCUMENT>
+              <SET Var="Status" FromValue="{$delResponse/@Status}"/>
+              <SET Var="StatusMsg" FromValue="{ifElse($Status='Success','WORKFLOW_PARAMETER_DELETED_SUCCESSFULLY','WORKFLOW_PARAMETER_NOT_DELETED_SUCCESSFULLY')}"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Save Configuration" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='SaveParam'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Parameters" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='EditParam'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Parameters" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='DeleteParam'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Parameters" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <start font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="224,247" size="744,599">
+        <iconProps iconfile="z1start.gif"/>
+      </start>
+      <done font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="816,247" size="744,599">
+        <iconProps iconfile="z1end.gif"/>
+      </done>
+      <mgcnode Name="Configure Workflows" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="574,247" size="1920,1050">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <mgcnode Name="Save Configuration" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="574,121" size="1920,1050">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <Redirect font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="328,247" size="744,679">
+        <iconProps iconfile="z1decision.gif"/>
+      </Redirect>
+      <mgcnode Name="Manage Log Levels" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="574,396" size="1920,1050">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <mgcnode Name="Manage Parameters" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="806,121" size="1920,1050">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+    </mgcnodes>
+    <mgcconnectors>
+      <start>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="269,269" endpoint="328,269" ctrlRect1="310,267,4,4" ctrlRect2="281,267,4,4"/>
+      </start>
+      <mgcnode Name="Configure Workflows">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="596,247" endpoint="596,166" ctrlRect1="594,185,4,4" ctrlRect2="594,225,4,4" textRect="589,203,14,8">
+          <textProps text="Configure"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="619,269" endpoint="619,269" ctrlRect1="680,246,4,4" ctrlRect2="615,349,4,4" textRect="644,295,11,8" ctrlRect2Dirty="true" ctrlRect1Dirty="true">
+          <textProps text="Remove"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="596,247" endpoint="596,166" ctrlRect1="560,232,4,4" ctrlRect2="560,184,4,4" ctrlRect2Dirty="true" ctrlRect1Dirty="true" textRect="558,206,8,8">
+          <textProps text="Add"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="596,292" endpoint="596,396" ctrlRect1="594,368,4,4" ctrlRect2="594,316,4,4" textRect="585,340,22,8">
+          <textProps text="Manage Log Levels"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="619,269" endpoint="816,269" ctrlRect1="764,267,4,4" ctrlRect2="666,267,4,4"/>
+      </mgcnode>
+      <mgcnode Name="Save Configuration">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="596,166" endpoint="596,247" ctrlRect1="628,207,4,4" ctrlRect2="623,230,4,4" ctrlRect1Dirty="true" ctrlRect2Dirty="true" textRect="623,216,9,8">
+          <textProps text="Back"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="596,121" endpoint="574,143" ctrlRect1="570,58,4,4" ctrlRect2="512,126,4,4" textRect="539,90,9,8" ctrlRect2Dirty="true" ctrlRect1Dirty="true">
+          <textProps text="Save"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="619,143" endpoint="806,143" ctrlRect1="756,141,4,4" ctrlRect2="663,141,4,4" textRect="705,139,13,8">
+          <textProps text="WfParams"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="619,143" endpoint="816,269" ctrlRect1="784,127,4,4" ctrlRect2="666,267,4,4" ctrlRect1Dirty="true"/>
+      </mgcnode>
+      <Redirect>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,0" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="373,269" endpoint="574,143" ctrlRect1="521,267,4,4" ctrlRect2="399,114,4,4" textRect="454,188,17,8" ctrlRect2Dirty="true">
+          <textProps text="Add Workflow"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="178,0,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="373,269" endpoint="574,269" ctrlRect1="521,267,4,4" ctrlRect2="421,267,4,4" textRect="464,265,19,8">
+          <textProps text="View Workflows"/>
+        </nextNodeView>
+      </Redirect>
+      <mgcnode Name="Manage Log Levels">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="596,396" endpoint="596,292" ctrlRect1="594,316,4,4" ctrlRect2="545,329,4,4" textRect="567,320,9,8" ctrlRect2Dirty="true">
+          <textProps text="Back"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="619,418" endpoint="619,418" ctrlRect1="692,416,4,4" ctrlRect2="654,366,4,4" ctrlRect2Dirty="true" textRect="666,389,18,8">
+          <textProps text="Beo Log Level"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="619,418" endpoint="619,418" ctrlRect1="692,416,4,4" ctrlRect2="692,416,4,4" textRect="683,414,23,8">
+          <textProps text="Category Log Level"/>
+        </nextNodeView>
+      </mgcnode>
+      <mgcnode Name="Manage Parameters">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="806,143" endpoint="596,121" ctrlRect1="647,141,4,4" ctrlRect2="663,48,4,4" textRect="653,92,9,8" ctrlRect2Dirty="true">
+          <textProps text="Back"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="828,121" endpoint="828,121" ctrlRect1="826,44,4,4" ctrlRect2="783,97,4,4" ctrlRect2Dirty="true" textRect="799,68,14,8">
+          <textProps text="SaveParam"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="828,121" endpoint="828,121" ctrlRect1="826,44,4,4" ctrlRect2="878,83,4,4" ctrlRect2Dirty="true" textRect="847,61,14,8">
+          <textProps text="EditParam"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="851,143" endpoint="851,143" ctrlRect1="924,141,4,4" ctrlRect2="909,89,4,4" ctrlRect2Dirty="true" textRect="910,113,16,8">
+          <textProps text="DeleteParam"/>
+        </nextNodeView>
+      </mgcnode>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions/>
+    <post_actions/>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

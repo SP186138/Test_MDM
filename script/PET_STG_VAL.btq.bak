@@ -1,0 +1,79 @@
+/***********************************************************************************************************
+SCRIPT:               PET_STG_VAL.BTEQ 
+DESCRIPTION:          This script validates the records received from ETL Staging.
+DEPENDENCY:           
+INPUT:                ETL Staging
+OUTPUT:               MST Staging
+ERRORS:
+SPECIAL INSTRUCTIONS:
+
+CHANGE LOG:
+VERSION              DATE                 AUTHOR                          CHANGES
+1.00                 01/21/2011           TERADATA                        INITIAL VERSION
+2.00                 08/22/2011           TERADATA                        Change OF Failure-BadFile
+3.00                 10/31/2011           TERADATA                        Removal of Deletes as  part of ||elism
+4.00                 03/26/2012		  TERADATA                        Made change in insert to LOAD_INFO to
+                                                                          manipulate LA data
+***********************************************************************************************************/
+
+.logon $TDPID/$TDUSER,$TDPWD
+ 
+.SET ERROROUT STDOUT;
+.SET SESSION CHARSET 'UTF8';
+.SET ERRORLEVEL 3624 SEVERITY 0
+.SET ERRORLEVEL 3803 SEVERITY 0
+
+
+INSERT INTO VALIDATION_ERR_$BTCH (
+MKTNG_PGM_NBR
+,REGIS_CNSMR_ID_VAL
+, LOAD_ID
+, SYS_ERR_CODE
+,RECORD_SOURCE)
+SELECT
+DER1.MKTNG_PGM_NBR,
+DER1.REGIS_CNSMR_ID_VAL,
+DER1.LOAD_ID,
+'DUPLICATE PET INFORMATION ON SOURCE FILE' ,
+'PET_STG'
+FROM
+(
+SELECT 
+MKTNG_PGM_NBR,
+REGIS_CNSMR_ID_VAL,
+PET_SEQ_NBR,
+STG.LOAD_ID,
+RECORD_IND
+FROM
+$ETL_DB.PET_STG STG
+WHERE LOAD_ID in (select load_id from VALIDATION_$BTCH)
+GROUP BY 1,2,3,4,5
+HAVING COUNT(*) >1
+)DER1;
+
+.IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE
+
+INSERT INTO VALIDATION_ERR_$BTCH 
+SELECT
+DER5.MKTNG_PGM_NBR,
+DER5.REGIS_CNSMR_ID_VAL,
+DER5.LOAD_ID,
+'Vulgar Name found in registration data' SYS_ERR_CODE,
+'PRSNA_STG'
+FROM
+(
+SEL STG.MKTNG_PGM_NBR,STG.REGIS_CNSMR_ID_VAL,STG.LOAD_ID
+FROM 
+$ETL_DB.PET_STG STG
+JOIN
+ VALIDATION_$BTCH B
+ON stg.LOAD_ID = B.LOAD_ID
+WHERE PET_NAME IN (SEL VULGAR_NAME FROM VULGAR_NAME_LIST)
+AND STG.MKTNG_PGM_NBR IN(SEL MKTNG_PGM_NBR FROM MKTNG_PGM WHERE LEGAL_ENT_NBR IN(15))
+) DER5
+;
+
+.IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE
+
+.EXIT
+

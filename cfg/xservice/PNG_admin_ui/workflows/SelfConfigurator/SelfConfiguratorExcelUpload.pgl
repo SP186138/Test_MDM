@@ -1,0 +1,59 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" version="3" name="studio.templates.simple_form" source="studio.controller:load">
+  <ui:container id="topContainer">
+    <ui:step displayText="Upload File" id="selfConfigExport">
+      <ui:help displayPage="../../bcm/help/Model_Builder_ExcelUpload_help.htm"/>
+      <ui:field-group columns="3">
+        <ui:image src="/bpi_check.gif" id="AlertGreenIconAjax" displayCondition="{string-length($root/ABC/AlertGreen/@Value)!= 0}"/>
+        <ui:image src="/cancel.gif" id="AlertRedIconAjax" displayCondition="{string-length($root/ABC/AlertRed/@Value) != 0}"/>
+        <ui:display-field value="{$root/ABC/AlertGreen/@Value}" displayCondition="{string-length($root/ABC/AlertGreen/@Value) != 0}" id="success" name="success" class="requiredIndicatorGreen" style="color:green;"/>
+        <ui:display-field value="{$root/ABC/AlertRed/@Value}" displayCondition="{string-length($root/ABC/AlertRed/@Value) != 0}" id="error" name="error" class="requiredIndicator" style="color:red;"/>
+      </ui:field-group>
+      <ui:field-group columns="3">
+        <ui:entry-field id="filePath" name="filePath" displayText="Choose file to be uploaded" dataType="File" required="true"/>
+        <ui:hidden-field id="fileType" name="fileType" value="xlsx"/>
+        <ui:hidden-field id="templateType" name="templateType"  defaultValue="MODEL" value="{$root/TemplateName/@Value}"/>
+      </ui:field-group>
+      <ui:buttons>
+        <ui:button id="Back" name="Back" displayText="Back"  onClick="javascript:onBackClick();"/>
+        <ui:button id="UPLOAD" name="UPLOAD" displayText="Upload"  onClick="javascript:uploadFile();"/>
+      </ui:buttons>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+    
+
+function uploadFile() 	{
+    
+document.getElementsByName('fil_filePath')[0].id=document.getElementsByName('fil_filePath')[0].name;
+if (document.getElementById('fil_filePath').value != null &amp; trimString(document.getElementById('fil_filePath').value) != '')
+{
+var fileType = escape(document.getElementById('fil_filePath').value).substring(escape(document.getElementById('fil_filePath').value).lastIndexOf('.')+1);
+if(fileType == 'xls' || fileType == 'xlsx')
+{
+document.form.BUTTON_ID.value = 'UPLOAD';
+document.form.submit();
+grayOut(true);
+}
+else
+{
+core_alert_jquery('Invalid file.The file type can be either xls or xlsx.');
+}
+}
+else
+{
+core_alert_jquery('Please select a document to Upload.');
+}
+
+}
+
+function onBackClick(){
+    if(document.getElementById('templateType').value != 'MODEL'){
+		document.form.BUTTON_ID.value = 'templateBack';
+    }else{
+		document.form.BUTTON_ID.value = 'Back';
+    }
+document.form.submit();
+}
+
+</ui:script>
+</ui:page-group>

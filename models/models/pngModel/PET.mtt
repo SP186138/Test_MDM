@@ -1,0 +1,80 @@
+<document>
+  <documentation>Information about an animal owned by a consumer that is provided as part of that consumer's PERSONA.</documentation>
+  <properties>
+    <property Name="PET_NAME" Required="false" CharSet="UNICODE">
+      <documentation>The name of the PET.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="PET_NAME" />
+    </property>
+    <property Name="REGIS_PRSNA_ID" Required="true">
+      <documentation>The DW surrogate key that was assigned to uniquely distinguish the PERSONA from all others.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="REGIS_PRSNA_ID" />
+    </property>
+    <property Name="PET_SEQ_NBR" Required="true">
+      <documentation>The number that P&amp;G assigned to uniquely distinguish the PET from all others in the same PERSONA.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="PET_SEQ_NBR" />
+    </property>
+    <property Name="PET_BRTH_DATE">
+      <documentation>The date when the PET was born.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="PET_BRTH_DATE" />
+    </property>
+    <property Name="PET_AGE_NBR">
+      <documentation>The number of years since the PET was born, as entered by the consumer represented by the PERSONA.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="PET_AGE_NBR" />
+    </property>
+    <property Name="PET_GENDR_IND">
+      <documentation>Indicates whether the PET is male or female.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="PET_GENDR_IND" />
+    </property>
+    <property Name="MKTNG_PGM_NBR" Required="true">
+      <documentation>The number that P&amp;G assigned to uniquely distinguish the MARKETING PROGRAM from all others.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="MKTNG_PGM_NBR" />
+    </property>
+    <property Name="DECEASED_IND">
+      <documentation>Flag field to identify if this dependent/pet is deceased.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="DECEASED_IND" />
+    </property>
+    <property Name="LEGAL_ENT_NBR" Required="false">
+      <documentation>The number that P&amp;G assigned to uniquely distinguish the LEGAL ENTITY from all others.</documentation>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="LEGAL_ENT_NBR" />
+    </property>
+    <property Name="PET_TYPE_CODE" Active="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="PET_TYPE_CODE" />
+    </property>
+    <property Name="PET_BREED_CODE" Active="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="PET_BREED_CODE" />
+    </property>
+    <property Name="PREF_PET_IND" PhysicalName="PREF_PET_IND" Active="true" Type="Char_1">
+      <extends />
+    </property>
+  </properties>
+  <keys>
+    <key Active="true" Name="PET_IX" PhysicalName="PET_IX" Kind="INDEX">
+      <property Name="LEGAL_ENT_NBR" />
+      <property Name="MKTNG_PGM_NBR" />
+      <property Name="REGIS_PRSNA_ID" />
+    </key>
+    <key Active="true" Name="PET_UPI" PhysicalName="PET_UPI" Kind="PRIMARY">
+      <property Name="MKTNG_PGM_NBR" />
+      <property Name="REGIS_PRSNA_ID" />
+    </key>
+  </keys>
+  <links>
+    <link Active="true" Name="PET_FK" PhysicalName="PET_FK">
+      <keymap FromKey="PET_IX" ToPackage="models/pngModel" ToModelUnit="REGIS_PRSNA.mtt" ReverseLink="true" ReverseLinkName="PET_RL">
+        <mapping FromProperty="LEGAL_ENT_NBR" ToProperty="LEGAL_ENT_NBR" />
+        <mapping FromProperty="MKTNG_PGM_NBR" ToProperty="MKTNG_PGM_NBR" />
+        <mapping FromProperty="REGIS_PRSNA_ID" ToProperty="REGIS_PRSNA_ID" />
+      </keymap>
+    </link>
+  </links>
+  <docFacets>
+    <mdmWebServiceFacet />
+    <mdmAuthorizationFacet />
+    <mdmSysTableMapFacet TableClass="MASTER" Source="MASTER" MasterTable="PET" />
+    <miscFacet PhysicalName="PET" Active="true" />
+    <mdmConfigFacet SchemaGen="true" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql />
+</document>
+

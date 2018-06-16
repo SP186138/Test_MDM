@@ -1,0 +1,60 @@
+<document>
+  <properties>
+    <property Name="AGNCY_INTRFC_NBR" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="AGNCY_INTRFC_NBR" />
+    </property>
+    <property Name="DATA_CLCTN_TYPE_CD" PhysicalName="DATA_CLCTN_TYPE_CD" CharSet="LATIN">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="DATA_CLCTN_TYPE_CD" />
+    </property>
+    <property Name="BRAND_SPLR_LST" PhysicalName="BRAND_SPLR_LST" CharSet="LATIN">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="BRAND_SPLR_LST" />
+    </property>
+    <property Name="INTRFC_NBR" PhysicalName="INTRFC_NBR">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="INTRFC_NBR" />
+    </property>
+    <property Name="AGNCY_NBR" PhysicalName="AGNCY_NBR">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="AGNCY_NBR" />
+    </property>
+    <property Name="PII_DATA_IND" PhysicalName="PII_DATA_IND" Required="true" CharSet="LATIN">
+      <default>N</default>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="PII_DATA_IND" />
+    </property>
+    <property Name="FREQ_NBR_DAYS" PhysicalName="FREQ_NBR_DAYS">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="FREQ_NBR_DAYS" />
+    </property>
+    <property Name="ERR_THRSHLD_PCT" PhysicalName="ERR_THRSHLD_PCT" Required="false">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="ERR_THRSHLD_PCT" />
+    </property>
+  </properties>
+  <keys>
+    <key Active="true" Name="AGNCY_INTRFC_UPI" PhysicalName="AGNCY_INTRFC_UPI" Kind="PRIMARY">
+      <property Name="AGNCY_INTRFC_NBR" />
+    </key>
+  </keys>
+  <links>
+    <link Active="true" Name="Link1" PhysicalName="Agncy_nbr_link">
+      <keymap ToPackage="models/pngModel" ToModelUnit="AGNCY.mtt" ToKey="AGNCY_UPI" ReverseLink="true" ReverseLinkName="Agncy_nbr" DeleteRule="RESTRICT">
+        <mapping FromProperty="AGNCY_NBR" ToProperty="AGNCY_NBR" />
+      </keymap>
+    </link>
+    <link Active="true" Name="Link2" PhysicalName="Interface_NBR_lnik">
+      <keymap ToPackage="models/pngModel" ToModelUnit="INTRFC.mtt" ToKey="INTRFC_UPI" ReverseLink="true" ReverseLinkName="Interface_number" DeleteRule="RESTRICT">
+        <mapping FromProperty="INTRFC_NBR" ToProperty="INTRFC_NBR" />
+      </keymap>
+    </link>
+    <link Active="true" Name="Link3" PhysicalName="DATA_CLCTN_TYPE_LINK">
+      <keymap ToPackage="models/pngModel" ToModelUnit="DATA_CLCTN_TYPE.mtt" ToKey="DATA_CLCTN_TYPE_UPI" ReverseLink="true" ReverseLinkName="DATA_TYPE" DeleteRule="RESTRICT">
+        <mapping FromProperty="DATA_CLCTN_TYPE_CD" ToProperty="DATA_CLCTN_TYPE_CD" />
+      </keymap>
+    </link>
+  </links>
+  <docFacets>
+    <mdmWebServiceFacet />
+    <mdmSysTableMapFacet TableClass="MASTER" Source="MASTER" MasterTable="AGNCY_INTRFC" />
+    <miscFacet PhysicalName="AGNCY_INTRFC" Active="true" SurrogateKey="true" />
+    <mdmConfigFacet SchemaGen="true" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql />
+</document>
+

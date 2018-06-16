@@ -1,0 +1,2413 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <DEFINE_METHOD Name="recordApprovalHistory">
+    <RULE>
+      <ACTION>
+        <REQUEST Name="getUser" ServiceName="USER_SECURITY" AssignToVar="currUser">
+          <ID Value="{$userId}"/>
+        </REQUEST>
+        <ADD_DOCUMENT Name="ApprovalHistory" AssignToVar="ApprovalHistory" ServiceName="APPROVAL">
+          <DateCreated Value="{date()}"/>
+          <InstanceDocID Value="{$thisParam/context_alertobject/root/document_Id/@Value}"/>
+          <InstanceType Value="{$thisParam/context_alertobject/root/messageType/@Value}"/>
+          <ApproverID Value="{$currUser/USER_PROFILE/LOGIN_NAME/@Value}"/>
+          <OriginalApproverID Value="{$thisParam/ORIG_APPROVER_ID/@Value}"/>
+          <TokenID Value="{$thisParam/TokenId/@Value}"/>
+          <PreviousTokenID Value="{$thisParam/PREV_TOKEN_ID/@Value}"/>
+          <NodeType Value="{$thisParam/context_nodetype/@Value}"/>
+          <NodeName Value="{$thisParam/context_nodename/@Value}"/>
+          <Status Value="{$thisParam/APPROVER_ACTION/@Value}"/>
+          <IsGroup Value="{$thisParam/context_isgroupapproval/@Value}"/>
+          <ConsultAllowed Value="{$thisParam/context_consultallowed/@Value}"/>
+          <ForwardAllowed Value="{$thisParam/context_forwardallowed/@Value}"/>
+          <ExpediteAllowed Value="{$thisParam/context_expediteallowed/@Value}"/>
+          <HoldAllowed Value="{$thisParam/context_holdallowed/@Value}"/>
+          <AllRequired Value="{$thisParam/context_allrequired/@Value}"/>
+          <ApproverUserID Value="{$thisParam/ACTING_USERID/@Value}"/>
+          <AlertText Value="{$thisParam/context_alertobject/root/alerttext/@Value}"/>
+          <ApproverComments Value="{$thisParam/APPROVER_COMMENTS/@Value}"/>
+          <InstanceMode Value="{$thisParam/context_alertobject/root/Action/@Value}"/>
+          <InstanceLineID Value="{$thisParam/context_alertobject/root/SysLoadId/@Value}"/>
+        </ADD_DOCUMENT>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getNextExecutionOrder">
+    <RULE>
+      <COND>
+        <IS_TRUE Value="{$thisParam/APPROVAL_GROUP_ID/@Value !=null}"/>
+      </COND>
+      <ACTION>
+        <SET Var="APPROVAL_GROUP_ID" FromValue="{$thisParam/APPROVAL_GROUP_ID/@Value}"/>
+        <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT MAX(EXECUTION_ORDER) AS EXECUTION_ORDER FROM AW_APPROVALS WHERE APPROVAL_GROUP_ID = ?" AssignToVar="thisReturn">
+          <PARAM Value="{$APPROVAL_GROUP_ID}"/>
+        </EXECUTE_SQL_QUERY>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getMinExecutionOrder">
+    <RULE>
+      <COND>
+        <IS_TRUE Value="{$thisParam/APPROVAL_GROUP_ID/@Value !=null}"/>
+      </COND>
+      <ACTION>
+        <SET Var="APPROVAL_GROUP_ID" FromValue="{$thisParam/APPROVAL_GROUP_ID/@Value}"/>
+        <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT MIN(EXECUTION_ORDER) AS EXECUTION_ORDER FROM AW_APPROVALS WHERE APPROVAL_GROUP_ID = ?" AssignToVar="thisReturn">
+          <PARAM Value="{$APPROVAL_GROUP_ID}"/>
+        </EXECUTE_SQL_QUERY>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="createAlert">
+    <RULE>
+      <ACTION>
+        <ADD_DOCUMENT Name="Alert" AssignToVar="NewAlert" ServiceName="APPROVAL">
+          <InstanceDocID Value="{$thisParam/context_alertobject/root/document_Id/@Value}"/>
+          <InstanceType Value="{$thisParam/context_alertobject/root/messageType/@Value}"/>
+          <ApproverID Value="{$thisParam/APPROVER_ID/@Value}"/>
+          <Status Value="{$thisParam/STATUS/@Value}"/>
+          <TokenID Value="{$thisParam/TokenId/@Value}"/>
+          <NodeType Value="{$thisParam/context_nodetype/@Value}"/>
+          <NodeName Value="{$thisParam/context_nodename/@Value}"/>
+          <IsGroup Value="{$thisParam/context_isgroupapproval/@Value}"/>
+          <ConsultAllowed Value="{$thisParam/context_consultallowed/@Value}"/>
+          <ForwardAllowed Value="{$thisParam/context_forwardallowed/@Value}"/>
+          <ExpediteAllowed Value="{$thisParam/context_expediteallowed/@Value}"/>
+          <HoldAllowed Value="{$thisParam/context_holdallowed/@Value}"/>
+          <AllRequired Value="{$thisParam/context_allrequired/@Value}"/>
+          <AlertText Value="{$thisParam/context_alertobject/root/alerttext/@Value}"/>
+          <DateCreated Value="{date()}"/>
+          <InstanceMode Value="{$thisParam/context_alertobject/root/Action/@Value}"/>
+          <InstanceLineID Value="{$thisParam/context_alertobject/root/SysLoadId/@Value}"/>
+        </ADD_DOCUMENT>
+        <ADD_CHILDREN DocVar="thisParam" FromSelect="$NewAlert"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="modifyAlert">
+    <RULE>
+      <ACTION>
+        <IF_TEST Test="$thisParam/APPROVER_ID/@Value = null">
+          <THEN>
+            <SET_PROPS Select="$thisParam">
+              <APPROVER_ID Value="{$thisParam/APPROVER_ID/@OldValue}" OldValue="{$thisParam/APPROVER_ID/@OldValue}" Overwrite="true"/>
+            </SET_PROPS>
+          </THEN>
+        </IF_TEST>
+        <GET_DOCUMENT Name="Alert" AssignToVar="alertResponse" ReturnRowCount="true" ServiceName="APPROVAL" DirtyRead="true">
+          <InstanceDocID Value="{$thisParam/context_alertobject/root/document_Id/@Value}"/>
+          <InstanceType Value="{$thisParam/context_alertobject/root/documentType/@Value}"/>
+          <!--ApproverID Value="{$thisParam/APPROVER_ID/@OldValue}"/-->
+          <TokenID Value="{$thisParam/TokenId/@OldValue}"/>
+        </GET_DOCUMENT>
+        <MODIFY_DOCUMENT Name="Alert" ServiceName="APPROVAL">
+          <DOCUMENT_CONTEXT>
+            <ID Value="{$alertResponse/*/ID/@Value}"/>
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <Status Value="{$thisParam/STATUS/@Value}"/>
+            <ApproverID Value="{$thisParam/APPROVER_ID/@Value}"/>
+            <TokenID Value="{$thisParam/TokenId/@Value}"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOCUMENT>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="expediteAlert">
+    <RULE>
+      <ACTION>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="validateUser">
+    <RULE>
+      <ACTION>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="createPendingAlert">
+    <RULE>
+      <ACTION>
+        <FOR_EACH SelectList="$thisParam/PENDING_ALERTS/NodeStatus" CurrentElement="currentNode">
+          <ADD_DOCUMENT Name="Alert" AssignToVar="pendingAlert" ServiceName="APPROVAL">
+            <InstanceDocID Value="{$thisParam/context_alertobject/root/document_Id/@Value}"/>
+            <InstanceType Value="{$thisParam/context_alertobject/documentType/@Value}"/>
+            <ApproverID Value="{$currentNode/ApproverId/@Value}"/>
+            <Status Value="{$currentNode/Status/@Value}"/>
+            <TokenID Value="{$currentNode/TokenId/@Value}"/>
+            <NodeType Value="{$thisParam/context_nodetype/@Value}"/>
+            <NodeName Value="{$thisParam/context_nodename/@Value}"/>
+            <IsGroup Value="{$thisParam/context_isgroupapproval/@Value}"/>
+            <ConsultAllowed Value="{$thisParam/context_consultallowed/@Value}"/>
+            <ForwardAllowed Value="{$thisParam/context_forwardallowed/@Value}"/>
+            <ExpediteAllowed Value="{$thisParam/context_expediteallowed/@Value}"/>
+            <HoldAllowed Value="{$thisParam/context_holdallowed/@Value}"/>
+            <AllRequired Value="{$thisParam/context_allrequired/@Value}"/>
+            <AlertText Value="{$thisParam/context_alertobject/root/alerttext/@Value}"/>
+            <DateCreated Value="{date()}"/>
+            <InstanceMode Value="{$thisParam/context_alertobject/root/InstanceMode/@Value}"/>
+          </ADD_DOCUMENT>
+        </FOR_EACH>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="removeAlert">
+    <RULE>
+      <ACTION>
+        <!--PRINTLN Value="Values  qqqw :     {$thisParam/context_alertobject/root/document_Id/@Value}"/>
+        <PRINTLN Value="InstanceType : {$thisParam/context_alertobject/root/messageType/@Value}"/>
+        <PRINTLN Value="NodeName : {$thisParam/context_nodename/@Value}"/>
+        <PRINTLN Value="ApproverID : {$UserId/@Value}"/>
+        <PRINTLN Value="ApproverID : {$UserName/@Value}"/-->
+        <GET_DOCUMENT Name="Alert" AssignToVar="alertResponse" ReturnRowCount="true" ServiceName="APPROVAL" DirtyRead="true">
+          <InstanceDocID Value="{$thisParam/context_alertobject/root/document_Id/@Value}"/>
+          <!--          <InstanceType Value="{$thisParam/context_alertobject/root/messageType/@Value}"/>-->
+          <NodeName Value="{$thisParam/context_nodename/@Value}"/>
+          <Status Value="A"/>
+          <!--          <ApproverID Value="{$UserId/@Value}"/>
+-->
+        </GET_DOCUMENT>
+        <!--PRINTLN Value="alert response {$alertResponse}"/-->
+        <FOR_EACH SelectList="$alertResponse/*" CurrentElement="eachAlertDoc">
+          <REMOVE_DOCUMENT Name="Alert" ServiceName="APPROVAL">
+            <ID Value="{$eachAlertDoc/ID/@Value}"/>
+          </REMOVE_DOCUMENT>
+        </FOR_EACH>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="_updateMaster">
+    <RULE>
+      <ACTION>
+        <!--PRINTLN Value="checkinput{$inputXml}"/-->
+        <MODIFY_DOCUMENT Name="{$thisParam/DOC_NAME/@Value}" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <TO_XML SelectList="$thisParam/conText/*"/>
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <TO_XML SelectList="$thisParam/props/*"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOCUMENT>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="_fromAccepted">
+    <RULE>
+      <ACTION>
+        <SET Var="ddpChildCount" FromValue="{count($thisParam/DO_DB_PERSIST/*)}"/>
+        <SET Var="ServiceName" FromValue="BCM_MASTER"/>
+        <IF_TEST Test="$ddpChildCount = 0">
+          <THEN>
+            <SET Var="depCommand" FromValue="true"/>
+            <SET Var="bulk" FromValue="true"/>
+            <IF_TEST Test="count($thisParam/Business_Rules/*/*) > 1">
+              <THEN>
+                <TO_DOCVAR AssignToVar="thisParamData">
+                  <ROOT>
+                    <TO_XML SelectList="$thisParam/Business_Rules"/>
+                  </ROOT>
+                </TO_DOCVAR>
+                <SET Var="ServiceName" FromValue="BPE_META"/>
+              </THEN>
+              <ELSE>
+                <TO_DOCVAR AssignToVar="thisParamData">
+                  <ROOT>
+                    <TO_XML SelectList="$thisParam/DO_ENTITY_PERSIST"/>
+                  </ROOT>
+                </TO_DOCVAR>
+              </ELSE>
+            </IF_TEST>
+          </THEN>
+          <ELSE>
+            <SET Var="depCommand" FromValue="false"/>
+            <TO_DOCVAR AssignToVar="thisParamData">
+              <ROOT>
+                <TO_XML SelectList="$thisParam/DO_DB_PERSIST"/>
+              </ROOT>
+            </TO_DOCVAR>
+            <IF_TEST Test="$thisParam/DO_DB_PERSIST/@BulkApprove = 'true'">
+              <THEN>
+                <SET Var="bulk" FromValue="true"/>
+              </THEN>
+              <ELSE>
+                <SET Var="bulk" FromValue="false"/>
+              </ELSE>
+            </IF_TEST>
+          </ELSE>
+        </IF_TEST>
+        <GET_DOCUMENT Name="DocumentInstance" ServiceName="APPROVAL" AssignToVar="GetCreatedBy" DirtyRead="true">
+          <AlertID Value="{$thisParam/ID/@Value}"/>
+        </GET_DOCUMENT>
+        <!--MDM-7174 Persisting current record in history -->
+        <IF_TEST Test="$thisParamData/*/@Action = 'UPDATE' or $thisParamData/*/@Action = 'MASS_UPDATE'">
+          <THEN>
+            <FOR_EACH CurrentElement="docInstElem" SelectList="$GetCreatedBy/DocumentInstance">
+              <GET_DOCUMENT Name="DocumentAttributes" ServiceName="APPROVAL" AssignToVar="docInstance" ReturnRowCount="yes" DirtyRead="true">
+                <InstanceID Value="{$docInstElem/ID/@Value}"/>
+                <ORDER_BY>
+                  <ID/>
+                </ORDER_BY>
+              </GET_DOCUMENT>
+              <GET_DOC_PROPERTIES TableName="{$docInstElem/DocumentType/@Value}" ServiceName="{$ServiceName}" AssignToVar="DocPropertiesVar"/>
+              <TO_DOCVAR AssignToVar="pkCols">
+                <ROOT/>
+              </TO_DOCVAR>
+              <FOR_EACH SelectList="$DocPropertiesVar/DOCUMENT/PROPERTY" CurrentElement="currColumn">
+                <IF_TEST Test="$currColumn/@PrimaryKey != null">
+                  <THEN>
+                    <SET Var="colName" FromValue=""/>
+                    <TO_DOCVAR AssignToVar="tempVar">
+                      <tempVar/>
+                    </TO_DOCVAR>
+                    <FOR_EACH SelectList="$docInstance/DocumentAttributes" CurrentElement="currElement">
+                      <IF_TEST Test="$currElement/AttributeID/@Value = $currColumn/@Name">
+                        <THEN>
+                          <SET DocVar="tempVar" Property="{$currColumn/@Name}" FromValue="{$currElement/AttributeValue/@Value}"/>
+                          <ADD_CHILDREN DocVar="pkCols" FromSelectList="$tempVar/*"/>
+                          <BREAK/>
+                        </THEN>
+                      </IF_TEST>
+                    </FOR_EACH>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+              <GET_DOCUMENT Name="{$docInstElem/DocumentType/@Value}" ServiceName="{$ServiceName}" AssignToVar="PresentRecord" DirtyRead="true">
+                <TO_XML SelectList="$pkCols/*"/>
+              </GET_DOCUMENT>
+              <ADD_DOCUMENT Name="DocumentInstance" AssignToVar="DocumentInstance" ServiceName="APPROVAL">
+                <ID Value="{$docInstElem/ID/@Value}-H"/>
+                <AlertID Value="{$thisParam/ID/@Value}-H"/>
+                <DocumentType Value="{$docInstElem/DocumentType/@Value}"/>
+                <SubmitByID Value="{$docInstElem/SubmitByID/@Value}"/>
+                <Status Value="{$thisParam/Result/@Value}"/>
+                <DocumentAction Value="{$docInstElem/DocumentAction/@Value}"/>
+                <SubmitDate Value="{$docInstElem/SubmitDate/@Value}"/>
+                <ModifiedDate Value="{$docInstElem/ModifiedDate/@Value}"/>
+              </ADD_DOCUMENT>
+              <FOR_EACH CurrentElement="currelm" SelectList="$PresentRecord/*/*">
+                <CREATE_DOCUMENT_ID Name="DocumentAttributes" AssignToVar="ID"/>
+                <ADD_DOCUMENT Name="DocumentAttributes" AssignToVar="DocumentAttributes" ServiceName="APPROVAL">
+                  <ID Value="{$ID/@Value}"/>
+                  <AttributeID Value="{name($currelm)}"/>
+                  <AttributeValue Value="{$currelm/@Value}"/>
+                  <InstanceID Value="{$docInstElem/ID/@Value}-H"/>
+                </ADD_DOCUMENT>
+              </FOR_EACH>
+            </FOR_EACH>
+          </THEN>
+        </IF_TEST>
+        <!--MDM-7174 Persisting current record in history -->
+        <TO_DOCVAR AssignToVar="PrepRecord">
+          <TO_XML SelectList="$thisParamData/*/*"/>
+        </TO_DOCVAR>
+        <IF_TEST Test="$thisParamData/*/@Action = 'INSERT' and $bulk = 'false'">
+          <THEN>
+            <TO_DOCVAR AssignToVar="AddCol_CREATED_BY">
+              <CREATED_BY Value="{$GetCreatedBy/DocumentInstance/SubmitByID/@Value}"/>
+            </TO_DOCVAR>
+            <SET_CHILD DocVar="PrepRecord" FromDocVar="AddCol_CREATED_BY"/>
+          </THEN>
+        </IF_TEST>
+        <IF_TEST Test="$thisParamData/*/@Action = 'DELETE' and $bulk = 'false'">
+          <THEN>
+            <TO_DOCVAR AssignToVar="AddCol_LAST_MODIFIED_BY_D">
+              <LAST_MODIFIED_BY Value="{$GetCreatedBy/DocumentInstance/SubmitByID/@Value}"/>
+            </TO_DOCVAR>
+            <REMOVE_CHILDREN DocVar="PrepRecord" ChildName="LAST_MODIFIED_BY"/>
+            <ADD_CHILDREN DocVar="PrepRecord" FromDocVar="AddCol_LAST_MODIFIED_BY_D"/>
+          </THEN>
+        </IF_TEST>
+        <IF_TEST Test="($thisParamData/*/@Action = 'UPDATE' or $thisParamData/*/@Action = 'ACTIVATE') and $bulk = 'false'">
+          <THEN>
+            <TO_DOCVAR AssignToVar="AddCol_LAST_MODIFIED_BY">
+              <LAST_MODIFIED_BY Value="{$GetCreatedBy/DocumentInstance/SubmitByID/@Value}"/>
+            </TO_DOCVAR>
+            <IF_TEST Test="$thisParamData/*/*/UPDATE_PROPERTIES/* != null">
+              <THEN>
+                <TO_DOCVAR AssignToVar="updateProps">
+                  <UPDATE_PROPERTIES/>
+                </TO_DOCVAR>
+                <ADD_CHILDREN DocVar="updateProps" FromSelectList="$thisParamData/*/*/UPDATE_PROPERTIES/*"/>
+                <REMOVE_CHILDREN DocVar="updateProps" ChildName="LAST_MODIFIED_BY"/>
+                <ADD_CHILDREN DocVar="updateProps" FromDocVar="AddCol_LAST_MODIFIED_BY"/>
+                <REMOVE_CHILDREN DocVar="PrepRecord" ChildName="UPDATE_PROPERTIES"/>
+                <ADD_CHILDREN DocVar="PrepRecord" FromDocVar="updateProps"/>
+              </THEN>
+              <ELSE>
+                <REMOVE_CHILDREN DocVar="PrepRecord" ChildName="LAST_MODIFIED_BY"/>
+                <ADD_CHILDREN DocVar="PrepRecord" FromDocVar="AddCol_LAST_MODIFIED_BY"/>
+              </ELSE>
+            </IF_TEST>
+          </THEN>
+        </IF_TEST>
+        <IF_TEST Test="$bulk = 'true'">
+          <THEN>
+            <TO_DOCVAR AssignToVar="PrepRecord">
+              <TO_XML SelectList="$thisParamData/*"/>
+            </TO_DOCVAR>
+            <IF_TEST Test="$thisParamData/*/@Action = 'INSERT'">
+              <THEN>
+                <TO_DOCVAR AssignToVar="AddCol_CREATED_BY">
+                  <CREATED_BY Value="{$GetCreatedBy/DocumentInstance/SubmitByID/@Value}"/>
+                </TO_DOCVAR>
+                <SET_CHILD DocVar="PrepRecord" SelectList="$PrepRecord/*" FromDocVar="AddCol_CREATED_BY"/>
+              </THEN>
+              <ELSE>
+                <TO_DOCVAR AssignToVar="AddCol_LAST_MODIFIED_BY">
+                  <LAST_MODIFIED_BY Value="{$GetCreatedBy/DocumentInstance/SubmitByID/@Value}"/>
+                </TO_DOCVAR>
+                <SET_CHILD DocVar="PrepRecord" SelectList="$PrepRecord/*" FromDocVar="AddCol_LAST_MODIFIED_BY"/>
+              </ELSE>
+            </IF_TEST>
+            <IF_TEST Test="$depCommand = 'true'">
+              <THEN>
+                <IF_TEST Test="count($thisParam/Business_Rules/*/*) > 1">
+                  <THEN>
+                    <TO_DOCVAR AssignToVar="executeDDPRecord">
+                      <REQUEST Name="{$thisParam/Business_Rules/@requestName}" ServiceName="BPE_META" Approved="True">
+                        <TO_XML SelectList="$thisParam/Business_Rules/*"/>
+                      </REQUEST>
+                    </TO_DOCVAR>
+                  </THEN>
+                  <ELSE>
+                    <TO_DOCVAR AssignToVar="executeDDPRecord">
+                      <DO_ENTITY_PERSIST Action="{$thisParamData/*/@Action}" ReqWfName="{$thisParamData/*/@ReqWfName}" ReqWfInstanceId="{$thisParamData/*/@ReqWfInstanceId}" SubmitByID="{$GetCreatedBy/DocumentInstance/SubmitByID/@Value}" DocumentName="{$thisParamData/*/@DocumentName}" EntityName="{$thisParamData/*/@EntityName}" EntityTables="{$thisParamData/*/@EntityTables}" ServiceName="{$thisParamData/*/@ServiceName}" Source="{$thisParamData/*/@Source}" Approved="Yes" AssignToVar="DummyRecord">
+                        <TO_XML SelectList="$PrepRecord/*"/>
+                      </DO_ENTITY_PERSIST>
+                    </TO_DOCVAR>
+                  </ELSE>
+                </IF_TEST>
+              </THEN>
+              <ELSE>
+                <TO_DOCVAR AssignToVar="executeDDPRecord">
+                  <DO_DB_PERSIST Action="{$thisParamData/*/@Action}" ReqWfName="{$thisParamData/*/@ReqWfName}" ReqWfInstanceId="{$thisParamData/*/@ReqWfInstanceId}" SubmitByID="{$GetCreatedBy/DocumentInstance/SubmitByID/@Value}" DocumentName="{$thisParamData/*/@DocumentName}" ServiceName="{$thisParamData/*/@ServiceName}" Source="{$thisParamData/*/@Source}" Approved="Yes" AssignToVar="DummyRecord">
+                    <TO_XML SelectList="$PrepRecord/*"/>
+                  </DO_DB_PERSIST>
+                </TO_DOCVAR>
+              </ELSE>
+            </IF_TEST>
+          </THEN>
+          <ELSE>
+            <TO_DOCVAR AssignToVar="executeDDPRecord">
+              <DO_DB_PERSIST Action="{$thisParamData/*/@Action}" ReqWfName="{$thisParamData/*/@ReqWfName}" ReqWfInstanceId="{$thisParamData/*/@ReqWfInstanceId}" SubmitByID="{$GetCreatedBy/DocumentInstance/SubmitByID/@Value}" DocumentName="{$thisParamData/*/@DocumentName}" ServiceName="{$thisParamData/*/@ServiceName}" Source="{$thisParamData/*/@Source}" Approved="Yes" AssignToVar="DummyRecord">
+                <TO_XML SelectList="$PrepRecord"/>
+              </DO_DB_PERSIST>
+            </TO_DOCVAR>
+          </ELSE>
+        </IF_TEST>
+        <MODIFY_DOCUMENT Name="DocumentInstance" ServiceName="APPROVAL">
+          <DOCUMENT_CONTEXT>
+            <AlertID Value="{$thisParam/ID/@Value}"/>
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <Status Value="{$thisParam/Result/@Value}"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOCUMENT>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="_fromRejected">
+    <RULE>
+      <ACTION>
+        <SET Var="ddpChildCount" FromValue="{count($thisParam/DO_DB_PERSIST/*)}"/>
+        <IF_TEST Test="$ddpChildCount > 0">
+          <THEN>
+            <!--MDM-7174 Persisting current record in history -->
+            <IF_TEST Test="$thisParam/DO_DB_PERSIST/@Action = 'UPDATE'">
+              <THEN>
+                <GET_DOCUMENT Name="DocumentInstance" ServiceName="APPROVAL" AssignToVar="GetCreatedBy" DirtyRead="true">
+                  <AlertID Value="{$thisParam/ID/@Value}"/>
+                </GET_DOCUMENT>
+                <FOR_EACH CurrentElement="docInstElem" SelectList="$GetCreatedBy/DocumentInstance">
+                  <GET_DOCUMENT Name="DocumentAttributes" ServiceName="APPROVAL" AssignToVar="docInstance" ReturnRowCount="yes" DirtyRead="true">
+                    <InstanceID Value="{$docInstElem/ID/@Value}"/>
+                    <ORDER_BY>
+                      <ID/>
+                    </ORDER_BY>
+                  </GET_DOCUMENT>
+                  <GET_DOC_PROPERTIES TableName="{$docInstElem/DocumentType/@Value}" ServiceName="BCM_MASTER" AssignToVar="DocPropertiesVar"/>
+                  <TO_DOCVAR AssignToVar="pkCols">
+                    <ROOT/>
+                  </TO_DOCVAR>
+                  <FOR_EACH SelectList="$DocPropertiesVar/DOCUMENT/PROPERTY" CurrentElement="currColumn">
+                    <IF_TEST Test="$currColumn/@PrimaryKey != null">
+                      <THEN>
+                        <SET Var="colName" FromValue=""/>
+                        <TO_DOCVAR AssignToVar="tempVar">
+                          <tempVar/>
+                        </TO_DOCVAR>
+                        <FOR_EACH SelectList="$docInstance/DocumentAttributes" CurrentElement="currElement">
+                          <IF_TEST Test="$currElement/AttributeID/@Value = $currColumn/@Name">
+                            <THEN>
+                              <SET DocVar="tempVar" Property="{$currColumn/@Name}" FromValue="{$currElement/AttributeValue/@Value}"/>
+                              <ADD_CHILDREN DocVar="pkCols" FromSelectList="$tempVar/*"/>
+                              <BREAK/>
+                            </THEN>
+                          </IF_TEST>
+                        </FOR_EACH>
+                      </THEN>
+                    </IF_TEST>
+                  </FOR_EACH>
+                  <GET_DOCUMENT Name="{$docInstElem/DocumentType/@Value}" ServiceName="BCM_MASTER" AssignToVar="PresentRecord" DirtyRead="true">
+                    <TO_XML SelectList="$pkCols/*"/>
+                  </GET_DOCUMENT>
+                  <ADD_DOCUMENT Name="DocumentInstance" AssignToVar="DocumentInstance" ServiceName="APPROVAL">
+                    <ID Value="{$docInstElem/ID/@Value}-H"/>
+                    <AlertID Value="{$thisParam/ID/@Value}-H"/>
+                    <DocumentType Value="{$docInstElem/DocumentType/@Value}"/>
+                    <SubmitByID Value="{$docInstElem/SubmitByID/@Value}"/>
+                    <Status Value="{$thisParam/Result/@Value}"/>
+                    <DocumentAction Value="{$docInstElem/DocumentAction/@Value}"/>
+                    <SubmitDate Value="{$docInstElem/SubmitDate/@Value}"/>
+                    <ModifiedDate Value="{$docInstElem/ModifiedDate/@Value}"/>
+                  </ADD_DOCUMENT>
+                  <FOR_EACH CurrentElement="currelm" SelectList="$PresentRecord/*/*">
+                    <CREATE_DOCUMENT_ID Name="DocumentAttributes" AssignToVar="ID"/>
+                    <ADD_DOCUMENT Name="DocumentAttributes" AssignToVar="DocumentAttributes" ServiceName="APPROVAL">
+                      <ID Value="{$ID/@Value}"/>
+                      <AttributeID Value="{name($currelm)}"/>
+                      <AttributeValue Value="{$currelm/@Value}"/>
+                      <InstanceID Value="{$docInstElem/ID/@Value}-H"/>
+                    </ADD_DOCUMENT>
+                  </FOR_EACH>
+                </FOR_EACH>
+              </THEN>
+            </IF_TEST>
+            <TO_DOCVAR AssignToVar="errorCorrection">
+              <ROOT/>
+            </TO_DOCVAR>
+            <IF_TEST Test="$thisParam/DO_DB_PERSIST/@SysLoadId != null">
+              <THEN>
+                <REMOVE_CHILDREN ChildName="SYS_LOAD_ID" SelectList="$thisParam/DO_DB_PERSIST"/>
+                <REMOVE_CHILDREN ChildName="WORKFLOW_ID" SelectList="$thisParam/DO_DB_PERSIST"/>
+                <REMOVE_CHILDREN ChildName="SYS_LOAD_ID" SelectList="$thisParam/DO_DB_PERSIST/*"/>
+                <REMOVE_CHILDREN ChildName="WORKFLOW_ID" SelectList="$thisParam/DO_DB_PERSIST/*"/>
+                <TO_DOCVAR AssignToVar="errorCorrection">
+                  <ROOT>
+                    <SYS_LOAD_ID Value="{$thisParam/DO_DB_PERSIST/@SysLoadId}"/>
+                    <WORKFLOW_ID Value="{$thisParam/DO_DB_PERSIST/@SysWfId}"/>
+                  </ROOT>
+                </TO_DOCVAR>
+              </THEN>
+            </IF_TEST>
+            <!--MDM-7174 Persisting current record in history -->
+            <IF_TEST Test="$thisParam/DO_DB_PERSIST/@Action='INSERT'">
+              <THEN>
+                <REMOVE_CHILDREN ChildName="SYS_TYPE" SelectList="$thisParam/DO_DB_PERSIST"/>
+                <APPEND_TO_XML SelectList="$thisParam/DO_DB_PERSIST/*">
+                  <ERROR_MESSAGE Value="{$thisParam/Comment/@Value} {date()}"/>
+                </APPEND_TO_XML>
+                <FOR_EACH CurrentElement="ddpElem" SelectList="$thisParam/DO_DB_PERSIST/*">
+                  <TO_DOCVAR AssignToVar="executeDDPRecord">
+                    <IF_TEST Test="$thisParam/DO_DB_PERSIST/@isDocView=null">
+                      <THEN>
+                        <ADD_DOCUMENT Name="error_{$thisParam/DO_DB_PERSIST/@DocumentName}" ServiceName="{$thisParam/DO_DB_PERSIST/@ServiceName}">
+                          <TO_XML SelectList="$ddpElem/*"/>
+                          <TO_XML SelectList="$errorCorrection/*"/>
+                        </ADD_DOCUMENT>
+                      </THEN>
+                    </IF_TEST>
+                  </TO_DOCVAR>
+                </FOR_EACH>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="$thisParam/DO_DB_PERSIST/@Action='UPDATE' or $thisParam/DO_DB_PERSIST/@Action='ACTIVATE' or $thisParam/DO_DB_PERSIST/@Action='MASS_UPDATE'">
+              <THEN>
+                <REMOVE_CHILDREN ChildName="SYS_TYPE" SelectList="$thisParam/DO_DB_PERSIST"/>
+                <APPEND_TO_XML SelectList="$thisParam/DO_DB_PERSIST/*/UPDATE_PROPERTIES">
+                  <ERROR_MESSAGE Value="{$thisParam/Comment/@Value} {date()}"/>
+                </APPEND_TO_XML>
+                <FOR_EACH CurrentElement="ddpElem" SelectList="$thisParam/DO_DB_PERSIST/*">
+                  <SET Var="testVar" FromSelect="$ddpElem/*/*"/>
+                  <IF_TEST Test="$testVar!=null ">
+                    <THEN>
+                      <TO_DOCVAR AssignToVar="executeDDPRecord">
+                        <IF_TEST Test="$thisParam/DO_DB_PERSIST/@isDocView=null">
+                          <THEN>
+                            <ADD_DOCUMENT Name="error_{$thisParam/DO_DB_PERSIST/@DocumentName}" ServiceName="{$thisParam/DO_DB_PERSIST/@ServiceName}" HandleException="true">
+                              <TO_XML SelectList="$ddpElem/UPDATE_PROPERTIES/*"/>
+                              <TO_XML SelectList="$errorCorrection/*"/>
+                              <TO_XML SelectList="$ddpElem/DOCUMENT_CONTEXT/*"/>
+                            </ADD_DOCUMENT>
+                          </THEN>
+                        </IF_TEST>
+                      </TO_DOCVAR>
+                    </THEN>
+                    <ELSE>
+                      <TO_DOCVAR AssignToVar="executeDDPRecord">
+                        <IF_TEST Test="$thisParam/DO_DB_PERSIST/@isDocView=null">
+                          <THEN>
+                            <ADD_DOCUMENT Name="error_{$thisParam/DO_DB_PERSIST/@DocumentName}" ServiceName="{$thisParam/DO_DB_PERSIST/@ServiceName}" HandleException="true">
+                              <TO_XML SelectList="$ddpElem/*"/>
+                              <TO_XML SelectList="$errorCorrection/*"/>
+                              <ERROR_MESSAGE Value="{$thisParam/Comment/@Value} {date()}"/>
+                            </ADD_DOCUMENT>
+                          </THEN>
+                        </IF_TEST>
+                      </TO_DOCVAR>
+                    </ELSE>
+                  </IF_TEST>
+                </FOR_EACH>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="$thisParam/DO_DB_PERSIST/@Action='DELETE'">
+              <THEN>
+                <REMOVE_CHILDREN ChildName="SYS_TYPE" SelectList="$thisParam/DO_DB_PERSIST"/>
+                <APPEND_TO_XML SelectList="$thisParam/DO_DB_PERSIST/*">
+                  <ERROR_MESSAGE Value="{$thisParam/Comment/@Value} {date()}"/>
+                </APPEND_TO_XML>
+                <FOR_EACH CurrentElement="ddpElem" SelectList="$thisParam/DO_DB_PERSIST/*">
+                  <SET Var="testVar" FromSelect="$ddpElem/*/*"/>
+                  <IF_TEST Test="$testVar!=null ">
+                    <THEN>
+                      <TO_DOCVAR AssignToVar="executeDDPRecord">
+                        <IF_TEST Test="$thisParam/DO_DB_PERSIST/@isDocView=null">
+                          <THEN>
+                            <ADD_DOCUMENT Name="error_{$thisParam/DO_DB_PERSIST/@DocumentName}" ServiceName="{$thisParam/DO_DB_PERSIST/@ServiceName}" HandleException="true">
+                              <TO_XML SelectList="$ddpElem/*/*"/>
+                              <TO_XML SelectList="$errorCorrection/*"/>
+                            </ADD_DOCUMENT>
+                          </THEN>
+                        </IF_TEST>
+                      </TO_DOCVAR>
+                    </THEN>
+                    <ELSE>
+                      <TO_DOCVAR AssignToVar="executeDDPRecord">
+                        <IF_TEST Test="$thisParam/DO_DB_PERSIST/@isDocView=null">
+                          <THEN>
+                            <ADD_DOCUMENT Name="error_{$thisParam/DO_DB_PERSIST/@DocumentName}" ServiceName="{$thisParam/DO_DB_PERSIST/@ServiceName}" HandleException="true">
+                              <TO_XML SelectList="$ddpElem/*"/>
+                              <TO_XML SelectList="$errorCorrection/*"/>
+                            </ADD_DOCUMENT>
+                          </THEN>
+                        </IF_TEST>
+                      </TO_DOCVAR>
+                    </ELSE>
+                  </IF_TEST>
+                </FOR_EACH>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="$thisParam/DO_DB_PERSIST/@SysLoadId != null">
+              <THEN>
+                <EXEC_PROC Name="GEN_ERR_SUMMARY_DDP" AssignToVar="SPResponse">
+                  <IN_WF_ID Value="{$thisParam/DO_DB_PERSIST/@SysWfId}" Type="IN" DataType="string"/>
+                  <IN_LOAD_ID Value="{$thisParam/DO_DB_PERSIST/@SysLoadId}" Type="IN" DataType="string"/>
+                  <DOCUMENT_NAME Value="{$thisParam/DO_DB_PERSIST/@DocumentName}" Type="IN" DataType="string"/>
+                </EXEC_PROC>
+              </THEN>
+            </IF_TEST>
+          </THEN>
+        </IF_TEST>
+        <MODIFY_DOCUMENT Name="DocumentInstance" ServiceName="APPROVAL">
+          <DOCUMENT_CONTEXT>
+            <AlertID Value="{$thisParam/ID/@Value}"/>
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <Status Value="{$thisParam/Result/@Value}"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOCUMENT>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="sendAlert">
+    <RULE>
+      <ACTION>
+        <IF_TEST Test="$thisParam/DOCUMENT_ID/@Value != null">
+          <THEN>
+            <CREATE_DOCUMENT_ID Name="MSG_ALERT" AssignToVar="ID"/>
+            <ADD_DOCUMENT Name="MSG_ALERT" ServiceName="MESSAGING" AssignToVar="MSG_ALERT">
+              <ID Value="{$ID/@Value}"/>
+              <MSG_TMPL_NM Value="CommonAlertMT"/>
+              <MSG_TMPL_TEXT Value="{0}"/>
+              <SERVICE_NAME Value="{$thisParam/SERVICE_NAME/@Value}"/>
+              <CREATION_DATE Value="{date()}"/>
+              <DOCUMENT_ID Value="{$thisParam/DOCUMENT_ID/@Value}"/>
+              <DOCUMENT_NAME Value="{$thisParam/DOCUMENT_NAME/@Value}"/>
+              <PRIORITY Value="{$thisParam/PRIORITY/@Value}"/>
+              <MESSAGE Value="{$thisParam/MESSAGE/@Value}"/>
+            </ADD_DOCUMENT>
+            <ADD_DOCUMENT Name="MSG_ALERT_ARG" ServiceName="MESSAGING" AssignToVar="MSG_ALERT_ARG">
+              <ALERT_ID Value="{$ID/@Value}"/>
+              <ARG_INDEX Value="{$thisParam/ARG_INDEX/@Value}"/>
+              <ARG_VALUE Value=""/>
+            </ADD_DOCUMENT>
+            <ADD_DOCUMENT Name="MSG_USER_ALERT" ServiceName="MESSAGING" AssignToVar="MSG_USER_ALERT">
+              <ALERT_ID Value="{$ID/@Value}"/>
+              <USER_ID Value="{$thisParam/USER_ID/@Value}"/>
+            </ADD_DOCUMENT>
+          </THEN>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getAllApprovals">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="test">
+          <APPROVALS/>
+        </TO_DOCVAR>
+        <SET Var="paginateStart" FromValue="{$thisParam/paginateStart/@Value}"/>
+        <SET Var="maxRow" FromValue="{$thisParam/maxRow/@Value}"/>
+        <IF_TEST Test="$thisParam/ORDER_BY/* != null">
+          <THEN>
+            <SET Var="orderBy_col" FromValue="{name($thisParam/ORDER_BY/*)}"/>
+            <SET Var="sortOrder" FromValue="{$thisParam/ORDER_BY/*/@Sort}"/>
+            <IF_TEST Test="$sortOrder/@Value = 'Descending'">
+              <THEN>
+                <SET Var="sortOrder" FromValue="DESC"/>
+              </THEN>
+              <ELSE>
+                <SET Var="sortOrder" FromValue="ASC"/>
+              </ELSE>
+            </IF_TEST>
+            <IF_TEST Test="$orderBy_col/@Value = 'ID'">
+              <THEN>
+                <SET Var="orderBy_colName" FromValue="{concat('A.INST_DOC_ID',' ',$sortOrder/@Value)}"/>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="$orderBy_col/@Value = 'INST_LINE_ID'">
+              <THEN>
+                <SET Var="orderBy_colName" FromValue="{concat('A.INST_LINE_ID',' ',$sortOrder/@Value)}"/>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="$orderBy_col/@Value = 'INSTANCE_TYPE'">
+              <THEN>
+                <SET Var="orderBy_colName" FromValue="{concat('A.INSTANCE_TYPE',' ',$sortOrder/@Value)}"/>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="$orderBy_col/@Value = 'DOCUMENTACTION'">
+              <THEN>
+                <SET Var="orderBy_colName" FromValue="{concat('A.INSTANCE_MODE',' ',$sortOrder/@Value)}"/>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="$orderBy_col/@Value = 'REQUESTOR'">
+              <THEN>
+                <SET Var="orderBy_colName" FromValue="{concat('t2.SUBMITBYID',' ',$sortOrder/@Value)}"/>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="$orderBy_col/@Value = 'NODE_TYPE'">
+              <THEN>
+                <SET Var="orderBy_colName" FromValue="{concat('A.NODE_TYPE',' ',$sortOrder/@Value)}"/>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="$orderBy_col/@Value = 'recordCount'">
+              <THEN>
+                <SET Var="orderBy_colName" FromValue="{concat('count(DISTINCT t2.ID)',' ',$sortOrder/@Value)}"/>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="$orderBy_col/@Value = 'DATE_CREATED'">
+              <THEN>
+                <SET Var="orderBy_colName" FromValue="{concat('A.DATE_CREATED',' ',$sortOrder/@Value)}"/>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="strlen(trim($orderBy_col/@Value)) = 0">
+              <THEN>
+                <SET Var="orderBy_colName" FromValue="{concat('A.DATE_CREATED',' ',$sortOrder/@Value)}"/>
+              </THEN>
+            </IF_TEST>
+          </THEN>
+        </IF_TEST>
+        <SET Var="sqlString" FromValue="LOCKING ROW FOR ACCESS SELECT A.INST_DOC_ID as ID, A.INSTANCE_TYPE, max(A.DATE_CREATED), a.INSTANCE_MODE as DOCUMENTACTION, A.NODE_TYPE, A.INST_LINE_ID, count(DISTINCT t2.ID) as recordCount, t2.SUBMITBYID as REQUESTOR GROUP BY A.INST_DOC_ID, A.INSTANCE_TYPE, a.INSTANCE_MODE, A.NODE_TYPE, A.INST_LINE_ID,A.DATE_CREATED, t2.SUBMITBYID FROM AW_ALERT A, AW_DOC_INSTANCE t2 WHERE A.STATUS='A' AND A.INST_DOC_ID = t2.ALERTID {$thisParam/filterQuery/@Value} order by"/>
+        <SET Var="sqlString" FromValue="{concat($sqlString/@Value, ' ',$orderBy_colName/@Value)}"/>
+        <EXECUTE_SQL_QUERY Value="{$sqlString/@Value}" AssignToVar="alert" StartAtRow="{string($paginateStart)}" ReturnRowCount="yes" MaxRows="{string($maxRow)}"/>
+        <FOR_EACH SelectList="$alert/SQL_RESULT" CurrentElement="curr">
+          <IF_TEST Test="$curr/NODE_TYPE/@Value='S'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="NODE_TYPE">
+                <NODE_TYPE Value="Serial"/>
+              </TO_DOCVAR>
+            </THEN>
+            <ELSE>
+              <TO_DOCVAR AssignToVar="NODE_TYPE">
+                <NODE_TYPE Value="Parallel"/>
+              </TO_DOCVAR>
+            </ELSE>
+          </IF_TEST>
+          <REMOVE_CHILDREN DocVar="curr" ChildName="NODE_TYPE"/>
+          <ADD_CHILDREN DocVar="curr" FromDocVar="NODE_TYPE"/>
+          <TO_DOCVAR AssignToVar="test1">
+            <APPROVAL/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="test2">
+            <APPROVERS/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$curr/NODE_TYPE/@Value = 'Parallel' ">
+            <THEN>
+              <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT APPROVER_ID as APPROVER_NAME, STATUS as A_Status from aw_alert where INST_DOC_ID =? and INSTANCE_TYPE = ? and NODE_TYPE = 'P' {$thisParam/filterQuery2/@Value}" AssignToVar="parallelStatus">
+                <PARAM Value="{$curr/ID/@Value}"/>
+                <PARAM Value="{$curr/INSTANCE_TYPE/@Value}"/>
+              </EXECUTE_SQL_QUERY>
+              <SET Var="found" FromValue="false"/>
+              <SET Var="match" FromValue="true"/>
+              <IF_TEST Test="$parallelStatus/SQL_RESULT/APPROVER_NAME/@Value=null">
+                <THEN>
+                  <SET Var="match" FromValue="false"/>
+                </THEN>
+                <ELSE>
+                  <FOR_EACH SelectList="$parallelStatus/SQL_RESULT" CurrentElement="pStatus">
+                    <SET Var="checkBeforeAddUser" FromValue="false"/>
+                    <TO_DOCVAR AssignToVar="sqlres">
+                      <SQL_RESULT/>
+                    </TO_DOCVAR>
+                    <IF_TEST Test="$pStatus/A_Status/@Value='A' and (lowerCase($thisParam/filterStatus/@Value) = lowerCase('Waiting for Approval') or $thisParam/filterStatus/@Value = null) ">
+                      <THEN>
+                        <SET Var="checkBeforeAddUser" FromValue="true"/>
+                        <SET Var="found" FromValue="true"/>
+                        <TO_DOCVAR AssignToVar="APPROVED_STATE">
+                          <SQL_RESULT>
+                            <APPROVER_NAME Value="{$pStatus/APPROVER_NAME/@Value}"/>
+                            <A_Status Value="Waiting for Approval"/>
+                            <Checked Value="true"/>
+                          </SQL_RESULT>
+                        </TO_DOCVAR>
+                      </THEN>
+                      <ELSE>
+                        <IF_TEST Test="$pStatus/A_Status/@Value='X' and (lowerCase($thisParam/filterStatus/@Value) = lowerCase('Approved') or $thisParam/filterStatus/@Value = null)">
+                          <THEN>
+                            <SET Var="checkBeforeAddUser" FromValue="true"/>
+                            <SET Var="found" FromValue="true"/>
+                            <TO_DOCVAR AssignToVar="APPROVED_STATE">
+                              <SQL_RESULT>
+                                <APPROVER_NAME Value="{$pStatus/APPROVER_NAME/@Value}"/>
+                                <A_Status Value="Approved"/>
+                                <Checked Value="false"/>
+                              </SQL_RESULT>
+                            </TO_DOCVAR>
+                          </THEN>
+                        </IF_TEST>
+                      </ELSE>
+                    </IF_TEST>
+                    <IF_TEST Test="$checkBeforeAddUser/@Value ='true'">
+                      <THEN>
+                        <ADD_CHILDREN DocVar="test2" FromSelectList="$APPROVED_STATE"/>
+                      </THEN>
+                    </IF_TEST>
+                  </FOR_EACH>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+            <ELSE>
+              <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT APPROVER_ID from aw_alert where INST_DOC_ID =? and INSTANCE_TYPE = ? and NODE_TYPE = 'S' {$thisParam/filterQuery2/@Value}" AssignToVar="SerialStatus">
+                <PARAM Value="{$curr/ID/@Value}"/>
+                <PARAM Value="{$curr/INSTANCE_TYPE/@Value}"/>
+              </EXECUTE_SQL_QUERY>
+              <SET Var="found" FromValue="false"/>
+              <SET Var="match" FromValue="true"/>
+              <IF_TEST Test="$SerialStatus/SQL_RESULT/APPROVER_ID/@Value=null">
+                <THEN>
+                  <SET Var="match" FromValue="false"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="curSerialApprover" FromSelect="$SerialStatus/SQL_RESULT/APPROVER_ID/@Value"/>
+                  <SET Var="checkApproved" FromValue="false"/>
+                  <SET Var="ApprovedValue" FromValue="Approved"/>
+                  <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT A.DATA FROM WFL_INSTANCE A, AW_USER_NODES B  WHERE A.ID=B.WORKFLOW_ID AND B.INST_DOC_ID = ?" AssignToVar="SerialData">
+                    <PARAM Value="{$curr/ID/@Value}"/>
+                  </EXECUTE_SQL_QUERY>
+                  <SET Var="curData" FromSelect="$SerialData/SQL_RESULT/DATA/@Value"/>
+                  <SET Var="tokenName" FromValue="context_object"/>
+                  <NATIVE_FUNCTION ClassName="com.teradata.xservice.approval.WFLInstanceDataParser" MethodName="getVariables" AssignToVar="contextObject">
+                    <PARAM Var="curData" Caption="data"/>
+                    <PARAM Var="tokenName" Caption="tokenName"/>
+                  </NATIVE_FUNCTION>
+                  <STRING_TO_XML FromSelect="$contextObject" DocVar="approversXML"/>
+                  <EXECUTE_SQL_QUERY AssignToVar="usrNameResp" Value="LOCKING TABLE USER_PROFILE_T FOR ACCESS LOCKING TABLE USER_UG_RELATION FOR ACCESS LOCKING TABLE USR_GRP_PROFIL FOR ACCESS SELECT distinct A.GRP_NAME AS GRP_NAME FROM USR_GRP_PROFIL A, USER_UG_RELATION B, USER_PROFILE_T E WHERE E.LOGIN_NAME = '{$curSerialApprover}' AND E.ID=B.USER_ID AND A.ID = B.USER_GRP_ID AND A.STATUS = 'ACTIVE'"/>
+                  <SET Var="grpName" FromValue=""/>
+                  <FOR_EACH CurrentElement="currGrp" SelectList="$usrNameResp/SQL_RESULT">
+                    <SET Var="grpName" FromValue="{$currGrp/GRP_NAME/@Value},{$grpName}"/>
+                  </FOR_EACH>
+                  <FOR_EACH SelectList="$approversXML/context_approveridlist/root/Id" CurrentElement="appr">
+                    <SET Var="checkBeforeAddUser" FromValue="false"/>
+                    <IF_TEST Test="($appr/@Value = $curSerialApprover) or (contains($grpName,$appr/@Value))">
+                      <THEN>
+                        <IF_TEST Test="$checkApproved = 'false'">
+                          <THEN>
+                            <TO_DOCVAR AssignToVar="SerialAppList">
+                              <SQL_RESULT>
+                                <APPROVER_NAME Value="{$appr/@Value}"/>
+                                <A_Status Value="Waiting for Approval"/>
+                                <Checked Value="true"/>
+                              </SQL_RESULT>
+                            </TO_DOCVAR>
+                            <SET Var="ApprovedValue" FromValue="Pending"/>
+                          </THEN>
+                        </IF_TEST>
+                      </THEN>
+                      <ELSE>
+                        <TO_DOCVAR AssignToVar="SerialAppList">
+                          <SQL_RESULT>
+                            <APPROVER_NAME Value="{$appr/@Value}"/>
+                            <A_Status Value="{$ApprovedValue}"/>
+                            <Checked Value="false"/>
+                          </SQL_RESULT>
+                        </TO_DOCVAR>
+                      </ELSE>
+                    </IF_TEST>
+                    <IF_TEST Test="(($appr/@Value = $curSerialApprover) or (contains($grpName,$appr/@Value))) and (lowerCase($thisParam/filterStatus/@Value) = lowerCase('Waiting for Approval') or $thisParam/filterStatus/@Value = null)">
+                      <THEN>
+                        <SET Var="checkBeforeAddUser" FromValue="true"/>
+                        <SET Var="found" FromValue="true"/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$ApprovedValue='Pending' and (lowerCase($thisParam/filterStatus/@Value) = lowerCase('Pending') or $thisParam/filterStatus/@Value = null)">
+                      <THEN>
+                        <IF_TEST Test="($appr/@Value != $curSerialApprover) and (contains($grpName,$appr/@Value) = 'false')">
+                          <THEN>
+                            <SET Var="checkBeforeAddUser" FromValue="true"/>
+                            <SET Var="found" FromValue="true"/>
+                          </THEN>
+                        </IF_TEST>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$ApprovedValue='Approved' and (lowerCase($thisParam/filterStatus/@Value) = lowerCase('Approved') or $thisParam/filterStatus/@Value = null)">
+                      <THEN>
+                        <SET Var="checkBeforeAddUser" FromValue="true"/>
+                        <SET Var="found" FromValue="true"/>
+                      </THEN>
+                    </IF_TEST>
+                    <IF_TEST Test="$checkBeforeAddUser/@Value ='true'">
+                      <THEN>
+                        <ADD_CHILDREN DocVar="test2" FromSelectList="$SerialAppList"/>
+                      </THEN>
+                    </IF_TEST>
+                  </FOR_EACH>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$match = 'true' and $found = 'true'">
+            <THEN>
+              <ADD_CHILDREN DocVar="curr" FromDocVar="test2"/>
+              <ADD_CHILDREN DocVar="test1" FromSelectList="$curr/*"/>
+              <ADD_CHILDREN DocVar="test" FromDocVar="test1"/>
+            </THEN>
+          </IF_TEST>
+        </FOR_EACH>
+        <TO_DOCVAR AssignToVar="thisReturn">
+          <SAMPLE_XML StartRowCount="{$paginateStart}" TotalRowCount="{$alert/@TotalRowCount}">
+            <TO_XML DocVar="test"/>
+          </SAMPLE_XML>
+        </TO_DOCVAR>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getApprovalDetails">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="test">
+          <APPROVALS/>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT A.INST_DOC_ID as ID, A.INSTANCE_TYPE, max(A.DATE_CREATED), a.INSTANCE_MODE as DOCUMENTACTION, A.NODE_TYPE FROM AW_ALERT A GROUP BY A.INST_DOC_ID, A.INSTANCE_TYPE, a.INSTANCE_MODE, A.NODE_TYPE  WHERE A.STATUS='A' {$thisParam/FILTER/@Value}" AssignToVar="alert"/>
+        <FOR_EACH SelectList="$alert/SQL_RESULT" CurrentElement="curr">
+          <IF_TEST Test="$curr/NODE_TYPE/@Value='S'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="NODE_TYPE">
+                <NODE_TYPE Value="Serial"/>
+              </TO_DOCVAR>
+            </THEN>
+            <ELSE>
+              <TO_DOCVAR AssignToVar="NODE_TYPE">
+                <NODE_TYPE Value="Parallel"/>
+              </TO_DOCVAR>
+            </ELSE>
+          </IF_TEST>
+          <REMOVE_CHILDREN DocVar="curr" ChildName="NODE_TYPE"/>
+          <ADD_CHILDREN DocVar="curr" FromDocVar="NODE_TYPE"/>
+          <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT A.DATA FROM WFL_INSTANCE A, AW_USER_NODES B  WHERE A.ID=B.WORKFLOW_ID AND B.INST_DOC_ID = ?" AssignToVar="SerialData">
+            <PARAM Value="{$curr/ID/@Value}"/>
+          </EXECUTE_SQL_QUERY>
+          <SET Var="curData" FromSelect="$SerialData/SQL_RESULT/DATA/@Value"/>
+          <SET Var="tokenName" FromValue="context_object"/>
+          <NATIVE_FUNCTION ClassName="com.teradata.xservice.approval.WFLInstanceDataParser" MethodName="getVariables" AssignToVar="contextObject">
+            <PARAM Var="curData" Caption="data"/>
+            <PARAM Var="tokenName" Caption="tokenName"/>
+          </NATIVE_FUNCTION>
+          <STRING_TO_XML FromSelect="$contextObject" DocVar="approversXML"/>
+          <TO_DOCVAR AssignToVar="test1">
+            <APPROVAL/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="test2">
+            <APPROVERS/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$curr/NODE_TYPE/@Value = 'Parallel' ">
+            <THEN>
+              <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT APPROVER_ID as APPROVER_NAME, STATUS as A_Status from aw_alert where INST_DOC_ID =? and INSTANCE_TYPE = ? and NODE_TYPE = 'P'" AssignToVar="parallelStatus">
+                <PARAM Value="{$curr/ID/@Value}"/>
+                <PARAM Value="{$curr/INSTANCE_TYPE/@Value}"/>
+              </EXECUTE_SQL_QUERY>
+              <FOR_EACH SelectList="$parallelStatus/SQL_RESULT" CurrentElement="pStatus">
+                <TO_DOCVAR AssignToVar="sqlres">
+                  <SQL_RESULT/>
+                </TO_DOCVAR>
+                <IF_TEST Test="$pStatus/A_Status/@Value='A'">
+                  <THEN>
+                    <TO_DOCVAR AssignToVar="APPROVED_STATE">
+                      <SQL_RESULT>
+                        <ID Value="{$pStatus/APPROVER_NAME/@Value}"/>
+                        <APPROVER_NAME Value="{$pStatus/APPROVER_NAME/@Value}"/>
+                        <A_Status Value="Waiting for Approval"/>
+                        <Checked Value="true"/>
+                      </SQL_RESULT>
+                    </TO_DOCVAR>
+                  </THEN>
+                  <ELSE>
+                    <TO_DOCVAR AssignToVar="APPROVED_STATE">
+                      <SQL_RESULT>
+                        <ID Value="{$pStatus/APPROVER_NAME/@Value}"/>
+                        <APPROVER_NAME Value="{$pStatus/APPROVER_NAME/@Value}"/>
+                        <A_Status Value="Approved"/>
+                        <Checked Value="false"/>
+                      </SQL_RESULT>
+                    </TO_DOCVAR>
+                  </ELSE>
+                </IF_TEST>
+                <ADD_CHILDREN DocVar="test2" FromSelectList="$APPROVED_STATE"/>
+              </FOR_EACH>
+            </THEN>
+            <ELSE>
+              <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT APPROVER_ID from aw_alert where INST_DOC_ID =? and INSTANCE_TYPE = ? and NODE_TYPE = 'S'" AssignToVar="SerialStatus">
+                <PARAM Value="{$curr/ID/@Value}"/>
+                <PARAM Value="{$curr/INSTANCE_TYPE/@Value}"/>
+              </EXECUTE_SQL_QUERY>
+              <SET Var="curSerialApprover" FromSelect="$SerialStatus/SQL_RESULT/APPROVER_ID/@Value"/>
+              <SET Var="checkApproved" FromValue="false"/>
+              <SET Var="ApprovedValue" FromValue="Approved"/>
+              <FOR_EACH SelectList="$approversXML/context_approveridlist/root/Id" CurrentElement="appr">
+                <IF_TEST Test="$appr/@Value = $curSerialApprover">
+                  <THEN>
+                    <IF_TEST Test="$checkApproved = 'false'">
+                      <THEN>
+                        <TO_DOCVAR AssignToVar="SerialAppList">
+                          <SQL_RESULT>
+                            <ID Value="{$appr/@Value}"/>
+                            <APPROVER_NAME Value="{$appr/@Value}"/>
+                            <A_Status Value="Waiting for Approval"/>
+                            <Checked Value="true"/>
+                          </SQL_RESULT>
+                        </TO_DOCVAR>
+                        <SET Var="ApprovedValue" FromValue="Pending"/>
+                      </THEN>
+                    </IF_TEST>
+                  </THEN>
+                  <ELSE>
+                    <TO_DOCVAR AssignToVar="SerialAppList">
+                      <SQL_RESULT>
+                        <ID Value="{$appr/@Value}"/>
+                        <APPROVER_NAME Value="{$appr/@Value}"/>
+                        <A_Status Value="{$ApprovedValue}"/>
+                        <Checked Value="false"/>
+                      </SQL_RESULT>
+                    </TO_DOCVAR>
+                  </ELSE>
+                </IF_TEST>
+                <ADD_CHILDREN DocVar="test2" FromSelectList="$SerialAppList"/>
+              </FOR_EACH>
+            </ELSE>
+          </IF_TEST>
+          <ADD_CHILDREN DocVar="curr" FromDocVar="test2"/>
+          <ADD_CHILDREN DocVar="test1" FromSelectList="$curr/*"/>
+          <ADD_CHILDREN DocVar="test" FromDocVar="test1"/>
+        </FOR_EACH>
+        <TO_DOCVAR AssignToVar="thisReturn">
+          <SAMPLE_XML>
+            <TO_XML DocVar="test"/>
+          </SAMPLE_XML>
+        </TO_DOCVAR>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="ageCalculate" Caption="ageCalculate">
+    <RULE>
+      <ACTION>
+        <NATIVE_FUNCTION ClassName="com.teradata.xservice.approval.AgeCalculation" MethodName="ageCalculate">
+          <PARAM Var="thisParam" Caption="thisParam"/>
+          <PARAM Var="thisReturn" Caption="thisReturn"/>
+        </NATIVE_FUNCTION>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="ageCalculateforMonitor" Caption="ageCalculateforMonitor">
+    <RULE>
+      <ACTION>
+        <NATIVE_FUNCTION ClassName="com.teradata.xservice.approval.AgeCalculation" MethodName="ageCalculateforMonitor">
+          <PARAM Var="thisParam" Caption="thisParam"/>
+          <PARAM Var="thisReturn" Caption="thisReturn"/>
+        </NATIVE_FUNCTION>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="poke">
+    <RULE>
+      <ACTION>
+        <REQUEST Name="GetApprovalUserType" ServiceName="ADMIN_UI" AssignToVar="ApprovalUserType">
+          <EVENT_NAME Value="{$thisParam/INSTANCE_TYPE/@Value}"/>
+          <ACTION_TYPE Value="{$thisParam/DOCUMENTACTION/@Value}"/>
+        </REQUEST>
+        <!--User Group based-->
+        <IF_TEST Test="$ApprovalUserType/ApprovalUserType/@Value = 'User Group Based'">
+          <THEN>
+            <REQUEST Name="getGrpMembers" AssignToVar="userNameResp" ServiceName="ADMIN_UI">
+              <userName Value="{$thisParam/user_id/@Value}"/>
+            </REQUEST>
+            <TO_DOCVAR AssignToVar="curDetails">
+              <USER_PROFILE/>
+            </TO_DOCVAR>
+            <FOR_EACH SelectList="$userNameResp/*" CurrentElement="curr">
+              <REQUEST Name="getUser" ServiceName="USER_SECURITY" AssignToVar="approverDetails" ReturnRowCount="true">
+                <ID Value="{$curr/@Value}"/>
+              </REQUEST>
+              <REQUEST Name="sendEmail" ServiceName="OMS_MESSAGE_SERVICE" Synchronous="no">
+                <SUBJECT Value="[MDM] Reminder email for your action on approval record"/>
+                <TO_ADDRS>
+                  <TO_ADDR Value="{$approverDetails/USER_PROFILE/EMAIL_ADDRESS/@Value}"/>
+                </TO_ADDRS>
+                <FORMAT Value="text/html"/>
+                <MESSAGE>
+                  <XML_DATA XsltFileName="xservice/email/xml/GenericApproval_Poke_Template.xsl">
+                    <DATA>
+                      <DocumentInstance Value="{$thisParam/ID/@Value}"/>
+                      <DocumentAction Value="{$thisParam/DOCUMENTACTION/@Value}"/>
+                      <DocumentType Value="{$thisParam/INSTANCE_TYPE/@Value}"/>
+                      <ApprovalType Value="{$thisParam/NODE_TYPE/@Value}"/>
+                    </DATA>
+                  </XML_DATA>
+                </MESSAGE>
+              </REQUEST>
+            </FOR_EACH>
+          </THEN>
+          <!--User Group based-->
+          <!--User based-->
+          <ELSE>
+            <GET_DOCUMENT AssignToVar="curDetails" Name="USER_PROFILE" ServiceName="USER_SECURITY" Distinct="true" DirtyRead="true">
+              <LOGIN_NAME Value="{$thisParam/user_id/@Value}"/>
+            </GET_DOCUMENT>
+            <REQUEST Name="getUser" ServiceName="USER_SECURITY" AssignToVar="approverDetails" ReturnRowCount="true">
+              <ID Value="{$curDetails/USER_PROFILE/ID/@Value}"/>
+            </REQUEST>
+            <REQUEST Name="sendEmail" ServiceName="OMS_MESSAGE_SERVICE" Synchronous="no">
+              <SUBJECT Value="[MDM] Reminder email for your action on approval record"/>
+              <TO_ADDRS>
+                <TO_ADDR Value="{$approverDetails/USER_PROFILE/EMAIL_ADDRESS/@Value}"/>
+              </TO_ADDRS>
+              <FORMAT Value="text/html"/>
+              <MESSAGE>
+                <XML_DATA XsltFileName="xservice/email/xml/GenericApproval_Poke_Template.xsl">
+                  <DATA>
+                    <DocumentInstance Value="{$thisParam/ID/@Value}"/>
+                    <DocumentAction Value="{$thisParam/DOCUMENTACTION/@Value}"/>
+                    <DocumentType Value="{$thisParam/INSTANCE_TYPE/@Value}"/>
+                    <ApprovalType Value="{$thisParam/NODE_TYPE/@Value}"/>
+                  </DATA>
+                </XML_DATA>
+              </MESSAGE>
+            </REQUEST>
+          </ELSE>
+          <!--User based-->
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="FetchApprovalInbox">
+    <RULE>
+      <ACTION>
+        <SET Var="orderBy_colName" FromValue=""/>
+        <SET Var="paginateStart" FromValue="{$thisParam/paginateStart/@Value}"/>
+        <SET Var="maxRow" FromValue="{$thisParam/maxRow/@Value}"/>
+        <IF_TEST Test="$thisParam/ORDER_BY/* != null">
+          <THEN>
+            <SET Var="orderBy_col" FromValue="{name($thisParam/ORDER_BY/*)}"/>
+            <SET Var="sortOrder" FromValue="{$thisParam/ORDER_BY/*/@Sort}"/>
+            <IF_TEST Test="$sortOrder/@Value = 'Descending'">
+              <THEN>
+                <SET Var="sortOrder" FromValue="DESC"/>
+              </THEN>
+              <ELSE>
+                <SET Var="sortOrder" FromValue="ASC"/>
+              </ELSE>
+            </IF_TEST>
+            <GET_DOC_PROPERTIES ServiceName="APPROVAL" TableName="Alert" AssignToVar="PropertiesVar"/>
+            <FOR_EACH CurrentElement="currProperty" SelectList="$PropertiesVar/DOCUMENT/PROPERTY">
+              <IF_TEST Test="$currProperty/@Name = $orderBy_col/@Value">
+                <THEN>
+                  <!--<SET Var="orderBy_colName" FromValue="{concat('t1.',$currProperty/@ColumnName,' ',$sortOrder/@Value)}"/>-->
+                  <SET Var="orderBy_colName" FromValue="{concat($currProperty/@ColumnName,' ',$sortOrder/@Value)}"/>
+                </THEN>
+              </IF_TEST>
+            </FOR_EACH>
+          </THEN>
+        </IF_TEST>
+        <IF_TEST Test="$orderBy_col/@Value = 'recordCount'">
+          <THEN>
+            <!--<SET Var="orderBy_colName" FromValue="{concat('count(t2.ALERTID)',' ',$sortOrder/@Value)}"/>-->
+            <SET Var="orderBy_colName" FromValue="{concat('count(ALERTID)',' ',$sortOrder/@Value)}"/>
+          </THEN>
+        </IF_TEST>
+        <IF_TEST Test="$orderBy_col/@Value = 'ActionType'">
+          <THEN>
+            <!--<SET Var="orderBy_colName" FromValue="{concat('t1.instance_mode',' ',$sortOrder/@Value)}"/>-->
+            <SET Var="orderBy_colName" FromValue="{concat('instance_mode',' ',$sortOrder/@Value)}"/>
+          </THEN>
+        </IF_TEST>
+        <!-- code added by aishwarya for order by LE starts -->
+        <IF_TEST Test="$orderBy_col/@Value = 'LEGAL_ENT_NAME'">
+          <THEN>
+            <SET Var="orderBy_colName" FromValue="{concat('LEGAL_ENT_NAME',' ',$sortOrder/@Value)}"/>
+          </THEN>
+        </IF_TEST>
+        <!-- code added by aishwarya for order by LE ends -->
+        <IF_TEST Test="strlen(trim($orderBy_colName/@Value)) = 0">
+          <THEN>
+            <!--<SET Var="orderBy_colName" FromValue="{concat('t1.DATE_CREATED',' ',$sortOrder/@Value)}"/>-->
+            <SET Var="orderBy_colName" FromValue="{concat('DATE_CREATED',' ',$sortOrder/@Value)}"/>
+          </THEN>
+        </IF_TEST>
+        <EXECUTE_SQL_QUERY AssignToVar="usrNameResp" Value="LOCKING TABLE USER_PROFILE_T FOR ACCESS LOCKING TABLE USER_UG_RELATION FOR ACCESS LOCKING TABLE USR_GRP_PROFIL FOR ACCESS SELECT distinct A.GRP_NAME AS GRP_NAME FROM USR_GRP_PROFIL A, USER_UG_RELATION B, USER_PROFILE_T E WHERE E.ID = '{$UserId}' AND E.ID=B.USER_ID AND A.ID = B.USER_GRP_ID AND A.STATUS = 'ACTIVE'"/>
+        <SET Var="appRoverID" FromValue=""/>
+        <FOR_EACH CurrentElement="currGrp" SelectList="$usrNameResp/SQL_RESULT">
+          <SET Var="grpName" FromValue="{$currGrp/GRP_NAME/@Value}"/>
+          <SET Var="appRoverID" FromValue="{$appRoverID} t1.APPROVER_ID = '{$currGrp/GRP_NAME/@Value}' or"/>
+          <TO_DOCVAR AssignToVar="usrGrpName">
+            <GRP_NAME Value="{$grpName/@Value}"/>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="thisReturn" FromDocVar="usrGrpName"/>
+        </FOR_EACH>
+        <SET Var="appRoverID1" FromValue="{subString($appRoverID,0,strlen($appRoverID)-2)}"/>
+        <SET Var="str1" FromValue="'"/>
+        <SET Var="str2" FromValue="'Not Assigned'"/>
+        <!--<SET Var="sqlString" FromValue="LOCKING ROW FOR ACCESS SELECT t1.ID,t1.APPROVER_ID,t1.INST_DOC_ID,t1.Instance_Type ,t1.status,t1.NODE_TYPE,t1.DATE_CREATED,t1.instance_mode,t1.INST_LINE_ID as InstanceLineID, count(t2.ALERTID) as recordCount, t2.SUBMITBYID as REQUESTOR GROUP BY t1.ID,t1.APPROVER_ID,t1.INST_DOC_ID,t1.Instance_Type ,t1.status,t1.NODE_TYPE,t1.DATE_CREATED,t1.instance_mode,t1.INST_LINE_ID, t2.SUBMITBYID FROM AW_ALERT t1, AW_DOC_INSTANCE t2 WHERE (t1.APPROVER_ID = '{$thisParam/APPROVER_ID/@Value}' or {$appRoverID1}) AND (t1.STATUS = 'A' ) AND t1.INST_DOC_ID = t2.ALERTID {$thisParam/filterQuery/@Value} order By "/>
+        <SET Var="sqlString" FromValue="{concat($sqlString/@Value, ' ',$orderBy_colName/@Value)}"/>-->
+        <!--<SET Var="sqlString" FromValue="LOCKING ROW FOR ACCESS SELECT t1.ID,t1.APPROVER_ID,t1.INST_DOC_ID,t1.Instance_Type ,t1.status,t1.NODE_TYPE,t1.DATE_CREATED,t1.instance_mode, t1.INST_LINE_ID as InstanceLineID, count(t2.ALERTID) as recordCount, t2.SUBMITBYID as REQUESTOR, t4.LEGAL_ENT_NAME as LEGAL_ENT_NAME GROUP BY t1.ID,t1.APPROVER_ID,t1.INST_DOC_ID,t1.Instance_Type ,t1.status,t1.NODE_TYPE,t1.DATE_CREATED,t1.instance_mode,t1.INST_LINE_ID, t2.SUBMITBYID, t4.LEGAL_ENT_NAME FROM AW_ALERT t1, AW_DOC_INSTANCE t2, AW_DOC_ATTR t3, LEGAL_ENT t4  WHERE (t1.APPROVER_ID = '{$thisParam/APPROVER_ID/@Value}' or {$appRoverID1}) AND (t1.STATUS = 'A' ) AND t1.INST_DOC_ID = t2.ALERTID  AND ( t2.ID = t3.INSTANCEID  AND ( t3.ATTRIBUTEID = 'LEGAL_ENT_NBR' AND t3.ATTRIBUTEVALUE = t4.LEGAL_ENT_NBR )) {$thisParam/filterQuery/@Value}"/>-->
+        <!--<SET Var="sqlString" FromValue="LOCKING ROW FOR ACCESS SELECT ID, APPROVER_ID, INST_DOC_ID, Instance_Type, status, NODE_TYPE, DATE_CREATED, instance_mode, InstanceLineID, recordCount, REQUESTOR, LEGAL_ENT_NAME from ( SELECT t1.ID, CASE WHEN t1.APPROVER_ID != '{$userName}' THEN 'Not Assigned' ELSE '{$userName}' END AS APPROVER_ID ,t1.INST_DOC_ID,t1.Instance_Type ,t1.status,t1.NODE_TYPE,t1.DATE_CREATED,t1.instance_mode, t1.INST_LINE_ID as InstanceLineID, count(t2.ALERTID) as recordCount, t2.SUBMITBYID as REQUESTOR, t4.LEGAL_ENT_NAME as LEGAL_ENT_NAME GROUP BY t1.ID,t1.APPROVER_ID,t1.INST_DOC_ID,t1.Instance_Type ,t1.status,t1.NODE_TYPE,t1.DATE_CREATED,t1.instance_mode,t1.INST_LINE_ID, t2.SUBMITBYID, t4.LEGAL_ENT_NAME FROM AW_ALERT t1, AW_DOC_INSTANCE t2, AW_DOC_ATTR t3, LEGAL_ENT t4  WHERE (t1.APPROVER_ID = '{$thisParam/APPROVER_ID/@Value}' or {$appRoverID1}) AND (t1.STATUS = 'A' ) AND t1.INST_DOC_ID = t2.ALERTID  AND ( t2.ID = t3.INSTANCEID  AND ( t3.ATTRIBUTEID = 'LEGAL_ENT_NBR' AND t3.ATTRIBUTEVALUE = t4.LEGAL_ENT_NBR )) {$thisParam/filterQuery/@Value}"/>-->
+        <SET Var="sqlString" FromValue="{concat('LOCKING ROW FOR ACCESS SELECT ID, APPROVER_ID, INST_DOC_ID, Instance_Type, status, NODE_TYPE, DATE_CREATED, instance_mode, InstanceLineID, recordCount, REQUESTOR, LEGAL_ENT_NAME from ( SELECT t1.ID, CASE WHEN t1.APPROVER_ID NOT IN ( ',$str1,$userName,$str1,' ) THEN ',$str2,' ELSE ',$str1,$userName,$str1,' END AS APPROVER_ID ,t1.INST_DOC_ID,t1.Instance_Type ,t1.status,t1.NODE_TYPE,t1.DATE_CREATED,t1.instance_mode, t1.INST_LINE_ID as InstanceLineID, count(t2.ALERTID) as recordCount, t2.SUBMITBYID as REQUESTOR, t4.LEGAL_ENT_NAME as LEGAL_ENT_NAME GROUP BY t1.ID,t1.APPROVER_ID,t1.INST_DOC_ID,t1.Instance_Type ,t1.status,t1.NODE_TYPE,t1.DATE_CREATED,t1.instance_mode,t1.INST_LINE_ID, t2.SUBMITBYID, t4.LEGAL_ENT_NAME FROM AW_ALERT t1, AW_DOC_INSTANCE t2, AW_DOC_ATTR t3, LEGAL_ENT t4  WHERE (t1.APPROVER_ID = ',$str1,$thisParam/APPROVER_ID/@Value,$str1,' or ',$appRoverID1,' ) AND (t1.STATUS = ',$str1,'A',$str1,') AND t1.INST_DOC_ID = t2.ALERTID  AND ( t2.ID = t3.INSTANCEID  AND ( t3.ATTRIBUTEID = ',$str1,'LEGAL_ENT_NBR',$str1,' AND t3.ATTRIBUTEVALUE = t4.LEGAL_ENT_NBR )) ',$thisParam/filterQuery/@Value)}"/>
+        <SET Var="sqlString" FromValue="{concat($sqlString/@Value, ' UNION ')}"/>
+        <!--<SET Var="sqlString1" FromValue="SELECT t1.ID, CASE WHEN t1.APPROVER_ID != '{$userName}' THEN 'Not Assigned' ELSE '{$userName}' END AS APPROVER_ID ,t1.INST_DOC_ID,t1.Instance_Type ,t1.status,t1.NODE_TYPE,t1.DATE_CREATED,t1.instance_mode, t1.INST_LINE_ID as InstanceLineID, count(t2.ALERTID) as recordCount, t2.SUBMITBYID as REQUESTOR, t4.LEGAL_ENT_NAME as LEGAL_ENT_NAME GROUP BY t1.ID,t1.APPROVER_ID,t1.INST_DOC_ID,t1.Instance_Type ,t1.status,t1.NODE_TYPE,t1.DATE_CREATED,t1.instance_mode,t1.INST_LINE_ID, t2.SUBMITBYID, t4.LEGAL_ENT_NAME FROM AW_ALERT t1, AW_DOC_INSTANCE t2, AW_DOC_ATTR t3, MKTNG_PGM t5, LEGAL_ENT t4 WHERE (t1.APPROVER_ID = '{$thisParam/APPROVER_ID/@Value}' or {$appRoverID1}) AND (t1.STATUS = 'A' ) AND t1.INST_DOC_ID = t2.ALERTID  AND ( t2.ID = t3.INSTANCEID  AND ( t3.ATTRIBUTEID = 'MKTNG_PGM_NBR' AND t3.ATTRIBUTEVALUE = t5.MKTNG_PGM_NBR AND t1.INSTANCE_TYPE = 'TRT_IN') AND t5.LEGAL_ENT_NBR = t4.LEGAL_ENT_NBR) {$thisParam/filterQuery/@Value}"/>-->
+        <SET Var="sqlString1" FromValue="{concat('SELECT t1.ID, CASE WHEN t1.APPROVER_ID NOT IN ( ',$str1,$userName,$str1,' ) THEN ',$str2,' ELSE ',$str1,$userName,$str1,' END AS APPROVER_ID ,t1.INST_DOC_ID,t1.Instance_Type ,t1.status,t1.NODE_TYPE,t1.DATE_CREATED,t1.instance_mode, t1.INST_LINE_ID as InstanceLineID, count(t2.ALERTID) as recordCount, t2.SUBMITBYID as REQUESTOR, t4.LEGAL_ENT_NAME as LEGAL_ENT_NAME GROUP BY t1.ID,t1.APPROVER_ID,t1.INST_DOC_ID,t1.Instance_Type ,t1.status,t1.NODE_TYPE,t1.DATE_CREATED,t1.instance_mode,t1.INST_LINE_ID, t2.SUBMITBYID, t4.LEGAL_ENT_NAME FROM AW_ALERT t1, AW_DOC_INSTANCE t2, AW_DOC_ATTR t3, MKTNG_PGM t5, LEGAL_ENT t4 WHERE (t1.APPROVER_ID = ',$str1,$thisParam/APPROVER_ID/@Value,$str1,' or ',$appRoverID1,' ) AND (t1.STATUS = ',$str1,'A',$str1,' ) AND t1.INST_DOC_ID = t2.ALERTID  AND ( t2.ID = t3.INSTANCEID  AND ( t3.ATTRIBUTEID = ',$str1,'MKTNG_PGM_NBR',$str1,' AND t3.ATTRIBUTEVALUE = t5.MKTNG_PGM_NBR AND t1.INSTANCE_TYPE = ',$str1,'TRT_IN',$str1,' ) AND t5.LEGAL_ENT_NBR = t4.LEGAL_ENT_NBR) ',$thisParam/filterQuery/@Value)}"/>
+        <SET Var="sqlString" FromValue="{concat($sqlString/@Value, ' ',$sqlString1/@Value)}"/>
+        <SET Var="sqlString" FromValue="{concat($sqlString/@Value, ' ) t order by ',$orderBy_colName/@Value)}"/>
+        <EXECUTE_SQL_QUERY Value="{$sqlString/@Value}" AssignToVar="ApprovalInbox" ReturnRowCount="yes"/>
+        <SET Var="count" FromValue="0"/>
+        <TO_DOCVAR AssignToVar="approvalInboxRecord">
+          <RESPONSE/>
+        </TO_DOCVAR>
+        <SET Var="TotalRowCount" FromValue="{$ApprovalInbox/@TotalRowCount}"/>
+        <FOR_EACH SelectList="$ApprovalInbox/SQL_RESULT" CurrentElement="currentElement">
+          <REQUEST Name="GetApprovalUserType" ServiceName="ADMIN_UI" AssignToVar="ApprovalUserType">
+            <ID Value="{$currentElement/INST_DOC_ID/@Value}"/>
+          </REQUEST>
+          <IF_TEST Test="$count&lt;$paginateStart">
+            <THEN>
+              <IF_TEST Test="($ApprovalUserType/ApprovalUserType/@Value='User Based') and ($userName/@Value = $currentElement/APPROVER_ID/@Value)">
+                <THEN>
+                  <SET Var="count" FromValue="{int($count + 1)}"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="($ApprovalUserType/ApprovalUserType/@Value='User Group Based')">
+                <THEN>
+                  <SET Var="count" FromValue="{int($count + 1)}"/>
+                </THEN>
+              </IF_TEST>
+              <CONTINUE/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$count>=int($paginateStart+10)">
+            <THEN>
+              <IF_TEST Test="($ApprovalUserType/ApprovalUserType/@Value='User Based') and ($userName/@Value = $currentElement/APPROVER_ID/@Value)">
+                <THEN>
+                  <SET Var="count" FromValue="{int($count + 1)}"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="($ApprovalUserType/ApprovalUserType/@Value='User Group Based')">
+                <THEN>
+                  <SET Var="count" FromValue="{int($count + 1)}"/>
+                </THEN>
+              </IF_TEST>
+              <CONTINUE/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="($count>=$paginateStart) and ($count&lt;int($paginateStart+10))">
+            <THEN>
+              <IF_TEST Test="($ApprovalUserType/ApprovalUserType/@Value='User Based') and ($userName/@Value = $currentElement/APPROVER_ID/@Value)">
+                <THEN>
+                  <SET Var="count" FromValue="{int($count + 1)}"/>
+                  <ADD_CHILDREN DocVar="approvalInboxRecord" FromDocVar="currentElement"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="($ApprovalUserType/ApprovalUserType/@Value='User Group Based')">
+                <THEN>
+                  <SET Var="count" FromValue="{int($count + 1)}"/>
+                  <ADD_CHILDREN DocVar="approvalInboxRecord" FromDocVar="currentElement"/>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+        </FOR_EACH>
+        <SET Attribute="TotalRowCount" DocVar="approvalInboxRecord" FromValue="{$count}"/>
+        <TO_DOCVAR AssignToVar="thisReturn">
+          <RESPONSE>
+            <TO_XML DocVar="approvalInboxRecord"/>
+          </RESPONSE>
+        </TO_DOCVAR>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="FetchApprovalHistory">
+    <RULE>
+      <ACTION>
+        <SET Var="orderBy_colName" FromValue=""/>
+        <SET Var="paginateStart" FromValue="{$thisParam/paginateStart/@Value}"/>
+        <SET Var="maxRow" FromValue="{$thisParam/maxRow/@Value}"/>
+        <IF_TEST Test="$thisParam/ORDER_BY/* != null">
+          <THEN>
+            <SET FromValue="{name($thisParam/ORDER_BY/*)}" Var="orderBy_col"/>
+            <SET FromValue="{$thisParam/ORDER_BY/*/@Sort}" Var="sortOrder"/>
+            <IF_TEST Test="$sortOrder/@Value = 'Descending'">
+              <THEN>
+                <SET FromValue="DESC" Var="sortOrder"/>
+              </THEN>
+              <ELSE>
+                <SET FromValue="ASC" Var="sortOrder"/>
+              </ELSE>
+            </IF_TEST>
+            <GET_DOC_PROPERTIES ServiceName="APPROVAL" TableName="Alert" AssignToVar="PropertiesVar"/>
+            <FOR_EACH SelectList="$PropertiesVar/DOCUMENT/PROPERTY" CurrentElement="currProperty">
+              <IF_TEST Test="$currProperty/@Name = $orderBy_col/@Value">
+                <THEN>
+                  <!--<SET FromValue="{concat('t1.',$currProperty/@ColumnName,' ',$sortOrder/@Value)}" Var="orderBy_colName"/>-->
+                  <SET FromValue="{concat($currProperty/@ColumnName,' ',$sortOrder/@Value)}" Var="orderBy_colName"/>
+                </THEN>
+                <ELSE/>
+              </IF_TEST>
+            </FOR_EACH>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+        <IF_TEST Test="$orderBy_col/@Value = 'recordCount'">
+          <THEN>
+            <!--<SET Var="orderBy_colName" FromValue="{concat('count(t2.ALERTID)',' ',$sortOrder/@Value)}"/>-->
+            <SET Var="orderBy_colName" FromValue="{concat('count(ALERTID)',' ',$sortOrder/@Value)}"/>
+          </THEN>
+        </IF_TEST>
+        <IF_TEST Test="$orderBy_col/@Value = 'ActionType'">
+          <THEN>
+            <!--<SET Var="orderBy_colName" FromValue="{concat('t1.instance_mode',' ',$sortOrder/@Value)}"/>-->
+            <SET Var="orderBy_colName" FromValue="{concat('instance_mode',' ',$sortOrder/@Value)}"/>
+          </THEN>
+        </IF_TEST>
+        <!-- code added by aishwarya for order by LE starts -->
+        <IF_TEST Test="$orderBy_col/@Value = 'LEGAL_ENT_NAME'">
+          <THEN>
+            <SET Var="orderBy_colName" FromValue="{concat('LEGAL_ENT_NAME',' ',$sortOrder/@Value)}"/>
+          </THEN>
+        </IF_TEST>
+        <!-- code added by aishwarya for order by LE ends -->
+        <IF_TEST Test="strlen(trim($orderBy_colName/@Value)) = 0">
+          <THEN>
+            <!--<SET FromValue="{concat('t1.DATE_CREATED',' ',$sortOrder/@Value)}" Var="orderBy_colName"/>-->
+            <SET FromValue="{concat('DATE_CREATED',' ',$sortOrder/@Value)}" Var="orderBy_colName"/>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+        <!--<EXECUTE_SQL_QUERY AssignToVar="usrNameResp" Value="LOCKING TABLE USER_PROFILE_T FOR ACCESS LOCKING TABLE USER_UG_RELATION FOR ACCESS LOCKING TABLE USR_GRP_PROFIL FOR ACCESS SELECT distinct A.GRP_NAME AS GRP_NAME FROM USR_GRP_PROFIL A, USER_UG_RELATION B, USER_PROFILE_T E WHERE E.ID = '{$UserId}' AND E.ID=B.USER_ID AND A.ID = B.USER_GRP_ID AND A.STATUS = 'ACTIVE'"/>
+        <FOR_EACH CurrentElement="currGrp" SelectList="$usrNameResp/SQL_RESULT">
+          <SET Var="grpName" FromValue="{$currGrp/GRP_NAME/@Value}"/>
+          <TO_DOCVAR AssignToVar="usrGrpName">
+            <GRP_NAME Value="{$grpName/@Value}"/>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="thisReturn" FromDocVar="usrGrpName"/>
+        </FOR_EACH>-->
+        <!-- <SET FromValue="LOCKING ROW FOR ACCESS SELECT t1.INST_DOC_ID,t1.INSTANCE_TYPE,t1.STATUS,t1.NODE_TYPE,t1.DATE_CREATED,t1.STATUS,t1.COMMENTS,t1.instance_mode,t1.INST_LINE_ID as InstanceLineID, count(t2.ALERTID) as recordCount, t2.SUBMITBYID as REQUESTOR GROUP BY t1.INST_DOC_ID,t1.INSTANCE_TYPE,t1.STATUS,t1.NODE_TYPE,t1.DATE_CREATED,t1.STATUS,t1.COMMENTS,t1.instance_mode,t1.INST_LINE_ID, t2.SUBMITBYID FROM AW_APPR_HIST t1, AW_DOC_INSTANCE t2 WHERE (t1.APPROVER_ID = '{$thisParam/APPROVER_ID/@Value}') AND t1.INST_DOC_ID = t2.ALERTID {$thisParam/filterQuery/@Value} ORDER BY " Var="sqlString"/>
+        <SET FromValue="{concat($sqlString/@Value, ' ',$orderBy_colName/@Value)}" Var="sqlString"/>-->
+        <SET Var="sqlString" FromValue="LOCKING ROW FOR ACCESS SELECT INST_DOC_ID, INSTANCE_TYPE, STATUS, NODE_TYPE, DATE_CREATED, COMMENTS, instance_mode, InstanceLineID, recordCount, REQUESTOR, LEGAL_ENT_NAME from ( SELECT t1.INST_DOC_ID,t1.INSTANCE_TYPE,t1.STATUS,t1.NODE_TYPE,t1.DATE_CREATED,t1.COMMENTS,t1.instance_mode, t1.INST_LINE_ID as InstanceLineID, count(t2.ALERTID) as recordCount, t2.SUBMITBYID as REQUESTOR, t4.LEGAL_ENT_NAME as LEGAL_ENT_NAME GROUP BY t1.INST_DOC_ID,t1.INSTANCE_TYPE,t1.STATUS,t1.NODE_TYPE,t1.DATE_CREATED,t1.COMMENTS,t1.instance_mode,t1.INST_LINE_ID, t2.SUBMITBYID, t4.LEGAL_ENT_NAME  FROM AW_APPR_HIST t1, AW_DOC_INSTANCE t2, AW_DOC_ATTR t3, LEGAL_ENT t4  WHERE (t1.APPROVER_ID = '{$thisParam/APPROVER_ID/@Value}') AND t1.INST_DOC_ID = t2.ALERTID AND ( t2.ID = t3.INSTANCEID AND ( t3.ATTRIBUTEID = 'LEGAL_ENT_NBR' AND t3.ATTRIBUTEVALUE = t4.LEGAL_ENT_NBR ))  {$thisParam/filterQuery/@Value}"/>
+        <SET Var="sqlString" FromValue="{concat($sqlString/@Value, ' UNION ')}"/>
+        <SET Var="sqlString1" FromValue="SELECT t1.INST_DOC_ID,t1.INSTANCE_TYPE,t1.STATUS,t1.NODE_TYPE,t1.DATE_CREATED,t1.COMMENTS,t1.instance_mode, t1.INST_LINE_ID as InstanceLineID, count(t2.ALERTID) as recordCount, t2.SUBMITBYID as REQUESTOR, t4.LEGAL_ENT_NAME as LEGAL_ENT_NAME GROUP BY t1.INST_DOC_ID,t1.INSTANCE_TYPE,t1.STATUS,t1.NODE_TYPE,t1.DATE_CREATED,t1.COMMENTS,t1.instance_mode,t1.INST_LINE_ID, t2.SUBMITBYID, t4.LEGAL_ENT_NAME FROM AW_APPR_HIST t1, AW_DOC_INSTANCE t2, AW_DOC_ATTR t3, MKTNG_PGM t5, LEGAL_ENT t4 WHERE (t1.APPROVER_ID = '{$thisParam/APPROVER_ID/@Value}') AND t1.INST_DOC_ID = t2.ALERTID AND ( t2.ID = t3.INSTANCEID  AND ( t3.ATTRIBUTEID = 'MKTNG_PGM_NBR' AND t3.ATTRIBUTEVALUE = t5.MKTNG_PGM_NBR AND t1.INSTANCE_TYPE = 'TRT_IN') AND t5.LEGAL_ENT_NBR = t4.LEGAL_ENT_NBR)  {$thisParam/filterQuery/@Value}"/>
+        <SET Var="sqlString" FromValue="{concat($sqlString/@Value, ' ',$sqlString1/@Value)}"/>
+        <SET Var="sqlString" FromValue="{concat($sqlString/@Value, ' ) t order by ',$orderBy_colName/@Value)}"/>
+        <EXECUTE_SQL_QUERY Value="{$sqlString/@Value}" AssignToVar="ApprovalInbox" StartAtRow="{string($paginateStart)}" ReturnRowCount="yes" MaxRows="{string($maxRow)}">
+        </EXECUTE_SQL_QUERY>
+        <TO_DOCVAR AssignToVar="thisReturn">
+          <SAMPLE_XML>
+            <TO_XML DocVar="ApprovalInbox"/>
+          </SAMPLE_XML>
+        </TO_DOCVAR>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="GetApprovalRecord">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="DocumentInstance" ServiceName="APPROVAL" AssignToVar="documentInstance" ReturnRowCount="yes" DirtyRead="true">
+          <AlertID Value="{$thisParam/DocumentInstanceID/@Value}"/>
+        </GET_DOCUMENT>
+        <GET_DOCUMENT Name="DocumentAttributes" ServiceName="APPROVAL" AssignToVar="docAttribute" ReturnRowCount="yes" DirtyRead="true">
+          <InstanceID Value="{$documentInstance/DocumentInstance/ID/@Value}"/>
+          <ORDER_BY>
+            <ID/>
+          </ORDER_BY>
+        </GET_DOCUMENT>
+        <GET_DOC_PROPERTIES TableName="{$documentInstance/DocumentInstance/DocumentType/@Value}" ServiceName="BCM_MASTER" AssignToVar="DocPropertiesVar" HandleException="true"/>
+        <TO_DOCVAR AssignToVar="pkCols">
+          <ROOT/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$DocPropertiesVar/DOCUMENT/PROPERTY" CurrentElement="currColumn">
+          <IF_TEST Test="$currColumn/@PrimaryKey != null">
+            <THEN>
+              <SET Var="colName" FromValue=""/>
+              <TO_DOCVAR AssignToVar="tempVar">
+                <tempVar/>
+              </TO_DOCVAR>
+              <FOR_EACH SelectList="$docAttribute/DocumentAttributes" CurrentElement="currElement">
+                <IF_TEST Test="$currElement/AttributeID/@Value = $currColumn/@Name">
+                  <THEN>
+                    <SET DocVar="tempVar" Property="{$currColumn/@Name}" FromValue="{$currElement/AttributeValue/@Value}"/>
+                    <ADD_CHILDREN DocVar="pkCols" FromSelectList="$tempVar/*"/>
+                    <BREAK/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+        </FOR_EACH>
+        <GET_DOCUMENT Name="{$documentInstance/DocumentInstance/DocumentType/@Value}" ServiceName="BCM_MASTER" AssignToVar="approvalRecord" ReturnRowCount="true" DirtyRead="true">
+          <TO_XML SelectList="$pkCols/*"/>
+          <ENTITY_STATE Value="ACTIVE"/>
+        </GET_DOCUMENT>
+        <TO_DOCVAR AssignToVar="thisReturn">
+          <ROOT>
+            <TO_XML SelectList="$approvalRecord"/>
+          </ROOT>
+        </TO_DOCVAR>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getPKColumns">
+    <RULE>
+      <ACTION>
+        <FOR_EACH SelectList="$thisParam/Column/*" CurrentElement="currSelID">
+          <TO_DOCVAR AssignToVar="records">
+            <RECORD/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$currSelID/name() = 'SELECTED_ID'">
+            <THEN>
+              <SET Var="tempPK" FromValue="{strSplit($currSelID/@Value,'#')}"/>
+              <FOR_EACH SelectList="$tempPK/*" CurrentElement="currElement">
+                <IF_TEST Test="$currElement/@Value != ''">
+                  <THEN>
+                    <SET Var="PKCols" FromValue="{strSplit($currElement/@Value,'=')}"/>
+                    <SET_NAME DocVar="currElement" FromValue="{$PKCols/TOKEN[1]/@Value}"/>
+                    <SET Attribute="Value" DocVar="currElement" FromValue="{$PKCols/TOKEN[2]/@Value}"/>
+                    <SET DocVar="temp" FromDocVar="currElement"/>
+                    <ADD_CHILDREN DocVar="records" FromDocVar="temp"/>
+                  </THEN>
+                </IF_TEST>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+          <ADD_CHILDREN DocVar="thisReturn" FromDocVar="records"/>
+        </FOR_EACH>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="CheckPendingApproval">
+    <!--
+SAMPLE VALUE for thisParam:-
+    
+<REQUEST Name="CheckPendingApproval" name="//ADMIN_UI/CheckPendingApproval" entireResponse="true" UserId="USR_1" ScenarioId="0" SysSource="UI">
+<Column>
+<RECORD>
+<IndividualId Value="1"/>
+<PartyTypeCd Value="A"/>
+</RECORD>
+</Column>
+<DocumentName>
+<TABLE_NAME Value="INDIVIDUAL_PARTY"/>
+</DocumentName>
+<DocumentOperation Value="UPDATE"/>
+</REQUEST>
+-->
+    <RULE>
+      <ACTION>
+        <SET Var="rowCount" FromValue="0"/>
+        <!--EXEC_PROC Name="EXECUTE_CHECK_APPROVAL" AssignToVar="ExecResults" HandleException="true">
+          <document_name Type="IN" Value="{$thisParam/DocumentName/TABLE_NAME/@Value}" DataType="string"/>
+          <operation_name Type="IN" Value="{$thisParam/DocumentOperation/@Value}" DataType="string"/>
+          <appr_gr_type Type="OUT" Value="appr_gr_type" DataType="string"/>
+        </EXEC_PROC>
+        <IF_TEST Test="$ExecResults/appr_gr_type/@Value = 'Serial' or $ExecResults/appr_gr_type/@Value = 'Parallel'">
+          <THEN-->
+        <IF_TEST Test="$thisParam/DocumentName/SERVICE_NAME/@Value != null">
+          <THEN>
+            <SET Var="serviceName" FromValue="{$thisParam/DocumentName/SERVICE_NAME/@Value}"/>
+          </THEN>
+          <ELSE>
+            <SET Var="serviceName" FromValue="BCM_MASTER"/>
+          </ELSE>
+        </IF_TEST>
+        <GET_DOC_PROPERTIES TableName="{$thisParam/DocumentName/TABLE_NAME/@Value}" ServiceName="{$serviceName/@Value}" AssignToVar="getDocResponse"/>
+        <FOR_EACH SelectList="$thisParam/Column/*" CurrentElement="currRecord">
+          <SET Var="clause" FromValue=""/>
+          <SET Var="count" FromValue="1"/>
+          <FOR_EACH SelectList="$currRecord/*" CurrentElement="currElement">
+            <FOR_EACH CurrentElement="currDocElem" SelectList="$getDocResponse/DOCUMENT/PROPERTY">
+              <IF_TEST Test="$currDocElem/@Name = $currElement/name()">
+                <THEN>
+                  <IF_TEST Test="$currDocElem/@Type ='timestamp'">
+                    <THEN>
+                      <SET Var="timeValue" FromValue="{trim($currElement/@Value)}"/>
+                      <SET Var="dbFormat" FromValue="MM/dd/yyyy HH:mm:ss"/>
+                      <SET Var="timeFormat" FromValue="MM/dd/yyyy HH:mm:ss"/>
+                      <NATIVE_FUNCTION ClassName="com.teradata.xservice.userSecurity.DynamicPGLGenerator" MethodName="parseDate" AssignToVar="nativeReturn">
+                        <PARAM Var="timeValue" Caption="date"/>
+                        <PARAM Var="timeFormat" Caption="format"/>
+                        <PARAM Var="dbFormat" Caption="dbFormat"/>
+                      </NATIVE_FUNCTION>
+                      <SET Attribute="Value" DocVar="currElement" FromValue="{$nativeReturn/@Value}"/>
+                    </THEN>
+                    <ELSE>
+                      <IF_TEST Test="$currDocElem/@Type ='date'">
+                        <THEN>
+                          <SET Var="timeValue" FromValue="{trim($currElement/@Value)}"/>
+                          <SET Var="dbFormat" FromValue="MM/dd/yyyy"/>
+                          <SET Var="dateFormat" FromValue="MM/dd/yyyy"/>
+                          <NATIVE_FUNCTION ClassName="com.teradata.xservice.userSecurity.DynamicPGLGenerator" MethodName="parseDate" AssignToVar="nativeReturn">
+                            <PARAM Var="timeValue" Caption="date"/>
+                            <PARAM Var="dateFormat" Caption="format"/>
+                            <PARAM Var="dbFormat" Caption="dbFormat"/>
+                          </NATIVE_FUNCTION>
+                          <SET Attribute="Value" DocVar="currElement" FromValue="{$nativeReturn/@Value}"/>
+                        </THEN>
+                      </IF_TEST>
+                    </ELSE>
+                  </IF_TEST>
+                  <BREAK/>
+                </THEN>
+              </IF_TEST>
+            </FOR_EACH>
+            <SET Var="apso" FromValue="'"/>
+            <IF_TEST Test="contains($currElement/@Value,$apso)">
+              <THEN>
+                <SET Var="replaceWith" FromValue="''"/>
+                <SET DocVar="currElement" Attribute="Value" FromValue="{strReplaceAll($currElement/@Value,$apso,$replaceWith)}"/>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="$count = 1">
+              <THEN>
+                <SET Var="clause" FromValue="(select INSTANCEID from AW_DOC_ATTR where ATTRIBUTEID = '{$currElement/name()}' and ATTRIBUTEVALUE = '{$currElement/@Value}' ) v{$count}"/>
+              </THEN>
+              <ELSE>
+                <SET Var="tempClause" FromValue=" INNER JOIN (select INSTANCEID from AW_DOC_ATTR where ATTRIBUTEID = '{$currElement/name()}' and ATTRIBUTEVALUE = '{$currElement/@Value}' ) v{$count}"/>
+                <SET Var="clause" FromValue="{concat($clause,$tempClause, ' on v', $count,'.INSTANCEID=v',$prevIndex,'.INSTANCEID ')}"/>
+              </ELSE>
+            </IF_TEST>
+            <SET Var="prevIndex" FromValue="{$count}"/>
+            <SET Var="count" FromValue="{int($count+1)}"/>
+          </FOR_EACH>
+          <SET Var="clause" FromValue="{concat('Select v1.INSTANCEID From ',$clause)}"/>
+          <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS select count(*) as CNT from AW_DOC_INSTANCE where ID IN ({$clause}) and DOCUMENTTYPE = '{$thisParam/DocumentName/TABLE_NAME/@Value}' and STATUS = 'UnderApproval'" AssignToVar="recToBeChecked" HandleException="true"/>
+          <IF_TEST Test="$recToBeChecked/SQL_RESULT/CNT/@Value >= '1'">
+            <THEN>
+              <SET Var="rowCount" FromValue="1"/>
+              <BREAK/>
+            </THEN>
+          </IF_TEST>
+        </FOR_EACH>
+        <!--/THEN>
+        </IF_TEST-->
+        <TO_DOCVAR AssignToVar="thisReturn">
+          <ROWCOUNT Value="{$rowCount}"/>
+        </TO_DOCVAR>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="CheckPendingApprovalAllRecords">
+    <RULE>
+      <ACTION>
+        <SET Var="rowCount" FromValue="0"/>
+        <EXEC_PROC Name="EXECUTE_CHECK_APPROVAL" AssignToVar="ExecResults" HandleException="true">
+          <document_name Type="IN" Value="{$thisParam/DocumentName/TABLE_NAME/@Value}" DataType="string"/>
+          <operation_name Type="IN" Value="{$thisParam/DocumentOperation/@Value}" DataType="string"/>
+          <appr_gr_type Type="OUT" Value="appr_gr_type" DataType="string"/>
+        </EXEC_PROC>
+        <IF_TEST Test="$ExecResults/appr_gr_type/@Value = 'Serial' or $ExecResults/appr_gr_type/@Value = 'Parallel'">
+          <THEN>
+            <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS select count(*) as CNT from AW_DOC_INSTANCE where DOCUMENTTYPE = '{$thisParam/DocumentName/TABLE_NAME/@Value}' and STATUS = 'UnderApproval'" AssignToVar="recToBeChecked"/>
+            <IF_TEST Test="$recToBeChecked/SQL_RESULT/CNT/@Value >= '1'">
+              <THEN>
+                <SET Var="rowCount" FromValue="1"/>
+              </THEN>
+            </IF_TEST>
+          </THEN>
+        </IF_TEST>
+        <TO_DOCVAR AssignToVar="thisReturn">
+          <ROWCOUNT Value="{$rowCount}"/>
+        </TO_DOCVAR>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <!--for role based approval-->
+  <DEFINE_METHOD Name="getMdmAllUser">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="mdmUsres">
+          <RESPONSE/>
+        </TO_DOCVAR>
+        <GET_DOCUMENT Name="USER_PROFILE" ServiceName="USER_SECURITY" AssignToVar="allUsres" DirtyRead="true">
+          <STATUS Value="ACTIVE"/>
+          <SELECT>
+            <LOGIN_NAME/>
+          </SELECT>
+        </GET_DOCUMENT>
+        <FOR_EACH CurrentElement="currUser" SelectList="$allUsres/*">
+          <SET Var="loginName" FromValue="{$currUser/LOGIN_NAME/@Value}"/>
+          <TO_DOCVAR AssignToVar="userNameList">
+            <LOGIN_NAME Value="{$loginName/@Value}"/>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="mdmUsres" FromDocVar="userNameList"/>
+        </FOR_EACH>
+        <APPEND_TO_XML SelectList="$thisReturn">
+          <TO_XML SelectList="$mdmUsres/*"/>
+        </APPEND_TO_XML>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getMdmAllUserGrp">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="mdmUsrGrp">
+          <RESPONSE/>
+        </TO_DOCVAR>
+        <GET_DOCUMENT Name="USER_GRP_PROFILE" ServiceName="USER_SECURITY" AssignToVar="allUsrGrp" DirtyRead="true">
+          <STATUS Value="ACTIVE"/>
+          <SELECT>
+            <GRP_NAME/>
+          </SELECT>
+        </GET_DOCUMENT>
+        <FOR_EACH CurrentElement="currUsrGrp" SelectList="$allUsrGrp/*">
+          <SET Var="grpName" FromValue="{$currUsrGrp/GRP_NAME/@Value}"/>
+          <TO_DOCVAR AssignToVar="grpNameList">
+            <GRP_NAME Value="{$grpName/@Value}"/>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="mdmUsrGrp" FromDocVar="grpNameList"/>
+        </FOR_EACH>
+        <APPEND_TO_XML SelectList="$thisReturn">
+          <TO_XML SelectList="$mdmUsrGrp/*"/>
+        </APPEND_TO_XML>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getAllUsersForGrp">
+    <RULE>
+      <ACTION>
+        <EXECUTE_SQL_QUERY AssignToVar="usrNameResp" Value="LOCKING TABLE USER_PROFILE_T FOR ACCESS LOCKING TABLE USER_UG_RELATION FOR ACCESS LOCKING TABLE USR_GRP_PROFIL FOR ACCESS SELECT distinct A.GRP_NAME AS GRP_NAME FROM USR_GRP_PROFIL A, USER_UG_RELATION B, USER_PROFILE_T E WHERE E.ID = '{$userId}' AND E.ID=B.USER_ID AND A.ID = B.USER_GRP_ID AND A.STATUS = 'ACTIVE'"/>
+        <FOR_EACH CurrentElement="currGrp" SelectList="$usrNameResp/SQL_RESULT">
+          <SET Var="grpName" FromValue="{$currGrp/GRP_NAME/@Value}"/>
+          <TO_DOCVAR AssignToVar="usrGrpName">
+            <ApproverID Value="{$grpName/@Value}"/>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="thisReturn" FromDocVar="usrGrpName"/>
+        </FOR_EACH>
+        <SET Var="ApproverID" FromValue="{$userName}"/>
+        <APPEND_TO_XML SelectList="$thisReturn">
+          <ApproverID Value="{$ApproverID}"/>
+        </APPEND_TO_XML>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getGrpMembers">
+    <RULE>
+      <ACTION>
+        <EXECUTE_SQL_QUERY AssignToVar="usrNameResp" Value="LOCKING ROW FOR ACCESS SELECT T1.USER_ID FROM USER_UG_RELATION T1, USR_GRP_PROFIL T2  WHERE T1.USER_GRP_ID = T2.ID and T2.GRP_NAME = '{$thisParam/userName/@Value}'"/>
+        <FOR_EACH CurrentElement="currGrp" SelectList="$usrNameResp/SQL_RESULT">
+          <SET Var="grpName" FromValue="{$currGrp/USER_ID/@Value}"/>
+          <TO_DOCVAR AssignToVar="usrGrpName">
+            <ApproverID Value="{$grpName/@Value}"/>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="thisReturn" FromDocVar="usrGrpName"/>
+        </FOR_EACH>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="GetApprovalUserType">
+    <RULE>
+      <ACTION>
+        <IF_TEST Test="$thisParam/ID/@Value != null">
+          <THEN>
+            <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT A.DATA FROM WFL_INSTANCE A, AW_USER_NODES B  WHERE A.ID=B.WORKFLOW_ID AND B.INST_DOC_ID = '{$thisParam/ID/@Value}'" AssignToVar="SerialData">
+            </EXECUTE_SQL_QUERY>
+            <SET Var="curData" FromSelect="$SerialData/SQL_RESULT/DATA/@Value"/>
+            <SET Var="tokenName" FromValue="ApprovalGroups"/>
+            <NATIVE_FUNCTION ClassName="com.teradata.xservice.approval.WFLInstanceDataParser" MethodName="getVariables" AssignToVar="contextObject">
+              <PARAM Var="curData" Caption="data"/>
+              <PARAM Var="tokenName" Caption="tokenName"/>
+            </NATIVE_FUNCTION>
+            <STRING_TO_XML FromSelect="$contextObject" DocVar="ApprovalGroupsObj"/>
+            <IF_TEST Test="$ApprovalGroupsObj/Approval_Groups/IS_ROLE/@Value = null">
+              <THEN>
+                <APPEND_TO_XML SelectList="$thisReturn">
+                  <ApprovalUserType Value="User Based"/>
+                </APPEND_TO_XML>
+              </THEN>
+              <ELSE>
+                <APPEND_TO_XML SelectList="$thisReturn">
+                  <ApprovalUserType Value="{$ApprovalGroupsObj/Approval_Groups/IS_ROLE/@Value}"/>
+                </APPEND_TO_XML>
+              </ELSE>
+            </IF_TEST>
+          </THEN>
+          <ELSE>
+            <EXECUTE_SQL_QUERY AssignToVar="Type" Value="LOCKING ROW FOR ACCESS SELECT IS_ROLE FROM AW_APPROVAL_GROUPS WHERE EVENT_NAME='{$thisParam/EVENT_NAME/@Value}' and (ACTION_TYPE='{$thisParam/ACTION_TYPE/@Value}' or ACTION_TYPE='ALL')"/>
+            <IF_TEST Test="$Type/SQL_RESULT/IS_ROLE/@Value = null">
+              <THEN>
+                <APPEND_TO_XML SelectList="$thisReturn">
+                  <ApprovalUserType Value="User Based"/>
+                </APPEND_TO_XML>
+              </THEN>
+              <ELSE>
+                <APPEND_TO_XML SelectList="$thisReturn">
+                  <ApprovalUserType Value="{$Type/SQL_RESULT/IS_ROLE/@Value}"/>
+                </APPEND_TO_XML>
+              </ELSE>
+            </IF_TEST>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="AssignToMyself">
+    <RULE>
+      <ACTION>
+        <REQUEST Name="getUser" ServiceName="USER_SECURITY" AssignToVar="currUser">
+          <ID Value="{$userId}"/>
+        </REQUEST>
+        <IF_TEST Test="$thisParam/User/@Value != null">
+          <THEN>
+            <MODIFY_DOCUMENT Name="Alert" ServiceName="APPROVAL" AssignToVar="curAlert" DirtyRead="true" ReturnRowCount="yes">
+              <DOCUMENT_CONTEXT>
+                <InstanceDocID Value="{$thisParam/selected_ID/@Value}"/>
+                <ApproverID Value="{$thisParam/User/@Value}"/>
+                <Status Value="A"/>
+              </DOCUMENT_CONTEXT>
+              <UPDATE_PROPERTIES>
+                <ApproverID Value="{$currUser/USER_PROFILE/LOGIN_NAME/@Value}"/>
+              </UPDATE_PROPERTIES>
+            </MODIFY_DOCUMENT>
+          </THEN>
+          <ELSE>
+            <REQUEST Name="getAllUsersForGrp" AssignToVar="userNameResp" ServiceName="ADMIN_UI"/>
+            <MODIFY_DOCUMENT Name="Alert" ServiceName="APPROVAL" AssignToVar="curAlert" DirtyRead="true" ReturnRowCount="yes">
+              <DOCUMENT_CONTEXT>
+                <InstanceDocID Value="{$thisParam/selected_ID/@Value}"/>
+                <OR>
+                  <TO_XML SelectList="$userNameResp/*"/>
+                </OR>
+                <Status Value="A"/>
+              </DOCUMENT_CONTEXT>
+              <UPDATE_PROPERTIES>
+                <ApproverID Value="{$currUser/USER_PROFILE/LOGIN_NAME/@Value}"/>
+              </UPDATE_PROPERTIES>
+            </MODIFY_DOCUMENT>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="sendMail2ApprovedUsers">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="ApprovedUsers">
+          <APPROVED_USER/>
+        </TO_DOCVAR>
+        <IF_TEST Test="$thisParam/ApprovalType/@Value='Serial'">
+          <THEN>
+            <GET_DOCUMENT Name="ApprovalHistory" AssignToVar="ApprovalHistory" ServiceName="APPROVAL" Distinct="true" DirtyRead="true">
+              <InstanceDocID Value="{$thisParam/ID/@Value}"/>
+              <SELECT>
+                <ApproverID/>
+              </SELECT>
+            </GET_DOCUMENT>
+            <FOR_EACH SelectList="$ApprovalHistory/ApprovalHistory" CurrentElement="currApprover">
+              <GET_DOCUMENT AssignToVar="curDetails" Name="USER_PROFILE" ServiceName="USER_SECURITY" Distinct="true" DirtyRead="true">
+                <LOGIN_NAME Value="{$currApprover/ApproverID/@Value}"/>
+              </GET_DOCUMENT>
+              <REQUEST Name="getUser" ServiceName="USER_SECURITY" AssignToVar="approverDetails" ReturnRowCount="true">
+                <ID Value="{$curDetails/USER_PROFILE/ID/@Value}"/>
+              </REQUEST>
+              <APPEND_TO_XML Select="$ApprovedUsers">
+                <TO_ADDR ID="{$approverDetails/USER_PROFILE/ID/@Value}" Value="{$approverDetails/USER_PROFILE/EMAIL_ADDRESS/@Value}"/>
+              </APPEND_TO_XML>
+            </FOR_EACH>
+          </THEN>
+          <ELSE>
+            <IF_TEST Test="($thisParam/ApprovalUserType/@Value='User Based')">
+              <THEN>
+                <FOR_EACH SelectList="$thisParam/Alert/Alert" CurrentElement="currApprover">
+                  <GET_DOCUMENT AssignToVar="curDetails" Name="USER_PROFILE" ServiceName="USER_SECURITY" Distinct="true" DirtyRead="true">
+                    <LOGIN_NAME Value="{$currApprover/ApproverID/@Value}"/>
+                  </GET_DOCUMENT>
+                  <REQUEST Name="getUser" ServiceName="USER_SECURITY" AssignToVar="approverDetails" ReturnRowCount="true">
+                    <ID Value="{$curDetails/USER_PROFILE/ID/@Value}"/>
+                  </REQUEST>
+                  <APPEND_TO_XML Select="$ApprovedUsers">
+                    <TO_ADDR ID="{$approverDetails/USER_PROFILE/ID/@Value}" Value="{$approverDetails/USER_PROFILE/EMAIL_ADDRESS/@Value}"/>
+                  </APPEND_TO_XML>
+                </FOR_EACH>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="($thisParam/ApprovalUserType/@Value='User Group Based')">
+              <THEN>
+                <FOR_EACH SelectList="$thisParam/Alert/Alert" CurrentElement="currApprover">
+                  <REQUEST Name="getGrpMembers" AssignToVar="userNameResp" ServiceName="ADMIN_UI">
+                    <userName Value="{$currApprover/ApproverID/@Value}"/>
+                  </REQUEST>
+                  <FOR_EACH SelectList="$userNameResp/*" CurrentElement="currApprover">
+                    <REQUEST Name="getUser" ServiceName="USER_SECURITY" AssignToVar="approverDetails" ReturnRowCount="true">
+                      <ID Value="{$currApprover/@Value}"/>
+                    </REQUEST>
+                    <APPEND_TO_XML Select="$ApprovedUsers">
+                      <TO_ADDR ID="{$approverDetails/USER_PROFILE/ID/@Value}" Value="{$approverDetails/USER_PROFILE/EMAIL_ADDRESS/@Value}"/>
+                    </APPEND_TO_XML>
+                  </FOR_EACH>
+                </FOR_EACH>
+              </THEN>
+            </IF_TEST>
+          </ELSE>
+        </IF_TEST>
+        <TO_DOCVAR AssignToVar="UniqueApprovedUsers">
+          <APPROVED_USER/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$ApprovedUsers/*" CurrentElement="allApprovers">
+          <FOR_EACH SelectList="$UniqueApprovedUsers/*" CurrentElement="UniqueApprovers">
+            <IF_TEST Test="$allApprovers/@ID=$UniqueApprovers/@ID">
+              <THEN>
+                <SET Var="available" FromValue="true"/>
+                <BREAK/>
+              </THEN>
+              <ELSE>
+                <SET Var="available" FromValue="false"/>
+              </ELSE>
+            </IF_TEST>
+          </FOR_EACH>
+          <IF_TEST Test="$available!='true'">
+            <THEN>
+              <APPEND_TO_XML Select="$UniqueApprovedUsers">
+                <TO_ADDR ID="{$allApprovers/@ID}" Value="{$allApprovers/@Value}"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+        </FOR_EACH>
+        <IF_TEST Test="$thisParam/NOTIFICATION_TYPE/@Value ='ALL' or $thisParam/NOTIFICATION_TYPE/@Value ='WEB'">
+          <THEN>
+            <FOR_EACH SelectList="$UniqueApprovedUsers/*" CurrentElement="UniqueApprovers">
+              <REQUEST Name="sendAlert">
+                <DOCUMENT_ID Value="{$thisParam/DocumentInstanceID/@Value}"/>
+                <DOCUMENT_NAME Value="{$thisParam/DocumentInstanceType/@Value}"/>
+                <ARG_INDEX Value="0"/>
+                <PRIORITY Value="3"/>
+                <USER_ID Value="{$UniqueApprovers/@Value}"/>
+                <SERVICE_NAME Value="APPROVAL"/>
+                <MESSAGE Value="{$thisParam/DocumentAction/@Value} request for {$thisParam/DocumentName/@Value} is Rejected by {$thisParam/ApproverName/@Value}"/>
+              </REQUEST>
+            </FOR_EACH>
+          </THEN>
+        </IF_TEST>
+        <IF_TEST Test="$thisParam/NOTIFICATION_TYPE/@Value ='ALL' or $thisParam/NOTIFICATION_TYPE/@Value ='EMAIL'">
+          <THEN>
+            <REQUEST Name="sendEmail" ServiceName="OMS_MESSAGE_SERVICE" Synchronous="no">
+              <SUBJECT Value="[MDM] {$thisParam/DocumentAction/@Value} request for {$thisParam/DocumentName/@Value} is Rejected"/>
+              <TO_ADDRS>
+                <TO_XML SelectList="$UniqueApprovedUsers/*"/>
+              </TO_ADDRS>
+              <FORMAT Value="text/html"/>
+              <MESSAGE>
+                <XML_DATA XsltFileName="xservice/email/xml/GenericApproval_Approved_Rejected_Template.xsl">
+                  <DATA>
+                    <DocumentAction Value="{$thisParam/DocumentAction/@Value}"/>
+                    <DocumentType Value="{$thisParam/DocumentName/@Value}"/>
+                    <LOGIN_NAME Value="{$thisParam/ApproverName/@Value}"/>
+                    <ApprovalType Value="{$thisParam/approvalType/@Value}"/>
+                    <creatorDetails Value="{$thisParam/CreatorName/@Value}"/>
+                    <DocumentInstance Value="{$thisParam/DocumentInstanceID/@Value}"/>
+                    <APPROVED_REJECTED Value="Rejected"/>
+                  </DATA>
+                </XML_DATA>
+              </MESSAGE>
+            </REQUEST>
+          </THEN>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getAllApprovalHistory">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="returnVar">
+          <APPROVALS/>
+        </TO_DOCVAR>
+        <SET Var="paginateStart" FromValue="{$thisParam/paginateStart/@Value}"/>
+        <SET Var="maxRow" FromValue="{$thisParam/maxRow/@Value}"/>
+        <IF_TEST Test="$thisParam/ORDER_BY/* != null">
+          <THEN>
+            <SET Var="orderBy_col" FromValue="{name($thisParam/ORDER_BY/*)}"/>
+            <SET Var="sortOrder" FromValue="{$thisParam/ORDER_BY/*/@Sort}"/>
+            <IF_TEST Test="$sortOrder/@Value = 'Descending'">
+              <THEN>
+                <SET Var="sortOrder" FromValue="DESC"/>
+              </THEN>
+              <ELSE>
+                <SET Var="sortOrder" FromValue="ASC"/>
+              </ELSE>
+            </IF_TEST>
+            <IF_TEST Test="$orderBy_col/@Value = 'ID'">
+              <THEN>
+                <SET Var="orderBy_colName" FromValue="{concat('A.INST_DOC_ID',' ',$sortOrder/@Value)}"/>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="$orderBy_col/@Value = 'INST_LINE_ID'">
+              <THEN>
+                <SET Var="orderBy_colName" FromValue="{concat('A.INST_LINE_ID',' ',$sortOrder/@Value)}"/>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="$orderBy_col/@Value = 'INSTANCE_TYPE'">
+              <THEN>
+                <SET Var="orderBy_colName" FromValue="{concat('A.INSTANCE_TYPE',' ',$sortOrder/@Value)}"/>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="$orderBy_col/@Value = 'DOCUMENTACTION'">
+              <THEN>
+                <SET Var="orderBy_colName" FromValue="{concat('A.INSTANCE_MODE',' ',$sortOrder/@Value)}"/>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="$orderBy_col/@Value = 'REQUESTOR'">
+              <THEN>
+                <SET Var="orderBy_colName" FromValue="{concat('t2.SUBMITBYID',' ',$sortOrder/@Value)}"/>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="$orderBy_col/@Value = 'NODE_TYPE'">
+              <THEN>
+                <SET Var="orderBy_colName" FromValue="{concat('A.NODE_TYPE',' ',$sortOrder/@Value)}"/>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="$orderBy_col/@Value = 'recordCount'">
+              <THEN>
+                <SET Var="orderBy_colName" FromValue="{concat('count(DISTINCT t2.ID)',' ',$sortOrder/@Value)}"/>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="$orderBy_col/@Value = 'DATE_CREATED'">
+              <THEN>
+                <SET Var="orderBy_colName" FromValue="{concat('A.DATE_CREATED',' ',$sortOrder/@Value)}"/>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="strlen(trim($orderBy_col/@Value)) = 0">
+              <THEN>
+                <SET Var="orderBy_colName" FromValue="{concat('A.DATE_CREATED',' ',$sortOrder/@Value)}"/>
+              </THEN>
+            </IF_TEST>
+          </THEN>
+        </IF_TEST>
+        <SET Var="sqlString" FromValue="LOCKING ROW FOR ACCESS SELECT distinct A.INST_DOC_ID as ID, A.INSTANCE_TYPE,  a.INSTANCE_MODE as DOCUMENTACTION, A.NODE_TYPE, A.INST_LINE_ID, count(DISTINCT t2.ID) as recordCount, t2.SUBMITBYID as REQUESTOR GROUP BY A.INST_DOC_ID, A.INSTANCE_TYPE, a.INSTANCE_MODE, A.NODE_TYPE, A.INST_LINE_ID, A.DATE_CREATED, t2.SUBMITBYID FROM AW_APPR_HIST A, AW_DOC_INSTANCE t2 WHERE (t2.STATUS='APPROVED' or t2.STATUS='REJECTED' ) AND A.INST_DOC_ID = t2.ALERTID {$thisParam/filterQuery/@Value} order by"/>
+        <SET Var="sqlString" FromValue="{concat($sqlString/@Value, ' ',$orderBy_colName/@Value)}"/>
+        <EXECUTE_SQL_QUERY Value="{$sqlString/@Value}" AssignToVar="alert" StartAtRow="{string($paginateStart)}" ReturnRowCount="yes" MaxRows="{string($maxRow)}"/>
+        <FOR_EACH SelectList="$alert/SQL_RESULT" CurrentElement="curr">
+          <IF_TEST Test="$curr/NODE_TYPE/@Value='S'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="NODE_TYPE">
+                <NODE_TYPE Value="Serial"/>
+              </TO_DOCVAR>
+            </THEN>
+            <ELSE>
+              <TO_DOCVAR AssignToVar="NODE_TYPE">
+                <NODE_TYPE Value="Parallel"/>
+              </TO_DOCVAR>
+            </ELSE>
+          </IF_TEST>
+          <REMOVE_CHILDREN DocVar="curr" ChildName="NODE_TYPE"/>
+          <ADD_CHILDREN DocVar="curr" FromDocVar="NODE_TYPE"/>
+          <TO_DOCVAR AssignToVar="returnVar1">
+            <APPROVAL/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="returnVar2">
+            <APPROVERS/>
+          </TO_DOCVAR>
+          <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT APPROVER_ID as APPROVER_NAME, STATUS as A_Status, DATE_CREATED, COMMENTS from AW_APPR_HIST where INST_DOC_ID =? and INSTANCE_TYPE = ? {$thisParam/filterQuery2/@Value} {$thisParam/filterDateAndStatus/@Value} order by DATE_CREATED ASC" AssignToVar="parallelStatus">
+            <PARAM Value="{$curr/ID/@Value}"/>
+            <PARAM Value="{$curr/INSTANCE_TYPE/@Value}"/>
+          </EXECUTE_SQL_QUERY>
+          <SET Var="match" FromValue="true"/>
+          <IF_TEST Test="$parallelStatus/SQL_RESULT/APPROVER_NAME/@Value=null">
+            <THEN>
+              <SET Var="match" FromValue="false"/>
+            </THEN>
+            <ELSE>
+              <FOR_EACH SelectList="$parallelStatus/SQL_RESULT" CurrentElement="pStatus">
+                <TO_DOCVAR AssignToVar="sqlres">
+                  <SQL_RESULT/>
+                </TO_DOCVAR>
+                <IF_TEST Test="$pStatus/A_Status/@Value='REJECTED'">
+                  <THEN>
+                    <TO_DOCVAR AssignToVar="APPROVED_STATE">
+                      <SQL_RESULT>
+                        <APPROVER_NAME Value="{$pStatus/APPROVER_NAME/@Value}"/>
+                        <A_Status Value="Rejected"/>
+                        <Checked Value="true"/>
+                        <DATE_CREATED Value="{$pStatus/DATE_CREATED/@Value}"/>
+                        <COMMENTS Value="{$pStatus/COMMENTS/@Value}"/>
+                      </SQL_RESULT>
+                    </TO_DOCVAR>
+                  </THEN>
+                  <ELSE>
+                    <TO_DOCVAR AssignToVar="APPROVED_STATE">
+                      <SQL_RESULT>
+                        <APPROVER_NAME Value="{$pStatus/APPROVER_NAME/@Value}"/>
+                        <A_Status Value="Approved"/>
+                        <Checked Value="false"/>
+                        <DATE_CREATED Value="{$pStatus/DATE_CREATED/@Value}"/>
+                        <COMMENTS Value="{$pStatus/COMMENTS/@Value}"/>
+                      </SQL_RESULT>
+                    </TO_DOCVAR>
+                  </ELSE>
+                </IF_TEST>
+                <ADD_CHILDREN DocVar="returnVar2" FromSelectList="$APPROVED_STATE"/>
+              </FOR_EACH>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$match = 'true'">
+            <THEN>
+              <ADD_CHILDREN DocVar="curr" FromDocVar="returnVar2"/>
+              <ADD_CHILDREN DocVar="returnVar1" FromSelectList="$curr/*"/>
+              <ADD_CHILDREN DocVar="returnVar" FromDocVar="returnVar1"/>
+            </THEN>
+          </IF_TEST>
+        </FOR_EACH>
+        <TO_DOCVAR AssignToVar="thisReturn">
+          <SAMPLE_XML StartRowCount="{$paginateStart}" TotalRowCount="{$alert/@TotalRowCount}">
+            <TO_XML DocVar="returnVar"/>
+          </SAMPLE_XML>
+        </TO_DOCVAR>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="viewApprovalRecords">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="pglFormInput">
+          <ROOT/>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="pglFormInput">
+          <table>
+            <APPEND_TO_XML>
+              <insDocType Value="{substringBefore($thisParam/selected_ID/@Value,'-')}"/>
+            </APPEND_TO_XML>
+          </table>
+        </TO_DOCVAR>
+        <SET Var="TableName" FromValue="{substringBefore($thisParam/selected_ID/@Value,'-')}"/>
+        <SET Var="RecordId" FromValue="{substringAfter($thisParam/selected_ID/@Value,'-')}"/>
+        <!--paginate variables-->
+        <SET Var="paginateStart" FromValue="{int(ifElse($thisParam/START_COUNT/@Value = null, 0, $thisParam/START_COUNT/@Value))}"/>
+        <IF_TEST Test="$thisParam/EXPORT_ALL/@Value='yes'">
+          <THEN>
+            <SET Var="paginateStart" FromValue="0"/>
+            <SET Var="maxRow" FromValue="{$thisParam/MAX_ROWS/@Value}"/>
+          </THEN>
+        </IF_TEST>
+        <SET Var="maxRow" FromValue="100"/>
+        <!--paginate variables-->
+        <GET_DOCUMENT Name="DocumentInstance" ServiceName="APPROVAL" AssignToVar="NewRecord" StartAtRow="{int($paginateStart)}" MaxRows="{$maxRow}" ReturnRowCount="yes" DirtyRead="true">
+          <AlertID Value="{$thisParam/selected_ID/@Value}"/>
+        </GET_DOCUMENT>
+        <IF_TEST Test="$TableName = 'Business Rules'">
+          <THEN>
+            <SET Var="ServiceName" FromValue="BPE_META"/>
+          </THEN>
+          <ELSE>
+            <SET Var="ServiceName" FromValue="BCM_MASTER"/>
+          </ELSE>
+        </IF_TEST>
+        <FOR_EACH CurrentElement="docInstElem" SelectList="$NewRecord/DocumentInstance">
+          <GET_DOC_PROPERTIES TableName="{$docInstElem/DocumentType/@Value}" ServiceName="{$ServiceName}" AssignToVar="DocPropertiesVar"/>
+          <GET_DOCUMENT Name="DocumentAttributes" ServiceName="APPROVAL" AssignToVar="docInstance" ReturnRowCount="yes" DirtyRead="true">
+            <InstanceID Value="{$docInstElem/ID/@Value}"/>
+            <ORDER_BY>
+              <ID/>
+            </ORDER_BY>
+          </GET_DOCUMENT>
+          <!-- ****** ORDERING THE COLUMNS ****** -->
+          <TO_DOCVAR AssignToVar="temp">
+            <RESPONSE/>
+          </TO_DOCVAR>
+          <FOR_EACH SelectList="$DocPropertiesVar/DOCUMENT/PROPERTY" CurrentElement="currColumn">
+            <FOR_EACH SelectList="$docInstance/DocumentAttributes" CurrentElement="currAttr">
+              <IF_TEST Test="$currAttr/AttributeID/@Value = $currColumn/@Name">
+                <THEN>
+                  <ADD_CHILDREN DocVar="temp" FromDocVar="currAttr"/>
+                </THEN>
+              </IF_TEST>
+            </FOR_EACH>
+          </FOR_EACH>
+          <SET Attribute="TotalRowCount" DocVar="temp" FromValue="{$docInstance/@TotalRowCount}"/>
+          <SET Attribute="Status" DocVar="temp" FromValue="{$docInstance/@Status}"/>
+          <SET DocVar="docInstance" FromDocVar="temp"/>
+          <!-- ***************************** -->
+          <IF_TEST Test="$thisParam/container2_SELECTED_STEP/@Value='History' and ($docInstElem/DocumentAction/@Value='UPDATE' or $docInstElem/DocumentAction/@Value='MASS_UPDATE')">
+            <THEN>
+              <GET_DOCUMENT Name="DocumentAttributes" ServiceName="APPROVAL" AssignToVar="PresentRecord" ReturnRowCount="yes" DirtyRead="true">
+                <InstanceID Value="{$docInstElem/ID/@Value}-H"/>
+                <ORDER_BY>
+                  <ID/>
+                </ORDER_BY>
+              </GET_DOCUMENT>
+              <IF_TEST Test="$docInstElem/DocumentAction/@Value='UPDATE' or $docInstElem/DocumentAction/@Value='ACTIVATE' or $docInstElem/DocumentAction/@Value='DEACTIVATE' or $docInstElem/DocumentAction/@Value='MASS_UPDATE'">
+                <THEN>
+                  <FOR_EACH SelectList="$PresentRecord/DocumentAttributes" CurrentElement="currElement">
+                    <FOR_EACH SelectList="$docInstance/DocumentAttributes" CurrentElement="currAttr">
+                      <IF_TEST Test="$currAttr/AttributeID/@Value = $currElement/AttributeID/@Value">
+                        <THEN>
+                          <SET_PROPS Select="$currAttr">
+                            <oldAttributeValue Value="{$currElement/AttributeValue/@Value}"/>
+                          </SET_PROPS>
+                        </THEN>
+                      </IF_TEST>
+                    </FOR_EACH>
+                  </FOR_EACH>
+                  <TO_DOCVAR AssignToVar="breakElem">
+                    <ROOT>
+                      <DocumentAttributes ExistingDocument="yes">
+                        <ID Value=""/>
+                        <AttributeID Value=""/>
+                        <InstanceID Value=""/>
+                        <SOURCE Value=""/>
+                        <TABLE_NAME Value="{$docInstElem/DocumentType/@Value}"/>
+                      </DocumentAttributes>
+                    </ROOT>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$breakElem/*"/>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$docInstance/*"/>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$docInstElem/DocumentAction/@Value!='INSERT'">
+                <THEN>
+                  <!--pk cols-->
+                  <GET_DOC_PROPERTIES TableName="{$docInstElem/DocumentType/@Value}" ServiceName="{$ServiceName}" AssignToVar="DocPropertiesVar"/>
+                  <TO_DOCVAR AssignToVar="pkCols">
+                    <ROOT/>
+                  </TO_DOCVAR>
+                  <FOR_EACH SelectList="$DocPropertiesVar/DOCUMENT/PROPERTY" CurrentElement="currColumn">
+                    <IF_TEST Test="$currColumn/@PrimaryKey != null">
+                      <THEN>
+                        <SET Var="colName" FromValue=""/>
+                        <TO_DOCVAR AssignToVar="tempVar">
+                          <tempVar/>
+                        </TO_DOCVAR>
+                        <FOR_EACH SelectList="$docInstance/DocumentAttributes" CurrentElement="currElement">
+                          <IF_TEST Test="$currElement/AttributeID/@Value = $currColumn/@Name">
+                            <THEN>
+                              <SET DocVar="tempVar" Property="{$currColumn/@Name}" FromValue="{$currElement/AttributeValue/@Value}"/>
+                              <ADD_CHILDREN DocVar="pkCols" FromSelectList="$tempVar/*"/>
+                              <BREAK/>
+                            </THEN>
+                          </IF_TEST>
+                        </FOR_EACH>
+                      </THEN>
+                    </IF_TEST>
+                  </FOR_EACH>
+                  <!--pk cols-->
+                  <GET_DOCUMENT Name="{$docInstElem/DocumentType/@Value}" ServiceName="{$ServiceName}" AssignToVar="PresentRecord" DirtyRead="true">
+                    <TO_XML SelectList="$pkCols/*"/>
+                  </GET_DOCUMENT>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$docInstElem/DocumentAction/@Value='MASS_UPDATE' or $docInstElem/DocumentAction/@Value='UPDATE' or $docInstElem/DocumentAction/@Value='ACTIVATE' or $docInstElem/DocumentAction/@Value='DEACTIVATE'">
+                <THEN>
+                  <FOR_EACH SelectList="$PresentRecord/*/*" CurrentElement="currElement">
+                    <FOR_EACH SelectList="$docInstance/DocumentAttributes" CurrentElement="currAttr">
+                      <SET Var="property" FromValue="{$currElement/name()}"/>
+                      <IF_TEST Test="$currAttr/AttributeID/@Value = $property/@Value">
+                        <THEN>
+                          <SET_PROPS Select="$currAttr">
+                            <oldAttributeValue Value="{$currElement/@Value}"/>
+                          </SET_PROPS>
+                        </THEN>
+                      </IF_TEST>
+                    </FOR_EACH>
+                  </FOR_EACH>
+                  <TO_DOCVAR AssignToVar="breakElem">
+                    <ROOT>
+                      <DocumentAttributes ExistingDocument="yes">
+                        <ID Value=""/>
+                        <AttributeID Value=""/>
+                        <InstanceID Value=""/>
+                        <SOURCE Value=""/>
+                        <TABLE_NAME Value="{$docInstElem/DocumentType/@Value}"/>
+                      </DocumentAttributes>
+                    </ROOT>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$breakElem/*"/>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$docInstance/*"/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$docInstElem/DocumentAction/@Value='DELETE'">
+                <THEN>
+                  <TO_DOCVAR AssignToVar="breakElem">
+                    <ROOT>
+                      <DocumentAttributes ExistingDocument="yes">
+                        <ID Value=""/>
+                        <AttributeID Value=""/>
+                        <InstanceID Value=""/>
+                        <SOURCE Value=""/>
+                        <TABLE_NAME Value="{$docInstElem/DocumentType/@Value}"/>
+                      </DocumentAttributes>
+                    </ROOT>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$breakElem/*"/>
+                  <FOR_EACH SelectList="$docInstance/*" CurrentElement="currElement">
+                    <TO_DOCVAR AssignToVar="delRecord">
+                      <DocumentAttributes ExistingDocument="yes">
+                        <AttributeID Value="{$currElement/AttributeID/@Value}"/>
+                        <oldAttributeValue Value="{$currElement/AttributeValue/@Value}"/>
+                      </DocumentAttributes>
+                    </TO_DOCVAR>
+                    <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$delRecord"/>
+                  </FOR_EACH>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$docInstElem/DocumentAction/@Value='INSERT'">
+                <THEN>
+                  <FOR_EACH SelectList="$docInstance/DocumentAttributes" CurrentElement="currAttr">
+                    <SET_PROPS Select="$currAttr">
+                      <AttributeValue Value="{$currAttr/AttributeValue/@Value}"/>
+                    </SET_PROPS>
+                  </FOR_EACH>
+                  <TO_DOCVAR AssignToVar="breakElem">
+                    <ROOT>
+                      <DocumentAttributes ExistingDocument="yes">
+                        <ID Value=""/>
+                        <AttributeID Value=""/>
+                        <InstanceID Value=""/>
+                        <SOURCE Value=""/>
+                        <TABLE_NAME Value="{$docInstElem/DocumentType/@Value}"/>
+                      </DocumentAttributes>
+                    </ROOT>
+                  </TO_DOCVAR>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$breakElem/*"/>
+                  <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$docInstance/*"/>
+                </THEN>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+        </FOR_EACH>
+        <TO_DOCVAR AssignToVar="DocID">
+          <ROOT>
+            <selected_ID Value="{$thisParam/selected_ID/@Value}"/>
+            <TotalRowCount Value="{$NewRecord/@TotalRowCount}"/>
+            <StartRowCount Value="{$paginateStart}"/>
+            <maxRow Value="{$maxRow}"/>
+          </ROOT>
+        </TO_DOCVAR>
+        <!--Code written by Ankita Sadhwani Starts-->
+        <!--<FOR_EACH SelectList="$docInstance/DocumentAttributes" CurrentElement="curInId">
+          <IF_TEST Test="$curInId/AttributeID/@Value='IN_id'">
+            <THEN>
+              <SET Var="IN_id" FromValue="{$curInId/AttributeValue/@Value}"/>
+            </THEN>
+          </IF_TEST>
+        </FOR_EACH>
+        <FOR_EACH SelectList="$pglFormInput/DocumentAttributes" CurrentElement="curPglFormInput">
+          <IF_TEST Test="$curPglFormInput/AttributeID/@Value='IN_id'">
+            <THEN>
+              <REMOVE_CHILDREN ChildName="AttributeID" DocVar="curPglFormInput"/>
+              <REMOVE_CHILDREN ChildName="AttributeValue" DocVar="curPglFormInput"/>
+              <REMOVE_CHILDREN ChildName="ID" DocVar="curPglFormInput"/>
+              <REMOVE_CHILDREN ChildName="InstanceID" DocVar="curPglFormInput"/>
+              <REMOVE_CHILDREN ChildName="SOURCE" DocVar="curPglFormInput"/>
+            </THEN>
+          </IF_TEST>
+        </FOR_EACH>-->
+        <APPEND_TO_XML SelectList="$thisReturn">
+          <TO_XML SelectList="$DocID/*"/>
+          <TO_XML SelectList="$pglFormInput/*"/>
+          <!--<IN_id Value="{$IN_id/@Value}"/>-->
+        </APPEND_TO_XML>
+        <!--Code written by Ankita Sadhwani ends-->
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="businessRulesApprovalHandler">
+    <RULE>
+      <ACTION>
+        <EXEC_PROC Name="EXECUTE_CHECK_APPROVAL" AssignToVar="checkApprovalResponse">
+          <DOCUMENT_NAME Value="Business Rules" Type="IN" DataType="string"/>
+          <OPERATION_NAME Value="{$thisParam/ACTION_VAL/@Value}" Type="IN" DataType="string"/>
+          <APPR_GRP_TYPE Type="OUT" DataType="string"/>
+        </EXEC_PROC>
+        <IF_TEST Test="$checkApprovalResponse/APPR_GRP_TYPE/@Value=null">
+          <THEN>
+            <REQUEST Name="{$thisParam/REQUEST/@Name}" ServiceName="BPE_META" Approved="True">
+              <TO_XML SelectList="$thisParam/*/*"/>
+            </REQUEST>
+            <IF_TEST Test="$thisParam/REQUEST/@Name = 'addDocumentRule'">
+              <THEN>
+                <SET Var="msg" FromValue="BUSINESS_RULE_CREATED_SUCCESS"/>
+              </THEN>
+              <ELSE>
+                <IF_TEST Test="$thisParam/REQUEST/@Name = 'updateDocumentRule'">
+                  <THEN>
+                    <SET Var="msg" FromValue="BUSINESS_RULE_EDIT_SUCCESS"/>
+                  </THEN>
+                  <ELSE>
+                    <IF_TEST Test="$thisParam/REQUEST/@Name = 'copyDocumentRule'">
+                      <THEN>
+                        <SET Var="msg" FromValue="BUSINESSRULE_COPY_SUCCESS"/>
+                      </THEN>
+                      <ELSE>
+                        <IF_TEST Test="$thisParam/REQUEST/@Name = 'deActivateBusinessRule'">
+                          <THEN>
+                            <SET Var="msg" FromValue="BUSINESSRULE_DEACTIVATE_SUCCESS"/>
+                          </THEN>
+                          <ELSE>
+                            <IF_TEST Test="$thisParam/REQUEST/@Name = 'activateBusinessRule'">
+                              <THEN>
+                                <SET Var="msg" FromValue="BUSINESSRULE_ACTIVATE_SUCCESS"/>
+                              </THEN>
+                              <ELSE>
+                                <SET Var="msg" FromValue="BUSINESSRULE_DELETE_SUCCESS"/>
+                              </ELSE>
+                            </IF_TEST>
+                          </ELSE>
+                        </IF_TEST>
+                      </ELSE>
+                    </IF_TEST>
+                  </ELSE>
+                </IF_TEST>
+              </ELSE>
+            </IF_TEST>
+          </THEN>
+          <ELSE>
+            <IF_TEST Test="$thisParam/ACTION_VAL/@Value!='DELETE' and $thisParam/ACTION_VAL/@Value!='INACTIVATE' and $thisParam/ACTION_VAL/@Value!='ACTIVATE' ">
+              <THEN>
+                <SET Var="rule_expr" FromValue="{$thisParam/REQUEST/DATA_RULE_TEMPLATE/RULE_EXPR/@Value}"/>
+                <XML_TO_STRING FromDocVar="rule_expr" DocVar="rule_expr_string"/>
+                <REMOVE_CHILDREN ChildName="RULE_EXPR" SelectList="$thisParam/REQUEST/DATA_RULE_TEMPLATE"/>
+              </THEN>
+            </IF_TEST>
+            <TO_DOCVAR AssignToVar="bussRulesReq">
+              <ROOT>
+                <Business_Rules DocumentName="Business Rules" Action="{$thisParam/ACTION_VAL/@Value}" isBulkRequest="false" requestName="{$thisParam/REQUEST/@Name}">
+                  <TO_XML SelectList="$thisParam/REQUEST/*"/>
+                </Business_Rules>
+              </ROOT>
+            </TO_DOCVAR>
+            <IF_TEST Test="$thisParam/ACTION_VAL/@Value!='DELETE' and $thisParam/ACTION_VAL/@Value!='INACTIVATE' and $thisParam/ACTION_VAL/@Value!='ACTIVATE' ">
+              <THEN>
+                <APPEND_TO_XML SelectList="$thisParam/REQUEST/DATA_RULE_TEMPLATE">
+                  <RULE_EXPR Value="{$rule_expr_string}"/>
+                </APPEND_TO_XML>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="$checkApprovalResponse/APPR_GRP_TYPE/@Value='Serial'">
+              <THEN>
+                <START_WORKFLOW ServiceName="ADMIN_UI">
+                  <TEMPLATE Value="SerialApprovalWF"/>
+                  <ADDITIONAL_PARAMETERS>
+                    <XML>
+                      <TO_XML SelectList="$bussRulesReq/*"/>
+                    </XML>
+                  </ADDITIONAL_PARAMETERS>
+                </START_WORKFLOW>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="$checkApprovalResponse/APPR_GRP_TYPE/@Value='Parallel'">
+              <THEN>
+                <START_WORKFLOW ServiceName="ADMIN_UI">
+                  <TEMPLATE Value="ParallelApprovalWF"/>
+                  <ADDITIONAL_PARAMETERS>
+                    <XML>
+                      <TO_XML SelectList="$bussRulesReq/*"/>
+                    </XML>
+                  </ADDITIONAL_PARAMETERS>
+                </START_WORKFLOW>
+              </THEN>
+            </IF_TEST>
+            <SET Var="msg" FromValue="BUSINESS_RULE_SUBMITTED_FOR_APPROVAL"/>
+          </ELSE>
+        </IF_TEST>
+        <TO_DOCVAR AssignToVar="resultDocVar">
+          <RESULT MESSAGE="{$msg/@Value}"/>
+        </TO_DOCVAR>
+        <ADD_CHILDREN DocVar="thisReturn" FromDocVar="resultDocVar"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="reAssignApprover">
+    <RULE>
+      <ACTION>
+        <EXECUTE_SQL_QUERY Value="LOCKING ROW FOR ACCESS SELECT A.DATA, A.ID FROM WFL_INSTANCE A, AW_USER_NODES B  WHERE A.ID=B.WORKFLOW_ID AND B.INST_DOC_ID = ?" AssignToVar="SerialData">
+          <PARAM Value="{$thisParam/ID/@Value}"/>
+        </EXECUTE_SQL_QUERY>
+        <SET Var="curData" FromSelect="$SerialData/SQL_RESULT/DATA/@Value"/>
+        <SET Var="tokenName" FromValue="context_object"/>
+        <NATIVE_FUNCTION ClassName="com.teradata.xservice.approval.WFLInstanceDataParser" MethodName="getVariables" AssignToVar="contextObject">
+          <PARAM Var="curData" Caption="data"/>
+          <PARAM Var="tokenName" Caption="tokenName"/>
+        </NATIVE_FUNCTION>
+        <TO_DOCVAR AssignToVar="newList">
+          <root/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$thisParam/LOGIN_NAME" CurrentElement="currParam">
+          <APPEND_TO_XML SelectList="$newList">
+            <Id Value="{$currParam/@Value}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <STRING_TO_XML FromDocVar="contextObject" DocVar="contextObject1"/>
+        <REMOVE_CHILDREN ChildName="context_approveridlist" SelectList="$contextObject1"/>
+        <APPEND_TO_XML SelectList="$contextObject1">
+          <context_approveridlist>
+            <TO_XML SelectList="$newList"/>
+          </context_approveridlist>
+        </APPEND_TO_XML>
+        <NATIVE_FUNCTION ClassName="com.teradata.xservice.approval.WFLInstanceDataParser" MethodName="alterValriable" AssignToVar="dataString">
+          <PARAM Var="curData" Caption="data"/>
+          <PARAM Var="tokenName" Caption="tokenName"/>
+          <PARAM Var="contextObject1" Caption="newValue"/>
+        </NATIVE_FUNCTION>
+        <TO_DOCVAR AssignToVar="queryList">
+          <ROOT/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$thisParam/OLD_NEW_APPROVER" CurrentElement="currParam">
+          <SET Var="approverName" FromValue="{strSplit($currParam/@Value,',')}"/>
+          <IF_TEST Test="$approverName/TOKEN[3]/@Value='Waiting for Approval'">
+            <THEN>
+              <GET_DOCUMENT Name="Alert" AssignToVar="alertResponse" ReturnRowCount="true" ServiceName="APPROVAL" DirtyRead="true">
+                <InstanceDocID Value="{$thisParam/ID/@Value}"/>
+                <InstanceType Value="{$thisParam/INSTANCE_TYPE/@Value}"/>
+                <Status Value="A"/>
+                <InstanceMode Value="{$thisParam/DOCUMENTACTION/@Value}"/>
+                <ApproverID Value="{$approverName/TOKEN[1]/@Value}"/>
+              </GET_DOCUMENT>
+              <APPEND_TO_XML SelectList="$queryList">
+                <QUERY Value="UPDATE AW_ALERT SET APPROVER_ID = '{$approverName/TOKEN[2]/@Value}' where INST_DOC_ID='{$thisParam/ID/@Value}' AND INSTANCE_TYPE='{$thisParam/INSTANCE_TYPE/@Value}' AND APPROVER_ID='{$approverName/TOKEN[1]/@Value}' AND INSTANCE_MODE='{$thisParam/DOCUMENTACTION/@Value}' AND STATUS='A' AND TOKEN_ID='{$alertResponse/*/TokenID/@Value}'; "/>
+                <QUERY Value="UPDATE AW_USER_NODES SET APPROVER_ID = '{$approverName/TOKEN[2]/@Value}', O_APPROVER_ID = '{$approverName/TOKEN[2]/@Value}' where INST_DOC_ID='{$thisParam/ID/@Value}' AND APPROVER_ID = '{$approverName/TOKEN[1]/@Value}' AND STATUS='A' AND TOKEN_ID='{$alertResponse/*/TokenID/@Value}';"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+        </FOR_EACH>
+        <DO_TRANSACTION>
+          <FOR_EACH SelectList="$queryList/*" CurrentElement="currQuery">
+            <EXECUTE_SQL_DML AssignToVar="result" Value="{$currQuery/@Value}" HandleException="true"/>
+            <IF_TEST Test="$result/@Status!='Success'">
+              <THEN>
+                <RAISE_EXCEPTION Value="Error in DB transaction"/>
+              </THEN>
+            </IF_TEST>
+          </FOR_EACH>
+          <SET Var="query3" FromValue="UPDATE WFL_INSTANCE SET DATA ='{$dataString}' where ID = '{$SerialData/SQL_RESULT/ID/@Value}'"/>
+          <EXECUTE_SQL_DML AssignToVar="result2" Value="{$query3}" HandleException="true"/>
+          <IF_TEST Test="$result2/@Status!='Success'">
+            <THEN>
+              <RAISE_EXCEPTION Value="Error in DB transaction"/>
+            </THEN>
+          </IF_TEST>
+        </DO_TRANSACTION>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

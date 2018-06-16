@@ -1,0 +1,99 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" Id="TaskMonitorDetails.pgl" version="3">
+  <ui:container id="taskdetailscontainer" inner="false" scrollable="true">
+    <ui:help displayPage="{$pages:WfTaskMonitorHelp}"/>
+    <ui:step id="taskdetailsstep" displayText="Task Details">
+      <ui:container id="detailsContainer" inner="true">
+        <ui:step id="detailsStep">
+          <ui:field-group id="hiddenFileds">
+            <ui:hidden-field id="alertStatus" name="alertStatus" value="{$root/alert_status/@Value}"/>
+            <ui:hidden-field id="alertMsg" name="alertMsg" value="{$root/alert_msg/@Value}"/>
+            <ui:hidden-field id="execStatus" name="execStatus" value="{$root/exec_status/@Value}"/>
+            <ui:hidden-field id="WfTaskNode" name="WfTaskNode" value="{$root/task_node/@Value}"/>
+            <ui:hidden-field id="WfProcessId" name="WfProcessId" value="{$root/p_id/@Value}"/>
+            <ui:hidden-field id="WfProcessName" name="WfProcessName" value="{$root/p_name/@Value}"/>
+            <ui:hidden-field id="WfTaskId" name="WfTaskId" value="{$root/t_id/@Value}"/>
+            <ui:hidden-field id="WfUserId" name="WfUserId" value="{$root/user_id/@Value}"/>
+          </ui:field-group>
+          <ui:field-group id="alert_fields" columns="4">
+            <ui:image src="/bpi_check.gif" id="AlertGreenIconAjax"/>
+            <ui:image src="/cancel.gif" id="AlertRedIconAjax"/>
+            <ui:display-field id="alertValue" value=""/>
+          </ui:field-group>
+          <ui:field-group id="taskdetailsmeta">
+            <ui:display-field id="WfProcessIdDisp" name="WfProcessIdDisp" displayText="Workflow Id" value="{$root/TASK_DETAILS/ProcessId/@Value}"/>
+            <ui:display-field id="WfTaskIdDisp" name="WfTaskIdDisp" displayText="Instance Id" value="{$root/TASK_DETAILS/TaskWfId/@Value}"/>
+            <ui:field-space/>
+          </ui:field-group>
+        </ui:step>
+      </ui:container>
+      <ui:table id="matchMapDetailTbl" rowId="CREATED_BY" postRowIdAs="SELECTED_OPERATOR" selectable="{$root/Table_Selectable/@Value}" select="$root/AUDIT_DATA/Wf_Task_Audit" rowSrc="$root/AUDIT_DATA/Wf_Task_Audit" displayText="Task Audit Data" displayTextNoRecords="No Audit Data Found" maxRows="-1" collapsable="false" title="Task Audit Data" scrollable="true">
+        <ui:field-group>
+          <ui:display-field id="Node_Id" name="Task_Node" displayText="Task Node"/>
+          <ui:display-field id="CREATED_BY" name="CREATED_BY" displayText="User"/>
+          <ui:display-field id="Operation" name="Operation" displayText="Operation"/>
+          <ui:display-field id="Reassigned_To" name="Reassigned_To" displayText="Reassigned To"/>
+          <ui:display-field id="CREATION_DATE" name="CREATION_DATE" displayText="Assigned On" dataType="DateTime"/>
+          <ui:display-field id="Reassign_Comment" name="Reassign_Comment" displayText="Reassign Comment"/>
+          <ui:display-field id="Task_Sequence" name="Task_Sequence" displayText="Task Sequence"/>
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button id="Back" name="Back" displayText="Back"/>
+          <ui:divider displayCondition="{$root/Task_Status/@Value!='Completed'}"/>
+          <ui:button id="Reassign" name="Reassign" displayText="Reassign Task" emphasized="true" displayCondition="{$root/Task_Status/@Value!='Completed'}"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+var alertStatus=document.getElementById('alertStatus').value;
+var alertMsg=document.getElementById('alertMsg').value;
+if(alertStatus==='Success')
+{
+showSuccessAlertFields(alertMsg);
+}
+else if(alertStatus==='Failure'){
+showFailureAlertFields(alertMsg);
+}
+else{
+hideAlertFields();
+}
+    
+function hideAlertFields()
+{
+toggleField('AlertGreenIconAjax','hide');
+toggleField('AlertRedIconAjax','hide');
+toggleField('alertValue_td','hide');
+}
+function showSuccessAlertFields(msg)
+{
+toggleField('AlertGreenIconAjax','show');
+toggleField('AlertRedIconAjax','hide');
+toggleField('alertValue_td','show');
+document.getElementById('alertValue_td').innerHTML=msg;
+}
+function showFailureAlertFields(msg)
+{
+toggleField('AlertGreenIconAjax','hide');
+toggleField('AlertRedIconAjax','show');
+toggleField('alertValue_td','show');
+document.getElementById('alertValue_td').innerHTML=msg;
+}
+function toggleField(id,state)
+{
+fieldCell  = document.getElementById(id);
+fieldRow = fieldCell.parentNode;
+toggleItemVisibility(fieldRow, state);
+var i = document.getElementById(id);
+if (state=='hide')
+{
+i.disabled = true;
+}
+else
+{
+i.disabled = false;
+i.enabled = true;
+}
+}
+    
+  </ui:script>
+</ui:page-group>

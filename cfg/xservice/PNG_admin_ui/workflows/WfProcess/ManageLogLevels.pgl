@@ -1,0 +1,114 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" Id="ManageLogLevels.pgl" version="3">
+  <ui:container id="Outer" scrollable="true">
+    <ui:step id="OuterStep" displayText="Set Workflow Log Levels" scrollable="true">
+      <ui:help displayPage="../../bcm/help/ConfigMgLogLevelsHelp.htm"/>
+      <ui:validation/>
+      <ui:field-group id="hiddenFieldsGroup">
+        <ui:hidden-field id="status" value="{$root/status/@Value}" name="status"/>
+        <ui:hidden-field id="status_msg" value="{$root/status_msg/@Value}" name="status_msg"/>
+      </ui:field-group>
+      <ui:field-group columns="4" id="alertFields">
+        <ui:image src="/bpi_check.gif" id="AlertGreenIconAjax"/>
+        <ui:image src="/cancel.gif" id="AlertRedIconAjax"/>
+        <ui:display-field id="alertValue" value="{$root/status_msg/@Value}" name="alertValueDisp"/>
+      </ui:field-group>
+      <!--ui:grid id="logLevelGrid">
+        <ui:row id="logLevelRow">
+          <ui:cell id="beoCell" valign="top" width="50%"-->
+            <ui:container id="beoLogContainer" inner="true">
+              <ui:step id="beoLog_step" displayText="Business Entity Log Levels">
+                <ui:field-group id="beoFg">
+                  <ui:dropdown id="BusinessEntity" name="BusinessEntity" optionSrc="$root/BUSINESS_ENTITY_LIST/TYPE_CODES/OPTION" value="{$root/CONFIGURE_PARAMS/Business_Entity/@Value}" displayText="WF_PROCESS_CAT" title="WF_PROCESS_CAT_HOVER" selectOne="true" required="true" unFormat="true"/>
+                  <ui:radiobutton id="beo_None" name="BeoLogLevel" displayText="Disabled" checkedValue="None" defaultValue="None" value="{$root/CONFIGURE_PARAMS/BeoLogLevel/@Value}" title="Sets log level to None to disable logging for workflow"/>
+                  <ui:radiobutton id="beo_Node" name="BeoLogLevel" displayText="Node" checkedValue="Node" value="{$root/CONFIGURE_PARAMS/BeoLogLevel/@Value}" title="Sets log level to Node to enabled logging for all nodes of the workflow"/>
+                  <ui:radiobutton id="beo_Workflow" name="BeoLogLevel" displayText="Workflow" checkedValue="Workflow" value="{$root/CONFIGURE_PARAMS/BeoLogLevel/@Value}" title="Sets log level to Workflow to enable logging at workflow level"/>
+                </ui:field-group>
+                <ui:buttons>
+                  <ui:button id="setBeoLogLevel" name="setBeoLogLevel" displayText="Set Log Level"/>
+                </ui:buttons>
+              </ui:step>
+            </ui:container>
+          <!--/ui:cell>
+          <ui:cell id="catCell" valign="top" width="50%"-->
+            <ui:container id="catLogContainer" inner="true">
+              <ui:step id="catLog_step" displayText="Workflow Category Log Levels">
+                <ui:field-group id="catFg">
+                  <ui:dropdown id="Category" name="Category" displayText="Workflow Category" title="Select workflow category" value="{$root/CONFIGURE_PARAMS/Category/@Value}" required="true" selectOne="true">
+                    <ui:option id="Custom" value="Custom" title="User built Custom workflow"/>
+                    <!--ui:option id="System" value="System" title="Out of the box system bundeld workflows"/-->
+                    <ui:option id="RunTime" value="RunTime" title="Runtime built managed workflows"/>
+                    <ui:option id="OOTB" value="OOTB" title="Out of the box system bundeld workflows"/>
+                    <ui:option id="Other" value="Other" title="Other workflows"/>
+                  </ui:dropdown>
+                  <ui:radiobutton id="cat_None" name="CatLogLevel" displayText="Disabled" checkedValue="None" defaultValue="None" value="{$root/CONFIGURE_PARAMS/CatLogLevel/@Value}" title="Sets log level to None to disable logging for workflow"/>
+                  <ui:radiobutton id="cat_Node" name="CatLogLevel" displayText="Node" checkedValue="Node" value="{$root/CONFIGURE_PARAMS/CatLogLevel/@Value}" title="Sets log level to Node to enabled logging for all nodes of the workflow"/>
+                  <ui:radiobutton id="cat_Workflow" name="CatLogLevel" displayText="Workflow" checkedValue="Workflow" value="{$root/CONFIGURE_PARAMS/CatLogLevel/@Value}" title="Sets log level to Workflow to enable logging at workflow level"/>
+                </ui:field-group>
+                <ui:buttons>
+					<ui:button id="Back" name="Back" displayText="Back"/>
+                  <ui:divider/>
+                  <ui:button id="setCatLogLevel" name="setCatLogLevel" displayText="Set Log Level"/>
+                </ui:buttons>
+              </ui:step>
+            </ui:container>
+          <!--/ui:cell>
+        </ui:row>
+      </ui:grid-->
+
+    </ui:step>
+  </ui:container>
+  <ui:script>
+function onLoad(){
+var status = document.getElementById('status').value;
+	if(status === 'Success'){
+		showSuccessAlertFields();
+	}
+	else if(status === 'Failure'){
+		showFailureAlertFields();
+		onChangeService();
+	}
+	else
+		hideAlertFields();
+	onResize();
+	onLoadSuper();
+}
+    
+function on_Back(){
+	document.form.BUTTON_ID.value = 'Back';
+	document.form.submit();
+	grayOut(true);
+}
+    
+function hideAlertFields(){
+	toggleField('AlertGreenIconAjax','hide');
+	toggleField('AlertRedIconAjax','hide');
+	toggleField('alertValue_td','hide');
+}
+
+ function showSuccessAlertFields(){
+	toggleField('AlertGreenIconAjax','show');
+	toggleField('AlertRedIconAjax','hide');
+	toggleField('alertValue_td','show');
+}
+
+function showFailureAlertFields(){
+	toggleField('AlertGreenIconAjax','hide');
+	toggleField('AlertRedIconAjax','show');
+	toggleField('alertValue_td','show');
+}
+
+function toggleField(id,state){
+	fieldCell  = document.getElementById(id);
+	fieldRow = fieldCell.parentNode;
+	toggleItemVisibility(fieldRow, state);
+	var i = document.getElementById(id);
+	if (state=='hide'){
+		i.disabled = true;
+	}
+	else{
+		i.disabled = false;
+		i.enabled = true;
+	}
+}
+ </ui:script>
+</ui:page-group>

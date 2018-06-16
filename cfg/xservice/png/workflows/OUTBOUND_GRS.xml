@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="0" ShowInBreadCrumbs="true" Version="1.0" Name="OUTBOUND_GRS" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="OUTBOUND_GRS"/>
+  <nodes>
+    <start Name="start0">
+      <actions>
+        <action>
+          <PRINTLN SelectList="$thisParam"/>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="rest_node1"/>
+      </next_nodes>
+    </start>
+    <rest_node Name="rest_node1">
+      <parameters>
+        <Method_Type Value="POST"/>
+        <End_Point Value="{$thisParam/GRS_ENDPOINT/@Value}"/>
+        <Resource Value="{concat($thisParam/RESOURCE_URL/@Value,'?mpId=',$thisParam/mpId/@Value,'&amp;sourceId=',$thisParam/sourceId/@Value)}"/>
+        <Mime_Type Value="application/json"/>
+        <XMLHttpJSON Value="          &lt;mpId Value=&quot;{$thisParam/mpId/@Value}&quot; />
+          &lt;sourceId Value=&quot;{$thisParam/sourceId/@Value}&quot; />"/>
+        <Headers>
+          <Host Value="grs-pg.com"/>
+          <Connection Value="Keep-Alive"/>
+          <accept Value="application/json"/>
+          <accept-encoding Value="gzip, deflate"/>
+          <accept-language Value="en-US,en;q=0.8"/>
+          <user-agent Value="Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"/>
+          <Content-Type Value="application/json"/>
+          <Authorization Value="Basic T25lQ1BfR0RQUjpTcmlvbnByb2QyMDE3"/>
+          <Content-Type Value="application/json"/>
+        </Headers>
+        <http_params>
+          <mpId Value="{$thisParam/mpId/@Value}"/>
+          <sourceId Value="{$thisParam/sourceId/@Value}"/>
+        </http_params>
+        <security_params>
+          <Encrypted Value="true"/>
+        </security_params>
+      </parameters>
+      <pre_actions>
+        <action/>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <!--<PRINTLN SelectList="$RestParametersOut" />-->
+          <!--<SET Var="Success1" FromValue="{substringAfter(substringBefore($RestParametersOut,','),'{"success":')}"/>-->
+          <!--<SET Var="str1" FromValue="{substringAfter($RestParametersOut,' &quot;code&quot;:&quot;   ')}" />-->
+          <SET Var="test" FromValue="&quot;code&quot;:&quot;"/>
+          <SET Var="str1" FromValue="{substringAfter($RestParametersOut,$test)}"/>
+          <SET Var="test1" FromValue="&quot;,&quot;message&quot;:&quot;"/>
+          <SET Var="code" FromValue="{substringBefore($str1,$test1)}"/>
+          <SET Var="test4" FromValue="&quot;"/>
+          <!-- <SET Var="message" FromValue="{substringAfter($str1,$test1)}"/>-->
+          <SET Var="message" FromValue="{substringBefore(substringAfter($str1,$test1),$test4)}"/>
+          <SET Var="test2" FromValue="&quot;success&quot;"/>
+          <SET Var="str2" FromValue="{substringAfter($RestParametersOut,$test2)}"/>
+          <SET Var="test3" FromValue="{substringBefore($RestParametersOut,$test)}"/>
+          <SET Var="success1" FromValue="{substringBefore(substringAfter($test3,':'),',')}"/>
+          <!--<SET Var="success" FromValue="{substringAfter(substringBefore($str2,$test),$test2)}"/>-->
+          <APPEND_TO_XML DocVar="thisReturn">
+            <Response Value="{$RestParametersOut}"/>
+            <Success1 Value="{$success1}"/>
+            <Code Value="{$code}"/>
+            <Message Value="{$message}"/>
+          </APPEND_TO_XML>
+          <!--<SET Var="Success1" FromValue="{substringAfter(substringBefore($thisReturn/@Value,',&quot;code&quot;'),'{&quot;success&quot;:')}"/>-->
+        </action>
+      </post_actions>
+      <next_nodes>
+        <next_node Name="done3"/>
+      </next_nodes>
+    </rest_node>
+    <done Name="done3">
+      <actions/>
+      <next_nodes/>
+    </done>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <start0 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="311,266" size="732,526">
+        <iconProps iconfile="z1start.gif"/>
+      </start0>
+      <rest_node1 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="678,267" size="744,684">
+        <iconProps iconfile="x1age95.gif"/>
+      </rest_node1>
+      <done3 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="1002,265">
+        <iconProps iconfile="z1end.gif"/>
+      </done3>
+    </mgcnodes>
+    <mgcconnectors>
+      <start0>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="356,288" endpoint="678,289" ctrlRect1="696,271,4,4" ctrlRect2="629,278,4,4" ctrlRect1Dirty="true" ctrlRect2Dirty="true"/>
+      </start0>
+      <rest_node1>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="723,289" endpoint="1002,287" ctrlRect1="929,287,4,4" ctrlRect2="790,285,4,4"/>
+      </rest_node1>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions/>
+    <post_actions/>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

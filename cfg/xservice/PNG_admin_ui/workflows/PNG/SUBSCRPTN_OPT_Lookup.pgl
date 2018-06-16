@@ -1,0 +1,69 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" Id="SUBSCRPTN_OPT_Lookup.pgl" version="3">
+  <ui:container id="CtSelectMtrlDesc" scrollable="true">
+    <ui:step id="StSelectSubsOpt" displayText="SUBSCRPTN_OPT Lookup">
+      <ui:field-group id="fgReatinViewRecords" columns="3">
+        <ui:display-field id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR" displayText="MKTNG_PGM_NBR"/>
+        <ui:display-field id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR" displayText="LEGAL_ENT_NBR"/>
+        <ui:display-field id="DATA_SRCE_NBR" name="DATA_SRCE_NBR" displayText="DATA_SRCE_NBR"/>
+        <ui:display-field id="ENG_TXT" name="ENG_TXT" displayText="ENG_TXT"/>
+        <ui:display-field id="LOCAL_TXT" name="LOCAL_TXT" displayText="LOCAL_TXT"/>
+        <ui:hidden-field id="SUBSCRPTN_OPT_START_DATE" name="SUBSCRPTN_OPT_START_DATE" displayText="Start Date"/>
+        <ui:hidden-field id="SUBSCRPTN_OPT_END_DATE" name="SUBSCRPTN_OPT_END_DATE" displayText="End Date"/>
+      </ui:field-group>
+      <ui:table id="tableSelectSubsOpt" rowSrc="$root/RESPONSE/SUBSCRPTN_OPT" selectable="Single" collapsable="false" postRowIdAs="SELECTED_ID" filter="true" rowId="SUBSCRPTN_OPT_NBR#SUBSCRPTN_OPT_STMT_TXT#SUBSCRPTN_OPT_NAME" doPaging="true" startAtRow="$root/START_COUNT/@Value" maxRows="$root/MaxRec/@Value" selectedId="SUBSCRPTN_OPT_NBR#SUBSCRPTN_OPT_STMT_TXT#SUBSCRPTN_OPT_NAME" totalRowCount="$root/RowCount/@Value">
+        <ui:field-group id="fgSelectSubsOpt">
+          <ui:display-field id="MKTNG_PGM_NBR" name="MKTNG_PGM_NBR" displayText="MKTNG_PGM_NBR" dataType="Constant" sortable="true"/>
+          <ui:display-field id="LEGAL_ENT_NBR" name="LEGAL_ENT_NBR" displayText="LEGAL_ENT_NBR" dataType="Constant" sortable="true"/>
+          <!--<ui:display-field id="DATA_SRCE_NBR" name="DATA_SRCE_NBR" displayText="DATA_SRCE_NBR" dataType="Constant" sortable="true"/>-->
+          <ui:display-field id="SUBSCRPTN_OPT_NAME" name="SUBSCRPTN_OPT_NAME" displayText="SUBSCRPTN_OPT_NAME" dataType="Constant" sortable="true"/>
+          <ui:display-field id="SUBSCRPTN_OPT_NBR" name="SUBSCRPTN_OPT_NBR" displayText="SUBSCRPTN_OPT_NBR" dataType="Constant" sortable="true"/>
+          <ui:display-field id="PARNTL_CNSNT_IND" name="PARNTL_CNSNT_IND" displayText="PARNTL_CNSNT_IND" dataType="Constant" sortable="true"/>
+          <ui:display-field id="SUBSCRPTN_OPT_STMT_TXT" name="SUBSCRPTN_OPT_STMT_TXT" displayText="SUBSCRPTN_OPT_STMT_TXT" dataType="Constant" sortable="true" displayNoWrap="false"/>
+        </ui:field-group>
+        <ui:buttons>
+          <!--<ui:dropdown id="MaxRec" name="MaxRec" displayText="Max Records Per Page" defaultValue="25" onChange="javascript:on_view();">
+            <ui:option id="25" value="25"/>
+            <ui:option id="50" value="50"/>
+            <ui:option id="75" value="75"/>
+            <ui:option id="100" value="100"/>
+          </ui:dropdown>-->
+          <ui:divider/>
+          <ui:divider/>
+          <ui:button id="cancel" name="cancel" displayText="Cancel"/>
+          <ui:divider/>
+          <ui:button id="select_and_return" name="select_and_return" displayText="Select and Return" enabledBySelections="true" emphasized="true"/>
+          <ui:divider/>
+          <ui:button id="Add" name="Add" displayText="Add"/>
+          <ui:divider/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+function on_view()
+{
+var bIsValid = true;
+document.form.SUBMIT_AS_XML.value = 'false';
+bIsValid = (isValid_tableSelectMtrlDesc());
+if( bIsValid == false )
+{
+validation_alert('tableSelectSubsOpt');
+}
+if ( bIsValid == true)
+{
+disableButtons();
+trapExcelPivotChanges();
+document.form.BUTTON_ID.value = 'view';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+}
+onResize();
+return;
+}
+
+
+        
+
+</ui:script>
+</ui:page-group>

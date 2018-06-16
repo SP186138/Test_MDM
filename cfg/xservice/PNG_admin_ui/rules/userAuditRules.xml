@@ -1,0 +1,99 @@
+<DOCUMENTS>
+  <DEFINE_METHOD Name="auditLogin">
+    <RULE>
+      <ACTION>
+        <REQUEST Name="asyncAuditLogin" Synchronous="no">
+          <TO_XML SelectList="$thisParam/*"/>
+        </REQUEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="asyncAuditLogin">
+    <CREATE_DOCUMENT_ID Name="USR_SECURITY_AUDIT_ID" AssignToVar="auditId"/>
+    <ADD_DOCUMENT Name="USR_SECURITY_AUDIT" AssignToVar="thisReturn" ServiceName="USER_SECURITY">
+      <ID Value="{$auditId}"/>
+      <LOGIN_NAME Value="{$thisParam/LOGIN_NAME/@Value}"/>
+      <REMOTE_ADDRESS Value="{$thisParam/REMOTE_ADDRESS/@Value}"/>
+      <OPERATION Value="{$thisParam/OPERATION/@Value}"/>
+      <RESULT Value="{$thisParam/RESULT/@Value}"/>
+      <TIME_STAMP Value="{date()}"/>
+    </ADD_DOCUMENT>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="convertLocalDateToWWREFormat">
+    <RULE>
+      <ACTION>
+        <!--<Input Value="12/13/2003"/>
+				<Output Value="2003-12-13"/>-->
+        <IF_TEST Test="strlen($thisParam/Input/@Value)=0">
+          <THEN>
+            <SET DocVar="thisReturn" Property="Output" FromValue=""/>
+          </THEN>
+          <ELSE>
+            <SET Var="year" FromValue="{subString($thisParam/Input/@Value,6,10)}"/>
+            <SET Var="month" FromValue="{subString($thisParam/Input/@Value,0,2)}"/>
+            <SET Var="date" FromValue="{subString($thisParam/Input/@Value,3,5)}"/>
+            <SET DocVar="thisReturn" Property="Output" FromValue="{concat($year,'-',$month,'-',$date)}"/>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getRedirectUrlParams">
+    <RULE>
+      <ACTION>
+        <SET Var="pageUrl" FromValue="{$thisParam/REDIRECT_PAGE_URL/@Value}"/>
+        <SET Var="pageParam" FromValue="{$thisParam/REDIRECT_PARAM/@Value}"/>
+        <IF_TEST Test="$pageUrl !=null and $pageUrl != ''">
+          <THEN>
+            <IF_TEST Test="$pageParam !=null and $pageParam != ''">
+              <THEN>
+                <SET Var="params" FromValue=""/>
+                <SET Var="paramToken" FromValue="{strSplit($pageParam,'&amp;')}"/>
+                <FOR_EACH CurrentElement="currPK" SelectList="$paramToken/TOKEN">
+                  <SET Var="currPK" FromValue="{trim($currPK/@Value)}"/>
+                  <IF_TEST Test="starts-with($currPK,'REDIRECT_PAGE=')">
+                    <THEN>
+                      <SET Var="paramVal" FromValue=""/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="params" FromValue="{concat($params,'&amp;',$currPK)}"/>
+                    </ELSE>
+                  </IF_TEST>
+                </FOR_EACH>
+                <SET Var="redirectPageUrl" FromValue="{concat($pageUrl,$params)}"/>
+                <SET DocVar="thisReturn" Property="REDIRECT_PARAMETERS" FromValue="{$redirectPageUrl}"/>
+              </THEN>
+              <ELSE>
+                <SET Var="params" FromValue=""/>
+                <FOR_EACH CurrentElement="child" SelectList="$thisParam/PARAMETERS/*">
+                  <IF_TEST Test="$child/name() != 'REDIRECT_PAGE'">
+                    <THEN>
+                      <SET Var="params" FromValue="{concat($params,'&amp;',$child/name(),'=',$child/@Value)}"/>
+                    </THEN>
+                  </IF_TEST>
+                </FOR_EACH>
+                <SET Var="redirectPageUrl" FromValue="{concat($pageUrl,$params)}"/>
+                <SET DocVar="thisReturn" Property="REDIRECT_PARAMETERS" FromValue="{$redirectPageUrl}"/>
+              </ELSE>
+            </IF_TEST>
+          </THEN>
+          <ELSE>
+            <SET DocVar="thisReturn" Property="REDIRECT_PARAMETERS" FromValue="null"/>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getMaintenanceFlag">
+    <RULE>
+      <ACTION>
+        <GET_DOC_SMART Name="SystemProperties" ServiceName="BCM_MASTER" AssignToVar="flag">
+          <propertyName Value="MDMMaintenanceEnabled"/>
+        </GET_DOC_SMART>
+        <!--EXECUTE_SQL_QUERY Value="select PROPVALUE from MST_SYS_PROPS where PROPNAME = 'MDMMaintenanceEnabled';" AssignToVar="flag"/-->
+        <SET DocVar="thisReturn" Property="MAINTENANCE_FLAG" FromValue="{$flag/SystemProperties/propertyValue/@Value}"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>
+

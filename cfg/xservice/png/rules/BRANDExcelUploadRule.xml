@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+
+Copyright (c) 2009 by Teradata Corporation.
+
+All Rights Reserved.
+
+Teradata CONFIDENTIAL AND TRADE SECRET
+
+ruleExcelUploadForProjectsSub
+
+-->
+  <DEFINE_METHOD Name="BrandFamlyExcelUpload">
+    <RULE>
+      <ACTION>
+        <EXECUTE_SQL_QUERY AssignToVar="respID" ReturnRowCount="yes" Value="SEL MAX(cast(id as integer))as ID FROM UPLD_PRGS_RPT WHERE TEMPLATE_NAME='EntityBRAND_FAMLYTemplate'"/>
+        <FOR_EACH CurrentElement="currRow" SelectList="$thisParam/BRAND_FAMLY">
+          <GET_DOCUMENT Name="BRAND_FAMLY" AssignToVar="resBrandFamly" DirtyRead="true" ReturnRowCount="yes">
+            <BRAND_FAMLY_ID Value="{$currRow/BRAND_FAMLY_ID/@Value}"/>
+          </GET_DOCUMENT>
+          <GET_DOCUMENT Name="BRAND_FAMLY_ASSOC" AssignToVar="resBrandFamlyAssoc" DirtyRead="true" ReturnRowCount="yes">
+            <BRAND_FAMLY_ID Value="{$currRow/BRAND_FAMLY_ID/@Value}"/>
+            <CATEG_CODE Value="{$currRow/CATEG_CODE/@Value}"/>
+            <BRAND_CODE Value="{$currRow/BRAND_CODE/@Value}"/>
+          </GET_DOCUMENT>
+          <IF_TEST Test="$resBrandFamly/@TotalRowCount >0">
+            <THEN>
+              <SET Var="actionValueBRANDFAMLY" FromValue="UPDATE"/>
+            </THEN>
+            <ELSE>
+              <SET Var="actionValueBRANDFAMLY" FromValue="INSERT"/>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$resBrandFamlyAssoc/@TotalRowCount>0">
+            <THEN>
+              <SET Var="actionValueBRANDFAMLYASSOC" FromValue="UPDATE"/>
+            </THEN>
+            <ELSE>
+              <SET Var="actionValueBRANDFAMLYASSOC" FromValue="INSERT"/>
+            </ELSE>
+          </IF_TEST>
+          <DO_DB_PERSIST DocumentName="BRAND_FAMLY_ASSOC" Source="EXTERNAL" Action="{$actionValueBRANDFAMLYASSOC}" ServiceName="BCM_MASTER" AssignToVar="BrandAssocResponse" SysLoadId="{$respID/SQL_RESULT/ID/@Value}" SysWfId="XL_WF1234">
+            <BRAND_FAMLY_ASSOC>
+              <BRAND_FAMLY_ID Value="{$currRow/BRAND_FAMLY_ID/@Value}"/>
+              <CATEG_CODE Value="{$currRow/CATEG_CODE/@Value}"/>
+              <BRAND_CODE Value="{$currRow/BRAND_CODE/@Value}"/>
+            </BRAND_FAMLY_ASSOC>
+          </DO_DB_PERSIST>
+          <IF_TEST Test="$BrandAssocResponse/@Status='Success' and $BrandAssocResponse/VALIDATION_RESULT/@Value='SUCCESS'">
+            <THEN>
+              <DO_DB_PERSIST DocumentName="BRAND_FAMLY" Source="EXTERNAL" Action="{$actionValueBRANDFAMLY}" ServiceName="BCM_MASTER" AssignToVar="brandResponse" SysLoadId="{$respID/SQL_RESULT/ID/@Value}" SysWfId="XL_WF1234">
+                <BRAND_FAMLY>
+                  <BRAND_FAMLY_ID Value="{$currRow/BRAND_FAMLY_ID/@Value}"/>
+                  <BRAND_FAMLY_NAME Value="{$currRow/BRAND_FAMLY_NAME/@Value}"/>
+                </BRAND_FAMLY>
+              </DO_DB_PERSIST>
+            </THEN>
+          </IF_TEST>
+        </FOR_EACH>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

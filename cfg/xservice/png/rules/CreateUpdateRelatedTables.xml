@@ -1,0 +1,1127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <DEFINE_METHOD Name="newConsumer">
+    <API_DOC>
+      <INPUT>
+        <MKTNG_PGM_NBR Value="x"/>
+        <REGIS_CNSMR_ID_VAL Value="Y"/>
+      </INPUT>
+      <OUTPUT>
+      </OUTPUT>
+    </API_DOC>
+    <RULE>
+      <ACTION>
+        <GET_DOC_SMART Name="TRILLIUM_MDM_REFERENCE" AssignToVar="respTempMdmRefRG" ServiceName="BCM_MASTER" DirtyRead="yes">
+          <REFERENCE_RegistrationKEY Value="{$thisParam/REFERENCE_RegistrationKEY/@Value}"/>
+        </GET_DOC_SMART>
+        <GET_DOC_SMART Name="TRILLIUM_MDM_REFERENCE" AssignToVar="respTempMdmRefMH" ServiceName="BCM_MASTER" DirtyRead="yes">
+          <REFERENCE_LegalEntityKEY Value="{$thisParam/REFERENCE_LegalEntityKEY/@Value}"/>
+        </GET_DOC_SMART>
+        <GET_DOC_SMART Name="TRILLIUM_MDM_REFERENCE" AssignToVar="respTempMdmRefHH" ServiceName="BCM_MASTER" DirtyRead="yes">
+          <REFERENCE_Household_ID Value="{$thisParam/REFERENCE_Household_ID/@Value}"/>
+        </GET_DOC_SMART>
+        <IF_TEST Test="$respTempMdmRefHH/TRILLIUM_MDM_REFERENCE/REFERENCE_Household_ID/@Value = null and $respTempMdmRefMH/TRILLIUM_MDM_REFERENCE/REFERENCE_LegalEntityKEY/@Value = null">
+          <THEN>
+            <REQUEST Name="newMatchedCnsmrPersona" AssignToVar="resMatchedCnsmrPersona" ServiceName="BCM_MASTER">
+              <TO_XML SelectList="$thisParam/*"/>
+            </REQUEST>
+          </THEN>
+          <ELSE>
+            <IF_TEST Test="$respTempMdmRefMH/TRILLIUM_MDM_REFERENCE/REFERENCE_LegalEntityKEY/@Value = null">
+              <THEN>
+                <REQUEST Name="newRule" AssignToVar="resNewRule" ServiceName="BCM_MASTER">
+                  <TO_XML SelectList="$thisParam/*"/>
+                </REQUEST>
+              </THEN>
+              <ELSE>
+                <IF_TEST Test="$respTempMdmRefRG/TRILLIUM_MDM_REFERENCE/REFERENCE_RegistrationKEY/@Value = null">
+                  <THEN>
+                    <REQUEST Name="newRegExistMatchedHouse" AssignToVar="resnewRegExistMatchedHouse" ServiceName="BCM_MASTER">
+                      <TO_XML SelectList="$thisParam/*"/>
+                      <MATCHD_CNSMR_PRSNA_ID Value="{$respTempMdmRefMH/TRILLIUM_MDM_REFERENCE/NEW_Legal_Entity_Key/@Value}"/>
+                      <NEW_Household_ID Value="{$respTempMdmRefHH/TRILLIUM_MDM_REFERENCE/NEW_Household_ID/@Value}"/>
+                    </REQUEST>
+                  </THEN>
+                  <ELSE>
+                    <REQUEST Name="updateRegistrationPersona" AssignToVar="resupdateRegistrationPersona" ServiceName="BCM_MASTER">
+                      <REGIS_PRSNA_ID Value="{$respTempMdmRefRG/TRILLIUM_MDM_REFERENCE/NEW_Registration_Key/@Value}"/>
+                      <MATCHD_CNSMR_PRSNA_ID Value="{$respTempMdmRefMH/TRILLIUM_MDM_REFERENCE/NEW_Legal_Entity_Key/@Value}"/>
+                      <TO_XML SelectList="$thisParam/*"/>
+                    </REQUEST>
+                    <REQUEST Name="updateMatchedCnsmr" AssignToVar="resupdateMatchedCnsmr" ServiceName="BCM_MASTER">
+                      <MATCHD_CNSMR_PRSNA_ID Value="{$respTempMdmRefMH/TRILLIUM_MDM_REFERENCE/NEW_Legal_Entity_Key/@Value}"/>
+                      <TO_XML SelectList="$thisParam/*"/>
+                    </REQUEST>
+                  </ELSE>
+                </IF_TEST>
+              </ELSE>
+            </IF_TEST>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="newRegExistMatchedHouse">
+    <API_DOC>
+      <INPUT>
+        <MKTNG_PGM_NBR Value="x"/>
+        <REGIS_CNSMR_ID_VAL Value="Y"/>
+        <LEGAL_ENT_PRSNA_ID Value="Z"/>
+      </INPUT>
+      <OUTPUT>
+      </OUTPUT>
+    </API_DOC>
+    <RULE>
+      <ACTION>
+        <REQUEST Name="newRegistrationPersona" AssignToVar="respRegistrationPersona" ServiceName="BCM_MASTER">
+          <TO_XML SelectList="$thisParam/*"/>
+        </REQUEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="newRegnewMatchedExistHouse">
+    <RULE>
+      <ACTION>
+        <REQUEST Name="newMatchedCnsmrPersona" AssignToVar="resMatchedCnsmrPersona" ServiceName="BCM_MASTER">
+          <TO_XML SelectList="$thisParam/*"/>
+        </REQUEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="updateRegistrationPersona">
+    <RULE>
+      <ACTION>
+        <IF_TEST Test="$Success_Error_Message = 'null'">
+          <THEN>
+            <REQUEST Name="updateRegisPrsna" AssignToVar="resupdateRegisPrsna" ServiceName="BCM_MASTER">
+              <TO_XML SelectList="$thisParam/*"/>
+            </REQUEST>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+        <IF_TEST Test="$Success_Error_Message = 'null'">
+          <THEN>
+            <REQUEST Name="updateInfoIntoRelatedTables" AssignToVar="resupdateInfoIntoRelTables" ServiceName="BCM_MASTER">
+              <TO_XML SelectList="$thisParam/*"/>
+              <PRSNA_TYPE_CODE Value="Registration"/>
+            </REQUEST>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="newMatchedCnsmrPersona">
+    <RULE>
+      <ACTION>
+        <REQUEST Name="getIDGeneratedPersona" AssignToVar="matchdCnsmrPersonaId" ServiceName="BCM_MASTER"/>
+        <IF_TEST Test="$thisParam/HOUSEHOLD_EXIST/@Value ='N'">
+          <THEN>
+            <REQUEST Name="getIDGeneratedPersona" AssignToVar="housePersonaId" ServiceName="BCM_MASTER"/>
+            <SET Var="HousePersonaGlobalID" FromValue="{$housePersonaId/PersonaID/@Value}"/>
+            <SET Var="HEADHSHLD_IND" FromValue="Y"/>
+            <REQUEST Name="newHouseHoldPersona" AssignToVar="resnewHouseHoldPersona" ServiceName="BCM_MASTER">
+              <HSHLD_PRSNA_ID Value="{$HousePersonaGlobalID}"/>
+              <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+              <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+              <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+            </REQUEST>
+          </THEN>
+          <ELSE>
+            <SET Var="HousePersonaGlobalID" FromValue="{$thisParam/REFERENCE_Household_ID/@Value}"/>
+            <SET Var="HEADHSHLD_IND" FromValue="N"/>
+          </ELSE>
+        </IF_TEST>
+        <GET_DOCUMENT Name="PRSNA_STG" AssignToVar="resPrsnaStg" DirtyRead="yes" ServiceName="BCM_MASTER">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+        </GET_DOCUMENT>
+        <ADD_DOC_SMART Name="MATCHD_CNSMR_PRSNA" AssignToVar="resMatchdCnsmrPrsna" ServiceName="BCM_MASTER">
+          <MATCHD_CNSMR_PRSNA_ID Value="{$matchdCnsmrPersonaId/PersonaID/@Value}"/>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <HSHLD_PRSNA_ID Value="{$HousePersonaGlobalID}"/>
+          <HEAD_OF_HSHLD_IND Value="{$HEADHSHLD_IND}"/>
+          <UNIVERSAL_OPT_OUT Value=""/>
+          <NAME_PREFX_TXT Value="{$thisParam/DR_MRMRS/@Value}"/>
+          <GVN_NAME Value="{$thisParam/DR_FIRST_NAME/@Value}"/>
+          <MID_NAME Value="{$thisParam/DR_MIDDLE_NAME/@Value}"/>
+          <FAMLY_NAME Value="{$thisParam/DR_LAST_NAME/@Value}"/>
+          <NAME_SUFFX_TXT Value="{$thisParam/DR_NAME_SUFFIX/@Value}"/>
+          <FULL_NAME Value="{$resPrsnaStg/PRSNA_STG/FULL_NAME/@Value}"/>
+          <GENDR_IND Value="{$resPrsnaStg/PRSNA_STG/GENDR_IND/@Value}"/>
+          <BRTH_DATE Value="{$thisParam/BRTH_DATE/@Value}"/>
+          <LANG_CODE Value="{$thisParam/LANG_CODE/@Value}"/>
+          <NOTE_TXT Value=""/>
+          <LATST_ACTVY_DATE Value="{$resPrsnaStg/PRSNA_STG/PRSNA_REG_DT/@Value}"/>
+          <PRSNA_STATUS_CODE Value="ACTIVATED"/>
+          <CNSMR_USER_NAME Value="{$thisParam/CNSMR_USER_NAME/@Value}"/>
+          <REGIS_DATE Value="{$resPrsnaStg/PRSNA_STG/PRSNA_REG_DT/@Value}"/>
+          <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+          <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+        </ADD_DOC_SMART>
+        <REQUEST Name="insertInfoIntoRelatedTables" AssignToVar="resInfo" ServiceName="BCM_MASTER">
+          <TO_XML SelectList="$thisParam/*"/>
+          <MATCHD_CNSMR_PRSNA_ID Value="{$matchdCnsmrPersonaId/PersonaID/@Value}"/>
+          <PRSNA_TYPE_CODE Value="Legal"/>
+        </REQUEST>
+        <PRINT Value="Insert into Related Tables for Matched Cnsmr Completed"/>
+        <REQUEST Name="newRegistrationPersona" AssignToVar="respRegistrationPersona" ServiceName="BCM_MASTER">
+          <TO_XML SelectList="$thisParam/*"/>
+          <MATCHD_CNSMR_PRSNA_ID Value="{$matchdCnsmrPersonaId/PersonaID/@Value}"/>
+          <NEW_Household_ID Value="{$HousePersonaGlobalID}"/>
+        </REQUEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="newRegistrationPersona">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="PRSNA_STG" AssignToVar="resPrsnaStg" DirtyRead="yes" ServiceName="BCM_MASTER">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+        </GET_DOCUMENT>
+        <REQUEST Name="getIDGeneratedPersona" AssignToVar="regisPersonaId" ServiceName="BCM_MASTER"/>
+        <ADD_DOC_SMART Name="REGIS_PRSNA" AssignToVar="respRegisPrsna" ServiceName="BCM_MASTER">
+          <REGIS_PRSNA_ID Value="{$regisPersonaId/PersonaID/@Value}"/>
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <MATCHD_CNSMR_PRSNA_ID Value="{$thisParam/MATCHD_CNSMR_PRSNA_ID/@Value}"/>
+          <REFERAL_MKTNG_PGM_NBR Value=""/>
+          <LEAD_KEY Value=""/>
+          <NAME_PREFX_TXT Value="{$thisParam/DR_MRMRS/@Value}"/>
+          <GVN_NAME Value="{$thisParam/DR_FIRST_NAME/@Value}"/>
+          <MID_NAME Value="{$thisParam/DR_MIDDLE_NAME/@Value}"/>
+          <FAMLY_NAME Value="{$thisParam/DR_LAST_NAME/@Value}"/>
+          <NAME_SUFFX_TXT Value="{$thisParam/DR_NAME_SUFFIX/@Value}"/>
+          <FULL_NAME Value="{$resPrsnaStg/PRSNA_STG/FULL_NAME/@Value}"/>
+          <GENDR_IND Value="{$resPrsnaStg/PRSNA_STG/GENDR_IND/@Value}"/>
+          <BRTH_DATE Value="{$thisParam/BRTH_DATE/@Value}"/>
+          <LANG_CODE Value="{$thisParam/LANG_CODE/@Value}"/>
+          <EMAIL_SUPRSN_IND Value=""/>
+          <PHONE_SUPRSN_IND Value=""/>
+          <POSTL_SUPRSN_IND Value=""/>
+          <SOCIAL_NETWK_SUPRSN_IND Value=""/>
+          <CNSMR_SENTIMENT Value=""/>
+          <LATST_ACTVY_DATE Value="{$resPrsnaStg/PRSNA_STG/PRSNA_REG_DT/@Value}"/>
+          <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+          <CNSMR_USER_NAME Value="{$thisParam/CNSMR_USER_NAME/@Value}"/>
+          <REGIS_DATE Value="{$resPrsnaStg/PRSNA_STG/PRSNA_REG_DT/@Value}"/>
+          <PRSNA_STATUS_CODE Value="ACTIVATED"/>
+          <CNTRY_CODE Value="{$thisParam/DR_COUNTRY_NAME/@Value}"/>
+          <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+          <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+        </ADD_DOC_SMART>
+        <REQUEST Name="insertInfoIntoRelatedTables" AssignToVar="resInfo" ServiceName="BCM_MASTER">
+          <TO_XML SelectList="$thisParam/*"/>
+          <REGIS_PRSNA_ID Value="{$regisPersonaId/PersonaID/@Value}"/>
+          <PRSNA_TYPE_CODE Value="Registration"/>
+        </REQUEST>
+        <PRINT Value="Insert into Related Tables for Registration Completed"/>
+        <REQUEST Name="insertTempMDMRef" AssignToVar="resinsertTempMDMRef" ServiceName="BCM_MASTER">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+          <REFERENCE_LegalEntityKEY Value="{$thisParam/REFERENCE_LegalEntityKEY/@Value}"/>
+          <NEW_LEGAL_ENTITY_KEY Value="{$thisParam/MATCHD_CNSMR_PRSNA_ID/@Value}"/>
+          <REFERENCE_Household_ID Value="{$thisParam/REFERENCE_Household_ID/@Value}"/>
+          <NEW_Household_ID Value="{$thisParam/NEW_Household_ID/@Value}"/>
+          <REFERENCE_RegistrationKEY Value="{$thisParam/REFERENCE_RegistrationKEY/@Value}"/>
+          <NEW_Registration_Key Value="{$regisPersonaId/PersonaID/@Value}"/>
+        </REQUEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getIDGeneratedPersona" Access="Public">
+    <RULE>
+      <ACTION>
+        <CREATE_DOCUMENT_ID Name="PERSONA_SEQ" AssignToVar="PersonaID" HandleException="yes"/>
+        <SET DocVar="thisReturn" Property="PersonaID" FromValue="{$PersonaID}"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="updateMatchedCnsmr">
+    <RULE>
+      <ACTION>
+        <IF_TEST Test="$Success_Error_Message = 'null'">
+          <THEN>
+            <REQUEST Name="updateMatchdCnsmr" AssignToVar="resupdateMatchdCnsmr" ServiceName="BCM_MASTER">
+              <TO_XML SelectList="$thisParam/*"/>
+            </REQUEST>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+        <IF_TEST Test="$Success_Error_Message = 'null'">
+          <THEN>
+            <REQUEST Name="updateInfoIntoRelatedTables" AssignToVar="resInfo" ServiceName="BCM_MASTER">
+              <TO_XML SelectList="$thisParam/*"/>
+              <PRSNA_TYPE_CODE Value="Legal"/>
+            </REQUEST>
+          </THEN>
+          <ELSE/>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="insertInfoIntoRelatedTables">
+    <RULE>
+      <ACTION>
+        <IF_TEST Test="$thisParam/PRSNA_TYPE_CODE/@Value='Legal'">
+          <THEN>
+            <REQUEST Name="createPostalAddLegal" AssignToVar="resPostalAddress" ServiceName="BCM_MASTER">
+              <TO_XML SelectList="$thisParam/*"/>
+            </REQUEST>
+          </THEN>
+          <ELSE>
+            <IF_TEST Test="$thisParam/PRSNA_TYPE_CODE/@Value='Registration'">
+              <THEN>
+                <REQUEST Name="createPostalAddReg" AssignToVar="resPostalAddress" ServiceName="BCM_MASTER">
+                  <TO_XML SelectList="$thisParam/*"/>
+                </REQUEST>
+                <REQUEST Name="createEmailReg" AssignToVar="resEmail" ServiceName="BCM_MASTER">
+                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                  <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+                  <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                  <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                  <VALID_CNTCT_POINT_IND Value="{$thisParam/EMAIL_IND/@Value}"/>
+                  <CLEANSED_EMAIL_1 Value="{$thisParam/CLEANSED_EMAIL_1/@Value}"/>
+                  <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                  <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                </REQUEST>
+                <REQUEST Name="createPhoneReg" AssignToVar="resPhone" ServiceName="BCM_MASTER">
+                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                  <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+                  <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                  <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                  <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                  <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                </REQUEST>
+                <REQUEST Name="createSocNetwkReg" AssignToVar="resSocialNetwork" ServiceName="BCM_MASTER">
+                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                  <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+                  <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                  <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                  <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                  <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                </REQUEST>
+                <REQUEST Name="createDependent" AssignToVar="resDependent" ServiceName="BCM_MASTER">
+                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                  <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+                  <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                  <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                  <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                  <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                  <DPEND_NAME Value="{$thisParam/DPEND_NAME/@Value}"/>
+                </REQUEST>
+                <REQUEST Name="createPet" AssignToVar="resPet" ServiceName="BCM_MASTER">
+                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                  <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+                  <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                  <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                  <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                  <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                  <PET_NAME Value="{$thisParam/PET_NAME/@Value}"/>
+                </REQUEST>
+                <REQUEST Name="createConsumerAffil" AssignToVar="resConsumerAffil" ServiceName="BCM_MASTER">
+                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                  <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+                  <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                  <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                  <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                  <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                </REQUEST>
+                <REQUEST Name="createDependTrait" AssignToVar="resDependTrait" ServiceName="BCM_MASTER">
+                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                  <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+                  <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                  <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                  <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                  <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                </REQUEST>
+                <REQUEST Name="createPersonaTrait" AssignToVar="resPersonaTrait" ServiceName="BCM_MASTER">
+                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                  <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+                  <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                  <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                  <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                  <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                </REQUEST>
+                <REQUEST Name="createPetTrait" AssignToVar="resPetTrait" ServiceName="BCM_MASTER">
+                  <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                  <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+                  <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                  <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                  <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                  <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                </REQUEST>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="updateInfoIntoRelatedTables">
+    <RULE>
+      <ACTION>
+        <IF_TEST Test="$thisParam/PRSNA_TYPE_CODE/@Value='Legal'">
+          <THEN>
+            <IF_TEST Test="$Success_Error_Message = 'null'">
+              <THEN>
+                <REQUEST Name="updatePostalAddLegal" AssignToVar="resPostalAddress" ServiceName="BCM_MASTER">
+                  <TO_XML SelectList="$thisParam/*"/>
+                </REQUEST>
+              </THEN>
+              <ELSE>
+              </ELSE>
+            </IF_TEST>
+          </THEN>
+          <ELSE>
+            <IF_TEST Test="$thisParam/PRSNA_TYPE_CODE/@Value='Registration'">
+              <THEN>
+                <IF_TEST Test="$Success_Error_Message = 'null'">
+                  <THEN>
+                    <REQUEST Name="updatePostalAddReg" AssignToVar="resPostalAddress" ServiceName="BCM_MASTER">
+                      <TO_XML SelectList="$thisParam/*"/>
+                    </REQUEST>
+                  </THEN>
+                  <ELSE>
+                  </ELSE>
+                </IF_TEST>
+                <IF_TEST Test="$Success_Error_Message = 'null'">
+                  <THEN>
+                    <REQUEST Name="updateEmailReg" AssignToVar="resEmail" ServiceName="BCM_MASTER">
+                      <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                      <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+                      <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                      <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                      <!--<VALID_CNTCT_POINT_IND Value="{$thisParam/EMAIL_IND/@Value}"/>
+                      <EMAIL_ADDR_TXT Value="{$thisParam/EMAIL_ADDR_TXT/@Value}"/> -->
+                      <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                      <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                    </REQUEST>
+                  </THEN>
+                  <ELSE>
+                  </ELSE>
+                </IF_TEST>
+                <IF_TEST Test="$Success_Error_Message = 'null'">
+                  <THEN>
+                    <REQUEST Name="updatePhoneReg" AssignToVar="resPhone" ServiceName="BCM_MASTER">
+                      <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                      <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+                      <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                      <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                      <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                      <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                    </REQUEST>
+                  </THEN>
+                  <ELSE>
+                  </ELSE>
+                </IF_TEST>
+                <IF_TEST Test="$Success_Error_Message = 'null'">
+                  <THEN>
+                    <REQUEST Name="updateSocNetwkReg" AssignToVar="resSocialNetwork" ServiceName="BCM_MASTER">
+                      <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                      <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+                      <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                      <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                      <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                      <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                    </REQUEST>
+                  </THEN>
+                  <ELSE>
+                  </ELSE>
+                </IF_TEST>
+                <IF_TEST Test="$Success_Error_Message = 'null'">
+                  <THEN>
+                    <REQUEST Name="updateDependent" AssignToVar="resDependent" ServiceName="BCM_MASTER">
+                      <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                      <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+                      <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                      <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                      <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                      <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                      <!--<DPEND_NAME Value="{$thisParam/DPEND_NAME/@Value}"/>-->
+                    </REQUEST>
+                  </THEN>
+                  <ELSE>
+                  </ELSE>
+                </IF_TEST>
+                <IF_TEST Test="$Success_Error_Message = 'null'">
+                  <THEN>
+                    <REQUEST Name="updatePet" AssignToVar="resPet" ServiceName="BCM_MASTER">
+                      <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                      <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+                      <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                      <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                      <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                      <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                      <!--<PET_NAME Value="{$thisParam/PET_NAME/@Value}"/>-->
+                    </REQUEST>
+                  </THEN>
+                  <ELSE>
+                  </ELSE>
+                </IF_TEST>
+                <IF_TEST Test="$Success_Error_Message = 'null'">
+                  <THEN>
+                    <REQUEST Name="updateConsumerAffil" AssignToVar="resConsumerAffil" ServiceName="BCM_MASTER">
+                      <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                      <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+                      <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                      <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                      <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                      <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                    </REQUEST>
+                  </THEN>
+                  <ELSE>
+                  </ELSE>
+                </IF_TEST>
+                <IF_TEST Test="$Success_Error_Message = 'null'">
+                  <THEN>
+                    <REQUEST Name="updateDependTrait" AssignToVar="resDependTrait" ServiceName="BCM_MASTER">
+                      <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                      <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+                      <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                      <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                      <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                      <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                    </REQUEST>
+                  </THEN>
+                  <ELSE>
+                  </ELSE>
+                </IF_TEST>
+                <IF_TEST Test="$Success_Error_Message = 'null'">
+                  <THEN>
+                    <REQUEST Name="updatePersonaTrait" AssignToVar="resPersonaTrait" ServiceName="BCM_MASTER">
+                      <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                      <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+                      <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                      <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                      <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                      <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                    </REQUEST>
+                  </THEN>
+                  <ELSE>
+                  </ELSE>
+                </IF_TEST>
+                <IF_TEST Test="$Success_Error_Message = 'null'">
+                  <THEN>
+                    <REQUEST Name="updatePetTrait" AssignToVar="resPetTrait" ServiceName="BCM_MASTER">
+                      <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+                      <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+                      <REGIS_PRSNA_ID Value="{$thisParam/REGIS_PRSNA_ID/@Value}"/>
+                      <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+                      <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+                      <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+                    </REQUEST>
+                  </THEN>
+                  <ELSE>
+                  </ELSE>
+                </IF_TEST>
+              </THEN>
+              <ELSE/>
+            </IF_TEST>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="newHouseHoldPersona">
+    <RULE>
+      <ACTION>
+        <ADD_DOC_SMART Name="HSHLD_PRSNA" AssignToVar="respHshldPrsna" ServiceName="BCM_MASTER">
+          <HSHLD_PRSNA_ID Value="{$thisParam/HSHLD_PRSNA_ID/@Value}"/>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+          <PRSNA_STATUS_CODE Value="ACTIVATED"/>
+          <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+        </ADD_DOC_SMART>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="updateMatchedCnsmrWithHousehold">
+    <RULE>
+      <ACTION>
+        <MODIFY_DOC_SMART Name="MATCHD_CNSMR_PRSNA" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <MATCHD_CNSMR_PRSNA_ID Value="{$thisParam/REFERENCE_LegalEntityKEY/@Value}"/>
+            <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <HSHLD_PRSNA_ID Value="{$thisParam/HSHLD_PRSNA_ID/@Value}"/>
+            <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+            <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOC_SMART>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="newRule">
+    <RULE>
+      <ACTION>
+        <REQUEST Name="getIDGeneratedPersona" AssignToVar="matchdCnsmrPersonaId" ServiceName="BCM_MASTER"/>
+        <GET_DOC_SMART Name="TRILLIUM_MDM_REFERENCE" AssignToVar="resMdmRef" DirtyRead="yes" ServiceName="BCM_MASTER">
+          <REFERENCE_Household_ID Value="{$thisParam/REFERENCE_Household_ID/@Value}"/>
+        </GET_DOC_SMART>
+        <SET Var="HousePersonaGlobalID" FromValue="{$resMdmRef/TRILLIUM_MDM_REFERENCE/NEW_Household_ID/@Value}"/>
+        <GET_DOCUMENT Name="PRSNA_STG" AssignToVar="resPrsnaStg" ServiceName="BCM_MASTER" DirtyRead="yes">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+        </GET_DOCUMENT>
+        <ADD_DOC_SMART Name="MATCHD_CNSMR_PRSNA" AssignToVar="resMatchdCnsmrPrsna" ServiceName="BCM_MASTER">
+          <MATCHD_CNSMR_PRSNA_ID Value="{$matchdCnsmrPersonaId/PersonaID/@Value}"/>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <HSHLD_PRSNA_ID Value="{$HousePersonaGlobalID}"/>
+          <HEAD_OF_HSHLD_IND Value="N"/>
+          <UNIVERSAL_OPT_OUT Value=""/>
+          <NAME_PREFX_TXT Value="{$thisParam/DR_MRMRS/@Value}"/>
+          <GVN_NAME Value="{$thisParam/DR_FIRST_NAME/@Value}"/>
+          <MID_NAME Value="{$thisParam/DR_MIDDLE_NAME/@Value}"/>
+          <FAMLY_NAME Value="{$thisParam/DR_LAST_NAME/@Value}"/>
+          <NAME_SUFFX_TXT Value="{$thisParam/DR_NAME_SUFFIX/@Value}"/>
+          <FULL_NAME Value="{$resPrsnaStg/PRSNA_STG/FULL_NAME/@Value}"/>
+          <GENDR_IND Value="{$resPrsnaStg/PRSNA_STG/GENDR_IND/@Value}"/>
+          <BRTH_DATE Value="{$thisParam/BRTH_DATE/@Value}"/>
+          <LANG_CODE Value="{$thisParam/LANG_CODE/@Value}"/>
+          <NOTE_TXT Value=""/>
+          <LATST_ACTVY_DATE Value="{$resPrsnaStg/PRSNA_STG/PRSNA_REG_DT/@Value}"/>
+          <PRSNA_STATUS_CODE Value="ACTIVATED"/>
+          <CNSMR_USER_NAME Value="{$thisParam/CNSMR_USER_NAME/@Value}"/>
+          <REGIS_DATE Value="{$resPrsnaStg/PRSNA_STG/PRSNA_REG_DT/@Value}"/>
+          <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+          <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+        </ADD_DOC_SMART>
+        <REQUEST Name="insertInfoIntoRelatedTables" AssignToVar="resInfo" ServiceName="BCM_MASTER">
+          <TO_XML SelectList="$thisParam/*"/>
+          <MATCHD_CNSMR_PRSNA_ID Value="{$matchdCnsmrPersonaId/PersonaID/@Value}"/>
+          <PRSNA_TYPE_CODE Value="Legal"/>
+        </REQUEST>
+        <REQUEST Name="newRegistrationPersona" AssignToVar="respRegistrationPersona" ServiceName="BCM_MASTER">
+          <TO_XML SelectList="$thisParam/*"/>
+          <MATCHD_CNSMR_PRSNA_ID Value="{$matchdCnsmrPersonaId/PersonaID/@Value}"/>
+          <NEW_Household_ID Value="{$HousePersonaGlobalID}"/>
+        </REQUEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="insertTempMDMRef">
+    <RULE>
+      <ACTION>
+        <ADD_DOC_SMART Name="TRILLIUM_MDM_REFERENCE" AssignToVar="respTemp_MH" ServiceName="BCM_MASTER">
+          <REFERENCE_LegalEntityKEY Value="{$thisParam/REFERENCE_LegalEntityKEY/@Value}"/>
+          <NEW_Legal_Entity_Key Value="{$thisParam/NEW_LEGAL_ENTITY_KEY/@Value}"/>
+          <REFERENCE_Household_ID Value="{$thisParam/REFERENCE_Household_ID/@Value}"/>
+          <NEW_Household_ID Value="{$thisParam/NEW_Household_ID/@Value}"/>
+          <REFERENCE_RegistrationKEY Value="{$thisParam/REFERENCE_RegistrationKEY/@Value}"/>
+          <NEW_Registration_Key Value="{$thisParam/NEW_Registration_Key/@Value}"/>
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+        </ADD_DOC_SMART>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="insertTrilliumOutDup">
+    <RULE>
+      <ACTION>
+        <ADD_DOC_SMART Name="TRILLIUM_OUTPUT_DUP" AssignToVar="resTrilliumDup" ServiceName="BCM_MASTER">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+          <DR_ALIAS_CONTACT Value="{$thisParam/DR_ALIAS_CONTACT/@Value}"/>
+          <DR_FIRST_NAME Value="{$thisParam/DR_FIRST_NAME/@Value}"/>
+          <DR_MIDDLE_NAME Value="{$thisParam/DR_MIDDLE_NAME/@Value}"/>
+          <DR_LAST_NAME Value="{$thisParam/DR_LAST_NAME/@Value}"/>
+          <DR_MRMRS Value="{$thisParam/DR_MRMRS/@Value}"/>
+          <DR_NAME_GENER Value="{$thisParam/DR_NAME_GENER/@Value}"/>
+          <DR_NAME_SUFFIX Value="{$thisParam/DR_NAME_SUFFIX/@Value}"/>
+          <DR_NAME_GENDER Value="{$thisParam/DR_NAME_GENDER/@Value}"/>
+          <DR_COUNTRY_NAME Value="{$thisParam/DR_COUNTRY_NAME/@Value}"/>
+          <DR_REGION_NAME Value="{$thisParam/DR_REGION_NAME/@Value}"/>
+          <DR_CITY_NAME Value="{$thisParam/DR_CITY_NAME/@Value}"/>
+          <DR_POSTAL_CODE Value="{$thisParam/DR_POSTAL_CODE/@Value}"/>
+          <DR_STREET_NAME Value="{$thisParam/DR_STREET_NAME/@Value}"/>
+          <DR_HOUSE_NUMBER1 Value="{$thisParam/DR_HOUSE_NUMBER1/@Value}"/>
+          <DR_HOUSE_NUMBER2 Value="{$thisParam/DR_HOUSE_NUMBER2/@Value}"/>
+          <DR_POBOX_NUMBER Value="{$thisParam/DR_POBOX_NUMBER/@Value}"/>
+          <DR_ADDRESS Value="{$thisParam/DR_ADDRESS/@Value}"/>
+          <DR_ADDRESS2 Value="{$thisParam/DR_ADDRESS2/@Value}"/>
+          <DR_ADDRESS3 Value="{$thisParam/DR_ADDRESS3/@Value}"/>
+          <CLEANSED_PHONE_1 Value="{$thisParam/CLEANSED_PHONE_1/@Value}"/>
+          <CLEANSED_EMAIL_1 Value="{$thisParam/CLEANSED_EMAIL_1/@Value}"/>
+          <PR_REV_GROUP Value="{$thisParam/PR_REV_GROUP/@Value}"/>
+          <GOUT_MATCH_LEVEL Value="{$thisParam/GOUT_MATCH_LEVEL/@Value}"/>
+          <WINDOW_KEY_01 Value="{$thisParam/WINDOW_KEY_01/@Value}"/>
+          <REFERENCE_Household_ID Value="{$thisParam/REFERENCE_Household_ID/@Value}"/>
+          <REFERENCE_LegalEntityKEY Value="{$thisParam/REFERENCE_LegalEntityKEY/@Value}"/>
+          <REFERENCE_RegistrationKEY Value="{$thisParam/REFERENCE_RegistrationKEY/@Value}"/>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <BRTH_DATE Value="{$thisParam/BRTH_DATE/@Value}"/>
+          <LANG_CODE Value="{$thisParam/LANG_CODE/@Value}"/>
+          <CNSMR_USER_NAME Value="{$thisParam/CNSMR_USER_NAME/@Value}"/>
+          <STATUS Value="{$thisParam/STATUS/@Value}"/>
+          <FULL_NAME Value="{$thisParam/FULL_NAME/@Value}"/>
+          <DPEND_NAME Value="{$thisParam/DPEND_NAME/@Value}"/>
+          <PET_NAME Value="{$thisParam/PET_NAME/@Value}"/>
+          <!--<PET_NAME Value="sheru"/>-->
+          <PR_NAME_FORM_01 Value="{$thisParam/PR_NAME_FORM_01/@Value}"/>
+          <DR_ALIAS_ACCOUNT Value="{$thisParam/DR_ALIAS_ACCOUNT/@Value}"/>
+          <REFERENCE_MATCHED_LEV1_PATTERN Value="{$thisParam/REFERENCE_MATCHED_LEV1_PATTERN/@Value}"/>
+          <REFERENCE_MATCHED_LEV2_PATTERN Value="{$thisParam/REFERENCE_MATCHED_LEV2_PATTERN/@Value}"/>
+          <DR_BUSINESS_NAME Value="{$thisParam/DR_BUSINESS_NAME/@Value}"/>
+          <EMAIL_IND Value="{$thisParam/EMAIL_IND/@Value}"/>
+          <REGIS_DATE Value="{$thisParam/REGIS_DATE/@Value}"/>
+          <RECORD_IND Value="{$thisParam/RECORD_IND/@Value}"/>
+          <RECENT_IND Value="{$thisParam/RECENT_IND/@Value}"/>
+          <DUP_REGIS_PRSNA_ID Value=""/>
+          <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+        </ADD_DOC_SMART>
+      </ACTION>
+    </RULE>
+    <HANDLE_SYSTEM_EXCEPTION>
+      <action>
+        <SET Var="Success_Error_Message" FromValue="Insert to Trillium Output Dup Failed" Scope="Global"/>
+      </action>
+    </HANDLE_SYSTEM_EXCEPTION>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="insRegPrsnaStatusInactive">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="PRSNA_STG" AssignToVar="resPrsnaStg" ServiceName="BCM_MASTER" DirtyRead="yes">
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+        </GET_DOCUMENT>
+        <ADD_DOC_SMART Name="REGIS_PRSNA" AssignToVar="respRegisPrsna" ServiceName="BCM_MASTER">
+          <REGIS_PRSNA_ID Value="{$thisParam/REFERENCE_RegistrationKEY/@Value}"/>
+          <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+          <MATCHD_CNSMR_PRSNA_ID Value="{$thisParam/REFERENCE_LegalEntityKEY/@Value}"/>
+          <REFERAL_MKTNG_PGM_NBR Value=""/>
+          <LEAD_KEY Value=""/>
+          <NAME_PREFX_TXT Value="{$thisParam/DR_MRMRS/@Value}"/>
+          <GVN_NAME Value="{$thisParam/DR_FIRST_NAME/@Value}"/>
+          <MID_NAME Value="{$thisParam/DR_MIDDLE_NAME/@Value}"/>
+          <FAMLY_NAME Value="{$thisParam/DR_LAST_NAME/@Value}"/>
+          <NAME_SUFFX_TXT Value="{$thisParam/DR_NAME_SUFFIX/@Value}"/>
+          <FULL_NAME Value="{$resPrsnaStg/PRSNA_STG/FULL_NAME/@Value}"/>
+          <GENDR_IND Value="{$resPrsnaStg/PRSNA_STG/GENDR_IND/@Value}"/>
+          <BRTH_DATE Value="{$thisParam/BRTH_DATE/@Value}"/>
+          <LANG_CODE Value="{$thisParam/LANG_CODE/@Value}"/>
+          <EMAIL_SUPRSN_IND Value=""/>
+          <PHONE_SUPRSN_IND Value=""/>
+          <POSTL_SUPRSN_IND Value=""/>
+          <SOCIAL_NETWK_SUPRSN_IND Value=""/>
+          <CNSMR_SENTIMENT Value=""/>
+          <LATST_ACTVY_DATE Value="{$resPrsnaStg/PRSNA_STG/PRSNA_REG_DT/@Value}"/>
+          <REGIS_CNSMR_ID_VAL Value="{$thisParam/REGIS_CNSMR_ID_VAL/@Value}"/>
+          <CNSMR_USER_NAME Value="{$thisParam/CNSMR_USER_NAME/@Value}"/>
+          <REGIS_DATE Value="{$resPrsnaStg/PRSNA_STG/PRSNA_REG_DT/@Value}"/>
+          <PRSNA_STATUS_CODE Value="ACTIVE"/>
+          <!-- changed to active as sris update will take care of status -->
+          <CNTRY_CODE Value="{$thisParam/DR_COUNTRY_NAME/@Value}"/>
+          <SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+          <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>
+        </ADD_DOC_SMART>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="modifyTrilliumStatus">
+    <RULE>
+      <ACTION>
+        <MODIFY_DOC_SMART Name="TRILLIUM_OUTPUT1" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <STATUS Value="IN PROCESS"/>
+            <!--<SOURCE Value="{$thisParam/SOURCE/@Value}"/>
+            <SYS_TYPE Value="{$thisParam/SYS_TYPE/@Value}"/>-->
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <STATUS Value="PROCESSED"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOC_SMART>
+      </ACTION>
+    </RULE>
+    <HANDLE_SYSTEM_EXCEPTION>
+      <action>
+        <SET Var="Success_Error_Message" FromValue="modify of Trillium Status Failed" Scope="Global"/>
+      </action>
+    </HANDLE_SYSTEM_EXCEPTION>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="Validation_Rule">
+    <RULE>
+      <ACTION>
+        <EXECUTE_SHELL_COMMAND Value="CONSUMER_INFORMATION.bat" AssignToVar="result"/>
+        <IF_TEST Test="$result/@ShellReturnValue = 0">
+          <THEN>
+            <TO_DOCVAR AssignToVar="thisReturn">
+              <SUCCESS>
+                <Message Value="Validation Successful"/>
+              </SUCCESS>
+            </TO_DOCVAR>
+          </THEN>
+          <ELSE>
+            <TO_DOCVAR AssignToVar="thisReturn">
+              <FAILURE>
+                <Message Value="{$result/STD_ERR/LINE[1]/@Value}"/>
+              </FAILURE>
+            </TO_DOCVAR>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="Validation_Rule_ORIG">
+    <RULE>
+      <ACTION>
+        <EXECUTE_SHELL_COMMAND Value="CNSMR_CNTCT_ORIG.BAT" AssignToVar="result"/>
+        <IF_TEST Test="$result/@ShellReturnValue = 0">
+          <THEN>
+            <TO_DOCVAR AssignToVar="thisReturn">
+              <SUCCESS>
+                <Message Value="ORIG Validation Successful"/>
+              </SUCCESS>
+            </TO_DOCVAR>
+          </THEN>
+          <ELSE>
+            <TO_DOCVAR AssignToVar="thisReturn">
+              <FAILURE>
+                <Message Value="{$result/STD_ERR/LINE[1]/@Value}"/>
+              </FAILURE>
+            </TO_DOCVAR>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="Trillium_Rule">
+    <RULE>
+      <ACTION>
+        <EXECUTE_SHELL_COMMAND Value="TSS_CLEANSE_INPUT.BAT" AssignToVar="result" Synchronous="true"/>
+        <IF_TEST Test="$result/@ShellReturnValue = 1">
+          <THEN>
+            <TO_DOCVAR AssignToVar="thisReturn">
+              <FAILURE>
+                <Message Value="TSS_CLEANSE_INPUT.BAT failed - {$result/STD_ERR/LINE[1]/@Value}"/>
+              </FAILURE>
+            </TO_DOCVAR>
+          </THEN>
+          <ELSE>
+            <EXECUTE_SHELL_COMMAND Value="TSSEnvSet.BAT" AssignToVar="result1" Synchronous="true"/>
+            <IF_TEST Test="$result1/@ShellReturnValue = 1">
+              <THEN>
+                <TO_DOCVAR AssignToVar="thisReturn">
+                  <FAILURE>
+                    <Message Value="TSSEnvSet.BAT failed - {$result1/STD_ERR/LINE[1]/@Value}"/>
+                  </FAILURE>
+                </TO_DOCVAR>
+              </THEN>
+              <ELSE>
+                <REQUEST Name="invokeRouteCleanse" ServiceName="Trillium" AssignToVar="result2" Synchronous="true"/>
+                <IF_TEST Test="$result2/@ShellReturnValue = 1">
+                  <THEN>
+                    <TO_DOCVAR AssignToVar="thisReturn">
+                      <FAILURE>
+                        <Message Value="invokeRouteCleanse failed - {$result2/STD_ERR/LINE[1]/@Value}"/>
+                      </FAILURE>
+                    </TO_DOCVAR>
+                  </THEN>
+                  <ELSE>
+                    <EXECUTE_SHELL_COMMAND Value="CNSMR_TSS_WINKEY_OUTPUT_STG.BAT" AssignToVar="result3" Synchronous="true"/>
+                    <IF_TEST Test="$result3/@ShellReturnValue = 1">
+                      <THEN>
+                        <TO_DOCVAR AssignToVar="thisReturn">
+                          <FAILURE>
+                            <Message Value="CNSMR_TSS_WINKEY_OUTPUT_STG.BAT failed - {$result3/STD_ERR/LINE[1]/@Value}"/>
+                          </FAILURE>
+                        </TO_DOCVAR>
+                      </THEN>
+                      <ELSE>
+                        <EXECUTE_SHELL_COMMAND Value="TSS_MATCH_INPUT_CRM.BAT" AssignToVar="result4" Synchronous="true"/>
+                        <IF_TEST Test="$result4/@ShellReturnValue = 1">
+                          <THEN>
+                            <TO_DOCVAR AssignToVar="thisReturn">
+                              <FAILURE>
+                                <Message Value="TSS_MATCH_INPUT_CRM.BAT failed - {$result4/STD_ERR/LINE[1]/@Value}"/>
+                              </FAILURE>
+                            </TO_DOCVAR>
+                          </THEN>
+                          <ELSE>
+                            <REQUEST Name="TSSMatch" ServiceName="Trillium" AssignToVar="result5" Synchronous="true"/>
+                            <IF_TEST Test="$result5/@ShellReturnValue = 1">
+                              <THEN>
+                                <TO_DOCVAR AssignToVar="thisReturn">
+                                  <FAILURE>
+                                    <Message Value="TSS Match Failed - {$result5/STD_ERR/LINE[1]/@Value}"/>
+                                  </FAILURE>
+                                </TO_DOCVAR>
+                              </THEN>
+                              <ELSE>
+                                <EXECUTE_SHELL_COMMAND Value="TSS_MATCH_STG.BAT" AssignToVar="result6" Synchronous="true"/>
+                                <IF_TEST Test="$result6/@ShellReturnValue = 0">
+                                  <THEN>
+                                    <TO_DOCVAR AssignToVar="thisReturn">
+                                      <SUCCESS>
+                                        <Message Value="Trillium Rule Successful"/>
+                                      </SUCCESS>
+                                    </TO_DOCVAR>
+                                  </THEN>
+                                  <ELSE>
+                                    <TO_DOCVAR AssignToVar="thisReturn">
+                                      <FAILURE>
+                                        <Message Value="TSS_MATCH_STG.BAT failed - {$result/STD_ERR/LINE[1]/@Value}"/>
+                                      </FAILURE>
+                                    </TO_DOCVAR>
+                                  </ELSE>
+                                </IF_TEST>
+                              </ELSE>
+                            </IF_TEST>
+                          </ELSE>
+                        </IF_TEST>
+                      </ELSE>
+                    </IF_TEST>
+                  </ELSE>
+                </IF_TEST>
+              </ELSE>
+            </IF_TEST>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getIDGeneratedBatch" Access="Public">
+    <RULE>
+      <ACTION>
+        <CREATE_DOCUMENT_ID Name="BATCH_SEQ" AssignToVar="BatchID" HandleException="yes"/>
+        <SET DocVar="thisReturn" Property="BatchID" FromValue="{$BatchID}"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="wrappersuccess">
+    <RULE>
+      <ACTION>
+        <FOR_EACH SelectList="$thisParam/ROOT/*" CurrentElement="currSource">
+          <SET Var="inputVal" FromValue="{concat($currSource/REQ_MAIL_ID/@Value,',',$currSource/AGN_CON_MAIL_ID/@Value)}"/>
+          <SET Var="inputValLength" FromValue="{strlen($inputVal)}"/>
+          <SET Var="index" FromValue="0"/>
+          <SET Var="previousindex" FromValue="0"/>
+          <SET Var="counter" FromValue="1"/>
+          <SET Var="FinalEmail" FromValue=""/>
+          <TO_DOCVAR AssignToVar="emailRecipients">
+            <ROOT>
+            </ROOT>
+          </TO_DOCVAR>
+          <WHILE Condition="($index &lt; $inputValLength)">
+            <SET Var="testVal" FromValue="{subString($inputVal,int($index),int($index+1))}"/>
+            <IF_TEST Test="$testVal=',' or ($index+1=$inputValLength)">
+              <THEN>
+                <IF_TEST Test="$index+1=$inputValLength">
+                  <THEN>
+                    <SET Var="FinalEmail" FromValue="{subString($inputVal,int($previousindex),int($index+1))}"/>
+                  </THEN>
+                  <ELSE>
+                    <SET Var="FinalEmail" FromValue="{subString($inputVal,int($previousindex),int($index))}"/>
+                  </ELSE>
+                </IF_TEST>
+                <SET Var="previousindex" FromValue="{int($index+1)}"/>
+                <APPEND_TO_XML DocVar="emailRecipients">
+                  <TO_ADDRS>
+                    <TO_ADDRESS Value="{$FinalEmail}"/>
+                  </TO_ADDRS>
+                </APPEND_TO_XML>
+                <SET Var="index" FromValue="{int($index+1)}"/>
+                <SET Var="FinalEmail" FromValue=""/>
+              </THEN>
+              <ELSE>
+                <SET Var="index" FromValue="{int($index+1)}"/>
+              </ELSE>
+            </IF_TEST>
+          </WHILE>
+          <REQUEST Name="emailonwrappersuccess" AssignToVar="resemailwrapper" ServiceName="BCM_MASTER" Synchronous="yes">
+            <SOURCE_ID Value="{$currSource/SOURCE_ID/@Value}"/>
+            <TO_XML DocVar="emailRecipients"/>
+            <BatchId Value="{$thisParam/BatchId/@Value}"/>
+          </REQUEST>
+        </FOR_EACH>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="BadFileRequest">
+    <RULE>
+      <ACTION>
+        <FOR_EACH SelectList="$thisParam/ROOT/*" CurrentElement="currSource">
+          <SET Var="inputVal" FromValue="{concat($currSource/REQ_MAIL_ID/@Value,',',$currSource/AGN_CON_MAIL_ID/@Value)}"/>
+          <SET Var="inputValLength" FromValue="{strlen($inputVal)}"/>
+          <SET Var="index" FromValue="0"/>
+          <SET Var="previousindex" FromValue="0"/>
+          <SET Var="counter" FromValue="1"/>
+          <SET Var="FinalEmail" FromValue=""/>
+          <TO_DOCVAR AssignToVar="emailRecipients">
+            <ROOT>
+            </ROOT>
+          </TO_DOCVAR>
+          <WHILE Condition="($index &lt; $inputValLength)">
+            <SET Var="testVal" FromValue="{subString($inputVal,int($index),int($index+1))}"/>
+            <IF_TEST Test="$testVal=',' or ($index+1=$inputValLength)">
+              <THEN>
+                <IF_TEST Test="$index+1=$inputValLength">
+                  <THEN>
+                    <SET Var="FinalEmail" FromValue="{subString($inputVal,int($previousindex),int($index+1))}"/>
+                  </THEN>
+                  <ELSE>
+                    <SET Var="FinalEmail" FromValue="{subString($inputVal,int($previousindex),int($index))}"/>
+                  </ELSE>
+                </IF_TEST>
+                <SET Var="previousindex" FromValue="{int($index+1)}"/>
+                <APPEND_TO_XML DocVar="emailRecipients">
+                  <TO_ADDRS>
+                    <TO_ADDRESS Value="{$FinalEmail}"/>
+                  </TO_ADDRS>
+                </APPEND_TO_XML>
+                <SET Var="index" FromValue="{int($index+1)}"/>
+                <SET Var="FinalEmail" FromValue=""/>
+              </THEN>
+              <ELSE>
+                <SET Var="index" FromValue="{int($index+1)}"/>
+              </ELSE>
+            </IF_TEST>
+          </WHILE>
+          <REQUEST Name="emailonBadFile" AssignToVar="resemailwrapper" ServiceName="BCM_MASTER" Synchronous="yes">
+            <SOURCE_ID Value="{$currSource/SOURCE_ID/@Value}"/>
+            <TO_XML DocVar="emailRecipients"/>
+            <BatchId Value="{$thisParam/BatchId/@Value}"/>
+          </REQUEST>
+        </FOR_EACH>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="UntranslatableChar">
+    <RULE>
+      <ACTION>
+        <FOR_EACH SelectList="$thisParam/ROOT/*" CurrentElement="currSource">
+          <SET Var="inputVal" FromValue="{concat($currSource/REQ_MAIL_ID/@Value,',',$currSource/AGN_CON_MAIL_ID/@Value)}"/>
+          <SET Var="inputValLength" FromValue="{strlen($inputVal)}"/>
+          <SET Var="index" FromValue="0"/>
+          <SET Var="previousindex" FromValue="0"/>
+          <SET Var="counter" FromValue="1"/>
+          <SET Var="FinalEmail" FromValue=""/>
+          <TO_DOCVAR AssignToVar="emailRecipients">
+            <ROOT>
+            </ROOT>
+          </TO_DOCVAR>
+          <WHILE Condition="($index &lt; $inputValLength)">
+            <SET Var="testVal" FromValue="{subString($inputVal,int($index),int($index+1))}"/>
+            <IF_TEST Test="$testVal=',' or ($index+1=$inputValLength)">
+              <THEN>
+                <IF_TEST Test="$index+1=$inputValLength">
+                  <THEN>
+                    <SET Var="FinalEmail" FromValue="{subString($inputVal,int($previousindex),int($index+1))}"/>
+                  </THEN>
+                  <ELSE>
+                    <SET Var="FinalEmail" FromValue="{subString($inputVal,int($previousindex),int($index))}"/>
+                  </ELSE>
+                </IF_TEST>
+                <SET Var="previousindex" FromValue="{int($index+1)}"/>
+                <APPEND_TO_XML DocVar="emailRecipients">
+                  <TO_ADDRS>
+                    <TO_ADDRESS Value="{$FinalEmail}"/>
+                  </TO_ADDRS>
+                </APPEND_TO_XML>
+                <SET Var="index" FromValue="{int($index+1)}"/>
+                <SET Var="FinalEmail" FromValue=""/>
+              </THEN>
+              <ELSE>
+                <SET Var="index" FromValue="{int($index+1)}"/>
+              </ELSE>
+            </IF_TEST>
+          </WHILE>
+          <REQUEST Name="emailOnUntranslatableChar" AssignToVar="resemailUntrans" ServiceName="BCM_MASTER" Synchronous="yes">
+            <SOURCE_ID Value="{$currSource/SOURCE_ID/@Value}"/>
+            <LOAD_ID Value="{$thisParam/LOAD_ID/@Value}"/>
+            <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+            <TO_XML DocVar="emailRecipients"/>
+            <Subject Value="Wrapper Validation - Untranslatable character records rejected"/>
+            <ERRORCODE Value="2"/>
+            <Error Value="Wrapper Validation"/>
+            <Desc Value="Please refer to the table below for details of the error, fix the data at source and resend to “1, Consumer Place”."/>
+            <Notification Value="Error notification is sent based on the filter criteria for the error called “Untranslatable Character “captured in SYS_ERR_CODE."/>
+          </REQUEST>
+        </FOR_EACH>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getConcatenatedLoadIds">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="LOAD_INFO" AssignToVar="respLoadInfo" DirtyRead="true" ReturnRowCount="true" ServiceName="BCM_MASTER">
+          <SELECT>
+            <LOAD_ID/>
+          </SELECT>
+          <BATCH_ID Value="{$thisParam/BATCH_ID/@Value}"/>
+          <GROUP_BY>
+            <LOAD_ID/>
+          </GROUP_BY>
+        </GET_DOCUMENT>
+        <SET Var="LoadId" FromVar=""/>
+        <FOR_EACH SelectList="$respLoadInfo/LOAD_INFO/LOAD_ID" CurrentElement="currentLoadId">
+          <IF_TEST Test="strlen($LoadId/@Value)= 0">
+            <THEN>
+              <SET Var="LoadId" FromValue="{$currentLoadId/@Value}"/>
+            </THEN>
+            <ELSE>
+              <SET Var="LoadId" FromValue="{$LoadId/@Value},{$currentLoadId/@Value}"/>
+            </ELSE>
+          </IF_TEST>
+        </FOR_EACH>
+        <TO_DOCVAR AssignToVar="thisReturn">
+          <LOAD_ID Value="{$LoadId}"/>
+        </TO_DOCVAR>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="EmailCheckAdditionalForI2Processing">
+    <RULE>
+      <ACTION>
+        <FOR_EACH SelectList="$thisParam/ROOT/*" CurrentElement="currSource">
+          <SET Var="inputVal" FromValue="{concat($currSource/REQ_MAIL_ID/@Value,',',$currSource/AGN_CON_MAIL_ID/@Value)}"/>
+          <SET Var="inputValLength" FromValue="{strlen($inputVal)}"/>
+          <SET Var="index" FromValue="0"/>
+          <SET Var="previousindex" FromValue="0"/>
+          <SET Var="counter" FromValue="1"/>
+          <SET Var="FinalEmail" FromValue=""/>
+          <TO_DOCVAR AssignToVar="emailRecipients">
+            <ROOT>
+            </ROOT>
+          </TO_DOCVAR>
+          <WHILE Condition="($index &lt; $inputValLength)">
+            <SET Var="testVal" FromValue="{subString($inputVal,int($index),int($index+1))}"/>
+            <IF_TEST Test="$testVal=',' or ($index+1=$inputValLength)">
+              <THEN>
+                <IF_TEST Test="$index+1=$inputValLength">
+                  <THEN>
+                    <SET Var="FinalEmail" FromValue="{subString($inputVal,int($previousindex),int($index+1))}"/>
+                  </THEN>
+                  <ELSE>
+                    <SET Var="FinalEmail" FromValue="{subString($inputVal,int($previousindex),int($index))}"/>
+                  </ELSE>
+                </IF_TEST>
+                <SET Var="previousindex" FromValue="{int($index+1)}"/>
+                <APPEND_TO_XML DocVar="emailRecipients">
+                  <TO_ADDRS>
+                    <TO_ADDRESS Value="{$FinalEmail}"/>
+                  </TO_ADDRS>
+                </APPEND_TO_XML>
+                <SET Var="index" FromValue="{int($index+1)}"/>
+                <SET Var="FinalEmail" FromValue=""/>
+              </THEN>
+              <ELSE>
+                <SET Var="index" FromValue="{int($index+1)}"/>
+              </ELSE>
+            </IF_TEST>
+          </WHILE>
+          <REQUEST Name="emailAdditionalForI2Processing" AssignToVar="resemailwrapper" ServiceName="BCM_MASTER" Synchronous="yes">
+            <SOURCE_ID Value="{$currSource/SOURCE_ID/@Value}"/>
+            <TO_XML DocVar="emailRecipients"/>
+            <BatchId Value="{$thisParam/BatchId/@Value}"/>
+            <MKTNG_PGM_NBR Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+          </REQUEST>
+        </FOR_EACH>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

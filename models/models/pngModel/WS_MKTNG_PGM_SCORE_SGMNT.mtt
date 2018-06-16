@@ -1,0 +1,101 @@
+<document IsDocView="true">
+  <properties>
+    <property Name="MKTNG_PGM_NBR">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="MKTNG_PGM_NBR" />
+    </property>
+    <property Name="MKTNG_PGM_NAME">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="MKTNG_PGM_NAME" />
+    </property>
+    <property Name="MKTNG_PGM_SHORT_NAME">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="MKTNG_PGM_SHORT_NAME" />
+    </property>
+    <property Name="MKTNG_PGM_DESC">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="MKTNG_PGM_DESC" />
+    </property>
+    <property Name="MKTNG_PGM_STATUS">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="MKTNG_PGM_STATUS" />
+    </property>
+    <property Name="MKTNG_PGM_BUSN_NAME">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="MKTNG_PGM_BUSN_NAME" />
+    </property>
+    <property Name="LEGAL_ENT_NBR">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="LEGAL_ENT_NBR" />
+    </property>
+    <property Name="CNSMR_SCORE_NBR">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="CNSMR_SCORE_NBR" />
+    </property>
+    <property Name="CNSMR_SCORE_NAME">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="CNSMR_SCORE_NAME" />
+    </property>
+    <property Name="CNSMR_SCORE_DESC">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="CNSMR_SCORE_DESC" />
+    </property>
+    <property Name="WEBSITE_SGMNT_IND">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="WEBSITE_SGMNT_IND" />
+    </property>
+  </properties>
+  <keys />
+  <links />
+  <docFacets>
+    <miscFacet Active="true" />
+    <mdmConfigFacet SchemaGen="false" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql OnMDMTables="true" IsSimpleView="true">REPLACE VIEW  MDM.WS_MKTNG_PGM_SCORE_SGMNT &#xD;
+(&#xD;
+MKTNG_PGM_NBR,&#xD;
+MKTNG_PGM_NAME ,&#xD;
+MKTNG_PGM_SHORT_NAME ,&#xD;
+MKTNG_PGM_DESC ,&#xD;
+MKTNG_PGM_STATUS ,&#xD;
+MKTNG_PGM_BUSN_NAME ,&#xD;
+LEGAL_ENT_NBR ,&#xD;
+CNSMR_SCORE_NBR ,&#xD;
+CNSMR_SCORE_NAME,&#xD;
+CNSMR_SCORE_DESC,  &#xD;
+WEBSITE_SGMNT_IND,&#xD;
+ SYS_TARGET_ID,&#xD;
+ SYS_AUTH_ID,&#xD;
+ SYS_SOURCE,&#xD;
+ SYS_CREATED_BY,&#xD;
+ SYS_CREATION_DATE,&#xD;
+ SYS_ENT_STATE,&#xD;
+ SYS_LAST_MODIFIED_BY,&#xD;
+ SYS_LAST_MODIFIED_DATE,&#xD;
+ SYS_NC_TYPE,&#xD;
+ SYS_ERR_CODE,&#xD;
+ SYS_ERR_SVRTY &#xD;
+	  ) AS &#xD;
+SEL	&#xD;
+MKTNG_PGM_NBR,&#xD;
+MKTNG_PGM_NAME ,&#xD;
+MKTNG_PGM_SHORT_NAME ,&#xD;
+MKTNG_PGM_DESC ,&#xD;
+MKTNG_PGM_STATUS ,&#xD;
+MKTNG_PGM_BUSN_NAME ,&#xD;
+B.LEGAL_ENT_NBR ,&#xD;
+A.CNSMR_SCORE_NBR ,&#xD;
+CNSMR_SCORE_NAME,&#xD;
+CNSMR_SCORE_DESC,  &#xD;
+WEBSITE_SGMNT_IND,&#xD;
+NULL (INTEGER) 		AS  SYS_TARGET_ID,&#xD;
+NULL (VARCHAR(1000)) 	AS SYS_AUTH_ID,&#xD;
+NULL (VARCHAR(256)) 	AS SYS_SOURCE,&#xD;
+NULL (VARCHAR(70)) 	AS SYS_CREATED_BY,&#xD;
+NULL (TIMESTAMP(0)) 	AS SYS_CREATION_DATE,&#xD;
+NULL  (VARCHAR(25)) 	AS  SYS_ENT_STATE,&#xD;
+NULL (VARCHAR(70)) 	AS SYS_LAST_MODIFIED_BY,&#xD;
+NULL (TIMESTAMP(0)) 	AS SYS_LAST_MODIFIED_DATE, &#xD;
+NULL (VARCHAR(25)) 	AS SYS_NC_TYPE,&#xD;
+NULL (VARCHAR(10000)) 	AS SYS_ERR_CODE,&#xD;
+NULL (VARCHAR(30)) 	AS SYS_ERR_SVRTY&#xD;
+FROM &#xD;
+CNSMR_SCORE_REF A &#xD;
+LEFT JOIN &#xD;
+MTCHD_CNSMR_SCR_DMN_MAP B &#xD;
+ON A.CNSMR_SCORE_NBR = B.CNSMR_SCORE_NBR&#xD;
+LEFT JOIN MKTNG_PGM C &#xD;
+ON B.LEGAL_ENT_NBR = C.LEGAL_ENT_NBR&#xD;
+WHERE WEBSITE_SGMNT_IND='Y';</viewsql>
+</document>
+

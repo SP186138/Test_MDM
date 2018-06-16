@@ -1,0 +1,901 @@
+<DOCUMENTS>
+  <DEFINE_METHOD Name="modifyProjects" Category="API methods">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT AssignToVar="resProjectTitle" DirtyRead="true" Name="mdm_projects_v" ServiceName="BCM_MASTER">
+          <project_title Value="{$thisParam/AV_DESCRIPTION/@Value}"/>
+          <SELECT>
+            <project_number/>
+            <interface_platform_short_name/>
+            <revenue_model_short_name/>
+          </SELECT>
+        </GET_DOCUMENT>
+        <TO_DOCVAR AssignToVar="ProjectUpdates">
+          <ROOT/>
+        </TO_DOCVAR>
+        <FOR_EACH CurrentElement="currProject" SelectList="$resProjectTitle/mdm_projects_v">
+          <!-- <APPEND_TO_XML DocVar="ProjectUpdates">
+            <PROJECTS>-->
+          <MODIFY_DOCUMENT Name="PROJECTS" ServiceName="BCM_MASTER">
+            <DOCUMENT_CONTEXT>
+              <PROJECT_NUMBER Value="{$currProject/project_number/@Value}"/>
+            </DOCUMENT_CONTEXT>
+            <UPDATE_PROPERTIES>
+              <PROJECT_DESCRIPTION Value="{upperCase(concat($thisParam/AV_DESCRIPTION/@Value,' - ',$currProject/interface_platform_short_name/@Value,' - ',$currProject/revenue_model_short_name/@Value))}"/>
+              <LAST_MODIFIED_BY Value="{$UserId}"/>
+              <LAST_MODIFIED_DATE Value="{date()}"/>
+            </UPDATE_PROPERTIES>
+          </MODIFY_DOCUMENT>
+          <!--       </PROJECTS>
+          </APPEND_TO_XML>-->
+        </FOR_EACH>
+        <!--   <DO_DB_PERSIST Action="UPDATE" DocumentName="PROJECTS" ServiceName="BCM_MASTER" AssignToVar="doDbPersistResult" Source="EXTERNAL">
+          <TO_XML SelectList="$ProjectUpdates/*"/>
+        </DO_DB_PERSIST>-->
+        <!--        <TO_DOCVAR AssignToVar="sqlQuery">-->
+        <!--          <QUERY>UPDATE	MST_PROJECTS 	SET PROJECT_DESCRIPTION= '{$thisParam/AV_DESCRIPTION/@Value}' || (Substr(PROJECT_DESCRIPTION,Position('-' In PROJECT_DESCRIPTION),characters(PROJECT_DESCRIPTION))), sys_last_modified_date =  cast(cast(current_timestamp as varchar(19)) as timestamp(0)), sys_last_modified_by = '{$userId}' 	WHERE	PROJECT_TITLE_AV_ID={$thisParam/AV_ID/@Value}</QUERY>-->
+        <!--     <QUERY>UPDATE	MST_PROJECTS 	SET PROJECT_DESCRIPTION= '{$thisParam/AV_DESCRIPTION/@Value}' ||' '|| (Substr(PROJECT_DESCRIPTION,Position('-' In PROJECT_DESCRIPTION),characters(PROJECT_DESCRIPTION))), sys_last_modified_date =  cast('{subString(date(),0,19)}' as timestamp(0) format 'mm/dd/yyyybhh:mi:ss') , sys_last_modified_by = '{$userId}' 	WHERE	PROJECT_TITLE_AV_ID={$thisParam/AV_ID/@Value}</QUERY>
+        </TO_DOCVAR>
+        <EXECUTE_SQL_DML Value="{$sqlQuery/@text}" AssignToVar="thisReturn" ReturnRowCount="true"/>-->
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getAttributeTypeDetail">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="ATTRIBUTE_TYPES" AssignToVar="AttributeDetail" ServiceName="BCM_MASTER">
+          <TO_XML SelectList="$thisParam/*"/>
+        </GET_DOCUMENT>
+      </ACTION>
+    </RULE>
+    <SET DocVar="thisReturn" FromDocVar="AttributeDetail"/>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="ValidationCodeExist" Category="VALIDATIONS">
+    <RULE>
+      <ACTION>
+        <IF_TEST Test="$thisParam/AV_CODE/@Value != null">
+          <THEN>
+            <REMOVE_CHILDREN ChildName="AV_DESCRIPTION" DocVar="thisParam"/>
+            <GET_DOCUMENT Name="ATTRIBUTE_VALUES" AssignToVar="resAttributeValues" ServiceName="BCM_MASTER">
+              <TO_XML SelectList="$thisParam/ATTRIBUTE_TYPE_ID"/>
+              <TO_XML SelectList="$thisParam/AV_CODE"/>
+              <TO_XML SelectList="$thisParam/AV_ID"/>
+            </GET_DOCUMENT>
+            <IF_TEST Test="count($resAttributeValues/ATTRIBUTE_VALUES/*)!=0">
+              <THEN>
+                <SET Var="ExistCheck" FromValue="FALSE"/>
+              </THEN>
+              <ELSE>
+                <SET Var="ExistCheck" FromValue="TRUE"/>
+              </ELSE>
+            </IF_TEST>
+          </THEN>
+          <ELSE>
+            <SET Var="ExistCheck" FromValue="TRUE"/>
+          </ELSE>
+        </IF_TEST>
+        <SET DocVar="thisReturn" Property="_RESULT" FromValue="{ifElse($ExistCheck='TRUE','SUCCESS','ERROR')}"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="ValidateShortName" Category="VALIDATIONS">
+    <RULE>
+      <ACTION>
+        <IF_TEST Test="$thisParam/AV_SHORT_NAME/@Value != null">
+          <THEN>
+            <GET_DOCUMENT Name="ATTRIBUTE_VALUES" AssignToVar="resAttributeValues" ServiceName="BCM_MASTER">
+              <TO_XML SelectList="$thisParam/ATTRIBUTE_TYPE_ID"/>
+              <TO_XML SelectList="$thisParam/AV_SHORT_NAME"/>
+              <TO_XML SelectList="$thisParam/AV_ID"/>
+            </GET_DOCUMENT>
+            <IF_TEST Test="count($resAttributeValues/ATTRIBUTE_VALUES/*)!=0">
+              <THEN>
+                <SET DocVar="thisReturn" Property="_RESULT" FromValue="ERROR"/>
+              </THEN>
+              <ELSE>
+                <SET DocVar="thisReturn" Property="_RESULT" FromValue="SUCCESS"/>
+              </ELSE>
+            </IF_TEST>
+          </THEN>
+          <ELSE>
+            <SET DocVar="thisReturn" Property="_RESULT" FromValue="SUCCESS"/>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="validationForCode">
+    <RULE>
+      <ACTION>
+        <INVOKE_VALIDATION_FRAMEWORK ApiName="isCodeAllreadyExist" AssignToVar="resIsCodeAllreadyExist" DocVar="thisParam" ServiceName="BCM_MASTER"/>
+        <ADD_CHILDREN DocVar="thisReturn" FromSelectList="$resIsCodeAllreadyExist/*"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getStatusValues">
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="status">
+          <ROOT>
+            <STATUS>
+              <OPTIONS>
+                <OPTION Value="ACTIVE" Id="Y"/>
+                <OPTION Value="INACTIVE" Id="N"/>
+              </OPTIONS>
+            </STATUS>
+          </ROOT>
+        </TO_DOCVAR>
+        <SET DocVar="thisReturn" FromDocVar="status"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getAttributeTypesList">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="ATTRIBUTE_TYPES" AssignToVar="AttributeTypesList" ServiceName="BCM_MASTER">
+          <SELECT>
+            <ATTRIBUTE_TYPE/>
+            <ATTRIBUTE_TYPE_ID/>
+          </SELECT>
+          <TO_XML SelectList="$thisParam/*"/>
+          <ORDER_BY>
+            <ATTRIBUTE_TYPE Sort="Ascending"/>
+          </ORDER_BY>
+        </GET_DOCUMENT>
+        <MAKE_INSTANCE_DOCUMENT Name="ROOT" AssignToVar="dropDownOptions"/>
+        <MAKE_INSTANCE_DOCUMENT Name="ATTRIBUTE_TYPE" AssignToVar="optionsType"/>
+        <MAKE_INSTANCE_DOCUMENT Name="OPTIONS" AssignToVar="optionsTag"/>
+        <SET_CHILD DocVar="optionsType" FromDocVar="optionsTag"/>
+        <SET_CHILD DocVar="dropDownOptions" FromDocVar="optionsType"/>
+        <TO_DOCVAR AssignToVar="temp">
+          <ROOT/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$AttributeTypesList/ATTRIBUTE_TYPES" CurrentElement="currentAttributeTypes">
+          <SET Var="AttributeValue" FromValue="{$currentAttributeTypes/ATTRIBUTE_TYPE/@Value}"/>
+          <SET Var="AttributeValueId" FromValue="{$currentAttributeTypes/ATTRIBUTE_TYPE_ID/@Value}"/>
+          <TO_DOCVAR AssignToVar="currentOptionTag">
+            <!--<ROOT>-->
+            <OPTION Id="{$AttributeValueId}" Value="{$AttributeValue}"/>
+            <!--  </ROOT>-->
+          </TO_DOCVAR>
+          <APPEND_TO_XML DocVar="temp">
+            <!--<ROOT>-->
+            <TO_XML SelectList="$currentOptionTag"/>
+            <!--  </ROOT>-->
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <APPEND_TO_XML Select="$dropDownOptions/ATTRIBUTE_TYPE/OPTIONS">
+          <TO_XML SelectList="$temp/*"/>
+        </APPEND_TO_XML>
+      </ACTION>
+    </RULE>
+    <SET DocVar="thisReturn" FromDocVar="dropDownOptions"/>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getAttributeDetails">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="ATTRIBUTE_TYPES" AssignToVar="AttributeDetails" ServiceName="BCM_MASTER"/>
+      </ACTION>
+    </RULE>
+    <SET DocVar="thisReturn" FromDocVar="AttributeDetails"/>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getParentAttribute">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="ATTRIBUTE_TYPES_HIERARCHY" AssignToVar="ParentAttribute" ServiceName="BCM_MASTER">
+          <TO_XML SelectList="$thisParam/*"/>
+        </GET_DOCUMENT>
+      </ACTION>
+    </RULE>
+    <SET DocVar="thisReturn" FromDocVar="ParentAttribute"/>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getAttributeValuesForAttributeType">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="ATTRIBUTE_VALUES" AssignToVar="AttributeValuesForAttributeType" ServiceName="BCM_MASTER">
+          <TO_XML SelectList="$thisParam/*"/>
+          <ORDER_BY>
+            <AV_DESCRIPTION Sort="Ascending"/>
+          </ORDER_BY>
+        </GET_DOCUMENT>
+        <MAKE_INSTANCE_DOCUMENT Name="ROOT" AssignToVar="dropDownOptions"/>
+        <MAKE_INSTANCE_DOCUMENT Name="PARENT_ATTRIBUTE_TYPE" AssignToVar="optionsType"/>
+        <MAKE_INSTANCE_DOCUMENT Name="OPTIONS" AssignToVar="optionsTag"/>
+        <SET_CHILD DocVar="optionsType" FromDocVar="optionsTag"/>
+        <SET_CHILD DocVar="dropDownOptions" FromDocVar="optionsType"/>
+        <TO_DOCVAR AssignToVar="temp">
+          <ROOT/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$AttributeValuesForAttributeType/ATTRIBUTE_VALUES" CurrentElement="currentAttributeValues">
+          <SET Var="AttributeValue" FromValue="{$currentAttributeValues/AV_DESCRIPTION/@Value}"/>
+          <SET Var="AttributeValueId" FromValue="{$currentAttributeValues/AV_ID/@Value}"/>
+          <TO_DOCVAR AssignToVar="currentOptionTag">
+            <!--<ROOT>-->
+            <OPTION Id="{$AttributeValueId}" Value="{$AttributeValue}"/>
+            <!--  </ROOT>-->
+          </TO_DOCVAR>
+          <APPEND_TO_XML DocVar="temp">
+            <!--<ROOT>-->
+            <TO_XML SelectList="$currentOptionTag"/>
+            <!--  </ROOT>-->
+          </APPEND_TO_XML>
+        </FOR_EACH>
+        <APPEND_TO_XML Select="$dropDownOptions/PARENT_ATTRIBUTE_TYPE/OPTIONS">
+          <TO_XML SelectList="$temp/*"/>
+        </APPEND_TO_XML>
+      </ACTION>
+    </RULE>
+    <SET DocVar="thisReturn" FromDocVar="dropDownOptions"/>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getAttValuesForAttTypeAndParentAvId">
+    <RULE>
+      <ACTION>
+        <IF_TEST Test="$thisParam/AV_ID_PARENT/@Value != '' and $thisParam/AV_ID_PARENT/@Value != null">
+          <THEN>
+            <REQUEST Name="getHeirarchyValue" AssignToVar="thisReturn" ServiceName="BCM_MASTER" MaxRows="{$thisParam/MAX_ROWS/@Value}" ReturnRowCount="true" StartAtRow="{$thisParam/START_COUNT/@Value}">
+              <AV_ID_PARENT Value="{$thisParam/AV_ID_PARENT/@Value}"/>
+              <!--<TO_XML SelectList="$tempAVID/*"/>-->
+              <QUERY_DOCUMENT_LINK Name="XIF2ATTRIBUTE_VALUES_HIR"><!--key name changed from XIF2ATTRIBUTE_VALUES_HIERARCHY to XIF2ATTRIBUTE_VALUES_HIR in upgrade-->
+                <SELECT>
+                  <AV_ID/>
+                  <ATTRIBUTE_TYPE_ID/>
+                  <AV_DESCRIPTION/>
+                  <AV_CODE/>
+                  <AV_SHORT_NAME/>
+                  <ACTIVE_FLAG/>
+                </SELECT>
+                <TO_XML SelectList="$thisParam/FILTERS/*"/>
+                <ACTIVE_FLAG Value="{$thisParam/FLAG/@Value}"/>
+                <ATTRIBUTE_TYPE_ID Value="{$thisParam/ATTRIBUTE_TYPE_ID/@Value}"/>
+              </QUERY_DOCUMENT_LINK>
+            </REQUEST>
+            <!--<SET Attribute="TotalRowCount" FromValue="{count($thisReturn/ATTRIBUTE_VALUES_HIERARCHY)}" DocVar="thisReturn"/>-->
+          </THEN>
+          <ELSE>
+            <GET_DOCUMENT Name="ATTRIBUTE_VALUES" AssignToVar="thisReturn" ServiceName="BCM_MASTER" MaxRows="{$thisParam/MAX_ROWS/@Value}" ReturnRowCount="true" StartAtRow="{$thisParam/START_COUNT/@Value}">
+              <ACTIVE_FLAG Value="{$thisParam/FLAG/@Value}"/>
+              <ATTRIBUTE_TYPE_ID Value="{$thisParam/ATTRIBUTE_TYPE_ID/@Value}"/>
+              <TO_XML SelectList="$thisParam/FILTERS/*"/>
+              <ORDER_BY>
+                <AV_DESCRIPTION/>
+              </ORDER_BY>
+            </GET_DOCUMENT>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="modifyAttValues">
+    <RULE>
+      <ACTION>
+        <MODIFY_DOCUMENT Name="ATTRIBUTE_VALUES" AssignToVar="AttributeValues" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <AV_ID Value="{$thisParam/AV_ID/@Value}"/>
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <!--<AV_DESCRIPTION Value="{$thisParam/DESCRIPTION/@Value}"/>
+						<AV_CODE Value="{$thisParam/CODE/@Value}"/>
+						<AV_SHORT_NAME Value="{$thisParam/SHORT_NAME/@Value}"/>
+						<ACTIVE_FLAG Value="{$thisParam/ACTIVE_FLAG/@Value}"/>-->
+            <TO_XML SelectList="$thisParam/*"/>
+            <LAST_MODIFIED_BY Value="{$userId}"/>
+            <LAST_MODIFIED_DATE Value="{date()}"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOCUMENT>
+      </ACTION>
+    </RULE>
+    <SET DocVar="thisReturn" FromDocVar="AttributeValues"/>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="modifyAttHierarchy">
+    <RULE>
+      <ACTION>
+        <REMOVE_DOCUMENT Name="ATTRIBUTE_VALUES_HIERARCHY" ServiceName="BCM_MASTER" AssignToVar="hierRecordEdit">
+          <AV_ID_CHILD Value="{$thisParam/AV_ID_CHILD/@Value}"/>
+        </REMOVE_DOCUMENT>
+        <ADD_DOCUMENT Name="ATTRIBUTE_VALUES_HIERARCHY" AssignToVar="AttributeValuesHier" ServiceName="BCM_MASTER">
+          <TO_XML SelectList="$thisParam/*"/>
+          <CREATED_BY Value="{$userId}"/>
+          <CREATION_DATE Value="{date()}"/>
+          <LAST_MODIFIED_BY Value="{$userId}"/>
+          <LAST_MODIFIED_DATE Value="{date()}"/>
+          <ENTITY_STATE Value="ACTIVE"/>
+        </ADD_DOCUMENT>
+        <!--        <MODIFY_DOCUMENT Name="ATTRIBUTE_VALUES_HIERARCHY" AssignToVar="AttributeValuesHier" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <AV_ID_CHILD Value="{$thisParam/AV_ID_CHILD/@Value}"/>
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <AV_ID_PARENT Value="{$thisParam/AV_ID_PARENT/@Value}"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOCUMENT>-->
+      </ACTION>
+    </RULE>
+    <SET DocVar="thisReturn" FromDocVar="AttributeValuesHier"/>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="addAttValues">
+    <RULE>
+      <ACTION>
+        <ADD_DOCUMENT Name="ATTRIBUTE_VALUES" AssignToVar="AttributeValues" ServiceName="BCM_MASTER">
+          <TO_XML SelectList="$thisParam/*"/>
+          <CREATED_BY Value="{$userId}"/>
+          <CREATION_DATE Value="{date()}"/>
+          <LAST_MODIFIED_BY Value="{$userId}"/>
+          <LAST_MODIFIED_DATE Value="{date()}"/>
+          <ENTITY_STATE Value="ACTIVE"/>
+        </ADD_DOCUMENT>
+      </ACTION>
+    </RULE>
+    <SET DocVar="thisReturn" FromDocVar="AttributeValues"/>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="addAttHierarchy">
+    <RULE>
+      <ACTION>
+        <ADD_DOCUMENT Name="ATTRIBUTE_VALUES_HIERARCHY" AssignToVar="AttributeValuesHier" ServiceName="BCM_MASTER">
+          <TO_XML SelectList="$thisParam/*"/>
+          <CREATED_BY Value="{$userId}"/>
+          <CREATION_DATE Value="{date()}"/>
+          <LAST_MODIFIED_BY Value="{$userId}"/>
+          <LAST_MODIFIED_DATE Value="{date()}"/>
+          <ENTITY_STATE Value="ACTIVE"/>
+        </ADD_DOCUMENT>
+      </ACTION>
+    </RULE>
+    <SET DocVar="thisReturn" FromDocVar="AttributeValuesHier"/>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getAttributeValues">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="ATTRIBUTE_VALUES" AssignToVar="AttributeValues" ServiceName="BCM_MASTER">
+          <TO_XML SelectList="$thisParam/*"/>
+          <ORDER_BY>
+            <AV_DESCRIPTION Sort="Ascending"/>
+          </ORDER_BY>
+        </GET_DOCUMENT>
+      </ACTION>
+    </RULE>
+    <SET DocVar="thisReturn" FromDocVar="AttributeValues"/>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getAttributeValuesHier">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="ATTRIBUTE_VALUES_HIERARCHY" AssignToVar="AttributeValuesHier" ServiceName="BCM_MASTER">
+          <TO_XML SelectList="$thisParam/*"/>
+        </GET_DOCUMENT>
+      </ACTION>
+    </RULE>
+    <SET DocVar="thisReturn" FromDocVar="AttributeValuesHier"/>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getRelatedAttributesForAvId">
+    <API_DOC>
+      <INPUT>
+        <REQUEST Name="getRelatedAttributesForAvId">
+     [<AV_ID1 Value=""/>]
+     [<AV_ID2 Value=""/>]
+    </REQUEST>
+      </INPUT>
+      <OUTPUT/>
+    </API_DOC>
+    <RULE>
+      <ACTION>
+        <IF_TEST Test="$thisParam/AV_ID1/@Value = null">
+          <THEN>
+            <GET_DOCUMENT Name="ATTRIBUTE_VALUES_RELN" ServiceName="BCM_MASTER" AssignToVar="avList">
+              <TO_XML SelectList="$thisParam/AV_ID2"/>
+              <ACTIVE_FLAG Value="Y"/>
+              <ORDER_BY>
+                <AV_DESCRIPTION/>
+              </ORDER_BY>
+              <QUERY_DOCUMENT_LINK Name="XIF1ATTRIBUTE_VALUES_REL">
+                <SELECT>
+                  <AV_DESCRIPTION/>
+                </SELECT>
+              </QUERY_DOCUMENT_LINK>
+              <!--<SELECT>
+                <AV_ID1 Alias="AV_ID"/>
+              </SELECT>
+              <TO_XML SelectList="$thisParam/AV_ID2"/>
+              <ACTIVE_FLAG Value="Y"/>-->
+            </GET_DOCUMENT>
+            <TO_DOCVAR AssignToVar="avListOptions">
+              <ROOT/>
+            </TO_DOCVAR>
+            <FOR_EACH SelectList="$avList/ATTRIBUTE_VALUES_RELN" CurrentElement="currAv">
+              <APPEND_TO_XML DocVar="avListOptions">
+                <RELATED_AV_ID Id="{$currAv/AV_ID1/@Value}" Value="{$currAv/AV_DESCRIPTION/@Value}"/>
+              </APPEND_TO_XML>
+            </FOR_EACH>
+          </THEN>
+          <ELSE>
+            <GET_DOCUMENT Name="ATTRIBUTE_VALUES_RELN" ServiceName="BCM_MASTER" AssignToVar="avList">
+              <TO_XML SelectList="$thisParam/AV_ID1"/>
+              <ACTIVE_FLAG Value="Y"/>
+              <ORDER_BY>
+                <AV_DESCRIPTION/>
+              </ORDER_BY>
+              <QUERY_DOCUMENT_LINK Name="XIF2ATTRIBUTE_VALUES_RELATIONS">
+                <SELECT>
+                  <AV_DESCRIPTION/>
+                </SELECT>
+              </QUERY_DOCUMENT_LINK>
+              <!--<SELECT>
+                <AV_ID2 Alias="AV_ID"/>
+              </SELECT>
+              <TO_XML SelectList="$thisParam/AV_ID1"/>
+              <ACTIVE_FLAG Value="Y"/>-->
+            </GET_DOCUMENT>
+            <TO_DOCVAR AssignToVar="avListOptions">
+              <ROOT/>
+            </TO_DOCVAR>
+            <FOR_EACH SelectList="$avList/ATTRIBUTE_VALUES_RELN" CurrentElement="currAv">
+              <APPEND_TO_XML DocVar="avListOptions">
+                <RELATED_AV_ID Id="{$currAv/AV_ID2/@Value}" Value="{$currAv/AV_DESCRIPTION/@Value}"/>
+              </APPEND_TO_XML>
+            </FOR_EACH>
+          </ELSE>
+        </IF_TEST>
+        <!--<TO_DOCVAR AssignToVar="avListOptions">
+          <ROOT/>
+        </TO_DOCVAR>
+        <FOR_EACH SelectList="$avList/ATTRIBUTE_VALUES_RELN" CurrentElement="currAv">
+          <APPEND_TO_XML DocVar="avListOptions">
+            <RELATED_AV_ID Value="{$currAv/AV_ID/@Value}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>-->
+        <APPEND_TO_XML DocVar="thisReturn">
+          <TO_XML DocVar="avListOptions"/>
+        </APPEND_TO_XML>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="modifyRelatedAttributes">
+    <API_DOC>
+      <INPUT>
+        <REQUEST Name="modifyRelatedAttributes">
+						[<AV_ID1 Value=""/>]
+			    	[<AV_ID2 Value=""/>]
+			     <RELATED_AV_IDS>
+            <RELATED_AV_ID Value="123"/>
+            <RELATED_AV_ID Value="456"/>
+          </RELATED_AV_IDS>
+          <CURRENT_AV_IDS>
+            <RELATED_AV_ID Value="123"/>
+            <RELATED_AV_ID Value="789"/>
+          </CURRENT_AV_IDS>
+        </REQUEST>
+      </INPUT>
+      <OUTPUT/>
+    </API_DOC>
+    <RULE>
+      <ACTION>
+        <!--Get the existing inactive relations-->
+        <IF_TEST Test="$thisParam/AV_ID1/@Value != null">
+          <THEN>
+            <SET DocVar="attributePtr" FromSelect="$thisParam/AV_ID1"/>
+            <TO_DOCVAR AssignToVar="relatedAvIdDoc">
+              <AV_ID2/>
+            </TO_DOCVAR>
+            <TO_DOCVAR AssignToVar="selectParameter">
+              <AV_ID2 Alias="REL_AV_ID"/>
+            </TO_DOCVAR>
+          </THEN>
+          <ELSE>
+            <SET DocVar="attributePtr" FromSelect="$thisParam/AV_ID2"/>
+            <TO_DOCVAR AssignToVar="relatedAvIdDoc">
+              <AV_ID1/>
+            </TO_DOCVAR>
+            <TO_DOCVAR AssignToVar="selectParameter">
+              <AV_ID1 Alias="REL_AV_ID"/>
+            </TO_DOCVAR>
+          </ELSE>
+        </IF_TEST>
+        <GET_DOCUMENT Name="ATTRIBUTE_VALUES_RELN" AssignToVar="inactiveRelatedAttributes" ServiceName="BCM_MASTER">
+          <SELECT>
+            <TO_XML DocVar="selectParameter"/>
+          </SELECT>
+          <TO_XML DocVar="attributePtr"/>
+          <!--<TO_XML DocVar="relatedAvIdDoc"/>-->
+          <ACTIVE_FLAG Value="N"/>
+        </GET_DOCUMENT>
+        <!--  <TO_DOCVAR AssignToVar="orList">
+          <AND/>
+        </TO_DOCVAR>-->
+        <IF_TEST Test="count($thisParam/CURRENT_AV_IDS/RELATED_AV_ID) > 0">
+          <THEN>
+            <TO_DOCVAR AssignToVar="orList">
+              <AND/>
+            </TO_DOCVAR>
+          </THEN>
+        </IF_TEST>
+        <IF_TEST Test="$thisParam/AV_ID1/@Value != null">
+          <THEN>
+            <FOR_EACH SelectList="$thisParam/CURRENT_AV_IDS/RELATED_AV_ID" CurrentElement="currAvId">
+              <APPEND_TO_XML DocVar="orList">
+                <AV_ID2 Value="{$currAvId/@Value}" MatchBy="NOT_EQUAL"/>
+              </APPEND_TO_XML>
+            </FOR_EACH>
+          </THEN>
+          <ELSE>
+            <FOR_EACH SelectList="$thisParam/CURRENT_AV_IDS/RELATED_AV_ID" CurrentElement="currAvId">
+              <APPEND_TO_XML DocVar="orList">
+                <AV_ID1 Value="{$currAvId/@Value}" MatchBy="NOT_EQUAL"/>
+              </APPEND_TO_XML>
+            </FOR_EACH>
+          </ELSE>
+        </IF_TEST>
+        <!--<REMOVE_DOCUMENT Name="ATTRIBUTE_VALUES_RELN" ServiceName="BCM_MASTER" AssignToVar="delResult">
+			<TO_XML SelectList="$thisParam/AV_ID1"/>
+			<TO_XML SelectList="$thisParam/AV_ID2"/>
+     	<TO_XML DocVar="orList"/>
+    </REMOVE_DOCUMENT>-->
+        <MODIFY_DOCUMENT Name="ATTRIBUTE_VALUES_RELN" AssignToVar="AttributeValues" ServiceName="BCM_MASTER">
+          <DOCUMENT_CONTEXT>
+            <TO_XML SelectList="$thisParam/AV_ID1"/>
+            <TO_XML SelectList="$thisParam/AV_ID2"/>
+            <TO_XML DocVar="orList"/>
+            <ACTIVE_FLAG Value="Y"/>
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <ACTIVE_FLAG Value="N"/>
+            <LAST_MODIFIED_BY Value="{$userId}"/>
+            <LAST_MODIFIED_DATE Value="{date()}"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOCUMENT>
+        <FOR_EACH SelectList="$thisParam/CURRENT_AV_IDS/RELATED_AV_ID" CurrentElement="currAvId">
+          <SET DocVar="existingAvId" FromSelect="$thisParam/RELATED_AV_IDS/RELATED_AV_ID[@Id = $currAvId/@Value]"/>
+          <IF_TEST Test="$existingAvId/@Value = null">
+            <THEN>
+              <SET DocVar="relatedAvIdDoc" Attribute="Value" FromValue="{$currAvId/@Value}"/>
+              <SET DocVar="inavtiveRelationVar" FromSelect="$inactiveRelatedAttributes/ATTRIBUTE_VALUES_RELN[REL_AV_ID/@Value = $currAvId/@Value]"/>
+              <IF_TEST Test="$inavtiveRelationVar/REL_AV_ID/@Value != null">
+                <THEN>
+                  <MODIFY_DOCUMENT Name="ATTRIBUTE_VALUES_RELN" AssignToVar="AttributeValues" ServiceName="BCM_MASTER">
+                    <DOCUMENT_CONTEXT>
+                      <TO_XML DocVar="attributePtr"/>
+                      <TO_XML DocVar="relatedAvIdDoc"/>
+                    </DOCUMENT_CONTEXT>
+                    <UPDATE_PROPERTIES>
+                      <ACTIVE_FLAG Value="Y"/>
+                      <LAST_MODIFIED_BY Value="{$userId}"/>
+                      <LAST_MODIFIED_DATE Value="{date()}"/>
+                    </UPDATE_PROPERTIES>
+                  </MODIFY_DOCUMENT>
+                </THEN>
+                <ELSE>
+                  <ADD_DOCUMENT Name="ATTRIBUTE_VALUES_RELN" ServiceName="BCM_MASTER" AssignToVar="addResult">
+                    <TO_XML DocVar="attributePtr"/>
+                    <TO_XML DocVar="relatedAvIdDoc"/>
+                    <!--<DEFAULT_FLAG Value="N"/>-->
+                    <ACTIVE_FLAG Value="Y"/>
+                    <CREATED_BY Value="{$userId}"/>
+                    <CREATION_DATE Value="{date()}"/>
+                    <LAST_MODIFIED_BY Value="{$userId}"/>
+                    <LAST_MODIFIED_DATE Value="{date()}"/>
+                    <ENTITY_STATE Value="ACTIVE"/>
+                  </ADD_DOCUMENT>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+        </FOR_EACH>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getRelatedAttribute">
+    <API_DOC>
+      <INPUT>
+        <REQUEST Name="getRelatedAttribute">
+          <ATTRIBUTE_TYPE_ID Value=""/>
+        </REQUEST>
+      </INPUT>
+      <OUTPUT/>
+    </API_DOC>
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="ATTRIBUTE_TYPES_RELN" ServiceName="BCM_MASTER" AssignToVar="relnRecord">
+          <SELECT>
+            <ATTRIBUTE_TYPE_ID1/>
+            <ATTRIBUTE_TYPE_ID2/>
+          </SELECT>
+          <OR>
+            <ATTRIBUTE_TYPE_ID1 Value="{$thisParam/ATTRIBUTE_TYPE_ID/@Value}"/>
+            <ATTRIBUTE_TYPE_ID2 Value="{$thisParam/ATTRIBUTE_TYPE_ID/@Value}"/>
+          </OR>
+        </GET_DOCUMENT>
+        <IF_TEST Test="$relnRecord/ATTRIBUTE_TYPES_RELN/ATTRIBUTE_TYPE_ID1/@Value = $thisParam/ATTRIBUTE_TYPE_ID/@Value">
+          <THEN>
+            <APPEND_TO_XML DocVar="thisReturn">
+              <TO_XML SelectList="$relnRecord/ATTRIBUTE_TYPES_RELN/ATTRIBUTE_TYPE_ID2"/>
+            </APPEND_TO_XML>
+          </THEN>
+          <ELSE>
+            <APPEND_TO_XML DocVar="thisReturn">
+              <TO_XML SelectList="$relnRecord/ATTRIBUTE_TYPES_RELN/ATTRIBUTE_TYPE_ID1"/>
+            </APPEND_TO_XML>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="addRemoveAttributeRelations">
+    <RULE>
+      <ACTION>
+        <REMOVE_DOCUMENT Name="ATTRIBUTE_VALUES_RELN" ServiceName="BCM_MASTER" AssignToVar="relnRecord">
+          <OR>
+            <AV_ID1 Value="{$thisParam/AV_ID/@Value}"/>
+            <AV_ID2 Value="{$thisParam/AV_ID/@Value}"/>
+          </OR>
+        </REMOVE_DOCUMENT>
+        <FOR_EACH SelectList="$thisParam/TEMP/RELATED_AV_ID" CurrentElement="currVal">
+          <!--<SET Var="temp" FromValue="abcd"/>-->
+          <ADD_DOCUMENT Name="ATTRIBUTE_VALUES_RELN" ServiceName="BCM_MASTER" AssignToVar="addRelnRecord">
+            <AV_ID1 Value="{$thisParam/AV_ID/@Value}"/>
+            <AV_ID2 Value="{$currVal/@Value}"/>
+            <ACTIVE_FLAG Value="{$thisParam/ACTIVE_FLAG/@Value}"/>
+            <CREATED_BY Value="{$userId}"/>
+            <CREATION_DATE Value="{date()}"/>
+            <LAST_MODIFIED_BY Value="{$userId}"/>
+            <LAST_MODIFIED_DATE Value="{date()}"/>
+            <ENTITY_STATE Value="ACTIVE"/>
+          </ADD_DOCUMENT>
+        </FOR_EACH>
+      </ACTION>
+    </RULE>
+    <SET DocVar="thisReturn" FromDocVar="addRelnRecord"/>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="sendAttributeNotification">
+    <RULE>
+      <ACTION>
+        <IF_TEST Test="$thisParam/SEND_ACTION/@Value='CREATE'">
+          <THEN>
+            <SET Var="qoute" FromValue="'"/>
+            <!--<SET Var="msgTxt" FromValue="A new attribute has been created&lt;br>"/>-->
+            <SET Var="msgTxt" FromValue="{concat($thisParam/message/@Value,'&lt;br>')}"/>
+            <SET Var="subjectTxt" FromValue="{concat('A new Attribute value of Type  ',$qoute,$thisParam/ATTRIBUTE_TYPE/@Value,$qoute,' is created')}"/>
+          </THEN>
+          <ELSE>
+            <!--<SET Var="msgTxt" FromValue="An attribute has been modified&lt;br>"/>
+						<SET Var="subjectTxt" FromValue="An Attribute value has been modified"/>-->
+            <SET Var="qoute" FromValue="'"/>
+            <SET Var="subjectTxt" FromValue="{concat('An Attribute ',$qoute,$thisParam/ATTRIBUTE_TYPE/@Value,$qoute,' has been modified')}"/>
+            <!--<SET Var="msgTxt" FromValue="{concat('The ',$thisParam/ATTRIBUTE_TYPE/@Value,' with description ',$qoute,$thisParam/Old_Description/@Value,$qoute,' has been modified to','&lt;br>')}"/>-->
+            <SET Var="msgTxt" FromValue="{concat($thisParam/message/@Value,'&lt;br>')}"/>
+          </ELSE>
+        </IF_TEST>
+        <!--<REQUEST Name="getUsersForAttributeNofification" ServiceName="ProductMaster" AssignToVar="emailRecipients"/>-->
+        <!--<FOR_EACH CurrentElement="CurrEmail" SelectList="$thisParam/TO_ADDRS"-->
+        <SET Var="inputVal" FromValue="{trim($thisParam/TO_ADDRS/TO_ADDR/@Value)}"/>
+        <SET Var="inputValLength" FromValue="{strlen(trim($thisParam/TO_ADDRS/TO_ADDR/@Value))}"/>
+        <SET Var="index" FromValue="0"/>
+        <SET Var="counter" FromValue="1"/>
+        <SET Var="FinalEmail" FromValue=""/>
+        <TO_DOCVAR AssignToVar="TOAddrs">
+          <TO_ADDRS/>
+        </TO_DOCVAR>
+        <WHILE Condition="($index &lt; $inputValLength)">
+          <SET Var="testVal" FromValue="{subString($inputVal,int($index),int($index+1))}"/>
+          <IF_TEST Test="$testVal=';'">
+            <THEN>
+              <APPEND_TO_XML DocVar="TOAddrs">
+                <TO_ADDR Value="{$FinalEmail}"/>
+              </APPEND_TO_XML>
+              <SET Var="index" FromValue="{int($index+1)}"/>
+              <SET Var="FinalEmail" FromValue=""/>
+            </THEN>
+            <ELSE>
+              <SET Var="index" FromValue="{int($index+1)}"/>
+              <SET Var="FinalEmail" FromValue="{concat($FinalEmail,$testVal)}"/>
+            </ELSE>
+          </IF_TEST>
+        </WHILE>
+        <IF_TEST Test="($index = $inputValLength)">
+          <THEN>
+            <APPEND_TO_XML DocVar="TOAddrs">
+              <TO_ADDR Value="{$FinalEmail}"/>
+            </APPEND_TO_XML>
+          </THEN>
+        </IF_TEST>
+        <REMOVE_CHILDREN ChildName="TO_ADDRS" DocVar="thisParam"/>
+        <APPEND_TO_XML DocVar="thisParam">
+          <TO_XML DocVar="TOAddrs"/>
+        </APPEND_TO_XML>
+        <TO_DOCVAR AssignToVar="emailRecipients">
+          <ROOT>
+            <TO_XML SelectList="$thisParam/TO_ADDRS"/>
+          </ROOT>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="emailSubject">
+          <ROOT>
+            <SUBJECT Value="{$subjectTxt}"/>
+          </ROOT>
+        </TO_DOCVAR>
+        <TO_DOCVAR AssignToVar="emailFormat">
+          <ROOT>
+            <FORMAT Value="TEXT/HTML"/>
+          </ROOT>
+        </TO_DOCVAR>
+        <IF_TEST Test="$thisParam/SEND_ACTION/@Value='CREATE'">
+          <THEN>
+            <SET Var="msgTxt" FromValue="{concat($msgTxt,'A new attribute has been created','&lt;br>')}"/>
+          </THEN>
+          <ELSE>
+            <SET Var="msgTxt" FromValue="{concat($msgTxt,'The ',$thisParam/ATTRIBUTE_TYPE/@Value,' with description ',$qoute,$thisParam/Old_Description/@Value,$qoute,' has been modified to','&lt;br>')}"/>
+          </ELSE>
+        </IF_TEST>
+        <IF_TEST Test="$thisParam/CODE/@Value != null">
+          <THEN>
+            <SET Var="msgTxt" FromValue="{concat($msgTxt, 'Code : ',$thisParam/CODE/@Value,'&lt;br>')}"/>
+          </THEN>
+        </IF_TEST>
+        <SET Var="msgTxt" FromValue="{concat($msgTxt, 'Description : ',$thisParam/DESCRIPTION/@Value,'&lt;br>')}"/>
+        <IF_TEST Test="$thisParam/SHORT_NAME/@Value != null">
+          <THEN>
+            <SET Var="msgTxt" FromValue="{concat($msgTxt, 'Short Name : ',$thisParam/SHORT_NAME/@Value,'&lt;br>')}"/>
+          </THEN>
+        </IF_TEST>
+        <SET Var="msgTxt" FromValue="{concat($msgTxt, 'Status : ',$thisParam/Status_CONT2/@Value,'&lt;br>')}"/>
+        <!--	<IF_TEST Test="$thisParam/message/@Value != null">
+          <THEN>
+            <SET Var="msgTxt" FromValue="{concat($msgTxt,$thisParam/message/@Value)}"/>
+          </THEN>
+        </IF_TEST>-->
+        <TO_DOCVAR AssignToVar="emailMessage">
+          <ROOT>
+            <MESSAGE>
+              <DATA Value="{$msgTxt}"/>
+            </MESSAGE>
+          </ROOT>
+        </TO_DOCVAR>
+        <!-- send email -->
+        <REQUEST Name="sendEmailNotification" AssignToVar="emailFeedback">
+          <TO_XML SelectList="$emailRecipients/*"/>
+          <TO_XML SelectList="$emailSubject/*"/>
+          <TO_XML SelectList="$emailFormat/*"/>
+          <TO_XML SelectList="$emailMessage/*"/>
+        </REQUEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getUsersForAttributeNofification">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="USER_PROFILE" ServiceName="USER_SECURITY" AssignToVar="userIdList" DirtyRead="true">
+          <QUERY_DOCUMENT_LINK Name="CONTACT_INFO_LINK">
+            <SELECT>
+              <EMAIL_ADDRESS/>
+            </SELECT>
+          </QUERY_DOCUMENT_LINK>
+          <STATUS Value="ACTIVE"/>
+        </GET_DOCUMENT>
+        <APPEND_TO_XML DocVar="thisReturn">
+          <TO_ADDRS/>
+        </APPEND_TO_XML>
+        <FOR_EACH SelectList="$userIdList/USER_PROFILE" CurrentElement="currProfile">
+          <APPEND_TO_XML Select="$thisReturn/TO_ADDRS">
+            <TO_ADDR Value="{$currProfile/EMAIL_ADDRESS/@Value}"/>
+          </APPEND_TO_XML>
+        </FOR_EACH>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getIDGeneratedAttributeValues" Access="Public">
+    <RULE>
+     <ACTION>
+       <CREATE_DOCUMENT_ID Name="AVID_SEQ" AssignToVar="AVID" HandleException="yes"/>
+       <SET DocVar="thisReturn" Property="AVID" FromValue="{$AVID}"/>
+     </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="onUpdateOtherAttributes" Category="API methods">
+    <RULE>
+      <ACTION>
+        <MODIFY_DOCUMENT Name="PROJECTS" ServiceName="BCM_MASTER" AssignToVar="updateResult">
+          <DOCUMENT_CONTEXT>
+            <OR>
+              <INTERFACE_PLATFORM_AV_ID Value="{$thisParam/AV_ID/@Value}"/>
+              <REVENUE_MODEL_AV_ID Value="{$thisParam/AV_ID/@Value}"/>
+              <REPORTING_BUSINESS_UNIT_AV_ID Value="{$thisParam/AV_ID/@Value}"/>
+              <PROJECT_TYPE_AV_ID Value="{$thisParam/AV_ID/@Value}"/>
+              <PROJECT_STATUS_AV_ID Value="{$thisParam/AV_ID/@Value}"/>
+              <PUBLISHER_GROUP_AV_ID Value="{$thisParam/AV_ID/@Value}"/>
+              <REVENUE_DEFERRAL_RULE_AV_ID Value="{$thisParam/AV_ID/@Value}"/>
+              <EXTERNAL_DEV_TYPE_AV_ID Value="{$thisParam/AV_ID/@Value}"/>
+              <DEVELOPMENT_PARTNER_AV_ID Value="{$thisParam/AV_ID/@Value}"/>
+              <LICENSE_PARTNER_AV_ID Value="{$thisParam/AV_ID/@Value}"/>
+              <SALES_RESPONSIBILITY_AV_ID Value="{$thisParam/AV_ID/@Value}"/>
+              <CONFIGURATION_AV_ID Value="{$thisParam/AV_ID/@Value}"/>
+            </OR>
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <LAST_MODIFIED_BY Value="{$userId}"/>
+            <LAST_MODIFIED_DATE Value="{date()}"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOCUMENT>
+        <MODIFY_DOCUMENT Name="SKUS" ServiceName="BCM_MASTER" AssignToVar="updateResult">
+          <DOCUMENT_CONTEXT>
+            <OR>
+              <SKU_TYPE_AV_ID Value="{$thisParam/AV_ID/@Value}"/>
+              <PRIMARY_LANGUAGE_AV_ID Value="{$thisParam/AV_ID/@Value}"/>
+              <CONFIGURATION_AV_ID Value="{$thisParam/AV_ID/@Value}"/>
+              <SKU_STATUS_AV_ID Value="{$thisParam/AV_ID/@Value}"/>
+              <REGION_AV_ID Value="{$thisParam/AV_ID/@Value}"/>
+            </OR>
+          </DOCUMENT_CONTEXT>
+          <UPDATE_PROPERTIES>
+            <LAST_MODIFIED_BY Value="{$userId}"/>
+            <LAST_MODIFIED_DATE Value="{date()}"/>
+          </UPDATE_PROPERTIES>
+        </MODIFY_DOCUMENT>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="getHeirarchyValue">
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="ATTRIBUTE_VALUES_HIERARCHY" StartAtRow="{$thisParam/@StartAtRow}" MaxRows="{$thisParam/@MaxRows}" ServiceName="BCM_MASTER" AssignToVar="GetResultAvhId" DirtyRead="true" ReturnRowCount="true">
+          <TO_XML SelectList="$thisParam/*"/>
+          <ORDER_BY>
+            <AV_DESCRIPTION/>
+          </ORDER_BY>
+        </GET_DOCUMENT>
+        <SET Var="thisReturn" FromDocVar="GetResultAvhId"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+<DEFINE_METHOD Name="GetIDForValueInAttrMaintanance" Category="Attribute_Values">
+    <API_DOC>
+      <INPUT>
+        <REQUEST Name="GetIDForMT">
+          <AV_DESCRIPTION Value="Master Title"/>
+          <SELECT>
+            <AV_ID/>
+          </SELECT>
+        </REQUEST>
+      </INPUT>
+    </API_DOC>
+    <RULE>
+      <ACTION>
+        <GET_DOCUMENT Name="ATTRIBUTE_VALUES" ServiceName="BCM_MASTER" AssignToVar="GetResultAvId" DirtyRead="true" MaxRows="20000">
+          <TO_XML SelectList="$thisParam/*"/>
+          <ORDER_BY>
+            <AV_DESCRIPTION/>
+          </ORDER_BY>
+        </GET_DOCUMENT>
+        <GET_DOCUMENT Name="ATTRIBUTE_VALUES_HIERARCHY" ServiceName="BCM_MASTER" DirtyRead="true" AssignToVar="parentHierarchy">
+          <SELECT>
+            <AV_ID_PARENT/>
+          </SELECT>
+          <AV_ID_CHILD Value="{$thisParam/AV_ID/@Value}"/>
+        </GET_DOCUMENT>
+        <IF_TEST Test="count($parentHierarchy/ATTRIBUTE_VALUES_HIERARCHY) > 0">
+          <THEN>
+            <APPEND_TO_XML Select="$GetResultAvId/ATTRIBUTE_VALUES">
+              <TO_XML SelectList="$parentHierarchy/ATTRIBUTE_VALUES_HIERARCHY/AV_ID_PARENT"/>
+            </APPEND_TO_XML>
+          </THEN>
+        </IF_TEST>
+        <SET Var="thisReturn" FromDocVar="GetResultAvId"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="ValidationDescExist" Category="VALIDATIONS">
+    <RULE>
+      <ACTION>
+        <REMOVE_CHILDREN ChildName="AV_CODE" DocVar="thisParam"/>
+        <GET_DOCUMENT Name="ATTRIBUTE_VALUES" AssignToVar="resAttributeValues" ServiceName="BCM_MASTER">
+          <TO_XML SelectList="$thisParam/ATTRIBUTE_TYPE_ID"/>
+          <TO_XML SelectList="$thisParam/AV_DESCRIPTION"/>
+          <TO_XML SelectList="$thisParam/AV_ID"/>
+        </GET_DOCUMENT>
+        <IF_TEST Test="count($resAttributeValues/ATTRIBUTE_VALUES/*)!=0">
+          <THEN>
+            <SET Var="ExistCheck" FromValue="FALSE"/>
+          </THEN>
+          <ELSE>
+            <SET Var="ExistCheck" FromValue="TRUE"/>
+          </ELSE>
+        </IF_TEST>
+        <SET DocVar="thisReturn" Property="_RESULT" FromValue="{ifElse($ExistCheck='TRUE','SUCCESS','ERROR')}"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

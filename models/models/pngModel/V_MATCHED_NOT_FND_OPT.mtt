@@ -1,0 +1,87 @@
+<document IsDocView="true">
+  <properties>
+    <property Name="PE_OPTOUT_ID">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="PE_OPTOUT_ID" />
+    </property>
+    <property Name="GVN_NAME_OPT" PhysicalName="GVN_NAME_OPT">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="GVN_NAME" />
+    </property>
+    <property Name="MID_NAME_OPT" PhysicalName="MID_NAME_OPT">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="MID_NAME" />
+    </property>
+    <property Name="FAMLY_NAME_OPT" PhysicalName="FAMLY_NAME_OPT">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="FAMLY_NAME" />
+    </property>
+    <property Name="FULL_PHONE_NUM_OPT" PhysicalName="FULL_PHONE_NUM_OPT">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="FULL_PHONE_NUM" />
+    </property>
+    <property Name="EMAIL_ADDR_TXT_OPT" PhysicalName="EMAIL_ADDR_TXT_OPT">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="EMAIL_ADDR_TXT" />
+    </property>
+    <property Name="ADDRESS_OPT">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="ADDRESS_OPT" />
+    </property>
+    <property Name="LEGAL_ENT_NBR">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="LEGAL_ENT_NBR" />
+    </property>
+    <property Name="MATCH_FLG">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="MATCH_FLG" />
+    </property>
+    <property Name="REGIS_PRSNA_ID">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="REGIS_PRSNA_ID" />
+    </property>
+    <property Name="GVN_NAME_REG" PhysicalName="GVN_NAME_REG">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="GVN_NAME" />
+    </property>
+    <property Name="FAMLY_NAME_REG" PhysicalName="FAMLY_NAME_REG">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="FAMLY_NAME" />
+    </property>
+    <property Name="NATIONAL_ID_NBR">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="NATIONAL_ID_NBR" />
+    </property>
+  </properties>
+  <keys />
+  <links />
+  <docFacets>
+    <miscFacet Active="true" />
+    <mdmConfigFacet SchemaGen="false" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql OnMDMTables="true" IsSimpleView="true">REPLACE VIEW MDM.V_MATCHED_NOT_FND_OPT&#xD;
+	(&#xD;
+	PE_OPTOUT_ID,&#xD;
+	GVN_NAME_OPT,&#xD;
+	MID_NAME_OPT,&#xD;
+	FAMLY_NAME_OPT,&#xD;
+	FULL_PHONE_NUM_OPT,&#xD;
+	EMAIL_ADDR_TXT_OPT,&#xD;
+	ADDRESS_OPT,&#xD;
+	LEGAL_ENT_NBR,&#xD;
+	MATCH_FLG,&#xD;
+	NATIONAL_ID_NBR,&#xD;
+	REGIS_PRSNA_ID,&#xD;
+	GVN_NAME_REG,&#xD;
+	FAMLY_NAME_REG&#xD;
+	)&#xD;
+	AS&#xD;
+	&#xD;
+	LOCKING ROW FOR ACCESS	&#xD;
+	SELECT &#xD;
+		OONF.PE_OPTOUT_ID,&#xD;
+		OONF.GVN_NAME AS GVN_NAME_OPT,&#xD;
+		OONF.MID_NAME AS MID_NAME_OPT,&#xD;
+		OONF.FAMLY_NAME AS FAMLY_NAME_OPT,&#xD;
+		OONF.FULL_PHONE_NUM AS FULL_PHONE_NUM_OPT,&#xD;
+		OONF.EMAIL_ADDR_TXT AS EMAIL_ADDR_TXT_OPT,&#xD;
+		coalesce(OONF.ADDR_LINE_1_TXT,'')||' '||coalesce(OONF.ADDR_LINE_2_TXT,'')||' '||coalesce(OONF.ADDR_LINE_3_TXT,'')||' '||coalesce(OONF.CITY_NAME,'')||' '||coalesce(OONF.TERR_NAME,'')||' '||coalesce(OONF.CNTRY_NAME,'')||' '||coalesce(OONF.POSTL_AREA_CODE,'') AS ADDRESS_OPT,&#xD;
+		OONF.LEGAL_ENT_NBR ,&#xD;
+		OONF.MATCH_FLG ,&#xD;
+		OONF.NATIONAL_ID_NBR,&#xD;
+		RP.REGIS_PRSNA_ID,&#xD;
+		RP.GVN_NAME,&#xD;
+		RP.FAMLY_NAME&#xD;
+	FROM MDM.OPT_OUT_NOT_FOUND OONF &#xD;
+	JOIN MDM.OPT_OUT_NOT_FOUND_XREF XREF ON OONF.PE_OPTOUT_ID=XREF.PE_OPTOUT_ID &#xD;
+	JOIN MDM.REGIS_PRSNA RP ON RP.MKTNG_PGM_NBR IN (SELECT MKTNG_PGM_NBR FROM MDM.MKTNG_PGM WHERE LEGAL_ENT_NBR=OONF.LEGAL_ENT_NBR ) AND RP.REGIS_PRSNA_ID=XREF.REGIS_PRSNA_ID;</viewsql>
+</document>
+

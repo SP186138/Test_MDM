@@ -1,0 +1,1 @@
+taskkill /im SQLA.exe /T /F

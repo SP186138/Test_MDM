@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<user_validations>
+  <!--
+ 	 Copyright (c) 2009 by Teradata Corporation. 
+	 All Rights Reserved. 
+	 Teradata CONFIDENTIAL AND TRADE SECRET 
+ -->
+  <user_validation Name="validateAllNULL" ServiceName="BCM_MASTER">
+    <error_codes>
+      <error_code Name="SUBSCRIPTION_WITH_ALL_NULL_VALUES_CAN_NOT_BE_UPDATED" Severity="SEVERE_ERROR"/>
+    </error_codes>
+    <tags>
+      <tag Name="REQUEST">
+        <validations>
+          <validation Name="isAllNULL" Expression="request('isAllNULL', $thisDoc/*)/_RESULT/@Value='SUCCESS'" IsActive="yes" FilterName="All" Error="SUBSCRIPTION_WITH_ALL_NULL_VALUES_CAN_NOT_BE_UPDATED"/>
+        </validations>
+      </tag>
+    </tags>
+  </user_validation>
+  
+  <user_validation Name="validateRecordExist" ServiceName="BCM_MASTER">
+<error_codes>
+<error_code Name="SUBSCRIPTION_EXIST_CAN_NOT_BE_UPDATED" Severity="SEVERE_ERROR"/>
+</error_codes>
+<tags>
+<tag Name="REQUEST">
+<validations>
+<validation Name="isSubscriptionExist" Expression="request('isSubscriptionExist', $thisDoc/*)/_RESULT/@Value='SUCCESS'" IsActive="yes" FilterName="All" Error="SUBSCRIPTION_EXIST_CAN_NOT_BE_UPDATED"/>
+</validations>
+</tag>
+</tags>
+  </user_validation>
+</user_validations>

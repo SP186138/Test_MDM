@@ -1,0 +1,458 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+ 	 Copyright (c) 2009 by Teradata Corporation. 
+	 All Rights Reserved. 
+	 Teradata CONFIDENTIAL AND TRADE SECRET 
+ -->
+  <DEFINE_METHOD Name="pngMDMtoTrilliumPersistRules">
+    <!--**********************************************************************************************************
+*   Module Name	: pngValidations
+*		Created Date	: Oct 27, 2011
+*		Created By   	: Kalyana Chakravarthy
+*		Called Functions: Calls batch scripts that performs survivorship to Trillium Output Table
+*		Called By Functions:  pngMDMtoTrilliumProcessingTimer
+*		Short Desc	: Rule that invokes MDM stage to Trillium Rules
+*  		Change Log 		:
+*		DATE							LC						OWNER		DESCRIPTION
+*
+**********************************************************************************************************-->
+    <RULE>
+      <ACTION>
+        <PRINTLN Value="Start Select Service based on country {$thisParam/CNTRY_NAME/@Value}"/>
+        <EXECUTE_SHELL_COMMAND Value="del MDM_LOAD_CONTROL_{$thisParam/CNTRY_NAME/@Value}.err" AssignToVar="errStatus"/>
+        <!--IF_TEST Test="$thisParam/CNTRY_NAME/@Value = 'HRV' or $thisParam/CNTRY_NAME/@Value = 'UKR' or $thisParam/CNTRY_NAME/@Value = 'CZE' or $thisParam/CNTRY_NAME/@Value = 'BGR' or $thisParam/CNTRY_NAME/@Value = 'ROU' or $thisParam/CNTRY_NAME/@Value = 'ISR' or $thisParam/CNTRY_NAME/@Value = 'EGY' or $thisParam/CNTRY_NAME/@Value = 'PAK' or $thisParam/CNTRY_NAME/@Value = 'AFR' or $thisParam/CNTRY_NAME/@Value = 'ARB' or $thisParam/CNTRY_NAME/@Value = 'AUT' or $thisParam/CNTRY_NAME/@Value = 'BEL' or $thisParam/CNTRY_NAME/@Value = 'CHE' or $thisParam/CNTRY_NAME/@Value = 'DEU' or $thisParam/CNTRY_NAME/@Value = 'DNK' or $thisParam/CNTRY_NAME/@Value = 'ESP' or $thisParam/CNTRY_NAME/@Value = 'FIN' or $thisParam/CNTRY_NAME/@Value = 'FRA' or $thisParam/CNTRY_NAME/@Value = 'GBR' or $thisParam/CNTRY_NAME/@Value = 'GRC' or $thisParam/CNTRY_NAME/@Value = 'HUN' or $thisParam/CNTRY_NAME/@Value = 'IRL' or $thisParam/CNTRY_NAME/@Value = 'ITA' or $thisParam/CNTRY_NAME/@Value = 'LUX' or $thisParam/CNTRY_NAME/@Value = 'NLD' or $thisParam/CNTRY_NAME/@Value = 'NOR' or $thisParam/CNTRY_NAME/@Value = 'POL' or $thisParam/CNTRY_NAME/@Value = 'PRT' or $thisParam/CNTRY_NAME/@Value = 'RUS' or $thisParam/CNTRY_NAME/@Value = 'SWE'">
+          <THEN>
+            <SET Var="Service" FromValue="Trillium_Europe"/>
+          </THEN>
+        </IF_TEST-->
+        <!--IF_TEST Test="$thisParam/CNTRY_NAME/@Value ='USA' or $thisParam/CNTRY_NAME/@Value = 'CAN' or $thisParam/CNTRY_NAME/@Value = 'LA' or $thisParam/CNTRY_NAME/@Value = 'BRA' or $thisParam/CNTRY_NAME/@Value = 'TUR'">
+          <THEN>
+            <SET Var="Service" FromValue="Trillium_Americas"/>
+          </THEN>
+        </IF_TEST-->
+        <!--IF_TEST Test="$thisParam/CNTRY_NAME/@Value = 'AUS' or $thisParam/CNTRY_NAME/@Value = 'CHN' or $thisParam/CNTRY_NAME/@Value = 'HKG' or $thisParam/CNTRY_NAME/@Value = 'IND' or $thisParam/CNTRY_NAME/@Value = 'JPN' or $thisParam/CNTRY_NAME/@Value = 'KOR' or $thisParam/CNTRY_NAME/@Value = 'MYS' or $thisParam/CNTRY_NAME/@Value = 'SGP' or $thisParam/CNTRY_NAME/@Value = 'OTH' or $thisParam/CNTRY_NAME/@Value = 'PHL' or $thisParam/CNTRY_NAME/@Value = 'TWN' or $thisParam/CNTRY_NAME/@Value = 'NZL'">
+          <THEN>
+            <SET Var="Service" FromValue="Trillium"/>
+          </THEN>
+        </IF_TEST-->
+		<SET Var="Service" FromValue="Trillium"/>
+        <PRINTLN Value="End Select Service based on country {$thisParam/CNTRY_NAME/@Value}"/>
+	
+        <!-- Verify if previous Trillium run failed.If yes then send the email and dont proceed further-->
+    
+        <!-- Validate if CPU processor Usage check(which identifies if Trillium Server is busy)is required-->
+        <PRINTLN Value="Start Check CPUUtil {$thisParam/CNTRY_NAME/@Value}"/>
+        <IF_TEST Test="$CPUUtilCheck/@Value='YES'">
+          <THEN>
+            <GET_DOCUMENT Name="ENV_NM" ServiceName="BCM_MASTER" AssignToVar="Environment">
+            </GET_DOCUMENT>
+            <!--IF_TEST Test="$thisParam/CNTRY_NAME/@Value = 'HRV' or $thisParam/CNTRY_NAME/@Value = 'UKR' or $thisParam/CNTRY_NAME/@Value = 'CZE' or $thisParam/CNTRY_NAME/@Value = 'BGR' or $thisParam/CNTRY_NAME/@Value = 'ROU' or $thisParam/CNTRY_NAME/@Value = 'ISR' or $thisParam/CNTRY_NAME/@Value = 'EGY' or $thisParam/CNTRY_NAME/@Value = 'PAK' or $thisParam/CNTRY_NAME/@Value = 'AFR' or $thisParam/CNTRY_NAME/@Value = 'ARB' or $thisParam/CNTRY_NAME/@Value = 'AUT' or $thisParam/CNTRY_NAME/@Value = 'BEL' or $thisParam/CNTRY_NAME/@Value = 'CHE' or $thisParam/CNTRY_NAME/@Value = 'DEU' or $thisParam/CNTRY_NAME/@Value = 'DNK' or $thisParam/CNTRY_NAME/@Value = 'ESP' or $thisParam/CNTRY_NAME/@Value = 'FIN' or $thisParam/CNTRY_NAME/@Value = 'FRA' or $thisParam/CNTRY_NAME/@Value = 'GBR' or $thisParam/CNTRY_NAME/@Value = 'GRC' or $thisParam/CNTRY_NAME/@Value = 'HUN' or $thisParam/CNTRY_NAME/@Value = 'IRL' or $thisParam/CNTRY_NAME/@Value = 'ITA' or $thisParam/CNTRY_NAME/@Value = 'LUX' or $thisParam/CNTRY_NAME/@Value = 'NLD' or $thisParam/CNTRY_NAME/@Value = 'NOR' or $thisParam/CNTRY_NAME/@Value = 'POL' or $thisParam/CNTRY_NAME/@Value = 'PRT' or $thisParam/CNTRY_NAME/@Value = 'RUS' or $thisParam/CNTRY_NAME/@Value = 'SWE'">
+              <THEN>
+                <EXECUTE_SHELL_COMMAND Value="pngMDM_Trillium.bat {$thisParam/CNTRY_NAME/@Value} CPUUtil {$Environment/ENV_NM/TRILLIUM_EMEA_NM/@Value} {$Service} {$CPUPercentProcessorTime/@Value}" AssignToVar="CPUUtilRes" Synchronous="true" HandleException="true"/>
+              </THEN>
+            </IF_TEST-->
+            <!--IF_TEST Test="$thisParam/CNTRY_NAME/@Value ='USA' or $thisParam/CNTRY_NAME/@Value = 'CAN' or $thisParam/CNTRY_NAME/@Value = 'LA' or $thisParam/CNTRY_NAME/@Value = 'BRA' or $thisParam/CNTRY_NAME/@Value = 'TUR'">
+              <THEN>
+                <EXECUTE_SHELL_COMMAND Value="pngMDM_Trillium.bat {$thisParam/CNTRY_NAME/@Value} CPUUtil {$Environment/ENV_NM/TRILLIUM_AMERICA_NM/@Value} {$Service} {$CPUPercentProcessorTime/@Value}" AssignToVar="CPUUtilRes" Synchronous="true" HandleException="true"/>
+              </THEN>
+            </IF_TEST-->
+            <!--IF_TEST Test="$thisParam/CNTRY_NAME/@Value = 'AUS' or $thisParam/CNTRY_NAME/@Value = 'CHN' or $thisParam/CNTRY_NAME/@Value = 'HKG' or $thisParam/CNTRY_NAME/@Value = 'IND' or $thisParam/CNTRY_NAME/@Value = 'JPN' or $thisParam/CNTRY_NAME/@Value = 'KOR' or $thisParam/CNTRY_NAME/@Value = 'MYS' or $thisParam/CNTRY_NAME/@Value = 'SGP' or $thisParam/CNTRY_NAME/@Value = 'OTH' or $thisParam/CNTRY_NAME/@Value = 'PHL' or $thisParam/CNTRY_NAME/@Value = 'TWN' or $thisParam/CNTRY_NAME/@Value = 'NZL'">
+              <THEN>
+                <EXECUTE_SHELL_COMMAND Value="pngMDM_Trillium.bat {$thisParam/CNTRY_NAME/@Value} CPUUtil {$Environment/ENV_NM/TRILLIUM_ASIA_NM/@Value} {$Service} {$CPUPercentProcessorTime/@Value}" AssignToVar="CPUUtilRes" Synchronous="true" HandleException="true"/>
+              </THEN>
+            </IF_TEST-->
+			 <EXECUTE_SHELL_COMMAND Value="pngMDM_Trillium.bat {$thisParam/CNTRY_NAME/@Value} CPUUtil {$Environment/ENV_NM/TRILLIUM_ASIA_NM/@Value} {$Service} {$CPUPercentProcessorTime/@Value}" AssignToVar="CPUUtilRes" Synchronous="true" HandleException="true"/>
+            <SET Var="CPUUtilResponse" FromValue="1"/>
+          </THEN>
+          <ELSE>
+            <SET Var="CPUUtilResponse" FromValue="0"/>
+          </ELSE>
+        </IF_TEST>
+        <PRINTLN Value="End Check CPUUtil {$thisParam/CNTRY_NAME/@Value}"/>
+        <IF_TEST Test="$CPUUtilRes/@ShellReturnValue = 0 or $CPUUtilResponse/@Value = 0">
+          <THEN>
+            <!-- identifies if there is load allready running & the load ids which are ready to be processed-->
+            <PRINTLN Value="Start Select on Load Info {$thisParam/CNTRY_NAME/@Value}"/>
+            <GET_DOCUMENT Name="LOAD_INFO" ServiceName="BCM_MASTER" AssignToVar="trilliumReadyLoadIds">
+              <OR>
+                <AND>
+                  <PROCESS_NAME Value="Trillium"/>
+                  <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+                  <STATUS Value="In Progress"/>
+                </AND>
+                <AND>
+                  <PROCESS_NAME Value="Trillium"/>
+                  <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+                  <STATUS Value="Ready to Process"/>
+                </AND>
+                <AND>
+                  <PROCESS_NAME Value="Wrapper"/>
+                  <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+                  <STATUS Value="In Progress"/>
+                </AND>
+                <!--<AND>
+                      <PROCESS_NAME Value="Wrapper"/>
+                      <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+                      <STATUS Value="Failure"/>
+                    </AND>-->
+              </OR>
+            </GET_DOCUMENT>
+            <PRINTLN Value="End Select on Load Info {$thisParam/CNTRY_NAME/@Value}"/>
+            <!-- For Previous load allready running,Quit and do nothing-->
+            <IF_TEST Test="count($trilliumReadyLoadIds/LOAD_INFO[PROCESS_NAME/@Value='Trillium' and STATUS/@Value='In Progress'])> 0 or count($trilliumReadyLoadIds/LOAD_INFO[PROCESS_NAME/@Value='Wrapper' and STATUS/@Value='In Progress'])> 0 or count($trilliumReadyLoadIds/LOAD_INFO[PROCESS_NAME/@Value='Wrapper' and STATUS/@Value='Failure'])> 0">
+              <THEN>
+                <TO_DOCVAR AssignToVar="thisReturn">
+                  <SUCCESS>
+                    <Message Value="Previous Load for Trillium/Wrapper Running or Wrapper in Failure State"/>
+                  </SUCCESS>
+                </TO_DOCVAR>
+              </THEN>
+              <ELSE>
+                <!-- Validate if there are load ids which are Ready for Processing-->
+                <IF_TEST Test="count($trilliumReadyLoadIds/LOAD_INFO[PROCESS_NAME/@Value='Trillium' and STATUS/@Value='Ready to Process'])> 0">
+                  <THEN>
+                    <!-- Form the concatenated String of Load Ids-->
+                    <SET Var="count" FromValue="1"/>
+                    <FOR_EACH SelectList="$trilliumReadyLoadIds/*" CurrentElement="currLoad">
+                      <IF_TEST Test="$count=1">
+                        <THEN>
+                          <SET Var="concatenatedLoadIds" FromValue="{$currLoad/LOAD_ID/@Value}"/>
+                        </THEN>
+                        <ELSE>
+                          <SET Var="concatenatedLoadIds" FromValue="{concat($concatenatedLoadIds/@Value,',',$currLoad/LOAD_ID/@Value)}"/>
+                        </ELSE>
+                      </IF_TEST>
+                      <SET Var="count" FromValue="{int(int($count)+1)}"/>
+                    </FOR_EACH>
+                    <!-- Calls Batch files one after other for Trillium Processing -->
+                    <PRINTLN Value="Start TSS CLEANSE INPUT {$thisParam/CNTRY_NAME/@Value}"/>
+                    <EXECUTE_SHELL_COMMAND Value="{$resCntryDetails/TSS_CNTRY_TABLE_MAP[CNTRY_NAME/@Value=$thisParam/CNTRY_NAME/@Value]/TSS_CLEANSE_INPUT/@Value}" AssignToVar="result" Synchronous="true" HandleException="true"/>
+                    <PRINTLN Value="End TSS CLEANSE INPUT {$thisParam/CNTRY_NAME/@Value}"/>
+                    <!-- <IF_TEST Test="$result/@ShellReturnValue = 1">-->
+                    <IF_TEST Test="$result/@ShellReturnValue != 0">
+                      <THEN>
+                        <TO_DOCVAR AssignToVar="thisReturn">
+                          <FAILURE>
+                            <Message Value="TSS_CLEANSE_INPUT.BAT failed - {$result/STD_ERR/LINE[1]/@Value}"/>
+                          </FAILURE>
+                        </TO_DOCVAR>
+                        <SET Var="Description" FromValue="{$result/@ShellReturnValue}"/>
+                      </THEN>
+                      <ELSE>
+                        <PRINTLN Value="Start TSS EnvSet {$thisParam/CNTRY_NAME/@Value}"/>
+                        <EXECUTE_SHELL_COMMAND Value="{$resCntryDetails/TSS_CNTRY_TABLE_MAP[CNTRY_NAME/@Value=$thisParam/CNTRY_NAME/@Value]/TSSENVSET/@Value}" AssignToVar="result1" Synchronous="true"/>
+                        <PRINTLN Value="End TSS EnvSet {$thisParam/CNTRY_NAME/@Value}"/>
+                        <!-- <IF_TEST Test="$result1/@ShellReturnValue = 1">-->
+                        <IF_TEST Test="$result1/@ShellReturnValue != 0">
+                          <THEN>
+                            <TO_DOCVAR AssignToVar="thisReturn">
+                              <FAILURE>
+                                <Message Value="TSSEnvSet.BAT failed - {$result1/STD_ERR/LINE[1]/@Value}"/>
+                              </FAILURE>
+                            </TO_DOCVAR>
+                            <SET Var="Description" FromValue="{$result1/@ShellReturnValue}"/>
+                          </THEN>
+                          <ELSE>
+                            <!--Below request is called on Trillium Server and trillium server has no connectivity with database.
+                            Hence entry into Load Info for below request is made from MDM-->
+                            <PRINTLN Value="Start Insert Load Info for invokeRouteCleanse {$thisParam/CNTRY_NAME/@Value}"/>
+                            <FOR_EACH SelectList="$trilliumReadyLoadIds/*" CurrentElement="currLoad">
+                              <DO_TRANSACTION>
+                                <ADD_DOC_SMART Name="LOAD_INFO" AssignToVar="resaddLoadInfo" ServiceName="BCM_MASTER">
+                                  <LOAD_ID Value="{$currLoad/LOAD_ID/@Value}"/>
+                                  <PROCESS_NAME Value="Trillium Route Cleanse"/>
+                                  <PROCESS_START_TIME Value="{date()}"/>
+                                  <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+                                  <NC_TYPE Value="{$currLoad/NC_TYPE/@Value}"/>
+                                  <BATCH_ID Value="{$currLoad/BATCH_ID/@Value}"/>
+                                  <STATUS Value="In Progress"/>
+                                </ADD_DOC_SMART>
+                              </DO_TRANSACTION>
+                            </FOR_EACH>
+                            <PRINTLN Value="End Insert Load Info for invokeRouteCleanse {$thisParam/CNTRY_NAME/@Value}"/>
+                            <PRINTLN Value="Start invokeRouteCleanse {$thisParam/CNTRY_NAME/@Value}"/>
+                            <!--IF_TEST Test="$thisParam/CNTRY_NAME/@Value = 'HRV' or $thisParam/CNTRY_NAME/@Value = 'UKR' or $thisParam/CNTRY_NAME/@Value = 'CZE' or $thisParam/CNTRY_NAME/@Value = 'BGR' or $thisParam/CNTRY_NAME/@Value = 'ROU' or $thisParam/CNTRY_NAME/@Value = 'ISR' or $thisParam/CNTRY_NAME/@Value = 'EGY' or $thisParam/CNTRY_NAME/@Value = 'PAK' or $thisParam/CNTRY_NAME/@Value = 'AFR' or $thisParam/CNTRY_NAME/@Value = 'ARB' or $thisParam/CNTRY_NAME/@Value = 'AUT' or $thisParam/CNTRY_NAME/@Value = 'BEL' or $thisParam/CNTRY_NAME/@Value = 'CHE' or $thisParam/CNTRY_NAME/@Value = 'DEU' or $thisParam/CNTRY_NAME/@Value = 'DNK' or $thisParam/CNTRY_NAME/@Value = 'ESP' or $thisParam/CNTRY_NAME/@Value = 'FIN' or $thisParam/CNTRY_NAME/@Value = 'FRA' or $thisParam/CNTRY_NAME/@Value = 'GBR' or $thisParam/CNTRY_NAME/@Value = 'GRC' or $thisParam/CNTRY_NAME/@Value = 'HUN' or $thisParam/CNTRY_NAME/@Value = 'IRL' or $thisParam/CNTRY_NAME/@Value = 'ITA' or $thisParam/CNTRY_NAME/@Value = 'LUX' or $thisParam/CNTRY_NAME/@Value = 'NLD' or $thisParam/CNTRY_NAME/@Value = 'NOR' or $thisParam/CNTRY_NAME/@Value = 'POL' or $thisParam/CNTRY_NAME/@Value = 'PRT' or $thisParam/CNTRY_NAME/@Value = 'RUS' or $thisParam/CNTRY_NAME/@Value = 'SWE'">
+                              <THEN>
+                                <EXECUTE_SHELL_COMMAND Value="pngMDM_Trillium.bat {$thisParam/CNTRY_NAME/@Value} invokeRouteCleanse {$Environment/ENV_NM/TRILLIUM_EMEA_NM/@Value} {$Service} 0" AssignToVar="result2" Synchronous="true" HandleException="true"/>
+                              </THEN>
+                            </IF_TEST-->
+                            <!--IF_TEST Test="$thisParam/CNTRY_NAME/@Value ='USA' or $thisParam/CNTRY_NAME/@Value = 'CAN' or $thisParam/CNTRY_NAME/@Value = 'LA' or $thisParam/CNTRY_NAME/@Value = 'BRA' or $thisParam/CNTRY_NAME/@Value = 'TUR'">
+                              <THEN>
+                                <EXECUTE_SHELL_COMMAND Value="pngMDM_Trillium.bat {$thisParam/CNTRY_NAME/@Value} invokeRouteCleanse {$Environment/ENV_NM/TRILLIUM_AMERICA_NM/@Value} {$Service} 0" AssignToVar="result2" Synchronous="true" HandleException="true"/>
+                              </THEN>
+                            </IF_TEST-->
+                            <!--IF_TEST Test="$thisParam/CNTRY_NAME/@Value = 'AUS' or $thisParam/CNTRY_NAME/@Value = 'CHN' or $thisParam/CNTRY_NAME/@Value = 'HKG' or $thisParam/CNTRY_NAME/@Value = 'IND' or $thisParam/CNTRY_NAME/@Value = 'JPN' or $thisParam/CNTRY_NAME/@Value = 'KOR' or $thisParam/CNTRY_NAME/@Value = 'MYS' or $thisParam/CNTRY_NAME/@Value = 'SGP' or $thisParam/CNTRY_NAME/@Value = 'OTH' or $thisParam/CNTRY_NAME/@Value = 'PHL' or $thisParam/CNTRY_NAME/@Value = 'TWN' or $thisParam/CNTRY_NAME/@Value = 'NZL'">
+                              <THEN>
+                                <EXECUTE_SHELL_COMMAND Value="pngMDM_Trillium.bat {$thisParam/CNTRY_NAME/@Value} invokeRouteCleanse {$Environment/ENV_NM/TRILLIUM_ASIA_NM/@Value} {$Service} 0" AssignToVar="result2" Synchronous="true" HandleException="true"/>
+                              </THEN>
+                            </IF_TEST-->
+							 <EXECUTE_SHELL_COMMAND Value="pngMDM_Trillium.bat {$thisParam/CNTRY_NAME/@Value} invokeRouteCleanse {$Environment/ENV_NM/TRILLIUM_ASIA_NM/@Value} {$Service} 0" AssignToVar="result2" Synchronous="true" HandleException="true"/>
+                            <PRINTLN Value="End invokeRouteCleanse {$thisParam/CNTRY_NAME/@Value}"/>
+                            <!--<IF_TEST Test="$result2/@ShellReturnValue = 1">-->
+                            <IF_TEST Test="$result2/@ShellReturnValue != 0">
+                              <THEN>
+                                <TO_DOCVAR AssignToVar="thisReturn">
+                                  <FAILURE>
+                                    <Message Value="invokeRouteCleanse failed - {$result2/STD_ERR/LINE[1]/@Value}"/>
+                                  </FAILURE>
+                                  <SET Var="Description" FromValue="{$result2/@ShellReturnValue}"/>
+                                </TO_DOCVAR>
+                                <PRINTLN Value="Start update Load Info for invokeRouteCleansefailure {$thisParam/CNTRY_NAME/@Value}"/>
+                                <DO_TRANSACTION>
+                                  <MODIFY_DOC_SMART Name="LOAD_INFO" ServiceName="BCM_MASTER">
+                                    <DOCUMENT_CONTEXT>
+                                      <PROCESS_NAME Value="Trillium Route Cleanse"/>
+                                      <STATUS Value="In Progress"/>
+                                      <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+                                    </DOCUMENT_CONTEXT>
+                                    <UPDATE_PROPERTIES>
+                                      <STATUS Value="Failure"/>
+                                      <ERROR_MSG_TXT Value="{$thisReturn/Message/@Value}"/>
+                                      <PROCESS_END_TIME Value="{date()}"/>
+                                    </UPDATE_PROPERTIES>
+                                  </MODIFY_DOC_SMART>
+                                </DO_TRANSACTION>
+                                <DO_TRANSACTION>
+                                  <MODIFY_DOC_SMART Name="LOAD_INFO" ServiceName="BCM_MASTER">
+                                    <DOCUMENT_CONTEXT>
+                                      <PROCESS_NAME Value="Trillium"/>
+                                      <STATUS Value="In Progress"/>
+                                      <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+                                    </DOCUMENT_CONTEXT>
+                                    <UPDATE_PROPERTIES>
+                                      <STATUS Value="Failure"/>
+                                      <PROCESS_END_TIME Value="{date()}"/>
+                                    </UPDATE_PROPERTIES>
+                                  </MODIFY_DOC_SMART>
+                                </DO_TRANSACTION>
+                                <PRINTLN Value="End update Load Info for invokeRouteCleansefailure {$thisParam/CNTRY_NAME/@Value}"/>
+                              </THEN>
+                              <ELSE>
+                                <PRINTLN Value="Start update Load Info for invokeRouteCleansesucces {$thisParam/CNTRY_NAME/@Value}"/>
+                                <DO_TRANSACTION>
+                                  <MODIFY_DOC_SMART Name="LOAD_INFO" ServiceName="BCM_MASTER">
+                                    <DOCUMENT_CONTEXT>
+                                      <PROCESS_NAME Value="Trillium Route Cleanse"/>
+                                      <STATUS Value="In Progress"/>
+                                      <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+                                    </DOCUMENT_CONTEXT>
+                                    <UPDATE_PROPERTIES>
+                                      <STATUS Value="Success"/>
+                                      <PROCESS_END_TIME Value="{date()}"/>
+                                    </UPDATE_PROPERTIES>
+                                  </MODIFY_DOC_SMART>
+                                </DO_TRANSACTION>
+                                <PRINTLN Value="End update Load Info for invokeRouteCleansesuccess {$thisParam/CNTRY_NAME/@Value}"/>
+                                <PRINTLN Value="Start WinkeyOutStg {$thisParam/CNTRY_NAME/@Value}"/>
+                                <EXECUTE_SHELL_COMMAND Value="{$resCntryDetails/TSS_CNTRY_TABLE_MAP[CNTRY_NAME/@Value=$thisParam/CNTRY_NAME/@Value]/CNSMR_WINKEY_OUT_STG/@Value}" AssignToVar="result3" Synchronous="true"/>
+                                <PRINTLN Value="End WinkeyOutStg {$thisParam/CNTRY_NAME/@Value}"/>
+                                <!--<IF_TEST Test="$result3/@ShellReturnValue = 1">-->
+                                <IF_TEST Test="$result3/@ShellReturnValue != 0">
+                                  <THEN>
+                                    <TO_DOCVAR AssignToVar="thisReturn">
+                                      <FAILURE>
+                                        <Message Value="CNSMR_TSS_WINKEY_OUTPUT_STG.BAT failed - {$result3/STD_ERR/LINE[1]/@Value}"/>
+                                      </FAILURE>
+                                    </TO_DOCVAR>
+                                    <SET Var="Description" FromValue="{$result3/@ShellReturnValue}"/>
+                                  </THEN>
+                                  <ELSE>
+                                    <PRINTLN Value="Start matchcrm {$thisParam/CNTRY_NAME/@Value}"/>
+                                    <EXECUTE_SHELL_COMMAND Value="{$resCntryDetails/TSS_CNTRY_TABLE_MAP[CNTRY_NAME/@Value=$thisParam/CNTRY_NAME/@Value]/MATCH_INPUT_CRM/@Value}" AssignToVar="result4" Synchronous="true"/>
+                                    <PRINTLN Value="End matchcrm {$thisParam/CNTRY_NAME/@Value}"/>
+                                    <!-- <IF_TEST Test="$result4/@ShellReturnValue = 1">-->
+                                    <IF_TEST Test="$result4/@ShellReturnValue != 0">
+                                      <THEN>
+                                        <TO_DOCVAR AssignToVar="thisReturn">
+                                          <FAILURE>
+                                            <Message Value="TSS_MATCH_INPUT_CRM.BAT failed - {$result4/STD_ERR/LINE[1]/@Value}"/>
+                                          </FAILURE>
+                                        </TO_DOCVAR>
+                                        <SET Var="Description" FromValue="{$result4/@ShellReturnValue}"/>
+                                      </THEN>
+                                      <ELSE>
+                                        <PRINTLN Value="Start insert Load Info for TssMatch {$thisParam/CNTRY_NAME/@Value}"/>
+                                        <FOR_EACH SelectList="$trilliumReadyLoadIds/*" CurrentElement="currLoad">
+                                          <DO_TRANSACTION>
+                                            <ADD_DOC_SMART Name="LOAD_INFO" AssignToVar="resaddLoadInfo" ServiceName="BCM_MASTER">
+                                              <LOAD_ID Value="{$currLoad/LOAD_ID/@Value}"/>
+                                              <PROCESS_NAME Value="Trillium TssMatch"/>
+                                              <PROCESS_START_TIME Value="{date()}"/>
+                                              <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+                                              <NC_TYPE Value="{$currLoad/NC_TYPE/@Value}"/>
+                                              <BATCH_ID Value="{$currLoad/BATCH_ID/@Value}"/>
+                                              <STATUS Value="In Progress"/>
+                                            </ADD_DOC_SMART>
+                                          </DO_TRANSACTION>
+                                        </FOR_EACH>
+                                        <PRINTLN Value="End insert Load Info for TssMatch {$thisParam/CNTRY_NAME/@Value}"/>
+                                        
+                                        <PRINTLN Value="Start TssMatch {$thisParam/CNTRY_NAME/@Value}"/>
+
+                                        <!--IF_TEST Test="$thisParam/CNTRY_NAME/@Value = 'HRV' or $thisParam/CNTRY_NAME/@Value = 'UKR' or $thisParam/CNTRY_NAME/@Value = 'CZE' or $thisParam/CNTRY_NAME/@Value = 'BGR' or $thisParam/CNTRY_NAME/@Value = 'ROU' or $thisParam/CNTRY_NAME/@Value = 'ISR' or $thisParam/CNTRY_NAME/@Value = 'EGY' or $thisParam/CNTRY_NAME/@Value = 'PAK' or $thisParam/CNTRY_NAME/@Value = 'AFR' or $thisParam/CNTRY_NAME/@Value = 'ARB' or $thisParam/CNTRY_NAME/@Value = 'AUT' or $thisParam/CNTRY_NAME/@Value = 'BEL' or $thisParam/CNTRY_NAME/@Value = 'CHE' or $thisParam/CNTRY_NAME/@Value = 'DEU' or $thisParam/CNTRY_NAME/@Value = 'DNK' or $thisParam/CNTRY_NAME/@Value = 'ESP' or $thisParam/CNTRY_NAME/@Value = 'FIN' or $thisParam/CNTRY_NAME/@Value = 'FRA' or $thisParam/CNTRY_NAME/@Value = 'GBR' or $thisParam/CNTRY_NAME/@Value = 'GRC' or $thisParam/CNTRY_NAME/@Value = 'HUN' or $thisParam/CNTRY_NAME/@Value = 'IRL' or $thisParam/CNTRY_NAME/@Value = 'ITA' or $thisParam/CNTRY_NAME/@Value = 'LUX' or $thisParam/CNTRY_NAME/@Value = 'NLD' or $thisParam/CNTRY_NAME/@Value = 'NOR' or $thisParam/CNTRY_NAME/@Value = 'POL' or $thisParam/CNTRY_NAME/@Value = 'PRT' or $thisParam/CNTRY_NAME/@Value = 'RUS' or $thisParam/CNTRY_NAME/@Value = 'SWE'">
+                                          <THEN>
+                                            <EXECUTE_SHELL_COMMAND Value="pngMDM_Trillium.bat {$thisParam/CNTRY_NAME/@Value} TSSMatch {$Environment/ENV_NM/TRILLIUM_EMEA_NM/@Value} {$Service} 0" AssignToVar="result5" Synchronous="true" HandleException="true"/>
+                                          </THEN>
+                                        </IF_TEST-->
+                                        <!--IF_TEST Test="$thisParam/CNTRY_NAME/@Value ='USA' or $thisParam/CNTRY_NAME/@Value = 'CAN' or $thisParam/CNTRY_NAME/@Value = 'LA' or $thisParam/CNTRY_NAME/@Value = 'BRA' or $thisParam/CNTRY_NAME/@Value = 'TUR'">
+                                          <THEN>
+                                            <EXECUTE_SHELL_COMMAND Value="pngMDM_Trillium.bat {$thisParam/CNTRY_NAME/@Value} TSSMatch {$Environment/ENV_NM/TRILLIUM_AMERICA_NM/@Value} {$Service} 0" AssignToVar="result5" Synchronous="true" HandleException="true"/>
+                                          </THEN>
+                                        </IF_TEST-->
+                                        <!--IF_TEST Test="$thisParam/CNTRY_NAME/@Value = 'AUS' or $thisParam/CNTRY_NAME/@Value = 'CHN' or $thisParam/CNTRY_NAME/@Value = 'HKG' or $thisParam/CNTRY_NAME/@Value = 'IND' or $thisParam/CNTRY_NAME/@Value = 'JPN' or $thisParam/CNTRY_NAME/@Value = 'KOR' or $thisParam/CNTRY_NAME/@Value = 'MYS' or $thisParam/CNTRY_NAME/@Value = 'SGP' or $thisParam/CNTRY_NAME/@Value = 'OTH' or $thisParam/CNTRY_NAME/@Value = 'PHL' or $thisParam/CNTRY_NAME/@Value = 'TWN' or $thisParam/CNTRY_NAME/@Value = 'NZL'">
+                                          <THEN>
+                                            <EXECUTE_SHELL_COMMAND Value="pngMDM_Trillium.bat {$thisParam/CNTRY_NAME/@Value} TSSMatch {$Environment/ENV_NM/TRILLIUM_ASIA_NM/@Value} {$Service} 0" AssignToVar="result5" Synchronous="true" HandleException="true"/>
+                                          </THEN>
+                                        </IF_TEST-->
+										 <EXECUTE_SHELL_COMMAND Value="pngMDM_Trillium.bat {$thisParam/CNTRY_NAME/@Value} TSSMatch {$Environment/ENV_NM/TRILLIUM_ASIA_NM/@Value} {$Service} 0" AssignToVar="result5" Synchronous="true" HandleException="true"/>
+                                        <PRINTLN Value="End TssMatch {$thisParam/CNTRY_NAME/@Value}"/>
+                                        <IF_TEST Test="$result5/@ShellReturnValue != 0">
+                                          <THEN>
+                                            <TO_DOCVAR AssignToVar="thisReturn">
+                                              <FAILURE>
+                                                <Message Value="TSS Match Failed - {$result5/STD_ERR/LINE[1]/@Value}"/>
+                                              </FAILURE>
+                                            </TO_DOCVAR>
+                                            <SET Var="Description" FromValue="{$result5/@ShellReturnValue}"/>
+                                            <PRINTLN Value="Start update Load Info for TssMatchfailure {$thisParam/CNTRY_NAME/@Value}"/>
+                                            <DO_TRANSACTION>
+                                              <MODIFY_DOC_SMART Name="LOAD_INFO" ServiceName="BCM_MASTER">
+                                                <DOCUMENT_CONTEXT>
+                                                  <PROCESS_NAME Value="Trillium TssMatch"/>
+                                                  <STATUS Value="In Progress"/>
+                                                  <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+                                                </DOCUMENT_CONTEXT>
+                                                <UPDATE_PROPERTIES>
+                                                  <STATUS Value="Failure"/>
+                                                  <ERROR_MSG_TXT Value="{$thisReturn/Message/@Value}"/>
+                                                  <PROCESS_END_TIME Value="{date()}"/>
+                                                </UPDATE_PROPERTIES>
+                                              </MODIFY_DOC_SMART>
+                                            </DO_TRANSACTION>
+                                            <DO_TRANSACTION>
+                                              <MODIFY_DOC_SMART Name="LOAD_INFO" ServiceName="BCM_MASTER">
+                                                <DOCUMENT_CONTEXT>
+                                                  <PROCESS_NAME Value="Trillium"/>
+                                                  <STATUS Value="In Progress"/>
+                                                  <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+                                                </DOCUMENT_CONTEXT>
+                                                <UPDATE_PROPERTIES>
+                                                  <STATUS Value="Failure"/>
+                                                  <PROCESS_END_TIME Value="{date()}"/>
+                                                </UPDATE_PROPERTIES>
+                                              </MODIFY_DOC_SMART>
+                                            </DO_TRANSACTION>
+                                            <PRINTLN Value="End update Load Info for TssMatchFailure {$thisParam/CNTRY_NAME/@Value}"/>
+                                          </THEN>
+                                          <ELSE>
+                                            <PRINTLN Value="Start update Load Info for TssMatchsuccess {$thisParam/CNTRY_NAME/@Value}"/>
+                                            <DO_TRANSACTION>
+                                              <MODIFY_DOC_SMART Name="LOAD_INFO" ServiceName="BCM_MASTER">
+                                                <DOCUMENT_CONTEXT>
+                                                  <PROCESS_NAME Value="Trillium TssMatch"/>
+                                                  <STATUS Value="In Progress"/>
+                                                  <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+                                                </DOCUMENT_CONTEXT>
+                                                <UPDATE_PROPERTIES>
+                                                  <STATUS Value="Success"/>
+                                                  <PROCESS_END_TIME Value="{date()}"/>
+                                                </UPDATE_PROPERTIES>
+                                              </MODIFY_DOC_SMART>
+                                            </DO_TRANSACTION>
+                                            <PRINTLN Value="End update Load Info for TssMatchsuccess {$thisParam/CNTRY_NAME/@Value}"/>
+                                            <EXECUTE_SHELL_COMMAND Value="{$resCntryDetails/TSS_CNTRY_TABLE_MAP[CNTRY_NAME/@Value=$thisParam/CNTRY_NAME/@Value]/TSS_MATCH_STG/@Value}" AssignToVar="result6" Synchronous="true"/>
+                                            <IF_TEST Test="$result6/@ShellReturnValue = 0">
+                                              <THEN>
+                                                <TO_DOCVAR AssignToVar="thisReturn">
+                                                  <SUCCESS>
+                                                    <Message Value="Trillium Rule Successful"/>
+                                                  </SUCCESS>
+                                                </TO_DOCVAR>
+                                              </THEN>
+                                              <ELSE>
+                                                <TO_DOCVAR AssignToVar="thisReturn">
+                                                  <FAILURE>
+                                                    <Message Value="TSS_MATCH_STG.BAT failed - {$result6/STD_ERR/LINE[1]/@Value}"/>
+                                                  </FAILURE>
+                                                </TO_DOCVAR>
+                                                <SET Var="Description" FromValue="{$result6/@ShellReturnValue}"/>
+                                              </ELSE>
+                                            </IF_TEST>
+                                          </ELSE>
+                                        </IF_TEST>
+                                      </ELSE>
+                                    </IF_TEST>
+                                  </ELSE>
+                                </IF_TEST>
+                              </ELSE>
+                            </IF_TEST>
+                          </ELSE>
+                        </IF_TEST>
+                      </ELSE>
+                    </IF_TEST>
+                  </THEN>
+                  <ELSE>
+                    <TO_DOCVAR AssignToVar="thisReturn">
+                      <SUCCESS>
+                        <Message Value="No LoadId To Process"/>
+                      </SUCCESS>
+                    </TO_DOCVAR>
+                  </ELSE>
+                </IF_TEST>
+              </ELSE>
+            </IF_TEST>
+          </THEN>
+          <ELSE>
+            <TO_DOCVAR AssignToVar="thisReturn">
+              <SUCCESS>
+                <Message Value="Trillium Server Busy"/>
+              </SUCCESS>
+            </TO_DOCVAR>
+          </ELSE>
+        </IF_TEST>
+        <!--Verify if entire process completed successfully and accordingly set the Load status -->
+        <IF_TEST Test="$thisReturn/Message/@Value ='Previous Load for Trillium/Wrapper Running or Wrapper in Failure State'or $thisReturn/Message/@Value ='No LoadId To Process'or $thisReturn/Message/@Value ='Trillium Server Busy'">
+          <THEN>
+          </THEN>
+          <ELSE>
+            <IF_TEST Test="$thisReturn/Message/@Value ='Trillium Rule Successful'">
+              <THEN>
+                <SET Var="Trillium" FromValue="Success"/>
+                <PRINTLN Value="Start Request pngMDMtoEDWPersistRules {$thisParam/CNTRY_NAME/@Value}"/>
+                <REQUEST Name="pngMDMtoEDWPersistRules" AssignToVar="resEDWPersistRules" ServiceName="BCM_MASTER">
+                  <LoadId Value="{$concatenatedLoadIds/@Value}"/>
+                  <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+                </REQUEST>
+                <PRINTLN Value="End Request pngMDMtoEDWPersistRules {$thisParam/CNTRY_NAME/@Value}"/>
+              </THEN>
+              <ELSE>
+                <!--Sets country specific load status variable to Failed -->
+                <SET Var="Trillium" FromValue="Failure"/>
+                <!--<SET Var="{$preRunCntryTrilliumVar/@Value}" FromValue="Failed" Scope="Global"/>-->
+                <!-- Call Status Update batch Script which does inserts into ETL_CTRL.LOAD_CONTROL -->
+                <!-- <EXECUTE_SHELL_COMMAND Value="MDM_STATUS.BAT" AssignToVar="resMdmStatus"/> -->
+                <PRINTLN Value="Start mdmstatus.cmd {$thisParam/CNTRY_NAME/@Value}"/>
+                <EXECUTE_SHELL_COMMAND Value="echo Error > MDM_LOAD_CONTROL_{$thisParam/CNTRY_NAME/@Value}.err" AssignToVar="errStatus"/>
+                <EXECUTE_SHELL_COMMAND Value="{concat('mdmstatus.cmd ',$thisParam/CNTRY_NAME/@Value)}" AssignToVar="resMdmStatus"/>
+                <PRINTLN Value="End mdmstatus.cmd {$thisParam/CNTRY_NAME/@Value}"/>
+                <!--Sends out an email in case of trillium process failure-->
+                <REQUEST Name="emailOnErrorNode">
+                  <LoadId Value="{$concatenatedLoadIds/@Value}"/>
+                  <Subject Value="Trillium Failure"/>
+                  <Short_Description Value="{$Description/@Value}"/>
+                  <Description Value="Following Load Id failed :{$concatenatedLoadIds/@Value}"/>
+                  <SubCategory Value="Trillium Error"/>
+                  <CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+                  <PROCESS_NAME Value="{$PROCESS_NAME/@Value}"/>
+                </REQUEST>
+              </ELSE>
+            </IF_TEST>
+          </ELSE>
+        </IF_TEST>
+        <!--</ELSE>
+        </IF_TEST>-->
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

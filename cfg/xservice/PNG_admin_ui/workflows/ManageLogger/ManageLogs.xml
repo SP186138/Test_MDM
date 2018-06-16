@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="343" ShowInBreadCrumbs="true" Version="1.0" Name="ManageLogs" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables>
+    <variable Name="availServicesVar" Type="xml" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start2">
+      <actions>
+        <action>
+          <PRINTLN Value="inside start node of manage logger"/>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Manage Logger" Description=""/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Manage Logger" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="ManageLog.pgl">
+      <pre_actions>
+        <action>
+          <!-- Added by ankit for Issue MDM-4825-->
+          <TO_DOCVAR AssignToVar="orderByXml">
+            <ORDER_BY>
+            </ORDER_BY>
+          </TO_DOCVAR>
+          <SET Var="paginateStart" FromValue="{ifElse($thisParam/START_COUNT/@Value = null, '0', $thisParam/START_COUNT/@Value)}"/>
+          <SET Var="SNAME" FromValue="{$thisParam/SNAME/@Value}"/>
+          <PRINTLN Value="default service is xserver"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SYS_RELOAD'">
+            <THEN>
+              <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+                <FILTER_SP_NAME/>
+                <FILTER_APP_USER_ID/>
+                <FILTER_ERROR_CODE/>
+                <FILTER_ERROR_MSG/>
+                <FILTER_LOG_TYPE/>
+                <FILTER_MSG/>
+                <COLLECT_TIMESTAMP Range="true" IsFilter="true"/>
+              </FORM_SEARCH_FILTER>
+              <FOR_EACH SelectList="$filters/*/*" CurrentElement="currentSearchColumn">
+                <SET_NAME DocVar="currentSearchColumn" FromValue="{substringAfter($currentSearchColumn/name(),'FILTER_')}"/>
+              </FOR_EACH>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value ='VIEW_SP_LOG' or  $thisParam/BUTTON_ID/@Value ='SYS_RELOAD'     ">
+            <THEN>
+              <TO_DOCVAR AssignToVar="DisplayTable">
+                <DISPLAY_LOG_TABLE Value="true"/>
+              </TO_DOCVAR>
+            </THEN>
+            <ELSE>
+              <TO_DOCVAR AssignToVar="DisplayTable">
+                <DISPLAY_LOG_TABLE Value="false"/>
+              </TO_DOCVAR>
+            </ELSE>
+          </IF_TEST>
+          <SET Var="sortBy" FromValue="{ifElse($thisParam/SORT_BY/@Value = null or $thisParam/SORT_BY/@Value = 'ID', 'COLLECT_TIMESTAMP', $thisParam/SORT_BY/@Value)}"/>
+          <!--  <SET Var="sortOrder" FromValue="{ifElse($thisParam/SORT_ORDER/@Value = null, 'Ascending', $thisParam/SORT_ORDER/@Value)}"/>-->
+          <SET Var="sortOrder" FromValue="{ifElse($thisParam/SORT_ORDER/@Value = null, 'Ascending', $thisParam/SORT_ORDER/@Value)}"/>
+          <TO_DOCVAR AssignToVar="sortByColumn">
+            <TEMP/>
+          </TO_DOCVAR>
+          <SET_NAME DocVar="sortByColumn" FromValue="{$sortBy}"/>
+          <SET Attribute="Sort" DocVar="sortByColumn" FromValue="{$sortOrder}"/>
+          <ADD_CHILDREN DocVar="orderByXml" FromDocVar="sortByColumn"/>
+          <!-- Added by ankit for MDM-4905-->
+          <TO_DOCVAR AssignToVar="sortByIDColumn">
+            <ID/>
+          </TO_DOCVAR>
+          <SET Attribute="Sort" DocVar="sortByIDColumn" FromValue="Ascending"/>
+          <ADD_CHILDREN DocVar="orderByXml" FromDocVar="sortByIDColumn"/>
+          <REQUEST Name="getServices" ServiceName="BCM_MASTER" AssignToVar="thisParam"/>
+          <REQUEST Name="getLogOptions" ServiceName="BCM_MASTER" AssignToVar="loggerOptions">
+            <SNAME Value="{$SNAME/@Value}"/>
+          </REQUEST>
+          <!-- this is dynamic PGL -->
+          <!-- dynamic PGL for getting running services list-->
+          <REQUEST Name="getDynamicPGLServices" ServiceName="BCM_MASTER" AssignToVar="RUNNING_SERVICES">
+            <TO_XML DocVar="thisParam"/>
+          </REQUEST>
+          <!-- dynamic PGL for getting running services list-->
+          <!-- dynamic PGL for getting logger options list-->
+          <REQUEST Name="getDynamicPGLLogOptions" ServiceName="BCM_MASTER" AssignToVar="LOG_OPTIONS">
+            <TO_XML DocVar="loggerOptions"/>
+          </REQUEST>
+          <!-- dynamic PGL for getting logger options list-->
+          <!-- request to get log file name -->
+          <REQUEST Name="getLogFileName" ServiceName="BCM_MASTER" AssignToVar="logfile">
+            <SNAME Value="{$SNAME/@Value}"/>
+          </REQUEST>
+          <!-- Added by ankit for Issue MDM-4825-->
+          <GET_DOC_SMART Name="SYS_SP_LOG" AssignToVar="SysProcData" ServiceName="E2E" StartAtRow="{$paginateStart}" MaxRows="10" ReturnRowCount="true">
+            <TO_XML SelectList="$filters/*/*"/>
+            <TO_XML SelectList="$orderByXml"/>
+          </GET_DOC_SMART>
+          <GET_DOC_SMART Name="SYS_SP_LOG" ServiceName="BCM_MASTER" AssignToVar="LoggerStatis"/>
+          <GET_DOC_SMART Name="SystemProperties" ServiceName="BCM_MASTER" AssignToVar="IsLoggerEnabled">
+            <propertyName Value="SPLoggerEnabled"/>
+          </GET_DOC_SMART>
+          <!-- Added by ankit ends -->
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <WEB_APP_PATH Value="{$webuiContextPath/@Value}"/>
+              <SORT_ORDER Value="{$sortOrder}"/>
+              <StartRowCount Value="{$paginateStart}"/>
+              <TotalRowCount Value="{$SysProcData/@TotalRowCount}"/>
+              <IS_LOGGER_ENABLED Value="{$IsLoggerEnabled/*/propertyValue/@Value}"/>
+              <TO_XML SelectList="$DisplayTable"/>
+              <SYS_LOG_DATA>
+                <TO_XML SelectList="$SysProcData/*"/>
+                <!--     <TO_XML SelectList="$clonedXml/*"/>-->
+              </SYS_LOG_DATA>
+              <SNAME Value="{$SNAME/@Value}"/>
+              <LOGFILE Value="{$logfile/fileName/@Value}"/>
+              <RUNNING_SERVICE>
+                <TO_XML SelectList="$RUNNING_SERVICES/*"/>
+              </RUNNING_SERVICE>
+              <LOGGER_OPTION>
+                <TO_XML SelectList="$LOG_OPTIONS/*"/>
+              </LOGGER_OPTION>
+            </ROOT>
+          </TO_DOCVAR>
+          <!-- -->
+          <TO_DOCVAR AssignToVar="availServicesVar">
+            <ROOT>
+              <SNAME Value="{$SNAME/@Value}"/>
+              <LOGFILE Value="{$fileName/@Value}"/>
+              <RUNNING_SERVICE>
+                <TO_XML SelectList="$RUNNING_SERVICES/*"/>
+              </RUNNING_SERVICE>
+              <LOGGER_OPTION>
+                <TO_XML SelectList="$LOG_OPTIONS/*"/>
+              </LOGGER_OPTION>
+            </ROOT>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction/@Value='SAVE' or $userAction/@Value='RESET' ">
+            <THEN>
+              <SET Var="userAction" FromValue="Save"/>
+              <REQUEST Name="saveLogOptions" ServiceName="BCM_MASTER" AssignToVar="serviceName">
+                <SNAME Value="{$availServicesVar/SNAME/@Value}"/>
+                <!--OPTIONS Value="{$pglFormOutput}"/-->
+                <TO_XML DocVar="thisParam"/>
+              </REQUEST>
+              <SET Var="service" FromValue="{$serviceName/@Value}"/>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction/@Value='AllClear'">
+            <THEN>
+              <SET Var="userAction" FromValue="Clear"/>
+              <REQUEST Name="clearLogFiles" ServiceName="BCM_MASTER" AssignToVar="serviceName">
+                <OPTION Value="All"/>
+                <SNAME Value="{$availServicesVar/SNAME/@Value}"/>
+              </REQUEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$userAction/@Value='Clearlog'">
+            <THEN>
+              <SET Var="userAction" FromValue="Clear"/>
+              <REQUEST Name="clearLogFiles" ServiceName="BCM_MASTER" AssignToVar="service">
+                <OPTION Value="{$availServicesVar/SNAME/@Value}"/>
+                <SNAME Value="{$availServicesVar/SNAME/@Value}"/>
+              </REQUEST>
+            </THEN>
+          </IF_TEST>
+          <!-- Added by ankit for Issue MDM-4825-->
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'SAVE_SP_LOG'">
+            <THEN>
+              <CREATE_DOCUMENT_ID Name="SYS_SEQ" AssignToVar="SYS_ID"/>
+              <MODIFY_DOCUMENT Name="SystemProperties" ServiceName="BCM_MASTER">
+                <DOCUMENT_CONTEXT>
+                  <propertyName Value="SPLoggerEnabled"/>
+                </DOCUMENT_CONTEXT>
+                <UPDATE_PROPERTIES>
+                  <propertyValue Value="{$thisParam/EnableDisableStoredProcLog/@Value}"/>
+                </UPDATE_PROPERTIES>
+              </MODIFY_DOCUMENT>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value = 'CLEAR_SP_LOG'">
+            <THEN>
+              <REMOVE_DOCUMENT Name="SYS_SP_LOG" ServiceName="E2E"/>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='DONE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='CLEAR'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SEARCH'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='null'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='RESET'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SAVE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Clearlog'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Savelog'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='AllClear'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='VIEW'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='CLEAR_SP_LOG'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Logger" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='SAVE_SP_LOG'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Logger" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='VIEW_SP_LOG'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Logger" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done4" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <done Name="done4">
+      <actions>
+        <action>
+          <SET Var="sname" FromValue="{$availServicesVar/SNAME/@Value}"/>
+          <SET Var="urlStr" FromValue="{concat('start.x2ps?START_WORKFLOW=ManageLogs&amp;SERVICE_NAME=ADMIN_UI&amp;SOLUTION_NAME=MDM&amp;SNAME=',$sname/@Value)}"/>
+          <SET Var="REDIRECT_URL" FromValue="{$urlStr}"/>
+        </action>
+      </actions>
+      <next_nodes/>
+    </done>
+  </nodes>
+  <mgcview>
+    <mgcnodes>
+      <start2 location="98,181" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="start2" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+      </start2>
+      <mgcnode Name="Manage Logger" location="356,54" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="Manage Logger" font="Verdana,0,9" textColor="186,12,12"/>
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+      </mgcnode>
+      <done4 location="664,123" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2">
+        <textProps text="done4" font="Verdana,0,9" textColor="80,80,80"/>
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+      </done4>
+    </mgcnodes>
+    <mgcconnectors>
+      <start2>
+        <nextNodeView font="Verdana,0,9" connectorColor="70,81,173" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="130,203" endpoint="356,77" ctrlRect1Dirty="true" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="228,172,4,4" ctrlRect2="184,75,4,4"/>
+      </start2>
+      <mgcnode Name="Manage Logger">
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="372,100" endpoint="372,100" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="true" ctrlRect1="370,173,4,4" ctrlRect2="438,141,4,4" textRect="324,154,170,9">
+          <textProps text="[$userAction ='CLEAR_SP_LOG']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="372,54" endpoint="372,54" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="true" ctrlRect1="370,-23,4,4" ctrlRect2="299,3,4,4" textRect="209,36,164,9">
+          <textProps text="[$userAction ='SAVE_SP_LOG']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="372,54" endpoint="372,54" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="true" ctrlRect1="370,-23,4,4" ctrlRect2="413,-12,4,4" textRect="312,-19,163,9">
+          <textProps text="[$userAction ='VIEW_SP_LOG']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView font="Verdana,0,9" connectorColor="0,178,178" connectorStroke="1.0,2,0,10.0,null,0.0" connectorTextColor="80,80,80" wavyConnector="true" fade="false" allowedToSelectConnector="true" connStartPointFill="false" connStartPointOval="true" connEndPointFill="true" draggable="true" startpoint="388,77" endpoint="664,145" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="593,75,4,4" ctrlRect2="455,143,4,4" textRect="356,120,35,9"/>
+      </mgcnode>
+    </mgcconnectors>
+    <mgcgroups/>
+    <mgctexts/>
+    <mgcdashboard compId="MgcDashboard1" location="10,10" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="1" textAttrsKey0="availServicesVar : xml">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="availServicesVar" Type="xml" Comment=""/>
+      </variables>
+    </mgcdashboard>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+    </pre_actions>
+    <post_actions>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

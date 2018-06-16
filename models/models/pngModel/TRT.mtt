@@ -1,0 +1,54 @@
+<document>
+  <properties>
+    <property Name="TRT_NBR" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="TRT_NBR" />
+    </property>
+    <property Name="TRT_ENT_TYPE_CODE" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="TRT_ENT_TYPE_CODE" />
+    </property>
+    <property Name="TRT_NAME" CharSet="UNICODE">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="TRT_NAME" />
+    </property>
+    <property Name="TRT_DESC">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="TRT_DESC" />
+    </property>
+    <property Name="TRT_DTTP_CODE" Required="true">
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="TRT_DTTP_CODE" />
+    </property>
+    <property Name="PII_DATA_IND" Required="true">
+      <validValues Kind="CONSTANT">
+        <validValue>Y</validValue>
+        <validValue>N</validValue>
+      </validValues>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="PII_DATA_IND" />
+    </property>
+    <property Name="PRDFN_TRT_IND" Required="true">
+      <validValues Kind="CONSTANT">
+        <validValue>Y</validValue>
+        <validValue>N</validValue>
+      </validValues>
+      <extends Package="dictionaries" ModelUnit="pngModel.mdt" Name="PRDFN_TRT_IND" />
+    </property>
+  </properties>
+  <keys>
+    <key Active="true" Name="TRT_UPI" PhysicalName="TRT_UPI" Kind="PRIMARY">
+      <property Name="TRT_NBR" />
+    </key>
+  </keys>
+  <links>
+    <link Active="true" Name="TRT_FK" PhysicalName="TRT_FK">
+      <keymap ToPackage="models/pngModel" ToModelUnit="TRT_ENT_TYPE.mtt" ToKey="TRT_ENT_TYPE_UPI">
+        <mapping FromProperty="TRT_ENT_TYPE_CODE" ToProperty="TRT_ENT_TYPE_CODE" />
+      </keymap>
+    </link>
+  </links>
+  <docFacets>
+    <mdmWebServiceFacet />
+    <mdmSysTableMapFacet TableClass="MASTER" Source="MASTER" MasterTable="TRT" />
+    <miscFacet PhysicalName="TRT" Active="true" />
+    <mdmConfigFacet SchemaGen="true" />
+  </docFacets>
+  <mdmPropsConfigFacet />
+  <viewsql />
+</document>
+

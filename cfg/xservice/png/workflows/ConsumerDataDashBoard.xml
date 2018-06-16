@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="5" ShowInBreadCrumbs="true" Version="1.0" Name="ConsumerDataDashBoard" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="ConsumerDataDashBoard">
+    <variable Name="matchedDomainValues" Type="xml" Comment=""/>
+    <variable Name="programIDValues" Type="xml" Comment=""/>
+    <variable Name="searchResults" Type="xml" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start0">
+      <actions>
+        <action>
+          <!--REQUEST Name="getMatchedDomainsOptions" ServiceName="BCM_MASTER" AssignToVar="matchedDomainValues"/-->
+          <REQUEST Name="getMatchedDomains" ServiceName="BCM_MASTER" AssignToVar="domainValues"/>
+          <TO_DOCVAR AssignToVar="matchedDomainValues">
+            <TO_XML SelectList="$domainValues"/>
+          </TO_DOCVAR>
+          <REQUEST Name="getProgramIDOptions" ServiceName="BCM_MASTER" AssignToVar="programIDValues">
+            <LEGAL_ENT_NBR Value="{$domainValues/LEGAL_ENT/LEGAL_ENT_NBR/@Value}"/>
+          </REQUEST>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Consumer Data Dashboard"/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Consumer Data Dashboard" ShowInBreadCrumbs="SHOW" Template="ConsumerDataDashBoard.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SYS_RELOAD' and $thisParam/FILTER_ID/@Value='searchResultsTable'">
+            <THEN>
+              <REQUEST Name="getConsmrDataSearchResults" AssignToVar="searchResults" ServiceName="BCM_MASTER">
+                <ACTION_NAME Value="EXPORT"/>
+                <!--TO_XML SelectList="$thisParam/*"/-->
+                <TO_XML SelectList="$matchedDomainValues/LEGAL_ENT"/>
+                <TO_XML SelectList="$programIDValues/MKTNG_PGM"/>
+              </REQUEST>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="($thisParam/SHOW_SEARCH_RESULTS/@Value='TRUE' or $thisParam/START_COUNT/@Value>=0)">
+                <THEN>
+                  <REQUEST Name="getConsmrDataSearchResults" AssignToVar="searchResults" ServiceName="BCM_MASTER">
+                    <TO_XML SelectList="$thisParam/*"/>
+                    <!--<TO_XML SelectList="$matchedDomainValues/LEGAL_ENT"/>-->
+                    <TO_XML SelectList="$programIDValues/MKTNG_PGM"/>
+                  </REQUEST>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$thisParam/SHOW_DETAILS/@Value='TRUE'">
+                    <THEN>
+                      <TO_DOCVAR AssignToVar="loadDetails">
+                        <RESPONSE>
+                          <RPT_DATA_NBR_DETAILS/>
+                        </RESPONSE>
+                      </TO_DOCVAR>
+                      <APPEND_TO_XML SelectList="$loadDetails/RPT_DATA_NBR_DETAILS">
+                        <TO_XML SelectList="$thisParam/*"/>
+                      </APPEND_TO_XML>
+                    </THEN>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <TO_XML SelectList="$matchedDomainValues/*"/>
+              <TO_XML SelectList="$programIDValues/*"/>
+              <TO_XML SelectList="$searchResults"/>
+              <TO_XML SelectList="$loadDetails"/>
+            </ROOT>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$userAction='SEARCH'">
+            <THEN>
+              <SET Property="SHOW_SEARCH_RESULTS" DocVar="thisParam" FromValue="TRUE"/>
+              <SET DocVar="thisParam" Property="START_COUNT" FromValue="0"/>
+            </THEN>
+            <ELSE>
+              <IF_TEST Test="$userAction='Details'">
+                <THEN>
+                  <SET Property="SHOW_DETAILS" DocVar="thisParam" FromValue="TRUE"/>
+                  <GET_DOCUMENT Name="V_RPT_DATA_NBR" AssignToVar="rptDataNbrDetails" ServiceName="BCM_MASTER" DirtyRead="true">
+                    <MKTNG_PGM_NBR Value="{$thisParam/SELECTED_PROGRAM_ID/@Value}"/>
+                    <SELECT>
+                      <MKTNG_PGM_NBR/>
+                      <LEGAL_ENT_NBR/>
+                      <STAGING_NBR/>
+                      <ERROR_NBR/>
+                      <ACTIVE_NBR/>
+                      <DUPLICATE_NBR/>
+                      <PHONE_OPT_IN/>
+                      <PHONE_OPT_OUT/>
+                      <EMAIL_OPT_IN/>
+                      <EMAIL_OPT_OUT/>
+                      <POSTAL_OPT_IN/>
+                      <POSTAL_OPT_OUT/>
+                      <SOCIAL_OPT_IN/>
+                      <SOCIAL_OPT_OUT/>
+                    </SELECT>
+                  </GET_DOCUMENT>
+                  <FOR_EACH SelectList="$rptDataNbrDetails/V_RPT_DATA_NBR" CurrentElement="currentElement">
+                    <FOR_EACH SelectList="$programIDValues/MKTNG_PGM/OPTION" CurrentElement="curElement">
+                      <IF_TEST Test="$curElement/@Value!='All'">
+                        <THEN>
+                          <IF_TEST Test="$currentElement/MKTNG_PGM_NBR/@Value=$curElement/@Id">
+                            <THEN>
+                              <SET DocVar="currentElement" Property="MKTNG_PGM_NAME" FromValue="{$curElement/@Value}"/>
+                            </THEN>
+                          </IF_TEST>
+                        </THEN>
+                      </IF_TEST>
+                    </FOR_EACH>
+                  </FOR_EACH>
+                  <FOR_EACH SelectList="$rptDataNbrDetails/V_RPT_DATA_NBR" CurrentElement="currentElement">
+                    <FOR_EACH SelectList="$matchedDomainValues/LEGAL_ENT/OPTION" CurrentElement="curElement">
+                      <IF_TEST Test="$curElement/@Value!='All'">
+                        <THEN>
+                          <IF_TEST Test="$currentElement/LEGAL_ENT_NBR/@Value=$curElement/@Id">
+                            <THEN>
+                              <SET DocVar="currentElement" Property="LEGAL_ENT_NAME" FromValue="{$curElement/@Value}"/>
+                            </THEN>
+                          </IF_TEST>
+                        </THEN>
+                      </IF_TEST>
+                    </FOR_EACH>
+                  </FOR_EACH>
+                  <APPEND_TO_XML SelectList="$thisParam">
+                    <TO_XML SelectList="$rptDataNbrDetails/*"/>
+                  </APPEND_TO_XML>
+                  <SET Property="SHOW_LOAD_SEARCH_RESULTS" DocVar="thisParam" FromValue="FALSE"/>
+                  <SET Property="START_COUNT" DocVar="thisParam" FromValue="-1"/>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$thisParam/BUTTON_ID/@Value='LOAD_PROGRAM_LIST'">
+                    <THEN>
+                      <REQUEST Name="getMatchedDomains" ServiceName="BCM_MASTER" AssignToVar="domainValues"/>
+                      <REQUEST Name="getProgramIDOptions" AssignToVar="programIDValues" ServiceName="BCM_MASTER">
+                        <SOURCE Value="SEARCH"/>
+                        <LEGAL_ENT_NBR Value="{$domainValues/LEGAL_ENT[LEGAL_ENT_NAME/@Value=$thisParam/LEGAL_ENT_NAME/@Value]/LEGAL_ENT_NBR/@Value}"/>
+                      </REQUEST>
+                      <TO_DOCVAR AssignToVar="searchResults">
+                        <ROOT/>
+                      </TO_DOCVAR>
+                      <SET Property="SHOW_LOAD_SEARCH_RESULTS" DocVar="thisParam" FromValue="FALSE"/>
+                      <SET Property="START_COUNT" DocVar="thisParam" FromValue="-1"/>
+                    </THEN>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='DONE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='SEARCH'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Consumer Data Dashboard" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Details'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Consumer Data Dashboard" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='LOAD_PROGRAM_LIST'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Consumer Data Dashboard" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='ERROR_SUMMARY'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Error_Summary" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done2" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <done Name="done2">
+      <actions/>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="Error_Summary" ShowInBreadCrumbs="SHOW" Template="Error_Summary.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <EXECUTE_SQL_QUERY Value="SELECT A.MKTNG_PGM_NBR, A.LEGAL_ENT_NBR, A.STAGING_NBR, A.ERROR_NBR AS TOTAL_ERROR_NBR, COALESCE(B.ERR_DESC,'No Record in Error') AS ERR_DESC, SUM(B.ERROR_CODE_NBR ) AS ERR_CODE_NBR FROM V_RPT_DATA_NBR A LEFT OUTER JOIN ERR_CODE_DETAILS B ON  A.MKTNG_PGM_NBR = B.MKTNG_PGM_NBR WHERE A.MKTNG_PGM_NBR = {$thisParam/SELECTED_PROGRAM_ID/@Value} group by 1,2,3,4,5;" AssignToVar="errorSummaryData"/>
+          <FOR_EACH SelectList="$programIDValues/MKTNG_PGM/OPTION" CurrentElement="curElement">
+            <IF_TEST Test="$curElement/@Value!='All'">
+              <THEN>
+                <IF_TEST Test="$thisParam/SELECTED_PROGRAM_ID/@Value=$curElement/@Id">
+                  <THEN>
+                    <SET DocVar="thisParam" Property="MKTNG_PGM_NAME" FromValue="{$curElement/@Value}"/>
+                  </THEN>
+                </IF_TEST>
+              </THEN>
+            </IF_TEST>
+          </FOR_EACH>
+          <FOR_EACH SelectList="$matchedDomainValues/LEGAL_ENT/OPTION" CurrentElement="curElement">
+            <IF_TEST Test="$curElement/@Value!='All'">
+              <THEN>
+                <IF_TEST Test="$thisParam/LEGAL_ENT_NBR/@Value=$curElement/@Id">
+                  <THEN>
+                    <SET DocVar="thisParam" Property="LEGAL_ENT_NAME" FromValue="{$curElement/@Value}"/>
+                  </THEN>
+                </IF_TEST>
+              </THEN>
+            </IF_TEST>
+          </FOR_EACH>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <TO_XML SelectList="$errorSummaryData/*"/>
+              <MKTNG_PGM_NAME Value="{$thisParam/MKTNG_PGM_NAME/@Value}"/>
+              <LEGAL_ENT_NAME Value="{$thisParam/LEGAL_ENT_NAME/@Value}"/>
+              <SELECTED_PROGRAM_ID Value="{$thisParam/SELECTED_PROGRAM_ID/@Value}"/>
+              <LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+              <MKTNG_PGM_NBR_HID Value="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+            </ROOT>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET DocVar="thisParam" Property="MKTNG_PGM_NBR" FromValue="{$thisParam/MKTNG_PGM_NBR_HID/@Value}"/>
+          <SET DocVar="thisParam" Property="SELECTED_PROGRAM_ID" FromValue="{$thisParam/SELECTED_PROGRAM_ID/@Value}"/>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='CREATE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='EDIT'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='DELETE'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='DONE'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Consumer Data Dashboard" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <start0 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="213,223" size="732,534">
+        <iconProps iconfile="z1start.gif"/>
+      </start0>
+      <mgcnode Name="Consumer Data Dashboard" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="411,252" size="1280,740">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <done2 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="639,234">
+        <iconProps iconfile="z1end.gif"/>
+      </done2>
+      <Error_Summary font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="534,114" size="732,745">
+        <iconProps iconfile="x1age80.gif"/>
+      </Error_Summary>
+    </mgcnodes>
+    <mgcconnectors>
+      <start0>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="258,245" endpoint="411,274" ctrlRect1="370,243,4,4" ctrlRect2="294,272,4,4"/>
+      </start0>
+      <mgcnode Name="Consumer Data Dashboard">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="433,297" endpoint="411,274" ctrlRect1="437,338,4,4" ctrlRect2="186,416,4,4" ctrlRect2Dirty="true" ctrlRect1Dirty="true" textRect="300,375,26,8">
+          <textProps text="$userAction ='SEARCH'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="411,274" endpoint="411,274" ctrlRect1="334,272,4,4" ctrlRect2="206,66,4,4" ctrlRect2Dirty="true" textRect="259,167,27,8">
+          <textProps text="$userAction ='Details'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="433,297" endpoint="433,297" ctrlRect1="431,370,4,4" ctrlRect2="598,484,4,4" ctrlRect2Dirty="true" textRect="497,425,38,8">
+          <textProps text="$userAction ='LOAD_PROGRAM_LIST'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="456,274" endpoint="556,159" ctrlRect1="520,224,4,4" ctrlRect2="554,244,4,4" ctrlRect1Dirty="true" textRect="523,232,33,8">
+          <textProps text="$userAction ='ERROR_SUMMARY'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="456,274" endpoint="639,256" ctrlRect1="590,272,4,4" ctrlRect2="499,254,4,4"/>
+      </mgcnode>
+      <Error_Summary>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="534,136" endpoint="433,252" ctrlRect1="457,134,4,4" ctrlRect2="431,163,4,4" textRect="434,146,24,8">
+          <textProps text="$userAction ='DONE'"/>
+        </nextNodeView>
+      </Error_Summary>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+      <action/>
+    </pre_actions>
+    <post_actions>
+      <action/>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

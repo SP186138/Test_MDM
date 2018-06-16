@@ -1,0 +1,437 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" name="studio.templates.simple_entry" source="studio.controller:load" version="3">
+  <ui:container id="mainContainer" scrollable="true">
+    <ui:step id="mainStep">
+      <ui:container id="topContainer" collapsable="false">
+        <ui:step id="topStep" displayText="Attribute Maintainence">
+          <ui:validation successMessage="{$root/SuccessMessageForProject/@Value}" id="SuccessMessageForProject" />
+          <ui:container id="container1" collapsable="false" scrollable="true">
+            <ui:step id="step1" displayText="Select Attribute Type">
+              <ui:field-group id="fieldGroup1" columns="2">
+                <ui:dropdown displayText="Attribute Type" name="ATTRIBUTE_TYPE_ID" id="ATTRIBUTE_TYPE_ID" optionSrc="$root/ATTRIBUTE_TYPE/OPTIONS/OPTION" onChange="javascript:AttributeTypeChanged();" selectOne="true" required="true" />
+                <ui:hidden-field id="Attribute_type_hidden1" name="Attribute_type_hidden1" />
+                <ui:dropdown displayText="{$root/PARENT_ATTRIBUTE/DISPLAY_NAME/@Value}" name="PARENT_ATTRIBUTE_AV_ID" optionSrc="$root/PARENT_ATTRIBUTE_TYPE/OPTIONS/OPTION" displayCondition="{$root/isParentExisting/@Value='true'}" selectOne="true" />
+                <ui:dropdown displayText="Status" name="Status" id="Status" optionSrc="$root/STATUS/OPTIONS/OPTION" />
+                <ui:entry-field displayText="Description" name="Description_TopCont" id="Description_TopCont" maxlength="100" size="50" />
+                <ui:hidden-field name="Attribute_type_hidden" id="Attribute_type_hidden" />
+              </ui:field-group>
+            </ui:step>
+          </ui:container>
+          <ui:buttons>
+            <ui:button id="Search" name="Search" displayText="Search" emphasized="true" onClick="javascript:on_Search();" />
+          </ui:buttons>
+        </ui:step>
+      </ui:container>
+      <ui:container id="SearchResults" collapsable="false" scrollable="true">
+        <ui:step id="SeachResultsStep">
+          <ui:table id="SearchResultTable" displayText="Search Results" displayTextNoRecords="No Records Found" collapsable="true" postRowIdAs="AV_ID" rowId="AV_ID" select="PROJECTS" selectable="single" doPaging="true" totalRowCount="@TOTAL_ROW_COUNT" maxRows="@MAX_ROWS" startAtRow="@START_COUNT">
+            <ui:field-group id="SearchResultsFields">
+              <ui:display-field name="AV_CODE" displayText="Code" size="20" />
+              <ui:display-field name="AV_DESCRIPTION" displayText="Description" />
+              <ui:display-field name="AV_SHORT_NAME" displayText="Short Name" size="20" />
+            </ui:field-group>
+            <ui:buttons>
+              <ui:button id="Edit" name="Edit" displayText="Edit" enabledBySelections="true" onClick="javascript:on_Edit();" />
+              <ui:divider id="d1" displayCondition="{$root/DISPLAY_COND_ADD/@Value='C'}" />
+              <ui:button id="Add" name="Add" displayText="Add" emphasized="true" displayCondition="{$root/DISPLAY_COND_ADD/@Value='C'}" onClick="javascript:on_Add();" />
+            </ui:buttons>
+          </ui:table>
+        </ui:step>
+      </ui:container>
+      <ui:container id="container2" displayCondition="{$root/DISPLAY_COND_CONT2/@Value='Add' or $root/DISPLAY_COND_CONT2/@Value='Edit'}" scrollable="true">
+        <ui:step id="step3">
+          <ui:validation id="AlertMessageForProject" instructionMessage="{$root/AlertMessageForProject/@Value}" anyFieldIsRequired="false" />
+          <ui:field-group columns="2">
+            <ui:field-group>
+              <ui:hidden-field id="MOD_AV_ID" name="MOD_AV_ID" />
+              <ui:entry-field displayText="Code" name="CODE" displayCondition="{$root/ATTRIBUTE_TYPES/AV_CODE_FLAG/@Value='Y'}" required="true" maxlength="20" disabled="{$root/ATTRIBUTE_TYPES/USER_MANAGED_FLAG/@Value = 'R'}" />
+              <ui:entry-field displayText="Description" name="DESCRIPTION" required="true" maxlength="100" size="50" disabled="{$root/ATTRIBUTE_TYPES/USER_MANAGED_FLAG/@Value = 'R'}" />
+              <ui:entry-field displayText="Short Name" name="SHORT_NAME" displayCondition="{$root/ATTRIBUTE_TYPES/AV_SHORT_NAME_FLAG/@Value='Y'}" required="true" maxlength="20" readOnly="{$root/ATTRIBUTE_TYPES/USER_MANAGED_FLAG/@Value = 'R'}" />
+              <ui:dropdown displayText="{$root/PARENT_ATTRIBUTE/DISPLAY_NAME/@Value}" name="PAR_ATT_AVID_CONT2" id="" optionSrc="$root/PARENT_ATTRIBUTE_TYPE/OPTIONS/OPTION" displayCondition="{$root/isParentExisting/@Value='true'}" selectOne="true" required="true" />
+              <ui:hidden-field id="parentAttribute" name="parentAttribute" value="{$root/PARENT_ATTRIBUTE/DISPLAY_NAME/@Value}" />
+              <ui:dropdown displayText="Status" name="Status_CONT2" id="Status_CONT2" optionSrc="$root/STATUS/OPTIONS/OPTION" disabled="{$root/ATTRIBUTE_TYPES/USER_MANAGED_FLAG/@Value = 'R'}" />
+            </ui:field-group>
+            <ui:field-group columns="3">
+              <!--<ui:dropdown displayText="{$root/RELATED_ATTRIBUTE/ATTRIBUTE_TYPE/@Value}" name="RELATED_AV_ID" id="RELATED_AV_ID" size="8" optionSrc="$root/RELATED_AV_IDS/RELATED_AV_ID" displayCondition="{strlen($root/RELATED_ATTRIBUTE/ATTRIBUTE_TYPE/@Value) > 0}"/>-->
+              <ui:field-group>
+                <ui:display-field value="{$root/RELATED_ATTRIBUTE/ATTRIBUTE_TYPE_AVAILABLE/@Value}" name="RelationList" id="RelationList" displayCondition="{count($root/RELATED_ATTRIBUTE/*) &gt; 0}" />
+                <ui:dropdown name="RELATED_AV_ID_LIST" id="RELATED_AV_ID_LIST" size="8" optionSrc="$root/RELATED_AV_IDS_LIST/RELATED_AV_ID_LIST" displayCondition="{count($root/RELATED_ATTRIBUTE/*) &gt; 0}" />
+              </ui:field-group>
+              <ui:field-group>
+                <ui:field-space />
+                <ui:field-space />
+                <ui:button id="out" onClick="javascript:moveoutid();" displayCondition="{count($root/RELATED_ATTRIBUTE/*) &gt; 0}" displayText="&gt;&gt;" />
+                <ui:button id="in" onClick="javascript:moveinid();" displayCondition="{count($root/RELATED_ATTRIBUTE/*) &gt; 0}" displayText="&amp;lt&amp;lt" />
+              </ui:field-group>
+              <ui:field-group>
+                <ui:display-field value="{$root/RELATED_ATTRIBUTE/ATTRIBUTE_TYPE_ASSIGNED/@Value}" name="RelationCurr" id="RelationCurr" displayCondition="{count($root/RELATED_ATTRIBUTE/*) &gt; 0}" />
+                <ui:dropdown name="RELATED_AV_ID" id="RELATED_AV_ID" size="8" optionSrc="$root/RELATED_AV_IDS/RELATED_AV_ID" displayCondition="{count($root/RELATED_ATTRIBUTE/*) &gt; 0}" />
+              </ui:field-group>
+            </ui:field-group>
+            <ui:field-group id="emailFields" columns="1">
+              <ui:checkbox id="emailRequired" name="emailRequired" displayText="Notification" onClick="javascript:on_emailRequired();"/>
+              <ui:entry-field id="toAddr" name="toAddr" displayText="To" required="true" colSpan="2" readOnly="true" maxlength="100" size="50"/>
+             <!-- <ui:field-space id="em2"/> -->
+              <ui:textarea id="message" name="message" displayText="Message" rows="5" columns="49" colSpan="2" readOnly="true"/>
+            <!--  <ui:field-space id="em3"/> -->
+            </ui:field-group> -->
+          </ui:field-group>
+          <ui:buttons>
+            <ui:button id="SUBMIT" name="SUBMIT" displayText="Submit" onClick="javascript:on_SUBMIT();" />
+            <ui:button id="Cancel" name="Cancel" displayText="Cancel" onClick="javascript:on_Cancel();" />
+          </ui:buttons>
+        </ui:step>
+      </ui:container>
+    </ui:step>
+  </ui:container>
+  <ui:script>function moveoutid()
+  {
+    var sda = document.getElementById('RELATED_AV_ID_LIST');
+    var len = sda.length;
+    var sda1 = document.getElementById('RELATED_AV_ID');
+    for(var j=0; j &lt; len; j++)
+     {
+     if(sda[j])
+     {
+      if(sda[j].selected)
+     {
+      var tmp = sda.options[j].text;
+      var tmp1 = sda.options[j].value;
+      sda.remove(j);
+      j--;
+      var y=document.createElement('option');
+      y.text=tmp;
+      y.value=tmp1;
+      try
+      {
+       sda1.add(y,null);
+      }
+      catch(ex)
+      {
+      sda1.add(y);
+      }
+     }
+     }
+     }
+  }
+  
+  function moveinid()
+{
+ var sda = document.getElementById('RELATED_AV_ID_LIST');
+ var sda1 = document.getElementById('RELATED_AV_ID');
+ var len = sda1.length;
+ for(var j=0; j&lt; len; j++)
+ {
+  if(sda1[j])
+  {
+  if(sda1[j].selected)
+  {
+   var tmp = sda1.options[j].text;
+   var tmp1 = sda1.options[j].value;
+   sda1.remove(j);
+   j--;
+   var y=document.createElement('option');
+   y.text=tmp;
+   y.value=tmp1;
+   try
+   {
+   sda.add(y,null);}
+   catch(ex){
+   sda.add(y); 
+   }
+  }
+  }
+ } 
+}
+/*
+function AttributeTypeChanged()
+{
+var conf='yes';
+if(document.form.ATTRIBUTE_TYPE_ID.value.length!=0)
+{
+if(document.form.DESCRIPTION)
+{
+conf = core_confirm('All Current changes will be lost.Do u want to continue?');
+}
+}
+if (conf=='yes')
+{
+document.form.Attribute_type_hidden1.value=document.form.ATTRIBUTE_TYPE_ID.value;
+disableButtons();
+trapExcelPivotChanges();
+document.form.BUTTON_ID.value = 'AttributeTypeChange';
+document.form.action = 'view.x2ps';
+document.form.submit();
+}
+else
+{
+document.form.ATTRIBUTE_TYPE_ID.value=document.form.Attribute_type_hidden1.value;
+return;
+}
+disableAllControls();
+}
+*/
+  
+  
+function AttributeTypeChanged()
+{
+var conf='yes';
+if(document.form.ATTRIBUTE_TYPE_ID.value.length!=0)
+{
+if(document.form.DESCRIPTION)
+{
+//conf = core_confirm('All Current changes will be lost.Do u want to continue?');
+conf=core_confirm_jquery('All Current changes will be lost.Do u want to continue?','onConfirmAttributeType');
+}
+}
+if (conf=='yes')
+{
+document.form.Attribute_type_hidden1.value=document.form.ATTRIBUTE_TYPE_ID.value;
+disableButtons();
+trapExcelPivotChanges();
+document.form.BUTTON_ID.value = 'AttributeTypeChange';
+document.form.action = 'view.x2ps';
+document.form.submit();
+}
+else
+{
+document.form.ATTRIBUTE_TYPE_ID.value=document.form.Attribute_type_hidden1.value;
+return;
+}
+disableAllControls();
+}
+  
+  
+function onConfirmAttributeType(conf)
+{
+if (conf=='yes')
+{
+document.form.Attribute_type_hidden1.value=document.form.ATTRIBUTE_TYPE_ID.value;
+disableButtons();
+trapExcelPivotChanges();
+document.form.BUTTON_ID.value = 'AttributeTypeChange';
+document.form.action = 'view.x2ps';
+document.form.submit();
+}
+else
+{
+document.form.ATTRIBUTE_TYPE_ID.value=document.form.Attribute_type_hidden1.value;
+return;
+}
+}
+  
+  
+function on_Search()
+{
+var bIsValid = true;
+document.form.SUBMIT_AS_XML.value = 'false';
+bIsValid = (isValid_topStep());
+ 
+     if( bIsValid == false )
+    {
+     validation_alert('topStep');
+    }
+    if ( bIsValid == true) 
+    {
+     disableButtons(); 
+     trapExcelPivotChanges(); 
+    document.form.BUTTON_ID.value = 'Search'; 
+    document.form.action = 'view.x2ps';
+    document.form.submit(); 
+  disableAllControls(); 
+    }
+    onResize();  
+    return; 
+    }
+    function on_Edit()
+   {
+   var bIsValid = true;
+   document.form.SUBMIT_AS_XML.value = 'false';
+  
+  bIsValid = (isValid_SearchResultTable());
+   
+  if( bIsValid == false )
+  {
+    validation_alert('SearchResultTable');
+  }
+  if ( bIsValid == true) 
+  {
+   disableButtons(); 
+   trapExcelPivotChanges(); 
+  document.form.BUTTON_ID.value = 'Edit'; 
+  document.form.action = 'view.x2ps';
+  document.form.submit();  
+  }
+  disableAllControls();
+  onResize();  
+  return; 
+  }
+    function on_Add()
+   {
+   var bIsValid = true;
+   document.form.SUBMIT_AS_XML.value = 'false';
+  
+  bIsValid = (isValid_SearchResultTable());
+   
+  if( bIsValid == false )
+  {
+    validation_alert('SearchResultTable');
+  }
+  if ( bIsValid == true) 
+  {
+   disableButtons(); 
+   trapExcelPivotChanges(); 
+  document.form.BUTTON_ID.value = 'Add'; 
+  document.form.action = 'view.x2ps';
+  document.form.submit();  
+  }
+  disableAllControls();
+  onResize();  
+  return; 
+  }
+  function on_SUBMIT()
+   {
+  if (document.form.DESCRIPTION.value)
+   document.form.DESCRIPTION.value = document.form.DESCRIPTION.value.trim();
+  if (document.form.CODE &amp;&amp; document.form.CODE.value)
+   document.form.CODE.value = document.form.CODE.value.trim();
+  if (document.form.SHORT_NAME &amp;&amp; document.form.SHORT_NAME.value)
+   document.form.SHORT_NAME.value = document.form.SHORT_NAME.value.trim();
+  if (document.form.PAR_ATT_AVID_CONT2)
+   if (document.form.PAR_ATT_AVID_CONT2.selectedIndex == 0){
+    core_alert("Please select a value for " + document.form.parentAttribute.value);
+    return;
+  }
+    if(document.getElementById('RELATED_AV_ID')!=null)
+    {
+     var selreln= document.getElementById('RELATED_AV_ID');
+     for (var i =0; i &lt; selreln.length; i++) 
+     {
+      selreln.options[i].selected = true;
+     }
+    }
+     /*TO_ADDR Validation*/
+  /*  if(document.form.emailRequired.checked)
+    {
+      var str = document.form.toAddr.value;
+      var email = str.split(';');
+    
+      String.prototype.trim = function() {   
+      return this.replace(/^\s+|\s+$/g,"");   
+      }   
+  
+      String.prototype.trimAll = function() {   
+      return this.replace(/\s+/g,"");   
+      }  
+      for (var i = 0; i &lt; email.length; i++) 
+      {
+       var strtrim=email[i].trim();
+       var strtrimAll=strtrim.trimAll();
+       if(isValidEmail(strtrim) != true || strtrim.length !=strtrimAll.length )
+       {
+       core_alert('One or more email addresses entered is invalid');
+       document.form.toAddr.focus();
+       return;
+       }
+      }
+    }  */
+  
+   var bIsValid = true;
+   document.form.SUBMIT_AS_XML.value = 'false';
+  
+  bIsValid = (isValid_SearchResultTable());
+   
+if( bIsValid == false )
+{
+validation_alert('SearchResultTable');
+}
+if ( bIsValid == true)
+{
+disableButtons();
+trapExcelPivotChanges();
+document.form.BUTTON_ID.value = 'SUBMIT';
+document.form.action = 'view.x2ps';
+document.form.submit();
+}
+disableAllControls();
+onResize();
+return;
+}
+function onLoadSuper() {
+enableButtonsIfRowSelected();
+dropValue = document.form.ATTRIBUTE_TYPE_ID.value;
+}
+function disableAllControls(){
+// core_alert("in 1" + form.elements.length);
+for( i = 0; i &lt;  form.elements.length; i++ ){
+form.elements[i].disabled = true;
+}
+//core_alert("in 2" + form.elements.length);
+}
+  
+/*
+function on_Cancel()
+{
+var can;
+can = core_confirm('All Current changes will be lost.Do u want to continue?');
+if (can=='yes')
+{
+disableButtons();
+trapExcelPivotChanges();
+document.form.BUTTON_ID.value = 'Cancel';
+document.form.action = 'view.x2ps';
+document.form.submit();
+}
+else
+{
+return;
+}
+  
+}
+*/
+  
+function on_Cancel()
+{
+//var can;
+//can = core_confirm('All Current changes will be lost.Do u want to continue?');
+core_confirm_jquery('All Current changes will be lost.Do u want to continue?','onconfirmCancel');
+}
+  
+  
+function onconfirmCancel(response)
+{
+if (response=='yes')
+{
+disableButtons();
+trapExcelPivotChanges();
+document.form.BUTTON_ID.value = 'Cancel';
+document.form.action = 'view.x2ps';
+document.form.submit();
+}
+else
+{
+return;
+}
+}
+  
+  function isValidEmail(str)
+  {
+  return (str.lastIndexOf(".") &gt; 2) &amp;&amp; (str.indexOf("@") &gt; 0) &amp;&amp; (str.lastIndexOf(".") &gt; (str.indexOf("@")+1)) &amp;&amp; (str.indexOf("@") == str.lastIndexOf("@"));
+  }
+  
+  function on_emailRequired()
+  {
+   if(document.form.emailRequired.checked)
+   {
+             document.forms['form'].toAddr.readOnly = false;
+             document.forms['form'].message.readOnly = false;
+   }
+   else
+   {
+      document.form.toAddr.value="";
+      document.form.message.value="";
+             document.forms['form'].toAddr.readOnly = true;
+             document.forms['form'].message.readOnly = true;
+   } 
+  }</ui:script>
+</ui:page-group>
+

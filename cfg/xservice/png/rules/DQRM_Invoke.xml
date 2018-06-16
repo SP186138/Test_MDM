@@ -1,0 +1,976 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--Copyright (c) 2009 by Teradata Corporation.
+
+All Rights Reserved.
+
+Teradata CONFIDENTIAL AND TRADE SECRET-->
+  <DEFINE_METHOD Name="DQRMEmailInvoke">
+    <RULE>
+      <ACTION>
+        <EXECUTE_SHELL_COMMAND Value="del E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM_Splitemails\*.html" AssignToVar="errStatus1"/>
+        <EXECUTE_SHELL_COMMAND Value="del E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM_Splitemails\*.txt" AssignToVar="errStatus2"/>
+        <EXECUTE_SHELL_COMMAND Value="del E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM_Splitemails\*.xls" AssignToVar="errStatus3"/>
+        <CREATE_DOCUMENT_ID Name="DQRM_Load_Id" AssignToVar="LoadId"/>
+        <SET Var="DqrmLoadID" FromValue="{$LoadId}"/>
+        <EXECUTE_SQL_QUERY AssignToVar="ResultIdGen" Value="INS MDM.DQRM_ID_GEN(PRCS_ID)VALUES({$LoadId})" ReturnRowCount="yes"/>
+        <EXECUTE_SQL_QUERY AssignToVar="DqrmLoadIDGEN" Value="SEL LOAD_ID FROM MDM.DQRM_ID_GEN WHERE PRCS_ID={$LoadId}" ReturnRowCount="yes"/>
+        <SET Var="DqrmLoadID" FromValue="{$DqrmLoadIDGEN/SQL_RESULT/LOAD_ID/@Value}"/>
+        <SET Var="ProjectId" FromValue="{$thisParam/PROJECT_ID/@Value}"/>
+        <SET Var="Frequency" FromValue="{$thisParam/Frequency/@Value}"/>
+        <EXECUTE_SHELL_COMMAND Value="DQRMCall.bat {$DqrmLoadID} {$ProjectId} {$Frequency}" AssignToVar="DQRMResults" Synchronous="true" HandleException="true"/>
+        <IF_TEST Test="$DQRMResults/@ShellReturnValue = 0">
+          <THEN>
+            <EXECUTE_SQL_QUERY AssignToVar="Result1" Value="SEL * FROM MDM.VW_DQ_MDM_SERVICE_NOW_EMAILS WHERE Process_id={$DqrmLoadID}" ReturnRowCount="yes"/>
+            <EXECUTE_SQL_QUERY AssignToVar="Result2" Value="SEL distinct * FROM MDM.VW_DQ_MDM_OTHER_EMAILS a LEFT JOIN (SEL PROJECT_ID,RULE_NUMBER,RULE_REVISION,Max(CASE WHEN PROPERTY_NAME='SM_CATEGORY'THEN PROPERTY_VALUE END) AS SM_Category, Max(CASE WHEN PROPERTY_NAME='SM_SUBCATEGORY' THEN PROPERTY_VALUE END) AS SM_Subcategory, Max(CASE WHEN PROPERTY_NAME='SM_PRIORITY' THEN PROPERTY_VALUE END) AS SM_Priority, Max(CASE WHEN PROPERTY_NAME='SM_OPENEDBY' THEN PROPERTY_VALUE END) AS SM_OPENEDBY FROM  DQRM.VW_DQ_RULE_CUST_PROP_DIM GROUP BY 1,2,3) b ON a. project_id=b.project_id AND a.rule_number=b.rule_number  And a.rule_revision=b.rule_revision WHERE  Process_id={$DqrmLoadID} AND EMAIL_TYPE IN ('SN','SM','OPS','DS') " ReturnRowCount="yes"/>
+            <!--To fetch file size and max row count (from db) for which file split need not be done.-->
+            <EXECUTE_SQL_QUERY AssignToVar="QueryCSVSize" Value="SEL MAX_ATTACHMENT_SIZE_BYTES FROM MDM.DQRM_CSV_CONFIG" ReturnRowCount="yes"/>
+            <EXECUTE_SQL_QUERY AssignToVar="QueryCSVRow" Value="sel MAX_ROW_COUNT from MDM.DQRM_CSV_CONFIG" ReturnRowCount="yes"/>
+            <!--Below IF_TEST contains logic for Service Now Emails-->
+            <IF_TEST Test="$Result1/@TotalRowCount > 0">
+              <THEN>
+                <FOR_EACH SelectList="$Result1/SQL_RESULT" CurrentElement="currElem">
+                  <APPEND_TO_XML DocVar="currElem">
+                    <FREQUENCY Value="{$Frequency}"/>
+                  </APPEND_TO_XML>
+                  <EXECUTE_SQL_QUERY AssignToVar="RuleCreator" Value="SEL data_steward_name, data_steward_email FROM DQRM.VW_DQ_DATA_QUALITY_RULE_DIM where project_id={$currElem/PROJECT_ID/@Value} and rule_number ={$currElem/RULE_NUMBER/@Value}" ReturnRowCount="yes"/>
+                  <APPEND_TO_XML DocVar="currElem">
+                    <RuleCreatorName Value="{$RuleCreator/SQL_RESULT/DATA_STEWARD_NAME/@Value}"/>
+                    <RuleCreatorEmail Value="{$RuleCreator/SQL_RESULT/DATA_STEWARD_EMAIL/@Value}"/>
+                  </APPEND_TO_XML>
+                  <EXECUTE_SQL_QUERY AssignToVar="RuleEscalation" Value="SEL SUBSTR(AV_DESCRIPTION,1,POSITION('~' IN AV_DESCRIPTION)-1) AS NAME, SUBSTR(AV_DESCRIPTION,POSITION('~' IN AV_DESCRIPTION)+1) AS EMAIL FROM MDM.ATTRIBUTE_VALUES WHERE ATTRIBUTE_TYPE_ID IN (SEL ATTRIBUTE_TYPE_ID FROM ATTRIBUTE_TYPES WHERE ATTRIBUTE_TYPE='DQRM_ESCALATION')" ReturnRowCount="yes"/>
+                  <APPEND_TO_XML DocVar="currElem">
+                    <escalationName Value="{$RuleEscalation/SQL_RESULT/NAME/@Value}"/>
+                    <escalationEmail Value="{$RuleEscalation/SQL_RESULT/EMAIL/@Value}"/>
+                  </APPEND_TO_XML>
+                  <SET Var="SummaryresultService1" FromValue="{$currElem/QUERY/@Value}"/>
+                  <EXECUTE_SQL_QUERY AssignToVar="SummaryQuery_Result1" Value="{$SummaryresultService1}" MaxRows="{$QueryCSVRow/SQL_RESULT/MAX_ROW_COUNT/@Value}" ReturnRowCount="yes"/>
+                  <SET Var="DetailresultService1" FromValue="{$currElem/DETAIL_QUERY/@Value}"/>
+                  <SET Var="removecolon" FromValue="{substringBefore($DetailresultService1,';')}"/>
+                  <TO_DOCVAR AssignToVar="Detailquery_orderby">
+                    <ROOT>
+                      <FinalQuery Value="{$removecolon} order by measure_time"/>
+                    </ROOT>
+                  </TO_DOCVAR>
+                  <EXECUTE_SQL_QUERY AssignToVar="Detailquery_Result1" MaxRows="{$QueryCSVRow/SQL_RESULT/MAX_ROW_COUNT/@Value}" Value="{$Detailquery_orderby/FinalQuery/@Value}" ReturnRowCount="yes"/>
+                  <SET Var="DQRMSNAttachment" FromValue="E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRMSNATT.xsl"/>
+                  <SET Var="AttRecCount" FromValue="{$Detailquery_Result1/@TotalRowCount}"/>
+                  <SET Var="SplitNo" FromValue="{$QueryCSVRow/SQL_RESULT/MAX_ROW_COUNT/@Value}"/>
+                  <!--check if the total record count, is greater then QueryCSVRow only then split required-->
+                  <TO_DOCVAR AssignToVar="emailSubject">
+                    <ROOT>
+                      <SUBJECT Value="Alert for Rule Number : {$currElem/PROJECT_NAME/@Value} {$currElem/RULE_NUMBER/@Value} Rule Name : {$currElem/RULE_NAME/@Value} FileName: DQRM_Rule{$currElem/RULE_NUMBER/@Value}_File"/>
+                    </ROOT>
+                  </TO_DOCVAR>
+                  <TO_DOCVAR AssignToVar="emailFormat">
+                    <ROOT>
+                      <FORMAT Value="text/html"/>
+                    </ROOT>
+                  </TO_DOCVAR>
+                  <TO_DOCVAR AssignToVar="emailMessage">
+                    <ROOT>
+                      <MESSAGE>
+                        <SET Var="DQRMSNDetails" FromValue="E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRMSN.xsl"/>
+                        <XML_DATA XsltFileName="{$DQRMSNDetails}">
+                          <REPORT>
+                            <TO_XML SelectList="$currElem"/>
+                          </REPORT>
+                          <REPORT1>
+                            <TO_XML SelectList="$SummaryQuery_Result1/*"/>
+                          </REPORT1>
+                        </XML_DATA>
+                      </MESSAGE>
+                    </ROOT>
+                  </TO_DOCVAR>
+                  <IF_TEST Test="$AttRecCount!=0">
+                    <THEN>
+                      <TO_DOCVAR AssignToVar="emailMessage1">
+                        <SET Var="DQRMSNDetails" FromValue="E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRMSN.xsl"/>
+                        <XML_DATA XsltFileName="{$DQRMSNDetails}">
+                          <REPORT1>
+                            <TO_XML SelectList="$Detailquery_Result1/*"/>
+                          </REPORT1>
+                        </XML_DATA>
+                      </TO_DOCVAR>
+                      <PRINT_TO_FILE Value="{$emailMessage1}" Beautify="yes" File="E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM_Splitemails\DQRMSNResults.txt" NewFile="yes" SameLine="no" AssignToVar="varPrint"/>
+                      <EXECUTE_SHELL_COMMAND Value="msxsl E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM_Splitemails\DQRMSNResults.txt E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRMSNATT.xsl -o E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM_Splitemails\DQRMSNATT_ProjectId{$currElem/PROJECT_ID/@Value}_Rule{$currElem/RULE_NUMBER/@Value}.html" AssignToVar="DQRMSNResults" Synchronous="true" HandleException="true"/>
+                      <!--Below command renames the html file created above, to xsl-->
+                      <EXECUTE_SHELL_COMMAND Value="ren E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM_Splitemails\DQRMSNATT_ProjectId{$currElem/PROJECT_ID/@Value}_Rule{$currElem/RULE_NUMBER/@Value}.html DQRMSNATT_ProjectId{$currElem/PROJECT_ID/@Value}_Rule{$currElem/RULE_NUMBER/@Value}.xls" AssignToVar="varRename_split" Synchronous="true" HandleException="true"/>
+                      <TO_DOCVAR AssignToVar="emailAttachment">
+                        <ROOT>
+                          <ATTACHMENTS>
+                            <ATTACH_FILE_NAME Value="E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM_Splitemails\DQRMSNATT_ProjectId{$currElem/PROJECT_ID/@Value}_Rule{$currElem/RULE_NUMBER/@Value}.xls"/>
+                          </ATTACHMENTS>
+                        </ROOT>
+                      </TO_DOCVAR>
+                      <GET_DOCUMENT Name="ATTRIBUTE_VALUES" AssignToVar="resAttValues" DirtyRead="yes" ServiceName="BCM_MASTER">
+                        <QUERY_DOCUMENT_LINK Name="XIF1ATTRIBUTE_VALUES">
+                          <OR>
+                            <ATTRIBUTE_TYPE_ID Value="5"/>
+                            <ATTRIBUTE_TYPE_ID Value="6"/>
+                            <ATTRIBUTE_TYPE_ID Value="10"/>
+                          </OR>
+                        </QUERY_DOCUMENT_LINK>
+                      </GET_DOCUMENT>
+                      <TO_DOCVAR AssignToVar="emailRecipients">
+                        <TO_ADDRS/>
+                      </TO_DOCVAR>
+                      <TO_DOCVAR AssignToVar="emailFrom">
+                        <FROM_ADDRESS Value="dqrm.administrator@teradata.com"/>
+                      </TO_DOCVAR>
+                      <FOR_EACH SelectList="$resAttValues/*" CurrentElement="currRec">
+                        <APPEND_TO_XML DocVar="emailRecipients">
+                          <TO_ADDR Value="{$currRec/AV_DESCRIPTION/@Value}"/>
+                        </APPEND_TO_XML>
+                      </FOR_EACH>
+                      <REQUEST Name="sendEmailNotification" AssignToVar="respEmail" ServiceName="BCM_MASTER" HandleException="true">
+                        <TO_XML DocVar="emailFrom"/>
+                        <TO_XML DocVar="emailRecipients"/>
+                        <TO_XML SelectList="$emailSubject/*"/>
+                        <TO_XML SelectList="$emailFormat/*"/>
+                        <TO_XML SelectList="$emailMessage/*"/>
+                        <TO_XML SelectList="$emailAttachment/*"/>
+                      </REQUEST>
+                    </THEN>
+                    <ELSE>
+                      <GET_DOCUMENT Name="ATTRIBUTE_VALUES" AssignToVar="resAttValues" DirtyRead="yes" ServiceName="BCM_MASTER">
+                        <QUERY_DOCUMENT_LINK Name="XIF1ATTRIBUTE_VALUES">
+                          <OR>
+                            <ATTRIBUTE_TYPE_ID Value="5"/>
+                            <ATTRIBUTE_TYPE_ID Value="6"/>
+                            <ATTRIBUTE_TYPE_ID Value="10"/>
+                          </OR>
+                        </QUERY_DOCUMENT_LINK>
+                      </GET_DOCUMENT>
+                      <TO_DOCVAR AssignToVar="emailRecipients">
+                        <TO_ADDRS/>
+                      </TO_DOCVAR>
+                      <TO_DOCVAR AssignToVar="emailFrom">
+                        <FROM_ADDRESS Value="dqrm.administrator@teradata.com"/>
+                      </TO_DOCVAR>
+                      <FOR_EACH SelectList="$resAttValues/*" CurrentElement="currRec">
+                        <APPEND_TO_XML DocVar="emailRecipients">
+                          <TO_ADDR Value="{$currRec/AV_DESCRIPTION/@Value}"/>
+                        </APPEND_TO_XML>
+                      </FOR_EACH>
+                      <REQUEST Name="sendEmailNotification" AssignToVar="respEmail" ServiceName="BCM_MASTER" HandleException="true">
+                        <TO_XML DocVar="emailFrom"/>
+                        <TO_XML DocVar="emailRecipients"/>
+                        <TO_XML SelectList="$emailSubject/*"/>
+                        <TO_XML SelectList="$emailFormat/*"/>
+                        <TO_XML SelectList="$emailMessage/*"/>
+                      </REQUEST>
+                    </ELSE>
+                  </IF_TEST>
+                </FOR_EACH>
+              </THEN>
+            </IF_TEST>
+            <!--Below IF_TEST contains logic for Other Emails-->
+            <IF_TEST Test="$Result2/@TotalRowCount > 0">
+              <THEN>
+                <FOR_EACH SelectList="$Result2/SQL_RESULT" CurrentElement="currElem">
+                  <APPEND_TO_XML DocVar="currElem">
+                    <FREQUENCY Value="{$Frequency}"/>
+                  </APPEND_TO_XML>
+                  <EXECUTE_SQL_QUERY AssignToVar="RuleCreator" Value="SEL data_steward_name, data_steward_email FROM DQRM.VW_DQ_DATA_QUALITY_RULE_DIM WHERE project_id={$currElem/PROJECT_ID/@Value} and rule_number={$currElem/RULE_NUMBER/@Value}" ReturnRowCount="yes"/>
+                  <APPEND_TO_XML DocVar="currElem">
+                    <RuleCreatorName Value="{$RuleCreator/SQL_RESULT/DATA_STEWARD_NAME/@Value}"/>
+                    <RuleCreatorEmail Value="{$RuleCreator/SQL_RESULT/DATA_STEWARD_EMAIL/@Value}"/>
+                  </APPEND_TO_XML>
+                  <EXECUTE_SQL_QUERY AssignToVar="RuleEscalation" Value="SEL SUBSTR(AV_DESCRIPTION,1,POSITION('~' IN AV_DESCRIPTION)-1) AS NAME, SUBSTR(AV_DESCRIPTION,POSITION('~' IN AV_DESCRIPTION)+1) AS EMAIL FROM MDM.ATTRIBUTE_VALUES WHERE ATTRIBUTE_TYPE_ID IN (SEL ATTRIBUTE_TYPE_ID FROM ATTRIBUTE_TYPES WHERE ATTRIBUTE_TYPE='DQRM_ESCALATION')" ReturnRowCount="yes"/>
+                  <APPEND_TO_XML DocVar="currElem">
+                    <escalationName Value="{$RuleEscalation/SQL_RESULT/NAME/@Value}"/>
+                    <escalationEmail Value="{$RuleEscalation/SQL_RESULT/EMAIL/@Value}"/>
+                  </APPEND_TO_XML>
+                  <SET Var="SummaryresultService2" FromValue="{$currElem/QUERY/@Value}"/>
+                  <EXECUTE_SQL_QUERY AssignToVar="SummaryQuery_Result2" Value="{$SummaryresultService2}" MaxRows="{$QueryCSVRow/SQL_RESULT/MAX_ROW_COUNT/@Value}" ReturnRowCount="yes"/>
+                  <SET Var="DetailresultService2" FromValue="{$currElem/DETAIL_QUERY/@Value}"/>
+                  <SET Var="removecolon" FromValue="{substringBefore($DetailresultService2,';')}"/>
+                  <TO_DOCVAR AssignToVar="Detailquery_orderby">
+                    <ROOT>
+                      <FinalQuery Value="{$removecolon} order by measure_time"/>
+                    </ROOT>
+                  </TO_DOCVAR>
+                  <EXECUTE_SQL_QUERY AssignToVar="Detailquery_Result2" MaxRows="{$QueryCSVRow/SQL_RESULT/MAX_ROW_COUNT/@Value}" Value="{$Detailquery_orderby/FinalQuery/@Value}" ReturnRowCount="yes"/>
+                  <SET Var="DQRMAttachment" FromValue="E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRMATT.xsl"/>
+                  <SET Var="AttRecCount" FromValue="{$Detailquery_Result2/@TotalRowCount}"/>
+                  <SET Var="SplitNo" FromValue="{$QueryCSVRow/SQL_RESULT/MAX_ROW_COUNT/@Value}"/>
+                  <!--check if the total record count, is greater then QueryCSVRow only then split required-->
+                  <!--If the row count is small we need not split the attachment in that case it will come here in else-->
+                  <TO_DOCVAR AssignToVar="emailSubject">
+                    <ROOT>
+                      <SUBJECT Value="Alert for Rule Number : {$currElem/PROJECT_NAME/@Value} {$currElem/RULE_NUMBER/@Value} Rule Name : {$currElem/RULE_NAME/@Value} FileName: DQRM_Rule{$currElem/RULE_NUMBER/@Value}_File"/>
+                    </ROOT>
+                  </TO_DOCVAR>
+                  <TO_DOCVAR AssignToVar="emailFormat">
+                    <ROOT>
+                      <FORMAT Value="text/html"/>
+                    </ROOT>
+                  </TO_DOCVAR>
+                  <!-- <TO_DOCVAR AssignToVar="emailMessage">
+                        <ROOT>
+                          <MESSAGE>
+                            <SET Var="DQRMDetails" FromValue="E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM.xsl"/>
+                            <XML_DATA XsltFileName="{$DQRMDetails}">
+                              <REPORT>
+                                <TO_XML SelectList="$currElem"/>
+                              </REPORT>
+                              <REPORT1>
+                                <TO_XML SelectList="$SummaryQuery_Result2/*"/>
+                              </REPORT1>
+                            </XML_DATA>
+                          </MESSAGE>
+                        </ROOT>
+                      </TO_DOCVAR>-->
+                  <IF_TEST Test="$currElem/EMAIL_TYPE/@Value= 'SM'">
+                    <THEN>
+                      <TO_DOCVAR AssignToVar="emailMessage">
+                        <ROOT>
+                          <MESSAGE>
+                            <SET Var="DQRMDetails" FromValue="E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRMSM.xsl"/>
+                            <XML_DATA XsltFileName="{$DQRMDetails}">
+                              <REPORT>
+                                <TO_XML SelectList="$currElem"/>
+                              </REPORT>
+                              <REPORT1>
+                                <TO_XML SelectList="$SummaryQuery_Result2/*"/>
+                              </REPORT1>
+                            </XML_DATA>
+                          </MESSAGE>
+                        </ROOT>
+                      </TO_DOCVAR>
+                    </THEN>
+                    <ELSE>
+                      <TO_DOCVAR AssignToVar="emailMessage">
+                        <ROOT>
+                          <MESSAGE>
+                            <SET Var="DQRMDetails" FromValue="E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM.xsl"/>
+                            <XML_DATA XsltFileName="{$DQRMDetails}">
+                              <REPORT>
+                                <TO_XML SelectList="$currElem"/>
+                              </REPORT>
+                              <REPORT1>
+                                <TO_XML SelectList="$SummaryQuery_Result2/*"/>
+                              </REPORT1>
+                            </XML_DATA>
+                          </MESSAGE>
+                        </ROOT>
+                      </TO_DOCVAR>
+                    </ELSE>
+                  </IF_TEST>
+                  <!--Below condition to check If there are records in detailedquery then no attachment needs to be sent-->
+                  <IF_TEST Test="$AttRecCount!=0">
+                    <THEN>
+                      <TO_DOCVAR AssignToVar="emailMessage1">
+                        <!--<SET Var="DQRMDetails" FromValue="$DQRMAttachment"/>-->
+                        <!--<XML_DATA XsltFileName="{$DQRMDetails}">-->
+                        <XML_DATA XsltFileName="{$DQRMAttachment}">
+                          <REPORT1>
+                            <TO_XML SelectList="$Detailquery_Result2/*"/>
+                          </REPORT1>
+                        </XML_DATA>
+                      </TO_DOCVAR>
+                      <PRINT_TO_FILE Value="{$emailMessage1}" Beautify="yes" File="E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM_Splitemails\DQRMResults.txt" NewFile="yes" SameLine="no" AssignToVar="varPrint"/>
+                      <EXECUTE_SHELL_COMMAND Value="msxsl E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM_Splitemails\DQRMResults.txt E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRMATT.xsl -o E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM_Splitemails\DQRMATT_ProjectId{$currElem/PROJECT_ID/@Value}_Rule{$currElem/RULE_NUMBER/@Value}.html" AssignToVar="DQRMResults" Synchronous="true" HandleException="true"/>
+                      <!--Below command renames the html file created above, to xsl-->
+                      <EXECUTE_SHELL_COMMAND Value="ren E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM_Splitemails\DQRMATT_ProjectId{$currElem/PROJECT_ID/@Value}_Rule{$currElem/RULE_NUMBER/@Value}.html DQRMATT_ProjectId{$currElem/PROJECT_ID/@Value}_Rule{$currElem/RULE_NUMBER/@Value}.xls" AssignToVar="varRename_split" Synchronous="true" HandleException="true"/>
+                      <TO_DOCVAR AssignToVar="emailAttachment">
+                        <ROOT>
+                          <ATTACHMENTS>
+                            <ATTACH_FILE_NAME Value="E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM_Splitemails\DQRMATT_ProjectId{$currElem/PROJECT_ID/@Value}_Rule{$currElem/RULE_NUMBER/@Value}.xls"/>
+                          </ATTACHMENTS>
+                        </ROOT>
+                      </TO_DOCVAR>
+                      <GET_DOCUMENT Name="DQRM_Email" AssignToVar="resAttValues" DirtyRead="yes" ServiceName="BCM_MASTER" ReturnRowCount="yes">
+                        <MAIL_TYPE Value="{$currElem/EMAIL_TYPE/@Value}"/>
+                        <ENTITY_STATE Value="ACTIVE"/>
+                      </GET_DOCUMENT>
+                      <TO_DOCVAR AssignToVar="emailRecipients">
+                        <TO_ADDRS/>
+                      </TO_DOCVAR>
+                      <FOR_EACH SelectList="$resAttValues/*" CurrentElement="currRec">
+                        <APPEND_TO_XML DocVar="emailRecipients">
+                          <TO_ADDR Value="{$currRec/EMAIL_ADDRS_TXT/@Value}"/>
+                        </APPEND_TO_XML>
+                      </FOR_EACH>
+                      <IF_TEST Test="$resAttValues/@TotalRowCount > 0">
+                        <THEN>
+                          <REQUEST Name="sendEmailNotification" AssignToVar="respEmail" ServiceName="BCM_MASTER" HandleException="true">
+                            <TO_XML DocVar="emailRecipients"/>
+                            <TO_XML SelectList="$emailSubject/*"/>
+                            <TO_XML SelectList="$emailFormat/*"/>
+                            <TO_XML SelectList="$emailMessage/*"/>
+                            <TO_XML SelectList="$emailAttachment/*"/>
+                          </REQUEST>
+                        </THEN>
+                      </IF_TEST>
+                    </THEN>
+                    <ELSE>
+                      <GET_DOCUMENT Name="DQRM_Email" AssignToVar="resAttValues" DirtyRead="yes" ServiceName="BCM_MASTER" ReturnRowCount="yes">
+                        <MAIL_TYPE Value="{$currElem/EMAIL_TYPE/@Value}"/>
+                        <ENTITY_STATE Value="ACTIVE"/>
+                      </GET_DOCUMENT>
+                      <TO_DOCVAR AssignToVar="emailRecipients">
+                        <TO_ADDRS/>
+                      </TO_DOCVAR>
+                      <FOR_EACH SelectList="$resAttValues/*" CurrentElement="currRec">
+                        <APPEND_TO_XML DocVar="emailRecipients">
+                          <TO_ADDR Value="{$currRec/EMAIL_ADDRS_TXT/@Value}"/>
+                        </APPEND_TO_XML>
+                      </FOR_EACH>
+                      <IF_TEST Test="$resAttValues/@TotalRowCount > 0">
+                        <THEN>
+                          <REQUEST Name="sendEmailNotification" AssignToVar="respEmail" ServiceName="BCM_MASTER" HandleException="true">
+                            <TO_XML DocVar="emailRecipients"/>
+                            <TO_XML SelectList="$emailSubject/*"/>
+                            <TO_XML SelectList="$emailFormat/*"/>
+                            <TO_XML SelectList="$emailMessage/*"/>
+                          </REQUEST>
+                        </THEN>
+                      </IF_TEST>
+                    </ELSE>
+                  </IF_TEST>
+                </FOR_EACH>
+              </THEN>
+            </IF_TEST>
+            <EXECUTE_SQL_QUERY AssignToVar="Result2" Value="SEL * FROM DQRM.VW_DQ_MDM_OTHER_EMAILS WHERE Process_id={$DqrmLoadID} AND EMAIL_TYPE IN ('DCA')" ReturnRowCount="yes"/>
+            <IF_TEST Test="$Result2/@TotalRowCount > 0">
+              <THEN>
+                <FOR_EACH SelectList="$Result2/SQL_RESULT" CurrentElement="currElem">
+                  <SET Var="SummaryQuesryTest" FromValue="{substringBefore($currElem/QUERY/@Value,'SELECT')}"/>
+                  <IF_TEST Test="$SummaryQuesryTest= ''">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="currElem">
+                        <FREQUENCY Value="{$Frequency}"/>
+                      </APPEND_TO_XML>
+                      <EXECUTE_SQL_QUERY AssignToVar="RuleCreator" Value="SEL data_steward_name, data_steward_email FROM DQRM.VW_DQ_DATA_QUALITY_RULE_DIM WHERE project_id={$currElem/PROJECT_ID/@Value} and rule_number={$currElem/RULE_NUMBER/@Value}" ReturnRowCount="yes"/>
+                      <APPEND_TO_XML DocVar="currElem">
+                        <RuleCreatorName Value="{$RuleCreator/SQL_RESULT/DATA_STEWARD_NAME/@Value}"/>
+                        <RuleCreatorEmail Value="{$RuleCreator/SQL_RESULT/DATA_STEWARD_EMAIL/@Value}"/>
+                      </APPEND_TO_XML>
+                      <EXECUTE_SQL_QUERY AssignToVar="RuleEscalation" Value="SEL SUBSTR(AV_DESCRIPTION,1,POSITION('~' IN AV_DESCRIPTION)-1) AS NAME, SUBSTR(AV_DESCRIPTION,POSITION('~' IN AV_DESCRIPTION)+1) AS EMAIL FROM MDM.ATTRIBUTE_VALUES WHERE ATTRIBUTE_TYPE_ID IN (SEL ATTRIBUTE_TYPE_ID FROM ATTRIBUTE_TYPES WHERE ATTRIBUTE_TYPE='DQRM_ESCALATION')" ReturnRowCount="yes"/>
+                      <APPEND_TO_XML DocVar="currElem">
+                        <escalationName Value="{$RuleEscalation/SQL_RESULT/NAME/@Value}"/>
+                        <escalationEmail Value="{$RuleEscalation/SQL_RESULT/EMAIL/@Value}"/>
+                      </APPEND_TO_XML>
+                      <SET Var="SummaryresultService2" FromValue="{$currElem/QUERY/@Value}"/>
+                      <EXECUTE_SQL_QUERY AssignToVar="SummaryQuery_Result2" Value="{$SummaryresultService2}" MaxRows="{$QueryCSVRow/SQL_RESULT/MAX_ROW_COUNT/@Value}" ReturnRowCount="yes"/>
+                      <SET Var="DetailresultService2" FromValue="{$currElem/DETAIL_QUERY/@Value}"/>
+                      <SET Var="removecolon" FromValue="{substringBefore($DetailresultService2,';')}"/>
+                      <TO_DOCVAR AssignToVar="Detailquery_orderby">
+                        <ROOT>
+                          <FinalQuery Value="{$removecolon} order by measure_time"/>
+                        </ROOT>
+                      </TO_DOCVAR>
+                      <EXECUTE_SQL_QUERY AssignToVar="Detailquery_Result2" MaxRows="{$QueryCSVRow/SQL_RESULT/MAX_ROW_COUNT/@Value}" Value="{$Detailquery_orderby/FinalQuery/@Value}" ReturnRowCount="yes"/>
+                      <SET Var="DQRMAttachment" FromValue="E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRMATT.xsl"/>
+                      <SET Var="AttRecCount" FromValue="{$Detailquery_Result2/@TotalRowCount}"/>
+                      <SET Var="SplitNo" FromValue="{$QueryCSVRow/SQL_RESULT/MAX_ROW_COUNT/@Value}"/>
+                      <!--check if the total record count, is greater then QueryCSVRow only then split required-->
+                      <!--If the row count is small we need not split the attachment in that case it will come here in else-->
+                      <TO_DOCVAR AssignToVar="emailSubject">
+                        <ROOT>
+                          <SUBJECT Value="Alert for Rule Number : {$currElem/PROJECT_NAME/@Value} {$currElem/RULE_NUMBER/@Value} Rule Name : {$currElem/RULE_NAME/@Value} FileName: DQRM_Rule{$currElem/RULE_NUMBER/@Value}_File"/>
+                        </ROOT>
+                      </TO_DOCVAR>
+                      <TO_DOCVAR AssignToVar="emailFormat">
+                        <ROOT>
+                          <FORMAT Value="text/html"/>
+                        </ROOT>
+                      </TO_DOCVAR>
+                      <TO_DOCVAR AssignToVar="emailMessage">
+                        <ROOT>
+                          <MESSAGE>
+                            <SET Var="DQRMDetails" FromValue="E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM.xsl"/>
+                            <XML_DATA XsltFileName="{$DQRMDetails}">
+                              <REPORT>
+                                <TO_XML SelectList="$currElem"/>
+                              </REPORT>
+                              <REPORT1>
+                                <TO_XML SelectList="$SummaryQuery_Result2/*"/>
+                              </REPORT1>
+                            </XML_DATA>
+                          </MESSAGE>
+                        </ROOT>
+                      </TO_DOCVAR>
+                      <!--Below condition to check If there are records in detailedquery then no attachment needs to be sent-->
+                      <IF_TEST Test="$AttRecCount!=0">
+                        <THEN>
+                          <TO_DOCVAR AssignToVar="emailMessage1">
+                            <!--<SET Var="DQRMDetails" FromValue="$DQRMAttachment"/>-->
+                            <!--<XML_DATA XsltFileName="{$DQRMDetails}">-->
+                            <XML_DATA XsltFileName="{$DQRMAttachment}">
+                              <REPORT1>
+                                <TO_XML SelectList="$Detailquery_Result2/*"/>
+                              </REPORT1>
+                            </XML_DATA>
+                          </TO_DOCVAR>
+                          <PRINT_TO_FILE Value="{$emailMessage1}" Beautify="yes" File="E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM_Splitemails\DQRMResults.txt" NewFile="yes" SameLine="no" AssignToVar="varPrint"/>
+                          <EXECUTE_SHELL_COMMAND Value="msxsl E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM_Splitemails\DQRMResults.txt E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRMATT.xsl -o E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM_Splitemails\DQRMATT_ProjectId{$currElem/PROJECT_ID/@Value}_Rule{$currElem/RULE_NUMBER/@Value}.html" AssignToVar="DQRMResults" Synchronous="true" HandleException="true"/>
+                          <!--Below command renames the html file created above, to xsl-->
+                          <EXECUTE_SHELL_COMMAND Value="ren E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM_Splitemails\DQRMATT_ProjectId{$currElem/PROJECT_ID/@Value}_Rule{$currElem/RULE_NUMBER/@Value}.html DQRMATT_ProjectId{$currElem/PROJECT_ID/@Value}_Rule{$currElem/RULE_NUMBER/@Value}.xls" AssignToVar="varRename_split" Synchronous="true" HandleException="true"/>
+                          <TO_DOCVAR AssignToVar="emailAttachment">
+                            <ROOT>
+                              <ATTACHMENTS>
+                                <ATTACH_FILE_NAME Value="E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM_Splitemails\DQRMATT_ProjectId{$currElem/PROJECT_ID/@Value}_Rule{$currElem/RULE_NUMBER/@Value}.xls"/>
+                              </ATTACHMENTS>
+                            </ROOT>
+                          </TO_DOCVAR>
+                          <GET_DOCUMENT Name="DQRM_Email" AssignToVar="resAttValues" DirtyRead="yes" ServiceName="BCM_MASTER" ReturnRowCount="yes">
+                            <MAIL_TYPE Value="{$currElem/EMAIL_TYPE/@Value}"/>
+                            <ENTITY_STATE Value="ACTIVE"/>
+                          </GET_DOCUMENT>
+                          <TO_DOCVAR AssignToVar="emailRecipients">
+                            <TO_ADDRS/>
+                          </TO_DOCVAR>
+                          <FOR_EACH SelectList="$resAttValues/*" CurrentElement="currRec">
+                            <APPEND_TO_XML DocVar="emailRecipients">
+                              <TO_ADDR Value="{$currRec/EMAIL_ADDRS_TXT/@Value}"/>
+                            </APPEND_TO_XML>
+                          </FOR_EACH>
+                          <IF_TEST Test="$resAttValues/@TotalRowCount > 0">
+                            <THEN>
+                              <REQUEST Name="sendEmailNotification" AssignToVar="respEmail" ServiceName="BCM_MASTER" HandleException="true">
+                                <TO_XML DocVar="emailRecipients"/>
+                                <TO_XML SelectList="$emailSubject/*"/>
+                                <TO_XML SelectList="$emailFormat/*"/>
+                                <TO_XML SelectList="$emailMessage/*"/>
+                                <TO_XML SelectList="$emailAttachment/*"/>
+                              </REQUEST>
+                            </THEN>
+                          </IF_TEST>
+                        </THEN>
+                        <ELSE>
+                          <GET_DOCUMENT Name="DQRM_Email" AssignToVar="resAttValues" DirtyRead="yes" ServiceName="BCM_MASTER" ReturnRowCount="yes">
+                            <MAIL_TYPE Value="{$currElem/EMAIL_TYPE/@Value}"/>
+                            <ENTITY_STATE Value="ACTIVE"/>
+                          </GET_DOCUMENT>
+                          <TO_DOCVAR AssignToVar="emailRecipients">
+                            <TO_ADDRS/>
+                          </TO_DOCVAR>
+                          <FOR_EACH SelectList="$resAttValues/*" CurrentElement="currRec">
+                            <APPEND_TO_XML DocVar="emailRecipients">
+                              <TO_ADDR Value="{$currRec/EMAIL_ADDRS_TXT/@Value}"/>
+                            </APPEND_TO_XML>
+                          </FOR_EACH>
+                          <IF_TEST Test="$resAttValues/@TotalRowCount > 0">
+                            <THEN>
+                              <REQUEST Name="sendEmailNotification" AssignToVar="respEmail" ServiceName="BCM_MASTER" HandleException="true">
+                                <TO_XML DocVar="emailRecipients"/>
+                                <TO_XML SelectList="$emailSubject/*"/>
+                                <TO_XML SelectList="$emailFormat/*"/>
+                                <TO_XML SelectList="$emailMessage/*"/>
+                              </REQUEST>
+                            </THEN>
+                          </IF_TEST>
+                        </ELSE>
+                      </IF_TEST>
+                    </THEN>
+                    <ELSE>
+                      <EXECUTE_SQL_QUERY Value="UPDATE MDM.LOAD_CONTROL SET LOADSTATUS='Failure',LOADENDTS=CURRENT_TIMESTAMP(0)WHERE LOAD_ID = {$DqrmLoadID};" AssignToVar="failedLoad"/>
+                      <TO_DOCVAR AssignToVar="emailSubject">
+                        <ROOT>
+                          <SUBJECT Value="DQRM Failure - {$DqrmLoadID}"/>
+                        </ROOT>
+                      </TO_DOCVAR>
+                      <GET_DOCUMENT Name="ATTRIBUTE_VALUES" AssignToVar="resAttValues" DirtyRead="yes" ServiceName="BCM_MASTER">
+                        <QUERY_DOCUMENT_LINK Name="XIF1ATTRIBUTE_VALUES">
+                          <OR>
+                            <ATTRIBUTE_TYPE_ID Value="5"/>
+                            <ATTRIBUTE_TYPE_ID Value="6"/>
+                            <ATTRIBUTE_TYPE_ID Value="10"/>
+                          </OR>
+                        </QUERY_DOCUMENT_LINK>
+                      </GET_DOCUMENT>
+                      <TO_DOCVAR AssignToVar="emailRecipients">
+                        <TO_ADDRS/>
+                      </TO_DOCVAR>
+                      <FOR_EACH SelectList="$resAttValues/*" CurrentElement="currRec">
+                        <APPEND_TO_XML DocVar="emailRecipients">
+                          <TO_ADDR Value="{$currRec/AV_DESCRIPTION/@Value}"/>
+                        </APPEND_TO_XML>
+                      </FOR_EACH>
+                      <TO_DOCVAR AssignToVar="emailFormat">
+                        <ROOT>
+                          <FORMAT Value="text/html"/>
+                        </ROOT>
+                      </TO_DOCVAR>
+                      <SET Var="Priority" FromValue="P4-Low"/>
+                      <APPEND_TO_XML SelectList="$thisParam">
+                        <RULE_ID Value="{$DqrmLoadID/@Value}"/>
+                        <ErrorMessage Value="{$DQRMResults/STD_ERR/LINE/@Value}"/>
+                        <PRIORITY_TYPE Value="{$Priority/@Value}"/>
+                      </APPEND_TO_XML>
+                      <TO_DOCVAR AssignToVar="emailMessage">
+                        <ROOT>
+                          <MESSAGE>
+                            <SET Var="DQRMErrorDetails" FromValue="E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRMError.xsl"/>
+                            <XML_DATA XsltFileName="{$DQRMErrorDetails}">
+                              <REPORT>
+                                <TO_XML SelectList="$thisParam/*"/>
+                              </REPORT>
+                            </XML_DATA>
+                          </MESSAGE>
+                        </ROOT>
+                      </TO_DOCVAR>
+                      <REQUEST Name="sendEmailNotification" AssignToVar="respEmail" ServiceName="BCM_MASTER">
+                        <TO_XML DocVar="emailRecipients"/>
+                        <TO_XML SelectList="$emailSubject/*"/>
+                        <TO_XML SelectList="$emailFormat/*"/>
+                        <TO_XML SelectList="$emailMessage/*"/>
+                      </REQUEST>
+                    </ELSE>
+                  </IF_TEST>
+                  <!--  -->
+                  <!--  -->
+                </FOR_EACH>
+              </THEN>
+            </IF_TEST>
+            <EXECUTE_SQL_QUERY AssignToVar="Result2" Value="SEL * FROM DQRM.VW_DQ_MDM_OTHER_EMAILS WHERE Process_id={$DqrmLoadID} AND EMAIL_TYPE IN ('MISC')" ReturnRowCount="yes"/>
+            <IF_TEST Test="$Result2/@TotalRowCount > 0">
+              <THEN>
+                <FOR_EACH SelectList="$Result2/SQL_RESULT" CurrentElement="currElem">
+                  <SET Var="SummaryQuesryTest" FromValue="{substringBefore($currElem/QUERY/@Value,'SELECT')}"/>
+                  <IF_TEST Test="$SummaryQuesryTest= ''">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="currElem">
+                        <FREQUENCY Value="{$Frequency}"/>
+                      </APPEND_TO_XML>
+                      <EXECUTE_SQL_QUERY AssignToVar="RuleCreator" Value="SEL data_steward_name, data_steward_email FROM DQRM.VW_DQ_DATA_QUALITY_RULE_DIM WHERE project_id={$currElem/PROJECT_ID/@Value} and rule_number={$currElem/RULE_NUMBER/@Value}" ReturnRowCount="yes"/>
+                      <APPEND_TO_XML DocVar="currElem">
+                        <RuleCreatorName Value="{$RuleCreator/SQL_RESULT/DATA_STEWARD_NAME/@Value}"/>
+                        <RuleCreatorEmail Value="{$RuleCreator/SQL_RESULT/DATA_STEWARD_EMAIL/@Value}"/>
+                      </APPEND_TO_XML>
+                      <EXECUTE_SQL_QUERY AssignToVar="RuleEscalation" Value="SEL SUBSTR(AV_DESCRIPTION,1,POSITION('~' IN AV_DESCRIPTION)-1) AS NAME, SUBSTR(AV_DESCRIPTION,POSITION('~' IN AV_DESCRIPTION)+1) AS EMAIL FROM MDM.ATTRIBUTE_VALUES WHERE ATTRIBUTE_TYPE_ID IN (SEL ATTRIBUTE_TYPE_ID FROM ATTRIBUTE_TYPES WHERE ATTRIBUTE_TYPE='DQRM_ESCALATION')" ReturnRowCount="yes"/>
+                      <APPEND_TO_XML DocVar="currElem">
+                        <escalationName Value="{$RuleEscalation/SQL_RESULT/NAME/@Value}"/>
+                        <escalationEmail Value="{$RuleEscalation/SQL_RESULT/EMAIL/@Value}"/>
+                      </APPEND_TO_XML>
+                      <SET Var="SummaryresultService2" FromValue="{$currElem/QUERY/@Value}"/>
+                      <EXECUTE_SQL_QUERY AssignToVar="SummaryQuery_Result2" Value="{$SummaryresultService2}" MaxRows="{$QueryCSVRow/SQL_RESULT/MAX_ROW_COUNT/@Value}" ReturnRowCount="yes"/>
+                      <SET Var="DetailresultService2" FromValue="{$currElem/DETAIL_QUERY/@Value}"/>
+                      <SET Var="removecolon" FromValue="{substringBefore($DetailresultService2,';')}"/>
+                      <TO_DOCVAR AssignToVar="Detailquery_orderby">
+                        <ROOT>
+                          <FinalQuery Value="{$removecolon} order by measure_time"/>
+                        </ROOT>
+                      </TO_DOCVAR>
+                      <EXECUTE_SQL_QUERY AssignToVar="Detailquery_Result2" MaxRows="{$QueryCSVRow/SQL_RESULT/MAX_ROW_COUNT/@Value}" Value="{$Detailquery_orderby/FinalQuery/@Value}" ReturnRowCount="yes"/>
+                      <SET Var="DQRMAttachment" FromValue="E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRMATT.xsl"/>
+                      <SET Var="AttRecCount" FromValue="{$Detailquery_Result2/@TotalRowCount}"/>
+                      <SET Var="SplitNo" FromValue="{$QueryCSVRow/SQL_RESULT/MAX_ROW_COUNT/@Value}"/>
+                      <!--check if the total record count, is greater then QueryCSVRow only then split required-->
+                      <!--If the row count is small we need not split the attachment in that case it will come here in else-->
+                      <TO_DOCVAR AssignToVar="emailSubject">
+                        <ROOT>
+                          <SUBJECT Value="Alert for Rule Number : {$currElem/PROJECT_NAME/@Value} {$currElem/RULE_NUMBER/@Value} Rule Name : {$currElem/RULE_NAME/@Value} FileName: DQRM_Rule{$currElem/RULE_NUMBER/@Value}_File"/>
+                        </ROOT>
+                      </TO_DOCVAR>
+                      <TO_DOCVAR AssignToVar="emailFormat">
+                        <ROOT>
+                          <FORMAT Value="text/html"/>
+                        </ROOT>
+                      </TO_DOCVAR>
+                      <TO_DOCVAR AssignToVar="emailMessage">
+                        <ROOT>
+                          <MESSAGE>
+                            <SET Var="DQRMDetails" FromValue="E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM.xsl"/>
+                            <XML_DATA XsltFileName="{$DQRMDetails}">
+                              <REPORT>
+                                <TO_XML SelectList="$currElem"/>
+                              </REPORT>
+                              <REPORT1>
+                                <TO_XML SelectList="$SummaryQuery_Result2/*"/>
+                              </REPORT1>
+                            </XML_DATA>
+                          </MESSAGE>
+                        </ROOT>
+                      </TO_DOCVAR>
+                      <!--Below condition to check If there are records in detailedquery then no attachment needs to be sent-->
+                      <IF_TEST Test="$AttRecCount!=0">
+                        <THEN>
+                          <TO_DOCVAR AssignToVar="emailMessage1">
+                            <!--<SET Var="DQRMDetails" FromValue="$DQRMAttachment"/>-->
+                            <!--<XML_DATA XsltFileName="{$DQRMDetails}">-->
+                            <XML_DATA XsltFileName="{$DQRMAttachment}">
+                              <REPORT1>
+                                <TO_XML SelectList="$Detailquery_Result2/*"/>
+                              </REPORT1>
+                            </XML_DATA>
+                          </TO_DOCVAR>
+                          <PRINT_TO_FILE Value="{$emailMessage1}" Beautify="yes" File="E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM_Splitemails\DQRMResults.txt" NewFile="yes" SameLine="no" AssignToVar="varPrint"/>
+                          <EXECUTE_SHELL_COMMAND Value="msxsl E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM_Splitemails\DQRMResults.txt E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRMATT.xsl -o E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM_Splitemails\DQRMATT_ProjectId{$currElem/PROJECT_ID/@Value}_Rule{$currElem/RULE_NUMBER/@Value}.html" AssignToVar="DQRMResults" Synchronous="true" HandleException="true"/>
+                          <!--Below command renames the html file created above, to xsl-->
+                          <EXECUTE_SHELL_COMMAND Value="ren E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM_Splitemails\DQRMATT_ProjectId{$currElem/PROJECT_ID/@Value}_Rule{$currElem/RULE_NUMBER/@Value}.html DQRMATT_ProjectId{$currElem/PROJECT_ID/@Value}_Rule{$currElem/RULE_NUMBER/@Value}.xls" AssignToVar="varRename_split" Synchronous="true" HandleException="true"/>
+                          <TO_DOCVAR AssignToVar="emailAttachment">
+                            <ROOT>
+                              <ATTACHMENTS>
+                                <ATTACH_FILE_NAME Value="E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM_Splitemails\DQRMATT_ProjectId{$currElem/PROJECT_ID/@Value}_Rule{$currElem/RULE_NUMBER/@Value}.xls"/>
+                              </ATTACHMENTS>
+                            </ROOT>
+                          </TO_DOCVAR>
+                          <GET_DOCUMENT Name="DQRM_Email" AssignToVar="resAttValues" DirtyRead="yes" ServiceName="BCM_MASTER" ReturnRowCount="yes">
+                            <MAIL_TYPE Value="{$currElem/EMAIL_TYPE/@Value}"/>
+                            <ENTITY_STATE Value="ACTIVE"/>
+                          </GET_DOCUMENT>
+                          <TO_DOCVAR AssignToVar="emailRecipients">
+                            <TO_ADDRS/>
+                          </TO_DOCVAR>
+                          <FOR_EACH SelectList="$resAttValues/*" CurrentElement="currRec">
+                            <APPEND_TO_XML DocVar="emailRecipients">
+                              <TO_ADDR Value="{$currRec/EMAIL_ADDRS_TXT/@Value}"/>
+                            </APPEND_TO_XML>
+                          </FOR_EACH>
+                          <IF_TEST Test="$resAttValues/@TotalRowCount > 0">
+                            <THEN>
+                              <REQUEST Name="sendEmailNotification" AssignToVar="respEmail" ServiceName="BCM_MASTER" HandleException="true">
+                                <TO_XML DocVar="emailRecipients"/>
+                                <TO_XML SelectList="$emailSubject/*"/>
+                                <TO_XML SelectList="$emailFormat/*"/>
+                                <TO_XML SelectList="$emailMessage/*"/>
+                                <TO_XML SelectList="$emailAttachment/*"/>
+                              </REQUEST>
+                            </THEN>
+                          </IF_TEST>
+                        </THEN>
+                        <ELSE>
+                          <GET_DOCUMENT Name="DQRM_Email" AssignToVar="resAttValues" DirtyRead="yes" ServiceName="BCM_MASTER" ReturnRowCount="yes">
+                            <MAIL_TYPE Value="{$currElem/EMAIL_TYPE/@Value}"/>
+                            <ENTITY_STATE Value="ACTIVE"/>
+                          </GET_DOCUMENT>
+                          <TO_DOCVAR AssignToVar="emailRecipients">
+                            <TO_ADDRS/>
+                          </TO_DOCVAR>
+                          <FOR_EACH SelectList="$resAttValues/*" CurrentElement="currRec">
+                            <APPEND_TO_XML DocVar="emailRecipients">
+                              <TO_ADDR Value="{$currRec/EMAIL_ADDRS_TXT/@Value}"/>
+                            </APPEND_TO_XML>
+                          </FOR_EACH>
+                          <IF_TEST Test="$resAttValues/@TotalRowCount > 0">
+                            <THEN>
+                              <REQUEST Name="sendEmailNotification" AssignToVar="respEmail" ServiceName="BCM_MASTER" HandleException="true">
+                                <TO_XML DocVar="emailRecipients"/>
+                                <TO_XML SelectList="$emailSubject/*"/>
+                                <TO_XML SelectList="$emailFormat/*"/>
+                                <TO_XML SelectList="$emailMessage/*"/>
+                              </REQUEST>
+                            </THEN>
+                          </IF_TEST>
+                        </ELSE>
+                      </IF_TEST>
+                    </THEN>
+                    <ELSE>
+                      <EXECUTE_SQL_QUERY Value="UPDATE MDM.LOAD_CONTROL SET LOADSTATUS='Failure',LOADENDTS=CURRENT_TIMESTAMP(0)WHERE LOAD_ID = {$DqrmLoadID};" AssignToVar="failedLoad"/>
+                      <TO_DOCVAR AssignToVar="emailSubject">
+                        <ROOT>
+                          <SUBJECT Value="DQRM Failure - {$DqrmLoadID}"/>
+                        </ROOT>
+                      </TO_DOCVAR>
+                      <GET_DOCUMENT Name="ATTRIBUTE_VALUES" AssignToVar="resAttValues" DirtyRead="yes" ServiceName="BCM_MASTER">
+                        <QUERY_DOCUMENT_LINK Name="XIF1ATTRIBUTE_VALUES">
+                          <OR>
+                            <ATTRIBUTE_TYPE_ID Value="5"/>
+                            <ATTRIBUTE_TYPE_ID Value="6"/>
+                            <ATTRIBUTE_TYPE_ID Value="10"/>
+                          </OR>
+                        </QUERY_DOCUMENT_LINK>
+                      </GET_DOCUMENT>
+                      <TO_DOCVAR AssignToVar="emailRecipients">
+                        <TO_ADDRS/>
+                      </TO_DOCVAR>
+                      <FOR_EACH SelectList="$resAttValues/*" CurrentElement="currRec">
+                        <APPEND_TO_XML DocVar="emailRecipients">
+                          <TO_ADDR Value="{$currRec/AV_DESCRIPTION/@Value}"/>
+                        </APPEND_TO_XML>
+                      </FOR_EACH>
+                      <TO_DOCVAR AssignToVar="emailFormat">
+                        <ROOT>
+                          <FORMAT Value="text/html"/>
+                        </ROOT>
+                      </TO_DOCVAR>
+                      <SET Var="Priority" FromValue="P4-Low"/>
+                      <APPEND_TO_XML SelectList="$thisParam">
+                        <RULE_ID Value="{$DqrmLoadID/@Value}"/>
+                        <ErrorMessage Value="{$DQRMResults/STD_ERR/LINE/@Value}"/>
+                        <PRIORITY_TYPE Value="{$Priority/@Value}"/>
+                      </APPEND_TO_XML>
+                      <TO_DOCVAR AssignToVar="emailMessage">
+                        <ROOT>
+                          <MESSAGE>
+                            <SET Var="DQRMErrorDetails" FromValue="E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRMError.xsl"/>
+                            <XML_DATA XsltFileName="{$DQRMErrorDetails}">
+                              <REPORT>
+                                <TO_XML SelectList="$thisParam/*"/>
+                              </REPORT>
+                            </XML_DATA>
+                          </MESSAGE>
+                        </ROOT>
+                      </TO_DOCVAR>
+                      <REQUEST Name="sendEmailNotification" AssignToVar="respEmail" ServiceName="BCM_MASTER">
+                        <TO_XML DocVar="emailRecipients"/>
+                        <TO_XML SelectList="$emailSubject/*"/>
+                        <TO_XML SelectList="$emailFormat/*"/>
+                        <TO_XML SelectList="$emailMessage/*"/>
+                      </REQUEST>
+                    </ELSE>
+                  </IF_TEST>
+                  <!--  -->
+                  <!--  -->
+                </FOR_EACH>
+              </THEN>
+            </IF_TEST>
+            <EXECUTE_SQL_QUERY AssignToVar="Result2" Value="SEL * FROM DQRM.VW_DQ_MDM_OTHER_EMAILS WHERE Process_id={$DqrmLoadID} AND EMAIL_TYPE IN ('EXP_OPS','EXP_DS')" ReturnRowCount="yes"/>
+            <IF_TEST Test="$Result2/@TotalRowCount > 0">
+              <THEN>
+                <FOR_EACH SelectList="$Result2/SQL_RESULT" CurrentElement="currElem">
+                  <SET Var="SummaryQuesryTest" FromValue="{substringBefore($currElem/QUERY/@Value,'SELECT')}"/>
+                  <IF_TEST Test="$SummaryQuesryTest= ''">
+                    <THEN>
+                      <APPEND_TO_XML DocVar="currElem">
+                        <FREQUENCY Value="{$Frequency}"/>
+                      </APPEND_TO_XML>
+                      <EXECUTE_SQL_QUERY AssignToVar="RuleCreator" Value="SEL data_steward_name, data_steward_email FROM DQRM.VW_DQ_DATA_QUALITY_RULE_DIM WHERE project_id={$currElem/PROJECT_ID/@Value} and rule_number={$currElem/RULE_NUMBER/@Value}" ReturnRowCount="yes"/>
+                      <APPEND_TO_XML DocVar="currElem">
+                        <RuleCreatorName Value="{$RuleCreator/SQL_RESULT/DATA_STEWARD_NAME/@Value}"/>
+                        <RuleCreatorEmail Value="{$RuleCreator/SQL_RESULT/DATA_STEWARD_EMAIL/@Value}"/>
+                      </APPEND_TO_XML>
+                      <EXECUTE_SQL_QUERY AssignToVar="RuleEscalation" Value="SEL SUBSTR(AV_DESCRIPTION,1,POSITION('~' IN AV_DESCRIPTION)-1) AS NAME, SUBSTR(AV_DESCRIPTION,POSITION('~' IN AV_DESCRIPTION)+1) AS EMAIL FROM MDM.ATTRIBUTE_VALUES WHERE ATTRIBUTE_TYPE_ID IN (SEL ATTRIBUTE_TYPE_ID FROM ATTRIBUTE_TYPES WHERE ATTRIBUTE_TYPE='DQRM_ESCALATION')" ReturnRowCount="yes"/>
+                      <APPEND_TO_XML DocVar="currElem">
+                        <escalationName Value="{$RuleEscalation/SQL_RESULT/NAME/@Value}"/>
+                        <escalationEmail Value="{$RuleEscalation/SQL_RESULT/EMAIL/@Value}"/>
+                      </APPEND_TO_XML>
+                      <SET Var="SummaryresultService2" FromValue="{$currElem/QUERY/@Value}"/>
+                      <EXECUTE_SQL_QUERY AssignToVar="SummaryQuery_Result2" Value="{$SummaryresultService2}" MaxRows="{$QueryCSVRow/SQL_RESULT/MAX_ROW_COUNT/@Value}" ReturnRowCount="yes"/>
+                      <SET Var="DetailresultService2" FromValue="{$currElem/DETAIL_QUERY/@Value}"/>
+                      <SET Var="removecolon" FromValue="{substringBefore($DetailresultService2,';')}"/>
+                      <TO_DOCVAR AssignToVar="Detailquery_orderby">
+                        <ROOT>
+                          <FinalQuery Value="{$removecolon} order by measure_time"/>
+                        </ROOT>
+                      </TO_DOCVAR>
+                      <EXECUTE_SQL_QUERY AssignToVar="Detailquery_Result2" MaxRows="{$QueryCSVRow/SQL_RESULT/MAX_ROW_COUNT/@Value}" Value="{$Detailquery_orderby/FinalQuery/@Value}" ReturnRowCount="yes"/>
+                      <SET Var="DQRMAttachment" FromValue="E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRMATT.xsl"/>
+                      <SET Var="AttRecCount" FromValue="{$Detailquery_Result2/@TotalRowCount}"/>
+                      <SET Var="SplitNo" FromValue="{$QueryCSVRow/SQL_RESULT/MAX_ROW_COUNT/@Value}"/>
+                      <!--check if the total record count, is greater then QueryCSVRow only then split required-->
+                      <!--If the row count is small we need not split the attachment in that case it will come here in else-->
+                      <TO_DOCVAR AssignToVar="emailSubject">
+                        <ROOT>
+                          <SUBJECT Value="Alert for Rule Number : {$currElem/PROJECT_NAME/@Value} {$currElem/RULE_NUMBER/@Value} Rule Name : {$currElem/RULE_NAME/@Value} FileName: DQRM_Rule{$currElem/RULE_NUMBER/@Value}_File"/>
+                        </ROOT>
+                      </TO_DOCVAR>
+                      <TO_DOCVAR AssignToVar="emailFormat">
+                        <ROOT>
+                          <FORMAT Value="text/html"/>
+                        </ROOT>
+                      </TO_DOCVAR>
+                      <TO_DOCVAR AssignToVar="emailMessage">
+                        <ROOT>
+                          <MESSAGE>
+                            <SET Var="DQRMDetails" FromValue="E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRMEXP.xsl"/>
+                            <XML_DATA XsltFileName="{$DQRMDetails}">
+                              <REPORT>
+                                <TO_XML SelectList="$currElem"/>
+                              </REPORT>
+                              <REPORT1>
+                                <TO_XML SelectList="$SummaryQuery_Result2/*"/>
+                              </REPORT1>
+                            </XML_DATA>
+                          </MESSAGE>
+                        </ROOT>
+                      </TO_DOCVAR>
+                      <!--Below condition to check If there are records in detailedquery then no attachment needs to be sent-->
+                      <IF_TEST Test="$AttRecCount!=0">
+                        <THEN>
+                          <TO_DOCVAR AssignToVar="emailMessage1">
+                            <!--<SET Var="DQRMDetails" FromValue="$DQRMAttachment"/>-->
+                            <!--<XML_DATA XsltFileName="{$DQRMDetails}">-->
+                            <XML_DATA XsltFileName="{$DQRMAttachment}">
+                              <REPORT1>
+                                <TO_XML SelectList="$Detailquery_Result2/*"/>
+                              </REPORT1>
+                            </XML_DATA>
+                          </TO_DOCVAR>
+                          <PRINT_TO_FILE Value="{$emailMessage1}" Beautify="yes" File="E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM_Splitemails\DQRMResults.txt" NewFile="yes" SameLine="no" AssignToVar="varPrint"/>
+                          <EXECUTE_SHELL_COMMAND Value="msxsl E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM_Splitemails\DQRMResults.txt E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRMATT.xsl -o E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM_Splitemails\DQRMATT_ProjectId{$currElem/PROJECT_ID/@Value}_Rule{$currElem/RULE_NUMBER/@Value}.html" AssignToVar="DQRMResults" Synchronous="true" HandleException="true"/>
+                          <!--Below command renames the html file created above, to xsl-->
+                          <EXECUTE_SHELL_COMMAND Value="ren E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM_Splitemails\DQRMATT_ProjectId{$currElem/PROJECT_ID/@Value}_Rule{$currElem/RULE_NUMBER/@Value}.html DQRMATT_ProjectId{$currElem/PROJECT_ID/@Value}_Rule{$currElem/RULE_NUMBER/@Value}.xls" AssignToVar="varRename_split" Synchronous="true" HandleException="true"/>
+                          <TO_DOCVAR AssignToVar="emailAttachment">
+                            <ROOT>
+                              <ATTACHMENTS>
+                                <ATTACH_FILE_NAME Value="E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRM_Splitemails\DQRMATT_ProjectId{$currElem/PROJECT_ID/@Value}_Rule{$currElem/RULE_NUMBER/@Value}.xls"/>
+                              </ATTACHMENTS>
+                            </ROOT>
+                          </TO_DOCVAR>
+                          <GET_DOCUMENT Name="DQRM_Email" AssignToVar="resAttValues" DirtyRead="yes" ServiceName="BCM_MASTER" ReturnRowCount="yes">
+                            <MAIL_TYPE Value="{$currElem/EMAIL_TYPE/@Value}"/>
+                            <ENTITY_STATE Value="ACTIVE"/>
+                          </GET_DOCUMENT>
+                          <TO_DOCVAR AssignToVar="emailRecipients">
+                            <TO_ADDRS/>
+                          </TO_DOCVAR>
+                          <FOR_EACH SelectList="$resAttValues/*" CurrentElement="currRec">
+                            <APPEND_TO_XML DocVar="emailRecipients">
+                              <TO_ADDR Value="{$currRec/EMAIL_ADDRS_TXT/@Value}"/>
+                            </APPEND_TO_XML>
+                          </FOR_EACH>
+                          <IF_TEST Test="$resAttValues/@TotalRowCount > 0">
+                            <THEN>
+                              <REQUEST Name="sendEmailNotification" AssignToVar="respEmail" ServiceName="BCM_MASTER" HandleException="true">
+                                <TO_XML DocVar="emailRecipients"/>
+                                <TO_XML SelectList="$emailSubject/*"/>
+                                <TO_XML SelectList="$emailFormat/*"/>
+                                <TO_XML SelectList="$emailMessage/*"/>
+                                <TO_XML SelectList="$emailAttachment/*"/>
+                              </REQUEST>
+                            </THEN>
+                          </IF_TEST>
+                        </THEN>
+                        <ELSE>
+                          <GET_DOCUMENT Name="DQRM_Email" AssignToVar="resAttValues" DirtyRead="yes" ServiceName="BCM_MASTER" ReturnRowCount="yes">
+                            <MAIL_TYPE Value="{$currElem/EMAIL_TYPE/@Value}"/>
+                            <ENTITY_STATE Value="ACTIVE"/>
+                          </GET_DOCUMENT>
+                          <TO_DOCVAR AssignToVar="emailRecipients">
+                            <TO_ADDRS/>
+                          </TO_DOCVAR>
+                          <FOR_EACH SelectList="$resAttValues/*" CurrentElement="currRec">
+                            <APPEND_TO_XML DocVar="emailRecipients">
+                              <TO_ADDR Value="{$currRec/EMAIL_ADDRS_TXT/@Value}"/>
+                            </APPEND_TO_XML>
+                          </FOR_EACH>
+                          <IF_TEST Test="$resAttValues/@TotalRowCount > 0">
+                            <THEN>
+                              <REQUEST Name="sendEmailNotification" AssignToVar="respEmail" ServiceName="BCM_MASTER" HandleException="true">
+                                <TO_XML DocVar="emailRecipients"/>
+                                <TO_XML SelectList="$emailSubject/*"/>
+                                <TO_XML SelectList="$emailFormat/*"/>
+                                <TO_XML SelectList="$emailMessage/*"/>
+                              </REQUEST>
+                            </THEN>
+                          </IF_TEST>
+                        </ELSE>
+                      </IF_TEST>
+                    </THEN>
+                    <ELSE>
+                      <EXECUTE_SQL_QUERY Value="UPDATE MDM.LOAD_CONTROL SET LOADSTATUS='Failure',LOADENDTS=CURRENT_TIMESTAMP(0)WHERE LOAD_ID = {$DqrmLoadID};" AssignToVar="failedLoad"/>
+                      <TO_DOCVAR AssignToVar="emailSubject">
+                        <ROOT>
+                          <SUBJECT Value="DQRM Failure - {$DqrmLoadID}"/>
+                        </ROOT>
+                      </TO_DOCVAR>
+                      <GET_DOCUMENT Name="ATTRIBUTE_VALUES" AssignToVar="resAttValues" DirtyRead="yes" ServiceName="BCM_MASTER">
+                        <QUERY_DOCUMENT_LINK Name="XIF1ATTRIBUTE_VALUES">
+                          <OR>
+                            <ATTRIBUTE_TYPE_ID Value="5"/>
+                            <ATTRIBUTE_TYPE_ID Value="6"/>
+                            <ATTRIBUTE_TYPE_ID Value="10"/>
+                          </OR>
+                        </QUERY_DOCUMENT_LINK>
+                      </GET_DOCUMENT>
+                      <TO_DOCVAR AssignToVar="emailRecipients">
+                        <TO_ADDRS/>
+                      </TO_DOCVAR>
+                      <FOR_EACH SelectList="$resAttValues/*" CurrentElement="currRec">
+                        <APPEND_TO_XML DocVar="emailRecipients">
+                          <TO_ADDR Value="{$currRec/AV_DESCRIPTION/@Value}"/>
+                        </APPEND_TO_XML>
+                      </FOR_EACH>
+                      <TO_DOCVAR AssignToVar="emailFormat">
+                        <ROOT>
+                          <FORMAT Value="text/html"/>
+                        </ROOT>
+                      </TO_DOCVAR>
+                      <SET Var="Priority" FromValue="P4-Low"/>
+                      <APPEND_TO_XML SelectList="$thisParam">
+                        <RULE_ID Value="{$DqrmLoadID/@Value}"/>
+                        <ErrorMessage Value="{$DQRMResults/STD_ERR/LINE/@Value}"/>
+                        <PRIORITY_TYPE Value="{$Priority/@Value}"/>
+                      </APPEND_TO_XML>
+                      <TO_DOCVAR AssignToVar="emailMessage">
+                        <ROOT>
+                          <MESSAGE>
+                            <SET Var="DQRMErrorDetails" FromValue="E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRMError.xsl"/>
+                            <XML_DATA XsltFileName="{$DQRMErrorDetails}">
+                              <REPORT>
+                                <TO_XML SelectList="$thisParam/*"/>
+                              </REPORT>
+                            </XML_DATA>
+                          </MESSAGE>
+                        </ROOT>
+                      </TO_DOCVAR>
+                      <REQUEST Name="sendEmailNotification" AssignToVar="respEmail" ServiceName="BCM_MASTER">
+                        <TO_XML DocVar="emailRecipients"/>
+                        <TO_XML SelectList="$emailSubject/*"/>
+                        <TO_XML SelectList="$emailFormat/*"/>
+                        <TO_XML SelectList="$emailMessage/*"/>
+                      </REQUEST>
+                    </ELSE>
+                  </IF_TEST>
+                  <!--  -->
+                  <!--  -->
+                </FOR_EACH>
+              </THEN>
+            </IF_TEST>
+          </THEN>
+          <ELSE>
+            <THEN>
+              <EXECUTE_SQL_QUERY Value="UPDATE MDM.LOAD_CONTROL SET LOADSTATUS='Failure',LOADENDTS=CURRENT_TIMESTAMP(0)WHERE LOAD_ID = {$DqrmLoadID};" AssignToVar="failedLoad"/>
+              <TO_DOCVAR AssignToVar="emailSubject">
+                <ROOT>
+                  <SUBJECT Value="DQRM Failure - {$DqrmLoadID}"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <GET_DOCUMENT Name="ATTRIBUTE_VALUES" AssignToVar="resAttValues" DirtyRead="yes" ServiceName="BCM_MASTER">
+                <QUERY_DOCUMENT_LINK Name="XIF1ATTRIBUTE_VALUES">
+                  <OR>
+                    <ATTRIBUTE_TYPE_ID Value="5"/>
+                    <ATTRIBUTE_TYPE_ID Value="6"/>
+                    <ATTRIBUTE_TYPE_ID Value="10"/>
+                  </OR>
+                </QUERY_DOCUMENT_LINK>
+              </GET_DOCUMENT>
+              <TO_DOCVAR AssignToVar="emailRecipients">
+                <TO_ADDRS/>
+              </TO_DOCVAR>
+              <FOR_EACH SelectList="$resAttValues/*" CurrentElement="currRec">
+                <APPEND_TO_XML DocVar="emailRecipients">
+                  <TO_ADDR Value="{$currRec/AV_DESCRIPTION/@Value}"/>
+                </APPEND_TO_XML>
+              </FOR_EACH>
+              <TO_DOCVAR AssignToVar="emailFormat">
+                <ROOT>
+                  <FORMAT Value="text/html"/>
+                </ROOT>
+              </TO_DOCVAR>
+              <SET Var="Priority" FromValue="P4-Low"/>
+              <APPEND_TO_XML SelectList="$thisParam">
+                <RULE_ID Value="{$DqrmLoadID/@Value}"/>
+                <ErrorMessage Value="{$DQRMResults/STD_ERR/LINE/@Value}"/>
+                <PRIORITY_TYPE Value="{$Priority/@Value}"/>
+              </APPEND_TO_XML>
+              <TO_DOCVAR AssignToVar="emailMessage">
+                <ROOT>
+                  <MESSAGE>
+                    <SET Var="DQRMErrorDetails" FromValue="E:\Teradata\MDM\3.05.02\custom\pngrelease3\DQRMError.xsl"/>
+                    <XML_DATA XsltFileName="{$DQRMErrorDetails}">
+                      <REPORT>
+                        <TO_XML SelectList="$thisParam/*"/>
+                      </REPORT>
+                    </XML_DATA>
+                  </MESSAGE>
+                </ROOT>
+              </TO_DOCVAR>
+              <REQUEST Name="sendEmailNotification" AssignToVar="respEmail" ServiceName="BCM_MASTER">
+                <TO_XML DocVar="emailRecipients"/>
+                <TO_XML SelectList="$emailSubject/*"/>
+                <TO_XML SelectList="$emailFormat/*"/>
+                <TO_XML SelectList="$emailMessage/*"/>
+              </REQUEST>
+            </THEN>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

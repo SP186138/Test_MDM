@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+
+ 	 Copyright (c) 2009 by Teradata Corporation. 
+
+	 All Rights Reserved. 
+
+	 Teradata CONFIDENTIAL AND TRADE SECRET 
+
+ -->
+  <DEFINE_METHOD Name="WS_CNSMR_GDPR_RQST" Access="Public">
+    <!--**********************************************************************************************************
+
+*   Module Name	: WS_CNSMR_GDPR_RQST
+
+*		Created Date	: Sept 9, 2017
+
+*		Created By   	: Ankita Sadhwani
+
+**********************************************************************************************************-->
+    <API_DOC>
+      <INPUT>
+        <REQUEST Name="webServiceCall">
+          <WS_CNSMR_GDPR_RQST>
+            <GDPR_CASE_ID Value="11"/>
+            <GDPR_RQST_TYPE_CD Value="11"/>
+            <GDPR_RQST_STATUS_CD Value="11"/>
+            <GVN_NAME Value="11"/>
+            <MID_NAME Value="11"/>
+            <FAMLY_NAME Value="11"/>
+            <NAME_SUFFX_TXT Value="11"/>
+            <FULL_NAME Value="11"/>
+            <MKTNG_PGM_NBR Value="11"/>
+            <REGIS_CNSMR_ID_VAL Value="11"/>
+            <DATA_SRCE_NBR Value="11"/>
+            <NATIONAL_ID_NBR Value="11"/>
+            <EMAIL_ADDR_TXT Value="11"/>
+            <FULL_PHONE_NUM Value="11"/>
+            <ADDR_LINE_1_TXT Value="11"/>
+            <ADDR_LINE_2_TXT Value="11"/>
+            <ADDR_LINE_3_TXT Value="11"/>
+            <CITY_NAME Value="11"/>
+            <TERR_NAME Value="11"/>
+            <POSTL_AREA_CODE Value="11"/>
+            <CNTRY_CODE Value="11"/>
+            <GDPR_RQST_FULFLMT_DATETM Value=""/>
+            <GDPR_RQST_CRTN_DATETM Value=""/>
+            <GDPR_RQST_IDNTY_VFYD_DATETM Value=""/>
+          </WS_CNSMR_GDPR_RQST>
+          <WS_CNSMR_GDPR_RQST>
+            <GDPR_CASE_ID Value="11"/>
+            <GDPR_RQST_TYPE_CD Value="11"/>
+            <GDPR_RQST_STATUS_CD Value="11"/>
+            <GVN_NAME Value="11"/>
+            <MID_NAME Value="11"/>
+            <FAMLY_NAME Value="11"/>
+            <NAME_SUFFX_TXT Value="11"/>
+            <FULL_NAME Value="11"/>
+            <MKTNG_PGM_NBR Value="11"/>
+            <REGIS_CNSMR_ID_VAL Value="11"/>
+            <DATA_SRCE_NBR Value="11"/>
+            <NATIONAL_ID_NBR Value="11"/>
+            <EMAIL_ADDR_TXT Value="11"/>
+            <FULL_PHONE_NUM Value="11"/>
+            <ADDR_LINE_1_TXT Value="11"/>
+            <ADDR_LINE_2_TXT Value="11"/>
+            <ADDR_LINE_3_TXT Value="11"/>
+            <CITY_NAME Value="11"/>
+            <TERR_NAME Value="11"/>
+            <POSTL_AREA_CODE Value="11"/>
+            <CNTRY_CODE Value="11"/>
+            <GDPR_RQST_FULFLMT_DATETM Value=""/>
+            <GDPR_RQST_CRTN_DATETM Value=""/>
+            <GDPR_RQST_IDNTY_VFYD_DATETM Value=""/>
+          </WS_CNSMR_GDPR_RQST>
+        </REQUEST>
+      </INPUT>
+      <OUTPUT>
+        <ON_SUCCESS>
+          <RESPONSE Status="Success" DbgTag_="REQUEST" DbgCmd_="_createREST">
+            <WS_CNSMR_GDPR_RQST>
+              <STATUS Description="Success">
+                <MESSAGE Value="Record Created Successfully"/>
+              </STATUS>
+              <UPDATED_VAL>
+                <GDPR_CASE_ID Value="11"/>
+              </UPDATED_VAL>
+            </WS_CNSMR_GDPR_RQST>
+          </RESPONSE>
+        </ON_SUCCESS>
+        <ON_ERROR>
+          <RESPONSE Comment="Validation error response of webServiceCall"/>
+        </ON_ERROR>
+      </OUTPUT>
+    </API_DOC>
+    <RULE>
+      <ACTION>
+        <TO_DOCVAR AssignToVar="thisReturn">
+        </TO_DOCVAR>
+        <FOR_EACH CurrentElement="currCase" SelectList="$thisParam/WS_CNSMR_GDPR_RQST">
+          <TO_DOCVAR AssignToVar="errorStatus">
+            <ROOT/>
+          </TO_DOCVAR>
+          <IF_TEST Test="($currCase/GDPR_RQST_TYPE_CD/@Value = null) or ($currCase/GDPR_RQST_TYPE_CD/@Value = '') or (trim($currCase/GDPR_RQST_TYPE_CD/@Value) = null) or (trim($currCase/GDPR_RQST_TYPE_CD/@Value) = '')">
+            <THEN>
+              <APPEND_TO_XML DocVar="thisReturn">
+                <ERROR Value="MISSING_MANDATORY_FIELD">
+                  <Message Value="GDPR_RQST_TYPE_CD is a required field. Please enter GDPR_RQST_TYPE_CD for GDPR_Case_Id {$currCase/GDPR_CASE_ID/@Value}"/>
+                </ERROR>
+              </APPEND_TO_XML>
+              <APPEND_TO_XML DocVar="errorStatus">
+                <Error_in_Status_Code Value="true"/>
+              </APPEND_TO_XML>
+            </THEN>
+            <ELSE>
+              <TO_DOCVAR AssignToVar="qry">
+                <root>
+SEL  * FROM  GDPR_RQST_TYPE WHERE GDPR_RQST_TYPE_CD='{$currCase/GDPR_RQST_TYPE_CD/@Value}'
+                </root>
+              </TO_DOCVAR>
+              <EXECUTE_SQL_QUERY AssignToVar="validTypeCodes" Value="{$qry/@text}" ReturnRowCount="yes"/>
+              <IF_TEST Test="$validTypeCodes/@TotalRowCount= 0 or $validTypeCodes/@TotalRowCount= '0' ">
+                <THEN>
+                  <APPEND_TO_XML DocVar="thisReturn">
+                    <ERROR Value="INVALID VALUE FOR GDPR_RQST_TYPE_CD">
+                      <Message Value="Value for field GDPR_RQST_TYPE_CD is Invalid.Please check table GDPR_RQST_TYPE for valid values."/>
+                    </ERROR>
+                  </APPEND_TO_XML>
+                  <APPEND_TO_XML DocVar="errorStatus">
+                    <Error_in_Type_Code Value="true"/>
+                  </APPEND_TO_XML>
+                </THEN>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$currCase/GDPR_RQST_STATUS_CD/@Value != 'NR'">
+            <THEN>
+              <APPEND_TO_XML DocVar="thisReturn">
+                <ERROR Value="INVALID VALUE FOR GDPR_RQST_STATUS_CD">
+                  <Message Value="Field GDPR_RQST_STATUS_CD only accepts the value 'NR'"/>
+                </ERROR>
+              </APPEND_TO_XML>
+              <APPEND_TO_XML DocVar="errorStatus">
+                <Error_in_Status_Code Value="true"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="($currCase/EMAIL_ADDR_TXT/@Value = null) or ($currCase/EMAIL_ADDR_TXT/@Value = '') or (trim($currCase/EMAIL_ADDR_TXT/@Value) = null) or (trim($currCase/EMAIL_ADDR_TXT/@Value) = '')">
+            <THEN>
+              <APPEND_TO_XML DocVar="thisReturn">
+                <ERROR Value="MISSING_MANDATORY_FIELD">
+                  <Message Value="Email Address is a required field. Please enter Email Address for GDPR_Case_Id {$currCase/GDPR_CASE_ID/@Value}"/>
+                </ERROR>
+              </APPEND_TO_XML>
+              <APPEND_TO_XML DocVar="errorStatus">
+                <Error_in_EMAIL_ADDR_TXT Value="true"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="($currCase/GVN_NAME/@Value = null) or ($currCase/GVN_NAME/@Value = '') or (trim($currCase/GVN_NAME/@Value) = null) or (trim($currCase/GVN_NAME/@Value) = '')">
+            <THEN>
+              <APPEND_TO_XML DocVar="thisReturn">
+                <ERROR Value="MISSING_MANDATORY_FIELD">
+                  <Message Value="First Name is a required field. Please enter First Name for GDPR_Case_Id {$currCase/GDPR_CASE_ID/@Value}"/>
+                </ERROR>
+              </APPEND_TO_XML>
+              <APPEND_TO_XML DocVar="errorStatus">
+                <Error_in_FirstName Value="true"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$currCase/FAMLY_NAME/@Value =null or $currCase/FAMLY_NAME/@Value = '' or (trim($currCase/FAMLY_NAME/@Value) = null) or (trim($currCase/FAMLY_NAME/@Value) = '')">
+            <THEN>
+              <APPEND_TO_XML DocVar="thisReturn">
+                <ERROR Value="MISSING_MANDATORY_FIELD">
+                  <Message Value="Last Name is a required field. Please enter Last Name for GDPR_Case_Id {$currCase/GDPR_CASE_ID/@Value}"/>
+                </ERROR>
+              </APPEND_TO_XML>
+              <APPEND_TO_XML DocVar="errorStatus">
+                <Error_in_LastName Value="true"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="($currCase/ADDR_LINE_1_TXT/@Value = null or $currCase/ADDR_LINE_1_TXT/@Value = '' or (trim($currCase/ADDR_LINE_1_TXT/@Value) = null) or (trim($currCase/ADDR_LINE_1_TXT/@Value) = '')) and ($thisParam/ADDR_LINE_2_TXT/@Value = null or $currCase/ADDR_LINE_2_TXT/@Value = '' or (trim($currCase/ADDR_LINE_2_TXT/@Value) = null) or (trim($currCase/ADDR_LINE_2_TXT/@Value) = '')) and ($currCase/ADDR_LINE_3_TXT/@Value = null or $currCase/ADDR_LINE_3_TXT/@Value = '' or (trim($currCase/ADDR_LINE_3_TXT/@Value) = null) or (trim($currCase/ADDR_LINE_3_TXT/@Value) = ''))">
+            <THEN>
+              <APPEND_TO_XML DocVar="thisReturn">
+                <ERROR Value="MISSING_MANDATORY_FIELD">
+                  <Message Value="Postal Address is mandatory. Please enter any 1 of the Address Line Text for GDPR_Case_Id {$currCase/GDPR_CASE_ID/@Value}"/>
+                </ERROR>
+              </APPEND_TO_XML>
+              <APPEND_TO_XML DocVar="errorStatus">
+                <Error_in_AddressLineText Value="true"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$currCase/CNTRY_CODE/@Value = null or $currCase/CNTRY_CODE/@Value = '' or (trim($currCase/CNTRY_CODE/@Value) = null) or (trim($currCase/CNTRY_CODE/@Value) = '')">
+            <THEN>
+              <APPEND_TO_XML DocVar="thisReturn">
+                <ERROR Value="MISSING_MANDATORY_FIELD">
+                  <Message Value="Country is a required field.  Please enter Country for GDPR_Case_Id {$currCase/GDPR_CASE_ID/@Value}"/>
+                </ERROR>
+              </APPEND_TO_XML>
+              <APPEND_TO_XML DocVar="errorStatus">
+                <Error_in_Country Value="true"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$currCase/TERR_NAME/@Value = null or $currCase/TERR_NAME/@Value = '' or (trim($currCase/TERR_NAME/@Value) = null) or (trim($currCase/TERR_NAME/@Value) = '') ">
+            <THEN>
+              <APPEND_TO_XML DocVar="thisReturn">
+                <ERROR Value="MISSING_MANDATORY_FIELD">
+                  <Message Value="Postal Address is mandatory. Please enter Territory Name for GDPR_Case_Id {$currCase/GDPR_CASE_ID/@Value}"/>
+                </ERROR>
+              </APPEND_TO_XML>
+              <APPEND_TO_XML DocVar="errorStatus">
+                <Error_in_TerrName Value="true"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$currCase/POSTL_AREA_CODE/@Value = null or $currCase/POSTL_AREA_CODE/@Value = '' or (trim($currCase/POSTL_AREA_CODE/@Value) = null) or (trim($currCase/POSTL_AREA_CODE/@Value) = '')">
+            <THEN>
+              <APPEND_TO_XML DocVar="thisReturn">
+                <ERROR Value="MISSING_MANDATORY_FIELD">
+                  <Message Value="Postal Address is mandatory. Please enter Postal Area Code for GDPR_Case_Id {$currCase/GDPR_CASE_ID/@Value}"/>
+                </ERROR>
+              </APPEND_TO_XML>
+              <APPEND_TO_XML DocVar="errorStatus">
+                <Error_in_PostalAddress Value="true"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$errorStatus/Error_in_FirstName/@Value='true' or $errorStatus/Error_in_LastName/@Value='true' or $errorStatus/Error_in_PostalAddress/@Value='true' or $errorStatus/Error_in_Country/@Value='true' or $errorStatus/Error_in_TerrName/@Value='true' or $errorStatus/Error_in_AddressLineText/@Value='true' or $errorStatus/Error_in_EMAIL_ADDR_TXT/@Value='true' or $errorStatus/Error_in_Status_Code/@Value='true' or $errorStatus/Error_in_Type_Code/@Value='true'">
+            <THEN/>
+            <ELSE>
+              <DO_DB_PERSIST AssignToVar="varInsertResponse" Action="INSERT" DocumentName="WS_CNSMR_GDPR_RQST" ServiceName="BCM_MASTER" Source="EXTERNAL" HandleException="true">
+                <TO_XML SelectList="$currCase/*"/>
+              </DO_DB_PERSIST>
+              <IF_TEST Test="$varInsertResponse/VALIDATION_RESULT/@Value='Error' or $varInsertResponse/VALIDATION_RESULT/@Value='ERROR'">
+                <THEN>
+                  <APPEND_TO_XML DocVar="thisReturn">
+                    <ON_ERROR>
+                      <RESPONSE Comment="{$varInsertResponse/VALIDATION_RESULT/ERROR_CODE/@Value}"/>
+                    </ON_ERROR>
+                  </APPEND_TO_XML>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$varInsertResponse/@Status='Error' or $varInsertResponse/@Status='ERROR'">
+                <THEN>
+                  <APPEND_TO_XML DocVar="thisReturn">
+                    <ON_ERROR>
+                      <RESPONSE Comment="{$varInsertResponse/@Description}"/>
+                    </ON_ERROR>
+                  </APPEND_TO_XML>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$varInsertResponse/@Status='Success' and $varInsertResponse/VALIDATION_RESULT/@Value='SUCCESS'">
+                <THEN>
+                  <EXECUTE_SQL_QUERY AssignToVar="rqstType" Value="SELECT GDPR_RQST_TYPE_NAME FROM GDPR_RQST_TYPE WHERE GDPR_RQST_TYPE_CD='{$currCase/GDPR_RQST_TYPE_CD/@Value}'"/>
+                  <EXECUTE_SQL_QUERY AssignToVar="rqstStatus" Value="SELECT GDPR_RQST_STATUS_NAME FROM GDPR_RQST_STATUS WHERE GDPR_RQST_STATUS_CD='{$currCase/GDPR_RQST_STATUS_CD/@Value}'"/>
+                  <TO_DOCVAR AssignToVar="Description">
+                    <Description>
+                      <GDPR_CASE_ID Value="{$currCase/GDPR_CASE_ID/@Value}"/>
+                      <CASE_STATUS Value="{$rqstStatus/SQL_RESULT/GDPR_RQST_STATUS_NAME/@Value}"/>
+                      <COUNTRY Value="{$currCase/CNTRY_CODE/@Value}"/>
+                      <RIGHTS_TYPE Value="{$rqstType/SQL_RESULT/GDPR_RQST_TYPE_NAME/@Value}"/>
+                      <CASE_CREATION_DATE Value="{$currCase/GDPR_RQST_CRTN_DATETM/@Value}"/>
+                      <CASE_IDENTITY_VERIFICATION_DATE Value="{$currCase/GDPR_RQST_IDNTY_VFYD_DATETM/@Value}"/>
+                    </Description>
+                  </TO_DOCVAR>
+                  <EXECUTE_SQL_QUERY AssignToVar="envDetails" Value="LOCKING ROW FOR ACCESS SELECT * FROM ENV_NM"/>
+                  <IF_TEST Test="$envDetails/SQL_RESULT/ENV_NM/@Value='DEV'">
+                    <THEN>
+                      <SET Var="varURL1" FromValue="http://143.16.92.8:8080/mdm/bcm/framework/login.jsp?REDIRECT_PAGE=GDPRReview"/>
+                    </THEN>
+                    <ELSE>
+                      <IF_TEST Test="$envDetails/SQL_RESULT/ENV_NM/@Value='SIT'">
+                        <THEN>
+                          <SET Var="varURL1" FromValue="https://pe-staging.pg.com/mdm/bcm/framework/login.jsp?REDIRECT_PAGE=GDPRReview"/>
+                        </THEN>
+                        <ELSE>
+                          <IF_TEST Test="$envDetails/SQL_RESULT/ENV_NM/@Value='UAT'">
+                            <THEN>
+                              <SET Var="varURL1" FromValue="https://pe-uat.pg.com/mdm/bcm/framework/login.jsp?REDIRECT_PAGE=GDPRReview"/>
+                            </THEN>
+                            <ELSE>
+                              <IF_TEST Test="$envDetails/SQL_RESULT/ENV_NM/@Value='PROD'">
+                                <THEN>
+                                  <SET Var="varURL1" FromValue="https://pe.pg.com/mdm/bcm/framework/login.jsp?REDIRECT_PAGE=GDPRReview"/>
+                                </THEN>
+                              </IF_TEST>
+                            </ELSE>
+                          </IF_TEST>
+                        </ELSE>
+                      </IF_TEST>
+                    </ELSE>
+                  </IF_TEST>
+                  <SET Var="varURL2" FromValue="GDPRCASEID={$currCase/GDPR_CASE_ID/@Value}"/>
+                  <SET Var="varURLfinal" FromValue="{concat($varURL1,'&amp;',$varURL2)}"/>
+                  <REQUEST Name="emailOnSuccessNode" ServiceName="BCM_MASTER" AssignToVar="varEmailReport" HandleException="true">
+                    <Subject Value="INSERT Request for WS_CNSMR_GDPR_RQST with GDPR_Case_Id {$currCase/GDPR_CASE_ID/@Value} has been successfull!!"/>
+                    <TO_XML DocVar="Description"/>
+                    <Tablename Value="WS_CNSMR_GDPR_RQST"/>
+                    <GDPR_CASE_ID Value="{$currCase/GDPR_CASE_ID/@Value}"/>
+                    <URL Value="{$varURLfinal}"/>
+                  </REQUEST>
+                  <APPEND_TO_XML DocVar="thisReturn">
+                    <STATUS Description="Success">
+                      <MESSAGE Value="INSERT Request for WS_CNSMR_GDPR_RQST with GDPR_Case_Id {$currCase/GDPR_CASE_ID/@Value} has been successfull!!"/>
+                    </STATUS>
+                  </APPEND_TO_XML>
+                </THEN>
+              </IF_TEST>
+            </ELSE>
+          </IF_TEST>
+        </FOR_EACH>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="96" ShowInBreadCrumbs="true" Version="1.0" Name="ManageActivity" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="ManageActivity">
+    <variable Name="flag" Type="string" Comment=""/>
+    <variable Name="alertGreen" Type="string" Comment=""/>
+    <variable Name="alertRed" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start4">
+      <actions/>
+      <next_nodes OutputVar="{pglFormOutput,xml}">
+        <next_node Name="Manage Activities"/>
+      </next_nodes>
+    </start>
+    <done Name="done5">
+      <actions/>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="Manage Activities" InputVar="{root,xml}" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="manageActivity.pgl">
+      <pre_actions>
+        <action>
+          <!--<IF_TEST Test="$thisParam/BUTTON_ID/@Value='SEARCH' or $thisParam/BUTTON_ID/@Value = 'SYS_RELOAD'">
+<THEN>-->
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='SEARCH'">
+            <THEN>
+              <SET DocVar="thisParam" Property="START_COUNT" FromValue="0"/>
+            </THEN>
+          </IF_TEST>
+          <SET Var="sortBy" FromValue="{ifElse($thisParam/SORT_BY/@Value = null or $thisParam/SORT_BY/@Value = 'ROWID', 'ID', $thisParam/SORT_BY/@Value)}"/>
+          <SET Var="sortOrder" FromValue="{ifElse($thisParam/SORT_ORDER/@Value = null, 'Ascending', $thisParam/SORT_ORDER/@Value)}"/>
+          <TO_DOCVAR AssignToVar="orderBy">
+            <ORDER_BY/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="orderProp">
+            <TEMP_PROP Sort="{$sortOrder}"/>
+          </TO_DOCVAR>
+          <SET_NAME Value="{$orderProp}" FromValue="{$sortBy}"/>
+          <ADD_CHILD DocVar="orderBy" ChildDocVar="orderProp"/>
+          <!-- Code added for fix of issue MDM-1921 by Ankur Goyal-->
+          <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+            <ID MatchBy="CONTAINS"/>
+            <NAME MatchBy="CONTAINS"/>
+            <ACTIVITY_TYPE MatchBy="CONTAINS"/>
+          </FORM_SEARCH_FILTER>
+          <TO_DOCVAR AssignToVar="tt">
+            <A/>
+          </TO_DOCVAR>
+          <FOR_EACH SelectList="$filters/FILTER" CurrentElement="thisFilter">
+            <APPEND_TO_XML SelectList="$tt">
+              <TO_XML SelectList="$thisFilter/*"/>
+            </APPEND_TO_XML>
+          </FOR_EACH>
+          <!--MDM-1921 ends -->
+          <SET Var="paginateStart" FromValue="{ifElse($thisParam/START_COUNT/@Value = null, '0', $thisParam/START_COUNT/@Value)}"/>
+          <SET DocVar="thisParam" Property="START_COUNT" FromValue="0"/>
+          <GET_DOCUMENT Name="UserActivity" AssignToVar="codetypeResults" ServiceName="USER_SECURITY" MaxRows="{$tableDefaultRows}" StartAtRow="{$paginateStart}" ReturnRowCount="true" DirtyRead="true">
+            <!-- Code removed for fix of issue MDM-1921 by Ankur Goyal-->
+            <!-- <AND>
+<ID Value="{$thisParam/ID/@Value}" MatchBy="CONTAINS"/>
+<NAME Value="{$thisParam/NAME/@Value}" MatchBy="CONTAINS"/>
+<ACTIVITY_TYPE Value="{$thisParam/ACTIVITY_TYPE/@Value}" MatchBy="CONTAINS"/>
+</AND>-->
+            <!--MDM-1921 ends-->
+            <TO_XML SelectList="$tt/*"/>
+            <!-- Code added for fix of issue MDM-1921 by Ankur Goyal-->
+            <TO_XML Select="$orderBy"/>
+          </GET_DOCUMENT>
+          <GET_CHILDREN_ITERATOR DocVar="codetypeResults" ChildName="UserActivity" AssignToVar="iter"/>
+          <FOR_EACH Iter="iter" CurrentElement="currentElem">
+            <IF_TEST Test="starts-with($currentElem/ID/@Value,'BCM_')">
+              <THEN>
+                <SET DocVar="currentElem" Property="ID" FromValue="{substringAfter($currentElem/ID/@Value,'BCM_')}"/>
+              </THEN>
+            </IF_TEST>
+          </FOR_EACH>
+          <TO_DOCVAR AssignToVar="test">
+            <TEST>
+              <ID Value="{$thisParam/ID/@Value}" MatchBy="CONTAINS"/>
+              <NAME Value="{$thisParam/NAME/@Value}" MatchBy="CONTAINS"/>
+              <ACTIVITY_TYPE Value="{$thisParam/ACTIVITY_TYPE/@Value}" MatchBy="CONTAINS"/>
+            </TEST>
+          </TO_DOCVAR>
+          <!--</THEN>
+</IF_TEST>-->
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT>
+              <ITEM_RESULTS>
+                <TO_XML SelectList="$codetypeResults/*"/>
+              </ITEM_RESULTS>
+            </ROOT>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="alertz">
+            <ABC>
+              <AlertGreen Value="{$alertGreen/@Value}"/>
+              <AlertRed Value="{$alertRed/@Value}"/>
+            </ABC>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="page">
+            <ABC>
+              <StartRowCount Value="{$paginateStart}"/>
+              <TotalRowCount Value="{$codetypeResults/@TotalRowCount}"/>
+              <maxRows Value="{$tableDefaultRows}"/>
+            </ABC>
+          </TO_DOCVAR>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$alertz/*"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$test/*"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$page/*"/>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="alertRed" FromValue=""/>
+          <SET Var="alertGreen" FromValue=""/>
+          <SET Var="flag" FromValue="false"/>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='SEARCH'">
+        <next_nodes OutputVar="{pglFormOutput,xml}">
+          <next_node Name="Manage Activities" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='SHOWALL'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='add_activity'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Add Activity" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='assign_activity'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Clear'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='upload'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="toUserActivityUpload" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done5" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <ui_form2 Name="Add Activity" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" ShowInBreadCrumbs="SHOW" Template="addActivity.pgl">
+      <pre_actions>
+        <action>
+          <IF_TEST Test="$flag/@Value='true'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="pglFormInput">
+                <ROOT>
+                  <AlertGreen Value="{$alertGreen/@Value}"/>
+                  <AlertRed Value="{$alertRed/@Value}"/>
+                  <ID Value="{$thisParam/ID/@Value}" MatchBy="CONTAINS"/>
+                  <NAME Value="{$thisParam/NAME/@Value}" MatchBy="CONTAINS"/>
+                  <ACTIVITY_TYPE Value="{$thisParam/ACTIVITY_TYPE/@Value}" MatchBy="CONTAINS"/>
+                </ROOT>
+              </TO_DOCVAR>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <SET Var="alertRed" FromValue=""/>
+          <SET Var="alertGreen" FromValue=""/>
+          <IF_TEST Test="$userAction='Save'">
+            <THEN>
+              <GET_DOCUMENT Name="UserActivity" AssignToVar="codetypeResults" ServiceName="USER_SECURITY" DirtyRead="true">
+                <ID Value="{$pglFormOutput/ID/@Value}"/>
+              </GET_DOCUMENT>
+              <IF_TEST Test="$codetypeResults/UserActivity/ID/@Value != null">
+                <THEN>
+                  <SET Var="alertRed" FromValue="Activity already exists"/>
+                  <SET Var="userAction" FromValue="Error"/>
+                </THEN>
+                <ELSE>
+                  <ADD_DOCUMENT Name="UserActivity" AssignToVar="responseCodetype" ServiceName="USER_SECURITY">
+                    <ID Value="{$pglFormOutput/ID/@Value}"/>
+                    <NAME Value="{$pglFormOutput/NAME/@Value}"/>
+                    <ACTIVITY_TYPE Value="{$pglFormOutput/ACTIVITY_TYPE/@Value}"/>
+                  </ADD_DOCUMENT>
+                  <IF_TEST Test="$responseCodetype/@Status='Success'">
+                    <THEN>
+                      <SET Var="alertGreen" FromValue="ACTIVITY_ADDED"/>
+                      <SET Var="userAction" FromValue="Success"/>
+                    </THEN>
+                    <ELSE>
+                      <SET Var="alertRed" FromValue="{$responseCodetype/@Description}"/>
+                      <SET Var="userAction" FromValue="Error"/>
+                    </ELSE>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <SET Var="flag" FromValue="true"/>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='Cancel'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='Save'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Error'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Add Activity" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Success'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Manage Activities" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Add Activity" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <sub_workflow Name="toUserActivityUpload" Workflow="//BPE_UI/userManagementUpload">
+      <pre_actions>
+        <action/>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <input>
+        <action>
+          <TO_DOCVAR AssignToVar="uploadDetails">
+            <uploadEntity Value="ACTIVITIES"/>
+          </TO_DOCVAR>
+          <TO_XML DocVar="uploadDetails"/>
+        </action>
+      </input>
+      <next_nodes OutputVar="{outputvar,xml}">
+        <next_node Name="Manage Activities" Description="Done"/>
+      </next_nodes>
+    </sub_workflow>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10" compId="MgcDashboard1" font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="0,0,0" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="UML" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" textAttrsSize="3" textAttrsKey0="alertGreen : string" textAttrsKey1="alertRed : string" textAttrsKey2="flag : string">
+      <textProps text="Pipeline" font="Verdana,0,9"/>
+      <iconProps iconfile="defaultNode.gif"/>
+      <variables>
+        <variable Name="alertRed" Type="string"/>
+      </variables>
+    </mgcdashboard>
+    <mgcnodes>
+      <start4 font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="105,56">
+        <iconProps iconfile="z1start.gif" location="0,0"/>
+        <textProps text="start4" font="Verdana,0,9" textColor="80,80,80"/>
+      </start4>
+      <done5 font="Verdana,0,9" componentConnect="false" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="443,49">
+        <iconProps iconfile="z1end.gif" location="0,0"/>
+        <textProps text="done5" font="Verdana,0,9" textColor="80,80,80"/>
+      </done5>
+      <mgcnode Name="Manage Activities" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="275,84" size="1288,972">
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+        <textProps text="Manage Activities" font="Verdana,0,9" textColor="186,12,12"/>
+      </mgcnode>
+      <mgcnode Name="Add Activity" font="Verdana,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="MID" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="136,242">
+        <iconProps iconfile="x1age80.gif" location="0,0"/>
+        <textProps text="Add Activity" font="Verdana,0,9" textColor="80,80,80"/>
+      </mgcnode>
+      <toUserActivityUpload font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="332,242" size="744,709">
+        <iconProps iconfile="z1sub_workflow.gif"/>
+      </toUserActivityUpload>
+    </mgcnodes>
+    <mgcconnectors>
+      <start4>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="70,81,173" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="137,78" endpoint="275,107" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="238,76,4,4" ctrlRect2="169,105,4,4"/>
+      </start4>
+      <mgcnode Name="Manage Activities">
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="291,84" endpoint="291,84" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="true" ctrlRect1="289,7,4,4" ctrlRect2="231,-17,4,4" textRect="197,-7,130,9">
+          <textProps text="[$userAction ='SEARCH']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="291,130" endpoint="152,242" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="289,212,4,4" ctrlRect2="13,108,4,4" textRect="80,158,147,9">
+          <textProps text="[$userAction ='add_activity']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="297,129" endpoint="397,242" ctrlRect1="295,211,4,4" ctrlRect2="395,155,4,4" textRect="335,181,25,8">
+          <textProps text="toUserActivityUpload"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="320,106" endpoint="443,71" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="409,104,4,4" ctrlRect2="407,80,4,4"/>
+      </mgcnode>
+      <mgcnode Name="Add Activity">
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="136,265" endpoint="136,265" ctrlRect1Dirty="false" ctrlRect2Dirty="true" textRectDirty="false" ctrlRect1="59,263,4,4" ctrlRect2="64,239,4,4" textRect="8,249,110,9">
+          <textProps text="[$userAction ='Error']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="152,242" endpoint="291,130" ctrlRect1Dirty="true" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="154,201,4,4" ctrlRect2="289,212,4,4" textRect="159,204,128,9">
+          <textProps text="[$userAction ='Success']" font="Verdana,0,9"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="80,80,80" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" font="Verdana,0,9" connectorStroke="1.0,2,0,10.0,null,0.0" fade="false" allowedToSelectConnector="true" startpoint="152,242" endpoint="152,242" ctrlRect1Dirty="false" ctrlRect2Dirty="false" textRectDirty="false" ctrlRect1="150,165,4,4" ctrlRect2="150,165,4,4"/>
+      </mgcnode>
+      <toUserActivityUpload>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="354,242" endpoint="297,129" ctrlRect1="354,251,4,4" ctrlRect2="295,212,4,4" textRect="322,229,9,8" ctrlRect1Dirty="true">
+          <textProps text="Done"/>
+        </nextNodeView>
+      </toUserActivityUpload>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions/>
+    <post_actions/>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

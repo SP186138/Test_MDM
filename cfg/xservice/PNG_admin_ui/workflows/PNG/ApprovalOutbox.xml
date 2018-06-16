@@ -1,0 +1,887 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="5" ShowInBreadCrumbs="true" Version="1.0" Name="ApprovalOutbox" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="ApprovalOutbox">
+    <variable Name="alertGreen" Type="string" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start0">
+      <actions/>
+      <next_nodes>
+        <next_node Name="Makers Inbox"/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Makers Inbox" ShowInBreadCrumbs="SHOW" Template="Outbox.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="orderByXml">
+            <ORDER_BY/>
+          </TO_DOCVAR>
+          <!--paginate variables-->
+          <SET Var="paginateStart" FromValue="{int(ifElse($thisParam/START_COUNT/@Value = null, 0, $thisParam/START_COUNT/@Value))}"/>
+          <SET Var="maxRow" FromValue="{int(ifElse($thisParam/MAX_ROWS/@Value = null, 100, $thisParam/MAX_ROWS/@Value))}"/>
+          <IF_TEST Test="$thisParam/EXPORT_ALL/@Value='yes'">
+            <THEN>
+              <SET Var="paginateStart" FromValue="0"/>
+              <SET Var="maxRow" FromValue="{$thisParam/MAX_ROWS/@Value}"/>
+            </THEN>
+          </IF_TEST>
+          <!--paginate variables-->
+          <IF_TEST Test="$fromViewRecordPage/@Value='yes'">
+            <THEN>
+              <SET DocVar="thisParam" Property="START_COUNT" FromValue="{$paginateStartBackup/@Value}"/>
+              <SET DocVar="thisParam" Property="SORT_ORDER" FromValue="{$sortOrderBackUp/@Value}"/>
+              <SET DocVar="thisParam" Property="SORT_BY" FromValue="{$sortByBackUp/@Value}"/>
+              <SET Var="fromViewRecordPage" FromValue=""/>
+            </THEN>
+          </IF_TEST>
+          <SET Var="sortOrder" FromValue="{ifElse($thisParam/SORT_ORDER/@Value = null, 'Ascending', $thisParam/SORT_ORDER/@Value)}"/>
+          <IF_TEST Test="$thisParam/SORT_BY/@Value='Age'">
+            <THEN>
+              <SET Var="sortBy" FromValue="DATE_CREATED"/>
+            </THEN>
+            <ELSE>
+              <SET Var="sortBy" FromValue="{ifElse(($thisParam/SORT_BY/@Value = null) or($thisParam/SORT_BY/@Value = 'ID') , 'ID', $thisParam/SORT_BY/@Value)}"/>
+            </ELSE>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/SORT_ORDER and $thisParam/SORT_BY">
+            <THEN>
+              <TO_DOCVAR AssignToVar="sortByColumn">
+                <TEMP/>
+              </TO_DOCVAR>
+              <SET_NAME DocVar="sortByColumn" FromValue="{$sortBy}"/>
+              <SET Attribute="Sort" DocVar="sortByColumn" FromValue="{$sortOrder}"/>
+              <ADD_CHILDREN DocVar="orderByXml" FromDocVar="sortByColumn"/>
+            </THEN>
+            <ELSE>
+              <TO_DOCVAR AssignToVar="sortByColumn">
+                <TEMP/>
+              </TO_DOCVAR>
+              <SET_NAME DocVar="sortByColumn" FromValue="DATE_CREATED"/>
+              <SET Attribute="Sort" DocVar="sortByColumn" FromValue="Descending"/>
+              <ADD_CHILDREN DocVar="orderByXml" FromDocVar="sortByColumn"/>
+            </ELSE>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="orderBy">
+            <TO_XML SelectList="$orderByXml"/>
+          </TO_DOCVAR>
+          <SET Var="starSign" FromValue="\*"/>
+          <SET Var="percentSign" FromValue="\%"/>
+          <SET Var="qu" FromValue="'"/>
+          <SET Var="filterQuery" FromValue=""/>
+          <SET Var="filterQuery2" FromValue=""/>
+          <SET Var="filterDate" FromValue=""/>
+          <SET Var="filterQuery" FromValue="and"/>
+          <SET Var="filterQuery2" FromValue="and"/>
+          <SET Var="filterDateAndStatus" FromValue="and"/>
+          <FOR_EACH SelectList="$thisParam/*" CurrentElement="currentSearchRow">
+            <SET Var="temp" FromValue="{substringBefore($currentSearchRow/name(),'_')}"/>
+            <IF_TEST Test="($thisParam/BUTTON_ID/@Value='SYS_TAB') and (($temp='FILTER' and $currentSearchRow/@Value!='') or starts-with($currentSearchRow/name(), 'FILTER_FROM') or starts-with($currentSearchRow/name(), 'FILTER_TO') or ends-with($currentSearchRow/name(), 'MATCH_BY'))">
+              <THEN>
+                <SET DocVar="currentSearchRow" Attribute="Value" FromValue=""/>
+              </THEN>
+            </IF_TEST>
+            <IF_TEST Test="($temp='FILTER' and $currentSearchRow/@Value!='') or starts-with($currentSearchRow/name(), 'FILTER_FROM') or starts-with($currentSearchRow/name(), 'FILTER_TO') or ends-with($currentSearchRow/name(), 'MATCH_BY')">
+              <THEN>
+                <IF_TEST Test="substringAfter($currentSearchRow/name(),'FILTER_')='ID'">
+                  <THEN>
+                    <SET Var="replacedString" FromValue="{strReplaceAll($currentSearchRow/@Value,$starSign,$percentSign)}"/>
+                    <SET Var="filterQuery" FromValue="{concat($filterQuery,' A.INST_DOC_ID LIKE ',$qu,$replacedString,$qu,' and ')}"/>
+                    <CONTINUE/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="substringAfter($currentSearchRow/name(),'FILTER_')='INST_LINE_ID'">
+                  <THEN>
+                    <SET Var="replacedString" FromValue="{strReplaceAll($currentSearchRow/@Value,$starSign,$percentSign)}"/>
+                    <SET Var="filterQuery" FromValue="{concat($filterQuery,' A.INST_LINE_ID LIKE ',$qu,$replacedString,$qu,' and ')}"/>
+                    <CONTINUE/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="substringAfter($currentSearchRow/name(),'FILTER_')='INSTANCE_TYPE'">
+                  <THEN>
+                    <SET Var="replacedString" FromValue="{strReplaceAll($currentSearchRow/@Value,$starSign,$percentSign)}"/>
+                    <SET Var="filterQuery" FromValue="{concat($filterQuery,' A.INSTANCE_TYPE LIKE ',$qu,$replacedString,$qu,' and ')}"/>
+                    <CONTINUE/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="substringAfter($currentSearchRow/name(),'FILTER_')='DOCUMENTACTION'">
+                  <THEN>
+                    <SET Var="replacedString" FromValue="{strReplaceAll($currentSearchRow/@Value,$starSign,$percentSign)}"/>
+                    <SET Var="filterQuery" FromValue="{concat($filterQuery,' A.INSTANCE_MODE LIKE ',$qu,$replacedString,$qu,' and ')}"/>
+                    <CONTINUE/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="substringAfter($currentSearchRow/name(),'FILTER_')='REQUESTOR'">
+                  <THEN>
+                    <SET Var="replacedString" FromValue="{strReplaceAll($currentSearchRow/@Value,$starSign,$percentSign)}"/>
+                    <SET Var="filterQuery" FromValue="{concat($filterQuery,' t2.SUBMITBYID LIKE ',$qu,$replacedString,$qu,' and ')}"/>
+                    <CONTINUE/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="substringAfter($currentSearchRow/name(),'FILTER_')='APPROVER_NAME'">
+                  <THEN>
+                    <SET Var="replacedString" FromValue="{strReplaceAll($currentSearchRow/@Value,$starSign,$percentSign)}"/>
+                    <SET Var="filterQuery2" FromValue="{concat($filterQuery2,' APPROVER_ID LIKE ',$qu,$replacedString,$qu,' and ')}"/>
+                    <CONTINUE/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="substringAfter($currentSearchRow/name(),'FILTER_')='A_Status'">
+                  <THEN>
+                    <SET Var="filterStatus" FromValue="{$currentSearchRow/@Value}"/>
+                    <SET Var="filterDateAndStatus" FromValue="{concat($filterDateAndStatus,' STATUS LIKE ',$qu,$filterStatus,$qu,' and ')}"/>
+                    <CONTINUE/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="substringAfter($currentSearchRow/name(),'FILTER_')='COMMENTS'">
+                  <THEN>
+                    <SET Var="replacedString" FromValue="{strReplaceAll($currentSearchRow/@Value,$starSign,$percentSign)}"/>
+                    <SET Var="filterQuery2" FromValue="{concat($filterQuery2,' COMMENTS LIKE ',$qu,$replacedString,$qu,' and ')}"/>
+                    <CONTINUE/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="substringAfter($currentSearchRow/name(),'FILTER_')='FROM_DATE_CREATED'">
+                  <THEN>
+                    <IF_TEST Test="$currentSearchRow/@Value!=''">
+                      <THEN>
+                        <SET Var="timeValue" FromValue="{trim($currentSearchRow/@Value)}"/>
+                        <SET Var="timeFormat" FromValue="MM/dd/yyyy HH:mm:ss"/>
+                        <SET Var="dbFormat" FromValue="MM/dd/yyyy HH:mm:ss"/>
+                        <NATIVE_FUNCTION ClassName="com.teradata.xservice.userSecurity.DynamicPGLGenerator" MethodName="parseDate" AssignToVar="nativeReturn">
+                          <PARAM Var="timeValue" Caption="date"/>
+                          <PARAM Var="timeFormat" Caption="format"/>
+                          <PARAM Var="dbFormat" Caption="dbFormat"/>
+                        </NATIVE_FUNCTION>
+                        <SET Var="formatValue" FromValue="(timestamp(0), format 'MM/DD/YYYYBHH:MI:SS')"/>
+                        <SET Var="filterQuery" FromValue="{concat($filterQuery,' (A.DATE_CREATED >= ',$qu,$nativeReturn/@Value,$qu,$formatValue,') and ')}"/>
+                      </THEN>
+                    </IF_TEST>
+                    <CONTINUE/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="substringAfter($currentSearchRow/name(),'FILTER_')='TO_DATE_CREATED'">
+                  <THEN>
+                    <IF_TEST Test="$currentSearchRow/@Value!=''">
+                      <THEN>
+                        <SET Var="timeValue" FromValue="{trim($currentSearchRow/@Value)}"/>
+                        <SET Var="timeFormat" FromValue="MM/dd/yyyy HH:mm:ss"/>
+                        <SET Var="dbFormat" FromValue="MM/dd/yyyy HH:mm:ss"/>
+                        <NATIVE_FUNCTION ClassName="com.teradata.xservice.userSecurity.DynamicPGLGenerator" MethodName="parseDate" AssignToVar="nativeReturn">
+                          <PARAM Var="timeValue" Caption="date"/>
+                          <PARAM Var="timeFormat" Caption="format"/>
+                          <PARAM Var="dbFormat" Caption="dbFormat"/>
+                        </NATIVE_FUNCTION>
+                        <SET Var="formatValue" FromValue=" (timestamp(0), format 'MM/DD/YYYYBHH:MI:SS') "/>
+                        <SET Var="filterQuery" FromValue="{concat($filterQuery,' (A.DATE_CREATED &lt;= ',$qu,$nativeReturn/@Value,$qu,$formatValue,') and ')}"/>
+                      </THEN>
+                    </IF_TEST>
+                    <CONTINUE/>
+                  </THEN>
+                </IF_TEST>
+                <IF_TEST Test="substringAfter($currentSearchRow/name(),'FILTER_')='NODE_TYPE'">
+                  <THEN>
+                    <SET Var="nodeTypeValue" FromValue="{ifElse($currentSearchRow/@Value ='Serial' , 'S', 'P')}"/>
+                    <SET Var="filterQuery" FromValue="{concat($filterQuery,' A.NODE_TYPE LIKE ',$qu,$nodeTypeValue,$qu,' and ')}"/>
+                    <CONTINUE/>
+                  </THEN>
+                </IF_TEST>
+                <SET Var="filterQuery" FromValue="{concat($filterQuery,' ',substringAfter($currentSearchRow/name(),'FILTER_'),' LIKE ',$qu,$currentSearchRow/@Value,$qu,' and ')}"/>
+              </THEN>
+            </IF_TEST>
+          </FOR_EACH>
+          <SET Var="filterQuery" FromValue="{concat($filterQuery,' t2.SUBMITBYID LIKE ',$qu,$userId,$qu,' and ')}"/>
+          <SET Var="filterQuery" FromValue="{concat($filterQuery,'  1=1 ')}"/>
+          <SET Var="filterQuery2" FromValue="{concat($filterQuery2,' 1=1 ')}"/>
+          <SET Var="filterDateAndStatus" FromValue="{concat($filterDateAndStatus,' 1=1 ')}"/>
+          <REQUEST Name="getAllApprovals" ServiceName="ADMIN_UI" AssignToVar="pglFormInput">
+            <TO_XML DocVar="orderBy"/>
+            <paginateStart Value="{$paginateStart}"/>
+            <maxRow Value="{$maxRow}"/>
+            <filterQuery Value="{$filterQuery}"/>
+            <filterQuery2 Value="{$filterQuery2}"/>
+            <filterStatus Value="{$filterStatus}"/>
+          </REQUEST>
+          <SET Var="ageCalculationParam" FromSelect="$pglFormInput"/>
+          <REQUEST Name="ageCalculateforMonitor" ServiceName="ADMIN_UI" AssignToVar="testResult">
+            <TO_XML DocVar="ageCalculationParam"/>
+          </REQUEST>
+          <IF_TEST Test="($thisParam/BUTTON_ID/@Value='ACCEPT' or $thisParam/BUTTON_ID/@Value='REJECT' or $thisParam/BUTTON_ID/@Value='REASSIGN')">
+            <THEN>
+              <TO_DOCVAR AssignToVar="alertDetails">
+                <ALERTMSG Value="{$alertGreen/@Value}"/>
+              </TO_DOCVAR>
+            </THEN>
+            <ELSE>
+              <TO_DOCVAR AssignToVar="alertDetails">
+                <ALERTMSG Value=""/>
+              </TO_DOCVAR>
+              <SET Var="alertGreen" FromValue=""/>
+            </ELSE>
+          </IF_TEST>
+          <SET Var="ctr" FromValue="1"/>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='Purge'">
+            <THEN>
+              <APPEND_TO_XML Select="$pglFormInput">
+                <TO_XML Select="$thisReturn"/>
+              </APPEND_TO_XML>
+            </THEN>
+            <ELSE>
+              <APPEND_TO_XML Select="$pglFormInput">
+                <TO_XML Select="$alertDetails"/>
+              </APPEND_TO_XML>
+            </ELSE>
+          </IF_TEST>
+          <FOR_EACH CurrentElement="currAlert" SelectList="$pglFormInput/APPROVALS/APPROVAL">
+            <IF_TEST Test="count($pglFormInput/APPROVALS/APPROVAL)=1">
+              <THEN>
+                <SET_PROPS SelectList="$currAlert">
+                  <Age Value="{$testResult/age/@Value}"/>
+                </SET_PROPS>
+              </THEN>
+              <ELSE>
+                <SET_PROPS SelectList="$currAlert">
+                  <Age Value="{$testResult/age[int($ctr)]/@Value}"/>
+                </SET_PROPS>
+                <SET Var="ctr" FromValue="{int($ctr)+1}"/>
+              </ELSE>
+            </IF_TEST>
+          </FOR_EACH>
+          <APPEND_TO_XML Select="$pglFormInput">
+            <StartRowCount Value="{$pglFormInput/@StartRowCount}"/>
+            <TotalRowCount Value="{$pglFormInput/@TotalRowCount}"/>
+          </APPEND_TO_XML>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <if_cond Value="$userAction ='VIEW'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="viewRecordCombine" Description=""/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='ACTION'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Purge'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='REJECT'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Reject" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done2" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <done Name="done2">
+      <actions/>
+      <next_nodes/>
+    </done>
+    <ui_form2 Name="viewRecordCombine" ShowInBreadCrumbs="SHOW" Template="viewRecordCombine.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput" Description="viewRecordCombine">
+      <pre_actions>
+        <action>
+          <SET Var="fromViewRecordPage" FromValue="yes"/>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <table>
+              <APPEND_TO_XML>
+                <TO_XML SelectList="$thisParam/insDocType"/>
+              </APPEND_TO_XML>
+            </table>
+          </TO_DOCVAR>
+          <IF_TEST Test="($thisParam/selected_ID/@Value =null)">
+            <THEN>
+              <SET_PROPS SelectList="$thisParam">
+                <selected_ID Value="{$thisParam/ID/@Value}" Overwrite="true"/>
+              </SET_PROPS>
+            </THEN>
+          </IF_TEST>
+          <REQUEST Name="viewApprovalRecords" AssignToVar="resultVar">
+            <TO_XML SelectList="$thisParam/*"/>
+          </REQUEST>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$resultVar/*"/>
+          <ADD_CHILDREN DocVar="pglFormInput" FromSelectList="$thisParam/*"/>
+          <TO_DOCVAR AssignToVar="stepInfo">
+            <step>
+              <APPEND_TO_XML>
+                <Container2SelectedStep Value="{$thisParam/container2_SELECTED_STEP/@Value}"/>
+                <Container2SelectedStepId Value="{$thisParam/container2_STEP_ID/@Value}"/>
+              </APPEND_TO_XML>
+            </step>
+          </TO_DOCVAR>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action/>
+      </post_actions>
+      <if_cond Value="$userAction ='REJECT'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </if_cond>
+      <else_if_cond Value="$userAction ='ACCEPT'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Makers Inbox" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+    </ui_form2>
+    <task Name="Reject">
+      <actions>
+        <action>
+          <GET_DOCUMENT Name="Alert" ServiceName="APPROVAL" AssignToVar="curAlert" ReturnRowCount="yes" DirtyRead="true">
+            <InstanceDocID Value="{$thisParam/ID/@Value}"/>
+            <Status Value="A"/>
+          </GET_DOCUMENT>
+          <IF_TEST Test="int($curAlert/@TotalRowCount) > 0">
+            <THEN>
+              <IF_TEST Test="$curAlert/Alert/NodeName/@Value = 'serial_approval_node'">
+                <THEN>
+                  <SET Var="ApprovalType" FromValue="Serial"/>
+                </THEN>
+                <ELSE>
+                  <SET Var="ApprovalType" FromValue="Parallel"/>
+                </ELSE>
+              </IF_TEST>
+              <REQUEST Name="GetApprovalUserType" ServiceName="ADMIN_UI" AssignToVar="ApprovalUserType">
+                <ID Value="{$thisParam/ID/@Value}"/>
+              </REQUEST>
+              <GET_DOCUMENT Name="Alert" AssignToVar="alertforMailUser" ReturnRowCount="true" ServiceName="APPROVAL" DirtyRead="true">
+                <InstanceDocID Value="{$thisParam/ID/@Value}"/>
+                <NodeType Value="P"/>
+              </GET_DOCUMENT>
+              <GET_DOCUMENT AssignToVar="DocumentInstance" Name="DocumentInstance" ServiceName="APPROVAL" ReturnRowCount="yes" DirtyRead="true">
+                <SELECT>
+                  <DocumentAction/>
+                </SELECT>
+                <AlertID Value="{$thisParam/ID/@Value}"/>
+              </GET_DOCUMENT>
+              <GET_DOCUMENT Name="Approval_Groups" AssignToVar="ApprovalGroups" ServiceName="APPROVAL" ReturnRowCount="yes" DirtyRead="true">
+                <EVENT_NAME Value="{$curAlert/Alert/InstanceType/@Value}"/>
+                <IS_ACTIVE Value="True"/>
+                <OR>
+                  <ACTION_TYPE Value="{$DocumentInstance/DocumentInstance/DocumentAction/@Value}"/>
+                  <ACTION_TYPE Value="ALL"/>
+                </OR>
+              </GET_DOCUMENT>
+              <GET_DOCUMENT Name="Approvals" AssignToVar="Approvals" ServiceName="APPROVAL" ReturnRowCount="yes" DirtyRead="true">
+                <SELECT>
+                  <NOTIFICATION_TYPE/>
+                </SELECT>
+                <APPROVAL_GROUP_ID Value="{$ApprovalGroups/Approval_Groups/SEQID/@Value}"/>
+                <IS_ACTIVE Value="True"/>
+                <ENTITY_STATE Value="ACTIVE"/>
+                <EXECUTION_ORDER Value="1"/>
+              </GET_DOCUMENT>
+              <CLONE_XML DocVar="thisParam" AssignToVar="SelectedItemApprovalDetails"/>
+              <REQUEST Name="ACTIVATE_APPROVAL_NODE" AssignToVar="activateAppNodeResp">
+                <ID Value="{$thisParam/ID/@Value}"/>
+                <Result Value="REJECTED"/>
+                <InstanceDocID Value="{$curAlert/Alert/InstanceDocID/@Value}"/>
+                <InstanceType Value="{$curAlert/Alert/InstanceType/@Value}"/>
+                <Comment Value="{$thisParam/Comment/@Value}"/>
+                <TokenId Value="{$curAlert/Alert/TokenID/@Value}"/>
+                <messageType Value="{$curAlert/Alert/InstanceType/@Value}"/>
+                <EMAIL_NODE_TYPE Value="{$curAlert/Alert/InstanceMode/@Value}"/>
+              </REQUEST>
+              <SET Var="DocumentName" FromValue="{$activateAppNodeResp/InstanceType/@Value}"/>
+              <GET_DOCUMENT Name="DocumentInstance" AssignToVar="DocumentInstance" ServiceName="APPROVAL" DirtyRead="true">
+                <AlertID Value="{$thisParam/ID/@Value}"/>
+              </GET_DOCUMENT>
+              <REQUEST Name="getUser" ServiceName="USER_SECURITY" AssignToVar="cur_approver_Details">
+                <ID Value="{$userId/@Value}"/>
+              </REQUEST>
+              <REQUEST Name="getUser" ServiceName="USER_SECURITY" AssignToVar="creatorDetails">
+                <ID Value="{$DocumentInstance/DocumentInstance/SubmitByID/@Value}"/>
+              </REQUEST>
+              <IF_TEST Test="$DocumentInstance/DocumentInstance/SubmitByID != null">
+                <THEN>
+                  <IF_TEST Test="$Approvals/Approvals/NOTIFICATION_TYPE/@Value ='ALL' or $Approvals/Approvals/NOTIFICATION_TYPE/@Value ='WEB'">
+                    <THEN>
+                      <REQUEST Name="sendAlert">
+                        <DOCUMENT_ID Value="{$DocumentInstance/DocumentInstance/ID/@Value}"/>
+                        <DOCUMENT_NAME Value="{$DocumentInstance/DocumentInstance/DocumentType/@Value}"/>
+                        <ARG_INDEX Value="0"/>
+                        <PRIORITY Value="3"/>
+                        <USER_ID Value="{$creatorDetails/USER_PROFILE/ID/@Value}"/>
+                        <SERVICE_NAME Value="APPROVAL"/>
+                        <MESSAGE Value="{$DocumentInstance/DocumentInstance[1]/DocumentAction/@Value} request for {$DocumentName/@Value} is Rejected by {$cur_approver_Details/USER_PROFILE/LOGIN_NAME/@Value}"/>
+                      </REQUEST>
+                    </THEN>
+                  </IF_TEST>
+                  <IF_TEST Test="$Approvals/Approvals/NOTIFICATION_TYPE/@Value ='ALL' or $Approvals/Approvals/NOTIFICATION_TYPE/@Value ='EMAIL'">
+                    <THEN>
+                      <!--<REQUEST Name="sendEmail" ServiceName="OMS_MESSAGE_SERVICE" Synchronous="no">
+                        <SUBJECT Value="[MDM] {$DocumentInstance/DocumentInstance[1]/DocumentAction/@Value} request for {$DocumentName/@Value} is Rejected"/>
+                        <TO_ADDRS>
+                          <TO_ADDR Value="{$creatorDetails/USER_PROFILE/EMAIL_ADDRESS/@Value}"/>
+                        </TO_ADDRS>
+                        <FORMAT Value="text/html"/>
+                        <MESSAGE>
+                          <XML_DATA XsltFileName="xservice/email/xml/GenericApproval_Approved_Rejected_Template.xsl">
+                            <DATA>
+                              <DocumentAction Value="{$DocumentInstance/DocumentInstance[1]/DocumentAction/@Value}"/>
+                              <DocumentType Value="{$DocumentName/@Value}"/>
+                              <LOGIN_NAME Value="{$cur_approver_Details/USER_PROFILE/LOGIN_NAME/@Value}"/>
+                              <ApprovalType Value="{$ApprovalType/@Value}"/>
+                              <approvers Value="{$approvers/@Value}"/>
+                              <creatorDetails Value="{$creatorDetails/USER_PROFILE/LOGIN_NAME/@Value}"/>
+                              <DocumentInstance Value="{$DocumentInstance/DocumentInstance/ID/@Value}"/>
+                              <APPROVED_REJECTED Value="Rejected"/>
+                            </DATA>
+                          </XML_DATA>
+                        </MESSAGE>
+                      </REQUEST>
+<REQUEST Name="sendMail2ApprovedUsers" ServiceName="ADMIN_UI">
+<ID Value="{$thisParam/ID/@Value}"/>
+<ApprovalType Value="{$ApprovalType/@Value}"/>
+<DocumentInstanceID Value="{$DocumentInstance/DocumentInstance/ID/@Value}"/>
+<DocumentInstanceType Value="{$DocumentInstance/DocumentInstance/DocumentType/@Value}"/>
+<DocumentAction Value="{$DocumentInstance/DocumentInstance[1]/DocumentAction/@Value}"/>
+<DocumentName Value="{$DocumentName/@Value}"/>
+<ApproverName Value="{$cur_approver_Details/USER_PROFILE/LOGIN_NAME/@Value}"/>
+<CreatorName Value="{$creatorDetails/USER_PROFILE/LOGIN_NAME/@Value}"/>
+<NOTIFICATION_TYPE Value="{$Approvals/Approvals/NOTIFICATION_TYPE/@Value}"/>
+<ApprovalUserType Value="{$ApprovalUserType/ApprovalUserType/@Value}"/>
+<Alert>
+<TO_XML SelectList="$alertforMailUser/*"/>
+</Alert>
+</REQUEST>-->
+                      <GET_DOC_SMART Name="DocumentInstance" AssignToVar="fetchInstanceID" DirtyRead="true" HandleException="true" ReturnRowCount="true" ServiceName="APPROVAL">
+                        <AlertID Value="{$DocumentInstance/DocumentInstance/AlertID/@Value}"/>
+                      </GET_DOC_SMART>
+                      <GET_DOC_SMART Name="DocumentAttributes" AssignToVar="fetchID" DirtyRead="true" HandleException="true" ReturnRowCount="true" ServiceName="APPROVAL">
+                        <InstanceID Value="{$fetchInstanceID/DocumentInstance/ID/@Value}"/>
+                      </GET_DOC_SMART>
+                      <IF_TEST Test="$DocumentName/@Value= 'DATA_SRCE_SUBS_OPT_IN'">
+                        <THEN>
+                          <FOR_EACH SelectList="$fetchID/DocumentAttributes" CurrentElement="currElem">
+                            <IF_TEST Test="$currElem/AttributeID/@Value= 'MKTNG_PGM_NBR'">
+                              <THEN>
+                                <SET Var="MKTNG_PGM_NBR_subs" FromValue="{$currElem/AttributeValue/@Value}"/>
+                              </THEN>
+                              <ELSE>
+                                <IF_TEST Test="$currElem/AttributeID/@Value ='LEGAL_ENT_NBR'">
+                                  <THEN>
+                                    <SET Var="LEGAL_ENT_NBR_subs" FromValue="{$currElem/AttributeValue/@Value}"/>
+                                  </THEN>
+                                  <ELSE>
+                                    <IF_TEST Test="$currElem/AttributeID/@Value= 'DATA_SRCE_NBR'">
+                                      <THEN>
+                                        <SET Var="DATA_SRCE_NBR_subs" FromValue="{$currElem/AttributeValue/@Value}"/>
+                                      </THEN>
+                                      <ELSE>
+                                        <IF_TEST Test="$currElem/AttributeID/@Value= 'CR_NUM'">
+                                          <THEN>
+                                            <SET Var="CR_NUM_subs" FromValue="{$currElem/AttributeValue/@Value}"/>
+                                          </THEN>
+                                          <ELSE>
+                                            <IF_TEST Test="$currElem/AttributeID/@Value= 'CR_DESC'">
+                                              <THEN>
+                                                <SET Var="CR_DESC_subs" FromValue="{$currElem/AttributeValue/@Value}"/>
+                                              </THEN>
+                                              <ELSE>
+                                                <IF_TEST Test="$currElem/AttributeID/@Value= 'ENG_TXT'">
+                                                  <THEN>
+                                                    <SET Var="ENG_TXT_subs" FromValue="{$currElem/AttributeValue/@Value}"/>
+                                                  </THEN>
+                                                  <ELSE>
+                                                    <IF_TEST Test="$currElem/AttributeID/@Value= 'LOCAL_TXT'">
+                                                      <THEN>
+                                                        <SET Var="LOCAL_TXT_subs" FromValue="{$currElem/AttributeValue/@Value}"/>
+                                                      </THEN>
+                                                      <ELSE>
+                                                        <IF_TEST Test="$currElem/AttributeID/@Value= 'BRAND_CODE'">
+                                                          <THEN>
+                                                            <SET Var="BRAND_CODE_subs" FromValue="{$currElem/AttributeValue/@Value}"/>
+                                                          </THEN>
+                                                          <ELSE>
+                                                            <IF_TEST Test="$currElem/AttributeID/@Value= 'COMMENTS'">
+                                                              <THEN>
+                                                                <SET Var="COMMENTS_subs" FromValue="{$currElem/AttributeValue/@Value}"/>
+                                                              </THEN>
+                                                            </IF_TEST>
+                                                          </ELSE>
+                                                        </IF_TEST>
+                                                      </ELSE>
+                                                    </IF_TEST>
+                                                  </ELSE>
+                                                </IF_TEST>
+                                              </ELSE>
+                                            </IF_TEST>
+                                          </ELSE>
+                                        </IF_TEST>
+                                      </ELSE>
+                                    </IF_TEST>
+                                  </ELSE>
+                                </IF_TEST>
+                              </ELSE>
+                            </IF_TEST>
+                          </FOR_EACH>
+                          <SET Var="UserGrpId" FromValue="SU_UGP" scope="Global"/>
+                          <TO_DOCVAR AssignToVar="emailSubject">
+                            <ROOT>
+                              <!--<SUBJECT Value="INSERT request for DATA_SRCE_SUBS_OPT_IN with CR # {$CR_NUM_subs/@Value}is Approved."/>-->
+                              <SUBJECT Value="[MDM] {$DocumentInstance/DocumentInstance[1]/DocumentAction/@Value} request for {$DocumentName/@Value} with CR # {$CR_NUM_subs/@Value} is Withdrawn"/>
+                            </ROOT>
+                          </TO_DOCVAR>
+                          <TO_DOCVAR AssignToVar="emailFormat">
+                            <ROOT>
+                              <FORMAT Value="text/html"/>
+                            </ROOT>
+                          </TO_DOCVAR>
+                          <TO_DOCVAR AssignToVar="emailMessage">
+                            <ROOT>
+                              <MESSAGE>
+                                <SET Var="AcceptApprovalDetails" FromValue="E:\Teradata\MDM\3.05.02\custom\pngrelease3\AcceptApproval.xsl"/>
+                                <XML_DATA XsltFileName="{$AcceptApprovalDetails}">
+                                  <REPORT>
+                                    <DocumentAction Value="{$DocumentInstance/DocumentInstance[1]/DocumentAction/@Value}"/>
+                                    <DocumentType Value="{$DocumentName/@Value}"/>
+                                    <LOGIN_NAME Value="{$cur_approver_Details/USER_PROFILE/LOGIN_NAME/@Value}"/>
+                                    <ApprovalType Value="{$ApprovalType/@Value}"/>
+                                    <approvers Value="{$approvers/@Value}"/>
+                                    <creatorDetails Value="{$creatorDetails/USER_PROFILE/LOGIN_NAME/@Value}"/>
+                                    <DocumentInstance Value="{$DocumentInstance/DocumentInstance/ID/@Value}"/>
+                                    <APPROVED_REJECTED Value="Withdrawn"/>
+                                    <SUBSCRPTN_OPT_NBR Value="{$thisParam/SUBSCRPTN_OPT_NBR/@Value}"/>
+                                    <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR_subs}"/>
+                                    <MKTNG_PGM_NBR Value="{$MKTNG_PGM_NBR_subs}"/>
+                                    <DATA_SRCE_NBR Value="{$DATA_SRCE_NBR_subs}"/>
+                                    <CR_NUM Value="{$CR_NUM_subs}"/>
+                                    <CR_DESC Value="{$CR_DESC_subs}"/>
+                                    <ENG_TXT Value="{$ENG_TXT_subs}"/>
+                                    <LOCAL_TXT Value="{$LOCAL_TXT_subs}"/>
+                                    <BRAND_CODE Value="{$BRAND_CODE_subs}"/>
+                                    <COMMENTS Value="{$COMMENTS_subs}"/>
+                                  </REPORT>
+                                </XML_DATA>
+                              </MESSAGE>
+                            </ROOT>
+                          </TO_DOCVAR>
+                          <TO_DOCVAR AssignToVar="emailRecipients">
+                            <TO_ADDRS/>
+                          </TO_DOCVAR>
+                          <EXECUTE_SQL_QUERY AssignToVar="GetApprGrpName" Value="SELECT APPROVER_NAME FROM AW_APPROVALS A, AW_APPROVAL_GROUPS B WHERE A.APPROVAL_GROUP_ID = B.SEQID AND B.EVENT_NAME = 'DATA_SRCE_SUBS_OPT_IN'"/>
+                          <EXECUTE_SQL_QUERY AssignToVar="allApproverUsers" Value="LOCKING ROW FOR ACCESS sel USER_ID from USER_UG_RELATION where user_grp_id in (  sel ID from USR_GRP_PROFIL where grp_name = '{$GetApprGrpName/SQL_RESULT/APPROVER_NAME/@Value}' )"/>
+                          <!--<EXECUTE_SQL_QUERY AssignToVar="allApproverUsers" Value="LOCKING ROW FOR ACCESS sel USER_ID from USER_UG_RELATION where user_grp_id in (  sel ID from USR_GRP_PROFIL where grp_name = 'Subscription_Testing_Internal' )"/>-->
+                          <FOR_EACH CurrentElement="currAppr" SelectList="$allApproverUsers/SQL_RESULT">
+                            <SET Var="currApprUser" FromValue="{$currAppr/USER_ID/@Value}"/>
+                            <REQUEST Name="getUser" ServiceName="USER_SECURITY" AssignToVar="apprDetails">
+                              <ID Value="{$currApprUser/@Value}"/>
+                            </REQUEST>
+                            <APPEND_TO_XML SelectList="$emailRecipients">
+                              <TO_ADDR Value="{$apprDetails/USER_PROFILE/EMAIL_ADDRESS/@Value}"/>
+                            </APPEND_TO_XML>
+                          </FOR_EACH>
+                          <APPEND_TO_XML DocVar="emailRecipients">
+                            <TO_ADDR Value="{$creatorDetails/USER_PROFILE/EMAIL_ADDRESS/@Value}"/>
+                          </APPEND_TO_XML>
+                          <REQUEST Name="sendEmailNotification" AssignToVar="respEmail" ServiceName="BCM_MASTER" HandleException="true">
+                            <TO_XML DocVar="emailRecipients"/>
+                            <TO_XML SelectList="$emailSubject/*"/>
+                            <TO_XML SelectList="$emailFormat/*"/>
+                            <TO_XML SelectList="$emailMessage/*"/>
+                          </REQUEST>
+                        </THEN>
+                        <ELSE>
+                          <IF_TEST Test="$DocumentName/@Value= 'TRT_IN'">
+                            <THEN>
+                              <SET Var="UserGrpId1" FromValue="SU_UGP"/>
+                              <FOR_EACH SelectList="$fetchID/DocumentAttributes" CurrentElement="currElem">
+                                <IF_TEST Test="$currElem/AttributeID/@Value= 'TRT_NBR'">
+                                  <THEN>
+                                    <SET Var="TRT_NBR_trt" FromValue="{$currElem/AttributeValue/@Value}"/>
+                                  </THEN>
+                                  <ELSE>
+                                    <IF_TEST Test="$currElem/AttributeID/@Value ='TRT_NAME'">
+                                      <THEN>
+                                        <SET Var="TRT_NAME_trtl" FromValue="{$currElem/AttributeValue/@Value}"/>
+                                      </THEN>
+                                      <ELSE>
+                                        <IF_TEST Test="$currElem/AttributeID/@Value ='LEGAL_ENT_NBR'">
+                                          <THEN>
+                                            <SET Var="LEGAL_ENT_trtl" FromValue="{$currElem/AttributeValue/@Value}"/>
+                                          </THEN>
+                                          <ELSE>
+                                            <IF_TEST Test="$currElem/AttributeID/@Value ='MKTNG_PGM_NBR'">
+                                              <THEN>
+                                                <SET Var="MKTNG_PGM_trtl" FromValue="{$currElem/AttributeValue/@Value}"/>
+                                              </THEN>
+                                            </IF_TEST>
+                                          </ELSE>
+                                        </IF_TEST>
+                                      </ELSE>
+                                    </IF_TEST>
+                                  </ELSE>
+                                </IF_TEST>
+                              </FOR_EACH>
+                              <TO_DOCVAR AssignToVar="emailSubject">
+                                <ROOT>
+                                  <SUBJECT Value="[MDM] {$DocumentInstance/DocumentInstance[1]/DocumentAction/@Value} request for {$DocumentName/@Value} with TRT # {$TRT_NBR_trt/@Value} is Withdrawn"/>
+                                </ROOT>
+                              </TO_DOCVAR>
+                              <TO_DOCVAR AssignToVar="emailFormat">
+                                <ROOT>
+                                  <FORMAT Value="text/html"/>
+                                </ROOT>
+                              </TO_DOCVAR>
+                              <TO_DOCVAR AssignToVar="emailMessage">
+                                <ROOT>
+                                  <MESSAGE>
+                                    <SET Var="AcceptTRTApprovalDetails" FromValue="E:\Teradata\MDM\3.05.02\custom\pngrelease3\AcceptTRTApproval.xsl"/>
+                                    <XML_DATA XsltFileName="{$AcceptTRTApprovalDetails}">
+                                      <REPORT>
+                                        <DocumentAction Value="{$DocumentInstance/DocumentInstance[1]/DocumentAction/@Value}"/>
+                                        <DocumentType Value="{$DocumentName/@Value}"/>
+                                        <LOGIN_NAME Value="{$cur_approver_Details/USER_PROFILE/LOGIN_NAME/@Value}"/>
+                                        <ApprovalType Value="{$ApprovalType/@Value}"/>
+                                        <approvers Value="{$approvers/@Value}"/>
+                                        <creatorDetails Value="{$creatorDetails/USER_PROFILE/LOGIN_NAME/@Value}"/>
+                                        <DocumentInstance Value="{$DocumentInstance/DocumentInstance/ID/@Value}"/>
+                                        <APPROVED_REJECTED Value="Withdrawn"/>
+                                        <TRT_NBR Value="{$TRT_NBR_trt}"/>
+                                        <TRT_NAME Value="{$TRT_NAME_trtl}"/>
+                                        <LEGAL_ENT_NBR Value="{$LEGAL_ENT_trtl}"/>
+                                        <MKTNG_PGM_NBR Value="{$MKTNG_PGM_trtl}"/>
+                                      </REPORT>
+                                    </XML_DATA>
+                                  </MESSAGE>
+                                </ROOT>
+                              </TO_DOCVAR>
+                              <TO_DOCVAR AssignToVar="emailRecipients">
+                                <TO_ADDRS/>
+                              </TO_DOCVAR>
+                              <EXECUTE_SQL_QUERY AssignToVar="GetApprGrpName" Value="SELECT APPROVER_NAME FROM AW_APPROVALS A, AW_APPROVAL_GROUPS B WHERE A.APPROVAL_GROUP_ID = B.SEQID AND B.EVENT_NAME = 'TRT_IN'"/>
+                              <EXECUTE_SQL_QUERY AssignToVar="allApproverUsers" Value="LOCKING ROW FOR ACCESS sel USER_ID from USER_UG_RELATION where user_grp_id in (  sel ID from USR_GRP_PROFIL where grp_name = '{$GetApprGrpName/SQL_RESULT/APPROVER_NAME/@Value}' )"/>
+                              <!--<EXECUTE_SQL_QUERY AssignToVar="allApproverUsers" Value="LOCKING ROW FOR ACCESS sel USER_ID from USER_UG_RELATION where user_grp_id in (  sel ID from USR_GRP_PROFIL where grp_name = 'TRT_Approver_GRP' )"/>-->
+                              <FOR_EACH CurrentElement="currAppr" SelectList="$allApproverUsers/SQL_RESULT">
+                                <SET Var="currApprUser" FromValue="{$currAppr/USER_ID/@Value}"/>
+                                <REQUEST Name="getUser" ServiceName="USER_SECURITY" AssignToVar="apprDetails">
+                                  <ID Value="{$currApprUser/@Value}"/>
+                                </REQUEST>
+                                <APPEND_TO_XML SelectList="$emailRecipients">
+                                  <TO_ADDR Value="{$apprDetails/USER_PROFILE/EMAIL_ADDRESS/@Value}"/>
+                                </APPEND_TO_XML>
+                              </FOR_EACH>
+                              <APPEND_TO_XML DocVar="emailRecipients">
+                                <TO_ADDR Value="{$creatorDetails/USER_PROFILE/EMAIL_ADDRESS/@Value}"/>
+                              </APPEND_TO_XML>
+                              <REQUEST Name="sendEmailNotification" AssignToVar="respEmail" ServiceName="BCM_MASTER" HandleException="true">
+                                <TO_XML DocVar="emailRecipients"/>
+                                <TO_XML SelectList="$emailSubject/*"/>
+                                <TO_XML SelectList="$emailFormat/*"/>
+                                <TO_XML SelectList="$emailMessage/*"/>
+                              </REQUEST>
+                            </THEN>
+                          </IF_TEST>
+                        </ELSE>
+                      </IF_TEST>
+                    </THEN>
+                  </IF_TEST>
+                </THEN>
+              </IF_TEST>
+              <ADD_CHILDREN DocVar="thisParam" FromDocVar="activateAppNodeResp"/>
+              <SET Var="subj" FromValue="Rejected"/>
+              <SET Var="alertGreen" FromValue="Approval rejected successfully."/>
+              <SET Var="mesg" FromValue="Rejected"/>
+              <GET_DOC_SMART Name="DocumentInstance" AssignToVar="fetchInstanceID" DirtyRead="true" HandleException="true" ReturnRowCount="true" ServiceName="APPROVAL">
+                <AlertID Value="{$DocumentInstance/DocumentInstance/AlertID/@Value}"/>
+              </GET_DOC_SMART>
+              <GET_DOC_SMART Name="DocumentAttributes" AssignToVar="fetchID" DirtyRead="true" HandleException="true" ReturnRowCount="true" ServiceName="APPROVAL">
+                <InstanceID Value="{$fetchInstanceID/DocumentInstance/ID/@Value}"/>
+              </GET_DOC_SMART>
+              <IF_TEST Test="$fetchInstanceID/DocumentInstance/DocumentType/@Value='DATA_SRCE_SUBS_OPT_IN'">
+                <THEN>
+                  <FOR_EACH CurrentElement="currElem" SelectList="$fetchID/DocumentAttributes">
+                    <IF_TEST Test="$currElem/AttributeID/@Value= 'MKTNG_PGM_NBR'">
+                      <THEN>
+                        <SET Var="MKTNG_PGM_NBR_6" FromValue="{$currElem/AttributeValue/@Value}"/>
+                      </THEN>
+                      <ELSE>
+                        <IF_TEST Test="$currElem/AttributeID/@Value ='LEGAL_ENT_NBR'">
+                          <THEN>
+                            <SET Var="LEGAL_ENT_NBR_6" FromValue="{$currElem/AttributeValue/@Value}"/>
+                          </THEN>
+                          <ELSE>
+                            <IF_TEST Test="$currElem/AttributeID/@Value= 'DATA_SRCE_NBR'">
+                              <THEN>
+                                <SET Var="DATA_SRCE_NBR_6" FromValue="{$currElem/AttributeValue/@Value}"/>
+                              </THEN>
+                              <ELSE>
+                                <IF_TEST Test="$currElem/AttributeID/@Value= 'CR_NUM'">
+                                  <THEN>
+                                    <SET Var="CR_NUM_6" FromValue="{$currElem/AttributeValue/@Value}"/>
+                                  </THEN>
+                                  <ELSE>
+                                    <IF_TEST Test="$currElem/AttributeID/@Value= 'CR_DESC'">
+                                      <THEN>
+                                        <SET Var="CR_DESC_6" FromValue="{$currElem/AttributeValue/@Value}"/>
+                                      </THEN>
+                                      <ELSE>
+                                        <IF_TEST Test="$currElem/AttributeID/@Value= 'ENG_TXT'">
+                                          <THEN>
+                                            <SET Var="ENG_TXT_6" FromValue="{$currElem/AttributeValue/@Value}"/>
+                                          </THEN>
+                                          <ELSE>
+                                            <IF_TEST Test="$currElem/AttributeID/@Value= 'LOCAL_TXT'">
+                                              <THEN>
+                                                <SET Var="LOCAL_TXT_6" FromValue="{$currElem/AttributeValue/@Value}"/>
+                                              </THEN>
+                                              <ELSE>
+                                                <IF_TEST Test="$currElem/AttributeID/@Value= 'BRAND_CODE'">
+                                                  <THEN>
+                                                    <SET Var="BRAND_CODE_6" FromValue="{$currElem/AttributeValue/@Value}"/>
+                                                  </THEN>
+                                                  <ELSE>
+                                                    <IF_TEST Test="$currElem/AttributeID/@Value= 'COMMENTS'">
+                                                      <THEN>
+                                                        <SET Var="COMMENTS_6" FromValue="{$currElem/AttributeValue/@Value}"/>
+                                                      </THEN>
+                                                    </IF_TEST>
+                                                  </ELSE>
+                                                </IF_TEST>
+                                              </ELSE>
+                                            </IF_TEST>
+                                          </ELSE>
+                                        </IF_TEST>
+                                      </ELSE>
+                                    </IF_TEST>
+                                  </ELSE>
+                                </IF_TEST>
+                              </ELSE>
+                            </IF_TEST>
+                          </ELSE>
+                        </IF_TEST>
+                      </ELSE>
+                    </IF_TEST>
+                  </FOR_EACH>
+                  <MODIFY_DOCUMENT Name="DATA_SRCE_SUBS_OPT_IN_DMY" AssignToVar="addOptInDummy" HandleException="true" ServiceName="BCM_MASTER">
+                    <DOCUMENT_CONTEXT>
+                      <MKTNG_PGM_NBR Value="{$MKTNG_PGM_NBR_6/@Value}"/>
+                      <LEGAL_ENT_NBR Value="{$LEGAL_ENT_NBR_6/@Value}"/>
+                      <DATA_SRCE_NBR Value="{$DATA_SRCE_NBR_6/@Value}"/>
+                    </DOCUMENT_CONTEXT>
+                    <UPDATE_PROPERTIES>
+                      <STATUS Value="Withdrawn"/>
+                    </UPDATE_PROPERTIES>
+                  </MODIFY_DOCUMENT>
+                </THEN>
+                <ELSE>
+                  <IF_TEST Test="$fetchInstanceID/DocumentInstance/DocumentType/@Value='TRT_IN'">
+                    <THEN>
+                      <FOR_EACH SelectList="$fetchID/DocumentAttributes" CurrentElement="currElem">
+                        <IF_TEST Test="$currElem/AttributeID/@Value= 'TRT_NBR'">
+                          <THEN>
+                            <SET Var="TRT_NBR_trt" FromValue="{$currElem/AttributeValue/@Value}"/>
+                          </THEN>
+                          <ELSE>
+                            <IF_TEST Test="$currElem/AttributeID/@Value ='TRT_NAME_LOCAL'">
+                              <THEN>
+                                <SET Var="TRT_NAME_trtl" FromValue="{$currElem/AttributeValue/@Value}"/>
+                              </THEN>
+                              <ELSE>
+                                <IF_TEST Test="$currElem/AttributeID/@Value ='LEGAL_ENT_NBR'">
+                                  <THEN>
+                                    <SET Var="LEGAL_ENT_trtl" FromValue="{$currElem/AttributeValue/@Value}"/>
+                                  </THEN>
+                                  <ELSE>
+                                    <IF_TEST Test="$currElem/AttributeID/@Value ='MKTNG_PGM_NBR'">
+                                      <THEN>
+                                        <SET Var="MKTNG_PGM_trtl" FromValue="{$currElem/AttributeValue/@Value}"/>
+                                      </THEN>
+                                      <ELSE>
+                                        <IF_TEST Test="$currElem/AttributeID/@Value ='ID'">
+                                          <THEN>
+                                            <SET Var="ID_rej" FromValue="{$currElem/AttributeValue/@Value}"/>
+                                          </THEN>
+                                        </IF_TEST>
+                                      </ELSE>
+                                    </IF_TEST>
+                                  </ELSE>
+                                </IF_TEST>
+                              </ELSE>
+                            </IF_TEST>
+                          </ELSE>
+                        </IF_TEST>
+                      </FOR_EACH>
+                      <MODIFY_DOC_SMART Name="TRT_IN_DUMMY" ServiceName="BCM_MASTER" AssignToVar="trt_in_d_upd" HandleException="true">
+                        <DOCUMENT_CONTEXT>
+                          <ID Value="{$ID_rej/@Value}"/>
+                        </DOCUMENT_CONTEXT>
+                        <UPDATE_PROPERTIES>
+                          <STATUS Value="Withdrawn"/>
+                        </UPDATE_PROPERTIES>
+                      </MODIFY_DOC_SMART>
+                    </THEN>
+                  </IF_TEST>
+                </ELSE>
+              </IF_TEST>
+            </THEN>
+            <ELSE>
+              <SET Var="alertRed" FromValue="Assign the record to yourself before taking an action."/>
+            </ELSE>
+          </IF_TEST>
+        </action>
+      </actions>
+      <next_nodes>
+        <next_node Name="Makers Inbox"/>
+      </next_nodes>
+    </task>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <start0 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="150,208">
+        <iconProps iconfile="z1start.gif"/>
+      </start0>
+      <mgcnode Name="Makers Inbox" font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="331,235" size="1600,818">
+        <iconProps iconfile="x1age80.gif"/>
+      </mgcnode>
+      <done2 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="589,248">
+        <iconProps iconfile="z1end.gif"/>
+      </done2>
+      <viewRecordCombine font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" Name="View Record" location="450,73" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </viewRecordCombine>
+      <Reject font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="415,359" size="744,627">
+        <iconProps iconfile="z1task.gif"/>
+      </Reject>
+    </mgcnodes>
+    <mgcconnectors>
+      <start0>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="195,230" endpoint="331,257" ctrlRect1="295,228,4,4" ctrlRect2="340,256,4,4" ctrlRect2Dirty="true"/>
+      </start0>
+      <mgcnode Name="Makers Inbox">
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="353,235" endpoint="472,118" ctrlRect1="351,146,4,4" ctrlRect2="470,204,4,4">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="353,280" endpoint="437,359" ctrlRect1="351,336,4,4" ctrlRect2="426,343,4,4" ctrlRect2Dirty="true">
+          <textProps/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="376,257" endpoint="589,270" ctrlRect1="533,255,4,4" ctrlRect2="427,268,4,4"/>
+      </mgcnode>
+      <viewRecordCombine>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="450,95" endpoint="353,235" ctrlRect1="220,78,4,4" ctrlRect2="226,61,4,4" ctrlRect2Dirty="true" ctrlRect1Dirty="true">
+          <textProps/>
+        </nextNodeView>
+      </viewRecordCombine>
+      <Reject>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="415,381" endpoint="376,257" ctrlRect1="337,360,4,4" ctrlRect2="404,255,4,4" ctrlRect1Dirty="true"/>
+      </Reject>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions/>
+    <post_actions/>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

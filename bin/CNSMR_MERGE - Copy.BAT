@@ -1,0 +1,52 @@
+@echo off
+REM TSS Import
+
+REM SCRIPT:               CNSMR_MERGE.BTEQ
+REM DESCRIPTION:          THIS SCRIPT MERGES CONSUMER INFORMATION
+REM DEPENDENCY:           WRAPPER
+REM INPUT:                GOLDEN TABLES
+REM OUTPUT:               THIS SCRIPT MERGES CONSUMER INFORMATION
+REM ERRORS:
+REM SPECIAL INSTRUCTIONS:
+REM CHANGE LOG:
+REM VERSION              DATE                 AUTHOR                          CHANGES
+REM 1.00                 05/17/2011           TERADATA                        INITIAL VERSION
+
+
+echo Executing TSS Import
+
+:start
+
+call .\mdmcustomenv.bat 
+
+set TSSMATCHOUTPUT="/c:%TSS_MATCH_OUTPUT%"
+
+set LOGONFILE="/e:%LOGON_FILE%"
+
+set DATABASENAME="/f:%MASTER_DB%"
+
+set CNSMRMERGEBTEQ="/d:%CNSMR_MERGE_BTEQ%"
+
+set MSTDB="/g:%MST_DB%"
+
+
+set CNSMRDSHBRDBTEQ="/d:%CNSMR_DSHBRD_BTEQ%"
+
+cscript %MDM_CUSTOM_DIR%\bin\CNSMR_TSS_MATCH_STG.vbs %TSSMATCHOUTPUT% %CNSMRDSHBRDBTEQ% %LOGONFILE% %DATABASENAME% %MSTDB% > %MDM_CUSTOM_DIR%\log\CNSMR_DSHBRD_VBS.LOG
+
+IF ERRORLEVEL 1 (
+echo Exiting due to error during MERGE >> %MDM_CUSTOM_DIR%\log\CNSMR_DSHBRD_VBS.LOG
+set errorlevel=1
+exit 1
+ )
+
+bteq < %CNSMR_DSHBRD_BTEQ% > %MDM_CUSTOM_DIR%\log\CNSMR_DSHBRD.LOG
+
+IF ERRORLEVEL 1 (
+echo Exiting due to error during MERGE >> %MDM_CUSTOM_DIR%\log\CNSMR_DSHBRD.LOG
+set errorlevel=1
+exit 1
+)
+
+:end
+pause

@@ -1,0 +1,95 @@
+/***********************************************************************************************************
+SCRIPT:               MATCHD_CNSMR_PRSNA_OPTOUT.BTEQ 
+DESCRIPTION:          THIS SCRIPT LOADS EDW TABLES
+DEPENDENCY:           
+INPUT:                TRILLIUM OUTPUT CNTRY TABLES
+OUTPUT:               EDW
+ERRORS:
+SPECIAL INSTRUCTIONS:
+
+CHANGE LOG:
+VERSION              DATE                 AUTHOR                          CHANGES
+1.0                  04/23/2014           TERADATA                        INITIAL VERSION RELEASE 5.1
+                                                                          1. i60 PROCESSING CHANGES
+***********************************************************************************************************/
+
+.logon 10.36.32.8/MDMMerge,$tdwallet(mdmmerge)
+
+
+.SET ERROROUT STDOUT;
+.SET SESSION CHARSET 'UTF8';
+.SET ERRORLEVEL 3624 SEVERITY 0
+
+
+DATABASE MDM;
+
+/*****************************************************************************
+ MATCHD_CNSMR_PRSNA OPT OUT Process.
+******************************************************************************/
+SELECT
+COUNT(*) AS CNT 
+FROM OPT_OUT_LIST_CAN
+HAVING CNT>0;
+
+.IF ACTIVITYCOUNT > 0 THEN .GOTO OPTOUT
+
+.QUIT 0
+
+.LABEL OPTOUT
+
+/*****************************************************************************
+Update the UNIVERSAL_OPT_OUT in MATCHD_CNSMR_PRSNA for universal optout. Universal
+Optout is marketing program 9999.
+******************************************************************************/
+
+UPDATE MDM.MATCHD_CNSMR_PRSNA
+FROM 
+(SELECT	DISTINCT MATCHD_CNSMR_PRSNA_ID,
+STG_OPT_TIME,
+STG_LOG_SOURCE_ID 
+FROM	OPT_OUT_LIST_CAN TEMP1  
+INNER JOIN REGIS_PRSNA RP
+ON TEMP1.EDW_REGIS_PRSNA_ID = RP.REGIS_PRSNA_ID
+AND TEMP1.EDW_MKTNG_PGM_NBR = RP.MKTNG_PGM_NBR
+WHERE EDW_OPT_LEVEL_IND IN ('H','M')
+QUALIFY RANK() OVER (PARTITION BY MATCHD_CNSMR_PRSNA_ID
+ORDER BY STG_OPT_TIME DESC,STG_LOG_SOURCE_ID DESC,RP.REGIS_PRSNA_ID DESC) = 1
+) TEMP
+SET UNIVERSAL_OPT_OUT= 'Y'
+,SYS_LAST_MODIFIED_DATE= CURRENT_DATE
+,SYS_LAST_MODIFIED_BY = 'ETLUSER'
+,SYS_SOURCE=TRIM(CAST(TEMP.STG_LOG_SOURCE_ID AS INTEGER))
+,LATST_ACTVY_DATE=CAST(TEMP.STG_OPT_TIME AS DATE)
+WHERE MATCHD_CNSMR_PRSNA.MATCHD_CNSMR_PRSNA_ID=TEMP.MATCHD_CNSMR_PRSNA_ID 
+AND MATCHD_CNSMR_PRSNA.LATST_ACTVY_DATE<=CAST(TEMP.STG_OPT_TIME AS DATE)
+;
+.IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE;
+
+/*****************************************************************************
+Update the LATST_ACTVY_DATE in MATCHD_CNSMR_PRSNA for regular optout. Universal
+Optout is marketing program 9999.
+******************************************************************************/
+
+UPDATE MDM.MATCHD_CNSMR_PRSNA
+FROM 
+(SELECT	DISTINCT MATCHD_CNSMR_PRSNA_ID,
+STG_OPT_TIME,
+STG_LOG_SOURCE_ID 
+FROM	OPT_OUT_LIST_CAN TEMP1  
+INNER JOIN REGIS_PRSNA RP
+ON TEMP1.EDW_REGIS_PRSNA_ID = RP.REGIS_PRSNA_ID
+AND TEMP1.EDW_MKTNG_PGM_NBR = RP.MKTNG_PGM_NBR
+WHERE EDW_OPT_LEVEL_IND NOT IN ('H','M')
+QUALIFY RANK() OVER (PARTITION BY MATCHD_CNSMR_PRSNA_ID
+ORDER BY STG_OPT_TIME DESC,STG_LOG_SOURCE_ID DESC,RP.REGIS_PRSNA_ID DESC) = 1
+) TEMP
+SET SYS_LAST_MODIFIED_DATE= CURRENT_DATE
+,SYS_LAST_MODIFIED_BY = 'ETLUSER'
+,SYS_SOURCE=TRIM(CAST(TEMP.STG_LOG_SOURCE_ID AS INTEGER))
+,LATST_ACTVY_DATE=CAST(TEMP.STG_OPT_TIME AS DATE)
+WHERE MATCHD_CNSMR_PRSNA.MATCHD_CNSMR_PRSNA_ID=TEMP.MATCHD_CNSMR_PRSNA_ID 
+AND MATCHD_CNSMR_PRSNA.LATST_ACTVY_DATE<=CAST(TEMP.STG_OPT_TIME AS DATE)
+;
+.IF ERRORLEVEL > 0 THEN .QUIT ERRORCODE;
+
+.exit

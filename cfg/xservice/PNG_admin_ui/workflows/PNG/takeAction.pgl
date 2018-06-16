@@ -1,0 +1,325 @@
+<ui:page-group version="3" xmlns:ui="http://www.teradata.com/ui" name="studio.templates.simple_entry" source="studio.controller:load">
+  <ui:container id="CC">
+    <ui:help displayPage="/mdm/bcm/help/Approval_Monitor_Help.htm"/>
+    <ui:step id="SS1" displayText="Take Action">
+      <ui:field-group id="FG" columns="2" select="$root/APPROVALS/APPROVAL">
+        <ui:display-field displayText="ID" name="ID" id="InstanceDocID" title="ManageApprovalsTakeActionId"/>
+        <ui:display-field displayText="Table/Entity Name" name="INSTANCE_TYPE" title="ManageApprovalsDocument"/>
+        <ui:display-field displayText="Action" name="DOCUMENTACTION" title="ManageApprovalsApprovalActionType"/>
+        <ui:display-field displayText="Approval Type" name="NODE_TYPE" title="ManageApprovalsApprovalGroupType"/>
+        <ui:hidden-field displayText="ID" name="ID" id="InstanceDocID"/>
+        <ui:hidden-field displayText="Document Name" name="INSTANCE_TYPE"/>
+        <ui:hidden-field displayText="Action" name="DOCUMENTACTION"/>
+        <ui:hidden-field displayText="Approval Type" name="NODE_TYPE"/>
+        <ui:hidden-field id="Comment" name="Comment"/>
+      </ui:field-group>
+    </ui:step>
+  </ui:container>
+  <ui:container id="topContainer">
+    <ui:step id="condLegendFields" displayText="Approvals">
+      <ui:table id="ApprovalList" displayText="Approval List" rowSrc="$root/APPROVALS/APPROVAL/APPROVERS/ SQL_RESULT " selectable="single" postRowIdAs="user_id">
+        <ui:field-group id="myFieldGroup">
+          <ui:display-field displayText="Approver Name" name="APPROVER_NAME" title="ManageApprovalsApproverName"/>
+          <ui:hidden-field  name="APPROVER_NAME"/>
+          <ui:hidden-field  name="OLD_NEW_APPROVER" displayText="OLD_NEW_APPROVER"/>
+          <ui:hidden-field name="A_Status"/> 
+          <ui:dropdown id="LOGIN_NAME" displayText="Available Approvers" name="LOGIN_NAME" optionSrc="$root/LOGIN_NAME" title="ManageApprovalsAvailableApprovers" onChange="javascript:onChangeApproverList();"/>          
+          <ui:display-field displayText="Inbox Status" name="A_Status" id="A_Status" title="ManageApprovalsInboxStatus"/>
+          <ui:hidden-field displayText="Comments" name="Checked" id="Checked"/>
+          <ui:textarea displayText="Comments" id="UDF1" name="UDF1" required="true" title="ManageApprovalsComments"/>
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button id="Back" name="Back" displayText="Back" validate="false"/>
+          <ui:divider/>
+          <ui:button id="REASSIGN" name="REASSIGN" displayText="Reassign" onClick="javascript:submitReAssignForm();"/>
+		  <ui:divider/>
+          <ui:button id="Poke" name="Poke" displayText="Send Reminder" enabledBySelections="true" onClick="javascript:sendRemainder();"/>
+          <ui:divider/>
+          <ui:button id="REJECT" name="REJECT" displayText="Reject" enabledBySelections="true" onClick="javascript:submitRejectForm();"/>
+          <ui:divider/>
+          <ui:button id="ACCEPT" name="ACCEPT" displayText="Accept" enabledBySelections="true" onClick="javascript:submitAcceptForm();"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+var approver_hidden=[];
+function onLoadSuper()
+{
+
+tduiToggleButtonState('REASSIGN','disabled','');
+enableButtonsIfRowSelected();
+
+if(document.form.elements['user_id'].length == undefined)
+		document.form.LOGIN_NAME.value=document.form.APPROVER_NAME.value;
+
+for (var i = 0; i&lt;document.form.Checked.length; i++)
+{
+if(document.form.Checked[i].value=='false')
+  {
+document.form.ApprovalList_rowselector[i].disabled=true;
+document.getElementsByName('UDF1')[i].disabled=true;
+    }
+document.form.LOGIN_NAME[i].value=document.form.APPROVER_NAME[i].value;
+
+if(document.form.A_Status[i].value=='Approved')
+{
+document.form.LOGIN_NAME[i].options.length = 0;
+document.form.LOGIN_NAME[i].options[0] = new Option(document.form.APPROVER_NAME[i].value, document.form.APPROVER_NAME[i].value, true, true);
+}
+}
+for (var i = 0; i&lt;document.form.Checked.length; i++)
+{
+if(document.form.Checked[i].value=='true')
+{
+break;
+}
+}
+    
+for(var i=0; i&lt;document.form.ApprovalList_rowselector.length; i++)
+    {
+     approver_hidden[i]=document.form.ApprovalList_rowselector[i].value;
+    }
+
+}
+
+
+    
+function sendRemainder()
+{
+var user_id=&quot;&quot;;
+var  radioObj = document.form.elements['user_id'];
+var radioLength = radioObj.length;
+if(radioLength == undefined)
+if(radioObj.checked)
+user_id=document.form.ApprovalList_rowselector.value;
+for(var i = 0;radioLength>i; i++)
+{
+if(radioObj[i].checked)
+user_id=document.form.ApprovalList_rowselector[i].value;
+}
+// alert(&quot;Reminder Sent to the user &quot;+&quot;\n&quot;+user_id+&quot;\n&quot;+this.form.ID.value +&quot;\n&quot; +this.form.DOCUMENTACTION.value+&quot;\n&quot; +this.form.INSTANCE_TYPE.value+&quot;\n&quot; +this.form.NODE_TYPE.value);
+                
+var ID = document.form.ID.value;
+var DOCUMENTACTION = document.form.DOCUMENTACTION.value;
+var INSTANCE_TYPE = document.form.INSTANCE_TYPE.value;
+var NODE_TYPE = document.form.NODE_TYPE.value;
+    
+    
+var service_name = &quot;ADMIN_UI&quot;;
+var request= &quot;&lt;REQUEST Name='poke' ServiceName='ADMIN_UI'>&lt;user_id Value='&quot;+user_id+&quot;'/>&lt;ID Value='&quot;+ID+&quot;'/>&lt;DOCUMENTACTION Value='&quot;+DOCUMENTACTION+&quot;'/>&lt;INSTANCE_TYPE Value='&quot;+INSTANCE_TYPE+&quot;'/>&lt;NODE_TYPE Value='&quot;+NODE_TYPE+&quot;'/>&lt;/REQUEST>&quot;;
+var xpath = &quot;/RESPONSES/RESPONSE&quot;;
+SendAjaxRequest(service_name,request,'getStateCallback',xpath);
+}
+    
+function getStateCallback(node)
+{
+var sent = false;
+//    if(document.all){
+for (i=0;i&lt;node.length;i++)
+{
+if (node[i].getAttribute(&quot;Status&quot;) == &quot;Success&quot;)
+sent = true;
+}
+//    }else{
+//x=node.getElementsByTagName('RESPONSE');
+
+//for (i=0;i&lt;x.length;i++)
+//{
+//if (x[i].getAttribute(&quot;Status&quot;) == &quot;Success&quot;)
+//sent = true;
+//}
+//    }
+if(sent)
+core_alert_jquery('APPROVAL_MONITOR_REMAINDER_SENT_SUCCESSFULLY');
+else
+core_alert_jquery('APPROVAL_MONITOR_PBLM_SENDING_EMAIL');
+}
+    
+function submitReAssignForm()
+{
+var  radioObj = document.form.elements['user_id'];
+var radioLength = radioObj.length;
+if(radioLength == undefined)
+{
+	document.form.OLD_NEW_APPROVER.value=document.form.APPROVER_NAME.value+','+document.form.LOGIN_NAME.value+','+document.form.A_Status.value;
+    if(document.form.LOGIN_NAME.value == undefined ||  document.form.LOGIN_NAME.value == '')
+    {
+		core_alert_jquery('UNIQUE_APPRVR_LIST');
+		return;
+    }
+}
+else
+{
+    for(var i = 0;radioLength>i; i++)
+	{
+	document.form.OLD_NEW_APPROVER[i].value=document.form.APPROVER_NAME[i].value+','+document.form.LOGIN_NAME[i].value+','+document.form.A_Status[i].value;
+    }
+	var newObj = {};
+	var newArr = [];
+	for(var i = 0;radioLength>i; i++)
+	{
+		newObj[document.form.LOGIN_NAME[i].value] = i;
+	}
+	for(var j in newObj){
+		newArr.push(j);
+	}
+	if(radioLength != newArr.length)
+	{
+		core_alert_jquery('UNIQUE_APPRVR_LIST');
+		return;
+	}
+    for(var i = 0;radioLength>i; i++)
+    {
+		if(document.form.LOGIN_NAME[i].value == undefined ||  document.form.LOGIN_NAME[i].value == '')
+    		{
+                core_alert_jquery('UNIQUE_APPRVR_LIST');
+                return;
+    		}
+    }
+}
+    
+core_confirm_jquery('CONF_REASSIGN','onReassignCallback');
+}    
+
+function onReassignCallback(response)
+{
+	if( response == 'yes' )
+	{
+		// LOGIC FOR SUBMIT A FORM
+		var bIsValid = true;
+		document.form.SUBMIT_AS_XML.value = 'false';
+		disableButtons();
+		trapExcelPivotChanges();
+		document.form.BUTTON_ID.value = 'REASSIGN';
+		document.form.action = 'view.x2ps';
+		document.form.submit();
+		grayOut(true);
+		onResize();
+		return;
+	}
+}    
+            
+        
+function submitAcceptForm()
+{
+var  radioObj = document.form.elements['user_id'];
+var radioLength = radioObj.length;
+if(radioLength == undefined)
+if(radioObj.checked)
+document.form.Comment.value=document.form.UDF1.value;
+for(var i = 0;radioLength>i; i++)
+{
+if(radioObj[i].checked)
+document.form.Comment.value=document.form.UDF1[i].value;
+              
+             
+}
+// LOGIC FOR SUBMIT A FORM
+var bIsValid = true;
+document.form.SUBMIT_AS_XML.value = 'false';
+disableButtons();
+trapExcelPivotChanges();
+document.form.BUTTON_ID.value = 'ACCEPT';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+onResize();
+return;
+}
+
+    
+function submitRejectForm()
+{
+var table = document.getElementById('user_id');
+var rowobj=document.getElementById('ApprovalList_data').getElementsByTagName(&quot;th&quot;);
+var rowCount = rowobj.length;
+if(rowCount==undefined ){
+document.form.Comment.value=document.form.UDF1.value;
+if(document.form.Comment.value==''){
+core_alert_jquery(&quot;Please enter comment for Rejection&quot;);
+document.form.UDF1.focus();
+return;
+}
+  
+}
+else{
+if(rowCount>1){
+var  radioObj = document.form.elements['user_id'];
+for(var i = 0;rowCount>i; i++)
+{
+if(radioObj[i].checked) {
+document.form.Comment.value=document.form.UDF1[i].value;
+if(document.form.Comment.value==''){
+core_alert_jquery(&quot;Please enter comment for Rejection&quot;);
+document.form.UDF1[i].focus();
+return;
+}
+}
+}
+    
+}else{
+    
+    
+var  radioObj = document.form.elements['user_id'];
+
+if(radioObj.checked) {
+document.form.Comment.value=document.form.UDF1.value;
+if(document.form.Comment.value==''){
+core_alert_jquery(&quot;Please enter comment for Rejection&quot;);
+document.form.UDF1.focus();
+return;
+}
+}
+
+    
+    
+}
+    
+    
+}
+// LOGIC FOR SUBMIT A FORM
+var bIsValid = true;
+document.form.SUBMIT_AS_XML.value = 'false';
+disableButtons();
+trapExcelPivotChanges();
+document.form.BUTTON_ID.value = 'REJECT';
+document.form.action = 'view.x2ps';
+document.form.submit();
+grayOut(true);
+onResize();
+return;
+}
+function onChangeApproverList()
+{
+ for(var i=0; i&lt;document.form.ApprovalList_rowselector.length; i++)
+  {
+   if(approver_hidden[i]!=document.form.LOGIN_NAME[i].value)
+    {
+     tduiToggleButtonState('REASSIGN','enabled','Regular');
+     break;
+    }
+    else
+    {
+     tduiToggleButtonState('REASSIGN','disabled','');
+    }
+  }
+}  
+function tduiToggleButtonState(id, desiredState, desiredType)
+{
+$('#'+id).children().each(function(){
+if(desiredState == "disabled") {
+$(this).attr("class",'buttonDisabled');
+$(this).attr("href2",$(this).attr("href"));
+$(this).removeAttr("href");
+} else {
+$(this).attr("class",'button deemphasized')
+$(this).attr("href",$(this).attr("href2"));
+$(this).removeAttr("href2");
+}
+
+});
+}
+   
+</ui:script>
+</ui:page-group>

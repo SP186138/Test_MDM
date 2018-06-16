@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+
+Copyright (c) 2009 by Teradata Corporation.
+
+All Rights Reserved.
+
+Teradata CONFIDENTIAL AND TRADE SECRET
+
+-->
+  <DEFINE_METHOD Name="WS_INCTV" Access="Public">
+    <API_DOC>
+      <INPUT>
+        <REQUEST Name="webServiceCall">
+          <MKTNG_PGM_NBR Value="999"/>
+          <INCTV_START_DATE Value="2016-01-31"/>
+          <INCTV_END_DATE Value="2016-01-31"/>
+          <BRAND_CODE Value="ASD"/>
+        </REQUEST>
+      </INPUT>
+      <OUTPUT>
+        <ON_SUCCESS>
+          <RESPONSE Status="Success" DbgCmd_="GET_DOCUMENT" DbgNameAttr_="WS_INCTV">
+            <readRESTResponse>
+              <STATUS Description="Success">
+                <MESSAGE Value="Query Returned 0 Rows"/>
+              </STATUS>
+              <READ_VAL>
+                <WS_INCTV ExistingDocument="yes">
+                  <INCTV_NBR Value="110001"/>
+                  <INCTV_NAME Value="Asd"/>
+                  <MKTNG_PGM_NBR Value="999"/>
+                  <INCTV_START_DATE Value="2016-01-31"/>
+                  <INCTV_END_DATE Value="2016-01-31"/>
+                  <BRAND_CODE Value="ASD"/>
+                </WS_INCTV>
+              </READ_VAL>
+            </readRESTResponse>
+          </RESPONSE>
+        </ON_SUCCESS>
+        <ON_EXCEPTION>
+          <RESPONSE Comment="Validation error response of webServiceCall"/>
+        </ON_EXCEPTION>
+      </OUTPUT>
+    </API_DOC>
+    <RULE>
+      <ACTION>
+        <!--<INVOKE_VALIDATION_FRAMEWORK ServiceName="BCM_MASTER" ApiName="WsInctv" DocVar="thisParam" AssignToVar="response"/>-->
+        <IF_TEST Test="$thisParam/MKTNG_PGM_NBR/@Value = null or $thisParam/MKTNG_PGM_NBR/@Value = ''">
+          <THEN>
+            <EXCEPTION Value="MISSING_MANDATORY_FIELD">
+              <Message Value="Marketing Program Number is required"/>
+            </EXCEPTION>
+            <!--            <TO_DOCVAR AssignToVar="return">
+<FAILURE>
+<Message Value="Marketing Program Number is required"/>
+</FAILURE>
+</TO_DOCVAR>
+<APPEND_CHILDREN DocVar="thisReturn" FromDocVar="return"/>
+<SET DocVar="$thisReturn" Property="RESPONSE" FromValue="Error"/> -->
+          </THEN>
+          <ELSE>
+            <SET Var="INCTV_START_DATE" FromValue="{$thisParam/INCTV_START_DATE/@Value}"/>
+            <SET Var="INCTV_END_DATE" FromValue="{$thisParam/INCTV_END_DATE/@Value}"/>
+            <SET Var="MKTNG_PGM_NBR" FromValue="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+            <SET Var="BRAND_CODE" FromValue="{$thisParam/BRAND_CODE/@Value}"/>
+            <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+              <INCTV_START_DATE/>
+              <INCTV_END_DATE/>
+              <MKTNG_PGM_NBR/>
+              <BRAND_CODE/>
+            </FORM_SEARCH_FILTER>
+            <TO_DOCVAR AssignToVar="filterList">
+              <FILTERLIST/>
+            </TO_DOCVAR>
+            <FOR_EACH SelectList="$filters/FILTER" CurrentElement="thisFilter">
+              <APPEND_TO_XML SelectList="$filterList">
+                <TO_XML SelectList="$thisFilter/*"/>
+              </APPEND_TO_XML>
+            </FOR_EACH>
+            <GET_DOCUMENT Name="WS_INCTV" ServiceName="BCM_MASTER" AssignToVar="InctvResponseVal" ReturnRowCount="yes" DirtyRead="true">
+              <TO_XML SelectList="$filterList/INCTV_START_DATE"/>
+              <TO_XML SelectList="$filterList/INCTV_END_DATE"/>
+              <TO_XML SelectList="$filterList/MKTNG_PGM_NBR"/>
+              <TO_XML SelectList="$filterList/BRAND_CODE"/>
+              <SELECT>
+                <INCTV_NBR/>
+                <INCTV_NAME/>
+                <MKTNG_PGM_NBR/>
+                <INCTV_START_DATE/>
+                <INCTV_END_DATE/>
+                <BRAND_CODE/>
+              </SELECT>
+            </GET_DOCUMENT>
+            <TO_DOCVAR AssignToVar="InctvResponse">
+              <readRESTResponse>
+                <STATUS Description="{$InctvResponseVal/@Status}">
+                  <MESSAGE Value="Query Returned {$InctvResponseVal/@TotalRowCount} Rows"/>
+                </STATUS>
+                <READ_VAL>
+                  <TO_XML SelectList="$InctvResponseVal/WS_INCTV"/>
+                </READ_VAL>
+              </readRESTResponse>
+            </TO_DOCVAR>
+            <APPEND_TO_XML DocVar="thisReturn">
+              <TO_XML Select="$InctvResponse"/>
+            </APPEND_TO_XML>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+  <DEFINE_METHOD Name="WS_MATCHD_CNSMR_OPT_STATUS" Access="Public">
+    <API_DOC>
+      <INPUT>
+        <REQUEST Name="webServiceCall">
+          <LEGAL_ENT_NBR Value="22"/>
+          <MKTNG_PGM_NBR Value="310"/>
+          <EMAIL_ADDR_TXT Value="LAURALBA@GMAIL.COM"/>
+        </REQUEST>
+      </INPUT>
+      <OUTPUT>
+        <ON_SUCCESS>
+          <RESPONSE Status="Success" DbgCmd_="GET_DOCUMENT" DbgNameAttr_="WS_MATCHD_CNSMR_OPT_STATUS">
+            <readRESTResponse>
+              <STATUS Description="Success">
+                <MESSAGE Value="Query Returned 0 Rows"/>
+              </STATUS>
+              <READ_VAL>
+                <WS_MATCHD_CNSMR_OPT_STATUS ExistingDocument="yes">
+                  <LEGAL_ENT_NBR Value="22"/>
+                  <MKTNG_PGM_NBR Value="310"/>
+                  <EMAIL_ADDR_TXT Value="LAURALBA@GMAIL.COM"/>
+                  <CNTCT_POINT_CATEG_CODE Value="EP"/>
+                  <SUBSCRPTN_OPT_NBR Value="1"/>
+                  <SUBSCRPTN_OPT_IND Value="I"/>
+                  <CNSMR_CHCE_DATETM Value="2016-02-19"/>
+                  <UNIVERSAL_OPT_OUT_IND Value="N"/>
+                  <UNIVERSAL_OPT_OUT_DATE Value=""/>
+                </WS_MATCHD_CNSMR_OPT_STATUS>
+              </READ_VAL>
+            </readRESTResponse>
+          </RESPONSE>
+        </ON_SUCCESS>
+        <ON_EXCEPTION>
+          <RESPONSE Comment="Validation error response of webServiceCall"/>
+        </ON_EXCEPTION>
+      </OUTPUT>
+    </API_DOC>
+    <RULE>
+      <ACTION>
+        <!--<INVOKE_VALIDATION_FRAMEWORK ServiceName="BCM_MASTER" ApiName="WsInctv" DocVar="thisParam" AssignToVar="response"/>-->
+        <IF_TEST Test="$thisParam/EMAIL_ADDR_TXT/@Value = null or $thisParam/EMAIL_ADDR_TXT/@Value = ''">
+          <THEN>
+            <EXCEPTION Value="MISSING_MANDATORY_FIELD">
+              <Message Value="Email Address is required"/>
+            </EXCEPTION>
+          </THEN>
+          <ELSE>
+            <SET Var="LEGAL_ENT_NBR" FromValue="{$thisParam/LEGAL_ENT_NBR/@Value}"/>
+            <SET Var="MKTNG_PGM_NBR" FromValue="{$thisParam/MKTNG_PGM_NBR/@Value}"/>
+            <SET Var="EMAIL_ADDR_TXT" FromValue="{$thisParam/EMAIL_ADDR_TXT/@Value}"/>
+            <FORM_SEARCH_FILTER Value="{$thisParam}" AssignToVar="filters">
+              <LEGAL_ENT_NBR/>
+              <MKTNG_PGM_NBR/>
+              <EMAIL_ADDR_TXT/>
+            </FORM_SEARCH_FILTER>
+            <TO_DOCVAR AssignToVar="filterList">
+              <FILTERLIST/>
+            </TO_DOCVAR>
+            <FOR_EACH SelectList="$filters/FILTER" CurrentElement="thisFilter">
+              <APPEND_TO_XML SelectList="$filterList">
+                <TO_XML SelectList="$thisFilter/*"/>
+              </APPEND_TO_XML>
+            </FOR_EACH>
+            <GET_DOCUMENT Name="WS_MATCHD_CNSMR_OPT_STATUS" ServiceName="BCM_MASTER" AssignToVar="OptStatusResponseVal" ReturnRowCount="yes" DirtyRead="true">
+              <TO_XML SelectList="$filterList/LEGAL_ENT_NBR"/>
+              <TO_XML SelectList="$filterList/MKTNG_PGM_NBR"/>
+              <TO_XML SelectList="$filterList/EMAIL_ADDR_TXT"/>
+              <SELECT>
+                <LEGAL_ENT_NBR/>
+                <MKTNG_PGM_NBR/>
+                <EMAIL_ADDR_TXT/>
+                <CNTCT_POINT_CATEG_CODE/>
+                <SUBSCRPTN_OPT_NBR/>
+                <SUBSCRPTN_OPT_IND/>
+                <CNSMR_CHCE_DATETM/>
+                <UNIVERSAL_OPT_OUT_IND/>
+                <UNIVERSAL_OPT_OUT_DATE/>
+              </SELECT>
+            </GET_DOCUMENT>
+            <TO_DOCVAR AssignToVar="OptStatusResponse">
+              <readRESTResponse>
+                <STATUS Description="{$OptStatusResponseVal/@Status}">
+                  <MESSAGE Value="Query Returned {$OptStatusResponseVal/@TotalRowCount} Rows"/>
+                </STATUS>
+                <READ_VAL>
+                  <TO_XML SelectList="$OptStatusResponseVal/WS_MATCHD_CNSMR_OPT_STATUS"/>
+                </READ_VAL>
+              </readRESTResponse>
+            </TO_DOCVAR>
+            <APPEND_TO_XML DocVar="thisReturn">
+              <TO_XML Select="$OptStatusResponse"/>
+            </APPEND_TO_XML>
+          </ELSE>
+        </IF_TEST>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>

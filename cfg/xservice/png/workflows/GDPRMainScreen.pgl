@@ -1,0 +1,47 @@
+<ui:page-group xmlns:ui="http://www.teradata.com/ui" Id="Node4.pgl" version="3">
+  <ui:container id="container1">
+    <ui:step displayText="GDPR Review Process" id="step1">
+      <ui:validation id="uivalidmsg" successMessage="{$root/Message/SUCCESS/@Value}" anyFieldIsRequired="false"/>
+      <ui:table displayText="-Review Request" id="reviewReq" select="$root/DATASET" postRowIdAs="selectedCaseID" maxRows="$root/MaxRec/@Value" displayTextNoRecords="No Records Found" selectable="single" rowId="GDPR_CASE_ID#GDPR_RQST_STATUS_NAME" exportable="true" filter="true" totalRowCount="$root/TotalRowCount/@Value" startAtRow="$root/START_COUNT/@Value">
+        <ui:table-row select="DATA"/>
+        <ui:field-group>
+          <!--<ui:display-field displayText="Case Id" title="CaseID" id="GDPR_CASE_ID" name="GDPR_CASE_ID"/>-->
+          <ui:hidden-field displayText="GDPR Request Status Code" id="GDPR_RQST_STATUS_CD" name="GDPR_RQST_STATUS_CD"/>
+          <ui:display-field displayText="GDPR Case Id" title="GDPR_CASE_ID" id="GDPR_CASE_ID" name="GDPR_CASE_ID" sortable="true"/>
+          <ui:display-field displayText="Given Name" title="CaseID" id="GVN_NAME" name="GVN_NAME" sortable="true"/>
+          <ui:display-field displayText="Middle Name" title="MiddleName" id="MID_NAME" name="MID_NAME" sortable="true"/>
+          <ui:display-field displayText="Family Name" title="FAMLY_NAME" id="FAMLY_NAME" name="FAMLY_NAME" sortable="true"/>
+          <ui:display-field displayText="Full Name" title="FULL_NAME" id="FULL_NAME" name="FULL_NAME" sortable="true"/>
+          <ui:display-field displayText="Specialist Name" title="SR_NBR" id="SR_NBR" name="SR_NBR" sortable="true"></ui:display-field>
+          <ui:display-field displayText="GDPR Status Name" title="GDPR_RQST_STATUS_NAME" id="GDPR_RQST_STATUS_NAME" name="GDPR_RQST_STATUS_NAME" sortable="true"/>
+          <ui:display-field displayText="GDPR Request fullfilment Date" title="GDPR_RQST_FULFLMT_DATETM" id="GDPR_RQST_FULFLMT_DATETM" name="GDPR_RQST_FULFLMT_DATETM" sortable="true"/>
+          <ui:display-field displayText="GDPR Request Identify Date" title="GDPR_RQST_IDNTY_VFYD_DATETM" id="GDPR_RQST_IDNTY_VFYD_DATETM" name="GDPR_RQST_IDNTY_VFYD_DATETM" sortable="true"/>
+          <ui:entry-field displayText="GDPR Request Type Name" title="GDPR_RQST_TYPE_NAME" id="GDPR_RQST_TYPE_NAME" name="GDPR_RQST_TYPE_NAME" sortable="true" editable="false"/>
+          <ui:display-field displayText="Address Line 1" title="ADDR_LINE_1_TXT" id="ADDR_LINE_1_TXT" name="ADDR_LINE_1_TXT" displayNoWrap="false" sortable="true"/>
+          <ui:display-field displayText="Address Line 2" title="ADDR_LINE_2_TXT" id="ADDR_LINE_2_TXT" name="ADDR_LINE_2_TXT" displayNoWrap="false" sortable="true"/>
+          <ui:display-field displayText="Address Line 3" title="ADDR_LINE_3_TXT" id="ADDR_LINE_3_TXT" name="ADDR_LINE_3_TXT" displayNoWrap="false" sortable="true"/>
+          <ui:hidden-field id="GDPR_CASE_OWNR_CNTCT_NBR" name="GDPR_CASE_OWNR_CNTCT_NBR"></ui:hidden-field>
+          <ui:display-field displayText="Territory Name" title="TERR_NAME" id="TERR_NAME" name="TERR_NAME" displayNoWrap="false" sortable="true"/>
+          <ui:display-field displayText="City Name" title="CITY_NAME" id="CITY_NAME" name="CITY_NAME" sortable="true"/>
+          <ui:display-field displayText="Postal Area Code" title="POSTL_AREA_CODE" id="POSTL_AREA_CODE" name="POSTL_AREA_CODE" sortable="true"/>
+          <ui:display-field displayText="GDPR Request Creation Date" title="GDPR_RQST_CRTN_DATETM" id="GDPR_RQST_CRTN_DATETM" name="GDPR_RQST_CRTN_DATETM" sortable="true"/>
+          <ui:display-field displayText="Email Address" title="EMAIL_ADDR_TXT" id="EMAIL_ADDR_TXT" name="EMAIL_ADDR_TXT" sortable="true"/>
+          <ui:display-field displayText="Phone Number" title="FULL_PHONE_NUM" id="FULL_PHONE_NUM" name="FULL_PHONE_NUM" sortable="true"/>
+          <ui:display-field displayText="Data Source Nbr" title="DATA_SRCE_NBR" id="DATA_SRCE_NBR" name="DATA_SRCE_NBR" sortable="true"/>
+          <ui:display-field displayText="Name Suffix Text" title="NAME_SUFFX_TXT" id="NAME_SUFFX_TXT" name="NAME_SUFFX_TXT" sortable="true"/>
+          <ui:display-field displayText="Register Consumer Value" title="REGIS_CNSMR_ID_VAL" id="REGIS_CNSMR_ID_VAL" name="REGIS_CNSMR_ID_VAL" sortable="true"/>
+          <ui:display-field displayText="National Id Number" title="NATIONAL_ID_NBR" id="NATIONAL_ID_NBR" name="NATIONAL_ID_NBR" sortable="true"/>
+          <ui:display-field displayText="Country Name" title="CNTRY_NAME" id="CNTRY_NAME" name="CNTRY_NAME" sortable="true"/>
+          <ui:display-field displayText="Marketing Program Desc" title="MKTNG_PGM_DESC" id="MKTNG_PGM_DESC" name="MKTNG_PGM_DESC" sortable="true"/>
+          <ui:entry-field displayText="Last Modified By" id="SYS_LAST_MODIFIED_BY" name="SYS_LAST_MODIFIED_BY" editable="false" sortable="true"/>
+        </ui:field-group>
+        <ui:buttons>
+          <ui:button displayText="Review Case" enabledBySelections="true" id="reviewCaseButton"/>
+          <ui:button displayText="Request Summary " id="requestSummaryButton" enabledBySelections="true"/>
+        </ui:buttons>
+      </ui:table>
+    </ui:step>
+  </ui:container>
+  <ui:script>
+  </ui:script>
+</ui:page-group>

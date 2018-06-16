@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow mgcCount="3" ShowInBreadCrumbs="true" Version="1.0" Name="Create_opt_out_found" Description="" Type="" PrimaryDocument="" IsStartAllowed="Yes">
+  <variables Name="Create_opt_out_found">
+    <variable Name="opt_id" Type="string" Comment=""/>
+    <variable Name="msg" Type="string" Comment=""/>
+    <variable Name="getAllFields" Type="xml" Comment=""/>
+  </variables>
+  <nodes>
+    <start Name="start0">
+      <actions/>
+      <next_nodes>
+        <next_node Name="Create_opt_out"/>
+      </next_nodes>
+    </start>
+    <ui_form2 Name="Create_opt_out" ShowInBreadCrumbs="HIDE" Template="Create_opt_out.pgl" InputFormVar="pglFormInput" OutputFormVar="pglFormOutput">
+      <pre_actions>
+        <action>
+          <TO_DOCVAR AssignToVar="countryList">
+            <ROOT>
+              <cntry/>
+            </ROOT>
+          </TO_DOCVAR>
+          <EXECUTE_SQL_QUERY AssignToVar="cntryDomains" Value="SELECT CNTRY_NAME,CNTRY_CODE FROM CNTRY ORDER BY CNTRY_NAME;"/>
+          <FOR_EACH SelectList="$cntryDomains/*" CurrentElement="currentElement">
+            <SET Var="cntryname" FromValue="{$currentElement/CNTRY_NAME/@Value}"/>
+            <SET Var="cntrynbr" FromValue="{$currentElement/CNTRY_CODE/@Value}"/>
+            <APPEND_TO_XML SelectList="$countryList/cntry">
+              <OPTION Id="{$cntrynbr}" Value="{$cntryname}"/>
+            </APPEND_TO_XML>
+          </FOR_EACH>
+          <TO_DOCVAR AssignToVar="pglFormInput">
+            <ROOT/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$userAction='create'">
+            <THEN>
+              <TO_DOCVAR AssignToVar="getAllFields">
+                <root1/>
+              </TO_DOCVAR>
+              <APPEND_TO_XML DocVar="getAllFields">
+                <TO_XML SelectList="$thisParam/*"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+          <APPEND_TO_XML DocVar="pglFormInput">
+            <TO_XML SelectList="$getAllFields/*"/>
+            <TO_XML SelectList="$countryList/*"/>
+            <Message Value="{$msg}"/>
+          </APPEND_TO_XML>
+        </action>
+      </pre_actions>
+      <post_actions>
+        <action>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='save'">
+            <THEN>
+              <SET Var="legal" FromValue="{$thisParam/LEGAL_ENT_NAME/@Value}"/>
+              <EXECUTE_SQL_QUERY AssignToVar="legalEnt" Value="sel legal_ent_nbr from legal_ent where legal_ent_name='{$legal}';"/>
+              <CREATE_DOCUMENT_ID Name="OPT_OUT_NOT_FOUND" AssignToVar="optfound"/>
+              <SET Var="opt_id" FromValue="{$optfound/@Value}"/>
+              <ADD_DOC_SMART Source="EXTERNAL" Name="OPT_OUT_NOT_FOUND" HandleException="true" ServiceName="BCM_MASTER" AssignToVar="var1">
+                <GVN_NAME Value="{$thisParam/GVN_NAME/@Value}"/>
+                <MID_NAME Value="{$thisParam/MID_NAME/@Value}"/>
+                <FAMLY_NAME Value="{$thisParam/FAMLY_NAME/@Value}"/>
+                <EMAIL_ADDR_TXT Value="{$thisParam/EMAIL_ADDR_TXT/@Value}"/>
+                <FULL_PHONE_NUM Value="{$thisParam/FULL_PHONE_NUMBER/@Value}"/>
+                <SRC_ADDR_LINE_1_TXT Value="{$thisParam/ADDR_LINE_1_TXT/@Value}"/>
+                <SRC_ADDR_LINE_2_TXT Value="{$thisParam/ADDR_LINE_2_TXT/@Value}"/>
+                <SRC_ADDR_LINE_3_TXT Value="{$thisParam/ADDR_LINE_3_TXT/@Value}"/>
+                <SRC_CITY_NAME Value="{$thisParam/CITY_NAME/@Value}"/>
+                <SRC_POSTAL_AREA_CODE Value="{$thisParam/POSTL_AREA_CODE/@Value}"/>
+                <SRC_TERR_NAME Value="{$thisParam/TERR_NAME/@Value}"/>
+                <SRC_CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+                <NATIONAL_ID_NBR Value="{$thisParam/NATIONAL_ID_NBR/@Value}"/>
+                <MATCH_FLG Value="N"/>
+                <LEGAL_ENT_NBR Value="{$legalEnt/SQL_RESULT/LEGAL_ENT_NBR/@Value}"/>
+                <PE_OPTOUT_ID Value="{$optfound/@Value}"/>
+              </ADD_DOC_SMART>
+              <!--REMOVE_CHILDREN ChildName="GVN_NAME" DocVar="thisParam" />
+      <REMOVE_CHILDREN ChildName="MID_NAME" DocVar="thisParam" />
+      <REMOVE_CHILDREN ChildName="FAMLY_NAME" DocVar="thisParam" />
+      <REMOVE_CHILDREN ChildName="EMAIL_ADDR_TXT" DocVar="thisParam" />
+      <REMOVE_CHILDREN ChildName="FULL_PHONE_NUM" DocVar="thisParam" />
+      <REMOVE_CHILDREN ChildName="ADDR_LINE_1_TXT" DocVar="thisParam" />
+      <REMOVE_CHILDREN ChildName="ADDR_LINE_2_TXT" DocVar="thisParam" />
+      <REMOVE_CHILDREN ChildName="ADDR_LINE_3_TXT" DocVar="thisParam" />
+      <REMOVE_CHILDREN ChildName="CITY_NAME" DocVar="thisParam" />
+      <REMOVE_CHILDREN ChildName="POSTL_AREA_CODE" DocVar="thisParam" />
+      <REMOVE_CHILDREN ChildName="TERR_NAME" DocVar="thisParam" />
+      <REMOVE_CHILDREN ChildName="CNTRY_NAME" DocVar="thisParam" /-->
+              <!-- core_alert('Record Created Successfully..');
+      <IF_TEST Test="$Result/@Status='Success'">
+        <THEN>
+          <APPEND_TO_XML SelectList="$thisParam">
+            <SUCCESS>
+              <Message Value="Record Created Successfully.." />
+            </SUCCESS>
+          </APPEND_TO_XML>
+        </THEN>
+      </IF_TEST> -->
+              <IF_TEST Test="$var1/@Status='Success'">
+                <THEN>
+                  <SET Var="msg" FromValue="Record Created Successfully."/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$var1/@Status='Error'">
+                <THEN>
+                  <SET Var="msg" FromValue="{$var1/@Description}"/>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <IF_TEST Test="$thisParam/BUTTON_ID/@Value='update'">
+            <THEN>
+              <MODIFY_DOCUMENT Name="OPT_OUT_NOT_FOUND" ServiceName="BCM_MASTER" AssignToVar="var2">
+                <DOCUMENT_CONTEXT>
+                  <PE_OPTOUT_ID Value="{$opt_id/@Value}" MatchBy="EQUAL"/>
+                </DOCUMENT_CONTEXT>
+                <UPDATE_PROPERTIES>
+                  <GVN_NAME Value="{$thisParam/GVN_NAME/@Value}"/>
+                  <MID_NAME Value="{$thisParam/MID_NAME/@Value}"/>
+                  <FAMLY_NAME Value="{$thisParam/FAMLY_NAME/@Value}"/>
+                  <EMAIL_ADDR_TXT Value="{$thisParam/EMAIL_ADDR_TXT/@Value}"/>
+                  <FULL_PHONE_NUM Value="{$thisParam/FULL_PHONE_NUM/@Value}"/>
+                  <SRC_ADDR_LINE_1_TXT Value="{$thisParam/ADDR_LINE_1_TXT/@Value}"/>
+                  <SRC_ADDR_LINE_2_TXT Value="{$thisParam/ADDR_LINE_2_TXT/@Value}"/>
+                  <SRC_ADDR_LINE_3_TXT Value="{$thisParam/ADDR_LINE_3_TXT/@Value}"/>
+                  <SRC_CITY_NAME Value="{$thisParam/CITY_NAME/@Value}"/>
+                  <SRC_POSTAL_AREA_CODE Value="{$thisParam/POSTL_AREA_CODE/@Value}"/>
+                  <SRC_TERR_NAME Value="{$thisParam/TERR_NAME/@Value}"/>
+                  <SRC_CNTRY_NAME Value="{$thisParam/CNTRY_NAME/@Value}"/>
+                  <MATCH_FLG Value="N"/>
+                  <NATIONAL_ID_NBR Value="{$thisParam/NATIONAL_ID_NBR/@Value}"/>
+                  <!--LEGAL_ENT_NBR Value="{$thisParam/LEGAL_ENT_NBR/@Value}" /-->
+                </UPDATE_PROPERTIES>
+              </MODIFY_DOCUMENT>
+              <IF_TEST Test="$var2/@Status='Success'">
+                <THEN>
+                  <SET Var="msg" FromValue="Record Modified Successfully."/>
+                </THEN>
+              </IF_TEST>
+              <IF_TEST Test="$var2/@Status='Error'">
+                <THEN>
+                  <SET Var="msg" FromValue="{$var2/@Description}"/>
+                </THEN>
+              </IF_TEST>
+            </THEN>
+          </IF_TEST>
+          <TO_DOCVAR AssignToVar="thisReturn">
+            <root/>
+          </TO_DOCVAR>
+          <IF_TEST Test="$userAction='back'">
+            <THEN>
+              <APPEND_TO_XML DocVar="thisReturn">
+                <TO_XML SelectList="$thisParam/*"/>
+              </APPEND_TO_XML>
+            </THEN>
+          </IF_TEST>
+        </action>
+      </post_actions>
+      <if_cond Value="$userAction ='save'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Create_opt_out" Description="Save"/>
+        </next_nodes>
+      </if_cond>
+      <else_if_cond Value="$userAction ='back'">
+        <next_nodes OutputVar="{outputXml,xml}"/>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='update'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="Create_opt_out" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="$userAction ='Back'">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done2" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+      <else_if_cond Value="true()">
+        <next_nodes OutputVar="{outputXml,xml}">
+          <next_node Name="done2" Description=""/>
+        </next_nodes>
+      </else_if_cond>
+    </ui_form2>
+    <done Name="done2">
+      <actions/>
+      <next_nodes/>
+    </done>
+  </nodes>
+  <mgcview>
+    <mgcdashboard location="10,10"/>
+    <mgcnodes>
+      <start0 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="301,192">
+        <iconProps iconfile="z1start.gif"/>
+      </start0>
+      <Create_opt_out font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="392,201" size="1364,684">
+        <iconProps iconfile="x1age80.gif"/>
+      </Create_opt_out>
+      <done2 font="Times New Roman,0,9" componentConnect="true" componentIconBorder="false" componentTextColor="80,80,80" componentBorderColor="255,255,255" freeze="false" visible="true" fade="false" fadeConnectors="false" shapeKey="ICONISH" snapPointKey="REGULAR" leadingEdge="5" trailingEdge="5" topGap="3" bottomGap="2" location="506,182">
+        <iconProps iconfile="z1end.gif"/>
+      </done2>
+    </mgcnodes>
+    <mgcconnectors>
+      <start0>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="346,214" endpoint="392,223" ctrlRect1="378,212,4,4" ctrlRect2="355,221,4,4"/>
+      </start0>
+      <Create_opt_out>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="414,246" endpoint="437,223" ctrlRect1="412,319,4,4" ctrlRect2="459,297,4,4" ctrlRect2Dirty="true" textRect="433,306,9,8">
+          <textProps text="Save"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="437,223" endpoint="437,223" ctrlRect1="510,221,4,4" ctrlRect2="534,335,4,4" ctrlRect2Dirty="true" textRect="519,276,11,8">
+          <textProps text="Update"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="414,201" endpoint="506,204" ctrlRect1="451,83,4,4" ctrlRect2="435,202,4,4" ctrlRect1Dirty="true" textRect="433,140,24,8">
+          <textProps text="$userAction ='Back'"/>
+        </nextNodeView>
+        <nextNodeView wavyConnector="true" connectorTextColor="0,0,0" connectorColor="0,178,178" connStartPointFill="false" connEndPointFill="true" connStartPointOval="true" draggable="true" startpoint="437,223" endpoint="506,204" ctrlRect1="514,259,4,4" ctrlRect2="455,213,4,4" ctrlRect1Dirty="true" ctrlRect2Dirty="true"/>
+      </Create_opt_out>
+    </mgcconnectors>
+    <mgctexts/>
+  </mgcview>
+  <shutdown_handler>
+    <pre_actions>
+      <action/>
+    </pre_actions>
+    <post_actions>
+      <action/>
+    </post_actions>
+    <checkcondition Value=""/>
+  </shutdown_handler>
+</workflow>

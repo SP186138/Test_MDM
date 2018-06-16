@@ -1,0 +1,482 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENTS>
+  <!--
+
+Copyright (c) 2009 by Teradata Corporation.
+
+All Rights Reserved.
+
+Teradata CONFIDENTIAL AND TRADE SECRET
+
+-->
+  <DEFINE_METHOD Name="ruleGDPRDataAccessProcess">
+    <!--**********************************************************************************************************
+
+*
+
+*		Created Date	: June 08, 2017
+
+*		Created By   	: Ankita Sadhwani
+
+*
+
+**********************************************************************************************************-->
+    <RULE>
+      <ACTION>
+        <!--Hardcoded thisParam below for the LoadId for testing-->
+        <EXECUTE_SHELL_COMMAND Value="del MDM_LOAD_CONTROL_GDPR_DA.err" AssignToVar="errStatus"/>
+        <IF_TEST Test="$errStatus/@ShellReturnValue != 0">
+          <THEN>
+            <EXECUTE_SQL_QUERY Value="UPDATE GDPR_RQST SET GDPR_RQST_STATUS_CD= CASE WHEN GDPR_RQST_TYPE_CD IN ('DA','DP') THEN 'PR' WHEN GDPR_RQST_TYPE_CD IN ('DH') THEN 'PA' ELSE GDPR_RQST_STATUS_CD END WHERE GDPR_CASE_ID='{$curCase/GDPR_CASE_ID/@Value}' AND GDPR_RQST_TYPE_CD IN ('DA','DP','DH');" AssignToVar="resUpd" HandleException="true"/>
+            <EXECUTE_SQL_QUERY Value="UPDATE ETL_CTRL.LOAD_CONTROL SET EDW_LOAD_STATUS='Failed', EDW_LOAD_ENDTS=CURRENT_TIMESTAMP(0) WHERE LOAD_ID={$thisParam/LoadId/@Value}" AssignToVar="resUpd" HandleException="true"/>
+            <SET Var="Description" FromValue="{$resUpd/@ShellReturnValue}"/>
+            <REQUEST Name="emailOnErrorNode" ServiceName="BCM_MASTER">
+              <LoadId Value="{$thisParam/LoadId/@Value}"/>
+              <Subject Value="GDPR Data Access Failure"/>
+              <Short_Description Value="{$Description/@Value}"/>
+              <Description Value="Following Load Id :{$thisParam/LoadId/@Value} for GDPR Case id: {$curCase/GDPR_CASE_ID/@Value} failed. Please verify the png_master.log and xserver.log at E:\Teradata\MDM\3.05.02\custom\pngrelease3\log on the MDM server."/>
+              <SubCategory Value="GDPR Data Access Error"/>
+              <RuleName Value="ruleGDPRDataAccessProcess"/>
+            </REQUEST>
+          </THEN>
+          <ELSE>
+            <EXECUTE_SQL_QUERY Value="SEL DISTINCT GDPR_CASE_ID FROM  ICRM_STAGE.GDPR_DATA_ACCESS_STG WHERE LOAD_ID IN ({$thisParam/LoadId/@Value});" AssignToVar="resSrcCase" HandleException="true" ReturnRowCount="yes"/>
+            <IF_TEST Test="$resSrcCase/@TotalRowCount > 0">
+              <THEN>
+                <FOR_EACH SelectList="$resSrcCase/SQL_RESULT" CurrentElement="curCase">
+                  <!--Below command delete all the files from the current case id folder-->
+                  <EXECUTE_SHELL_COMMAND Value="del E:\Teradata\MDM\3.05.02\custom\pngrelease3\data\GDPR\DataAccess\{$curCase/GDPR_CASE_ID/@Value}\*.* /s /q" AssignToVar="delAllFiles"/>
+                  <SET Var="CASE_ID" FromValue="{$curCase/GDPR_CASE_ID/@Value}"/>
+                  <EXECUTE_SHELL_COMMAND Value="mkdir E:\Teradata\MDM\3.05.02\custom\pngrelease3\data\GDPR\DataAccess\{$curCase/GDPR_CASE_ID/@Value}" AssignToVar="errStatus_dir"/>
+                  <EXEC_PARALLEL Mode="Sync" Transaction="true" AssignToVar="Parallel">
+                    <EXECUTE_SQL_QUERY AssignToVar="resCase" Value=" SEL  DISTINCT A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID,B.LEGAL_ENT_NBR FROM ICRM_STAGE.GDPR_DATA_ACCESS_STG A JOIN MDM.MKTNG_PGM B ON A.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR WHERE LOAD_ID IN({$thisParam/LoadId/@Value}) AND GDPR_CASE_ID='{$curCase/GDPR_CASE_ID/@Value}'" HandleException="true"/>
+                    <EXECUTE_SQL_QUERY AssignToVar="otherResultsTemp" Value="SELECT A.*,B.MKTNG_PGM_DESC,C.LANG_NAME FROM MDM.REGIS_PRSNA A JOIN MDM.MKTNG_PGM B ON A.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR LEFT JOIN MDM.LANG C ON A.LANG_CODE=C.LANG_CODE WHERE (A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID) IN ( SEL  DISTINCT A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID FROM ICRM_STAGE.GDPR_DATA_ACCESS_STG A WHERE LOAD_ID IN({$thisParam/LoadId/@Value}) AND GDPR_CASE_ID='{$curCase/GDPR_CASE_ID/@Value}') ORDER BY A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID" HandleException="true"/>
+                    <EXECUTE_SQL_QUERY AssignToVar="ViewEMAILResults" Value="SELECT A.*,B.MKTNG_PGM_DESC,C.CNTCT_POINT_CATEG_NAME AS EMAIL_TYPE,A1.SUBSCRPTN_OPT_NAME,B1.SUBSCRPTN_OPT_FREQ_TXT,CASE WHEN A.SUBSCRPTN_OPT_IND ='I' THEN 'Opt-In' WHEN A.SUBSCRPTN_OPT_IND ='O' THEN 'Opt-Out' WHEN A.SUBSCRPTN_OPT_IND ='R' THEN 'Retention-Opt' END AS SUBSCRPTN_OPT_IND_NAME FROM MDM.REGIS_PRSNA_EMAIL_ADDR A JOIN MDM.MKTNG_PGM B ON A.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR LEFT JOIN MDM.CNTCT_POINT_CATEG C ON A.CNTCT_POINT_CATEG_CODE=C.CNTCT_POINT_CATEG_CODE LEFT JOIN SUBSCRPTN_OPT A1 ON A.SUBSCRPTN_OPT_NBR=A1.SUBSCRPTN_OPT_NBR AND A.MKTNG_PGM_NBR=A1.MKTNG_PGM_NBR LEFT JOIN SUBSCRPTN_OPT_TYPE B1 ON A.SUBSCRPTN_OPT_NBR=B1.SUBSCRPTN_OPT_NBR AND A.MKTNG_PGM_NBR=B1.MKTNG_PGM_NBR AND B1.CNTCT_POINT_CATEG_CODE=A.CNTCT_POINT_CATEG_CODE WHERE (A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID) IN ( SEL  DISTINCT A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID FROM ICRM_STAGE.GDPR_DATA_ACCESS_STG A WHERE LOAD_ID IN({$thisParam/LoadId/@Value}) AND GDPR_CASE_ID='{$curCase/GDPR_CASE_ID/@Value}') ORDER BY A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID;" HandleException="true"/>
+                    <EXECUTE_SQL_QUERY AssignToVar="ViewPHONEResults" Value="SELECT A.*,B.MKTNG_PGM_DESC,C.CNTCT_POINT_CATEG_NAME AS PHONE_TYPE,A1.SUBSCRPTN_OPT_NAME,B1.SUBSCRPTN_OPT_FREQ_TXT,CASE WHEN A.SUBSCRPTN_OPT_IND ='I' THEN 'Opt-In' WHEN A.SUBSCRPTN_OPT_IND ='O' THEN 'Opt-Out' WHEN A.SUBSCRPTN_OPT_IND ='R' THEN 'Retention-Opt' END AS SUBSCRPTN_OPT_IND_NAME FROM MDM.REGIS_PRSNA_PHONE A JOIN MDM.MKTNG_PGM B ON A.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR LEFT JOIN MDM.CNTCT_POINT_CATEG C ON A.CNTCT_POINT_CATEG_CODE=C.CNTCT_POINT_CATEG_CODE LEFT JOIN SUBSCRPTN_OPT A1 ON A.SUBSCRPTN_OPT_NBR=A1.SUBSCRPTN_OPT_NBR AND A.MKTNG_PGM_NBR=A1.MKTNG_PGM_NBR LEFT JOIN SUBSCRPTN_OPT_TYPE B1 ON A.SUBSCRPTN_OPT_NBR=B1.SUBSCRPTN_OPT_NBR AND A.MKTNG_PGM_NBR=B1.MKTNG_PGM_NBR AND B1.CNTCT_POINT_CATEG_CODE=A.CNTCT_POINT_CATEG_CODE WHERE (A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID) IN ( SEL  DISTINCT A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID FROM ICRM_STAGE.GDPR_DATA_ACCESS_STG A WHERE LOAD_ID IN({$thisParam/LoadId/@Value}) AND GDPR_CASE_ID='{$curCase/GDPR_CASE_ID/@Value}') ORDER BY A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID;" HandleException="true"/>
+                    <EXECUTE_SQL_QUERY AssignToVar="ViewADDRESSResults" Value="SELECT A.*,B.MKTNG_PGM_DESC,C.CNTCT_POINT_CATEG_NAME AS ADDRESS_TYPE,A1.SUBSCRPTN_OPT_NAME,B1.SUBSCRPTN_OPT_FREQ_TXT,CASE WHEN A.SUBSCRPTN_OPT_IND ='I' THEN 'Opt-In' WHEN A.SUBSCRPTN_OPT_IND ='O' THEN 'Opt-Out' WHEN A.SUBSCRPTN_OPT_IND ='R' THEN 'Retention-Opt' END AS SUBSCRPTN_OPT_IND_NAME,COALESCE(A.ADDR_LINE_1_TXT,'') ||  ' ' || COALESCE(A.ADDR_LINE_2_TXT,'') ||   ' ' ||COALESCE(A.CITY_NAME,'') ||  ' ' ||COALESCE(A.POSTL_AREA_CODE,'') AS FULL_ADDRESS,E.CNTRY_DESC FROM MDM.REGIS_PRSNA_POSTL_ADDR A JOIN MDM.MKTNG_PGM B ON A.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR LEFT JOIN MDM.CNTCT_POINT_CATEG C ON A.CNTCT_POINT_CATEG_CODE=C.CNTCT_POINT_CATEG_CODE LEFT JOIN SUBSCRPTN_OPT A1 ON A.SUBSCRPTN_OPT_NBR=A1.SUBSCRPTN_OPT_NBR AND A.MKTNG_PGM_NBR=A1.MKTNG_PGM_NBR LEFT JOIN SUBSCRPTN_OPT_TYPE B1 ON A.SUBSCRPTN_OPT_NBR=B1.SUBSCRPTN_OPT_NBR AND A.MKTNG_PGM_NBR=B1.MKTNG_PGM_NBR AND B1.CNTCT_POINT_CATEG_CODE=A.CNTCT_POINT_CATEG_CODE LEFT JOIN CNTRY E ON A.CNTRY_CODE=E.CNTRY_CODE WHERE (A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID) IN ( SEL  DISTINCT A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID FROM ICRM_STAGE.GDPR_DATA_ACCESS_STG A WHERE LOAD_ID IN({$thisParam/LoadId/@Value}) AND GDPR_CASE_ID='{$curCase/GDPR_CASE_ID/@Value}') ORDER BY A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID;" HandleException="true"/>
+                    <EXECUTE_SQL_QUERY AssignToVar="ViewSOCIALResults" Value="SELECT A.*,B.MKTNG_PGM_DESC,C.CNTCT_POINT_CATEG_NAME AS SOCIAL_TYPE,A1.SUBSCRPTN_OPT_NAME,B1.SUBSCRPTN_OPT_FREQ_TXT,CASE WHEN A.SUBSCRPTN_OPT_IND ='I' THEN 'Opt-In' WHEN A.SUBSCRPTN_OPT_IND ='O' THEN 'Opt-Out' WHEN A.SUBSCRPTN_OPT_IND ='R' THEN 'Retention-Opt' END AS SUBSCRPTN_OPT_IND_NAME FROM MDM.REGIS_PRSNA_SOC_NET_ACCT A JOIN MDM.MKTNG_PGM B ON A.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR LEFT JOIN MDM.CNTCT_POINT_CATEG C ON A.CNTCT_POINT_CATEG_CODE=C.CNTCT_POINT_CATEG_CODE LEFT JOIN SUBSCRPTN_OPT A1 ON A.SUBSCRPTN_OPT_NBR=A1.SUBSCRPTN_OPT_NBR AND A.MKTNG_PGM_NBR=A1.MKTNG_PGM_NBR LEFT JOIN SUBSCRPTN_OPT_TYPE B1 ON A.SUBSCRPTN_OPT_NBR=B1.SUBSCRPTN_OPT_NBR AND A.MKTNG_PGM_NBR=B1.MKTNG_PGM_NBR AND B1.CNTCT_POINT_CATEG_CODE=A.CNTCT_POINT_CATEG_CODE WHERE (A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID) IN ( SEL  DISTINCT A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID FROM ICRM_STAGE.GDPR_DATA_ACCESS_STG A WHERE LOAD_ID IN({$thisParam/LoadId/@Value}) AND GDPR_CASE_ID='{$curCase/GDPR_CASE_ID/@Value}') ORDER BY A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID;" HandleException="true"/>
+                    <EXECUTE_SQL_QUERY AssignToVar="babyResults" Value="SELECT A.*,B.MKTNG_PGM_DESC FROM MDM.DPEND A JOIN MDM.MKTNG_PGM B ON A.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR WHERE (A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID) IN ( SEL  DISTINCT A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID FROM ICRM_STAGE.GDPR_DATA_ACCESS_STG A WHERE LOAD_ID IN({$thisParam/LoadId/@Value}) AND GDPR_CASE_ID='{$curCase/GDPR_CASE_ID/@Value}') ORDER BY A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID" HandleException="true"/>
+                    <EXECUTE_SQL_QUERY Value="SELECT P.REGIS_PRSNA_ID, P.MKTNG_PGM_NBR, P.PET_SEQ_NBR, P.PET_TYPE_CODE, P.PET_BREED_CODE,P.PET_NAME, P.PET_GENDR_IND, P.PET_BRTH_DATE, P.PET_AGE_NBR, P.DECEASED_IND, P.LEGAL_ENT_NBR, PT.PET_TYPE_NAME, PB.PET_BREED_NAME, PBS.BREED_SIZE_NAME,B.MKTNG_PGM_DESC From MDM.PET P LEFT JOIN PET_TYPE PT ON P.PET_TYPE_CODE  = PT.PET_TYPE_CODE LEFT JOIN PET_BREED PB ON P.PET_BREED_CODE  = PB.PET_BREED_CODE LEFT JOIN PET_BREED_SIZE PBS ON PB.BREED_SIZE_CODE  = PBS.BREED_SIZE_CODE JOIN MKTNG_PGM B ON P.MKTNG_PGM_NBR=B.MKTNG_PGM_NBR WHERE (P.MKTNG_PGM_NBR,P.REGIS_PRSNA_ID) IN ( SEL  DISTINCT A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID FROM ICRM_STAGE.GDPR_DATA_ACCESS_STG A WHERE LOAD_ID IN({$thisParam/LoadId/@Value}) AND GDPR_CASE_ID='{$curCase/GDPR_CASE_ID/@Value}') ORDER BY P.MKTNG_PGM_NBR,P.REGIS_PRSNA_ID" AssignToVar="petResults"/>
+                    <EXECUTE_SQL_QUERY AssignToVar="petDetails" Value="SEL REGIS_PRSNA_ID,a.MKTNG_PGM_NBR,PET_TRT_SEQ_NBR,a.TRT_NBR,PET_TRT_TXT,PET_TRT_DATE,                    TRT_NAME,                    'PET' AS TRAIT_TYPE,b1.MKTNG_PGM_DESC FROM PET_TRT A                    LEFT JOIN TRT B                    ON A.TRT_NBR=B.TRT_NBR                    JOIN MKTNG_PGM B1 ON A.MKTNG_PGM_NBR=B1.MKTNG_PGM_NBR WHERE  (A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID) IN ( SEL  DISTINCT A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID FROM ICRM_STAGE.GDPR_DATA_ACCESS_STG A WHERE LOAD_ID IN({$thisParam/LoadId/@Value}) AND GDPR_CASE_ID='{$curCase/GDPR_CASE_ID/@Value}') AND (A.TRT_NBR,a.MKTNG_PGM_NBR) IN (SEL TRT_NBR,MKTNG_PGM_NBR FROM MKTNG_PGM_TRAIT_MAP WHERE CNSMR_CLCT_IND='Y') ORDER BY A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID;" HandleException="true" ReturnRowCount="yes"/>
+                    <EXECUTE_SQL_QUERY AssignToVar="prsnaDetails" Value="SELECT REGIS_PRSNA_ID,a.MKTNG_PGM_NBR,PRSNA_TRT_SEQ_NBR,a.TRT_NBR,PRSNA_TRT_TXT,PRSNA_TRT_DATE,                    TRT_NAME,                    'PRSNA' AS TRAIT_TYPE,b1.MKTNG_PGM_DESC FROM PRSNA_TRT A                    LEFT JOIN TRT B                    ON A.TRT_NBR=B.TRT_NBR  JOIN MKTNG_PGM B1 ON A.MKTNG_PGM_NBR=B1.MKTNG_PGM_NBR WHERE  (A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID) IN ( SEL  DISTINCT A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID FROM ICRM_STAGE.GDPR_DATA_ACCESS_STG A WHERE LOAD_ID IN({$thisParam/LoadId/@Value}) AND GDPR_CASE_ID='{$curCase/GDPR_CASE_ID/@Value}') AND (A.TRT_NBR,a.MKTNG_PGM_NBR) IN  (SEL TRT_NBR,MKTNG_PGM_NBR FROM MKTNG_PGM_TRAIT_MAP WHERE CNSMR_CLCT_IND='Y') ORDER BY A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID;" HandleException="true" ReturnRowCount="yes"/>
+                    <EXECUTE_SQL_QUERY AssignToVar="dpendDetails" Value="SELECT REGIS_PRSNA_ID,a.MKTNG_PGM_NBR,DPEND_TRT_SEQ_NBR,a.TRT_NBR,DPEND_TRT_TXT,DPEND_TRT_DATE,                    TRT_NAME,                    'DPEND' AS TRAIT_TYPE,b1.MKTNG_PGM_DESC FROM DPEND_TRT A                    LEFT JOIN TRT B                    ON A.TRT_NBR=B.TRT_NBR                                              JOIN MKTNG_PGM B1 ON A.MKTNG_PGM_NBR=B1.MKTNG_PGM_NBR WHERE (A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID) IN ( SEL  DISTINCT A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID FROM ICRM_STAGE.GDPR_DATA_ACCESS_STG A WHERE LOAD_ID IN({$thisParam/LoadId/@Value}) AND GDPR_CASE_ID='{$curCase/GDPR_CASE_ID/@Value}') AND (A.TRT_NBR,a.MKTNG_PGM_NBR) IN (SEL TRT_NBR,MKTNG_PGM_NBR FROM MKTNG_PGM_TRAIT_MAP WHERE CNSMR_CLCT_IND='Y') ORDER BY A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID;" HandleException="true" ReturnRowCount="yes"/>
+                    <EXECUTE_SQL_QUERY AssignToVar="consumerActionDetails" Value="sel A.MKTNG_PGM_NBR,REGIS_PRSNA_ID,CNSMR_ACTN_TYPE_CODE,CNSMR_ACTN_NUM,MKTNG_PGM_DESC,COUNT(*) AS NBR_OF_ACTNS from CNSMR_ACTN A                                         JOIN MKTNG_PGM B1 ON A.MKTNG_PGM_NBR=B1.MKTNG_PGM_NBR WHERE (A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID) IN ( SEL  DISTINCT A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID FROM ICRM_STAGE.GDPR_DATA_ACCESS_STG A WHERE LOAD_ID IN ({$thisParam/LoadId/@Value}) AND GDPR_CASE_ID='{$curCase/GDPR_CASE_ID/@Value}') GROUP BY 1,2,3,4,5 ORDER BY A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID;" HandleException="true"/>
+                    <EXECUTE_SQL_QUERY AssignToVar="loyaltyTierHist" Value="SEL A.*,B.REGIS_PRSNA_ID,MKTNG_PGM_DESC FROM  LYLTY_TIER_HIST A JOIN REGIS_PRSNA B ON a.LYLTY_ACCT_NUM=b.LYLTY_ACCT_NUM AND a.LYLTY_PGM_NBR=b.LYLTY_PGM_NBR AND a.MKTNG_PGM_NBR=b.MKTNG_PGM_NBR JOIN MKTNG_PGM B1 ON A.MKTNG_PGM_NBR=B1.MKTNG_PGM_NBR WHERE (B.MKTNG_PGM_NBR,B.REGIS_PRSNA_ID) IN ( SEL  DISTINCT A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID FROM ICRM_STAGE.GDPR_DATA_ACCESS_STG A WHERE LOAD_ID IN({$thisParam/LoadId/@Value}) AND GDPR_CASE_ID='{$curCase/GDPR_CASE_ID/@Value}') QUALIFY Row_Number() Over (PARTITION BY A.LYLTY_PGM_NBR,A.LYLTY_ACCT_NUM,A.MKTNG_PGM_NBR ORDER BY LOG_CREATION_DATETM DESC) = 1 ORDER BY b.MKTNG_PGM_NBR,b.REGIS_PRSNA_ID ;"/>
+                    <EXECUTE_SQL_QUERY AssignToVar="loyalty" Value="SEL A.*,B.REGIS_PRSNA_ID,MKTNG_PGM_DESC FROM  LYLTY_ACCT_STMT A JOIN REGIS_PRSNA B ON a.LYLTY_ACCT_NUM=b.LYLTY_ACCT_NUM AND a.LYLTY_PGM_NBR=b.LYLTY_PGM_NBR AND a.MKTNG_PGM_NBR=b.MKTNG_PGM_NBR JOIN MKTNG_PGM B1 ON A.MKTNG_PGM_NBR=B1.MKTNG_PGM_NBR WHERE (B.MKTNG_PGM_NBR,B.REGIS_PRSNA_ID) IN ( SEL  DISTINCT A.MKTNG_PGM_NBR,A.REGIS_PRSNA_ID FROM ICRM_STAGE.GDPR_DATA_ACCESS_STG A WHERE LOAD_ID IN({$thisParam/LoadId/@Value}) AND GDPR_CASE_ID='{$curCase/GDPR_CASE_ID/@Value}') QUALIFY ROW_NUMBER() OVER (PARTITION BY A.LYLTY_PGM_NBR,A.LYLTY_ACCT_NUM,A.MKTNG_PGM_NBR ORDER BY LYLTY_ACCT_STMT_DATE DESC) = 1 ORDER BY b.MKTNG_PGM_NBR,b.REGIS_PRSNA_ID;"/>
+                  </EXEC_PARALLEL>
+                  <IF_TEST Test="$Parallel/@ParallelJobIsError = 'true'">
+                    <THEN>
+                      <EXECUTE_SQL_QUERY Value="UPDATE ETL_CTRL.LOAD_CONTROL SET EDW_LOAD_STATUS='Failed', EDW_LOAD_ENDTS=CURRENT_TIMESTAMP(0) WHERE LOAD_ID={$thisParam/LoadId/@Value}" AssignToVar="resUpd"/>
+                      <EXECUTE_SQL_QUERY Value="UPDATE GDPR_RQST SET GDPR_RQST_STATUS_CD= CASE WHEN GDPR_RQST_TYPE_CD IN ('DA','DP') THEN 'PR' WHEN GDPR_RQST_TYPE_CD IN ('DH') THEN 'PA' ELSE GDPR_RQST_STATUS_CD END WHERE GDPR_CASE_ID='{$curCase/GDPR_CASE_ID/@Value}' AND GDPR_RQST_TYPE_CD IN ('DA','DP','DH');" AssignToVar="resUpd" HandleException="true"/>
+                      <SET Var="Description" FromValue="{$errStatus/@ShellReturnValue}"/>
+                      <REQUEST Name="emailOnErrorNode" ServiceName="BCM_MASTER">
+                        <LoadId Value="{$thisParam/LoadId/@Value}"/>
+                        <Subject Value="GDPR Data Access Failure!!"/>
+                        <Short_Description Value="{$Description/@Value}"/>
+                        <Description Value="Following Load Id :{$thisParam/LoadId/@Value} for GDPR Case id: {$curCase/GDPR_CASE_ID/@Value} failed while extracting data. Please check MDM logs for more details."/>
+                        <SubCategory Value="GDPR Data Access Error"/>
+                        <RuleName Value="ruleGDPRDataAccessProcess"/>
+                      </REQUEST>
+                    </THEN>
+                    <ELSE>
+                      <TO_DOCVAR AssignToVar="trtDetails">
+                        <ROOT>
+                          <TO_XML SelectList="$Parallel/RESPONSE[9]/*"/>
+                          <TO_XML SelectList="$Parallel/RESPONSE[10]/*"/>
+                          <TO_XML SelectList="$Parallel/RESPONSE[11]/*"/>
+                        </ROOT>
+                      </TO_DOCVAR>
+                      <TO_DOCVAR AssignToVar="otherResultsRaw">
+                        <ROOT>
+                          <V_REGIS_PRSNA>
+                            <TO_XML SelectList="$Parallel/RESPONSE[2]/*"/>
+                            <EMAIL_RESULTS>
+                              <TO_XML SelectList="$Parallel/RESPONSE[3]/*"/>
+                            </EMAIL_RESULTS>
+                            <PHONE_RESULTS>
+                              <TO_XML SelectList="$Parallel/RESPONSE[4]/*"/>
+                            </PHONE_RESULTS>
+                            <ADDRESS_RESULTS>
+                              <TO_XML SelectList="$Parallel/RESPONSE[5]/*"/>
+                            </ADDRESS_RESULTS>
+                            <SOCIAL_RESULTS>
+                              <TO_XML SelectList="$Parallel/RESPONSE[6]/*"/>
+                            </SOCIAL_RESULTS>
+                            <DPEND>
+                              <TO_XML SelectList="$Parallel/RESPONSE[7]/*"/>
+                            </DPEND>
+                            <PET_RESULT>
+                              <TO_XML SelectList="$Parallel/RESPONSE[8]/*"/>
+                            </PET_RESULT>
+                            <TRAIT_DETAILS>
+                              <TO_XML SelectList="$trtDetails/*"/>
+                            </TRAIT_DETAILS>
+                            <CONSUMER_ACTIONS>
+                              <TO_XML SelectList="$Parallel/RESPONSE[12]/*"/>
+                            </CONSUMER_ACTIONS>
+                            <LOYALTY_TIER_HISTORY>
+                              <TO_XML SelectList="$Parallel/RESPONSE[13]/*"/>
+                            </LOYALTY_TIER_HISTORY>
+                            <LOYALTY>
+                              <TO_XML SelectList="$Parallel/RESPONSE[14]/*"/>
+                            </LOYALTY>
+                          </V_REGIS_PRSNA>
+                        </ROOT>
+                      </TO_DOCVAR>
+                      <TO_DOCVAR AssignToVar="printToPdf">
+                        <ROOT>
+                          <MESSAGE>
+                            <SET Var="GDPRFilePath" FromValue="\custom\pngrelease3\GDPRDetails.xsl"/>
+                            <XML_DATA XsltFileName="{concat($MDM_Install_Dir,$GDPRFilePath)}">
+                              <REPORT>
+                                <TO_XML SelectList="$otherResultsRaw/*"/>
+                              </REPORT>
+                            </XML_DATA>
+                          </MESSAGE>
+                        </ROOT>
+                      </TO_DOCVAR>
+                      <!--<PRINT_TO_FILE Value="{$printToPdf}" Beautify="yes" File="E:\Teradata\MDM\3.05.02\custom\pngrelease3\data\GDPR\{$curCase/GDPR_CASE_ID/@Value}\{$curCase/GDPR_CASE_ID/@Value}.txt" NewFile="yes" SameLine="no"/>-->
+                      <STORE_XML_FILE FromSelect="$printToPdf" Value="E:\Teradata\MDM\3.05.02\custom\pngrelease3\data\GDPR\DataAccess\{$curCase/GDPR_CASE_ID/@Value}\{$curCase/GDPR_CASE_ID/@Value}.txt" Beautify="true" NewFile="yes" SameLine="no"/>
+                      <EXECUTE_SHELL_COMMAND AssignToVar="GDPRResults" Value="msxsl E:\Teradata\MDM\3.05.02\custom\pngrelease3\data\GDPR\DataAccess\{$curCase/GDPR_CASE_ID/@Value}\{$curCase/GDPR_CASE_ID/@Value}.txt E:\Teradata\MDM\3.05.02\custom\pngrelease3\GDPRDetails.xsl -o E:\Teradata\MDM\3.05.02\custom\pngrelease3\data\GDPR\DataAccess\{$curCase/GDPR_CASE_ID/@Value}\{$curCase/GDPR_CASE_ID/@Value}.html" Synchronous="true" HandleException="true"/>
+                      <IF_TEST Test="$GDPRResults/@ShellReturnValue != 0">
+                        <THEN>
+                          <EXECUTE_SQL_QUERY Value="UPDATE ETL_CTRL.LOAD_CONTROL SET EDW_LOAD_STATUS='Failed', EDW_LOAD_ENDTS=CURRENT_TIMESTAMP(0) WHERE LOAD_ID={$thisParam/LoadId/@Value}" AssignToVar="resUpd"/>
+                          <EXECUTE_SQL_QUERY Value="UPDATE GDPR_RQST SET GDPR_RQST_STATUS_CD= CASE WHEN GDPR_RQST_TYPE_CD IN ('DA','DP') THEN 'PR' WHEN GDPR_RQST_TYPE_CD IN ('DH') THEN 'PA' ELSE GDPR_RQST_STATUS_CD END WHERE GDPR_CASE_ID='{$curCase/GDPR_CASE_ID/@Value}' AND GDPR_RQST_TYPE_CD IN ('DA','DP','DH');" AssignToVar="resUpd" HandleException="true"/>
+                          <SET Var="Description" FromValue="{$errStatus/@ShellReturnValue}"/>
+                          <REQUEST Name="emailOnErrorNode" ServiceName="BCM_MASTER">
+                            <LoadId Value="{$thisParam/LoadId/@Value}"/>
+                            <Subject Value="GDPR Data Access Failure!!"/>
+                            <Short_Description Value="{$Description/@Value}"/>
+                            <Description Value="Following Load Id :{$thisParam/LoadId/@Value} for GDPR Case id: {$curCase/GDPR_CASE_ID/@Value} failed while generating HTML File. Please check MDM logs for more details."/>
+                            <SubCategory Value="GDPR Data Access Error"/>
+                            <RuleName Value="ruleGDPRDataAccessProcess"/>
+                          </REQUEST>
+                        </THEN>
+                        <ELSE>
+                          <EXECUTE_SQL_QUERY AssignToVar="getRqstTypeCd" Value="SEL GDPR_RQST_TYPE_CD FROM GDPR_RQST WHERE GDPR_CASE_ID IN ('{$curCase/GDPR_CASE_ID/@Value}')"/>
+                          <IF_TEST Test="$getRqstTypeCd/SQL_RESULT/GDPR_RQST_TYPE_CD/@Value='DA' or $getRqstTypeCd/SQL_RESULT/GDPR_RQST_TYPE_CD/@Value='DH'">
+                            <THEN>
+                              <EXECUTE_SQL_QUERY AssignToVar="currTime" Value="SELECT( CAST((current_timestamp (format 'YYYYMMDDHHMISS') ) AS VARCHAR(14))) AS CURRTIME" HandleException="true"/>
+                              <SET Var="currentTimestamp" FromValue="{$currTime/SQL_RESULT/CURRTIME/@Value}"/>
+                              <SET Var="pdfName" FromValue="1CP_DataAccess_{$curCase/GDPR_CASE_ID/@Value}_{$currentTimestamp}"/>
+                              <EXECUTE_SHELL_COMMAND AssignToVar="PDFResults" Value="wkhtmltopdf E:\Teradata\MDM\3.05.02\custom\pngrelease3\data\GDPR\DataAccess\{$curCase/GDPR_CASE_ID/@Value}\{$curCase/GDPR_CASE_ID/@Value}.html E:\Teradata\MDM\3.05.02\custom\pngrelease3\data\GDPR\DataAccess\{$curCase/GDPR_CASE_ID/@Value}\{$pdfName}.pdf" Synchronous="true" HandleException="true"/>
+                              <IF_TEST Test="$PDFResults/@ShellReturnValue !=0">
+                                <THEN>
+                                  <EXECUTE_SQL_QUERY Value="UPDATE ETL_CTRL.LOAD_CONTROL SET EDW_LOAD_STATUS='Failed', EDW_LOAD_ENDTS=CURRENT_TIMESTAMP(0) WHERE LOAD_ID={$thisParam/LoadId/@Value}" AssignToVar="resUpd"/>
+                                  <EXECUTE_SQL_QUERY Value="UPDATE GDPR_RQST SET GDPR_RQST_STATUS_CD= CASE WHEN GDPR_RQST_TYPE_CD IN ('DA','DP') THEN 'PR' WHEN GDPR_RQST_TYPE_CD IN ('DH') THEN 'PA' ELSE GDPR_RQST_STATUS_CD END WHERE GDPR_CASE_ID='{$curCase/GDPR_CASE_ID/@Value}' AND GDPR_RQST_TYPE_CD IN ('DA','DP','DH');" AssignToVar="resUpd" HandleException="true"/>
+                                  <SET Var="Description" FromValue="{$errStatus/@ShellReturnValue}"/>
+                                  <REQUEST Name="emailOnErrorNode" ServiceName="BCM_MASTER">
+                                    <LoadId Value="{$thisParam/LoadId/@Value}"/>
+                                    <Subject Value="GDPR Data Access Failure!!"/>
+                                    <Short_Description Value="{$Description/@Value}"/>
+                                    <Description Value="Following Load Id :{$thisParam/LoadId/@Value} for GDPR Case id: {$curCase/GDPR_CASE_ID/@Value} failed while generating PDF File. Please check MDM logs for more details."/>
+                                    <SubCategory Value="GDPR Data Access Error"/>
+                                    <RuleName Value="ruleGDPRDataAccessProcess"/>
+                                  </REQUEST>
+                                </THEN>
+                              </IF_TEST>
+                            </THEN>
+                            <ELSE>
+                              <IF_TEST Test="$getRqstTypeCd/SQL_RESULT/GDPR_RQST_TYPE_CD/@Value='DP'">
+                                <THEN>
+                                  <TO_DOCVAR AssignToVar="printToXML">
+                                    <RegistrationFile Name="1, CONSUMER PLACE CONSUMER DETAILS">
+                                      <Registrations/>
+                                    </RegistrationFile>
+                                  </TO_DOCVAR>
+                                  <FOR_EACH SelectList="$otherResultsRaw/V_REGIS_PRSNA/SQL_RESULT" CurrentElement="currRegistration">
+                                    <APPEND_TO_XML SelectList="$printToXML/Registrations">
+                                      <Registration>
+                                        <Registration>
+                                          <RegistrationId>{$currRegistration/REGIS_PRSNA_ID/@Value}</RegistrationId>
+                                          <MarketingProgramName>{$currRegistration/MKTNG_PGM_DESC/@Value}</MarketingProgramName>
+                                          <MarketingProgramNumber>{$currRegistration/MKTNG_PGM_NBR/@Value}</MarketingProgramNumber>
+                                          <GivenName>{$currRegistration/GVN_NAME/@Value}</GivenName>
+                                          <MiddleName>{$currRegistration/MID_NAME/@Value}</MiddleName>
+                                          <FamilyName>{$currRegistration/FAMLY_NAME/@Value}</FamilyName>
+                                          <FullName>{$currRegistration/FULL_NAME/@Value}</FullName>
+                                          <Birthdate>{$currRegistration/BRTH_DATE/@Value}</Birthdate>
+                                          <Gender>{$currRegistration/GENDR_IND/@Value}</Gender>
+                                          <UserName>{$currRegistration/CNSMR_USER_NAME/@Value}</UserName>
+                                          <Language>{$currRegistration/LANG_NAME/@Value}</Language>
+                                          <NationalIdNumber>{$currRegistration/NATIONAL_ID_NBR/@Value}</NationalIdNumber>
+                                        </Registration>
+                                      </Registration>
+                                    </APPEND_TO_XML>
+                                    <FOR_EACH CurrentElement="curr_1" SelectList="$otherResultsRaw/V_REGIS_PRSNA/ADDRESS_RESULTS/SQL_RESULT[REGIS_PRSNA_ID/@Value=$currRegistration/REGIS_PRSNA_ID/@Value]">
+                                      <APPEND_TO_XML SelectList="$printToXML/Registrations">
+                                        <Postals>
+                                          <Postal>
+                                            <RegistrationId>{$curr_1/REGIS_PRSNA_ID/@Value}</RegistrationId>
+                                            <MarketingProgramName>{$curr_1/MKTNG_PGM_DESC/@Value}</MarketingProgramName>
+                                            <MarketingProgramNumber>{$curr_1/MKTNG_PGM_NBR/@Value}</MarketingProgramNumber>
+                                            <SubscriptionID>{$curr_1/SUBSCRPTN_OPT_NBR/@Value}</SubscriptionID>
+                                            <SubscriptionText>{$curr_1/SUBSCRPTN_OPT_NAME/@Value}</SubscriptionText>
+                                            <SubscriptionOptIndicator>{$curr_1/SUBSCRPTN_OPT_IND/@Value}</SubscriptionOptIndicator>
+                                            <SubscriptionOptTimestamp>{$curr_1/CNSMR_CHCE_DATETM/@Value}</SubscriptionOptTimestamp>
+                                            <PostalAddress>{$curr_1/FULL_ADDRESS/@Value}</PostalAddress>
+                                            <Country>{$curr_1/CNTRY_DESC/@Value}</Country>
+                                          </Postal>
+                                        </Postals>
+                                      </APPEND_TO_XML>
+                                    </FOR_EACH>
+                                    <FOR_EACH CurrentElement="curr_2" SelectList="$otherResultsRaw/V_REGIS_PRSNA/DPEND/SQL_RESULT[REGIS_PRSNA_ID/@Value=$currRegistration/REGIS_PRSNA_ID/@Value]">
+                                      <APPEND_TO_XML SelectList="$printToXML/Registrations">
+                                        <Dependants>
+                                          <Dependant>
+                                            <RegistrationId>{$curr_2/REGIS_PRSNA_ID/@Value}</RegistrationId>
+                                            <MarketingProgramName>{$curr_2/MKTNG_PGM_DESC/@Value}</MarketingProgramName>
+                                            <MarketingProgramNumber>{$curr_2/MKTNG_PGM_NBR/@Value}</MarketingProgramNumber>
+                                            <SequenceNumber>{$curr_2/DPEND_SEQ_NBR/@Value}</SequenceNumber>
+                                            <DependantName>{$curr_2/DPEND_NAME/@Value}</DependantName>
+                                            <DependantBirthDate>{$curr_2/DPEND_BRTH_DATE/@Value}</DependantBirthDate>
+                                          </Dependant>
+                                        </Dependants>
+                                      </APPEND_TO_XML>
+                                    </FOR_EACH>
+                                    <FOR_EACH CurrentElement="curr_3" SelectList="$otherResultsRaw/V_REGIS_PRSNA/PET_RESULT/SQL_RESULT[REGIS_PRSNA_ID/@Value=$currRegistration/REGIS_PRSNA_ID/@Value]">
+                                      <APPEND_TO_XML SelectList="$printToXML/Registrations">
+                                        <Pets>
+                                          <Pet>
+                                            <RegistrationId>{$curr_3/REGIS_PRSNA_ID/@Value}</RegistrationId>
+                                            <MarketingProgramName>{$curr_3/MKTNG_PGM_DESC/@Value}</MarketingProgramName>
+                                            <MarketingProgramNumber>{$curr_3/MKTNG_PGM_NBR/@Value}</MarketingProgramNumber>
+                                            <SequenceNumber>{$curr_3/PET_SEQ_NBR/@Value}</SequenceNumber>
+                                            <PetName>{$curr_3/PET_TYPE_NAME/@Value}</PetName>
+                                            <PetBirthDate>{$curr_3/PET_BRTH_DATE/@Value}</PetBirthDate>
+                                          </Pet>
+                                        </Pets>
+                                      </APPEND_TO_XML>
+                                    </FOR_EACH>
+                                    <FOR_EACH CurrentElement="currPet_5" SelectList="$otherResultsRaw/V_REGIS_PRSNA/TRAIT_DETAILS/SQL_RESULT[REGIS_PRSNA_ID/@Value=$currRegistration/REGIS_PRSNA_ID/@Value]">
+                                      <IF_TEST Test="$currPet_5/TRAIT_TYPE/@Value='PET'">
+                                        <THEN>
+                                          <APPEND_TO_XML SelectList="$printToXML/Registrations">
+                                            <Traits>
+                                              <Trait>
+                                                <RegistrationId>{$currPet_5/REGIS_PRSNA_ID/@Value}</RegistrationId>
+                                                <MarketingProgramName>{$currPet_5/MKTNG_PGM_DESC/@Value}</MarketingProgramName>
+                                                <MarketingProgramNumber>{$currPet_5/MKTNG_PGM_NBR/@Value}</MarketingProgramNumber>
+                                                <SequenceNumber>{$currPet_5/PET_TRT_SEQ_NBR/@Value}</SequenceNumber>
+                                                <TraitNumber>{$currPet_5/TRT_NBR/@Value}</TraitNumber>
+                                                <TraitName>{$currPet_5/PET_TRT_NAME/@Value}</TraitName>
+                                                <TraitType>{$currPet_5/TRAIT_TYPE/@Value}</TraitType>
+                                                <TraitText>{$currPet_5/PET_TRT_TXT/@Value}</TraitText>
+                                                <TraitDate>{$currPet_5/PET_TRT_DATE/@Value}</TraitDate>
+                                              </Trait>
+                                            </Traits>
+                                          </APPEND_TO_XML>
+                                        </THEN>
+                                      </IF_TEST>
+                                    </FOR_EACH>
+                                    <FOR_EACH CurrentElement="currPrsna_5" SelectList="$otherResultsRaw/V_REGIS_PRSNA/TRAIT_DETAILS/SQL_RESULT[REGIS_PRSNA_ID/@Value=$currRegistration/REGIS_PRSNA_ID/@Value]">
+                                      <IF_TEST Test="$currPrsna_5/TRAIT_TYPE/@Value='PRSNA'">
+                                        <THEN>
+                                          <APPEND_TO_XML SelectList="$printToXML/Registrations">
+                                            <Traits>
+                                              <Trait>
+                                                <RegistrationId>{$currPrsna_5/REGIS_PRSNA_ID/@Value}</RegistrationId>
+                                                <MarketingProgramName>{$currPrsna_5/MKTNG_PGM_DESC/@Value}</MarketingProgramName>
+                                                <MarketingProgramNumber>{$currPrsna_5/MKTNG_PGM_NBR/@Value}</MarketingProgramNumber>
+                                                <SequenceNumber>{$currPrsna_5/PRSNA_TRT_SEQ_NBR/@Value}</SequenceNumber>
+                                                <TraitNumber>{$currPrsna_5/TRT_NBR/@Value}</TraitNumber>
+                                                <TraitName>{$currPrsna_5/PRSNA_TRT_NAME/@Value}</TraitName>
+                                                <TraitType>{$currPrsna_5/TRAIT_TYPE/@Value}</TraitType>
+                                                <TraitText>{$currPrsna_5/PRSNA_TRT_TXT/@Value}</TraitText>
+                                                <TraitDate>{$currPrsna_5/PRSNA_TRT_DATE/@Value}</TraitDate>
+                                              </Trait>
+                                            </Traits>
+                                          </APPEND_TO_XML>
+                                        </THEN>
+                                      </IF_TEST>
+                                    </FOR_EACH>
+                                    <FOR_EACH CurrentElement="currDpend_5" SelectList="$otherResultsRaw/V_REGIS_PRSNA/TRAIT_DETAILS/SQL_RESULT[REGIS_PRSNA_ID/@Value=$currRegistration/REGIS_PRSNA_ID/@Value]">
+                                      <IF_TEST Test="$currDpend_5/TRAIT_TYPE/@Value='PET'">
+                                        <THEN>
+                                          <APPEND_TO_XML SelectList="$printToXML/Registrations">
+                                            <Traits>
+                                              <Trait>
+                                                <RegistrationId>{$currDpend_5/REGIS_PRSNA_ID/@Value}</RegistrationId>
+                                                <MarketingProgramName>{$currDpend_5/MKTNG_PGM_DESC/@Value}</MarketingProgramName>
+                                                <MarketingProgramNumber>{$currDpend_5/MKTNG_PGM_NBR/@Value}</MarketingProgramNumber>
+                                                <SequenceNumber>{$currDpend_5/DPEND_TRT_TXT/@Value}</SequenceNumber>
+                                                <TraitNumber>{$currDpend_5/TRT_NBR/@Value}</TraitNumber>
+                                                <TraitName>{$currDpend_5/PRSNA_TRT_NAME/@Value}</TraitName>
+                                                <TraitType>{$currDpend_5/TRAIT_TYPE/@Value}</TraitType>
+                                                <TraitText>{$currDpend_5/DPEND_TRT_SEQ_NBR/@Value}</TraitText>
+                                                <TraitDate>{$currDpend_5/DPEND_TRT_DATE/@Value}</TraitDate>
+                                              </Trait>
+                                            </Traits>
+                                          </APPEND_TO_XML>
+                                        </THEN>
+                                      </IF_TEST>
+                                    </FOR_EACH>
+                                    <FOR_EACH CurrentElement="curr_6" SelectList="$otherResultsRaw/V_REGIS_PRSNA/EMAIL_RESULTS/SQL_RESULT[REGIS_PRSNA_ID/@Value=$currRegistration/REGIS_PRSNA_ID/@Value]">
+                                      <APPEND_TO_XML SelectList="$printToXML/Registrations">
+                                        <Emails>
+                                          <Email>
+                                            <RegistrationId>{$curr_6/REGIS_PRSNA_ID/@Value}</RegistrationId>
+                                            <MarketingProgramName>{$curr_6/MKTNG_PGM_DESC/@Value}</MarketingProgramName>
+                                            <MarketingProgramNumber>{$curr_6/MKTNG_PGM_NBR/@Value}</MarketingProgramNumber>
+                                            <SubscriptionID>{$curr_6/SUBSCRPTN_OPT_NBR/@Value}</SubscriptionID>
+                                            <SubscriptionText>{$curr_6/SUBSCRPTN_OPT_NAME/@Value}</SubscriptionText>
+                                            <SubscriptionOptIndicator>{$curr_6/SUBSCRPTN_OPT_IND/@Value}</SubscriptionOptIndicator>
+                                            <SubscriptionOptTimestamp>{$curr_6/CNSMR_CHCE_DATETM/@Value}</SubscriptionOptTimestamp>
+                                            <EmailAddress>{$curr_6/EMAIL_ADDR_TXT/@Value}</EmailAddress>
+                                          </Email>
+                                        </Emails>
+                                      </APPEND_TO_XML>
+                                    </FOR_EACH>
+                                    <FOR_EACH CurrentElement="curr_7" SelectList="$otherResultsRaw/V_REGIS_PRSNA/PHONE_RESULTS/SQL_RESULT[REGIS_PRSNA_ID/@Value=$currRegistration/REGIS_PRSNA_ID/@Value]">
+                                      <APPEND_TO_XML SelectList="$printToXML/Registrations">
+                                        <Phones>
+                                          <Phone>
+                                            <RegistrationId>{$curr_7/REGIS_PRSNA_ID/@Value}</RegistrationId>
+                                            <MarketingProgramName>{$curr_7/MKTNG_PGM_DESC/@Value}</MarketingProgramName>
+                                            <MarketingProgramNumber>{$curr_7/MKTNG_PGM_NBR/@Value}</MarketingProgramNumber>
+                                            <SubscriptionID>{$curr_7/SUBSCRPTN_OPT_NBR/@Value}</SubscriptionID>
+                                            <SubscriptionText>{$curr_7/SUBSCRPTN_OPT_NAME/@Value}</SubscriptionText>
+                                            <SubscriptionOptIndicator>{$curr_7/SUBSCRPTN_OPT_IND/@Value}</SubscriptionOptIndicator>
+                                            <SubscriptionOptTimestamp>{$curr_7/CNSMR_CHCE_DATETM/@Value}</SubscriptionOptTimestamp>
+                                            <PhoneNumber>{$curr_7/FULL_PHONE_NUM/@Value}</PhoneNumber>
+                                          </Phone>
+                                        </Phones>
+                                      </APPEND_TO_XML>
+                                    </FOR_EACH>
+                                    <FOR_EACH CurrentElement="curr_12" SelectList="$otherResultsRaw/V_REGIS_PRSNA/CONSUMER_ACTIONS/SQL_RESULT[REGIS_PRSNA_ID/@Value=$currRegistration/REGIS_PRSNA_ID/@Value]">
+                                      <APPEND_TO_XML SelectList="$printToXML/Registrations">
+                                        <ConsumerActions>
+                                          <ConsumerAction>
+                                            <RegistrationId>{$curr_12/REGIS_PRSNA_ID/@Value}</RegistrationId>
+                                            <MarketingProgramName>{$curr_12/MKTNG_PGM_DESC/@Value}</MarketingProgramName>
+                                            <MarketingProgramNumber>{$curr_12/MKTNG_PGM_NBR/@Value}</MarketingProgramNumber>
+                                            <ConsumerActionType>{$curr_12/CNSMR_ACTN_TYPE_CODE/@Value}</ConsumerActionType>
+                                            <ConsumerActionSubType>{$curr_12/CNSMR_ACTN_NUM/@Value}</ConsumerActionSubType>
+                                            <ConsumerActionSubType>{$curr_12/NBR_OF_ACTNS/@Value}</ConsumerActionSubType>
+                                          </ConsumerAction>
+                                        </ConsumerActions>
+                                      </APPEND_TO_XML>
+                                    </FOR_EACH>
+                                    <FOR_EACH CurrentElement="curr_14" SelectList="$otherResultsRaw/V_REGIS_PRSNA/LOYALTY_TIER_HISTORY/SQL_RESULT[REGIS_PRSNA_ID/@Value=$currRegistration/REGIS_PRSNA_ID/@Value]">
+                                      <APPEND_TO_XML SelectList="$printToXML/Registrations">
+                                        <LoyaltyTierHistories>
+                                          <LoyaltyTierHistory>
+                                            <RegistrationId>{$curr_14/REGIS_PRSNA_ID/@Value}</RegistrationId>
+                                            <MarketingProgramName>{$curr_14/MKTNG_PGM_DESC/@Value}</MarketingProgramName>
+                                            <MarketingProgramNumber>{$curr_14/MKTNG_PGM_NBR/@Value}</MarketingProgramNumber>
+                                            <LoyaltyAccountNumber>{$curr_14/LYLTY_ACCT_NUM/@Value}</LoyaltyAccountNumber>
+                                            <TierJoinDate>{$curr_14/TIER_JOIN_DATE/@Value}</TierJoinDate>
+                                            <TierExpiryDate>{$curr_14/TIER_EXPR_DATE/@Value}</TierExpiryDate>
+                                            <LoyaltyLevel>{$curr_14/LYLTY_LVL_CODE/@Value}</LoyaltyLevel>
+                                            <ProcessDate>{$curr_14/PROCESS_DATE/@Value}</ProcessDate>
+                                          </LoyaltyTierHistory>
+                                        </LoyaltyTierHistories>
+                                      </APPEND_TO_XML>
+                                    </FOR_EACH>
+                                    <FOR_EACH CurrentElement="curr_15" SelectList="$otherResultsRaw/V_REGIS_PRSNA/LOYALTY/SQL_RESULT[REGIS_PRSNA_ID/@Value=$currRegistration/REGIS_PRSNA_ID/@Value]">
+                                      <APPEND_TO_XML SelectList="$printToXML/Registrations">
+                                        <Loyalties>
+                                          <Loyalty>
+                                            <RegistrationId>{$curr_15/REGIS_PRSNA_ID/@Value}</RegistrationId>
+                                            <MarketingProgramName>{$curr_15/MKTNG_PGM_DESC/@Value}</MarketingProgramName>
+                                            <MarketingProgramNumber>{$curr_15/MKTNG_PGM_NBR/@Value}</MarketingProgramNumber>
+                                            <LoyaltyAccountNumber>{$curr_15/LYLTY_ACCT_NUM/@Value}</LoyaltyAccountNumber>
+                                            <PointBalance>{$curr_15/ENDG_PTS_QTY/@Value}</PointBalance>
+                                          </Loyalty>
+                                        </Loyalties>
+                                      </APPEND_TO_XML>
+                                    </FOR_EACH>
+                                  </FOR_EACH>
+                                  <EXECUTE_SQL_QUERY AssignToVar="currTime" Value="SELECT( CAST((current_timestamp (format 'YYYYMMDDHHMISS') ) AS VARCHAR(14))) AS CURRTIME" HandleException="true"/>
+                                  <SET Var="currentTimestamp" FromValue="{$currTime/SQL_RESULT/CURRTIME/@Value}"/>
+                                  <SET Var="xmlName" FromValue="1CP_DataPortability_{$curCase/GDPR_CASE_ID/@Value}_{$currentTimestamp}"/>
+                                  <PRINT_TO_FILE File="E:\Teradata\MDM\3.05.02\custom\pngrelease3\data\GDPR\DataAccess\{$curCase/GDPR_CASE_ID/@Value}\{$xmlName}.xml" NewFile="yes" SameLine="No" Value="{$printToXML}" Beautify="true"/>
+                                  <!--<STORE_XML_FILE FromSelect="$xml" Var="E:\Teradata\MDM\3.05.02\custom\pngrelease3\data\GDPR\{$curCase/GDPR_CASE_ID/@Value}\{$curCase/GDPR_CASE_ID/@Value}.xml" Beautify="true"/>-->
+                                  <!--Below command to move the file on ETL server using WINSCP-->
+                                </THEN>
+                              </IF_TEST>
+                            </ELSE>
+                          </IF_TEST>
+                          <EXECUTE_SHELL_COMMAND Value="del E:\Teradata\MDM\3.05.02\custom\pngrelease3\data\GDPR\DataAccess\{$curCase/GDPR_CASE_ID/@Value}\{$curCase/GDPR_CASE_ID/@Value}.txt" AssignToVar="errStatusTxt"/>
+                          <EXECUTE_SHELL_COMMAND Value="del E:\Teradata\MDM\3.05.02\custom\pngrelease3\data\GDPR\DataAccess\{$curCase/GDPR_CASE_ID/@Value}\{$curCase/GDPR_CASE_ID/@Value}.html" AssignToVar="errStatusHtml"/>
+                          <!--<SET Var="backSlash" FromValue="/"/>
+                      <SET Var="FSlash" FromValue="\"/>
+                      <SET Var="SFTPDirPathSynch" FromValue="{concat($backSlash,'data02',$backSlash,'GDPR_Case_Master',$backSlash,$curCase/GDPR_CASE_ID/@Value)}"/>
+                      <SET Var="filepathSynch" FromValue="{concat('E:',$FSlash,'Teradata',$FSlash,'MDM',$FSlash,'3.05.02',$FSlash,'custom',$FSlash,'pngrelease3',$FSlash,'data',$FSlash,'GDPR',$FSlash,$curCase/GDPR_CASE_ID/@Value)}"/>
+                      
+<EXECUTE_SHELL_COMMAND Value="E:\Teradata\MDM\3.05.02\custom\pngrelease3\util\winscp -rawsettings SFTPMaxVersion=3 /console /script=E:\Teradata\MDM\3.05.02\custom\pngrelease3\script\ftpupload.script /parameter {$filepathSynch} {$SFTPDirPathSynch}" AssignToVar="errStatus" Synchronous="true"/>
+                      -->
+                          <IF_TEST Test="$errStatus/@ShellReturnValue != 0">
+                            <THEN>
+                              <EXECUTE_SQL_QUERY Value="UPDATE ETL_CTRL.LOAD_CONTROL SET EDW_LOAD_STATUS='Failed', EDW_LOAD_ENDTS=CURRENT_TIMESTAMP(0) WHERE LOAD_ID={$thisParam/LoadId/@Value}" AssignToVar="resUpd"/>
+                              <EXECUTE_SQL_QUERY Value="UPDATE GDPR_RQST SET GDPR_RQST_STATUS_CD= CASE WHEN GDPR_RQST_TYPE_CD IN ('DA','DP') THEN 'PR' WHEN GDPR_RQST_TYPE_CD IN ('DH') THEN 'PA' ELSE GDPR_RQST_STATUS_CD END WHERE GDPR_CASE_ID='{$curCase/GDPR_CASE_ID/@Value}' AND GDPR_RQST_TYPE_CD IN ('DA','DP','DH');" AssignToVar="resUpd" HandleException="true"/>
+                              <SET Var="Description" FromValue="{$errStatus/@ShellReturnValue}"/>
+                              <REQUEST Name="emailOnErrorNode" ServiceName="BCM_MASTER">
+                                <LoadId Value="{$thisParam/LoadId/@Value}"/>
+                                <Subject Value="GDPR Data Access Failure!!"/>
+                                <Short_Description Value="{$Description/@Value}"/>
+                                <Description Value="Following Load Id :{$thisParam/LoadId/@Value}for GDPR Case ID: {$curCase/GDPR_CASE_ID/@Value}, failed while copying files to SFTP server"/>
+                                <SubCategory Value="GDPR Data Access Error"/>
+                                <RuleName Value="ruleGDPRDataAccessProcess"/>
+                              </REQUEST>
+                            </THEN>
+                            <ELSE>
+                              <IF_TEST Test="$getRqstTypeCd/SQL_RESULT/GDPR_RQST_TYPE_CD/@Value='DP'">
+                                <THEN>
+                                  <IF_TEST Test="$errStatus/@ShellReturnValue= 0 and $GDPRResults/@ShellReturnValue= 0 ">
+                                    <THEN>
+                                      <EXECUTE_SQL_QUERY AssignToVar="currentTimestamp" Value="select current_timestamp as CurrTime"/>
+                                      <EXECUTE_SQL_QUERY Value="UPDATE GDPR_RQST SET GDPR_RQST_STATUS_CD= CASE WHEN GDPR_RQST_TYPE_CD IN ('DA','DP') THEN 'RP' WHEN GDPR_RQST_TYPE_CD IN ('DH') THEN 'RA' ELSE GDPR_RQST_STATUS_CD END WHERE GDPR_CASE_ID IN ('{$curCase/GDPR_CASE_ID/@Value}') AND GDPR_RQST_TYPE_CD IN ('DA','DP','DH');" AssignToVar="resUpd" HandleException="true"/>
+                                      <EXECUTE_SQL_QUERY Value="UPDATE GDPR_RQST SET SYS_SOURCE={$thisParam/LoadId/@Value},GDPR_RQST_FULFLMT_DATETM=current_timestamp WHERE GDPR_CASE_ID IN ('{$curCase/GDPR_CASE_ID/@Value}') AND GDPR_RQST_TYPE_CD IN ('DA','DP','DH');" AssignToVar="resUpd1" HandleException="true"/>
+                                      <!--</FOR_EACH>-->
+                                      <SET Var="Description" FromValue="{$errStatus/@ShellReturnValue}"/>
+                                      <REQUEST Name="emailOnSuccessNode" ServiceName="BCM_MASTER">
+                                        <LoadId Value="{$thisParam/LoadId/@Value}"/>
+                                        <Subject Value="GDPR Data Access Successful!!"/>
+                                        <Short_Description Value="{$Description/@Value}"/>
+                                        <Description Value="Following Load Id :{$thisParam/LoadId/@Value} for GDPR Case ID: {$curCase/GDPR_CASE_ID/@Value}, has been successfully copied the files to SFTP server"/>
+                                        <SubCategory Value="GDPR Data Access Success"/>
+                                      </REQUEST>
+                                      <SET Var="varFileName" FromValue="{concat('GDPR_AccessRqst_',$currentTimestamp/SQL_RESULT/CurrTime/@Value,'.txt')}"/>
+                                      <EXECUTE_SQL_QUERY AssignToVar="resUpd2" Value="UPDATE ETL_CTRL.LOAD_CONTROL SET EDW_LOAD_STATUS='1CPCompleted', EDW_LOAD_ENDTS=CURRENT_TIMESTAMP(0), FileName='{$varFileName}' WHERE LOAD_ID={$thisParam/LoadId/@Value}" HandleException="true"/>
+                                    </THEN>
+                                  </IF_TEST>
+                                </THEN>
+                                <ELSE>
+                                  <IF_TEST Test="$errStatus/@ShellReturnValue= 0 and $GDPRResults/@ShellReturnValue= 0 and $PDFResults/@ShellReturnValue= 0 ">
+                                    <THEN>
+                                      <EXECUTE_SQL_QUERY AssignToVar="currentTimestamp" Value="select current_timestamp as CurrTime"/>
+                                      <!--<FOR_EACH SelectList="$resSrcCase/SQL_RESULT" CurrentElement="curUpdate">-->
+                                      <EXECUTE_SQL_QUERY Value="UPDATE GDPR_RQST SET GDPR_RQST_STATUS_CD= CASE WHEN GDPR_RQST_TYPE_CD IN ('DA','DP') THEN 'RP' WHEN GDPR_RQST_TYPE_CD IN ('DH') THEN 'RA' ELSE GDPR_RQST_STATUS_CD END WHERE GDPR_CASE_ID IN ('{$curCase/GDPR_CASE_ID/@Value}') AND GDPR_RQST_TYPE_CD IN ('DA','DP','DH');" AssignToVar="resUpd" HandleException="true"/>
+                                      <EXECUTE_SQL_QUERY Value="UPDATE GDPR_RQST SET SYS_SOURCE={$thisParam/LoadId/@Value},GDPR_RQST_FULFLMT_DATETM=current_timestamp WHERE GDPR_CASE_ID IN ('{$curCase/GDPR_CASE_ID/@Value}') AND GDPR_RQST_TYPE_CD IN ('DA','DP','DH');" AssignToVar="resUpd1" HandleException="true"/>
+                                      <!--</FOR_EACH>-->
+                                      <SET Var="Description" FromValue="{$errStatus/@ShellReturnValue}"/>
+                                      <REQUEST Name="emailOnSuccessNode" ServiceName="BCM_MASTER">
+                                        <LoadId Value="{$thisParam/LoadId/@Value}"/>
+                                        <Subject Value="GDPR Data Access Successful!!"/>
+                                        <Short_Description Value="{$Description/@Value}"/>
+                                        <Description Value="Following Load Id :{$thisParam/LoadId/@Value}for GDPR Case ID: {$curCase/GDPR_CASE_ID/@Value}, has been successfully copied the files to SFTP server"/>
+                                        <SubCategory Value="GDPR Data Access Success"/>
+                                      </REQUEST>
+                                      <SET Var="varFileName" FromValue="{concat('GDPR_AccessRqst_',$currentTimestamp/SQL_RESULT/CurrTime/@Value,'.txt')}"/>
+                                      <EXECUTE_SQL_QUERY AssignToVar="resUpd2" Value="UPDATE ETL_CTRL.LOAD_CONTROL SET EDW_LOAD_STATUS='1CPCompleted', EDW_LOAD_ENDTS=CURRENT_TIMESTAMP(0), FileName='{$varFileName}' WHERE LOAD_ID={$thisParam/LoadId/@Value}" HandleException="true"/>
+                                    </THEN>
+                                  </IF_TEST>
+                                </ELSE>
+                              </IF_TEST>
+                            </ELSE>
+                          </IF_TEST>
+                        </ELSE>
+                      </IF_TEST>
+                    </ELSE>
+                  </IF_TEST>
+                </FOR_EACH>
+              </THEN>
+            </IF_TEST>
+          </ELSE>
+        </IF_TEST>
+        <EXECUTE_SHELL_COMMAND Value="E:\Teradata\MDM\3.05.02\custom\pngrelease3\util\winscp /console /script=E:\Teradata\MDM\3.05.02\custom\pngrelease3\script\ftp.script" AssignToVar="errStatus"/>
+      </ACTION>
+    </RULE>
+  </DEFINE_METHOD>
+</DOCUMENTS>
